@@ -196,3 +196,6 @@ Array allocation, recursive binding targets and Function length boundaries.
 - Draft Number Call/noncoercive predicates and common Math bodies using shared
   numeric conversion/IEEE754 primitives and actual variadic argument Lists.
   Preserve Number constructor classification separately from Call support.
+
+Draft protected BigInt/Boolean Calls and exact BigInt.asIntN/asUintN conversion
+order, width bounds and signed modular wrapping through shared source kernels.

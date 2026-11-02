@@ -4,12 +4,18 @@ export function readJavaScriptNumberPredicateNames(){return ['isNaN','isFinite',
 /** @returns {string[]} */
 export function readJavaScriptMathMethodNames(){return ['abs','floor','ceil','trunc','round','sign','sqrt','pow','min','max'];}
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptNumericIntrinsicOperation(operation){return operation==='Number'||readJavaScriptNumberPredicateNames().some(name=>operation==='Number.'+name)||readJavaScriptMathMethodNames().some(name=>operation==='Math.'+name);}
+export function testJavaScriptNumericIntrinsicOperation(operation){return ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN'].includes(operation)||readJavaScriptNumberPredicateNames().some(name=>operation==='Number.'+name)||readJavaScriptMathMethodNames().some(name=>operation==='Math.'+name);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptNumericIntrinsicFunction(identity,realm,operation){
  if(!testJavaScriptNumericIntrinsicOperation(operation))return undefined;
  /** @type {JavaScriptCallInstruction[]} */const code=[];
- if(operation==='Number'){
+ if(operation==='Boolean'){
+  code.push({$:'argument',destination:1,index:0},{$:'branch',condition:1,yes:2,no:4},{$:'constant',destination:2,value:{$:'boolean',value:true}},{$:'return',source:2},{$:'constant',destination:2,value:{$:'boolean',value:false}},{$:'return',source:2});
+ }else if(operation==='BigInt'){
+  code.push({$:'argument',destination:1,index:0},{$:'primitive',destination:1,operation:'convert explicit integer',arguments:[1]},{$:'return',source:1});
+ }else if(operation==='BigInt.asIntN'||operation==='BigInt.asUintN'){
+  code.push({$:'argument',destination:1,index:0},{$:'primitive',destination:1,operation:'coerce primitive number',arguments:[1]},{$:'primitive',destination:1,operation:'read integer index',arguments:[1]},{$:'argument',destination:2,index:1},{$:'primitive',destination:2,operation:'coerce primitive integer',arguments:[2]},{$:'primitive',destination:3,operation:operation==='BigInt.asIntN'?'wrap signed integer':'wrap unsigned integer',arguments:[1,2]},{$:'return',source:3});
+ }else if(operation==='Number'){
   code.push({$:'argumentCount',destination:1},{$:'constant',destination:2,value:{$:'number',value:0}},{$:'numberBinary',destination:3,left:1,right:2,operator:'equal'},{$:'branch',condition:3,yes:7,no:4},{$:'argument',destination:1,index:0},{$:'primitive',destination:1,operation:'convert explicit number',arguments:[1]},{$:'return',source:1},{$:'return',source:2});
  }else if(operation.startsWith('Number.')){
   const primitive=operation==='Number.isNaN'?'test NaN number':operation==='Number.isFinite'?'test finite number':operation==='Number.isInteger'?'test integer number':'test safe integer number';

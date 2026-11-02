@@ -1430,3 +1430,26 @@ Node 22/24 original-source bounds remain in force. No tests, parser/generator
 execution, gates, compilation or CI feedback inspection ran. Wider numeric
 formatting/parsing, boxed Number slots/constructor behavior and remaining Math
 methods remain independently required; no execution evidence is claimed.
+
+### BigInt and Boolean Call and exact bounded integer wrapping
+
+Protected BigInt and Boolean namespace/function identities now join the numeric
+catalog. BigInt Call uses explicit integer conversion, including integral Number
+acceptance and fractional Number RangeError; Boolean uses the VM's shared
+truthiness and never invokes object conversion. BigInt.asIntN/asUintN complete
+width ToNumber and ToIndex first, then implicit ToBigInt of the value, then exact
+modular wrapping. Missing/NaN width becomes zero; fractions truncate toward zero;
+negative integers, infinities and widths above the safe index range throw
+RangeError before the value is touched. BigInt widths fail implicit ToNumber.
+Even zero width performs ToBigInt, rejecting Number and preserving original
+conversion throws. Signed residues use the high-bit threshold, with negative
+modulo normalized into the unsigned range. The selected 4096-bit work bounds
+produce resource-limit requests after conversion rather than fake RangeErrors.
+Boolean remains actually constructible and BigInt nonconstructible in the
+constructor facts; boxed construction remains independently required.
+
+Twelve original source cases and two deferred low-level controls cover these
+orders, scalar conversions, signed residues, ranges and resource boundaries.
+They retain the existing explicit Node source-version bounds. Source authoring
+will include the existing updated numeric/integer libraries automatically when
+that phase resumes. No tests, validation, generation or compilation ran.

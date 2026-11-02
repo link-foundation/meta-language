@@ -57,6 +57,15 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Protected BigInt Call uses shared explicit conversion, while asIntN/asUintN
+first complete width ToNumber/ToIndex and then value ToBigInt. Width truncation,
+negative-fraction zero, invalid-range errors, exact modular signed residues and
+zero-width value conversion retain the actual order of effects. Resource limits
+are reported separately after conversions, never as invented language errors.
+Boolean Call uses shared truthiness without ToPrimitive. Actual Boolean/Number
+constructibility and BigInt nonconstructibility remain independent of portable
+Call support; boxed construction stays a separate operation requirement.
+
 Protected Number Call distinguishes no argument (+0) from explicit undefined
 (NaN), uses the shared explicit numeric conversion including BigInt, and retains
 number-hint object coercion. Number predicates inspect actual Number operands

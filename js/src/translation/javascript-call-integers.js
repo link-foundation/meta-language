@@ -7,7 +7,7 @@ import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values
 /** @param {string} operation @returns {number} */
 export function readJavaScriptCallIntegerArity(operation){
  if(operation==='negate integer'||operation==='complement integer bits'||operation==='complement number bits')return 1;
- return ['add integers','subtract integers','multiply integers','divide integers','read integer remainder','raise integer power','compare integers','compare number integer','compare text integer',
+ return ['wrap signed integer','wrap unsigned integer','add integers','subtract integers','multiply integers','divide integers','read integer remainder','raise integer power','compare integers','compare number integer','compare text integer',
  'conjoin integer bits','disjoin integer bits','exclude equal integer bits','shift integer bits left','shift integer bits right',
  'conjoin number bits','disjoin number bits','exclude equal number bits','shift number bits left','shift number bits right','shift number bits right unsigned'].includes(operation)?2:0;
 }
@@ -41,6 +41,7 @@ export function executeJavaScriptCallNumberBits(operation,values){
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallIntegerPrimitive(operation,values){
+ if(operation==='wrap signed integer'||operation==='wrap unsigned integer')return executeJavaScriptCallIntegerWrapping(operation,values);
  if(operation.includes('number bits'))return executeJavaScriptCallNumberBits(operation,values);
  if(operation==='compare number integer'||operation==='compare text integer')return executeJavaScriptCallMixedIntegerComparison(operation,values);
  const first=values[0]??{$:'undefined'},second=values[1]??{$:'integer',value:0n};
@@ -93,4 +94,18 @@ export function executeJavaScriptCallMixedIntegerComparison(operation,values){
   return {$:'primitiveValue',value:{$:'number',value:compareJavaScriptStringBigIntegerUnits(first.units,second.value)}};
  }
  return {$:'primitiveInvalid',reason:'mixed integer comparison requires its actual registered operation'};
+}
+
+/** Width already passed ToIndex and the value already passed ToBigInt. Work
+ * limits are checked afterward, so conversion effects survive even at zero bits.
+ * @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallIntegerWrapping(operation,values){
+ const width=values[0]??{$:'undefined'},input=values[1]??{$:'undefined'};
+ if(!['wrap signed integer','wrap unsigned integer'].includes(operation)||width.$!=='number'||!Number.isSafeInteger(width.value)||width.value<0||input.$!=='integer')return {$:'primitiveInvalid',reason:'integer wrapping consumes its completed ToIndex and ToBigInt operands'};
+ if(width.value===0)return {$:'primitiveValue',value:{$:'integer',value:0n}};
+ if(width.value>4096||readJavaScriptCallIntegerWidth(input.value)<0)return {$:'primitiveResourceLimit',reason:'integer wrapping exceeds the selected 4096-bit work profile'};
+ let modulus=1n;for(let bit=0;bit<width.value;bit+=1)modulus*=2n;
+ let result=input.value%modulus;if(result<0n)result+=modulus;
+ if(operation==='wrap signed integer'&&result>=modulus/2n)result-=modulus;
+ return {$:'primitiveValue',value:{$:'integer',value:result}};
 }

@@ -15,6 +15,16 @@ test('Math extrema consume every actual argument and preserve signed-zero reduct
  assert.equal(Object.is(executeJavaScriptCallPrimitive('read minimum number',[{$:'number',value:0},{$:'number',value:-0}]).value.value,-0),true);assert.equal(Object.is(executeJavaScriptCallPrimitive('read maximum number',[{$:'number',value:-0},{$:'number',value:0}]).value.value,0),true);
 });
 test('numeric catalog entries retain complete branch targets and actual constructor classification',()=>{
- for(const operation of ['Number',...readJavaScriptNumberPredicateNames().map(name=>'Number.'+name),...readJavaScriptMathMethodNames().map(name=>'Math.'+name)]){const fn=compileJavaScriptNumericIntrinsicFunction(1n,2n,operation);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(Number.isInteger(target)&&target>=0&&target<fn.instructions.length);}
+ for(const operation of ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN',...readJavaScriptNumberPredicateNames().map(name=>'Number.'+name),...readJavaScriptMathMethodNames().map(name=>'Math.'+name)]){const fn=compileJavaScriptNumericIntrinsicFunction(1n,2n,operation);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(Number.isInteger(target)&&target>=0&&target<fn.instructions.length);}
  const directory={$:'collectionCallableDirectory',realms:[2n],exoticKey:{$:'symbol',identity:9n},constructors:[],primitiveMethods:[{$:'primitiveMethodOwner',identity:1n,realm:2n,operation:'Number'}]};assert.notEqual(compileJavaScriptCollectionCallDirectory(directory).error,'');assert.equal(compileJavaScriptCollectionCallDirectory({...directory,primitiveMethods:[{...directory.primitiveMethods[0],constructable:true}]}).error,'');
+});
+
+test('ToIndex distinguishes truncated negative fractions from invalid integer widths',()=>{
+ for(const [input,expected] of [[-0.9,0],[NaN,0],[3.9,3],[-0,0],[9007199254740991,9007199254740991]]){const result=executeJavaScriptCallPrimitive('read integer index',[{$:'number',value:input}]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
+ for(const input of [-1,Infinity,-Infinity,9007199254740992]){const result=executeJavaScriptCallPrimitive('read integer index',[{$:'number',value:input}]);assert.equal(result.$,'primitiveError');assert.equal(result.errorClass,'RangeError');}
+});
+test('integer wrapping keeps exact signed residues and explicit resource boundaries',()=>{
+ for(const [operation,width,input,expected] of [['wrap signed integer',8,255n,-1n],['wrap signed integer',8,-129n,127n],['wrap unsigned integer',8,-1n,255n],['wrap unsigned integer',8,257n,1n],['wrap signed integer',0,99n,0n]]){const result=executeJavaScriptCallPrimitive(operation,[{$:'number',value:width},{$:'integer',value:input}]);assert.equal(result.$,'primitiveValue');assert.equal(result.value.value,expected);}
+ const limit=executeJavaScriptCallPrimitive('wrap unsigned integer',[{$:'number',value:4097},{$:'integer',value:1n}]);assert.equal(limit.$,'primitiveResourceLimit');
+ const invalid=executeJavaScriptCallPrimitive('wrap unsigned integer',[{$:'number',value:0},{$:'number',value:7}]);assert.equal(invalid.$,'primitiveInvalid');
 });
