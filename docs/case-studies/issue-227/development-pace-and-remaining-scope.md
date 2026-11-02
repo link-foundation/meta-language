@@ -458,3 +458,53 @@ remaining effort may decrease as current batches finish; different daily active
 hours change the conversion. The project still lacks an empirical conversion
 from commit cadence or model throughput to verified end-to-end delivery. A
 reliable current finish date cannot be inferred from the agent-count change.
+
+## November 3 bulk drafting interval
+
+The subsequent user authorization restores up to two subagents while root also
+writes code. This supersedes the preceding solo-capacity scenario for the current
+batch; it does not turn that scenario into a measured finish forecast.
+
+The Git committer timestamps from `ac4531f03` (01:07:57 +07:00) through
+`ff58130ab` (02:07:34 +07:00) cover 14 commits in 59 minutes 37 seconds. The 13
+adjacent intervals average 4 minutes 35 seconds, with median 3 minutes 57 seconds;
+the shortest is 19 seconds and longest 14 minutes 7 seconds. These are arrival
+intervals for parallel source batches, not time spent implementing individual
+requirements. For example independently drafted changes can commit seconds
+apart after substantially overlapping work.
+
+That interval drafts actual exclusive Rust source admission/composition, distinct
+collection carriers, primitive compound writes, String accumulation, Vec packets,
+closed Hash/BTree operations, Eq/Ord and ordered snapshots. Root connects typed
+Links, project/CST ownership, package declarations and genuine library loading.
+Five Array methods reuse existing VM opcodes: toReversed, with, sort, toSorted
+and toSpliced. One generic native-control driver now includes 150 positive rows
+from eight Rust state fixture groups, while the copying/sorting fixtures retain
+62 original JavaScript rows. These are source/control inventories, with overlap
+possible between examples; none is a requirement completion measurement or an
+observed runtime pass.
+
+The actions with broad reach are shared state/packet composition, genuine source
+owner checks, one automatic library interface derivation, existing-opcode Array
+composition and one reusable original/emitted-product matrix. Keeping primitive
+and nominal semantics shared reduces independent native implementations. The
+current local work writes source text only; no tests, source generation or Rust
+compilation ran. The recorded project cache cleanup remains approximately
+510 KiB with zero removed, and the inspected disk reports about 60 GiB free.
+
+The next source frontier is materially larger than a leaf method: genuine generic
+FnMut specialization needs original type/callback binders, concrete source body
+reparse, mutable environment packets and first-error iterator completion.
+Borrowed ordered loops need real source loan roots and control-state publication,
+not an owned-array label. Stored/escaping references, general traits/macros,
+source module initialization, native frontend/codec publication and complete
+downstream programs remain outside the demonstrated source batches. Automatic
+generation has not calibrated whether the new batches compose successfully.
+
+Accordingly this faster commit cadence does not justify replacing the earlier
+uncalibrated effort ranges with an asserted finish date. The next useful forecast
+checkpoint is a complete actual own-project module's integrated source path and
+the first permitted successful automatic generation, followed by measured
+original/product/runtime results after the full draft gate. Until those inputs
+exist, quote concrete drafted families and known gaps rather than a 100% date
+derived from commits, fixture counts or mapped paths.

@@ -13,6 +13,12 @@ width and Node version. The initial frontend scope is Rust >=1.90 <1.100, editio
 2024, 64-bit target, and Node >=22.15 <23 or >=24 <25. Uncovered versions fail
 with diagnostics. This does not extend the frontend to the kernel's separate
 32-bit domains or claim a native Rust frontend implementation.
+Each original's declared language range is checked against that interpretation.
+The existing runtime-data version selector also checks the active Links Notation
+dependency; its actual version, Unicode/V8 versions and platform/architecture
+are retained with the observations. A separate assertion requires the original's
+complete CST to be clean, while text/binary transports are still attempted as
+their own checks. Actual concrete graphs and JavaScript products are retained.
 
 For each original, the driver independently compiles/runs its original Rust,
 parses/checks the actual source through the shared JavaScript frontend, emits
@@ -46,8 +52,9 @@ Assertion correction: the exact empty-HashSet equality original previously named
 retained `compilerAccepted:true`. The new genuine equality implementation makes
 the old unsupported expectation obsolete. Its source input is preserved as an
 appended positive in `rust-exclusive-collection-source.mjs`, with `true\n` stdout.
-That input declares no exclusive function, so the fixture-specific “has exclusive
-packet” assertion now applies to originals that actually require one. Its CST,
+That input declares no exclusive function, so the packet-inventory assertion
+compares every original with its actual header requirement, including an explicit
+false expectation for this input. No assertion cell is skipped. Its CST,
 public profile, emitted stdout and graph coverage remain; every previous input
 is retained. The current composition inventory has 13 positives and seven
 refusals. This source correction is justified by the actual new shared Eq path
