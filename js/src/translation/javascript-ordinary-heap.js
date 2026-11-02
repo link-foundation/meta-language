@@ -1,3 +1,4 @@
+import {testJavaScriptValidatedHeapSnapshot} from './javascript-heap-snapshot-authority.js';
 import {readJavaScriptWeakKeyEligibility} from './javascript-weak-collection-rules.js';
 import {readJavaScriptArrayObjectError,planJavaScriptArrayPropertyDefinition,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,constructJavaScriptSemanticTextUnits,readJavaScriptSemanticTextLength} from './javascript-semantic-values.js';
@@ -110,6 +111,7 @@ export function findJavaScriptOrdinaryProperty(properties, key) {
  * ordinary-only object domain; exotic objects retain their own operations.
  * @param {JavaScriptOrdinaryHeap} heap @returns {string} */
 export function readJavaScriptOrdinaryHeapError(heap) {
+  if(testJavaScriptValidatedHeapSnapshot(heap))return '';
   if (heap.objects.length > 4096 || heap.symbols.length > 16384) return 'ordinary heap identity directory exceeds its explicit resource budget';
   let previous = 0n;
   for (const object of heap.objects) {
