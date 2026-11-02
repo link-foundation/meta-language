@@ -23,7 +23,9 @@ general serialization equivalence, full module translation or every feature of
 the crate.
 
 One temporary native example bundles all actual-crate scenarios for a method,
-preserving their control entry bodies and importing the actual library method.
+preserving each complete original scenario inside its own module and importing
+the actual library method. A wrapper invokes each unchanged scenario main;
+scenario-specific helper functions remain inside the same original module.
 It builds with the checkout's complete unchanged Cargo.lock, no default features
 and debug information disabled. This avoids loading the unrelated default
 dictionary feature in this targeted reference configuration; existing full-feature
