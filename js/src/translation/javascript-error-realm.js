@@ -1,3 +1,4 @@
+import {importJavaScriptSymbolRegistryWitness,findJavaScriptSymbolRegistryKey} from './javascript-symbol-registry.js';
 // Host boundary for the portable Error source machine. Source definitions are
 // supplied as real declaration values, checked against the captured text and
 // NEVER invoked by this adapter. Only independently supplied realm intrinsics
@@ -45,7 +46,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  if(sourceFunctions&&(!deferModule||!ordinaryClasses&&declarationWitness!==null))throw new TypeError('source capabilities must be bound before source entry publication');
  const declarationOwners=declarationWitness===null?null:ordinaryClasses?readJavaScriptOrdinaryClassDeclarationWitness(capture,declarationWitness):readSourceLibraryErrorDeclarationWitness(capture,declarationWitness);
  if(!realm||!realm.errors||!realm.objectPrototype||typeof realm.objectPrototype!=='object'||Reflect.getPrototypeOf(realm.objectPrototype)!==null||typeof realm.toPrimitive!=='symbol'||typeof realm.getPrimitive!=='function'||typeof realm.assign!=='function'||!definitions||typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n)throw new TypeError('actual complete Error realm authority is required');
- let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[],symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:[]};
+ let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[],symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:[],symbolRegistryModel:'represented global Symbol registry 1',symbolRegistry:[]};
  const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map(),capabilityOwners=new Map(),opaqueOwners=new Map(),portableFunctions=new Map();
  let portableTemplateProgram={templates:undefined},arrayConstructorAuthority=null,primitiveIteratorPrototypes=null;
  function refuse(reason){const error=new TypeError(reason);refusals.add(error);throw error;}
@@ -54,8 +55,13 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  function encode(value){
   if(value===undefined)return {$:'undefined'};if(value===null)return {$:'null'};
   if(typeof value==='string')return sourceFunctions&&value.length>1048576?constructJavaScriptSourceText(value):text(value);if(typeof value==='boolean')return {$:'boolean',value};if(typeof value==='number')return {$:'number',value};if(typeof value==='bigint')return {$:'integer',value};
-  if(forward.has(value)){const id=forward.get(value);return typeof value==='symbol'?{$:'symbol',identity:id}:{$:'object',identity:id,callable:typeof value==='function'};}
-  if(typeof value==='symbol'){if(globalThis.Symbol!==actualSymbolAllocator||typeof actualSymbolKeyFor!=='function'||Reflect.getOwnPropertyDescriptor(actualSymbolAllocator,'keyFor')?.value!==actualSymbolKeyFor)throw new TypeError('weak Symbol eligibility retains the actual protected global Symbol registry authority');const registered=Reflect.apply(actualSymbolKeyFor,actualSymbolAllocator,[value])!==undefined,id=allocate();forward.set(value,id);reverse.set(id,value);heap.symbols.push(id);heap.symbolRegistrationModel='actual global Symbol registry classification 1';heap.symbolRegistrations=(heap.symbolRegistrations??[]).concat([{$:'symbolRegistrationFact',identity:id,registered}]);sorted();return {$:'symbol',identity:id};}
+  if(typeof value==='symbol'){
+   if(globalThis.Symbol!==actualSymbolAllocator||typeof actualSymbolKeyFor!=='function'||Reflect.getOwnPropertyDescriptor(actualSymbolAllocator,'keyFor')?.value!==actualSymbolKeyFor)throw new TypeError('Symbol registry imports retain their actual protected key witness authority');
+   const actualKey=Reflect.apply(actualSymbolKeyFor,actualSymbolAllocator,[value]),key=actualKey===undefined?{$:'undefined'}:actualKey.length>65536?constructJavaScriptSourceText(actualKey):text(actualKey),at=actualKey===undefined?-1:findJavaScriptSymbolRegistryKey(heap,key),existing=heap.symbolRegistry?.[at],prior=forward.get(value),id=prior??existing?.identity??allocate();
+   if(prior!==undefined&&existing!==undefined&&prior!==existing.identity)throw new TypeError('an imported registered Symbol cannot replace its established global identity');
+   const witness=importJavaScriptSymbolRegistryWitness(heap,id,key);if(witness.$!=='symbolRegistryValue')throw new TypeError(witness.reason);heap=witness.heap;forward.set(value,id);reverse.set(id,value);return {$:'symbol',identity:id};
+  }
+  if(forward.has(value)){const id=forward.get(value);return {$:'object',identity:id,callable:typeof value==='function'};}
   if(typeof value!=='object'&&typeof value!=='function')throw new TypeError('unmodeled host semantic value');
   if(nativeTypes.isWeakMap(value)||nativeTypes.isWeakSet(value))return refuse('capturing native weak contents requires their actual source allocation and weak slot transitions; hidden host contents are unavailable');
   if(nativeTypes.isProxy(value))return refuse('capturing a Proxy requires its actual trap continuations before reflection');
@@ -283,10 +289,10 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  function resumeSymbolAllocation(request){
   if(module===null||request?.$!=='machineAllocateSymbol'||!request.machine)throw new TypeError('Symbol allocation requires its actual published request');
   const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
-  if(actual.$!=='machineAllocateSymbol'||!testJavaScriptSemanticSameValue(actual.description,request.description)||heap!==request.machine.heap)throw new TypeError('Symbol allocation retains its completed description and adopted latest heap');
+  if(actual.$!=='machineAllocateSymbol'||!testJavaScriptSemanticSameValue(actual.description,request.description)||!testJavaScriptSemanticSameValue(actual.registryKey??{$:'undefined'},request.registryKey??{$:'undefined'})||heap!==request.machine.heap)throw new TypeError('Symbol allocation retains its completed description and adopted latest heap');
   if(globalThis.Symbol!==actualSymbolAllocator)throw new TypeError('Symbol allocation requires the captured actual identity allocator');
   const identity=allocate(),transition=resumeJavaScriptCallSymbolAllocation(module.program,request.machine,identity);
-  if(transition.$==='machineContinue'){const arguments_=actual.description.$==='undefined'?[]:[readJavaScriptSemanticTextString(actual.description)],symbol=Reflect.apply(actualSymbolAllocator,undefined,arguments_);forward.set(symbol,identity);reverse.set(identity,symbol);}
+  if(transition.$==='machineContinue'&&actual.registryKey===undefined){const arguments_=actual.description.$==='undefined'?[]:[readJavaScriptSemanticTextString(actual.description)],symbol=Reflect.apply(actualSymbolAllocator,undefined,arguments_);forward.set(symbol,identity);reverse.set(identity,symbol);}
   return {resumed:true,identity,transition};
  }
  function resumeSymbolDescription(request){

@@ -22,7 +22,7 @@ export function projectJavaScriptHeapRetentionEdges(object){
 export function traceJavaScriptWeakCollectionRetention(heap,roots){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {identities:[],error};if(roots.length>1048576)return {identities:[],error:'retention roots exceed the explicit shared value budget'};
  for(const value of roots){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {identities:[],error:invalid};}
- const identities=[],pending=roots.slice(),conditional=[],objects=heap.objects.map(()=>false),symbols=heap.symbols.map(()=>false);let conditionalIndex=0,work=0;
+ const identities=[],pending=roots.concat((heap.symbolRegistry??[]).map(entry=>({$:'symbol',identity:entry.identity}))),conditional=[],objects=heap.objects.map(()=>false),symbols=heap.symbols.map(()=>false);let conditionalIndex=0,work=0;
  const symbolIndex=identity=>{let low=0,high=heap.symbols.length;while(low<high){const middle=Math.floor((low+high)/2);if((heap.symbols[middle]??identity)<identity)low=middle+1;else high=middle;}return heap.symbols[low]===identity?low:-1;};
  const live=value=>value.$==='object'?objects[findJavaScriptOrdinaryObject(heap.objects,value.identity)]===true:value.$==='symbol'?symbols[symbolIndex(value.identity)]===true:false;
  for(;;){

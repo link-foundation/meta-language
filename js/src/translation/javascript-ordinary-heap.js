@@ -3,7 +3,7 @@ import {readJavaScriptWeakKeyEligibility} from './javascript-weak-collection-rul
 import {readJavaScriptArrayObjectError,planJavaScriptArrayPropertyDefinition,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,constructJavaScriptSemanticTextUnits,readJavaScriptSemanticTextLength} from './javascript-semantic-values.js';
 import {createJavaScriptPropertyDescriptor,testCompleteJavaScriptPropertyDescriptor,planJavaScriptPropertyDefinition} from './javascript-property-descriptors.js';
-import {testJavaScriptCollectionKey,orderJavaScriptCollectionKeys} from './javascript-collection-rules.js';
+import {testJavaScriptCollectionKey,orderJavaScriptCollectionKeys,compareJavaScriptCollectionKeys} from './javascript-collection-rules.js';
 import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-rules.js';
 
 /** Tombstones retain stable insertion ordinals after releasing deleted values.
@@ -39,13 +39,14 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
  */
 /** Additive authority for edition-16 CanBeHeldWeakly. Absence preserves old
  * heap profiles; unknown Symbol facts cannot authorize a new weak operation.
- * @typedef {{$:'symbolRegistrationFact',identity:bigint,registered:boolean}} JavaScriptSymbolRegistrationFact */
+ * @typedef {{$:'symbolRegistrationFact',identity:bigint,registered:boolean,key?:JavaScriptSemanticValue}} JavaScriptSymbolRegistrationFact */
+/** @typedef {{$:'symbolRegistryEntry',identity:bigint,key:JavaScriptSemanticValue}} JavaScriptSymbolRegistryEntry */
 /** Objects and Symbols share one strictly ordered unsigned64 identity space.
  * Functional snapshots are semantic states. A frontend must keep the selected
  * state in one shared cell so all aliases observe the same transition.
  * Nominal definitions keep recursive source types shared rather than repeatedly
  * expanding structural records along every typed expression occurrence.
- * @typedef {{$:'ordinaryHeap',objects:JavaScriptOrdinaryObject[],symbols:bigint[],symbolRegistrationModel?:string,symbolRegistrations?:JavaScriptSymbolRegistrationFact[]}} JavaScriptOrdinaryHeap
+ * @typedef {{$:'ordinaryHeap',objects:JavaScriptOrdinaryObject[],symbols:bigint[],symbolRegistrationModel?:string,symbolRegistrations?:JavaScriptSymbolRegistrationFact[],symbolRegistryModel?:string,symbolRegistry?:JavaScriptSymbolRegistryEntry[]}} JavaScriptOrdinaryHeap
  */
 
 /** @param {JavaScriptOrdinaryObject[]} objects @param {bigint} identity @returns {number} */
@@ -130,7 +131,20 @@ export function readJavaScriptOrdinaryHeapError(heap) {
   }
   if(heap.symbolRegistrations!==undefined||heap.symbolRegistrationModel!==undefined){
     if(heap.symbolRegistrationModel!=='actual global Symbol registry classification 1'||!Array.isArray(heap.symbolRegistrations)||heap.symbolRegistrations.length>16384)return 'Symbol registration authority exceeds its explicit directory budget';
-    let prior=0n;for(const fact of heap.symbolRegistrations){if(fact?.$!=='symbolRegistrationFact'||typeof fact.registered!=='boolean'||typeof fact.identity!=='bigint'||fact.identity<=prior||!testJavaScriptOrdinarySymbol(heap.symbols,fact.identity))return 'Symbol registration facts retain actual unique ordered global Symbol identities';prior=fact.identity;}
+    let prior=0n;for(const fact of heap.symbolRegistrations){if(fact?.$!=='symbolRegistrationFact'||typeof fact.registered!=='boolean'||typeof fact.identity!=='bigint'||fact.identity<=prior||!testJavaScriptOrdinarySymbol(heap.symbols,fact.identity))return 'Symbol registration facts retain actual unique ordered global Symbol identities';prior=fact.identity;if(fact.key!==undefined&&(!fact.registered||fact.key.$!=='text'&&fact.key.$!=='sourceText'||readJavaScriptOrdinaryValueError(heap,fact.key)!==''||readJavaScriptSemanticTextLength(fact.key)>1048576))return 'registered Symbol key witnesses retain exact bounded UTF16 text';}
+  }
+  const witnessedKeys=orderJavaScriptCollectionKeys((heap.symbolRegistrations??[]).filter(fact=>fact.key!==undefined).map(fact=>fact.key));let witnessedUnits=0;for(let index=0;index<witnessedKeys.length;index++){witnessedUnits+=readJavaScriptSemanticTextLength(witnessedKeys[index]);if(witnessedUnits>16777216)return 'Symbol key witnesses exceed their explicit UTF16 storage profile';if(index>0&&testJavaScriptSemanticSameValue(witnessedKeys[index-1],witnessedKeys[index]))return 'actual registered Symbol witnesses have unique global keys';}
+  if(heap.symbolRegistry!==undefined||heap.symbolRegistryModel!==undefined){
+    if(heap.symbolRegistryModel!=='represented global Symbol registry 1'||!Array.isArray(heap.symbolRegistry)||heap.symbolRegistry.length>16384)return 'the represented Symbol registry retains its actual bounded shared agent model';
+    const facts=heap.symbolRegistrations??[],identities=[];let previousKey=null,units=0;
+    for(const entry of heap.symbolRegistry){
+      if(entry?.$!=='symbolRegistryEntry'||!testJavaScriptOrdinarySymbol(heap.symbols,entry.identity)||entry.key?.$!=='text'&&entry.key?.$!=='sourceText'||readJavaScriptOrdinaryValueError(heap,entry.key)!=='')return 'Symbol registry entries retain actual global Symbol identities and primitive UTF16 keys';
+      units+=readJavaScriptSemanticTextLength(entry.key);if(readJavaScriptSemanticTextLength(entry.key)>1048576||units>16777216)return 'Symbol registry keys exceed their explicit UTF16 storage profile';
+      if(previousKey!==null&&compareJavaScriptCollectionKeys(previousKey,entry.key)>=0)return 'Symbol registry keys retain unique strict UTF16 order';previousKey=entry.key;
+      let low=0,high=facts.length;while(low<high){const middle=Math.floor((low+high)/2);if((facts[middle]?.identity??entry.identity)<entry.identity)low=middle+1;else high=middle;}const fact=facts[low];if(fact?.identity!==entry.identity||!fact.registered||fact.key===undefined||!testJavaScriptSemanticSameValue(fact.key,entry.key))return 'registry key entries retain their matching exact actual registration witness';identities.push({$:'symbol',identity:entry.identity});
+    }
+    const ordered=orderJavaScriptCollectionKeys(identities);for(let index=1;index<ordered.length;index++)if(testJavaScriptSemanticSameValue(ordered[index-1],ordered[index]))return 'one global Symbol identity retains exactly one registry key';
+    for(const fact of facts)if(fact.key!==undefined){let low=0,high=heap.symbolRegistry.length;while(low<high){const middle=Math.floor((low+high)/2),entry=heap.symbolRegistry[middle];if(entry!==undefined&&compareJavaScriptCollectionKeys(entry.key,fact.key)<0)low=middle+1;else high=middle;}if(heap.symbolRegistry[low]?.identity!==fact.identity)return 'known registered key witnesses remain in the monotonic global registry';}
   }
   let closureCaptureCount = 0;
   let propertyCount = 0;

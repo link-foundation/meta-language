@@ -54,6 +54,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'primitiveWrapper',destination:number,input:number,prototype:number} |
  * {$:'symbolAllocate',destination:number,input:number} |
  * {$:'symbolDescription',destination:number,input:number} |
+ * {$:'symbolRegistry',destination:number,input:number,operation:string} |
  * {$:'functionName',destination:number,object:number,key:number,prefix:string,realm:bigint} |
  * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
  * {$:'closureAllocate',destination:number,owner:bigint,ordinal:number,captures:number[],receiver:number} |
@@ -134,7 +135,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'arrayCreation':return [instruction.destination,instruction.prototype,instruction.iteratorKey];
     case 'objectFromEntries':return [instruction.destination,instruction.input,instruction.prototype,instruction.iteratorKey];
     case 'primitiveWrapper':return [instruction.destination,instruction.input,instruction.prototype];
-    case 'symbolAllocate':case 'symbolDescription':case 'propertyKey':return [instruction.destination,instruction.input];
+    case 'symbolAllocate':case 'symbolDescription':case 'symbolRegistry':case 'propertyKey':return [instruction.destination,instruction.input];
     case 'propertyDefinition':return [instruction.destination,instruction.target,instruction.key,instruction.attributes];
   }
 }

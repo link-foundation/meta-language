@@ -52,5 +52,5 @@ for(const row of originals)test(row.name,()=>{
 });
 test('unavailable weak liveness, source registry and native hidden-content frontiers remain explicit',()=>{
  for(const row of refusals){if(row.nativeWeakInput){const capture=captureJavaScriptOrdinaryClassModule(row.source,{identifier:'native-weak-frontier.js',entries:row.entries}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:73n});assert.throws(()=>instance.embedding.encode(new WeakMap()),/hidden host contents/);continue;}if(row.runtimeBoundary){const capture=captureJavaScriptOrdinaryClassModule(row.source,{identifier:'symbol-registry-frontier.js',entries:row.entries}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:73n});const transition=runJavaScriptSourceTransition(instance.embedding,instance.begin(row.entry,[]),{steps:1048576}).transition;assert.equal(transition.$,'machineInvalid');assert.match(transition.reason,/registered executable definition/);continue;}assert.throws(()=>prepareJavaScriptOrdinaryClassModule(captureJavaScriptOrdinaryClassModule(row.source,{identifier:'weak-frontier.js',entries:row.entries}),{realmIdentity:73n}));}
- assert.equal(originals.length,33);assert.equal(refusals.length,5);
+ assert.equal(originals.length,34);assert.equal(refusals.length,4);
 });

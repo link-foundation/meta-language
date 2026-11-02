@@ -1,3 +1,4 @@
+import {executeJavaScriptSymbolRegistryOperation,allocateJavaScriptRegisteredSymbol,readJavaScriptSymbolRegistrationFact} from './javascript-symbol-registry.js';
 import {allocateJavaScriptWeakCollection,executeJavaScriptWeakCollectionOperation} from './javascript-weak-collections.js';
 import {readJavaScriptWeakCollectionOperationKind} from './javascript-weak-collection-rules.js';
 import {beginJavaScriptArrayConcatenation,stepJavaScriptArrayConcatenation,resumeJavaScriptArrayConcatenationCall,resumeJavaScriptArrayConcatenationConstruction,resumeJavaScriptArrayConcatenationAllocation,readJavaScriptArrayConcatenationStateError} from './javascript-array-concatenation.js';
@@ -92,7 +93,7 @@ import {testJavaScriptArrayLength} from './javascript-array-objects.js';
  * {$:'waitConstructorCheck',destination:number,input:JavaScriptSemanticValue,required:boolean} |
  * {$:'waitObjectFromEntries',destination:number,realm:bigint,state:JavaScriptObjectFromEntriesState,error?:JavaScriptObjectFromEntriesErrorRequest} |
  * {$:'waitPrimitiveWrapper',destination:number,state:JavaScriptPrimitiveWrapperState} |
- * {$:'waitSymbolAllocation',destination:number,description:JavaScriptSemanticValue} |
+ * {$:'waitSymbolAllocation',destination:number,description:JavaScriptSemanticValue,registryKey?:JavaScriptSemanticValue} |
  * {$:'waitSymbolDescription',destination:number,symbol:JavaScriptSemanticValue} |
  * {$:'waitFunctionNameSymbol',destination:number,object:JavaScriptSemanticValue,key:JavaScriptSemanticValue,prefix:string,realm:bigint} |
  * {$:'waitSourceError',realm:bigint,errorClass:string,message:JavaScriptSemanticValue,messagePresent:boolean} |
@@ -107,7 +108,7 @@ import {testJavaScriptArrayLength} from './javascript-array-objects.js';
 /** @typedef {{$:'callMachine',heap:JavaScriptOrdinaryHeap,frames:JavaScriptCallFrame[]}} JavaScriptCallMachine */
 /** @typedef {{$:'machineContinue',machine:JavaScriptCallMachine} |
  * {$:'machineNeedObjectPrototype',machine:JavaScriptCallMachine,input:JavaScriptSemanticValue,realm:bigint} |
- * {$:'machineAllocateSymbol',machine:JavaScriptCallMachine,description:JavaScriptSemanticValue} |
+ * {$:'machineAllocateSymbol',machine:JavaScriptCallMachine,description:JavaScriptSemanticValue,registryKey?:JavaScriptSemanticValue} |
  * {$:'machineNeedSymbolDescription',machine:JavaScriptCallMachine,symbol:JavaScriptSemanticValue} |
  * {$:'machineNeedFunctionNameSymbolDescription',machine:JavaScriptCallMachine,object:JavaScriptSemanticValue,key:JavaScriptSemanticValue,prefix:string} |
  * {$:'machineCompleted',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
@@ -252,6 +253,7 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
         case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String','WeakMap','WeakSet'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
         case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
+        case 'symbolRegistry':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!['for','keyFor'].includes(instruction.operation))return 'Symbol registry work retains its actual protected standard method owner';break;
         case 'collectionOperation':if(!testJavaScriptCollectionIntrinsicMode(fn.receiverMode)||readJavaScriptCollectionOperationKind(instruction.operation)==='')return 'collection operations retain their actual registered intrinsic frame';break;
         case 'primitiveMethod':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPrimitiveMethodOperation(instruction.operation)&&!testJavaScriptArrayIntrinsicOperation(instruction.operation))return 'primitive methods retain their actual registered intrinsic frame';break;
         case 'closureAllocate':{
@@ -526,7 +528,8 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       }
       case 'waitSymbolAllocation':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction?.$!=='symbolAllocate'||instruction.destination!==pending.destination||!['undefined','text','sourceText'].includes(pending.description.$)||readJavaScriptOrdinaryValueError(heap,pending.description)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description)||suspended)return 'Symbol allocation retains its actual converted optional description and selected instruction';break;
+        const registry=instruction?.$==='symbolRegistry'&&instruction.operation==='for';
+        if(instruction?.$!=='symbolAllocate'&&!registry||registry&&(pending.registryKey===undefined||!['text','sourceText'].includes(pending.description.$)||!testJavaScriptSemanticSameValue(pending.registryKey,pending.description))||!registry&&pending.registryKey!==undefined||instruction.destination!==pending.destination||!['undefined','text','sourceText'].includes(pending.description.$)||readJavaScriptOrdinaryValueError(heap,pending.description)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description)||suspended)return 'Symbol allocation retains its actual converted optional description and selected instruction';break;
       }
       case 'waitSymbolDescription':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -1134,9 +1137,9 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'waitConstruction':{const directory=program.constructorDirectory;return directory===undefined?{$:'machineInvalid',heap:machine.heap,reason:'construction requires actual constructor authority'}:acceptJavaScriptCallConstruction(program,machine,pending.destination,pending.realm,stepJavaScriptConstruction(program,machine.heap,directory,pending.state));}
     case 'waitObjectFromEntries':return pending.error!==undefined?{$:'machineAllocateError',machine,realm:pending.error.realm,errorClass:pending.error.errorClass,reason:pending.error.reason}:acceptJavaScriptCallObjectFromEntries(program,machine,pending.destination,pending.realm,stepJavaScriptObjectFromEntries(machine.heap,pending.state));
     case 'waitPrimitiveWrapper':return acceptJavaScriptCallPrimitiveWrapper(machine,pending.destination,beginJavaScriptPrimitiveWrapper(machine.heap,pending.state.input,pending.state.prototype));
-    case 'waitSymbolAllocation':return machine.heap.symbols.length>=16384?{$:'machineResourceLimit',machine,reason:'Symbol allocation exceeds the selected 16384 identity profile'}:{$:'machineAllocateSymbol',machine,description:pending.description};
-    case 'waitSymbolDescription':return {$:'machineNeedSymbolDescription',machine,symbol:pending.symbol};
-    case 'waitFunctionNameSymbol':return {$:'machineNeedFunctionNameSymbolDescription',machine,object:pending.object,key:pending.key,prefix:pending.prefix};
+    case 'waitSymbolAllocation':return machine.heap.symbols.length>=16384?{$:'machineResourceLimit',machine,reason:'Symbol allocation exceeds the selected 16384 identity profile'}:{$:'machineAllocateSymbol',machine,description:pending.description,...(pending.registryKey===undefined?{}:{registryKey:pending.registryKey})};
+    case 'waitSymbolDescription':{const fact=readJavaScriptSymbolRegistrationFact(machine.heap,pending.symbol.identity);if(fact?.registered&&fact.key!==undefined)return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,fact.key))};return {$:'machineNeedSymbolDescription',machine,symbol:pending.symbol};}
+    case 'waitFunctionNameSymbol':{const fact=readJavaScriptSymbolRegistrationFact(machine.heap,pending.key.identity);if(fact?.registered&&fact.key!==undefined)return resumeJavaScriptCallFunctionNameSymbolDescription(program,machine,fact.key);return {$:'machineNeedFunctionNameSymbolDescription',machine,object:pending.object,key:pending.key,prefix:pending.prefix};}
     case 'waitArrayConcatenation':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array concatenation step retains actual species authority'};return pending.construction!==undefined?acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,pending.construction)):acceptJavaScriptCallArrayConcatenation(program,machine,pending.destination,pending.realm,stepJavaScriptArrayConcatenation(machine.heap,directory,pending.state));}
     case 'waitArraySlice':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array slice step retains actual species authority'};return pending.construction!==undefined?acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,pending.construction)):acceptJavaScriptCallArraySlice(program,machine,pending.destination,pending.realm,stepJavaScriptArraySlice(machine.heap,directory,pending.state));}
     case 'waitArrayTransform':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array transform step retains its actual source directory'};return pending.construction!==undefined?acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,pending.construction)):acceptJavaScriptCallArrayTransform(program,machine,pending.destination,pending.realm,stepJavaScriptArrayTransform(machine.heap,directory,pending.state));}
@@ -1305,6 +1308,14 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'construct':{const directory=program.constructorDirectory;return directory===undefined?{$:'machineInvalid',heap:machine.heap,reason:'construction requires actual constructor authority'}:acceptJavaScriptCallConstruction(program,current,instruction.destination,fn.realm,beginJavaScriptConstruction(program,machine.heap,directory,registers[instruction.callee]??{$:'undefined'},registers[instruction.newTarget]??{$:'undefined'},instruction.arguments.map(index=>registers[index]??{$:'undefined'})));}
     case 'objectFromEntries':return acceptJavaScriptCallObjectFromEntries(program,current,instruction.destination,fn.realm,beginJavaScriptObjectFromEntries(machine.heap,registers[instruction.input]??{$:'undefined'},registers[instruction.prototype]??{$:'undefined'},registers[instruction.iteratorKey]??{$:'undefined'},program.exoticKey));
     case 'primitiveWrapper':return acceptJavaScriptCallPrimitiveWrapper(current,instruction.destination,beginJavaScriptPrimitiveWrapper(machine.heap,registers[instruction.input]??{$:'undefined'},registers[instruction.prototype]??{$:'undefined'}));
+    case 'symbolRegistry':{
+      const result=executeJavaScriptSymbolRegistryOperation(machine.heap,instruction.operation,registers[instruction.input]??{$:'undefined'});
+      if(result.$==='symbolRegistryValue')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(result.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,result.value))};
+      if(result.$==='symbolRegistryAllocate')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(result.heap,machine.frames,{...next,pending:{$:'waitSymbolAllocation',destination:instruction.destination,description:result.key,registryKey:result.key}})};
+      if(result.$==='symbolRegistryError')return requestJavaScriptCallError(machine,fn.realm,result.errorClass,result.reason);
+      if(result.$==='symbolRegistryResourceLimit')return {$:'machineResourceLimit',machine,reason:result.reason};
+      return {$:'machineInvalid',heap:machine.heap,reason:result.reason};
+    }
     case 'symbolAllocate':{
       const description=registers[instruction.input]??{$:'undefined'};if(!['undefined','text','sourceText'].includes(description.$))return {$:'machineInvalid',heap:machine.heap,reason:'Symbol allocation requires its actual completed optional text description'};
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitSymbolAllocation',destination:instruction.destination,description}})};
@@ -2083,6 +2094,7 @@ export function resumeJavaScriptCallSymbolAllocation(program,machine,identity){
  const frame=machine.frames[machine.frames.length-1],pending=frame?.pending;if(frame===undefined||pending?.$!=='waitSymbolAllocation')return {$:'machineInvalid',heap:machine.heap,reason:'Symbol allocation requires its actual suspended source instruction'};
  if(typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n||machine.heap.symbols.includes(identity)||machine.heap.objects.some(object=>object.identity===identity))return {$:'machineInvalid',heap:machine.heap,reason:'Symbol allocation requires an unused actual positive unsigned64 global identity'};
  if(machine.heap.symbols.length>=16384)return {$:'machineResourceLimit',machine,reason:'Symbol allocation exceeds the selected 16384 identity profile'};
+ if(pending.registryKey!==undefined){const registered=allocateJavaScriptRegisteredSymbol(machine.heap,identity,pending.registryKey);if(registered.$==='symbolRegistryValue')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(registered.heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,registered.value))};if(registered.$==='symbolRegistryResourceLimit')return {$:'machineResourceLimit',machine,reason:registered.reason};return {$:'machineInvalid',heap:machine.heap,reason:registered.reason};}
  const heap={...machine.heap,symbols:machine.heap.symbols.concat([identity]).toSorted((left,right)=>left<right?-1:left>right?1:0),symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:(machine.heap.symbolRegistrations??[]).concat([{$:'symbolRegistrationFact',identity,registered:false}]).toSorted((left,right)=>left.identity<right.identity?-1:left.identity>right.identity?1:0)};
  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,{$:'symbol',identity}))};
 }
