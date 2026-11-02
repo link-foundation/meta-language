@@ -57,6 +57,18 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Protected Number Call distinguishes no argument (+0) from explicit undefined
+(NaN), uses the shared explicit numeric conversion including BigInt, and retains
+number-hint object coercion. Number predicates inspect actual Number operands
+without conversion. Common Math unary/power methods use ordered implicit numeric
+conversion and existing IEEE754 kernels. Variadic min/max consume the immutable
+actual Call List, preserve empty identities and signed zeros, and convert every
+argument even after NaN. Original conversion throws and completed earlier effects
+survive. The actual Number intrinsic keeps its independent constructible fact;
+Call support does not pretend its boxed constructor implementation is available.
+Remaining constructor/boxed Number slots, numeric formatting/parsing and the wider
+Math catalog keep separate explicit implementations/requirements.
+
 Protected String method identities compose shared ToString/ToNumber, UTF16,
 Call and exception operations for toString/valueOf, trim variants, character/
 code-unit/code-point access, relative at, slice/substring/legacy substr, searches,

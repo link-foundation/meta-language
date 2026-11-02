@@ -16,7 +16,7 @@ import {replaceUtf16Text,planUtf16TextSubstitution,sliceUtf16Text,codePointUtf16
 
 /** @param {string} operation @returns {boolean} */
 export function testJavaScriptCallUnaryNumberOperation(operation){
- return ['negate number','truncate number','read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation);
+ return ['test NaN number','test finite number','negate number','truncate number','read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation);
 }
 /** Operations consume already checked primitive values. Unmodeled coercions,
  * wrappers and replacement intrinsics need their own source lowering.
@@ -54,6 +54,8 @@ export function executeJavaScriptCallNumericPrimitive(operation,values){
 }
 /** @param {string} operation @param {number} number @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallUnaryNumber(operation,number){
+ if(operation==='test NaN number')return {$:'primitiveValue',value:{$:'boolean',value:Number.isNaN(number)}};
+ if(operation==='test finite number')return {$:'primitiveValue',value:{$:'boolean',value:Number.isFinite(number)}};
  if(operation==='negate number')return {$:'primitiveValue',value:{$:'number',value:-number}};
  if(operation==='truncate number')return {$:'primitiveValue',value:{$:'number',value:Math.trunc(number)}};
  if(operation==='test integer number')return {$:'primitiveValue',value:{$:'boolean',value:Number.isInteger(number)}};

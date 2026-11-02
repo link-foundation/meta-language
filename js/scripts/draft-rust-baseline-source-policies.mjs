@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-numeric-intrinsic-call-source.js',moduleName:'javascript_numeric_intrinsic_call_source',model:'Actual Number conversion predicates and Math scalar argument bodies 1',programAsset:'javascript-numeric-intrinsic-call-source-program'},
  {sourcePath:'js/src/translation/javascript-string-method-rules.js',moduleName:'javascript_string_method_rules',model:'Actual UTF16 String indexed slicing boundary and inclusion rules 1',programAsset:'javascript-string-method-rules-program'},
  {sourcePath:'js/src/translation/javascript-string-method-call-source.js',moduleName:'javascript_string_method_call_source',model:'Actual standard String method coercion and protected bytecode bodies 1',programAsset:'javascript-string-method-call-source-program'},
  {sourcePath:'js/src/translation/javascript-function-invocation-call-source.js',moduleName:'javascript_function_invocation_call_source',model:'Actual Function call apply and Reflect apply abstract argument Lists 1',programAsset:'javascript-function-invocation-call-source-program'},
@@ -206,6 +207,7 @@ const consumers=[
  'js/tests/translation-javascript-lexical-initialization.test.js',
  'js/tests/translation-javascript-variable-hoisting.test.js',
  'js/tests/translation-javascript-string-methods.test.js',
+ 'js/tests/translation-javascript-numeric-intrinsics.test.js',
  'js/src/translation/javascript-property-definition.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',

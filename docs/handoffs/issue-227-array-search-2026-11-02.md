@@ -1399,3 +1399,34 @@ Nullish errors and other primitive getters retain their previous boundary.
 Three more originals and two deferred controls cover prototype replacement,
 getter this, one-time key conversion and own-key behavior. The native oracles
 restore all modified prototype properties through finally. No oracle executed.
+
+### Number Call, noncoercive predicates and shared Math bodies
+
+The protected numeric catalog now drafts Number Call, Number.isNaN/isFinite/
+isInteger/isSafeInteger and Math.abs/floor/ceil/trunc/round/sign/sqrt/pow/min/max.
+Bodies reuse actual argument access, shared explicit/implicit scalar conversion,
+existing numeric/IEEE754 primitives and Call continuations. Number distinguishes
+no input from explicit undefined and admits explicit BigInt conversion. Predicates
+check the actual Number type and never invoke valueOf on another type. Power
+converts operands left to right. Extrema loop over every actual argument, retain
+NaN while still converting later operands, preserve signed zeros and return the
+correct empty identity. No source argument Array or native represented Number/
+Math function is a fallback.
+
+Number/Math namespaces and every operation owner are authenticated privately.
+Primitive-owner metadata separately records Number's actual constructibility;
+the directory requires that fact and the species authority preserves it instead
+of falsely classifying Number as nonconstructible merely because its portable
+body currently implements Call. Boxed Number construction remains a distinct
+implementation request. Legacy standard owners remain nonconstructible. The
+complete protected 128-owner profile carries this larger catalog with its bounds
+unchanged; source shadowing still resolves actual lexical binding edges first.
+
+Thirteen original sources and four deferred body/rule controls are drafted and
+registered for future automatic policy authoring. They cover omitted/undefined,
+BigInt/Symbol, coercion order, noncoercive predicates, finite/safe boundaries,
+signed zeros, empty extrema, post-NaN effects/throws and argument spread. Existing
+Node 22/24 original-source bounds remain in force. No tests, parser/generator
+execution, gates, compilation or CI feedback inspection ran. Wider numeric
+formatting/parsing, boxed Number slots/constructor behavior and remaining Math
+methods remain independently required; no execution evidence is claimed.

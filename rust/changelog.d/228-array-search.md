@@ -192,3 +192,7 @@ Array allocation, recursive binding targets and Function length boundaries.
 - Draft twenty-one protected String method bodies using shared coercion/UTF16
   kernels, ordered IsRegExp checks, padding early return and actual argument Lists.
   Preserve boxed String/RegExp input slot metadata and legacy catalog profiles.
+
+- Draft Number Call/noncoercive predicates and common Math bodies using shared
+  numeric conversion/IEEE754 primitives and actual variadic argument Lists.
+  Preserve Number constructor classification separately from Call support.
