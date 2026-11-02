@@ -5,11 +5,31 @@ import {executeRustStandardCollectionValuePacket} from './rust-standard-collecti
 export {executeRustStandardCollectionValuePacket} from './rust-standard-collection-value-packet.js';
 import {readRustStandardCollectionCallOriginError,readRustStandardCollectionSourceOriginError,resolveRustStandardCollectionOwner,testRustStandardCollectionMutation} from './rust-standard-collection-rules.js';
 import {readRustExclusiveSourceLoanContextError,readRustExclusiveSourceLoanStateError,accessRustExclusiveSourcePlace,executeRustExclusiveSourceCollectionOperation} from './rust-exclusive-source-loans.js';
-import {readSourceLibraryDeclarationOwnership} from './source-library-closure.js';
+import {readSourceLibraryDeclarationOwnership,readSuppliedSourceLibraryClosure} from './source-library-closure.js';
+import {parseJavaScript} from './javascript.js';
+import {checkProgram} from './check.js';
 
 // Source contexts and declarations are compiler metadata, not represented Map
 // values. Their structural comparisons never implement collection key equality.
 function sameRustStandardCollectionSourceTree(left,right){return JSON.stringify(left)===JSON.stringify(right);}
+// Complete graph correspondence includes declaration Maps, BigInts, signed
+// zero, own fields and shared-node identity. JSON serialization loses these.
+export function testRustStandardCollectionProjectedGraphEquality(left,right){
+ const forward=new WeakMap(),backward=new WeakMap();let work=0;
+ function same(actual,expected){
+  if(++work>1000000)return false;
+  if(actual===null||expected===null||typeof actual!=='object'||typeof expected!=='object')return Object.is(actual,expected);
+  if(forward.has(actual)||backward.has(expected))return forward.get(actual)===expected&&backward.get(expected)===actual;
+  forward.set(actual,expected);backward.set(expected,actual);
+  if(Array.isArray(actual)!==Array.isArray(expected)||Object.getPrototypeOf(actual)!==Object.getPrototypeOf(expected))return false;
+  const keys=Reflect.ownKeys(actual),other=Reflect.ownKeys(expected);if(keys.length!==other.length||keys.some(key=>!other.includes(key)))return false;
+  for(const key of keys){const first=Object.getOwnPropertyDescriptor(actual,key),second=Object.getOwnPropertyDescriptor(expected,key);if(!Object.hasOwn(first,'value')||!Object.hasOwn(second,'value')||first.enumerable!==second.enumerable||first.configurable!==second.configurable||first.writable!==second.writable||!same(first.value,second.value))return false;}
+  if(actual instanceof Map||expected instanceof Map){if(!(actual instanceof Map)||!(expected instanceof Map)||actual.size!==expected.size)return false;const rows=[...expected];let index=0;for(const [key,value] of actual){const row=rows[index++];if(!same(key,row[0])||!same(value,row[1]))return false;}return true;}
+  if(actual instanceof Set||expected instanceof Set){if(!(actual instanceof Set)||!(expected instanceof Set)||actual.size!==expected.size)return false;return [...actual].every((value,index)=>same(value,[...expected][index]));}
+  return true;
+ }
+ return same(left,right);
+}
 function registeredRustStandardCollectionSource(context,binderIdentity,collection){
  const invalid=readRustExclusiveSourceLoanContextError(context);if(invalid)return invalid;
  const binder=context.binders.find(row=>row.identity===binderIdentity),position=binder?.position,entry=(context.collectionTypes??[]).find(row=>row.typeIdentity===position?.collectionTypeIdentity);
@@ -70,8 +90,18 @@ function rustStandardCollectionSourceCalls(body){const calls=[],pending=[body],s
  * invalid:{checkedName,sourceName},resource:{checkedName,sourceName}}}.
  */
 export function readRustStandardCollectionProjectedLibraryError(library){
- if(!library?.closure||!library.program?.declarations||!library.sourceProgram?.items||!Array.isArray(library.functions))return 'collection source linkage requires complete actual projected library and source declaration graphs';
- let owners;try{owners=readSourceLibraryDeclarationOwnership(library.closure,library.program);}catch(error){return error.message;}
+ if(!library?.closure||!library.program?.declarations||!library.sourceProgram?.items||!Array.isArray(library.functions)||typeof library.entryPath!=='string'||!library.entryPath.endsWith('/rust-standard-collection-value-packet.js'))return 'collection source linkage requires complete actual projected library and source declaration graphs';
+ let owners;
+ try{
+  const actualClosure=readSuppliedSourceLibraryClosure(library.entryPath,library.closure.inputs.map(row=>({path:row.path,source:row.source})),{aliases:true}),surface=parseJavaScript(actualClosure.source),checked=checkProgram(surface),projected=checkProgram(library.sourceProgram);
+  if(actualClosure.source!==library.closure.source||actualClosure.sourceSha256!==library.closure.sourceSha256||actualClosure.bytes!==library.closure.bytes)return 'collection closure must match its actual recomposed complete source inputs';
+  if(!testRustStandardCollectionProjectedGraphEquality(checked,library.program)||!testRustStandardCollectionProjectedGraphEquality(projected,checked))return 'collection source and library bodies must recheck to the same complete actual checked graph; unsupported projection remapping refuses';
+  // An identity projection still checks actual bodies; it is not permission to
+  // attach arbitrary source declarations to a genuine checked kernel graph.
+  for(const row of library.functions)if(!sameRustStandardCollectionSourceTree(row.sourcePath,['crate',...row.checkedName.split('.')]))return 'collection source function remapping requires a separate exact checked projection interpretation';
+  if(!sameRustStandardCollectionSourceTree(library.packetType?.sourcePath,['crate',...(library.packetType?.checkedName??'').split('.')])||Object.values(library.packetType?.constructors??{}).some(row=>row.checkedName!==row.sourceName))return 'collection source datatype or constructor remapping requires its separate exact checked projection interpretation';
+  owners=readSourceLibraryDeclarationOwnership(actualClosure,checked);
+ }catch(error){return 'collection source graph regeneration refused: '+String(error?.message??error);}
  const source=rustStandardCollectionSourceDeclarations(library.sourceProgram),binding=library.functions.find(row=>row.role==='packet'),entry=binding?library.program.declarations.get(binding.checkedName):null,owner=binding?owners.find(row=>row.name===binding.checkedName):null,projected=binding?source.find(row=>sameRustStandardCollectionSourceTree(row.path,binding.sourcePath))?.declaration:null;
  if(entry?.k!=='fn'||!entry.body||entry.params.length!==5||!projected?.body||projected.k!=='fn'||projected.params.length!==5||!projected.ret||(owner?.sourceName??owner?.name)!=='executeRustStandardCollectionValuePacket'||!owner?.path?.endsWith('/rust-standard-collection-value-packet.js'))return 'collection packet binding requires its actual complete automatically projected source callable body and original module owner';
  const kernel=library.functions.find(row=>row.role==='kernel'),actualKernel=kernel?library.program.declarations.get(kernel.checkedName):null,kernelOwner=kernel?owners.find(row=>row.name===kernel.checkedName):null;

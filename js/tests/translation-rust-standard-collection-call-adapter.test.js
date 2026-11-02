@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRustStandardCollectionState} from '../src/translation/rust-standard-collection-state.js';
-import {executeRustStandardCollectionValuePacket,resumeRustStandardCollectionSourcePacket,readRustStandardCollectionProjectedLibraryError,lowerRustStandardCollectionProjectedSourcePacket} from '../src/translation/rust-standard-collection-call-adapter.js';
+import {executeRustStandardCollectionValuePacket,resumeRustStandardCollectionSourcePacket,readRustStandardCollectionProjectedLibraryError,lowerRustStandardCollectionProjectedSourcePacket,testRustStandardCollectionProjectedGraphEquality} from '../src/translation/rust-standard-collection-call-adapter.js';
 const integer=value=>({$:'rustCollectionInteger',value:BigInt(value)}),owner=domain=>({kind:'primitive',path:[domain],arguments:[]});
 const origin={$:'rustStandardCollectionOrigin',ordinary:true,proven:true,shadowed:false,typeIdentity:'actual std HashMap u8 i32 concrete source type',resolvedOwner:'std::collections::HashMap',sourceOwner:{kind:'library',path:['std','collections','HashMap'],arguments:[owner('u8'),owner('i32')]},arguments:['u8','i32'].map(domain=>({proven:true,wrappers:[],sourceOwner:owner(domain)})),sourceVersionMinor:90,pointerWidth:64,customHasher:false,customEquality:false};
 function call(root,method,domains=[],changes={}){return {$:'rustStandardCollectionCallOrigin',owner:'std::collections::HashMap',typeIdentity:origin.typeIdentity,receiverRoot:root,method,dispatchOwner:method==='clone'?'core::clone::Clone':'std::collections::HashMap',proven:true,shadowed:false,mutable:true,available:true,overlappingLoan:false,arguments:domains.map(domain=>({domain,proven:true,available:true,borrowed:method!=='insert',ownedTransfer:false,sourceOwner:owner(domain)})),...changes};}
@@ -27,4 +27,12 @@ test('invalid ownership resource refusal and mismatched roots never run the cont
 });
 test('projected source seam refuses body promises and metadata-only graph descriptors',()=>{
  for(const library of [undefined,{}, {functions:[{role:'packet',checkedName:'executeRustStandardCollectionValuePacket',bodyAvailable:true}]},{program:{declarations:new Map()},sourceProgram:{items:[]},functions:[]}])assert.notEqual(readRustStandardCollectionProjectedLibraryError(library),'');const result=lowerRustStandardCollectionProjectedSourcePacket({}, {}, {}, [], [], {}, ()=>{throw new Error('not reached');});assert.equal(result.$,'rustCollectionSourceLoweringInvalid');
+});
+test('complete graph correspondence checks real bodies Map contents exact scalars and aliases',()=>{
+ const body={k:'lit',value:9007199254740993n,type:{kind:'int'}},declaration={k:'fn',name:'actual',params:[],ret:{kind:'int'},body},actual={items:[declaration],declarations:new Map([['actual',declaration]])},otherBody={k:'lit',value:9007199254740993n,type:{kind:'int'}},otherDeclaration={k:'fn',name:'actual',params:[],ret:{kind:'int'},body:otherBody},expected={items:[otherDeclaration],declarations:new Map([['actual',otherDeclaration]])};
+ assert.equal(testRustStandardCollectionProjectedGraphEquality(actual,expected),true);
+ const changed={...otherDeclaration,body:{...otherBody,value:9007199254740992n}};assert.equal(testRustStandardCollectionProjectedGraphEquality(actual,{items:[changed],declarations:new Map([['actual',changed]])}),false);
+ assert.equal(testRustStandardCollectionProjectedGraphEquality(actual,{items:[otherDeclaration],declarations:new Map([['actual',{...otherDeclaration}]])}),false);
+ assert.equal(testRustStandardCollectionProjectedGraphEquality({value:-0},{value:0}),false);assert.equal(testRustStandardCollectionProjectedGraphEquality({value:NaN},{value:NaN}),true);
+ const map=new Map([['key',1]]);map.extra='unrepresented';assert.equal(testRustStandardCollectionProjectedGraphEquality(map,new Map([['key',1]])),false);
 });

@@ -75,11 +75,22 @@ results. Normal mutation packets publish the new selected caller root before
 the supplied continuation. Constructors return a fresh binding initializer;
 they do not write back an existing root.
 
-The projected-library seam requires complete actual checked library declarations
-and their source-module ownership, complete emitted source callable/datatype
-bodies, matching transition constructors and fields, and parser-registered
-function/type/constructor interfaces. The real packet callable must invoke the
-real projected kernel. Body names or availability flags alone refuse. The
+The projected-library seam first independently recomposes all actual supplied
+input modules using `readSuppliedSourceLibraryClosure` with aliases enabled,
+reparses the complete closure using `parseJavaScript` and runs `checkProgram`.
+It also runs `checkProgram` on the supplied sourceProgram and compares both
+complete checked graphs with the supplied library program, preserving actual
+Map/Set contents, exact scalars, own descriptors and shared-node correspondence.
+Different bodies cannot hide behind genuine checked names or ownership rows.
+The initial seam supports only identity symbol/path/constructor mappings;
+target emitter renaming needs a separate exact projection interpretation and
+currently refuses. It does not infer body equivalence across renamed graphs.
+
+It additionally requires complete actual checked library declarations and fresh
+source-module ownership, complete source callable/datatype bodies, matching
+transition constructors and fields, and parser-registered function/type/
+constructor interfaces. The real packet callable must invoke the real projected
+kernel. Body names or availability flags alone refuse. The
 source lowerer checks the actual held receiver origin, reserves emitted names,
 keeps global qualifications and emits ordinary call/match/tuple/let terms.
 Handlers decode the concrete source result and preserve distinct Invalid and
@@ -87,11 +98,12 @@ Resource continuations. The resulting expression is intended for the existing
 owned-record state/completion continuation, including branch/return/residual
 publication. No source text is carried as an executable fallback.
 
-Required library linkage data is `closure`, checked `program`, complete emitted
+Required library linkage data is `entryPath`, `closure`, checked `program`, complete
 `sourceProgram`, `functions: [{role, checkedName, sourcePath}]` with packet/kernel
 roles, and `packetType: {checkedName, sourcePath, constructors}`. Each constructor
-role normal/invalid/resource maps actual `{checkedName, sourceName}` so target
-case conversion never becomes a guessed name. The request retains actual
+role normal/invalid/resource maps actual `{checkedName, sourceName}`; the current
+identity projection requires equality and refuses unsupported target case
+conversion rather than guessing it. The request retains actual
 origin, keyDomain, valueDomain, pointerWidth, root, path, method and call witness.
 Five already evaluated names supply state/method/arguments/call/projection.
 Roots retain the actual root identity, origin and current source value.
@@ -115,7 +127,8 @@ The precise remaining source work is:
    arguments and retain actual complete source origins through headers,
    locals, calls and returns. Register its real projected carrier declarations.
 3. Automatically project the supplied JavaScript kernels/value-packet module
-   and install their real bodies/types. Improve translation for unsupported
+   and install their real bodies/types, with a complete checked correspondence
+   interpretation for any target symbol remapping. Improve translation for unsupported
    syntax rather than supplying native handwritten collection semantics.
 4. Admit actual mutable collection roots into the state slot/effect inventory.
    Existing record field writes reconstruct nominal fields; whole-collection
