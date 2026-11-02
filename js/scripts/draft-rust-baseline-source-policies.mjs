@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-array-call-source.js',moduleName:'javascript_array_call_source',model:'Actual Array Call shared Construct argument List 1',programAsset:'javascript-array-call-source-program'},
  {sourcePath:'js/src/translation/javascript-construction.js',moduleName:'javascript_construction',model:'Actual target and newTarget base construction continuations 1',programAsset:'javascript-construction-program'},
  {sourcePath:'js/src/translation/javascript-array-creation.js',moduleName:'javascript_array_creation',model:'Actual Array of from iterable array like creation continuations 1',programAsset:'javascript-array-creation-program'},
  {sourcePath:'js/src/translation/javascript-reflect-construction-call-source.js',moduleName:'javascript_reflect_construction_call_source',model:'Actual Reflect construct constructor checks and array like arguments 1',programAsset:'javascript-reflect-construction-call-source-program'},
@@ -228,6 +229,7 @@ const consumers=[
  'js/tests/translation-javascript-string-case-profile.test.js',
  'js/tests/translation-javascript-collection-for-each.test.js',
  'js/tests/translation-javascript-reflect-construction-call-source.test.js',
+ 'js/tests/translation-javascript-array-call-source.test.js',
  'js/tests/translation-javascript-construction.test.js',
  'js/tests/translation-javascript-array-creation.test.js',
  'js/tests/translation-javascript-object-from-entries.test.js',

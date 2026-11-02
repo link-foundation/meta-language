@@ -78,6 +78,10 @@ caches the iterator method before construction and acquires the iterator after
 construction. Array-like ToObject/length conversion precedes construction. Mapper
 and index-definition failures close a live iterator while retaining the original
 throw; iterator-step failures and final length Set after exhaustion do not close.
+Array Call forwards its full actual argument List to the same Array Construct
+kernel with the active intrinsic Array owner as both target and newTarget,
+independently of its supplied thisArgument. It never duplicates allocation or
+length semantics in a native fallback.
 All continuations retain original inputs, selected callbacks, allocation requests
 and realm Error identity, including strict final length Set and resource retries.
 

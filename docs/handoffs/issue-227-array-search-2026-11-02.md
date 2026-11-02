@@ -1769,3 +1769,19 @@ source syntax remains an explicit capture refusal. After the complete source
 draft, execute authoring and all declared original/kernel/native controls, repair
 translation gaps through the shared translator, then consume CI feedback. Do not
 handwrite native replacement semantics or treat fixture declarations as passes.
+
+
+### Array Call continuation
+
+`javascript-array-call-source.js` now drafts actual Array [[Call]] by building an
+ordered private argument List and invoking shared Construct with the protected
+Array owner as target/newTarget. Supplied thisArgument is ignored. The protected
+catalog admits the actual Array callable separately from Array static methods;
+its constructor fact agrees with the existing intrinsic Array authority, avoiding
+conflicting duplicate classification. No native Array body executes represented
+semantics. Five retained literal originals cover zero/single/multiple arguments,
+holes versus own undefined, invalid numeric lengths, object no-coercion, aliases,
+call/apply and iterable spread. Two deferred bytecode/catalog controls accompany
+the library registration. Construction originals now total forty-five; generated
+Links/native replay inherits the full group automatically. No execution or
+validation ran. This source addition follows pushed checkpoint `7e694933`.
