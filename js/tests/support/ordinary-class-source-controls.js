@@ -13,13 +13,13 @@ import {encodeSourceModuleCompilation} from './source-module-compilation.js';
 import * as codecs from '../../../experiments/javascript-properties/error-class-source-codecs.mjs';
 import * as collectionCodecs from '../../../experiments/javascript-properties/collection-call-source-codecs.mjs';
 
-export function readOrdinaryClassSourceOriginalDiagnostic(definition,{prepare=prepareJavaScriptOrdinaryClassModule,originalCompletion,observeResult}={}){
+export function readOrdinaryClassSourceOriginalDiagnostic(definition,{prepare=prepareJavaScriptOrdinaryClassModule,originalCompletion,observeResult,prepareArguments=values=>values}={}){
  const diagnostic=createControlDiagnostics(),attempt=diagnostic.attempt;
  const concrete=attempt('original full source default CST/text/binary/AST projection',()=>readCollectionCopyConcreteControl(definition.source));
  const capture=attempt('complete original class/member/lexical source ownership',()=>captureJavaScriptOrdinaryClassModule(definition.source,{identifier:'literal-ordinary-class.js',entries:definition.entries}));
  let originalResult,originalError,originalArgumentState;const transports=[];
  attempt('original engine source completion',()=>{
-  const actual=product(capture,'complete original class/member/lexical source ownership'),args=structuredClone(definition.arguments);
+  const actual=product(capture,'complete original class/member/lexical source ownership'),args=prepareArguments(structuredClone(definition.arguments));
   if(originalCompletion){if(originalCompletion.unavailable)throw new TypeError('required original ESM completion unavailable');originalResult=originalCompletion.result;originalError=originalCompletion.error;originalArgumentState=originalCompletion.argumentState;}
   else{const source=actual.origins.filter(origin=>origin.classBinding===undefined||origin.constructor===true).map(origin=>actual.source.slice(origin.start,origin.end)).join('\n'),entry=compileFunction('"use strict";'+source+'\nreturn '+definition.entry+';',[])();try{originalResult=entry(...args);}catch(error){originalError=error;}}
   if(originalError===undefined&&observeResult!==undefined)originalResult=observeResult(originalResult);
@@ -36,7 +36,7 @@ export function readOrdinaryClassSourceOriginalDiagnostic(definition,{prepare=pr
   const sourceCompilation=attempt(label+'/actual source compiler roots',()=>encodeSourceModuleCompilation(product(instance,label+'/actual class/prototype/standard-collection publication').embedding.module));
   const collectionCompilation=attempt(label+'/actual standard operation compiler roots',()=>{const value=product(instance,label+'/actual class/prototype/standard-collection publication').collection;return {directory:collectionCodecs.encodeJavaScriptCollectionCallableDirectory(value.directory),expected:collectionCodecs.encodeJavaScriptCollectionCallCompilation({$:'collectionCallCompilation',program:value.program,error:''})};});
   const combinedProgram=attempt(label+'/actual complete joined portable program',()=>codecs.encodeJavaScriptCallProgram(product(instance,label+'/actual class/prototype/standard-collection publication').embedding.module.program));
-  const arguments_=attempt(label+'/exact original literal argument values',()=>{const value=product(instance,label+'/actual class/prototype/standard-collection publication');return structuredClone(definition.arguments).map(value.embedding.encode);});
+  const arguments_=attempt(label+'/exact original literal argument values',()=>{const value=product(instance,label+'/actual class/prototype/standard-collection publication');return prepareArguments(structuredClone(definition.arguments)).map(value.embedding.encode);});
   const trace=attempt(label+'/actual portable source run and every external response',()=>{const value=product(instance,label+'/actual class/prototype/standard-collection publication');return readSourceMachineTrace(value.embedding,value.begin(definition.entry,product(arguments_,label+'/exact original literal argument values')),{steps:65536});});
   if(definition.expectedBatchResumption)attempt(label+'/declared bounded pure batch resumption',()=>assert.equal(product(trace,label+'/actual portable source run and every external response').events.some(event=>event.operation==='resumeBatch'),true));
   let result,error,argumentState;

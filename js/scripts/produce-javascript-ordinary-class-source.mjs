@@ -1,9 +1,11 @@
 // Future bounded diagnostic producer. Every original/refusal and transport
 // remains represented even when another generated/native product is missing.
+import assert from 'node:assert/strict';
+import {selectVersionedAssertion} from './assertion-version-ranges.mjs';
 import {once} from 'node:events';
-import {javascriptWeakCollectionOriginals as weakCollections} from '../tests/fixtures/javascript-weak-collection-source.mjs';
-import {javascriptSymbolRegistryOriginals as symbolRegistry} from '../tests/fixtures/javascript-symbol-registry-source.mjs';
-import {javascriptWeakConstructionOriginals as weakConstruction} from '../tests/fixtures/javascript-weak-construction-source.mjs';
+import {javascriptWeakCollectionOriginals as weakCollections,javascriptWeakCollectionAssertionPolicy as weakCollectionPolicy} from '../tests/fixtures/javascript-weak-collection-source.mjs';
+import {javascriptSymbolRegistryOriginals as symbolRegistry,javascriptSymbolRegistryAssertionPolicy as symbolRegistryPolicy} from '../tests/fixtures/javascript-symbol-registry-source.mjs';
+import {javascriptWeakConstructionOriginals as weakConstruction,javascriptWeakConstructionAssertionPolicy as weakConstructionPolicy} from '../tests/fixtures/javascript-weak-construction-source.mjs';
 import {javascriptArraySortOriginals as arraySort} from '../tests/fixtures/javascript-array-sort-source.mjs';
 import {javascriptArrayCopyOriginals as arrayCopy} from '../tests/fixtures/javascript-array-copy-source.mjs';
 import {javascriptArrayConcatenationOriginals as arrayConcatenation} from '../tests/fixtures/javascript-array-concatenation-source.mjs';
@@ -35,7 +37,7 @@ await write(JSON.stringify({model,nodeVersion:process.versions.node,unicodeVersi
 for(const group of [{key:'arraySort',rows:arraySort,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayCopy',rows:arrayCopy,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayConcatenation',rows:arrayConcatenation,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arraySlice',rows:arraySlice,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'objectAssignmentCoercion',rows:objectAssignmentCoercion,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayMutationBoxing',rows:arrayMutationBoxing,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayReadBoxing',rows:arrayReadBoxing,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayJoin',rows:arrayJoin,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'construction',rows:construction,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayCreation',rows:arrayCreation,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'cases',rows:cases,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'wrapperMaterialization',rows:wrapperMaterialization,read:definition=>readOrdinaryClassSourceOriginalDiagnostic(definition,{observeResult:observeWrapperMaterialization})},{key:'primitiveWrappers',rows:primitiveWrappers,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'objectFromEntries',rows:objectFromEntries,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'collectionForEach',rows:collectionForEach,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'stringCaseProfiles',rows:stringCaseProfiles,read:readStringCaseProfileDiagnostic},{key:'closures',rows:closures,read:readOrdinaryClassClosureOriginalDiagnostic},{key:'workloads',rows:workloads,read:readOrdinaryClassClosureOriginalDiagnostic},{key:'refusals',rows:refusals,read:readOrdinaryClassSourceRefusalDiagnostic}]){
  if(selectedGroup!==undefined&&group.key!==selectedGroup)continue;selectedCount+=1;await emitSourceGroup(group);
 }
-for(const group of [{key:'weakCollections',rows:weakCollections,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'symbolRegistry',rows:symbolRegistry,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'weakConstruction',rows:weakConstruction,read:readOrdinaryClassSourceOriginalDiagnostic}]){if(selectedGroup!==undefined&&group.key!==selectedGroup)continue;selectedCount+=1;await emitSourceGroup(group);}
+for(const group of [{key:'weakCollections',rows:weakCollections,read:versionedOriginal(weakCollectionPolicy)},{key:'symbolRegistry',rows:symbolRegistry,read:versionedOriginal(symbolRegistryPolicy,{prepareArguments:registeredSymbolArguments})},{key:'weakConstruction',rows:weakConstruction,read:versionedOriginal(weakConstructionPolicy)}]){if(selectedGroup!==undefined&&group.key!==selectedGroup)continue;selectedCount+=1;await emitSourceGroup(group);}
 if(selectedGroup!==undefined&&selectedCount!==1)throw new TypeError('one actual source group must match --group');
 await write(',"diagnostics":'+JSON.stringify({assertions:diagnostic.assertions,failures:diagnostic.failures})+'}\n');
 if(failures){process.stderr.write(model+': '+failures+' assertions failed; all original definitions retained\n');process.exitCode=1;}
@@ -50,3 +52,9 @@ async function emitSourceGroup(group){
  }
  await write(']');
 }
+
+// Literal witness descriptors are converted only at the native input boundary,
+// then the embedding records the actual host identity. The represented registry
+// never uses this function to implement allocation or lookup.
+function registeredSymbolArguments(values){return values.map(value=>{if(value?.$!=='registeredSymbol')return value;assert.deepEqual(Object.keys(value).sort(),['$','key']);assert.equal(typeof value.key,'string');return Symbol.for(value.key);});}
+function versionedOriginal(policy,options){return definition=>{assert.equal(selectVersionedAssertion(policy,process.versions.node).expected,true);return readOrdinaryClassSourceOriginalDiagnostic(definition,options);};}

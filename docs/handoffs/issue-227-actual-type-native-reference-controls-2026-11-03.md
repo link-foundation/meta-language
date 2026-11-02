@@ -54,3 +54,8 @@ per-row assertions while applying its output bound to one group at a time. The
 new WeakMap/WeakSet, Symbol registry and generic weak construction rows use the
 same shared compiler/machine replay. No caller is permitted to substitute native
 collection contents or invent a successful product when a control is unavailable.
+
+New weak/registry groups select their explicit Node assertion ranges before
+source execution. Symbol registry input descriptors become actual native Symbol
+witnesses only at the original/embedding input boundary, retaining exact source
+definitions. Represented allocation and lookup do not call the host registry.
