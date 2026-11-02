@@ -1,0 +1,49 @@
+// Deferred controls. No source execution, native compilation or generation here.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as loans from '../src/translation/rust-exclusive-source-loans.js';
+import * as rules from '../src/translation/rust-exclusive-source-loan-rules.js';
+const scalar={type:{kind:'fixed',bits:8,signed:false},owner:{kind:'primitive',path:['u8'],arguments:[]},wrappers:[]};
+const unit={type:{kind:'unit'},owner:{kind:'unit',path:[],arguments:[]},wrappers:[]};
+const pair={type:{kind:'named',path:['crate','Pair']},owner:{kind:'declaration',path:['Pair'],arguments:[]},wrappers:[]};
+const vector={type:{kind:'array',element:scalar.type},owner:{kind:'library',path:['std','vec','Vec'],arguments:[scalar.owner]},wrappers:[]};
+const name=value=>({k:'name',path:[value]});
+function context(){return {$:'rustExclusiveSourceContext',profile:rules.rustExclusiveSourceLoanProfile,major:1,minor:90,scopes:[{identity:1,parent:0},{identity:2,parent:1}],destructors:[],records:[{owner:'Pair',constructor:['crate','Pair','Pair'],fields:[{name:'first',position:scalar},{name:'second',position:scalar}]}],binders:[{identity:1,scope:1,name:'pair',mutable:true,mode:'owned',position:pair},{identity:2,scope:1,name:'items',mutable:true,mode:'owned',position:vector},{identity:3,scope:1,name:'shared',mutable:false,mode:'shared',position:pair},{identity:4,scope:2,name:'inner',mutable:true,mode:'owned',position:pair}],callables:[{identity:'crate::change',path:['crate','change'],parameters:[{mode:'exclusive',position:pair},{mode:'value',position:scalar}],result:scalar},{identity:'crate::split',path:['crate','split'],parameters:[{mode:'exclusive',position:scalar},{mode:'exclusive',position:scalar}],result:unit},{identity:'crate::push',path:['crate','push'],parameters:[{mode:'exclusive',position:vector},{mode:'value',position:scalar}],result:unit}]};}
+function state(c){const result=loans.beginRustExclusiveSourceLoans(c);assert.equal(result.$,'rustExclusiveSourceContinue',result.reason);return result.state;}
+function next(result){assert.equal(result.$,'rustExclusiveSourceContinue',result.reason);return result.state;}
+test('exclusive source profile retains explicit versions and complete scalar/nominal positions',()=>{
+ const c=context();assert.equal(loans.readRustExclusiveSourceLoanContextError(c),'');for(const minor of [89,100,NaN])assert.notEqual(loans.readRustExclusiveSourceLoanContextError({...c,minor}),'');
+ assert.notEqual(loans.readRustExclusiveSourceLoanContextError({...c,destructors:['Pair']}),'');
+ assert.notEqual(loans.readRustExclusiveSourceLoanContextError({...c,records:[]}),'');
+ const forged={...scalar,type:{kind:'fixed',bits:64,signed:false}};assert.notEqual(loans.readRustExclusiveSourceLoanContextError({...c,binders:[{...c.binders[0],position:forged}]}),'');
+ assert.notEqual(loans.readRustExclusiveSourceLoanContextError({...c,binders:[{...c.binders[0],position:{...pair,wrappers:['reference']}}]}),'');
+});
+test('exclusive whole-place borrow blocks owner access while disjoint field borrows coexist',()=>{
+ const c=context(),initial=state(c),borrowed=next(loans.borrowRustExclusiveSourcePlace(c,initial,1,[],'exclusive'));assert.equal(loans.accessRustExclusiveSourcePlace(c,borrowed,1,[],'read').$,'rustExclusiveSourceInvalid');assert.equal(loans.accessRustExclusiveSourcePlace(c,borrowed,1,[0],'write',1).$,'rustExclusiveSourceContinue');assert.equal(loans.borrowRustExclusiveSourcePlace(c,borrowed,1,[0],'shared').$,'rustExclusiveSourceInvalid');
+ const first=next(loans.borrowRustExclusiveSourcePlace(c,initial,1,[0],'exclusive')),second=next(loans.borrowRustExclusiveSourcePlace(c,first,1,[1],'exclusive'));assert.equal(second.loans.length,2);assert.equal(loans.accessRustExclusiveSourcePlace(c,first,1,[1],'read').$,'rustExclusiveSourceContinue');assert.equal(initial.loans.length,0);
+});
+test('reborrowing suspends its exact parent until leaf release and preserves modes',()=>{
+ const c=context(),parent=next(loans.borrowRustExclusiveSourcePlace(c,state(c),1,[],'exclusive')),child=next(loans.borrowRustExclusiveSourcePlace(c,parent,1,[0],'shared',1));assert.equal(child.loans[0].status,'suspended');assert.equal(loans.accessRustExclusiveSourcePlace(c,child,1,[1],'write',1).$,'rustExclusiveSourceInvalid');assert.equal(loans.releaseRustExclusiveSourceLoan(c,child,1).$,'rustExclusiveSourceInvalid');const released=next(loans.releaseRustExclusiveSourceLoan(c,child,2));assert.equal(released.loans[0].status,'active');assert.equal(loans.accessRustExclusiveSourcePlace(c,released,1,[1],'write',1).$,'rustExclusiveSourceContinue');
+ assert.equal(loans.borrowRustExclusiveSourcePlace(c,state(c),3,[],'exclusive').$,'rustExclusiveSourceInvalid');
+});
+test('lexical scope exit preserves actual owner and reborrow lifetimes',()=>{
+ const c=context(),initial=state(c);assert.equal(loans.borrowRustExclusiveSourcePlace(c,initial,4,[],'exclusive').$,'rustExclusiveSourceInvalid');const entered=next(loans.enterRustExclusiveSourceLoanScope(c,initial,2)),borrowed=next(loans.borrowRustExclusiveSourcePlace(c,entered,1,[],'exclusive'));assert.equal(loans.leaveRustExclusiveSourceLoanScope(c,borrowed,2).$,'rustExclusiveSourceInvalid');const released=next(loans.releaseRustExclusiveSourceLoan(c,borrowed,1));assert.equal(loans.leaveRustExclusiveSourceLoanScope(c,released,2).$,'rustExclusiveSourceContinue');
+});
+test('evaluated argument loans retain formal order and exclusive calls block interleaved accesses',()=>{
+ const c=context(),first=next(loans.borrowRustExclusiveSourcePlace(c,state(c),1,[0],'exclusive')),both=next(loans.borrowRustExclusiveSourcePlace(c,first,1,[1],'exclusive')),args=[{parameter:0,loan:1},{parameter:1,loan:2}],calling=next(loans.beginRustExclusiveSourceCall(c,both,'crate::split',args));assert.equal(loans.accessRustExclusiveSourcePlace(c,calling,1,[0],'write',1).$,'rustExclusiveSourceInvalid');assert.equal(loans.releaseRustExclusiveSourceLoan(c,calling,1).$,'rustExclusiveSourceInvalid');assert.equal(loans.finishRustExclusiveSourceCall(c,calling,99).$,'rustExclusiveSourceInvalid');const finished=next(loans.finishRustExclusiveSourceCall(c,calling,1));assert.equal(finished.roots[0].version,1);assert.equal(finished.loans[0].status,'active');assert.equal(loans.beginRustExclusiveSourceCall(c,both,'crate::split',[args[1],args[0]]).$,'rustExclusiveSourceInvalid');
+});
+test('callee packets retain result zero and every exclusive formal even for Result early exits',()=>{
+ const c=context(),result={k:'app',fn:name('Err'),args:[name('original_error')]},packet=loans.createRustExclusiveSourceReturnPacket(c,'crate::split',result,[{parameter:0,value:name('updated_first')},{parameter:1,value:name('updated_second')}]);assert.equal(packet.$,'rustExclusiveSourceLowered');assert.deepEqual(packet.expression,{k:'tuple',items:[result,name('updated_first'),name('updated_second')]});assert.equal(loans.createRustExclusiveSourceReturnPacket(c,'crate::split',result,[{parameter:1,value:name('updated_second')},{parameter:0,value:name('updated_first')}]).$,'rustExclusiveSourceLoweringInvalid');
+});
+test('caller writeback runs one adapted call and reconstructs disjoint fields on the latest root',()=>{
+ const c=context(),first=next(loans.borrowRustExclusiveSourcePlace(c,state(c),1,[0],'exclusive')),both=next(loans.borrowRustExclusiveSourcePlace(c,first,1,[1],'exclusive')),calling=next(loans.beginRustExclusiveSourceCall(c,both,'crate::split',[{parameter:0,loan:1},{parameter:1,loan:2}])),packet={k:'app',fn:{k:'name',path:['crate','split']},args:[name('held_first'),name('held_second')]};
+ const result=loans.lowerRustExclusiveSourceCallWriteback(c,calling,packet,[{binder:1,value:name('pair')}],['p','a','b','first_root','c','d','second_root'],(value,roots)=>({k:'tuple',items:[value,roots[0].value]}));assert.equal(result.$,'rustExclusiveSourceLowered');assert.strictEqual(result.expression.value,packet);assert.equal(result.expression.body.value.k,'match');assert.deepEqual(result.expression.body.body.value.scrutinees,[name('first_root')]);assert.deepEqual(result.roots[0].value,name('second_root'));assert.equal(result.expression.body.body.body.k,'tuple');
+ assert.equal(loans.lowerRustExclusiveSourceCallWriteback(c,calling,{...packet,fn:name('substitute')},[{binder:1,value:name('pair')}],['p','a','b','x','c','d','y'],()=>name('never')).$,'rustExclusiveSourceLoweringInvalid');
+});
+test('Vec accumulator append uses ordinary array accumulation and genuine exclusive authority',()=>{
+ const c=context(),borrowed=next(loans.borrowRustExclusiveSourcePlace(c,state(c),2,[],'exclusive')),result=loans.lowerRustExclusiveSourceVectorPush(c,borrowed,2,1,name('held_items'),name('held_item'),scalar);assert.equal(result.$,'rustExclusiveSourceLowered');assert.deepEqual(result.expression,{k:'array',items:[{value:name('held_items'),spread:true},{value:name('held_item'),spread:false}]});assert.equal(result.state.roots[1].version,1);assert.equal(loans.lowerRustExclusiveSourceVectorPush(c,borrowed,2,0,name('held_items'),name('held_item'),scalar).$,'rustExclusiveSourceLoweringInvalid');
+});
+test('loan records cannot replace binder position, parent activation, selected call or coordinates',()=>{
+ const c=context(),parent=next(loans.borrowRustExclusiveSourcePlace(c,state(c),1,[],'exclusive')),child=next(loans.borrowRustExclusiveSourcePlace(c,parent,1,[0],'shared',1));for(const altered of [{...child,nextLoan:1},{...child,loans:child.loans.map(row=>row.identity===1?{...row,status:'active'}:row)},{...child,loans:child.loans.map(row=>row.identity===2?{...row,fields:[2]}:row)},{...child,scopes:[2]},{...child,work:100001}])assert.notEqual(loans.readRustExclusiveSourceLoanStateError(c,altered),'');
+ const moved=next(loans.accessRustExclusiveSourcePlace(c,state(c),1,[],'move'));assert.equal(loans.borrowRustExclusiveSourcePlace(c,moved,1,[],'shared').$,'rustExclusiveSourceInvalid');
+});
