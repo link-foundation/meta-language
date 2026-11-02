@@ -24,7 +24,9 @@ const evidence=state=>({$:'rustStandardCollectionOrderingOrigin',owner:'core::cm
 test('only actual BTree standard declarations and reexports admit ordered methods',()=>{
  for(const [path,owner]of [['std::collections::BTreeSet','std::collections::BTreeSet'],['std::collections::btree_set::BTreeSet','std::collections::BTreeSet'],['std::collections::BTreeMap','std::collections::BTreeMap'],['std::collections::btree_map::BTreeMap','std::collections::BTreeMap']])assert.equal(resolveRustStandardCollectionOwner(path,true,false),owner);
  for(const path of ['BTreeSet','core::collections::BTreeSet','alloc::collections::BTreeMap','local::BTreeMap'])assert.equal(resolveRustStandardCollectionOwner(path,true,false),'');assert.equal(resolveRustStandardCollectionOwner('std::collections::BTreeSet',true,true),'');
- assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeSet','iter'),0);assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeMap','keys'),0);assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeMap','values'),0);assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeMap','iter'),-1);assert.equal(readRustStandardCollectionMethodArity('std::collections::HashSet','iter'),-1);
+ assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeSet','iter'),0);assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeMap','keys'),0);assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeMap','values'),0);
+ // The same retained method input now has an actual shared pair-loop consumer.
+ assert.equal(readRustStandardCollectionMethodArity('std::collections::BTreeMap','iter'),0);assert.equal(readRustStandardCollectionMethodArity('std::collections::HashSet','iter'),-1);
 });
 test('closed primitive Ord uses exact signed integer Boolean and UTF8 String order',()=>{
  assert.equal(compareRustStandardCollectionScalars(boolean(false),boolean(true)),-1);assert.equal(compareRustStandardCollectionScalars(integer(-9007199254740993n),integer(-9007199254740992n)),-1);

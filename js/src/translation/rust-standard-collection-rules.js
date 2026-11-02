@@ -60,7 +60,7 @@ export function readRustStandardCollectionSourceOriginError(origin,keyDomain,val
 export function readRustStandardCollectionMethodArity(owner,method){
  const kind=readRustStandardCollectionKind(owner);if(kind==='')return -1;
  if(['new','default','len','is_empty','clear','clone'].includes(method))return 0;
- if(testRustStandardCollectionOrdered(owner)&&(kind==='set'&&method==='iter'||kind==='map'&&['keys','values'].includes(method)))return 0;
+ if(testRustStandardCollectionOrdered(owner)&&(kind==='set'&&method==='iter'||kind==='map'&&['iter','keys','values'].includes(method)))return 0;
  if(method==='insert')return kind==='map'?2:1;
  if(method==='get'||method==='remove'||method===(kind==='map'?'contains_key':'contains'))return 1;
  return -1;

@@ -1,10 +1,11 @@
 // This executable library module depends only on shared scalar/state kernels.
 // Compiler graph linkage lives in the separate source call adapter.
 import {executeRustStandardCollectionOperation,projectRustStandardCollectionOption} from './rust-standard-collection-state.js';
+import {executeRustStandardCollectionOrderedBorrow} from './rust-standard-collection-ordered-borrow.js';
 import {executeRustStandardCollectionOrderedSnapshot} from './rust-standard-collection-ordered-snapshot.js';
 import {executeRustStandardCollectionOrdering} from './rust-standard-collection-ordering.js';
 import {executeRustStandardCollectionEquality} from './rust-standard-collection-equality.js';
-/** @typedef {{$:'rustCollectionPacketNormal',values:[RustStandardCollectionScalar|RustStandardCollectionOption|RustStandardCollectionState|{$:'rustCollectionOrderedValues',values:RustStandardCollectionScalar[]}|{$:'rustCollectionUnit'},RustStandardCollectionState],writeback:boolean}|{$:'rustCollectionInvalid',reason:string}|{$:'rustCollectionResourceLimit',state?:RustStandardCollectionState,reason:string}} RustStandardCollectionPacketTransition */
+/** @typedef {{$:'rustCollectionPacketNormal',values:[RustStandardCollectionScalar|RustStandardCollectionOption|RustStandardCollectionState|{$:'rustCollectionOrderedValues',values:RustStandardCollectionScalar[]}|{$:'rustCollectionOrderedEntries',entries:RustStandardCollectionEntry[]}|{$:'rustCollectionUnit'},RustStandardCollectionState],writeback:boolean}|{$:'rustCollectionInvalid',reason:string}|{$:'rustCollectionResourceLimit',state?:RustStandardCollectionState,reason:string}} RustStandardCollectionPacketTransition */
 /** A real callable body for later automatic source-library projection. Both
  * reads and writes return the original result-zero/state-one tuple recipe.
  * Bare get references cannot escape this adapter; projection is immediate.
@@ -13,7 +14,7 @@ import {executeRustStandardCollectionEquality} from './rust-standard-collection-
  * @param {string} projection @returns {RustStandardCollectionPacketTransition} */
 export function executeRustStandardCollectionValuePacket(state,method,arguments_,call,projection){
  const ordered=['iter','keys','values'].includes(method);
- if(ordered){if(arguments_.length!==0)return {$:'rustCollectionInvalid',reason:'ordered iterator projection retains its actual empty argument list'};const result=executeRustStandardCollectionOrderedSnapshot(state,method,call,projection);return result.$==='rustCollectionNormal'?{$:'rustCollectionPacketNormal',values:[result.value,result.state],writeback:false}:result;}
+ if(ordered){if(arguments_.length!==0)return {$:'rustCollectionInvalid',reason:'ordered iterator projection retains its actual empty argument list'};const result=projection==='borrowed'?executeRustStandardCollectionOrderedBorrow(state,method,call):executeRustStandardCollectionOrderedSnapshot(state,method,call,projection);return result.$==='rustCollectionNormal'?{$:'rustCollectionPacketNormal',values:[result.value,result.state],writeback:false}:result;}
  if(method==='get'&&!['copied','cloned'].includes(projection)||method!=='get'&&projection!=='')return {$:'rustCollectionInvalid',reason:'collection source packets require an actual immediate get copied/cloned projection or no projection'};
  const result=executeRustStandardCollectionOperation(state,method,arguments_,call);
  if(result.$==='rustCollectionInvalid'||result.$==='rustCollectionResourceLimit')return result;
