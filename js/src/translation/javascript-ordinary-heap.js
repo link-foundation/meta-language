@@ -15,7 +15,7 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
  * {$:'setObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
- * {$:'ordinaryObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,immutablePrototype?:boolean,regularExpression?:boolean,stringData?:JavaScriptSemanticValue,
+ * {$:'ordinaryObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,immutablePrototype?:boolean,regularExpression?:boolean,stringData?:JavaScriptSemanticValue,primitiveData?:JavaScriptSemanticValue,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[]} |
  * {$:'hostErrorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],hostGet:JavaScriptSemanticValue,
@@ -105,6 +105,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
   let previous = 0n;
   for (const object of heap.objects) {
     if(object.$==='ordinaryObject'&&object.regularExpression!==undefined&&typeof object.regularExpression!=='boolean')return 'regular expression metadata retains its actual internal-slot Boolean';
+    if(object.$==='ordinaryObject'&&object.primitiveData!==undefined&&(object.callable||!['number','boolean','integer'].includes(object.primitiveData.$)||readJavaScriptSemanticValueError(object.primitiveData)!==''||object.stringData!==undefined))return 'primitive wrapper objects retain exactly one actual Number Boolean or BigInt internal slot';
     if(object.$==='ordinaryObject'&&object.stringData!==undefined&&(object.callable||object.stringData.$!=='text'&&object.stringData.$!=='sourceText'||readJavaScriptSemanticValueError(object.stringData)!==''))return 'String objects retain actual primitive UTF16 StringData';
     if(object.$==='ordinaryObject'&&object.immutablePrototype!==undefined&&typeof object.immutablePrototype!=='boolean')return 'immutable prototype metadata retains its actual Boolean slot';
     if(!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','collectionIteratorObject','hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(object.$))return 'ordinary heap objects require their actual registered object kind';

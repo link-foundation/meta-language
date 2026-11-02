@@ -1480,3 +1480,30 @@ conversion throws/order, implicit BigInt/Symbol refusal, low-word products and
 leading zeros. The new source library is registered with the deferred automatic
 policy author. Nothing was generated, executed, tested, compiled or validated;
 no CI feedback was inspected and no execution evidence is claimed.
+
+### Primitive prototype lookup, own scalar slots and BigInt formatting
+
+Number, Boolean and BigInt roots now join String in closed-source realm metadata.
+Their source property reads use ordinary Get on the actual root with a distinct
+original primitive receiver. This reuses the existing getter/Call machinery and
+converted key rather than allocating boxes or reading native prototype copies.
+SourceGet gains an optional receiver coordinate; its existing Object receiver
+behavior stays unchanged. Symbol's independently required description protocol
+still uses its existing boundary rather than inventing portable Symbol slots.
+
+Number.valueOf, Boolean.valueOf/toString and BigInt.valueOf have protected bodies.
+Native boxed inputs retain an own typed primitiveData slot, captured only through
+protected type tests and native slot readers at the input boundary. Heap checks
+reject callable/multiply-typed slots; method extraction does not inherit slots or
+call user valueOf. Number/Boolean prototype defaults retain their real captured
+slots; BigInt.prototype correctly lacks one. Box construction remains a separate
+operation requirement, not implied by accepting existing input wrappers.
+
+BigInt.toString validates its receiver before radix evaluation, defaults undefined
+to decimal, performs implicit ToNumber and radix truncation/range checks, then
+formats the exact signed value in bases 2 through 36 under the existing explicit
+4096-bit resource profile. No native represented formatting method is invoked.
+Fourteen original source cases and two deferred controls cover receivers, slots,
+radices, throws, signs and real shared-prototype mutations. Prototype-changing
+native oracles restore their changes through finally. Existing Node source-version
+bounds apply. No execution, generation, validation or compilation occurred.

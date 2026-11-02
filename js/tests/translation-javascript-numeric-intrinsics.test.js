@@ -1,3 +1,4 @@
+import {beginJavaScriptObjectObservation} from '../src/translation/javascript-object-integrity.js';
 // Deferred numeric intrinsic source controls; no compilation occurs on import.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {compileJavaScriptNumericIntrinsicFunction,readJavaScriptNumberPredicateNames,readJavaScriptMathMethodNames} from '../src/translation/javascript-numeric-intrinsic-call-source.js';
@@ -15,7 +16,7 @@ test('Math extrema consume every actual argument and preserve signed-zero reduct
  assert.equal(Object.is(executeJavaScriptCallPrimitive('read minimum number',[{$:'number',value:0},{$:'number',value:-0}]).value.value,-0),true);assert.equal(Object.is(executeJavaScriptCallPrimitive('read maximum number',[{$:'number',value:-0},{$:'number',value:0}]).value.value,0),true);
 });
 test('numeric catalog entries retain complete branch targets and actual constructor classification',()=>{
- for(const operation of ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN','Number.parseInt','Number.parseFloat','isNaN','isFinite',...readJavaScriptNumberPredicateNames().map(name=>'Number.'+name),...readJavaScriptMathMethodNames().map(name=>'Math.'+name)]){const fn=compileJavaScriptNumericIntrinsicFunction(1n,2n,operation);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(Number.isInteger(target)&&target>=0&&target<fn.instructions.length);}
+ for(const operation of ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN','BigInt.toString','Number.parseInt','Number.parseFloat','isNaN','isFinite',...readJavaScriptNumberPredicateNames().map(name=>'Number.'+name),...readJavaScriptMathMethodNames().map(name=>'Math.'+name)]){const fn=compileJavaScriptNumericIntrinsicFunction(1n,2n,operation);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(Number.isInteger(target)&&target>=0&&target<fn.instructions.length);}
  const directory={$:'collectionCallableDirectory',realms:[2n],exoticKey:{$:'symbol',identity:9n},constructors:[],primitiveMethods:[{$:'primitiveMethodOwner',identity:1n,realm:2n,operation:'Number'}]};assert.notEqual(compileJavaScriptCollectionCallDirectory(directory).error,'');assert.equal(compileJavaScriptCollectionCallDirectory({...directory,primitiveMethods:[{...directory.primitiveMethods[0],constructable:true}]}).error,'');
 });
 
@@ -38,4 +39,15 @@ test('numeric prefix parsers retain radix precision and decimal exponent rollbac
 test('Math integer kernels retain exact low products and unsigned leading zeros',()=>{
  for(const [left,right,expected] of [[4294967295,4294967295,1],[2147483647,2147483647,1],[-1,5,-5],[3.9,2.9,6],[Infinity,7,0]]){const result=executeJavaScriptCallPrimitive('multiply signed integer bits',[{$:'number',value:left},{$:'number',value:right}]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
  for(const [input,expected] of [[0,32],[-1,0],[1,31],[256,23],[4294967296,32],[NaN,32]])assert.equal(executeJavaScriptCallPrimitive('count leading zero bits',[{$:'number',value:input}]).value.value,expected);
+});
+
+test('primitive value extraction reads only actual own internal slots',()=>{
+ const heap={$:'ordinaryHeap',symbols:[],objects:[{$:'ordinaryObject',identity:1n,prototype:{$:'null'},extensible:true,callable:false,properties:[],primitiveData:{$:'number',value:-0}},{$:'ordinaryObject',identity:2n,prototype:{$:'object',identity:1n,callable:false},extensible:true,callable:false,properties:[]}]};
+ const extracted=beginJavaScriptObjectObservation(heap,'Number.valueOf',{$:'object',identity:1n,callable:false},{$:'undefined'});assert.equal(extracted.$,'objectIntegrityCompleted');assert.ok(Object.is(extracted.value.value,-0));
+ for(const [operation,input] of [['Number.valueOf',{$:'object',identity:2n,callable:false}],['Boolean.valueOf',{$:'object',identity:1n,callable:false}],['BigInt.valueOf',{$:'number',value:7}]]){const result=beginJavaScriptObjectObservation(heap,operation,input,{$:'undefined'});assert.equal(result.$,'objectIntegrityError');assert.equal(result.errorClass,'TypeError');}
+});
+test('BigInt radix text retains signs digits truncated radix and receiver-independent range errors',()=>{
+ const units=value=>Array.from(value,character=>character.charCodeAt(0));
+ for(const [input,radix,expected] of [[255n,10,'255'],[-255n,16,'-ff'],[10n,2,'1010'],[1295n,36,'zz'],[0n,2,'0'],[15n,16.9,'f']]){const result=executeJavaScriptCallPrimitive('convert integer radix text',[{$:'integer',value:input},{$:'number',value:radix}]);assert.equal(result.$,'primitiveValue');assert.deepEqual(result.value.units,units(expected));}
+ for(const radix of [NaN,0,1,37,Infinity,-Infinity]){const result=executeJavaScriptCallPrimitive('convert integer radix text',[{$:'integer',value:7n},{$:'number',value:radix}]);assert.equal(result.$,'primitiveError');assert.equal(result.errorClass,'RangeError');}
 });

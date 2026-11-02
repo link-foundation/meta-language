@@ -57,6 +57,18 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Primitive Number, Boolean and BigInt property lookup walks each actual shared
+realm prototype with the original primitive as receiver; computed keys convert
+once, and represented prototype getters/mutations stay in the common heap.
+Protected valueOf methods require actual primitive values or captured own internal
+data slots, never prototype resemblance or user valueOf coercion. Boolean
+stringification and BigInt radix 2–36 stringification compose the same slot checks
+and scalar conversion rules. Receiver validation precedes radix conversion;
+undefined alone selects radix 10, fractional radices truncate, and range errors
+remain separate from the explicit 4096-bit formatting work profile. Native input
+wrapper slots are captured through protected slot readers before publication;
+represented method bodies never execute through those native readers.
+
 Numeric prefix parsers operate on exact UTF16. parseInt completes input ToString
 before radix ToNumber/ToInt32, honors radix 2 through 36 and conditional hex
 prefixes, consumes the longest valid digit prefix and rounds the exact accumulated

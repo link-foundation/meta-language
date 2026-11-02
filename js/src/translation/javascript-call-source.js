@@ -57,7 +57,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceSnapshotSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceStringGet',input:JavaScriptCallSource,key:JavaScriptCallSource,prototype:JavaScriptCallSource} |
- * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
+ * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource,receiver?:JavaScriptCallSource} |
  * {$:'sourceInstanceOf',left:JavaScriptCallSource,right:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceDelete',object:JavaScriptCallSource,key:JavaScriptCallSource} | {$:'sourceHas',object:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
@@ -353,8 +353,8 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    return {$:'sourceResult',register:result.register,builder:{...got,instructions:got.instructions.map((instruction,at)=>at===branch?{$:'branch',condition:condition.register,yes:branch+1,no:get}:at===jump?{$:'jump',target:end}:instruction)}};
   }
   case 'sourceGet':{
-   const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);
-   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryGet',destination:result.register,object:object.register,key:key.register,receiver:object.register})};
+   const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),receiver=source.receiver===undefined?{register:object.register,builder:key.builder}:lowerJavaScriptCallSourceExpression(source.receiver,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(receiver.builder);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryGet',destination:result.register,object:object.register,key:key.register,receiver:receiver.register})};
   }
   case 'sourceCall':case 'sourceSnapshotCall':{
    if(source.arguments.some(argument=>argument.$==='sourceArgumentSpread'))return lowerJavaScriptCallSourceArgumentList({$:'sourceVariadicCall',callee:source.callee,receiver:source.receiver,arguments:source.arguments,mode:'call',receiverAfterArguments:false},bindings,state,depth+1);

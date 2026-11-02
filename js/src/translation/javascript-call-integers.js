@@ -7,7 +7,7 @@ import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values
 /** @param {string} operation @returns {number} */
 export function readJavaScriptCallIntegerArity(operation){
  if(operation==='negate integer'||operation==='complement integer bits'||operation==='complement number bits')return 1;
- return ['wrap signed integer','wrap unsigned integer','add integers','subtract integers','multiply integers','divide integers','read integer remainder','raise integer power','compare integers','compare number integer','compare text integer',
+ return ['convert integer radix text','wrap signed integer','wrap unsigned integer','add integers','subtract integers','multiply integers','divide integers','read integer remainder','raise integer power','compare integers','compare number integer','compare text integer',
  'conjoin integer bits','disjoin integer bits','exclude equal integer bits','shift integer bits left','shift integer bits right',
  'conjoin number bits','disjoin number bits','exclude equal number bits','shift number bits left','shift number bits right','shift number bits right unsigned'].includes(operation)?2:0;
 }
@@ -41,6 +41,7 @@ export function executeJavaScriptCallNumberBits(operation,values){
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallIntegerPrimitive(operation,values){
+ if(operation==='convert integer radix text')return executeJavaScriptCallIntegerRadixText(values);
  if(operation==='wrap signed integer'||operation==='wrap unsigned integer')return executeJavaScriptCallIntegerWrapping(operation,values);
  if(operation.includes('number bits'))return executeJavaScriptCallNumberBits(operation,values);
  if(operation==='compare number integer'||operation==='compare text integer')return executeJavaScriptCallMixedIntegerComparison(operation,values);
@@ -108,4 +109,17 @@ export function executeJavaScriptCallIntegerWrapping(operation,values){
  let result=input.value%modulus;if(result<0n)result+=modulus;
  if(operation==='wrap signed integer'&&result>=modulus/2n)result-=modulus;
  return {$:'primitiveValue',value:{$:'integer',value:result}};
+}
+
+/** @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallIntegerRadixText(values){
+ const input=values[0]??{$:'undefined'},radix=values[1]??{$:'undefined'};
+ if(input.$!=='integer'||radix.$!=='number')return {$:'primitiveInvalid',reason:'integer radix formatting requires its actual BigInt and completed numeric radix'};
+ const base=Number.isNaN(radix.value)||radix.value===0?0:Math.trunc(radix.value);
+ if(base<2||base>36)return {$:'primitiveError',errorClass:'RangeError',reason:'toString() radix argument must be between 2 and 36'};
+ if(readJavaScriptCallIntegerWidth(input.value)<0)return {$:'primitiveResourceLimit',reason:'integer radix text exceeds the selected 4096-bit work profile'};
+ let remaining=input.value<0n?-input.value:input.value;const divisor=BigInt(base),reversed=[];
+ do{const digit=Number(remaining%divisor);reversed.push(digit<10?48+digit:87+digit);remaining/=divisor;}while(remaining>0n);
+ const units=[];if(input.value<0n)units.push(45);for(let index=reversed.length-1;index>=0;index-=1)units.push(reversed[index]??48);
+ return {$:'primitiveValue',value:{$:'text',units}};
 }

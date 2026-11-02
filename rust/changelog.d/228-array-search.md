@@ -202,3 +202,6 @@ order, width bounds and signed modular wrapping through shared source kernels.
 
 Draft UTF16 parseInt/parseFloat prefix grammars with exact shared numeric rounding,
 protected parser aliases/global predicates, and exact Math.imul/clz32 kernels.
+
+Draft shared primitive prototype reads, own Number/Boolean/BigInt slot extraction,
+Boolean stringification and exact BigInt radix stringification with ordered coercion.

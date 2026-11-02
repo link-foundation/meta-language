@@ -4,12 +4,14 @@ export function readJavaScriptNumberPredicateNames(){return ['isNaN','isFinite',
 /** @returns {string[]} */
 export function readJavaScriptMathMethodNames(){return ['clz32','imul','abs','floor','ceil','trunc','round','sign','sqrt','pow','min','max'];}
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptNumericIntrinsicOperation(operation){return ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN','Number.parseInt','Number.parseFloat','isNaN','isFinite'].includes(operation)||readJavaScriptNumberPredicateNames().some(name=>operation==='Number.'+name)||readJavaScriptMathMethodNames().some(name=>operation==='Math.'+name);}
+export function testJavaScriptNumericIntrinsicOperation(operation){return ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN','BigInt.toString','Number.parseInt','Number.parseFloat','isNaN','isFinite'].includes(operation)||readJavaScriptNumberPredicateNames().some(name=>operation==='Number.'+name)||readJavaScriptMathMethodNames().some(name=>operation==='Math.'+name);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptNumericIntrinsicFunction(identity,realm,operation){
  if(!testJavaScriptNumericIntrinsicOperation(operation))return undefined;
  /** @type {JavaScriptCallInstruction[]} */const code=[];
- if(operation==='Number.parseInt'||operation==='Number.parseFloat'){
+ if(operation==='BigInt.toString'){
+  code.push({$:'objectObservation',destination:1,operation:'BigInt.valueOf',input:0,other:0},{$:'argument',destination:2,index:0},{$:'constant',destination:3,value:{$:'undefined'}},{$:'strictEqual',destination:4,left:2,right:3},{$:'branch',condition:4,yes:5,no:7},{$:'constant',destination:2,value:{$:'number',value:10}},{$:'jump',target:8},{$:'primitive',destination:2,operation:'coerce primitive number',arguments:[2]},{$:'primitive',destination:5,operation:'convert integer radix text',arguments:[1,2]},{$:'return',source:5});
+ }else if(operation==='Number.parseInt'||operation==='Number.parseFloat'){
   code.push({$:'argument',destination:1,index:0},{$:'primitive',destination:1,operation:'convert primitive text',arguments:[1]});
   if(operation==='Number.parseInt')code.push({$:'argument',destination:2,index:1},{$:'primitive',destination:2,operation:'coerce primitive number',arguments:[2]},{$:'primitive',destination:1,operation:'parse integer text prefix',arguments:[1,2]});
   else code.push({$:'primitive',destination:1,operation:'parse float text prefix',arguments:[1]});
