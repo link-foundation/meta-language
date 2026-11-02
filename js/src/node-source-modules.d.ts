@@ -16,6 +16,7 @@ export type JavaScriptSourceTransition =
  | {$:'machineContinue';machine:unknown}
  | {$:'machineAllocateObject';machine:unknown;prototype:JavaScriptSemanticValue}
  | {$:'machineNeedPrimitiveIteratorGet';machine:unknown;receiver:JavaScriptSemanticValue;key:JavaScriptSemanticValue}
+ | {$:'machineAllocateSymbol';machine:unknown;description:JavaScriptSemanticValue}
  | {$:'machineNeedSymbolDescription';machine:unknown;symbol:JavaScriptSemanticValue}
  | {$:'machineNeedFunctionNameSymbolDescription';machine:unknown;object:JavaScriptSemanticValue;key:JavaScriptSemanticValue;prefix:string}
  | {$:'machineNeedObjectPrototype';machine:unknown;input:JavaScriptSemanticValue;realm:bigint}
@@ -31,6 +32,7 @@ export interface JavaScriptSourceEmbedding {
  adoptHeap(heap:unknown):void;
  allocateIdentity():bigint;
  resumePrimitiveIteratorGet?(request:JavaScriptSourceTransition):{resumed:boolean;prototype?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
+ resumeSymbolAllocation?(request:JavaScriptSourceTransition):{resumed:boolean;identity?:bigint;transition:JavaScriptSourceTransition};
  resumeSymbolDescription?(request:JavaScriptSourceTransition):{resumed:boolean;description?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
  resumeFunctionNameSymbolDescription?(request:JavaScriptSourceTransition):{resumed:boolean;description?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
  resumeObjectPrimitivePrototype?(request:JavaScriptSourceTransition):{resumed:boolean;prototype?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};

@@ -205,6 +205,10 @@ pub(super) fn assert_source_machine_trace(program_wire:&serde_json::Value,trace:
                 let prototype=decode_java_script_semantic_value(&event["prototype"]);
                 native::resume_java_script_call_object_primitive_prototype(program.clone(),machine,prototype)
             },
+            "allocateSymbol"=>{
+                used+=1.0;assert_eq!(before["$"],"machineAllocateSymbol");assert_eq!(before["description"],event["description"]);
+                native::resume_java_script_call_symbol_allocation(program.clone(),machine,native::ml::Big::parse(event["identity"].as_str().unwrap()))
+            },
             "symbolDescription"=>{
                 used+=1.0;assert_eq!(before["$"],"machineNeedSymbolDescription");assert_eq!(before["symbol"],event["symbol"]);
                 let description=decode_java_script_semantic_value(&event["description"]);

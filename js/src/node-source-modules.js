@@ -46,6 +46,8 @@ export function runJavaScriptSourceTransition(embedding,transition,{steps=65536}
    if(current.$==='machineContinue')allocated+=1;
   }else if(current.$==='machineNeedObjectPrototype'){
    if(typeof embedding.resumeObjectPrimitivePrototype!=='function')break;const response=embedding.resumeObjectPrimitivePrototype(current);if(!response.resumed)break;current=response.transition;
+  }else if(current.$==='machineAllocateSymbol'){
+   if(typeof embedding.resumeSymbolAllocation!=='function')break;const response=embedding.resumeSymbolAllocation(current);if(!response.resumed)break;current=response.transition;if(current.$==='machineContinue')allocated+=1;
   }else if(current.$==='machineNeedSymbolDescription'){
    if(typeof embedding.resumeSymbolDescription!=='function')break;const response=embedding.resumeSymbolDescription(current);if(!response.resumed)break;current=response.transition;
   }else if(current.$==='machineNeedFunctionNameSymbolDescription'){

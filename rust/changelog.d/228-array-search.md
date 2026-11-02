@@ -223,3 +223,6 @@ active-profile authority, generic receivers and explicit uncovered-version repor
 
 Draft live Map/Set forEach through insertion-history cursors and shared VM callback
 continuations, preserving mutations, operands, thisArg and original throws.
+
+Draft Symbol creation with portable ordered description conversion and authenticated
+fresh identity allocation across source embedding and native trace replay.

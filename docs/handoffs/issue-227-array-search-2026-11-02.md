@@ -1619,3 +1619,25 @@ assertions are unchanged. Evidence: `readJavaScriptSemanticValueError` requires
 that profile before primitive execution, so the former malformed input would
 select Invalid instead of reaching the intended resource boundary. This is a
 source-derived assertion-input correction, not an executed observation.
+
+### Portable Symbol creation and qualified identity allocation
+
+Symbol Call now has a protected body: read the actual argument, preserve
+undefined absence, perform shared implicit ToString for every other input, then
+request a fresh Symbol identity. The new symbolAllocate instruction and pending
+state authenticate the completed optional description. Its resumer refuses used
+Object/Symbol IDs and atomically inserts a fresh unsigned64 identity under the
+existing 16384-Symbol resource profile. Capacity is checked before the embedding
+consumes an ID. The private embedding verifies the actual re-stepped request and
+latest heap, creates only the actual native identity from already primitive text,
+and binds private forward/reverse identity metadata. No represented conversion
+or Symbol function body executes in the host. Source runner, public TypeScript
+contracts, trace producer and native replay driver include the new event.
+
+Seven original sources and an additional deferred machine control cover identity
+freshness, absent/empty descriptions, hints/effects/throws, rejected Symbol input,
+UTF16 and distinct Symbol property keys. Existing explicit Node version bounds
+remain. The existing String conversion library feeds deferred automatic policy
+and VM/codecs generation. Global Symbol.for/keyFor registry operations remain
+separate requirements; no evidence or complete-coverage claim is inferred.
+No tests, generation, validation or compilation ran.

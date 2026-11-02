@@ -12,9 +12,10 @@ import {readSourceLibraryErrorDeclarationWitness} from './javascript-error-closu
 import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordinary-class-closure-source.js';
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
-import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
+import {constructJavaScriptSourceText,readJavaScriptSemanticTextString,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
+import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolAllocation,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
 
+const actualSymbolAllocator=Symbol;
 const primitiveValueSlots=[{kind:'number',constructor:Number,test:nativeTypes.isNumberObject,value:Reflect.getOwnPropertyDescriptor(Number.prototype,'valueOf')?.value},{kind:'boolean',constructor:Boolean,test:nativeTypes.isBooleanObject,value:Reflect.getOwnPropertyDescriptor(Boolean.prototype,'valueOf')?.value},{kind:'symbol',constructor:Symbol,test:nativeTypes.isSymbolObject,value:Reflect.getOwnPropertyDescriptor(Symbol.prototype,'valueOf')?.value},{kind:'integer',constructor:BigInt,test:nativeTypes.isBigIntObject,value:Reflect.getOwnPropertyDescriptor(BigInt.prototype,'valueOf')?.value}];
 const stringValueSlot=Reflect.getOwnPropertyDescriptor(String.prototype,'valueOf')?.value;
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
@@ -225,6 +226,15 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(heap!==request.machine.heap)throw new TypeError('primitive prototype metadata requires the adopted latest heap');
   const prototype={...root.prototype};return {resumed:true,prototype,transition:resumeJavaScriptCallObjectPrimitivePrototype(module.program,request.machine,prototype)};
  }
+ function resumeSymbolAllocation(request){
+  if(module===null||request?.$!=='machineAllocateSymbol'||!request.machine)throw new TypeError('Symbol allocation requires its actual published request');
+  const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
+  if(actual.$!=='machineAllocateSymbol'||!testJavaScriptSemanticSameValue(actual.description,request.description)||heap!==request.machine.heap)throw new TypeError('Symbol allocation retains its completed description and adopted latest heap');
+  if(globalThis.Symbol!==actualSymbolAllocator)throw new TypeError('Symbol allocation requires the captured actual identity allocator');
+  const identity=allocate(),transition=resumeJavaScriptCallSymbolAllocation(module.program,request.machine,identity);
+  if(transition.$==='machineContinue'){const arguments_=actual.description.$==='undefined'?[]:[readJavaScriptSemanticTextString(actual.description)],symbol=Reflect.apply(actualSymbolAllocator,undefined,arguments_);forward.set(symbol,identity);reverse.set(identity,symbol);}
+  return {resumed:true,identity,transition};
+ }
  function resumeSymbolDescription(request){
   if(module===null||request?.$!=='machineNeedSymbolDescription'||!request.machine)throw new TypeError('Symbol description metadata requires its actual published request');
   const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
@@ -316,7 +326,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
  }};
  return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
-  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeSymbolDescription,resumeFunctionNameSymbolDescription,resumeObjectPrimitivePrototype,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeSymbolAllocation,resumeSymbolDescription,resumeFunctionNameSymbolDescription,resumeObjectPrimitivePrototype,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
   realmErrorConstructorReference(source,name){const actual=bases.get(name);if(typeof actual!=='function'||realm.errors[name]!==actual)throw new TypeError('Error namespace references retain their actual independently supplied realm constructor');const semantic=encode(actual);return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation:'actual standard '+name+' namespace',owner:'actual registered Error realm 1',callable:true,executable:false};},

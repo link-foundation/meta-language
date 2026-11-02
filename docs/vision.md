@@ -57,6 +57,15 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Symbol Call completes optional description ToString before requesting fresh
+identity allocation. Missing/undefined description remains absent; empty text stays
+present. An authenticated allocation instruction, pending request and resumer
+commit an unused global unsigned64 identity to the shared symbol directory.
+The embedding creates only the corresponding fresh native identity after the
+portable conversion has completed; it executes no represented coercion or method.
+Allocation exhaustion is a resumable resource boundary and native replay supplies
+the same recorded identity. Symbol registry operations remain separate work.
+
 Protected Map.forEach/Set.forEach traverse actual insertion-history slots with a
 private ordinal cursor and shared callback continuations. Receiver slots validate
 before callback callability, including empty collections. Callback operands and
