@@ -2,7 +2,7 @@
 
 This is source/control authoring under [the vision](../vision.md), not execution
 evidence. `run-rust-state-source-originals.mjs` adds one reusable CI-only driver
-over all complete positive originals in fourteen fixture groups: exclusive loans,
+over all complete positive originals in the initial fourteen fixture groups: exclusive loans,
 primitive compounds, owned Strings, owned vectors, exclusive collections,
 standard collections, collection equality, ordered collections, borrowed ordered
 collection loops, stable UTF16 nominal field sorting and literal character String
@@ -80,8 +80,8 @@ ledger obligation still require their own full draft and later verification.
 No tests, source imports, generation, compilation or validation ran locally.
 
 The current driver also adds 28 actual `Type::map_children` and 33 actual
-`Type::children` controls through current-source factories. This gives 340
-authored scenario rows across sixteen groups (279 literal originals plus 61
-current-source scenarios). Counts do not measure requirement completion. See
+`Type::children` controls through current-source factories. Adding eight literal mixed-region originals and three actual Type composition
+scenarios gives 351 authored positive rows across eighteen groups (287 literal
+originals plus 64 current-source scenarios). Counts do not measure requirement completion. See
 [the native reference handoff](issue-227-actual-type-native-reference-controls-2026-11-03.md)
 for full original, projected and actual crate reference scopes. None ran locally.

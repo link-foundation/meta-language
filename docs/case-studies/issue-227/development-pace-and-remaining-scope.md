@@ -549,3 +549,12 @@ input into the positive inventory. With that retained input, there are 340
 authored positive scenario rows (279 literal originals and 61 actual-source
 scenarios). Two added source-owner/static-lifetime refusal inputs cover indexed
 results. These are source drafts without observations.
+
+The final agent finished its current region batch at `fa925b892` and stopped.
+Root now works alone. Integration adds eight literal mixed-region originals and
+three complete actual method compositions to the same CI-only driver, yielding
+351 authored positive rows across eighteen groups (287 literal and 64 actual
+source scenarios). The new three-case composition group has explicit subset
+scope; existing full-variant assertions remain unchanged. These inputs provide
+more composition coverage but remain unexecuted and do not measure completed
+requirements. No new agent or parallel batch is started.

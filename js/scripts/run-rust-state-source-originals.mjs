@@ -20,7 +20,7 @@ import {loadRustStandardCollectionSourceLibrary} from '../src/translation/rust-s
 import {readActiveRuntimeDataVersions} from '../src/translation/runtime-data-module.js';
 import {encodeTypedProgramLinks,decodeTypedProgramLinks} from '../src/typed-program-links.js';
 import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
-import {createActualRustTypeMapChildrenControlGroup,createActualRustTypeChildrenControlGroup} from './rust-type-map-children-source-controls.mjs';
+import {createActualRustTypeMapChildrenControlGroup,createActualRustTypeChildrenControlGroup,createActualRustTypeRegionCompositionControlGroup} from './rust-type-map-children-source-controls.mjs';
 import {compileRustStateNativeOriginal} from './rust-state-native-original-compiler.mjs';
 const repository=fileURLToPath(new URL('../../',import.meta.url));
 function requireNativeCI(){if(process.env.CI!=='true'||process.env.META_LANGUAGE_NATIVE_RUST_STATE!=='1')throw new Error('native Rust state source controls run only in explicitly selected CI');}
@@ -46,7 +46,7 @@ export function runRustStateSourceOriginals(){
  const directory=join(repository,'issue-195-artifacts','rust-state-source',commit),work=join(directory,'work');mkdirSync(work,{recursive:true});
  const header=createControlDiagnostics(),profile=header.attempt('covered actual compiler and target versions',compilerProfile),library=header.attempt('complete shipped collection library bodies',()=>loadRustStandardCollectionSourceLibrary({invalid:()=>({k:'abort',message:'invalid collection source packet'}),resource:()=>({k:'abort',message:'collection source resource bound'})}));
  const dependencyTarget=mkdtempSync(join(work,'cargo-target-'));writeProjectData(join(dependencyTarget,'owner.lino'),{model:'task-owned Rust source control dependency target 1',commit});
- const nativeContext={dependencyTarget,command,successful,profile},groups=[...rustStateSourceOriginalGroups,createActualRustTypeMapChildrenControlGroup(header,directory,nativeContext),createActualRustTypeChildrenControlGroup(header,directory,nativeContext)];
+ const nativeContext={dependencyTarget,command,successful,profile},groups=[...rustStateSourceOriginalGroups,createActualRustTypeMapChildrenControlGroup(header,directory,nativeContext),createActualRustTypeChildrenControlGroup(header,directory,nativeContext),createActualRustTypeRegionCompositionControlGroup(header,directory,nativeContext)];
  const records=[];let failures=header.failures.length;
  for(const group of groups)for(const [index,fixture]of group.rows.entries()){
   const diagnostics=createControlDiagnostics(),caseDirectory=join(directory,group.id+'-'+String(index).padStart(4,'0')),temporary=mkdtempSync(join(work,'case-'));mkdirSync(caseDirectory,{recursive:true});writeProjectData(join(temporary,'owner.lino'),{model:'task-owned Rust source control scratch 1',commit,group:group.id,index});

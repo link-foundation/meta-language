@@ -65,3 +65,11 @@ New weak/registry groups select their explicit Node assertion ranges before
 source execution. Symbol registry input descriptors become actual native Symbol
 witnesses only at the original/embedding input boundary, retaining exact source
 definitions. Represented allocation and lookup do not call the host registry.
+
+After the region agent finished, root connected its eight literal originals and
+three full actual Type Tuple/Function/Array compositions to the same driver.
+Each composition retains the three actual method owners children/map_children/
+is_reference. The composition group declares subset coverage; the two original
+all-variant groups keep their full-coverage assertions. No all-variant gate is
+weakened or skipped. The combined positive inventory is 351 authored rows in
+eighteen groups, with 287 literal originals and 64 actual-source scenarios.

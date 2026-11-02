@@ -4579,6 +4579,13 @@ recursively immutable snapshots. Mutable/new/untrusted snapshots retain full
 checks; persistent mutation costs and complete garbage collection remain explicit
 requirements rather than claims established by lookup complexity alone.
 
+Mixed readonly and mutable source functions select the existing signature3,
+exclusive-loan and closed FnMut profiles together. Each body keeps its genuine
+readonly or closed interface; composition must interpret actual ordered state
+packets, source binders and loan revisions. Closed callbacks cannot hide borrowed
+vector carriers, and whole-root admission grants no projected-field authority.
+Older independent profile guards remain intact.
+
 Signature3 borrowed-vector indexing copies the actual shared-reference element
 while preserving its canonical owner, lifetime and referent regions. Copying a
 reference grants no Copy/Clone or mutable authority on its referent. Vector

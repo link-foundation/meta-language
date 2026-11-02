@@ -13,8 +13,10 @@ import {rustSourceStringCharacterPushOriginals as characterPush} from '../tests/
 import {rustOwnedVectorLoopOriginals as ownedVectorLoops} from '../tests/fixtures/rust-owned-vector-source-loops.mjs';
 import {rustFnMutSourceOriginals as mutableFunctions} from '../tests/fixtures/rust-fnmut-source.mjs';
 import {rustSourcePrimitiveVectorSortOriginals as primitiveVectorSort} from '../tests/fixtures/rust-source-vector-primitive-sort.mjs';
+import {rustSourceRegionCompositionOriginals as regionComposition} from '../tests/fixtures/rust-source-region-composition.mjs';
 const sourceVersionRange='>=1.90.0 <1.100.0';
 export const rustStateSourceOriginalGroups=[
+ {id:'readonly-mutable-source-region-composition',rows:regionComposition,sourceSignatureModel:'Rust source function signature 3',fnMut:true,collections:false,sourceVersionRange},
  {id:'exclusive-loans',rows:loans,collections:false,sourceVersionRange},
  {id:'primitive-compounds',rows:compounds,collections:false,sourceVersionRange},
  {id:'owned-strings',rows:strings,collections:false,sourceVersionRange},
