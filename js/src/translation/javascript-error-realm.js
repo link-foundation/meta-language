@@ -1,4 +1,8 @@
 import {importJavaScriptSymbolRegistryWitness,findJavaScriptSymbolRegistryKey} from './javascript-symbol-registry.js';
+import {createJavaScriptLiveHandles} from './javascript-live-handles.js';
+import {compileJavaScriptLiveHandleInvocationFunction} from './javascript-live-handle-call-source.js';
+import {classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
+import {runJavaScriptSourceTransition} from './javascript-source-driver.js';
 // Host boundary for the portable Error source machine. Source definitions are
 // supplied as real declaration values, checked against the captured text and
 // NEVER invoked by this adapter. Only independently supplied realm intrinsics
@@ -14,7 +18,7 @@ import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordina
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
 import {constructJavaScriptSourceText,readJavaScriptSemanticTextString,readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolAllocation,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
+import {beginJavaScriptCallMachine,readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolAllocation,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
 
 // External data reification only: these operations receive already primitive
 // metadata after portable wrapper semantics completed. They do not run a
@@ -31,9 +35,11 @@ const string=units=>{let result='';for(const unit of units)result+=String.fromCh
  * actual Object.prototype, Symbol.toPrimitive and each admitted standard Error
  * constructor from ONE real realm. `definitions` contains all actual captured
  * declarations (including private helpers). Their bodies are not a fallback
- * execution path. Modified prototypes, proxies and reflection on VM ordinary
- * objects require successor host protocols and are refused here. */
-export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1n,declarationWitness=null,deferModule=false}){
+ * execution path. Source-function embeddings expose ordinary metadata through
+ * live heap handles; legacy Error embeddings keep their original opaque port.
+ * Native callback stacks require their own declared portable continuations. */
+export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1n,declarationWitness=null,deferModule=false,liveHandleSteps=65536}){
+ if(!Number.isSafeInteger(liveHandleSteps)||Object.is(liveHandleSteps,-0)||liveHandleSteps<0||liveHandleSteps>1048576)throw new RangeError('live handles require an explicit bounded transition work slice');
  const ordinaryClasses=capture.model==='actual closed source classes 1';
  const sourceFunctions=capture.model==='actual project data source functions 1'||ordinaryClasses;
  capture=sourceFunctions?checkJavaScriptProjectDataSource(capture):validateJavaScriptErrorClassModule(capture);
@@ -49,6 +55,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[],symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:[],symbolRegistryModel:'represented global Symbol registry 1',symbolRegistry:[]};
  const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map(),capabilityOwners=new Map(),opaqueOwners=new Map(),portableFunctions=new Map();
  let portableTemplateProgram={templates:undefined},arrayConstructorAuthority=null,primitiveIteratorPrototypes=null;
+ let liveHandles,embedding,hostAuthorityDepth=0;const liveHandleEntries=new Map(),liveHandleSuspensions=new WeakMap();
  function refuse(reason){const error=new TypeError(reason);refusals.add(error);throw error;}
  const allocate=()=>{while(heap.objects.some(row=>row.identity===next)||heap.symbols.includes(next))next+=1n;if(next>18446744073709551615n)throw new RangeError('the authoritative global identity allocator exhausted unsigned64 identities');return next++;};
  const sorted=()=>{heap={...heap,objects:heap.objects.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0),symbols:heap.symbols.toSorted((a,b)=>a<b?-1:a>b?1:0),symbolRegistrations:heap.symbolRegistrations?.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)};};
@@ -86,6 +93,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(['number','integer','boolean'].includes(value.$))return value.value;
   if(value.$==='object'&&value.callable){
    if(intrinsics.has(value.identity)||capabilityOwners.has(value.identity))return reverse.get(value.identity);
+   if(liveHandles!==undefined)return liveHandles.decode(value);
    if(vmProxies.has(value.identity))return vmProxies.get(value.identity);
    const handle=function representedSourceCallable(){return refuse('an engine callback needs a portable source-call continuation; original bodies are never a host fallback');};
    if(sourceNames.has(value.identity))Object.defineProperty(handle,'name',{value:sourceNames.get(value.identity),configurable:true,enumerable:false,writable:false});
@@ -95,6 +103,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
   if(value.$==='symbol'||hostOwned.has(value.identity)){if(reverse.has(value.identity))return reverse.get(value.identity);}
   if(value.$==='symbol')throw new TypeError('a Symbol needs its actual authoritative host identity');
+  if(liveHandles!==undefined)return liveHandles.decode(value);
   const object=heap.objects.find(row=>row.identity===value.identity);if(!object)throw new TypeError('an Object needs its current actual shared heap');
   if(vmProxies.has(value.identity))return vmProxies.get(value.identity);
   // A live handle, never a copied record. Property access consults the latest
@@ -252,6 +261,9 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(!sourceFunctions||module!==null)throw new TypeError('source function capability publication requires its actual unpublished source module');
   const compiled=compileJavaScriptErrorModulePlanWithCapabilities(capture.plan,registry,bindings,capabilities);if(compiled.error)throw new TypeError(compiled.error);
   const functions=[...compiled.program.functions];for(const fn of portableFunctions.values()){const previous=functions.find(row=>row.identity===fn.identity);if(previous&&!isDeepStrictEqual(previous,fn))throw new TypeError('portable operation frames cannot replace an actual source implementation');if(!previous)functions.push(fn);}
+  // These private boundary owners coordinate actual Call/Construct/Get/Set using
+  // shared bytecode. Their original carrier bodies are never an execution path.
+  for(const [operation,carrier]of [['call',function liveHandleCallOwner(){}],['construct',function liveHandleConstructOwner(){}],['get property',function liveHandleGetOwner(){}],['set property',function liveHandleSetOwner(){}]]){const owner=encode(carrier),fn=compileJavaScriptLiveHandleInvocationFunction(owner.identity,identity,operation);if(fn===undefined||functions.some(row=>row.identity===owner.identity))throw new TypeError('live handle coordinators retain fresh private operation owners');liveHandleEntries.set(operation,owner.identity);functions.push(fn);}
   module={capture,registry,program:{...compiled.program,...mergeSourceTemplates(compiled.program,portableTemplateProgram),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},sourceProgram:compiled.program,sourceUnits:[],bindings,capabilities};return module;
  }
  function registerPortableProgram(program){
@@ -356,6 +368,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   // The independent allocator skips actual occupied identities. A sparse high
   // identity never establishes that every smaller identity has been consumed.
   try{
+   hostAuthorityDepth+=1;
    if(request.realm!==identity)return refuse('the request belongs to a different actual host realm');
    let result;
    if(request.$==='machineInvokeHostCapability'){
@@ -383,9 +396,33 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
    // Genuine engine exceptions retain their original live objects. Authority
    // configuration failures are explicit too; no guessed error snapshots.
    const value=opaque(error);return {heap,value,abrupt:true};
-  }
+  }finally{hostAuthorityDepth-=1;}
  }};
- return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
+ function decodePublic(value){if(liveHandles!==undefined&&value.$==='object'){const row=heap.objects.find(row=>row.identity===value.identity);if(row!==undefined&&!['hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(row.$))return liveHandles.decode(value);}return decode(value);}
+ function beginHandleOperation(operation,target,receiver,arguments_){
+  if(hostAuthorityDepth!==0)return refuse('a native callback requires its own portable continuation before entering a live source handle');
+  if(module===null||!liveHandleEntries.has(operation)||target?.$!=='object'||(operation==='call'||operation==='construct')&&!target.callable||!Array.isArray(arguments_)||arguments_.length>1048575)throw new TypeError('a live invocation retains its actual published operation, target and bounded argument List');
+  return beginJavaScriptCallMachine(module.program,heap,liveHandleEntries.get(operation),target,[receiver,...arguments_]);
+ }
+ function retainHandleExecution(operation,execution){
+  const transition=execution.transition;if(transition.$==='machineCompleted')return transition.value;if(transition.$==='machineThrow')throw decodePublic(transition.value);if(transition.$==='machineInvalid')return refuse(transition.reason);
+  const error=new TypeError('a live source handle suspended at its explicit portable continuation'),record=Object.freeze({$:'liveHandleSuspension',operation,transition});liveHandleSuspensions.set(error,record);refusals.add(error);throw error;
+ }
+ function invokeHandle(operation,target,receiver,arguments_){return retainHandleExecution(operation,runJavaScriptSourceTransition(embedding,beginHandleOperation(operation,target,receiver,arguments_),{steps:liveHandleSteps}));}
+ function resumeHandleSuspension(error,options={}){
+  const record=liveHandleSuspensions.get(error);if(record===undefined)throw new TypeError('live handle retry requires its actual privately retained suspension');const transition=record.transition;
+  if(hostAuthorityDepth!==0||transition.machine?.heap!==heap)throw new TypeError('live handle retry cannot discard newer heap changes or enter a native callback');
+  liveHandleSuspensions.delete(error);return decodePublic(retainHandleExecution(record.operation,runJavaScriptSourceTransition(embedding,transition.$==='machineResourceLimit'?{$:'machineContinue',machine:transition.machine}:transition,options)));
+ }
+ if(sourceFunctions)liveHandles=createJavaScriptLiveHandles({heap:()=>heap,encode,decode:decodePublic,decodePrimitive:decode,decodeOpaque(value){if(reverse.has(value.identity))return reverse.get(value.identity);return refuse('an opaque live value requires its actual independently supplied native owner');},adoptHeap(value){heap=value;},publish(handle,value){forward.set(handle,value.identity);if(!reverse.has(value.identity))reverse.set(value.identity,handle);},constructable(value){
+  if(module===null)return refuse('a live callable requires its actual published constructor authority');const directory=module.program.constructorDirectory,classification=directory===undefined?undefined:classifyJavaScriptArraySpeciesConstructor(heap,directory,value);
+  if(classification?.$==='arrayConstructorKnown')return classification.fact.constructable;if(classification?.$==='arrayConstructorNotConstructable')return false;
+  const declaration=constructorFacts.find(row=>row.identity===value.identity);if(declaration!==undefined)return declaration.constructable;
+  if(operations.functionPrototype?.$==='object'&&value.identity===operations.functionPrototype.identity)return false;
+  return refuse('a live callable shape requires actual target constructor authority');
+ },invoke:invokeHandle,refuse});
+ embedding={get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode:decodePublic,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
+  beginHandleOperation,runHandleOperation(operation,target,receiver,arguments_,options={}){return runJavaScriptSourceTransition(embedding,beginHandleOperation(operation,target,receiver,arguments_),options);},readHandleSuspension(error){return liveHandleSuspensions.get(error);},resumeHandleSuspension,
   registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeSymbolAllocation,resumeSymbolDescription,resumeFunctionNameSymbolDescription,resumeObjectPrimitivePrototype,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
@@ -394,5 +431,5 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   opaqueCapabilities:()=>opaqueGetCapability&&opaqueSetCapability?[opaqueGetCapability,opaqueSetCapability]:[],
   encodeHostError(value){if(!nativeTypes.isNativeError(value))throw new TypeError('an IO Error result requires actual engine Error authority');return opaque(value);},
   finishModuleInitialization(state){if(module!==null)throw new TypeError('actual source module initialization is completed exactly once');for(const slot of state.slots){const error=readJavaScriptOrdinaryValueError(heap,slot.value);if(error)throw new TypeError(error);}module=prepareJavaScriptInitializedErrorModule(capture,registry,state);return module;}
- };
+ };return embedding;
 }

@@ -704,6 +704,17 @@ and independent kernel/forgery/resource controls are authored, not executed.
 Callable handles, derived/Proxy protocols, whole own-project translation and the
 broader vision remain work; no completion percentage or execution claim follows.
 
+The [live handle batch](../../handoffs/issue-227-live-callable-handles-2026-11-03.md)
+shares one Node driver and four small operation coordinators across public
+Call/Construct/Get/Set. Live metadata uses the existing heap descriptor/prototype
+algorithms; no original body supplies behavior. Source review corrected operand
+imports selecting a stale heap, setter completion after suspension and Array
+length writes needing the existing numeric conversion protocol. Eleven independent
+native originals plus resource, alias, reflection, callback-boundary and source-free
+snapshot controls are drafted and unexecuted. Reflective Array length descriptors,
+complete native callable metadata/callback ports and the full broader objective
+remain work. This is code progress, not a requirement percentage or runtime proof.
+
 The [Function binding ordinary Call batch](../../handoffs/issue-227-function-binding-calls-2026-11-03.md)
 drafts actual bound slots, ordered metadata/getter continuations, ordinary heap
 integration and constant-size projected forwarding code. Thirteen native-original

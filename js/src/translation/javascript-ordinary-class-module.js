@@ -24,11 +24,11 @@ export function createJavaScriptOrdinaryClassDeclarations(input){
  * operation has an executable implementation. Collection-bearing modules use
  * the same bootstrap plus the separately supplied shared collection linker;
  * they must not fall back to original host Set/Map or class bodies. */
-export function prepareJavaScriptOrdinaryClassModule(input,{realmIdentity,declarationWitness=null}={}){
+export function prepareJavaScriptOrdinaryClassModule(input,{realmIdentity,declarationWitness=null,liveHandleSteps=65536}={}){
  if(typeof realmIdentity!=='bigint'||realmIdentity<=0n||realmIdentity>18446744073709551615n)throw new TypeError('ordinary source classes require an explicit actual realm identity');
  const authority=createJavaScriptOrdinaryClassDeclarations(input),capture=authority.capture;
  if(capture.cells.length)throw new TypeError('this ordinary class module needs its actual cell initialization before publication');
- const embedding=createJavaScriptErrorRealm(capture,{...authority,identity:realmIdentity,deferModule:true,declarationWitness}),collection=linkJavaScriptCollectionRealm(embedding,capture.capabilities,{realmIdentity});embedding.finishSourceCapabilities(collection.references,[]);
+ const embedding=createJavaScriptErrorRealm(capture,{...authority,identity:realmIdentity,deferModule:true,declarationWitness,liveHandleSteps}),collection=linkJavaScriptCollectionRealm(embedding,capture.capabilities,{realmIdentity});embedding.finishSourceCapabilities(collection.references,[]);
  return {capture,embedding,collection,
   callable(name){const definitions=capture.plan.functions.filter(row=>row.name===name&&capture.plan.exports.includes(row.identity));if(definitions.length!==1)throw new TypeError('a source callable value requires its actual public declaration');const owner=embedding.module.registry.owners.find(row=>row.source===definitions[0].identity);return {$:'object',identity:owner.identity,callable:true};},
   begin(name,args){collection.verify();const definitions=capture.plan.functions.filter(row=>row.name===name&&capture.plan.exports.includes(row.identity)&&(row.$==='errorStatementFunctionPlan'||row.$==='errorMutableStatementFunctionPlan'));if(definitions.length!==1)throw new TypeError('entry calls require one actual ordinary public function; construct a class through its actual source new expression');return beginJavaScriptErrorModule(embedding.module,embedding.heap(),definitions[0].identity,args);}

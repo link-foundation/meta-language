@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-live-handle-call-source.js',moduleName:'javascript_live_handle_call_source',sourceDependencies:true,model:'Actual live handle Call Construct Get and Set coordinators 1',programAsset:'javascript-live-handle-call-source-program'},
  {sourcePath:'js/src/translation/javascript-function-binding.js',moduleName:'javascript_function_binding',sourceDependencies:true,model:'Actual Function binding allocation metadata and getter continuations 1',programAsset:'javascript-function-binding-program'},
  {sourcePath:'js/src/translation/javascript-collection-construction-rules.js',moduleName:'javascript_collection_construction_rules',model:'Actual collection Construct storage and brand selection 1',programAsset:'javascript-collection-construction-rules-program'},
  {sourcePath:'js/src/translation/javascript-collection-construction.js',moduleName:'javascript_collection_construction',sourceDependencies:true,model:'Actual strong and weak collection generic construction receiver ownership 1',programAsset:'javascript-collection-construction-program'},
@@ -151,6 +152,7 @@ const fixtures=[
  'js/tests/fixtures/javascript-function-binding-source.mjs',
  'js/tests/fixtures/javascript-bound-construction-source.mjs',
  'js/tests/fixtures/javascript-bound-instance-of-source.mjs',
+ 'js/tests/fixtures/javascript-live-handle-source.mjs',
  'js/tests/fixtures/javascript-shared-species-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-collection-source.mjs',
@@ -367,6 +369,7 @@ const consumers=[
  'js/tests/translation-javascript-shared-species-construction.test.js',
  'js/tests/translation-javascript-function-binding.test.js',
  'js/tests/translation-javascript-bound-construction.test.js',
+ 'js/tests/translation-javascript-live-handles.test.js',
  'js/tests/translation-javascript-iterator-protocol.test.js',
  'js/tests/translation-javascript-array-iteration.test.js',
  'js/tests/translation-javascript-array-spread.test.js',
@@ -469,6 +472,8 @@ const consumers=[
  'js/tests/translation-javascript-ordinary-class-source.test.js',
  'js/tests/translation-javascript-source-text.test.js',
  'js/src/node-source-modules.js',
+ 'js/src/translation/javascript-source-driver.js',
+ 'js/src/translation/javascript-live-handles.js',
  'js/src/translation/javascript-host-capabilities.js',
  'js/tests/translation-javascript-host-capabilities.test.js',
  'js/src/translation/disjoint-collection-iterations.js',
@@ -739,6 +744,7 @@ for(const [source,target] of [
  ['javascript-function-binding-source','javascript-function-binding-source'],
  ['javascript-bound-construction-source','javascript-bound-construction-source'],
  ['javascript-bound-instance-of-source','javascript-bound-instance-of-source'],
+ ['javascript-live-handle-source','javascript-live-handle-source'],
  ['rust-exclusive-source-vectors','rust-exclusive-source-vectors'],
  ['rust-exclusive-source-strings','rust-exclusive-source-strings'],
  ['rust-exclusive-source-compounds','rust-exclusive-source-compounds'],

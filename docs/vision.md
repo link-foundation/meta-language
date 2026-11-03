@@ -128,13 +128,38 @@ before a primitive-left shortcut. A bounded actual target path retains original
 source operands while the selected getter/method uses the current actual target.
 Custom Symbol.hasInstance lookup, its receiver, Boolean conversion and abrupt
 values remain observable; prototype containment does not perform this delegation.
-Public callable metadata handles, Proxy and derived constructor protocols retain
-their separate full obligations; a projected ordinary Call body alone cannot grant
-base-constructor behavior. These contracts follow
+Public source values use stable live handles, with actual own descriptors and
+prototype links read from the current heap. Callable carrier constructibility
+comes from actual constructor authority, including bound targets, rather than the
+carrier body or source spelling. Nonconstructor methods and constructible bound
+carriers avoid an invented own prototype. Irreversible descriptors, array length,
+prototype and nonextensibility are mirrored only to satisfy the host Proxy
+invariants; the heap remains the represented authority. Configurable properties
+need no eager native value materialization while the carrier is extensible.
+Descriptor field presence, ordered keys, Symbols, aliases, deletion, partial
+definition and exact primitive bits remain observable. Imported operands are
+encoded before selecting the current heap for each operation.
+Four private boundary coordinators reuse actual shared Call/Construct/Get/Set
+instructions and the same explicit source driver as public Node execution.
+Selected accessors, setter Boolean completion, Array length conversion and
+constructor results therefore use their real portable continuations. Boundary
+owner bodies never execute or replace represented declarations. Work exhaustion
+retains a private suspension with the actual machine; explicit retry rejects
+intervening heap changes and consumes its prior token. Snapshot data contains the
+actual code, ordinary/bound slots and frames, independently of native handle caches.
+Untranslated native callback stacks need their own portable continuation before
+source reentry. Full reflective Array descriptor conversion, unknown native
+callable metadata authority, source text/brand reflection and arbitrary callback
+ports retain their complete obligations, alongside Proxy and derived constructor
+protocols. A projected ordinary Call body alone cannot grant base-constructor
+behavior. These contracts follow
 [Function.prototype.bind](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-function.prototype.bind)
 and [bound function exotic objects](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-bound-function-exotic-objects),
 [GetFunctionRealm](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-getfunctionrealm)
 and [OrdinaryHasInstance](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-ordinaryhasinstance).
+Live Node carriers also retain the
+[Proxy invariants](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-proxy-object-internal-methods-and-internal-slots)
+without treating a native carrier as a source CST or callable-body witness.
 
 Reflect.construct checks target and actual/default newTarget before reading its
 array-like argument Object, then Gets length and every ordered index. Array.of

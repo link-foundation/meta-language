@@ -6,6 +6,10 @@ and primary specification reading only. No test, represented program, generator,
 formatter, validation gate or compilation ran; no CI feedback was read. Full
 requirements drafting remains incomplete; the original active goal stays intact.
 
+Successor: [live callable handles](issue-227-live-callable-handles-2026-11-03.md)
+drafts the common Node handle/driver boundary and independent continuation
+controls. Its remaining reflection and callback protocols remain obligations.
+
 ## Actual drafted paths
 
 Constructor classification follows actual immutable bound target links to the
