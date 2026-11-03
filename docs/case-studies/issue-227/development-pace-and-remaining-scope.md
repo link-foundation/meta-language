@@ -591,3 +591,15 @@ The inventory is unexecuted; it supplies no requirement completion percentage.
 A fourth projection original exercises genuine FnMut writeback while an unrelated
 vector owner remains moved. The inventory is now 365 authored positive rows
 (301 literal, 64 actual source) across eighteen groups; no execution occurred.
+
+A strict immediate-overwrite projection retains three more join originals and
+avoids materializing a dead selected vector root. The inventory becomes 368
+authored positives (304 literal, 64 actual source), eighteen groups. This source
+optimization does not claim a general uninitialized carrier: non-immediate
+overwrites and nested joins retain explicit boundaries and unexecuted controls.
+
+Sharing that immediate replacement proof with adjacent callable bindings adds
+two readonly-result function originals. Current driver inventory: 370 authored
+positives (306 literal, 64 actual source), eighteen groups. Private descriptor
+scopes are restored after lowering each binding; no new public admission flag
+or independent runtime semantics is introduced. These paths remain unexecuted.

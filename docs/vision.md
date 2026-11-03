@@ -4589,6 +4589,10 @@ State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state
 transport, and every omitted slot must retain its exact original environment.
+A main join or adjacent callable binding may also omit a root immediately
+replaced by the next actual whole assignment when that replacement cannot access it. This source-derived kill
+projection must remain local to the exact join and preserve every branch effect.
+It supplies no general uninitialized value or permission to read a moved root.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.

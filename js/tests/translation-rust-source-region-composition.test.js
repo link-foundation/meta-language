@@ -33,3 +33,7 @@ test('mutable readonly formals initialize real local storage without changing th
 test('conditional state packets carry written scalar slots without copying a moved unchanged vector',()=>{
  const row=originals.find(value=>value.name==='conditional packets retain written scalar without copying unchanged moved vector');assert.ok(row);const checked=checkProgram(parseRust(row.source,options)),branches=nodes(checked.main).filter(node=>node.k==='if'&&node.type?.kind==='tuple');assert.ok(branches.length>0);for(const branch of branches){assert.equal(branch.type.elements.length,2);assert.equal(branch.type.elements[1].kind,'fixed');assert.equal(branch.type.elements[1].bits,8);assert.equal(branch.type.elements[1].signed,false);}assert.equal(output(emitJavaScript(checked).text),row.stdout);
 });
+
+test('immediate root replacement omits only the killed joined allocation and retains scalar state',()=>{
+ const row=originals.find(value=>value.name==='immediate replacement discards one joined root while preserving another written scalar');assert.ok(row);const checked=checkProgram(parseRust(row.source,options)),branches=nodes(checked.main).filter(node=>node.k==='if'&&node.type?.kind==='tuple');assert.ok(branches.length>0);for(const branch of branches){assert.equal(branch.type.elements.length,2);assert.equal(branch.type.elements[1].kind,'fixed');assert.equal(branch.type.elements[1].bits,8);}assert.equal(output(emitJavaScript(checked).text),row.stdout);
+});
