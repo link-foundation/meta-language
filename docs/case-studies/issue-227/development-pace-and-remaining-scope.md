@@ -580,3 +580,14 @@ old/new snapshot assertion. The driver inventory becomes 361 authored positives
 (297 literal originals, 64 actual-source scenarios) in eighteen groups. Conditional
 moves remain a distinct uninitialized state-packet frontier; a lexical scope
 permission does not itself implement that carrier. No runtime results are claimed.
+
+One bounded projection now connects conditional and main state transport to the
+actual written roots, retaining unchanged SSA names without phantom owned reads.
+Three more conditional originals bring the positive driver to 364 authored rows
+(300 literal and 64 actual source) across eighteen groups. A selected root that
+is moved in one arm and written in another remains an explicit carrier gap.
+The inventory is unexecuted; it supplies no requirement completion percentage.
+
+A fourth projection original exercises genuine FnMut writeback while an unrelated
+vector owner remains moved. The inventory is now 365 authored positive rows
+(301 literal, 64 actual source) across eighteen groups; no execution occurred.

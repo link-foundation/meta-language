@@ -4585,6 +4585,10 @@ readonly or closed interface; composition must interpret actual ordered state
 packets, source binders and loan revisions. Closed callbacks cannot hide borrowed
 vector carriers, and whole-root admission grants no projected-field authority.
 Older independent profile guards remain intact.
+State joins transport only actual written outer roots. Unchanged SSA names
+remain outside the result/state packet; moving their owned value must not
+create a phantom second read. Unknown operations retain conservative full-state
+transport, and every omitted slot must retain its exact original environment.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.
