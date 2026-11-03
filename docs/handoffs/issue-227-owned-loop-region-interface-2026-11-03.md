@@ -65,7 +65,7 @@ removed interface, reordered same-type slots and a forged source binder. Links
 text/binary controls retain the facet and compare all four emitter products.
 Earlier positives, all refusal inputs and their assertions remain.
 
-Current declared input inventory: 423 positives in nineteen groups, comprising
+This region-interface checkpoint declared 423 positives in nineteen groups, comprising
 359 literal originals and 64 actual-source scenarios. The mixed group contains
 58 positives and 21 refusals. None has been executed for this batch; these
 numbers establish neither passes nor completed requirement counts.
@@ -88,10 +88,11 @@ numbers establish neither passes nor completed requirement counts.
 - Generalize finite while-loop helper region interfaces and projected exclusive
   fields, retaining mandatory caller/callback writebacks and exact recursive
   referent layouts. Existing finite helper admission and acyclic checks stay.
-- Extend overwrite liveness across loops only after proving every actual head,
-  body and completion access. The native-valid mixed unknown-loop refusal still
-  exists: the old join cannot lose its slot merely because a later loop looks
-  unrelated. This is independent of the new fold-body region interpretation.
+- Continue overwrite liveness through each actual head, body, lease and completion
+  access. The [loop-aware successor](issue-227-loop-aware-overwrite-liveness-2026-11-03.md)
+  drafts this for admitted nonreturning loops and retains the exact old unknown-loop
+  source as positive. Returning loops and uninitialized loop-entry carriers still
+  need their full contracts; unrelated-looking source syntax grants no authority.
 - Complete borrowed callback interfaces, full own-project module translation,
   JavaScript constructor frontiers and every broader vision obligation. This
   batch and its control inventory do not redefine the active goal around loops.

@@ -33,3 +33,6 @@ test('every retained refusal keeps its original source and rejects before a priv
  const library=actualLibrary();for(const row of refusals)assert.throws(()=>checkProgram(parseRust(row.source,options(library,'1.90.0'))),error=>['type','unsupported','syntax'].includes(error.kind),row.name);
 });
 test('actual shared-loop literals retain complete version and original stdout declarations',()=>{assert.equal(originals.length,34);assert.equal(refusals.length,18);for(const row of [...originals,...refusals]){assert.equal(row.sourceVersionRange,versions.rust);assert.match(row.source,/fn main/);}for(const row of originals)assert.equal(typeof row.stdout,'string');});
+test('a copied source descriptor in an otherwise matching inventory cannot grant loop admission',()=>{
+ const node={k:'math',op:'rustStandardCollectionOrderedLoop',name:'0',args:[{value:{k:'unit'},spread:false},{value:{k:'unit'},spread:false}]},parser={standardCollectionSourceLoops:[{view:{owned:true},slots:[],returns:[],span:{start:0,end:1}}]};assert.equal(readRustStandardCollectionSourceLoopOrigin(parser,node),null);assert.throws(()=>lowerRustStandardCollectionSourceLoop(parser,node,new Map(),()=>{throw Error('not reached');},()=>{throw Error('not reached');}),/actual parsed source/);
+});

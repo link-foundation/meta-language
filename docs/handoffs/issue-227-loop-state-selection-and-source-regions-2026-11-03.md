@@ -40,7 +40,7 @@ All preexisting inputs, refusal controls and their indexes remain.
 
 The complete-original CI driver now includes all six finite-record originals in
 a separate group with its actual nonexclusive source profile. The inventory is
-423 authored positives in nineteen groups: 359 literal originals and 64 actual
+428 authored positives in nineteen groups: 364 literal originals and 64 actual
 source scenarios. These are declared controls, not passing results or a count
 of completed requirements. Existing CI performs native original/product checks,
 default complete CST reconstruction, and typed Links text/binary rechecks. The
@@ -54,7 +54,8 @@ parenthesized blocks may not. Six appended owned-loop originals and three
 invalid-source refusals retain ordered stdout, empty/direct blocks and actual
 function returns. These bring the owned-loop group to 38 positives and 19
 refusals. That checkpoint declared 414 positives; the owned-loop region successor
-adds nine, giving the 423-positive total above. None ran.
+adds nine, followed by five loop-aware overwrite positives for the 428-positive
+total above. None ran.
 
 Source review found that owned vector loop/sort fixture ranges spell the same
 bounds with a leading `Rust ` label, while the original driver compared the raw
@@ -96,8 +97,9 @@ obligations and is not a pass/completion report:
    controls. Generate native policy implementations from the shared JavaScript
    source after full drafting; do not add handwritten Rust semantics.
 
-The existing native-valid unknown-loop refusal in the mixed-region originals
-remains until that path is drafted. Standard collection/signature-3 interfaces,
+The [loop-aware successor](issue-227-loop-aware-overwrite-liveness-2026-11-03.md)
+now retains the exact native-valid unknown-loop source as a positive original
+while keeping returning/unknown operations as barriers. Standard collection/signature-3 interfaces,
 projected exclusive places, borrowed callbacks and full own-project module
 translation are additional independent frontiers; this batch closes none by
 declaration. The active goal retains their full scope.

@@ -4625,6 +4625,12 @@ separate interpreter roles and cannot be observed as ordinary source values.
 Their complete type and declaration edges survive ordinary Links text/binary
 transport and checked projection. Shared collection iteration and borrowed item
 escaping require their own actual interfaces under the same source obligations.
+Overwrite analysis may cross a real admitted finite/ordered loop only after
+inspecting its complete head/body dependencies and actual borrowed iterator
+leases. Loop writes remain accesses, because zero iterations cannot establish
+an overwrite. Returning loops, unknown private operations, aborts and unresolved
+completion packets retain conservative barriers. Reader inventory shape or copied
+descriptors do not establish loop admission.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.

@@ -19,7 +19,8 @@ import {readRustOwnedRecordNestedLoopError,readRustOwnedRecordNestedLoopDepthErr
 import {readRustStandardSumTrySourceBranches} from './rust-standard-sum-completions.js';
 import {hasRustExpressionCompletion} from './rust-expression-completions.js';
 const admitted=new WeakSet();
-export function assertRustOwnedRecordLoopAdmission(value){if(!admitted.has(value))throw unsupported('finite record loop helper','the helper needs its actual admitted source counter and exit-state derivation',value?.span);}
+export function hasRustOwnedRecordLoopAdmission(value){return admitted.has(value);}
+export function assertRustOwnedRecordLoopAdmission(value){if(!hasRustOwnedRecordLoopAdmission(value))throw unsupported('finite record loop helper','the helper needs its actual admitted source counter and exit-state derivation',value?.span);}
 const fail=(reason,span)=>{throw unsupported('Rust finite record loop',reason,span);};
 function inventory(parser){return parser.ownedRecordFiniteLoops??={entries:[],helpers:[],nodes:0};}
 export function readRustOwnedRecordFiniteLoopSource(parser,node){if(node?.k!=='math'||node.op!==readRustOwnedRecordLoopOperation()||node.args?.length!==2)return null;const ordinal=Number(node.name);return Number.isSafeInteger(ordinal)&&ordinal>=0&&String(ordinal)===node.name?parser.ownedRecordFiniteLoops?.entries[ordinal]??null:null;}

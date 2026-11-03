@@ -22,7 +22,7 @@ const operation='rustStandardCollectionOrderedLoop',admissions=new WeakSet();
 const fail=(reason,span)=>{throw unsupported('Rust shared ordered collection loop',reason,span);};
 const name=value=>({k:'name',path:[value]}),project=(value,index)=>({k:'tupleIndex',object:name(value),index});
 export function testRustStandardCollectionSourceLoopNode(node){return node?.k==='math'&&node.op===operation;}
-export function readRustStandardCollectionSourceLoopOrigin(parser,node){if(!testRustStandardCollectionSourceLoopNode(node)||node.args?.length!==2)return null;const index=Number(node.name);return Number.isSafeInteger(index)&&index>=0&&String(index)===node.name?parser.standardCollectionSourceLoops?.[index]??null:null;}
+export function readRustStandardCollectionSourceLoopOrigin(parser,node){if(!testRustStandardCollectionSourceLoopNode(node)||node.args?.length!==2)return null;const index=Number(node.name),source=Number.isSafeInteger(index)&&index>=0&&String(index)===node.name?parser.standardCollectionSourceLoops?.[index]??null:null;return admissions.has(source)?source:null;}
 function pattern(parser,path,depth=0){
  const c=parser.cursor,token=c.peek(),mutable=Boolean(c.eat('mut'));if(mutable&&c.peek().kind!=='identifier')fail('mutable for binding requires its actual direct identifier',token);if(depth>4)fail('ordered loop patterns retain their finite direct item structure',token);
  if(c.eat('&'))return {kind:'reference',inner:pattern(parser,path,depth+1),span:token};

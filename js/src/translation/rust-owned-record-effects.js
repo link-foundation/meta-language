@@ -7,12 +7,13 @@ import {readRustOwnedRecordEffectForm,readRustOwnedRecordEffectChildren,readRust
 import {readRustExpressionCompletionPacketOperation,acceptRustExpressionCompletionInertLeaf,readRustExpressionCompletionShortCircuitValue} from './rust-expression-completion-rules.js';
 import {readRustRecordSourceType} from './rust-records.js';
 import {expandSurfacePropositionValue} from './proposition-values.js';
-import {readRustOwnedRecordFiniteLoopSource,lowerRustOwnedRecordFiniteLoop,appendRustOwnedRecordFiniteLoopHelpers} from './rust-owned-record-loops.js';
+import {readRustOwnedRecordFiniteLoopSource,hasRustOwnedRecordLoopAdmission,lowerRustOwnedRecordFiniteLoop,appendRustOwnedRecordFiniteLoopHelpers} from './rust-owned-record-loops.js';
 import {readRustOwnedRecordLoopOperation} from './rust-owned-record-loop-rules.js';
 import {readRustExclusiveSourceWholeAssignment,readRustExclusiveSourceNode,testRustExclusiveSourcePrivateNode} from './rust-exclusive-source-calls.js';
 import {readRustExclusiveSourceCompoundAssignment} from './rust-exclusive-source-compounds.js';
 import {projectRustOwnedRecordStatePlace} from './rust-owned-record-state.js';
 import {attachRustSourceStateTransition} from './rust-source-state-transitions.js';
+import {testRustOwnedRecordFieldDescendant} from './rust-owned-record-update-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust ordered record state',reason,span);};
 function effects(parser){
  if(parser.ownedRecordEffects)return parser.ownedRecordEffects;
@@ -70,14 +71,21 @@ function killedBeforeNextAccess(parser,node,continuation,environment){
  const first=new Map(),killed=new Set();let work=0,complete=true;
  function accesses(expression){
   const found=new Set(),pending=[expression],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);if(++work>readRustOwnedRecordEffectLimit('inspection'))fail('overwrite liveness exceeds its source inspection budget',node.span);
-   if(value.k==='abort'||value.k==='math'&&readRustExpressionCompletionPacketOperation(value.op))return null;
+   if(value.k==='abort'||value.k==='rustStandardSumTry'||value.k==='math'&&readRustExpressionCompletionPacketOperation(value.op))return null;
    if(value.sourceStateTransition)found.add(value.sourceStateTransition.binder.identity);
    if(marker(value)){
     const ordinary=readRustOwnedRecordEffectSource(parser,value),exclusive=readRustExclusiveSourceNode(parser,value);
     if(ordinary)found.add(ordinary.slot.lexical);
     else if(exclusive?.kind==='write')found.add(exclusive.info.slot.lexical);
     else if(exclusive?.kind==='call'){for(const borrow of exclusive.info.borrows)found.add(borrow.slot.lexical);for(let index=0;index<value.args.length;index++)if(!exclusive.info.borrows.some(borrow=>borrow.index===index))pending.push(value.args[index].value);continue;}
-    else return null;
+    else {
+     const ordered=readRustStandardCollectionSourceLoopOrigin(parser,value),loop=ordered??readRustOwnedRecordFiniteLoopSource(parser,value);
+     if(!loop||!ordered&&!hasRustOwnedRecordLoopAdmission(loop)||loop.returns?.length)return null;
+     // A borrowed iterator's lease is an access even when its item pattern
+     // copies a scalar or ignores every element. The head/body operands below
+     // supply ordinary dependencies; the actual lease supplies hidden loans.
+     if(ordered&&!ordered.view.owned){const loan=ordered.view.loan;if(!loan)return null;const identities=new Set([loan.sourceBindingIdentity,loan.sourcePlaceBindingIdentity,...(loan.sourceValueBorrowBindings??[]),...(loan.sourceLoanBindingIdentities??[]),...(loan.sourcePlaceLoanBindingIdentities??[])].filter(Boolean));if(!identities.size)return null;for(const slot of ordered.slots)for(const identity of identities){if(++work>readRustOwnedRecordEffectLimit('inspection'))fail('iterator lease liveness exceeds its source inspection budget',node.span);if(identity===slot.root||testRustOwnedRecordFieldDescendant(slot.root,identity)){found.add(slot.lexical);break;}}}
+    }
    }
    for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);
   }return found;

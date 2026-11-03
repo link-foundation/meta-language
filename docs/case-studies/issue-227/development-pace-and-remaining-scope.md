@@ -647,3 +647,12 @@ inventory to 423 positives (359 literal, 64 actual source), nineteen groups.
 All generation and execution remain deferred. Shared collections, escaping loop
 results and finite-helper region interfaces remain explicit full-scope work;
 the case does not count this source batch as a completed requirement percentage.
+
+The [loop-aware overwrite batch](../../handoffs/issue-227-loop-aware-overwrite-liveness-2026-11-03.md)
+reuses actual admitted head/body/lease dependencies and preserves zero-iteration
+write semantics. It retains the exact earlier native-valid loop frontier as a
+positive original, with its previous revision/input identity and coverage, plus
+four further positive programs and two invalid-source controls. Declared totals:
+428 positives in nineteen groups, 364 literal and 64 actual source. No runtime
+evidence, regenerated assets or requirement-level completion claims accompany
+these source edits.
