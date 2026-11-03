@@ -4869,6 +4869,23 @@ Canonical boxed array constructors first establish the actual vector and element
 owners, then retain every original Box layer. This supplies neither a new stored
 reference domain nor custom allocation/Drop semantics. Indexed/destructuring
 places, general partial moves and user-defined assignment traits remain separate.
+Mutable call operands use that same ordered place parser. The caller keeps its
+complete root/field while a separate actual referent selects a canonical Box
+payload. The selected mutable formal may request further known Box dereference
+coercion, retaining exact remaining owner identity rather than inferring it from
+an erased scalar width. Acquisition and overlap checks keep original places.
+Projected calls retain the payload qualifier only on the designated actual
+extraction expression; independent checking proves every canonical removed layer,
+the complete selected callee position and the original extraction/rebuild graph.
+An empty field path is admitted only with a genuine Box payload projection.
+Ordinary whole calls cannot acquire a projected interface from a qualifier alone.
+Writeback restores complete caller positions and unchanged siblings in order,
+with one current storage revision per distinct root. Explicit callback payload
+operands retain this protocol; hidden captured state keeps its original complete
+whole-root interface and cannot become a partial payload capture. Boxed standard
+Option/Result constructors establish their real library payload owner before Box
+layer construction, preserving actual variant declarations and field positions.
+Canonical call coercion follows [Rust mutable dereference coercion](https://doc.rust-lang.org/reference/type-coercions.html#coercion-types).
 The ordering follows [Rust compound assignment](https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions)
 and [operator precedence](https://doc.rust-lang.org/reference/expressions.html#expression-precedence).
 Stored-reference payloads, general recursive state, per-layer lifetime

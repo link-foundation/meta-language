@@ -910,3 +910,18 @@ The preceding commits `fc308e1cb` (2026-11-04 00:02:59 +07:00) and `0c42ff8d7`
 (00:17:27 +07:00) are 14 minutes 28 seconds apart. This measures publication of
 source edits and controls, without executing their behavior. It supplies no
 verified requirements-per-minute rate or reliable full-scope finish date.
+
+The [Box payload call batch](../../handoffs/issue-227-box-payload-calls-2026-11-04.md)
+joins the shared ordered place parser, one canonical projection-depth policy and
+the existing checked extraction/call/rebuild protocol. Explicit and formal-directed
+Box projections share full original roots; no serialized facet shape or target
+runtime was added. Boxed standard sum construction retains its actual payload
+owner. Twenty-one positive and eleven invalid originals plus independent syntax,
+owner/depth, packet, callback and Links controls are authored, all unexecuted.
+Receiver methods, intrinsic replacements, low-level payload contexts and all
+broader source/grammar/concept obligations remain actual code work.
+
+The preceding commits `0c42ff8d7` (2026-11-04 00:17:27 +07:00) and `73fe8da8e`
+(00:30:21 +07:00) are 12 minutes 54 seconds apart. This is source publication
+cadence, without behavioral execution or an audited requirement denominator.
+It cannot establish a completion percentage or whole-project finish estimate.

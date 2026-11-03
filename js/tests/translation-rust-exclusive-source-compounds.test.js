@@ -9,7 +9,7 @@ import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import {readRustExclusiveSourceCompoundOperation,readRustExclusiveSourceCompoundPlace,acceptRustExclusiveSourceCompoundPrimitive} from '../src/translation/rust-exclusive-source-compound-rules.js';
+import {readRustExclusiveSourceCompoundOperation,readRustExclusiveSourceCompoundPlace,readRustExclusiveSourceBorrowPlacePlan,acceptRustExclusiveSourceCompoundPrimitive} from '../src/translation/rust-exclusive-source-compound-rules.js';
 import {rustExclusiveSourceCompoundOriginals as originals,rustExclusiveSourceCompoundRefusals as refusals,rustExclusiveSourceCompoundVersions as versions} from './fixtures/rust-exclusive-source-compounds.mjs';
 function output(code){const lines=[];vm.runInNewContext(code,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}}, {timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
 for(const row of originals)for(const sourceVersion of ['1.90.0','1.99.0'])test('exclusive compound actual source '+row.name+'/'+sourceVersion,()=>{
@@ -39,5 +39,15 @@ test('compound place plans preserve prefix postfix and grouping order independen
 test('primitive RHS-before-place semantics survive typed Links and every emitter',()=>{
  const row=originals[4],packet=createTypedProgramLinks(row.source,'Rust',{rustSourceVersion:'1.90.0',rustExclusiveSourceModel:versions.model}),text=packet.network.toLino(),binary=encodeLinkNetworkBinary(packet.network),targets=['JavaScript','Rust','Lean','Rocq'],baseline=Object.fromEntries(targets.map(target=>[target,emitTypedProgramLinks(packet.network,packet.root,target)]));
  for(const graph of [packet.network,LinkNetwork.fromLino(text),decodeLinkNetworkBinary(binary)]){assert.equal(graph.toLino(),text);assert.deepEqual(encodeLinkNetworkBinary(graph),binary);const restored=decodeTypedProgramLinks(graph,packet.root);assert.ok(restored.items.length>0);for(const target of targets){const emitted=emitTypedProgramLinks(graph,packet.root,target);assert.deepEqual(emitted,baseline[target]);if(target==='JavaScript')assert.equal(output(emitted.code),row.stdout);}}
+});
+test('borrowed place plans stop at the actual call delimiter after consuming grouped fields and dereferences',()=>{
+ const plans=[
+  {forms:['name',','],expected:[1,0]},
+  {forms:['*','*','name',')'],expected:[3,2,-1,-1]},
+  {forms:['*','name','.','name',',','other'],expected:[4,1,3,-1]},
+  {forms:['(','*','name',')','.','name',')'],expected:[6,2,-1,5]},
+  {forms:['(','*','(','name',')',')',')'],expected:[6,3,-1]},
+ ];for(const row of plans)assert.deepEqual(readRustExclusiveSourceBorrowPlacePlan(row.forms),row.expected);
+ for(const forms of [['name'],['name','}'],['name','other',')'],['name','[','number',']',')'],['(','*','name',','],['*',')'],[...Array(256).fill('*'),'name',')'],Array(1026).fill('name')])assert.deepEqual(readRustExclusiveSourceBorrowPlacePlan(forms),[]);
 });
 test('unselected source profile keeps its original primitive mutation boundary',()=>{assert.throws(()=>parseRust(originals[0].source,{sourceVersion:'1.90.0'}),error=>error.kind==='unsupported');});

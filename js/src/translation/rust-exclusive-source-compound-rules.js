@@ -16,6 +16,14 @@ export function readRustExclusiveSourcePlacePlan(forms){
  const plan=readRustExclusiveSourceCompoundPlaceAt(forms,0,0);
  return plan.length>=2&&forms[plan[0]]==='}'?plan:[];
 }
+/** Call delimiters are outside a complete borrowed place; grouped closing
+ * parentheses inside it are consumed by the same ordered parser.
+ * @param {string[]} forms @returns {number[]} */
+export function readRustExclusiveSourceBorrowPlacePlan(forms){
+ if(forms.length>1025)return [];
+ const plan=readRustExclusiveSourceCompoundPlaceAt(forms,0,0);
+ return plan.length>=2&&(forms[plan[0]]===','||forms[plan[0]]===')')?plan:[];
+}
 /** @param {string[]} forms @param {number} start @param {number} depth
  * @returns {number[]} */
 function readRustExclusiveSourceCompoundPlaceAt(forms,start,depth){

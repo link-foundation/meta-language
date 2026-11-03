@@ -1,14 +1,15 @@
 // Source token selection and actual mutable storage admission share one place
 // resolver. Inspecting a type/place never performs its eventual read or write.
 import {unsupported} from './diagnostics.js';
-import {readRustExclusiveSourcePlacePlan,readRustExclusiveSourceCompoundOperation} from './rust-exclusive-source-compound-rules.js';
+import {readRustExclusiveSourcePlacePlan,readRustExclusiveSourceBorrowPlacePlan,readRustExclusiveSourceCompoundOperation} from './rust-exclusive-source-compound-rules.js';
 import {readRustOwnedRecordStatePlace} from './rust-owned-record-state.js';
 import {readRustOwnedBoxPlaceProjection} from './rust-owned-containers.js';
 import {noteRustBorrowedExpressionSourcePosition} from './rust-borrowed-expression-positions.js';
 import {readRustRecordSourceType} from './rust-records.js';
+import {readRustRecordPlaceBoxProjectionDepth} from './rust-record-place-owner-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive source place',reason,span);};
 export function readRustExclusiveSourcePlaceTokens(parser,operation){
- const tokens=parser.cursor.tokens.slice(parser.cursor.index,parser.cursor.index+1025),forms=tokens.map(token=>(operation==='compound'?Boolean(readRustExclusiveSourceCompoundOperation(token.value)):token.value===operation)?'}':['(',')','.','*'].includes(token.value)?token.value:token.kind==='identifier'?'name':token.kind==='number'&&/^(0|[1-9][0-9]*)$/u.test(token.raw)?'number':'other'),plan=readRustExclusiveSourcePlacePlan(forms);
+ const tokens=parser.cursor.tokens.slice(parser.cursor.index,parser.cursor.index+1025),forms=tokens.map(token=>(operation==='compound'?Boolean(readRustExclusiveSourceCompoundOperation(token.value)):operation!=='borrow'&&token.value===operation)?'}':['(',')','.','*',','].includes(token.value)?token.value:token.kind==='identifier'?'name':token.kind==='number'&&/^(0|[1-9][0-9]*)$/u.test(token.raw)?'number':'other'),plan=operation==='borrow'?readRustExclusiveSourceBorrowPlacePlan(forms):readRustExclusiveSourcePlacePlan(forms);
  return plan.length>=2?{tokens,plan}:null;
 }
 export function resolveRustExclusiveSourcePlannedPlace(parser,{tokens,plan}){
@@ -29,4 +30,14 @@ export function restoreRustExclusiveSourcePlaceValue(parser,selected,value,path,
  noteRustBorrowedExpressionSourcePosition(parser,body,path);
  const restored=table.mark({k:'let',name,type:readRustRecordSourceType(parser,selected.position.type,selected.position.path),value,body,span},origin);
  noteRustBorrowedExpressionSourcePosition(parser,restored,path);return restored;
+}
+// Only the selected mutable call formal supplies a coercion target. Ordinary
+// value transfers and assignment places never gain this call-site projection.
+export function selectRustExclusiveSourceCallReferent(parser,place,parameter,span){
+ if(!parameter)return place;
+ const source=place.referent??place.field,reference=parameter.wrappers[0]==='reference'?1:0,target={...parameter,wrappers:parameter.wrappers.slice(reference),sourceLifetimes:(parameter.sourceLifetimes??[]).slice(reference)},position=origin=>({owner:origin.expandedSourceOwner??origin.sourceOwner,wrappers:origin.wrappers,lifetimes:origin.sourceLifetimes??[],arrayElementPosition:origin.arrayElementPosition}),depth=readRustRecordPlaceBoxProjectionDepth(position(source),position(target));
+ if(depth<0&&!parser.origins.collecting&&(place.payloadLayers>0||source.wrappers.includes('box')))fail('a Box call projection preserves the actual selected formal owner and every remaining canonical layer',span);
+ if(depth<=0)return place;
+ const referent=readRustOwnedBoxPlaceProjection(parser.origins,source,depth);if(!referent)fail('a selected mutable formal retains each actual canonical Box coercion layer',span);
+ return {...place,referent,payloadLayers:(place.payloadLayers??0)+depth};
 }

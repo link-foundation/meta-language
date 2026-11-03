@@ -12,7 +12,7 @@ import {readRustExclusiveSourceStringMethod,createRustExclusiveSourceStringMutat
 import {readRustExclusiveSourceVectorMethod,createRustExclusiveSourceVectorPacket} from './rust-exclusive-source-vectors.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {captureRustOwnedStandardSumMethodValue} from './rust-owned-standard-sum-methods.js';
-import {readRustExclusiveSourcePlaceTokens,resolveRustExclusiveSourcePlannedPlace,restoreRustExclusiveSourcePlaceValue} from './rust-exclusive-source-places.js';
+import {readRustExclusiveSourcePlaceTokens,resolveRustExclusiveSourcePlannedPlace,restoreRustExclusiveSourcePlaceValue,selectRustExclusiveSourceCallReferent} from './rust-exclusive-source-places.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive source call',reason,span);};
 const operations={borrow:'rustExclusiveSourceBorrow',call:'rustExclusiveSourceCall',write:'rustExclusiveSourceWholeWrite'};
 export function initializeRustExclusiveSourceCalls(parser){
@@ -31,22 +31,22 @@ export function selectRustExclusiveSourcePlace(parser,node,path){
 }
 function acquire(parser,place,parameter,span){
  const arena=initializeRustExclusiveSourceCalls(parser),frame=arena?.frames.at(-1);if(!frame||!place)fail('an exclusive argument needs its actual selected callable and mutable lexical place',span);
+ place=selectRustExclusiveSourceCallReferent(parser,place,frame.current?.origin,span);
  if(place.slot.callable!==frame.callable)fail('exclusive arguments cannot capture a mutable root from another callable',span);
  for(const pending of arena.frames)for(const borrow of pending.borrows)if(testRustExclusiveSourcePlaceOverlap(place.slot.lexical,place.fields,borrow.slot.lexical,borrow.fields))fail('exclusive arguments retain disjoint actual places until the selected Call',span);
  if(!parser.origins.collecting&&parser.origins.sourceBindingStates.get(place.slot.root)!=='available')fail('an exclusive argument needs its still available actual owner',span);
  if(!parser.origins.collecting){for(let depth=1;depth<=place.fields.length;depth++)if((parser.origins.sourceBindingStates.get(readRustOwnedRecordStateFieldIdentity(place.slot.root,place.fields.slice(0,depth)))??'available')!=='available')fail('an exclusive argument needs every actual selected field initialized',span);const root=readRustOwnedRecordStateFieldIdentity(place.slot.root,place.fields),states=[...parser.origins.sourceBindingStates],error=readRustOwnedRecordWholeError(root,states.map(row=>row[0]),states.map(row=>row[1]));if(error)fail(error,span);}
  if(!parser.origins.collecting&&testRustOwnedRecordStatePlaceLoans(parser,place.slot,place.fields))fail('an exclusive argument overlaps an actual surviving source reference loan',span);
  const info={...place,parameter,span},index=arena.borrows.length;if(index>=100000)fail('exclusive source arguments exceed their finite construction budget',span);arena.borrows.push(info);frame.borrows.push(info);
- const node={k:'math',op:operations.borrow,name:String(index),args:[],span},origin={...place.field,wrappers:['reference',...place.field.wrappers],sourceLifetimes:[null,...(place.field.sourceLifetimes??[])],sourceExclusiveMode:'exclusive',sourceBorrowedPlace:true,sourceBindingIdentity:place.slot.root,sourceLexicalBindingIdentity:place.slot.lexical,sourceLoanBindingIdentities:[place.slot.root]};return parser.origins.mark(node,origin);
+ const node={k:'math',op:operations.borrow,name:String(index),args:[],span},referent=place.referent??place.field,origin={...referent,wrappers:['reference',...referent.wrappers],sourceLifetimes:[null,...(referent.sourceLifetimes??[])],sourceExclusiveMode:'exclusive',sourceBorrowedPlace:true,sourceBindingIdentity:place.slot.root,sourceLexicalBindingIdentity:place.slot.lexical,sourceLoanBindingIdentities:[place.slot.root]};return parser.origins.mark(node,origin);
 }
 export function readRustExclusiveSourceBorrow(parser,path,token){
  const arena=initializeRustExclusiveSourceCalls(parser),frame=arena?.frames.at(-1),parameter=frame?.current;
  if(!frame||!parameter||parameter.origin.sourceExclusiveMode!=='exclusive')fail('mutable references are admitted only as actual selected exclusive call operands',token);
- const c=parser.cursor;c.expect('mut','exclusive source borrow');const dereference=Boolean(c.eat('*')),name=c.identifier('exclusive source place');
- const source=parser.origins.scope.get(name.value);if(dereference&&source?.sourceExclusiveMode!=='exclusive')fail('a reborrow dereferences its actual exclusive parameter',name);
- const fields=[];while(c.eat('.')){const field=c.peek();if(field.kind==='number'&&/^(0|[1-9][0-9]*)$/.test(field.raw)){fields.push(c.next().raw);}else fields.push(c.identifier('exclusive source field').value);}
- if(c.is('['))fail('array-index reference aliases need their actual indexed place and invalidation protocol',c.peek());
- const span={start:token.start,end:c.peek(-1).end},place=readRustOwnedRecordStatePlace(parser,name.value,fields,span);return acquire(parser,place,parameter.index,span);
+ const c=parser.cursor;c.expect('mut','exclusive source borrow');const syntax=readRustExclusiveSourcePlaceTokens(parser,'borrow');if(!syntax)fail('a mutable call borrow retains its complete local/field/dereference place; indexed aliases need their actual indexed protocol',c.peek());
+ const selected=resolveRustExclusiveSourcePlannedPlace(parser,syntax);if(!selected||selected.exclusiveReference)fail('a mutable call borrow selects its actual mutable lexical referent rather than a reference binder',c.peek());
+ for(let index=0;index<selected.count;index++)c.next();
+ const span={start:token.start,end:c.peek(-1).end},place={...selected.place,...(selected.payloadLayers>0?{referent:selected.position,payloadLayers:selected.payloadLayers}:{})};return acquire(parser,place,parameter.index,span);
 }
 export function beginRustExclusiveSourceArgumentFrame(parser,parameters,span){
  const arena=initializeRustExclusiveSourceCalls(parser);if(!arena||!Array.isArray(parameters)||parameters.length>256||arena.frames.length>=256)fail('a selected source call retains its bounded actual formal acquisition frame',span);const frame={entry:{parameters},callable:parser.ownedRecordState?.currentCallable??0,borrows:[],current:null};arena.frames.push(frame);return frame;
