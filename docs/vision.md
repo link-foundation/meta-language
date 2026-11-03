@@ -4639,6 +4639,19 @@ storage publication and nonescaping local state. Reachable helper calls must be
 actually static and acyclic; archived recursion flags grant no authority.
 Closed state parameters supply no nonstatic result loan. Proof coordinates are
 local to each callable/main scope while cumulative work/branch budgets remain.
+Every expanded source iteration closes its body in a result/state packet before
+the next iteration or helper call. Only actual outer state slots cross that
+boundary. Mutable body locals and their referent loans end in the original
+lexical body, including continue, break and return paths; reusing a source binder
+in the next iteration cannot revive prior storage or a moved value. Zero
+iterations evaluate no body initializer or observation.
+Expansion may share exact immutable source positions, transitions, fold facts,
+types and spans by object identity while copying the expression structure and
+retaining its actual origin. This is reuse of the same fact, not inferred
+equivalence between separate sources. Preflight charges the copied syntax;
+materialization independently charges the complete retained helper graph and
+shared facts once. Existing node/text caps, source admission, helper witnesses
+and per-body region checks remain required.
 Generated record projections bind only the selected field, leaving other fields
 wild. Nominal constructor patterns that bind only primitive Copy or immutable
 reference fields preserve their owner; bound owned payloads and whole-value bind

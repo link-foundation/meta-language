@@ -81,7 +81,7 @@ A forged self-call with false recursion flags must fail the independent actual
 graph check. Links text/binary controls retain interfaces and compare all four
 emitter products. All controls remain unexecuted and retain explicit versions.
 
-Current declared inventory: 438 positive inputs in nineteen groups, 374 literal
+Inventory at this checkpoint: 438 positive inputs in nineteen groups, 374 literal
 originals plus 64 actual-source scenarios. The mixed group has 73 positives and
 25 refusals. These count authoring inputs, not passes or completed requirements.
 The existing original/product CI driver imports them automatically; it did not
@@ -94,11 +94,10 @@ run locally. Generated asset publication remains deferred with testing.
   Existing closed-capture admission still applies. Closed parameters cannot
   supply nonstatic result loans; adding real borrowed captures requires an
   explicit argument/return-region ABI, not a fabricated source header.
-- Retain exact source iteration boundaries for mutable iteration-local binders
-  inside expanded chunks. A pure generated let may enclose the next step after
-  CPS lowering; its physical scope must not extend a source storage lifetime or
-  authorize duplicate initialization of the same source binder. Draft explicit
-  scope exit/reentry transport with old-alias rejection and native controls.
+- Exact source iteration boundaries were subsequently drafted in
+  [finite iteration local scopes](issue-227-finite-iteration-local-scopes-2026-11-03.md),
+  including body packet transport and controls. General borrowed completion and
+  field-place paths below remain open; this successor has no execution evidence.
 - Generalize record place regions for borrowed/non-Copy projections, partial
   moves, disjoint field loans and projected exclusive calls. Primitive field
   reads do not establish complete field-reference or arbitrary nominal Copy

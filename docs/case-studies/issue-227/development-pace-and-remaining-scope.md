@@ -667,6 +667,17 @@ frontiers are explicit in the handoff. These are unexecuted code and control
 drafts, with no requirement percentage or completion claim.
 
 The same pass detaches Copy values from local alias places without dropping
-reference loans. It retains explicit source iteration-lifetime transport for
+reference loans. At that checkpoint it retained source iteration-lifetime transport for
 mutable locals in expanded chunks as remaining work. Proof scopes release local
 coordinates between functions while cumulative resource accounting remains.
+
+The [iteration-local scope batch](../../handoffs/issue-227-finite-iteration-local-scopes-2026-11-03.md)
+ends every expanded body before its next iteration or chunk call, carrying only
+actual outer state. Exact immutable formal source facts are shared by identity;
+an additional materialization gate charges the entire retained graph under the
+existing caps. Eight new positive originals and two invalid-source originals
+bring the authored inventory to 446 positives (382 literal, 64 actual source)
+in nineteen groups. This is source drafting, not executed evidence or a measure
+of completed requirements. The full scope remains active and the handoff names
+the borrowed capture, field-place, loop initialization and whole-project paths
+still requiring implementation.
