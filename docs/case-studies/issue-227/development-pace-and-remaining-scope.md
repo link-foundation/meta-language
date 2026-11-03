@@ -977,3 +977,20 @@ The preceding commits `347efd07f` (2026-11-04 01:17:17 +07:00) and `b300cda38`
 cadence including review and continuation, without execution or an audited
 requirement denominator. It cannot establish verified throughput, a completion
 percentage or a reliable full-scope finish date.
+
+The [disjoint field revision batch](../../handoffs/issue-227-disjoint-field-revisions-2026-11-04.md)
+separates containing lifetimes from whole-read revisions, retaining actual
+untouched components through checked writes and joins. Eighteen positive and
+twelve invalid originals plus independent retargeted-graph/Links controls are
+authored and unexecuted. Source review required coordinating sibling identity,
+nested projection dependencies, whole versus field loans, whole acquisition,
+owner/arm/temporary expiry and branch/loop snapshots together. Without those
+changes, preserving a sibling reference could also preserve a dangling reference
+after parent replacement. Advanced call effects and partial pattern/loop state
+remain actual code work.
+
+The preceding commits `b300cda38` (2026-11-04 02:08:14 +07:00) and `10e72a77e`
+(02:22:10 +07:00) are 13 minutes 56 seconds apart. That measures source publication
+cadence, without executed behavior or an audited requirement denominator. It
+cannot establish a completion percentage, verified development throughput or a
+reliable full-scope finish date.

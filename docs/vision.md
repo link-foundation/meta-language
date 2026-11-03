@@ -4855,15 +4855,31 @@ invented mask grants no partial-state authority. Ordinary whole-value reads,
 borrows, calls and returns still require every actual component initialized.
 Branch joins retain actual per-branch component states, including newly allocated
 storage images, and mint current-storage proofs only for real returned carriers.
-Snapshot allocations are charged to the existing branch budget. Assignment still
-replaces the containing whole revision; general disjoint surviving field loans,
-reference-bearing call/state contexts, tuples and multi-constructor images retain their
-separate implementation obligations. No image, ownership mask or local region identifier is accepted
-from an archive. Actual projection graphs and source positions remain the public
-proof inputs. State replacements still conservatively invalidate their containing
-root revision; disjoint mutable calls do not establish general surviving field
-loans across writes. Partially initialized state publication/reinitialization and
-general mixed pattern binding remain separate required protocols. The value/place
+Snapshot allocations are charged to the existing branch budget. Component
+lifetimes are separate private coordinates from whole-read revisions. A selected
+write rebuilds only actual declaration ancestors, preserving their containing
+lifetimes and every untouched sibling identity. Selected replacement subtrees
+receive new ownership and lifetime coordinates; their former roots and lifetimes
+end. Whole-owner references retain whole revisions, and an opaque whole-input
+helper result cannot acquire the weaker authority of a direct field loan.
+Nested direct projections retain containing lifetimes without accidentally
+depending on an intermediate whole-parent revision. Selected scalar/String/Vec
+loans can therefore survive actual disjoint writes, including checked helpers,
+callbacks and shared disjoint intrinsic operands, while parent/child overlap
+remains invalid. Whole writes, moves, lexical/arm/temporary expiry and closed
+whole-state helper acquisition end the original containing lifetime, so unchanged
+descendant IDs cannot confer dangling authority.
+Branch joins reuse actual equal component/lifetime identities and build new
+revisions only where branch coordinates differ. Per-branch states, including new
+lifetimes, are merged and returned loan coordinates are rebased; existing sibling
+references keep their actual original coordinates. Loop joins retain complete
+charged snapshots under their existing state contract. This does not establish
+general partial loop packets or precise arbitrary helper effect summaries.
+Reference-bearing call/state contexts, tuples, multi-constructor images,
+temporary lifetime extension and general mixed pattern bindings retain their
+separate required protocols. No image, lifetime root, disjointness claim,
+ownership mask or local region identifier is accepted from an archive. Actual
+projection graphs and source positions remain the public proof inputs. The value/place
 distinction and partial transfer follow [Rust place semantics](https://doc.rust-lang.org/reference/expressions.html#place-expressions-and-value-expressions)
 and [partial ownership](https://doc.rust-lang.org/rust-by-example/scope/move/partial_move.html).
 Owned Box values also retain their complete positions across ordinary helper

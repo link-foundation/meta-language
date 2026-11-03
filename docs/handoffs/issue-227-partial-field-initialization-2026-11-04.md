@@ -124,3 +124,10 @@ and [partial moves](https://doc.rust-lang.org/rust-by-example/scope/move/partial
    ledger use, automatic native/schema/naming publication, authorized JavaScript
    gates and CI-only native execution, actual failure fixes and observations at
    the executed exact commits. Never compile Rust locally.
+
+Successor: [disjoint field revisions](issue-227-disjoint-field-revisions-2026-11-04.md)
+drafts separate component lifetimes and whole-read revisions for direct/nested
+closed field loans, shared publication, joins and scope expiry. The historical
+whole-revision limitation in this handoff motivates that source change; controls
+remain unexecuted. Advanced helper/callback/reference contracts, partial loop
+packets, mixed patterns and every broader requirement remain actual code work.

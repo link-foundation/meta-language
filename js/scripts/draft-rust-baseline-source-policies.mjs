@@ -284,6 +284,7 @@ const consumers=[
  'js/src/translation/rust-source-region-divergence.js',
  'js/src/translation/rust-source-place-transforms.js',
  'js/src/translation/rust-source-field-images.js',
+ 'js/src/translation/rust-source-field-revisions.js',
  'js/src/translation/rust-source-partial-state.js',
  'js/src/translation/rust-source-place-transform-regions.js',
  'js/src/translation/rust-source-place-replacements.js',
