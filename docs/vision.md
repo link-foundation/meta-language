@@ -4589,6 +4589,22 @@ readonly or closed interface; composition must interpret actual ordered state
 packets, source binders and loan revisions. Closed callbacks cannot hide borrowed
 vector carriers, and whole-root admission grants no projected-field authority.
 Older independent profile guards remain intact.
+Projected mutable calls retain an independent compiler place transformation.
+Its real executable graph extracts selected fields, invokes the actual checked
+callee, reconstructs every unchanged sibling in declaration order, and returns
+the result plus each complete changed root once. Validation derives those steps
+from actual constructor inventories and rejects changed paths, sibling wiring,
+overlapping places, missing operands and hidden effects. Nonexclusive operands
+finish in source order before this closed transformation; plain field extraction
+adds no observation and source acquisition still protects its actual place.
+The region proof acquires each distinct current root revision once, publishes
+new revisions from the checked writeback ABI, and expires old-root aliases.
+Several disjoint mutable parameters may select one root; they do not create
+duplicate owners or inferred field Copy traits. Nested disjoint argument calls
+retain the latest actual root and every earlier field unchanged by those calls.
+This compiler interface supplies no source function header, reference-return
+region or callback authority. Projected intrinsic replacement expressions and
+borrowed/non-Copy place references need their own complete operation interfaces.
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state

@@ -692,3 +692,15 @@ three invalid originals bring the source inventory to 455 positives (391 literal
 mutable field calls still need a complete storage contract; their guard remains.
 These code drafts remain unexecuted and do not establish a requirement-level
 completion percentage.
+
+The [projected source-call batch](../../handoffs/issue-227-projected-source-call-regions-2026-11-03.md)
+drafts the complete actual field extraction, selected closed callee and enclosing
+root reconstruction graph, plus current-root transport and Links integration.
+The exact prior projected-field refusal remains unchanged as a positive draft
+original with explicit history. Eleven further originals and five invalid-source
+controls bring the authored inventory to 467 positives (403 literal, 64 actual
+source), nineteen groups. The scope includes nested records, owned String/Vec
+fields, method receivers, multiple roots and disjoint nested argument calls.
+Intrinsic replacement expressions, callbacks and general field-reference regions
+remain distinct full-scope paths. These edits supply no execution evidence or
+requirement completion percentage.

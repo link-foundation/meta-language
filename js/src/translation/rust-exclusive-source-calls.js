@@ -31,7 +31,6 @@ export function selectRustExclusiveSourcePlace(parser,node,path){
 }
 function acquire(parser,place,parameter,span){
  const arena=initializeRustExclusiveSourceCalls(parser),frame=arena?.frames.at(-1);if(!frame||!place)fail('an exclusive argument needs its actual selected callable and mutable lexical place',span);
- requireRustSourceRegionWholePlace(parser,place.fields,span);
  if(place.slot.callable!==frame.callable)fail('exclusive arguments cannot capture a mutable root from another callable',span);
  for(const pending of arena.frames)for(const borrow of pending.borrows)if(testRustExclusiveSourcePlaceOverlap(place.slot.lexical,place.fields,borrow.slot.lexical,borrow.fields))fail('exclusive arguments retain disjoint actual places until the selected Call',span);
  if(!parser.origins.collecting&&parser.origins.sourceBindingStates.get(place.slot.root)!=='available')fail('an exclusive argument needs its still available actual owner',span);
@@ -99,6 +98,7 @@ export function readRustExclusiveSourceCall(parser,callee,args,path,span){
 export function readRustExclusiveSourceMethod(parser,receiver,method,args,path,span){
  const info=parser.exclusiveSourceCalls?.receivers.get(receiver);if(!info)return null;
  if(!info.borrow)fail('exclusive receiver operands retain their ordered argument frame',span);
+ if(info.string||info.vector)requireRustSourceRegionWholePlace(parser,info.place.fields,span);
  if(info.string)return recordRustExclusiveSourcePlaceWrite(parser,info.place,createRustExclusiveSourceStringMutation(parser,info.place,info.string,args,path,span),path,span);
  if(info.vectorMutation){const packet=createRustExclusiveSourceVectorPacket(parser,info.place,info.vectorMutation,args,path,span);return recordRustExclusiveSourcePacketEffect(parser,packet.callee,[info.borrow,...args],packet.parameters,packet.result,[{index:0,...info.place}],span);}
  if(!info.vector)return readRustExclusiveSourceCall(parser,info.callee,[info.borrow,...args],path,span);

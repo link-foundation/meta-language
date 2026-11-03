@@ -84,7 +84,11 @@ remain CI-only under the existing explicit version ranges.
   loans and projected exclusive calls. The source review confirms that the
   existing guard protects a missing field-storage contract: removing it alone
   would lose the actual root revision between field extraction, call and root
-  reconstruction. Draft that complete contract and independent old-alias checks.
+  reconstruction. Selected callable transformations were subsequently drafted
+  with full extraction/reconstruction checks in
+  [projected source call regions](issue-227-projected-source-call-regions-2026-11-03.md).
+  That successor retains explicit intrinsic replacement, callback and general
+  field-reference frontiers and independent old-alias controls.
 - Complete loop initialization-state carriers, borrowed iterator/callback
   interfaces, shared collection/signature-3 composition and full own-project
   JavaScript/Rust translation. Continue constructor and all grammar/concept,
