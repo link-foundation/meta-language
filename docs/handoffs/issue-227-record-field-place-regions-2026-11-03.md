@@ -6,6 +6,10 @@ review only: no program, test, generator, formatter, validation gate, compilatio
 or CI feedback was executed or reviewed. The overall code draft is incomplete;
 the active goal and every preceding requirement remain binding.
 
+Continuation: [fallible iterator helper interfaces](issue-227-fallible-iterator-helper-interfaces-2026-11-03.md)
+drafts the existing contiguous Vec map/Result collect helper's complete compiler
+ABI and body proof. Other iterator, storage and frontend obligations below remain.
+
 ## Actual source/compiler path drafted
 
 `rust-records.js` retains the actual parent before Box projection and attaches

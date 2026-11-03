@@ -273,6 +273,7 @@ const consumers=[
  'js/src/translation/rust-vector-mutation-interfaces.js',
  'js/src/translation/rust-closed-callback-regions.js',
  'js/src/translation/rust-record-place-regions.js',
+ 'js/src/translation/rust-fallible-iterator-interfaces.js',
  'js/tests/source-state-transition-links.test.js',
  'js/tests/translation-javascript-weak-construction.test.js',
  'js/tests/rust-source-project-signature-model.test.js',

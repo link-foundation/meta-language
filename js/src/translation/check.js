@@ -4,6 +4,7 @@ import {checkRustFiniteLoopStateTransform} from './rust-source-state-transforms.
 import {checkRustSourcePlaceTransform} from './rust-source-place-transforms.js';
 import {checkRustVectorMutationInterface,checkRustVectorMutationBody} from './rust-vector-mutation-interfaces.js';
 import {checkRustRecordPlace} from './rust-record-place-regions.js';
+import {checkRustFallibleIteratorInterface,checkRustFallibleIteratorBody} from './rust-fallible-iterator-interfaces.js';
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
 import {checkPropositionValue} from './proposition-values.js';
 import {validateFiniteRecordLoopHelpers} from './finite-record-loop-helpers.js';
@@ -412,12 +413,14 @@ class Checker {
       if(item.sourceFnMutSpecialization!==undefined){if(item.sourceSignature!==undefined||item.sourceExclusiveSignature!==undefined)throw typeError('a source FnMut specialization retains its own actual generic/callback ABI',item.span);entry.sourceFnMutSpecialization=checkRustFnMutSourceSpecialization(item.sourceFnMutSpecialization,entry.params.map(parameter=>parameter.type),entry.ret,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
       if(item.sourceStateTransform!==undefined)entry.sourceStateTransform=checkRustFiniteLoopStateTransform(item.sourceStateTransform,entry,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));
       if(item.sourceVectorMutation!==undefined)entry.sourceVectorMutation=checkRustVectorMutationInterface(item.sourceVectorMutation,entry,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));
+      if(item.sourceFallibleIterator!==undefined)entry.sourceFallibleIterator=checkRustFallibleIteratorInterface(item.sourceFallibleIterator,entry,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k === 'fn') {
         const env = new Map(entry.params.map((param) => [param.name, param.type]));
         entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
         if(entry.sourceVectorMutation)checkRustVectorMutationBody(entry,entry.sourceVectorMutation);
+        if(entry.sourceFallibleIterator)checkRustFallibleIteratorBody(entry,entry.sourceFallibleIterator);
         if(item.sourceStandardCollectionLibraryOwner!==undefined)entry.sourceStandardCollectionLibraryOwner=checkRustStandardCollectionLibraryOwner(entry,this.language);
         if(item.sourcePrimitiveOwners!==undefined)entry.sourcePrimitiveOwners=prepareRustPrimitiveOwnerProof(item.sourcePrimitiveOwners,entry.body);
         if(item.sourceLocalState!==undefined)entry.sourceLocalState=prepareRustOwnedLocalStateProof(item.sourceLocalState,entry.body);

@@ -141,6 +141,7 @@ function bindingTargets(program) {
     if(entry.k==='fn'&&entry.sourceExclusiveSignature!==undefined){for(const parameter of entry.sourceExclusiveSignature.parameters)walkSourcePosition(parameter.position);walkSourcePosition(entry.sourceExclusiveSignature.result);}
     if(entry.k==='fn'&&entry.sourceStateTransform!==undefined){const facet=entry.sourceStateTransform;if(facet.control)walkType(facet.control);walkSourcePosition(facet.result);for(const slot of facet.slots)walkSourcePosition(slot.position);}
     if(entry.k==='fn'&&entry.sourceVectorMutation!==undefined){const facet=entry.sourceVectorMutation;for(const position of [...facet.parameters,facet.element,facet.result])walkSourcePosition(position);}
+    if(entry.k==='fn'&&entry.sourceFallibleIterator!==undefined){const facet=entry.sourceFallibleIterator;for(const position of [...facet.parameters,facet.item,facet.mapped,facet.result])walkSourcePosition(position);}
     for (const constructor of entry.ctors ?? []) for (const field of constructor.fields) walkType(field.type);
     for(const constructor of entry.sourceFieldSignatures?.ctors??[])for(const field of constructor.fields)walkSourcePosition(field);
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));

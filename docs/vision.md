@@ -4638,6 +4638,22 @@ list grants no authority. Free captures must be live direct Copy values without
 loans or mutable storage identity; mutable roots require their explicit state
 parameters and result slots. Existing borrowed/owned escaping callback and
 field-granular capture obligations remain separate.
+Generated contiguous Vec iterator map/Result collect helpers retain their own
+compiler interface, distinct from original source function headers. It preserves
+the actual readonly vector, shared item, callback Result, collected Result<Vec>
+and every ordered callback state input/output, including complete source owners
+where erased primitive widths coincide. Every actual helper body is checked,
+even if unused: an empty Ok vector seeds the fold; an existing Err returns the
+entire accumulator without another callback; an Ok invokes the real mapper once
+with current state; a new Err retains its actual payload and updated state; and
+an Ok appends exactly the mapped item after the existing prefix. The admitted
+receiver is a contiguous readonly standard Vec, whose remaining element visits
+have no custom iterator observations. This fold does not establish physical
+early termination or the behavior of arbitrary user-defined iterators.
+Compiler callback operands retain actual inline bodies when present. Existing
+internal formal forwarding keeps its own route. Complete declaration positions
+and bodies survive Links projection and independent rechecking; the compiler
+interface grants no escaping callback environment or stored-reference result.
 Direct closed record fields retain an independently checked source place facet.
 Its complete executable expression must project the actual declaration field
 from its actual single-constructor owner, evaluating that owner once. Compiler

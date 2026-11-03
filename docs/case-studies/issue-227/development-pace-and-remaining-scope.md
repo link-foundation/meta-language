@@ -744,3 +744,13 @@ inventory to 514 positives (450 literal, 64 actual source), nineteen groups.
 Partial moves, disjoint surviving field loans, reference-bearing/Box storage and
 whole-project integration remain explicit work. These are unexecuted source
 drafts; they do not establish completed requirement counts or a percentage.
+
+The [fallible iterator helper interface batch](../../handoffs/issue-227-fallible-iterator-helper-interfaces-2026-11-03.md)
+drafts complete source positions and independent body checking around the
+existing contiguous Vec map/Result collect algorithm. The actual first-error,
+success-prefix and callback state graph is checked even in unused helpers.
+Six positive and two invalid originals bring the inventory to 520 positives
+(456 literal, 64 actual source), nineteen groups. Complete borrowed callback
+interiors, other iterator protocols and whole-project integration remain work;
+the fold is not claimed to physically stop traversing the Vec after an error.
+No execution evidence or requirement completion percentage is established.
