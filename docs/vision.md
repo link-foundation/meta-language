@@ -4854,12 +4854,25 @@ current scalar place. A copied primitive payload drives the existing arithmetic,
 then writeback retains the complete selected Box field and latest containing
 root, including siblings changed by the RHS. Primitive source positions and full
 state positions remain separate through existing Links facets and target
-emission; no additional serialized place shape is introduced. Ordinary payload
-assignment, indexed places and user-defined assignment traits remain separate.
+emission; no additional serialized place shape is introduced.
+Ordinary payload assignments share the same actual ordered place resolver with
+compound assignment. The complete RHS is evaluated and its owning inputs
+transferred before actual writeback; dereferenced Box storage must still be
+initialized after those effects. Partial Box projection keeps unselected owning
+layers and restores the complete selected field position around the actual
+replacement expression. Replacement expressions retain their own source
+positions, so an owning String/record/vector or remaining inner Box cannot become
+a copied payload or an erased owner. Selected field reinitialization clears only
+its actual descendants and retains initialized containing fields and live loan
+checks. Existing plain field assignment retains its preceding source path.
+Canonical boxed array constructors first establish the actual vector and element
+owners, then retain every original Box layer. This supplies neither a new stored
+reference domain nor custom allocation/Drop semantics. Indexed/destructuring
+places, general partial moves and user-defined assignment traits remain separate.
 The ordering follows [Rust compound assignment](https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions)
 and [operator precedence](https://doc.rust-lang.org/reference/expressions.html#expression-precedence).
 Stored-reference payloads, general recursive state, per-layer lifetime
-substitution, ordinary payload assignments, Box receiver autoderef for
+substitution, general assignment/destructuring places, Box receiver autoderef for
 collection/String methods and general callback Box environments retain their
 complete independent obligations. The ownership contract follows
 [Rust Box](https://doc.rust-lang.org/std/boxed/index.html) and the

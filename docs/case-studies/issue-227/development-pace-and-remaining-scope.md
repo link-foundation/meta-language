@@ -894,3 +894,19 @@ publication interval, not executed requirement throughput. No audited denominato
 drafting percentage, verification percentage or full-scope finish date follows
 from those times. The status answer remains that all requirements are not yet
 drafted; the active unbounded drafting goal and detailed successor work remain.
+
+The [Box payload assignment batch](../../handoffs/issue-227-box-payload-assignments-2026-11-04.md)
+extracts one actual token/place resolver for ordinary and compound assignment,
+then reuses existing ordered writeback and retained source positions. It also
+supplies the required actual vector-element view before boxed array construction.
+Sixteen positive and ten invalid literal originals and independent structural/
+forgery/Links controls are added, all unexecuted. Textual review repaired the
+preceding fixture append separator without changing its original cases. Actual
+payload call projection, Box receiver operations and all broader obligations
+remain explicit code work. No ledger count, execution evidence or whole-project
+completion estimate is inferred from this source batch.
+
+The preceding commits `fc308e1cb` (2026-11-04 00:02:59 +07:00) and `0c42ff8d7`
+(00:17:27 +07:00) are 14 minutes 28 seconds apart. This measures publication of
+source edits and controls, without executing their behavior. It supplies no
+verified requirements-per-minute rate or reliable full-scope finish date.

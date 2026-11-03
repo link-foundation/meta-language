@@ -8,6 +8,10 @@ export function readRustExclusiveSourceCompoundOperation(token){return token==='
  * indices or -1 for dereference. Postfix fields bind before unary stars.
  * @param {string[]} forms @returns {number[]} */
 export function readRustExclusiveSourceCompoundPlace(forms){
+ return readRustExclusiveSourcePlacePlan(forms);
+}
+/** @param {string[]} forms @returns {number[]} */
+export function readRustExclusiveSourcePlacePlan(forms){
  if(forms.length>1025)return [];
  const plan=readRustExclusiveSourceCompoundPlaceAt(forms,0,0);
  return plan.length>=2&&forms[plan[0]]==='}'?plan:[];

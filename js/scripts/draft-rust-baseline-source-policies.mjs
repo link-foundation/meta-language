@@ -357,6 +357,7 @@ const consumers=[
  'js/tests/translation-javascript-array-copy-call-source.test.js',
  'js/tests/translation-javascript-array-copy-source.test.js',
  'js/src/translation/rust-exclusive-source-compounds.js',
+ 'js/src/translation/rust-exclusive-source-places.js',
  'js/tests/translation-rust-exclusive-source-compounds.test.js',
  'js/src/translation/rust-exclusive-source-signatures.js',
  'js/src/translation/rust-exclusive-source-parameters.js',

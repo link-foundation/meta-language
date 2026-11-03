@@ -210,7 +210,7 @@ class SourceRegions{
    for(let index=0;index<count;index+=1){let state=outcomes[0][index];for(const outcome of outcomes.slice(1))state=rules.mergeRustBorrowedSourceRegion(state,outcome[index]);this.states[index]=state;}
    this.mergeStorages(storageBase,storageOutcomes,node,results);value=this.joinValues(results,node);}
   }else if(operation==='array'){
-   const wanted=position??expected,element=wanted?this.position(wanted.arrayElementPosition??{type:wanted.type.element,wrappers:[],lifetimes:[],owner:wanted.owner.arguments[0]}):null,values=[];
+   const qualified=position??expected,view=this.composed&&qualified?readRustRecordPlaceOwner(qualified,false):null,wanted=view?.boxed?view.position:qualified,element=wanted?this.position(wanted.arrayElementPosition??{type:wanted.type.element,wrappers:[],lifetimes:[],owner:wanted.owner.arguments[0]}):null,values=[];
    if(!wanted||!['owned','borrowed vector'].includes(role(wanted)))fail('an array source constructor needs its complete element position',node);
    for(const item of node.items){const actual=this.compatible(this.expression(item,env,bindings,element,depth+1),element,item);values.push(this.read(actual,'move',item));}
    value=this.value(this.position(wanted),this.root('',true),this.union(values.map(item=>item.regions)),true);
