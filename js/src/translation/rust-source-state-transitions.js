@@ -7,6 +7,7 @@ import {readRustOwnedRecordStateDeclarations} from './rust-owned-record-state.js
 import {qualifyRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
 import {createRustBorrowedVectorElementPosition} from './rust-borrowed-vectors.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 function binder(value){return exact(value,['name','identity','start','end'])&&typeof value.name==='string'&&value.name.length>0&&value.name.length<=4096&&typeof value.identity==='string'&&value.identity.length>0&&value.identity.length<=4096&&Number.isSafeInteger(value.start)&&Number.isSafeInteger(value.end)&&value.start>=0&&value.end>value.start;}
 export function attachRustSourceStateTransition(parser,node,slot,operation){
@@ -18,5 +19,5 @@ export function attachRustSourceStateTransition(parser,node,slot,operation){
 }
 export function checkRustSourceStateTransition(facet,type,language,resolveType=value=>value,resolveData=()=>null){
  if(language!=='Rust'||!exact(facet,['model','operation','binder','position'])||facet.model!=='Rust source state transition 1'||!['initialize','write'].includes(facet.operation)||!binder(facet.binder))throw typeError('a source state transition retains its exact Rust model, operation and actual source binder');
- const checked=checkRustSourceSignature({model:'Rust source function signature 2',language:'Rust',parameters:[],result:facet.position,lifetimeBindings:[]},[],type,language,resolveType,resolveData);if(checked.result.wrappers.length||checked.result.lifetimes.length||checked.result.arrayElementPosition)throw typeError('a source state transition publishes its actual direct closed referent');return {...facet,binder:{...facet.binder},position:checked.result};
+ const checked=checkRustSourceSignature({model:'Rust source function signature 2',language:'Rust',parameters:[],result:facet.position,lifetimeBindings:[]},[],type,language,resolveType,resolveData);if(checked.result.lifetimes.length||checked.result.arrayElementPosition||!readRustRecordPlaceOwner(checked.result,false))throw typeError('a source state transition publishes its actual closed owned referent with every canonical Box layer');return {...facet,binder:{...facet.binder},position:checked.result};
 }

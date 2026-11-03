@@ -4,14 +4,15 @@ import {createRustExclusiveSourceSignature} from './rust-exclusive-source-signat
 import {lowerRustExclusiveSourceParsedCallable} from './rust-exclusive-source-call-adapter.js';
 import {initializeRustOwnedRecordEffects} from './rust-owned-record-effects.js';
 import {readRustSourceRegionBodyMode} from './rust-source-region-composition.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 export function readRustExclusiveSourceReferenceType(parser,lifetime){
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'||!parser.exclusiveParameterType)return null;
  if(lifetime!==null)throw unsupported('Rust exclusive source lifetime','this nonescaping formal profile uses actual elided parameter regions');
  const token=parser.cursor.next();
  if(parser.cursor.is('[')||parser.cursor.is('str'))throw unsupported('Rust exclusive source referent','mutable slices and str need their actual indexed alias and growth protocols',token);
  const type=parser.type(),origin=parser.origins.type;
- if(origin.wrappers.length||origin.arrayElementPosition)throw unsupported('Rust exclusive source referent','nested stored references, Box and borrowed vector elements need their complete interpretations',token);
- parser.origins.type={...origin,wrappers:['reference'],sourceLifetimes:[null],sourceExclusiveMode:'exclusive'};return type;
+ if(origin.arrayElementPosition||(!parser.origins.collecting||origin.wrappers.length)&&!readRustRecordPlaceOwner({type:origin.type,owner:origin.expandedSourceOwner??origin.sourceOwner,wrappers:origin.wrappers,lifetimes:origin.sourceLifetimes??[]},false))throw unsupported('Rust exclusive source referent','mutable formals retain actual direct or canonical Box referents without stored references',token);
+ parser.origins.type={...origin,wrappers:['reference',...origin.wrappers],sourceLifetimes:[null,...(origin.sourceLifetimes??[])],sourceExclusiveMode:'exclusive'};return type;
 }
 export function beginRustExclusiveSourceFunction(parser,name,path,parameters,sourceParameters,result,mutableParameters){
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1')return null;

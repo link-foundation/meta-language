@@ -7,9 +7,10 @@ import {readRustExclusiveSourceLoanContextError,readRustExclusiveSourcePositionB
 import {unsupported} from './diagnostics.js';
 import {attachRustSourceStateTransition} from './rust-source-state-transitions.js';
 import {createRustSourceSignature} from './rust-source-signatures.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 const fail=(reason,node)=>{throw unsupported('Rust exclusive source call adapter',reason,node?.span);};
 function sameOwner(left,right){return Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((value,index)=>value===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((value,index)=>sameOwner(value,right.arguments[index]));}
-function slotPosition(slot,expected){const origin=slot.origin,owner=origin?.expandedSourceOwner??origin?.sourceOwner;const budget=readRustExclusiveSourcePositionBudgetError({type:origin?.type,owner,wrappers:origin?.wrappers});if(budget)return budget;return origin?.proven===true&&origin.wrappers.length===0&&origin.type?.kind===expected.type.kind&&(origin.sourceCollectionTypeIdentity??'')===(expected.collectionTypeIdentity??'')&&sameOwner(owner,expected.owner)?'':'an exclusive parameter slot needs its actual proven referent type and complete source owner';}
+function slotPosition(slot,expected){const origin=slot.origin,owner=origin?.expandedSourceOwner??origin?.sourceOwner;const budget=readRustExclusiveSourcePositionBudgetError({type:origin?.type,owner,wrappers:origin?.wrappers});if(budget)return budget;return origin?.proven===true&&readRustRecordPlaceOwner({type:origin.type,owner,wrappers:origin.wrappers,lifetimes:origin.sourceLifetimes??[]},false)&&origin.wrappers.length===expected.wrappers.length&&origin.wrappers.every((layer,index)=>layer===expected.wrappers[index])&&origin.type?.kind===expected.type.kind&&(origin.sourceCollectionTypeIdentity??'')===(expected.collectionTypeIdentity??'')&&sameOwner(owner,expected.owner)?'':'an exclusive parameter slot needs its actual proven referent type source owner and complete Box layers';}
 // parameterSlots: [{parameter,binder,lexical}], projected from the actual
 // source header's exclusive formals after admission has established referents.
 // Every supplied lexical identity must already exist in the parser's slot map.
@@ -53,7 +54,7 @@ export function lowerRustExclusiveSourceParsedCallable(parser,frame,declaration)
  const parameterInitializers=[];
  if(frame.readonlyRegionComposition)for(const row of frame.slots){
   const parameter=declaration.params[row.parameter],slot=row.slot;
-  if(slot.exclusiveMode!=='owned'||!parameter||slot.name!==parameter.name||slot.origin.wrappers.length||slot.origin.arrayElementPosition||inventory.get(slot.currentName)!==slot)fail('a mutable readonly formal retains its actual direct owned parameter and declared storage slot',declaration);
+  if(slot.exclusiveMode!=='owned'||!parameter||slot.name!==parameter.name||slot.origin.arrayElementPosition||!readRustRecordPlaceOwner({type:slot.origin.type,owner:slot.origin.expandedSourceOwner??slot.origin.sourceOwner,wrappers:slot.origin.wrappers,lifetimes:slot.origin.sourceLifetimes??[]},false)||inventory.get(slot.currentName)!==slot)fail('a mutable readonly formal retains its actual owned parameter Box layers and declared storage slot',declaration);
   const input=parser.origins.mark({k:'name',path:[parameter.name],span:parameter.span??declaration.span},slot.origin),value=attachRustSourceStateTransition(parser,input,slot,'initialize');
   if(!value.sourceStateTransition)fail('mutable readonly parameters retain their explicit initial source storage carrier',declaration);
   initial.set(slot.lexical,{slot,name:slot.currentName});parameterInitializers.push({name:slot.currentName,type:readRustRecordSourceType(parser,slot.origin.type,slot.origin.path),value});

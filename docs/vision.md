@@ -4829,10 +4829,27 @@ owners through the real closed payload graph, keeping field owners, element
 owners, resource bounds and existing recursion/destructor restrictions. Box
 results remain owning values with fresh result storage; source allocation,
 argument evaluation, early returns and state writeback retain their actual bodies.
-This value/shared call path does not establish mutable Box root, projected Box
-mutation, stored-reference payload or general recursive state authority. Those
-interfaces still need complete source wrapper and loan transport. The ownership
-contract follows [Rust Box](https://doc.rust-lang.org/std/boxed/index.html).
+Mutable Box formals and owned local/parameter roots preserve those same canonical
+layers through actual state initialization, argument acquisition, implicit
+reborrow, completion packets and current-root publication. Only the selected
+outer mutable reference is removed when selecting a referent. Containing record
+layouts follow the actual canonical payload while source facets retain the full
+Box positions. Projected calls select actual Box fields with exact wrapper and
+owner agreement and reconstruct unchanged siblings from the latest root.
+The source region interpreter retains Box payload construction, shared payload
+loans and owning/copying projections through canonical layer checks. Inferred
+primitive payloads retain their actual scalar constraint; owned String payloads
+materialize actual shared text into fresh owned storage. Box record reconstruction
+uses the real constructor graph and actual storage move checks. The original
+closed/destructor-free graph and resource bounds remain. Direct non-Box values
+use their preceding operation path. Low-level contexts use the same actual
+canonical layouts without discarding selected loan paths or complete positions.
+Stored-reference payloads, general recursive state, per-layer lifetime
+substitution, scalar compound dereference places, Box receiver autoderef for
+collection/String methods and general callback Box environments retain their
+complete independent obligations. The ownership contract follows
+[Rust Box](https://doc.rust-lang.org/std/boxed/index.html) and the
+[assignment contract](https://doc.rust-lang.org/reference/expressions/operator-expr.html#assignment-expressions).
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state

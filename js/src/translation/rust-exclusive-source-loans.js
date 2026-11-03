@@ -4,13 +4,14 @@
 import * as rules from './rust-exclusive-source-loan-rules.js';
 import {resolveRustStandardCollectionOwner,readRustStandardCollectionSourceOriginError,testRustStandardCollectionMutation} from './rust-standard-collection-rules.js';
 import {readRustStandardCollectionStateError,executeRustStandardCollectionOperation} from './rust-standard-collection-state.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 const failure=(state,reason)=>({$:'rustExclusiveSourceInvalid',state,reason});
 const continued=state=>({$:'rustExclusiveSourceContinue',state});
 const sameOwner=(a,b)=>Boolean(a&&b)&&a.kind===b.kind&&a.path.length===b.path.length&&a.path.every((value,index)=>value===b.path[index])&&a.arguments.length===b.arguments.length&&a.arguments.every((value,index)=>sameOwner(value,b.arguments[index]));
 const samePosition=(a,b)=>sameOwner(a?.owner,b?.owner)&&a.type.kind===b.type.kind&&(a.collectionTypeIdentity??'')===(b.collectionTypeIdentity??'')&&a.wrappers.length===b.wrappers.length&&a.wrappers.every((value,index)=>value===b.wrappers[index]);
 const binder=(context,identity)=>context.binders.find(row=>row.identity===identity);
 const loan=(state,identity)=>state.loans.find(row=>row.identity===identity);
-const record=(context,position)=>context.records.find(row=>row.owner===position.owner.path.join('::'));
+const record=(context,position)=>{const owner=readRustRecordPlaceOwner({...position,lifetimes:position.lifetimes??[]},false);return owner?context.records.find(row=>row.owner===owner.position.owner.path.join('::')):undefined;};
 function sameTree(left,right){const pending=[[left,right]];let work=0;while(pending.length){if(++work>8192)return false;const [a,b]=pending.pop();if(a===b)continue;if(a===null||b===null||typeof a!=='object'||typeof b!=='object')return false;const keys=Object.keys(a);if(keys.length!==Object.keys(b).length)return false;for(const key of keys){if(!Object.hasOwn(b,key))return false;pending.push([a[key],b[key]]);}}return true;}
 export function readRustExclusiveSourcePositionBudgetError(position){
  const active=new Set(),pending=[{value:position,depth:0,leave:false}];let nodes=0,units=0;
@@ -20,6 +21,7 @@ export function readRustExclusiveSourcePositionBudgetError(position){
 function storage(context,position,active=[],budget={work:0}){
  if(!position||!position.type||!position.owner||!Array.isArray(position.wrappers)||!Array.isArray(position.owner.path)||!Array.isArray(position.owner.arguments))return 'exclusive referents retain their complete source positions';
  const error=rules.readRustExclusiveSourceLoanBudgetError(context.binders.length,0,active.length,++budget.work);if(error)return error;
+ const layers=readRustRecordPlaceOwner({...position,lifetimes:position.lifetimes??[]},false);if(!layers)return 'exclusive referents retain canonical owned Box layers without stored reference authority';if(layers.boxed)return storage(context,{...position,owner:layers.position.owner,wrappers:[]},active,budget);
  const role=rules.readRustExclusiveSourceStorageRole(position.type.kind,position.owner.kind,position.owner.path.join('::'),position.owner.arguments.length,position.wrappers.length);
  if(position.wrappers.length===0&&position.owner.kind==='library'&&resolveRustStandardCollectionOwner(position.owner.path.join('::'),true,false)!==''){
   const entry=(context.collectionTypes??[]).find(row=>row.typeIdentity===position.collectionTypeIdentity);

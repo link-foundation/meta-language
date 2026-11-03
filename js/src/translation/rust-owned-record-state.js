@@ -5,7 +5,8 @@ import {readRustOwnedRecordMutableBindingError,readRustOwnedRecordStateWriteErro
 import {readRustOwnedRecordUpdateVersionError} from './rust-owned-record-update-rules.js';
 import {rustOwnedRecordFieldState} from './rust-owned-record-updates.js';
 import {readRustNominalOwnershipFacts} from './rust-nominal-ownership.js';
-import {readRustOwnedContainerFacts} from './rust-owned-containers.js';
+import {readRustOwnedContainerFacts,readRustOwnedBoxRecordParent} from './rust-owned-containers.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {readRustStandardSumSourceIdentity,withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
@@ -38,8 +39,10 @@ export function registerRustExclusiveSourceStateRoot(parser,name,mode,span){
  const current=state(parser),table=parser.origins,actual=table.scope.get(name),frame=current.frames.at(-1);
  if(table.collecting&&actual&&frame&&!actual.sourceLexicalBindingIdentity)actual.sourceLexicalBindingIdentity='exclusive collecting lexical '+String(current.nextFrame++);
  const collection=mode==='owned'&&parser.standardCollectionSourceModel==='Rust closed standard collections 1'&&parser.standardCollectionSourceStorage?.(actual)===true;
- if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'&&!collection||!actual||!frame||!actual.sourceLexicalBindingIdentity||!['owned','exclusive'].includes(mode)||mode==='exclusive'&&actual.sourceExclusiveMode!=='exclusive'||mode==='owned'&&actual.wrappers.length!==0)fail('exclusive state roots need their actual admitted source mode and lexical binder',span);
- const origin={...copy(actual),wrappers:[],sourceLifetimes:[],sourceBorrowedPlace:mode==='exclusive',sourceExclusiveParameter:mode==='exclusive'};
+ if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'&&!collection||!actual||!frame||!actual.sourceLexicalBindingIdentity||!['owned','exclusive'].includes(mode)||mode==='exclusive'&&(actual.sourceExclusiveMode!=='exclusive'||actual.wrappers[0]!=='reference'))fail('exclusive state roots need their actual admitted source mode and lexical binder',span);
+ const wrappers=actual.wrappers.slice(mode==='exclusive'?1:0),sourceLifetimes=(actual.sourceLifetimes??[]).slice(mode==='exclusive'?1:0),owner=actual.expandedSourceOwner??actual.sourceOwner;
+ if(sourceLifetimes.length||wrappers.some(layer=>layer!=='box')||(!table.collecting||wrappers.length)&&!readRustRecordPlaceOwner({type:actual.type,owner,wrappers,lifetimes:sourceLifetimes},false))fail('state roots preserve their actual canonical Box referent layers without stored reference authority',span);
+ const origin={...copy(actual),wrappers:[...wrappers],sourceLifetimes:[...sourceLifetimes],sourceBorrowedPlace:mode==='exclusive',sourceExclusiveParameter:mode==='exclusive'};
  delete origin.sourceExclusiveMode;
  if(!table.collecting)requireStorage(parser,origin,span);
  const root=actual.sourceBindingIdentity??actual.sourceLexicalBindingIdentity;table.sourceBindingStates.set(root,'available');origin.sourceBindingIdentity=root;
@@ -55,14 +58,19 @@ export function projectRustOwnedRecordStatePlace(parser,layouts,object,span){
 }
 export function testRustOwnedRecordStatePlaceLoans(parser,slot,fields){return overlaps(parser,slot,readRustOwnedRecordStateFieldIdentity(slot.root,fields));}
 function sourceSlot(parser,origin,name){const current=state(parser);if(origin?.sourceLexicalBindingIdentity)return current.slots.get(origin.sourceLexicalBindingIdentity);const site=origin?.sourceRecordStateCollectingSite;return parser.origins.collecting&&site?[...current.slots.values()].find(slot=>slot.site?.start===site.start&&slot.site?.end===site.end):null;}
-function record(parser,origin){const owner=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,layout=owner?parser.namedRecords.get(owner.fullName):null,entry=layout?parser.origins.lookupValueOwner(['crate',...layout.constructor.split('.')],[]):null;return layout&&entry?.k==='ctor'&&entry.owner===owner.fullName?{layout,entry}:null;}
+function record(parser,origin){const actual=readRustOwnedBoxRecordParent(parser.origins,origin),owner=actual.type?.kind==='named'?parser.origins.lookupTypeOwner(actual.type.path,actual.path):null,layout=owner?parser.namedRecords.get(owner.fullName):null,entry=layout?parser.origins.lookupValueOwner(['crate',...layout.constructor.split('.')],[]):null;return layout&&entry?.k==='ctor'&&entry.owner===owner.fullName?{layout,entry}:null;}
 export function readRustOwnedRecordStateLayout(parser,origin){return record(parser,origin);}
 function requireStorage(parser,root,span){
  const table=parser.origins,pending=[{origin:root,depth:0,active:[]}];let nodes=0;
  while(pending.length){const {origin,depth,active}=pending.pop(),error=readRustOwnedRecordStateStorageError(++nodes,depth);if(error)fail(error,span);
+  if(origin.wrappers.length){
+   const layers=readRustRecordPlaceOwner({type:origin.type,owner:origin.expandedSourceOwner??origin.sourceOwner,wrappers:origin.wrappers,lifetimes:origin.sourceLifetimes??[]},false),facts=readRustOwnedContainerFacts(table,origin);
+   if(!layers?.boxed||facts.profile!=='owned'||!facts.closed)fail('mutable Box storage retains actual canonical destructor-free closed payload ownership',span);
+   const payload=readRustOwnedBoxRecordParent(table,origin);if(payload.wrappers.length)fail('mutable Box storage retains each actual payload layer',span);pending.push({origin:payload,depth:depth+origin.wrappers.length,active});continue;
+  }
   if(parser.standardCollectionSourceStorage?.(origin)===true)continue;
   if(parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&origin.type?.kind==='array'&&origin.wrappers.length===0){const facts=readRustOwnedContainerFacts(table,origin);if(facts.profile==='owned'&&facts.closed)continue;}
-  const sourceOwner=origin.expandedSourceOwner??origin.sourceOwner,role=readRustStandardSumOwnershipFacts(table,origin).profile,disposition=readRustOwnedRecordStateStorageDisposition(origin.type?.kind??'',origin.wrappers.length,role);if(disposition==='refuse'||!acceptRustOwnedRecordStateStorageOwner(sourceOwner?.kind??'',sourceOwner?.path.join('::')??''))fail('mutable record state requires actual direct storage without callable, reference or Box fields',span);if(disposition==='leaf')continue;
+  const sourceOwner=origin.expandedSourceOwner??origin.sourceOwner,role=readRustStandardSumOwnershipFacts(table,origin).profile,disposition=readRustOwnedRecordStateStorageDisposition(origin.type?.kind??'',origin.wrappers.length,role);if(disposition==='refuse'||!acceptRustOwnedRecordStateStorageOwner(sourceOwner?.kind??'',sourceOwner?.path.join('::')??''))fail('mutable record state requires actual closed owned storage without callable or reference fields',span);if(disposition==='leaf')continue;
   if(origin.type.kind==='tuple'){if(!origin.fields)fail('tuple storage needs every actual complete child origin',span);for(const child of origin.fields)pending.push({origin:child,depth:depth+1,active});continue;}
   if(origin.type.kind==='array'){const owner=origin.expandedSourceOwner??origin.sourceOwner;if(owner?.kind!=='library'||owner.arguments.length!==1)fail('vector state needs its actual complete source element owner',span);const position=origin.arrayElementPosition;if(position?.wrappers.length)fail('mutable record state requires actual direct storage without callable, reference or Box fields',span);const child={...table.typeOrigin(origin.type.element,origin.path),sourceOwner:copy(position?.owner??owner.arguments[0]),arrayElementPosition:position?.arrayElementPosition?copy(position.arrayElementPosition):null};pending.push({origin:child,depth:depth+1,active});continue;}
   const declared=table.lookupTypeOwner(origin.type.path,origin.path);if(!declared||active.includes(declared.fullName))fail('recursive mutable record storage needs its separate finite state interpretation',span);const next=[...active,declared.fullName],sum=declared.standardSumSourceOrigin?.standardSumSource;

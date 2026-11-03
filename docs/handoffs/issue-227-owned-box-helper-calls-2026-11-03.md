@@ -7,6 +7,11 @@ generators, formatters, validation gates, compilation or CI feedback were run or
 reviewed. The full requirements code draft remains unfinished and the complete
 goal stays active. Authored controls are not execution evidence.
 
+Continuation: [mutable Box source state](issue-227-mutable-box-source-state-2026-11-04.md)
+extends actual formals, slots, transitions and projected writeback with retained
+canonical Box ownership. Recursive/reference-bearing state and every other
+broader requirement below remain binding; all controls remain unexecuted.
+
 ## Actual shared implementation path
 
 Ordinary source helper parsing previously reached the exclusive interface header

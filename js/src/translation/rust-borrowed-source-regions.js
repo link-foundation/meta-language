@@ -102,8 +102,26 @@ class SourceRegions{
  }
  checkLifetime(value,position,node){const error=rules.readRustBorrowedSourceLifetimeError(lifetime(position),value.regions.map(id=>this.lifetimes[id]));if(error)throw typeError(error,node?.span);}
  boxReference(value,target){const source=value.position;if(!source||source.wrappers[0]!=='reference'||target.wrappers[0]!=='reference'||source.wrappers.length<=target.wrappers.length)return value;let owner=source.owner,canonical=true;const drop=source.wrappers.length-target.wrappers.length;for(let index=0;index<drop;index+=1){if(!acceptRustOwnedBoxTypeNode(['box'],owner.kind,owner.path.join('::'),owner.arguments.length)){canonical=false;break;}owner=owner.arguments[0];}const projected={...source,owner,wrappers:['reference',...source.wrappers.slice(1+drop)]};if(!rules.acceptRustBorrowedSourceBoxReference(source.wrappers,target.wrappers,canonical,sameOwner(projected,target)))return value;return {...value,position:{...this.position(source),owner,wrappers:projected.wrappers}};}
+ boxAdjustment(value,position,node){
+  if(!position.wrappers.includes('box')&&!value.position?.wrappers?.includes('box'))return null;
+  const target=readRustRecordPlaceOwner(position,true);if(!target)return null;
+  if(target.boxed&&!target.borrowed&&value.role==='inferred numeric'&&value.inference!==null&&role(target.position)==='copy'){this.constraints.set(value.inference,this.position(target.position));value=this.resolved(value);}
+  if(target.boxed&&!target.borrowed&&role(target.position)==='string'&&value.role==='reference'&&role(this.inner(value.position))==='text'){
+   value=this.read(value,'read',node);value={...value,position:this.position(target.position),role:'string',root:this.root('',true),regions:[],producer:true,storageRoot:undefined,storageIdentity:undefined,placeRegions:undefined,borrowedPlace:false};
+  }
+  const source=readRustRecordPlaceOwner(value.position,false);if(!source||!sameType(source.position.type,target.position.type)||!sameOwner(source.position,target.position))return null;
+  const sourceLayers=value.position.wrappers.length,targetLayers=position.wrappers.filter(layer=>layer==='box').length;
+  if(target.borrowed){
+   if(!source.boxed||references(position)!==1||targetLayers>sourceLayers)return null;this.closedTarget(position,node);value=this.read(value,'read',node);
+   return {...value,position,role:'reference',regions:this.union([value.regions,value.placeRegions??[value.storageRoot??value.root??this.root('',true)]]),producer:false};
+  }
+  if(targetLayers===sourceLayers)return null;
+  if(targetLayers>sourceLayers){value=this.read(value,'move',node);return {...value,position,role:role(position),root:this.root('',true),producer:true};}
+  const copy=role(position)==='copy';value=this.read(value,copy?'read':'move',node);return {...value,position,role:role(position),root:copy?null:this.root('',true),regions:copy?[]:value.regions,producer:!copy,placeRegions:undefined,borrowedPlace:false};
+ }
  adjust(value,position,node){
   value=this.resolved(value);if(!position)return value;value=this.boxReference(value,position);const wanted=role(position);if(!wanted)fail('the actual expression source position needs a separate value domain',node);
+  const boxed=this.boxAdjustment(value,position,node);if(boxed){this.checkLifetime(boxed,position,node);return boxed;}
   let same=sameOwner(value.position,position),targetInner=this.inner(position);
   if(value.role==='inferred numeric'&&value.inference!==null&&wanted==='reference'&&role(targetInner)==='copy'){this.constraints.set(value.inference,targetInner);value=this.resolved(value);same=sameOwner(value.position,position);}
   const sourceInner=this.inner(value.position);const plan=rules.readRustBorrowedSourceAdjustment(value.role,wanted,same,sameOwner(value.position,targetInner),sameOwner(sourceInner,position),value.root!==null,node.k==='lit'&&role(targetInner)==='copy',role(sourceInner)==='text',references(value.position),references(position));
@@ -113,9 +131,9 @@ class SourceRegions{
    case 'borrow':case 'temporary borrow':this.closedTarget(position,node);value=this.read(value,'read',node);value={...value,regions:this.union([value.regions,value.placeRegions??[value.storageRoot??value.root??this.root('',true)]]),producer:false};break;
    case 'static literal':this.closedTarget(position,node);value={...value,regions:[0],producer:false};break;
    case 'copy referent':value=this.read(value,'read',node);value={...value,root:null,regions:[],producer:false};break;
-   case 'construct box':value=this.read(value,'move',node);value={...value,root:this.root('',true),producer:true};break;
-   case 'copy box payload':value=this.read(value,'read',node);value={...value,root:null,producer:false};break;
-   case 'move box payload':value=this.read(value,'move',node);value={...value,root:this.root('',true),producer:true};break;
+   case 'construct box':if(this.composed)fail('closed Box construction retains its actual canonical owned layer transition',node);value=this.read(value,'move',node);value={...value,root:this.root('',true),producer:true};break;
+   case 'copy box payload':if(this.composed)fail('closed Box copying retains its actual canonical payload projection',node);value=this.read(value,'read',node);value={...value,root:null,producer:false};break;
+   case 'move box payload':if(this.composed)fail('closed Box transfer retains its actual canonical payload projection',node);value=this.read(value,'move',node);value={...value,root:this.root('',true),producer:true};break;
    case 'materialize text':value=this.read(value,'read',node);value={...value,root:this.root('',true),regions:[],producer:true};break;
    default:fail('the expression qualifier change needs its explicit source operation proof',node);
   }
@@ -174,7 +192,7 @@ class SourceRegions{
    }else if(!acceptRustBorrowedIteratorWholeSlice(node.args.map(arg=>arg?.k??''),node.args.map(arg=>arg?.type.kind??''),node.args.map(arg=>String(arg?.value??''))))fail('readonly collect materialization requires its exact whole-vector slice',node);
    const error=readRustBorrowedIteratorCollectionError(sameType(output.type,wanted.type.element),sameOwner(output,wanted.arrayElementPosition),output.wrappers.length===1&&output.wrappers[0]==='reference',true);if(error)fail(error,node);this.closedTarget(output,node);value=this.value(this.position(wanted),this.root('',true),regions,true);
   }else if(operation==='match'){
-   let scrutinee=this.read(this.expression(node.scrutinee,env,bindings,null,depth+1),'read',node.scrutinee);const loop=readRustSourceLoopMatch(this,node,scrutinee,env,bindings,expected,depth);if(loop)value=loop;else{const owned=scrutinee.role==='owned';if(owned&&!this.composed)fail('owned matches retain the independent composition gate',node);const count=this.states.length;
+   let scrutinee=this.read(this.expression(node.scrutinee,env,bindings,null,depth+1),'read',node.scrutinee);const loop=readRustSourceLoopMatch(this,node,scrutinee,env,bindings,expected,depth);if(loop)value=loop;else{const boxed=scrutinee.role==='box'&&readRustRecordPlaceOwner(scrutinee.position,false),owned=scrutinee.role==='owned'||Boolean(boxed);if(owned&&!this.composed)fail('owned matches retain the independent composition gate',node);if(boxed)this.closedTarget(scrutinee.position,node);const count=this.states.length;
    this.branches(2*count);const base=this.states.slice(),storageBase=new Map(this.storages),outcomes=[],storageOutcomes=[],results=[];
    if(node.cases.length===0)fail('a source match requires its actual inhabited case inventory',node);
    for(const arm of node.cases){for(let index=0;index<count;index+=1)this.states[index]=base[index];this.storages=new Map(storageBase);const local=new Map(env),ids=[],pattern=arm.pattern,start=this.temporaries.length;
