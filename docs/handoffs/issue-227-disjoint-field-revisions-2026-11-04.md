@@ -112,3 +112,10 @@ Contract: [Rust separate field borrowing and Box](https://doc.rust-lang.org/refe
    authorized JavaScript gates and CI-only native execution; repair actual
    failures; record all observed assertions at the exact executed commits.
    Never compile Rust locally. No current source batch proves full delivery.
+
+Successor: [irrefutable place bindings](issue-227-irrefutable-place-bindings-2026-11-04.md)
+drafts closed record/tuple-struct move/ref/Copy let bindings using existing checked
+projections, including shadows, initializer storage and mutable owning bindings.
+All controls remain unexecuted. General matches/guards, anonymous products,
+multiple variants, exclusive-reference patterns and broader obligations remain
+actual code work detailed there.

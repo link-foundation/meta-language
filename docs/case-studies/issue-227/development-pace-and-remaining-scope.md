@@ -994,3 +994,18 @@ The preceding commits `b300cda38` (2026-11-04 02:08:14 +07:00) and `10e72a77e`
 cadence, without executed behavior or an audited requirement denominator. It
 cannot establish a completion percentage, verified development throughput or a
 reliable full-scope finish date.
+
+
+The [irrefutable place binding batch](../../handoffs/issue-227-irrefutable-place-bindings-2026-11-04.md)
+reuses the existing checked field protocol for actual selected move/ref/Copy
+bindings. Twenty-four positive and fourteen invalid originals plus independent
+projection/forgery/call-count/Links controls are authored and unexecuted. Reuse
+avoids another archive format, but requires preserving initializer evaluation,
+field availability, temporary storage, unused moves, user-name shadows and mutable
+binding ownership together. General match/guard entry modes and variant/product
+images remain actual code work; a recorded pattern flag would not supply them.
+
+The preceding commits `10e72a77e` (2026-11-04 02:22:10 +07:00) and `63c905ff1`
+(02:36:19 +07:00) are 14 minutes 9 seconds apart. That measures source publication
+without execution or an audited requirement denominator. It cannot establish a
+completion percentage, verified development throughput or full-scope finish date.

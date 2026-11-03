@@ -201,6 +201,7 @@ export function readRustRecordPattern(parser,segments,path,aliases,start){
  while(!c.is('}')){
   if(c.is('..')){rest=c.next();break;}
   parser.attributes();
+  if(parser.irrefutableSourcePlaceBinding&&!c.peek().raw?.startsWith('r#')&&(c.is('ref')||c.is('mut'))){const binding=parser.pattern(path,aliases);if(binding.k!=='bind'||c.is(':'))throw unsupported('Rust record binding modifier','a shorthand modifier retains its actual field binding',binding.span);names.push(binding.name);patterns.push(binding);if(!c.eat(','))break;continue;}
   const numeric=c.peek().kind==='number'&&/^(0|[1-9][0-9]*)$/u.test(c.peek().raw);
   const field=numeric?c.next():c.identifier('record pattern field');
   let pattern;
@@ -228,6 +229,7 @@ export function readRustRecordPattern(parser,segments,path,aliases,start){
 
 export function readRustNominalBindingPattern(parser){
  const c=parser.cursor;
+ if(parser.irrefutableSourcePlaceBinding&&!c.peek().raw?.startsWith('r#')&&(c.is('ref')||c.is('mut'))){const aliases=[],pattern=parser.pattern(parser.modulePath,aliases);return {k:'nominal',pattern,span:pattern.span};}
  if(c.peek().kind!=='identifier')return null;
  const resolved=parser.resolve([c.peek().value],parser.modulePath);
  const valueCandidate=parser.origins.lookupValueOwner(resolved,parser.modulePath),typeCandidate=parser.origins.lookupTypeOwner(resolved,parser.modulePath);

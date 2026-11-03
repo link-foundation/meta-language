@@ -4875,8 +4875,22 @@ lifetimes, are merged and returned loan coordinates are rebased; existing siblin
 references keep their actual original coordinates. Loop joins retain complete
 charged snapshots under their existing state contract. This does not establish
 general partial loop packets or precise arbitrary helper effect summaries.
-Reference-bearing call/state contexts, tuples, multi-constructor images,
-temporary lifetime extension and general mixed pattern bindings retain their
+Closed irrefutable record and tuple-struct bindings lower each actual selected
+leaf through the same checked field projection. By-value leaves transfer or copy
+according to their real owner; explicit shared `ref` leaves retain actual field
+loans. Wildcards perform no field read or move. Selected values are held in fresh
+internal binders before any user names enter scope, preserving shadows and moves
+even for unused bindings. An arbitrary initializer evaluates once in actual
+hidden storage; a syntactic place keeps its original containing owner. Canonical
+Box initializer dereferences inspect places without transferring whole payloads.
+Shared-parent ergonomics retain original parent loans and produce shared field
+bindings; mutable owning/Copy bindings initialize independent ordinary source
+storage. Explicit modifiers under an inherited shared binding mode refuse under
+the registered Rust 2024 fixture contract. Raw pattern-mode flags do not enter
+archives; actual projection graphs and source positions remain the proof inputs.
+Reference-bearing call/state contexts, anonymous products, multi-constructor
+images, general temporary lifetime extension, exclusive-reference patterns and
+mixed refutable/guarded match bindings retain their
 separate required protocols. No image, lifetime root, disjointness claim,
 ownership mask or local region identifier is accepted from an archive. Actual
 projection graphs and source positions remain the public proof inputs. The value/place

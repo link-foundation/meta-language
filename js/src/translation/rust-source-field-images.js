@@ -2,7 +2,7 @@
 // containing lifetime. Images are private proof coordinates, never archived.
 import {unsupported} from './diagnostics.js';
 import {sameType} from './types.js';
-import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
+import {readRustRecordPlaceOwner,readRustRecordPlaceBoxProjectionDepth} from './rust-record-place-owner-rules.js';
 import {sameRustSourcePlaceOwner} from './rust-source-place-transforms.js';
 import {checkRustSourceExpressionPosition} from './rust-source-expression-positions.js';
 import {readRustOwnedRecordStateStorageError} from './rust-owned-record-state-rules.js';
@@ -54,7 +54,8 @@ export function readRustSourceRecordProjectionOwner(visitor,base,env,bindings,po
  if(base.k==='var'&&env.has(base.name)&&!base.sourceStateTransition&&!base.sourceLoopFold&&!base.sourcePlaceTransform&&!base.sourceRecordPlace){
   const actual=env.get(base.name);let qualified=null;
   if(base.sourcePosition){qualified=checkRustSourceExpressionPosition(base.sourcePosition,base.type,visitor.program.sourceLanguage,value=>value,value=>visitor.program.declarations.get(value.name)).position;visitor.scope(qualified,bindings,base);}
-  if(sameRustSourceRecordImagePosition(actual.position,position)&&(!qualified||sameRustSourceRecordImagePosition(qualified,position)))return visitor.compatible(visitor.readLifetime(actual,base),position,base);
+  const exact=sameRustSourceRecordImagePosition(actual.position,position),payload=!exact&&Boolean(actual.position)&&sameType(actual.position.type,position.type)&&readRustRecordPlaceBoxProjectionDepth(actual.position,position)>0;
+  if((exact||payload)&&(!qualified||sameRustSourceRecordImagePosition(qualified,position))){const value=visitor.readLifetime(actual,base);return visitor.compatible(payload?{...value,position:visitor.position(position),role:visitor.value(position).role}:value,position,base);}
  }
  const actual=visitor.expression(base,env,bindings,position,depth+1);
  // A nested checked projection selects a container image without promoting

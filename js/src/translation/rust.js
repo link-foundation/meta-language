@@ -1,6 +1,7 @@
 import {readRustFnMutSourceIterator} from './rust-fnmut-source-iterators.js';
 import {readRustOwnedRecordStateDeclarations} from './rust-owned-record-state.js';
-import {acceptRustSourceRegionComposition,initializeRustSourceRegionComposition,readRustSourceRegionBodyMode,beginRustSourceRegionBody,endRustSourceRegionBody} from './rust-source-region-composition.js';
+import {acceptRustSourceRegionComposition,initializeRustSourceRegionComposition,readRustSourceRegionBodyMode,beginRustSourceRegionBody,endRustSourceRegionBody,hasRustSourceRegionComposition} from './rust-source-region-composition.js';
+import {readRustSourcePatternPlace,lowerRustSourcePlaceBinding,testRustModifiedPlaceBinding} from './rust-source-place-bindings.js';
 import {attachRustSourceStateTransition} from './rust-source-state-transitions.js';
 import {readRustSourceVectorSort} from './rust-source-vector-sort.js';
 import {readRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
@@ -1169,8 +1170,9 @@ class RustParser {
   letStatement(path) {
     const c = this.cursor;
     const start = c.next();
-    const mutableToken=c.eat('mut'),mutable=Boolean(mutableToken);
-    const pattern = readRustLetElsePattern(this,path)??this.productBindingPattern();
+    const mutableToken=!c.peek().raw?.startsWith('r#')&&c.eat('mut'),mutable=Boolean(mutableToken);
+    const previousBindingMode=this.irrefutableSourcePlaceBinding;let pattern;this.irrefutableSourcePlaceBinding=hasRustSourceRegionComposition(this);
+    try{pattern=readRustLetElsePattern(this,path)??this.productBindingPattern();}finally{this.irrefutableSourcePlaceBinding=previousBindingMode;}
     if(mutable&&pattern.k!=='name')throw unsupported('mutable binding','mutation is outside the portable core',span(start,mutableToken));
     const names = new Set();
     const validateNames = binding => {
@@ -1191,7 +1193,8 @@ class RustParser {
     let sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
     const initializerStart=c.index,temporaryFrame=this.origins.ownedTemporaryFrame();
-    const value = withRustStandardSumSourceContext(this,sourceType,()=>readRustExpectedCopyClosure(this,path,sourceType));
+    const patternPlace=withRustStandardSumSourceContext(this,sourceType,()=>readRustSourcePatternPlace(this,pattern,path));
+    const value = patternPlace?.node??withRustStandardSumSourceContext(this,sourceType,()=>readRustExpectedCopyClosure(this,path,sourceType));
     if(fnMutLocalType){const inferred=finishRustFnMutSourceLocalVectorAnnotation(this,fnMutLocalType,value,path);type=inferred.type;sourceType=inferred.origin;}
     let fallback=null;
     if(c.is('else')){
@@ -1205,6 +1208,10 @@ class RustParser {
     c.expect(';', 'let');
     this.origins.finishOwnedExpression(value,path,temporaryFrame,true);
     const range = span(start, c.peek());
+    if(pattern.k==='nominal'){
+      const bindings=fallback===null?lowerRustSourcePlaceBinding(this,pattern,value,path,range,sourceType,patternPlace?.place===true):null;if(bindings!==null)return bindings;
+      if(testRustModifiedPlaceBinding(pattern.pattern)&&!this.origins.collecting)throw unsupported('Rust modified pattern binding','refutable and mutable-reference bindings need their separate full source match protocol',pattern.span);
+    }
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path, sourceType);
       const name=mutable?registerRustOwnedRecordMutableBinding(this,pattern.name,pattern.span??span(start,mutableToken)):pattern.name;
@@ -1236,10 +1243,10 @@ class RustParser {
     const c = this.cursor;
     const token = c.peek();
     const mutable=Boolean(allowMutable&&this.localValueStateModel&&c.eat('mut'));
-    if (c.is('mut')) throw unsupported('mutable tuple binding', 'mutation is outside the immutable product model', span(token, token));
-    if (c.is('ref') || c.is('&')) throw unsupported('reference tuple binding', 'product bindings must retain direct Copy values', span(token, token));
     const nominal=readRustNominalBindingPattern(this);
     if(nominal)return nominal;
+    if (c.is('mut')&&!token.raw?.startsWith('r#')) throw unsupported('mutable tuple binding', 'mutation is outside the immutable product model', span(token, token));
+    if (c.is('ref')&&!token.raw?.startsWith('r#') || c.is('&')) throw unsupported('reference tuple binding', 'product bindings must retain direct Copy values', span(token, token));
     if (c.eat('_')) return { k: 'wild', span: { start: token.start, end: token.end } };
     if (c.eat('(')) {
       if (c.eat(')')) return { k: 'unit', span: { start: token.start, end: c.tokens[c.index - 1].end } };
@@ -1263,7 +1270,7 @@ class RustParser {
   }
 
   lowerProductBinding(pattern, value, path, bindings) {
-    if(pattern.k==='nominal'){lowerRustNominalBinding(this,pattern.pattern,value,path,bindings);return;}
+    if(pattern.k==='nominal'){if(testRustModifiedPlaceBinding(pattern.pattern)&&!this.origins.collecting)throw unsupported('Rust product reference binding','anonymous-product field loans retain their separate actual product-place protocol',pattern.span);lowerRustNominalBinding(this,pattern.pattern,value,path,bindings);return;}
     if (pattern.k === 'wild') return;
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path);
@@ -2171,7 +2178,8 @@ class RustParser {
     const token = c.peek();
     if (c.eat('&')) return this.origins.referencePattern(this.pattern(path, aliases));
     if (c.eat('_')) return this.recordPatternDepth?{k:'wild',span:{start:token.start,end:token.end}}:{k:'wild'};
-    if (c.is('ref') || c.is('mut')) throw unsupported(`${token.value} binding`, 'bindings are by value in the portable core', span(token, token));
+    if(this.irrefutableSourcePlaceBinding&&!token.raw?.startsWith('r#')&&(c.is('ref')||c.is('mut'))){const mode=c.next();if(mode.value==='ref'&&c.is('mut')&&!c.peek().raw?.startsWith('r#'))throw unsupported('Rust mutable-reference pattern binding','the exclusive field lease needs its complete mutable binding and scope protocol',span(mode,c.peek()));const name=c.identifier('modified pattern binding');requireRustNonconstantBinding(this,name.value,path,name);return {k:'bind',name:name.value,...(mode.value==='ref'?{sourceBindingMode:'shared reference'}:{sourceBindingMutable:true}),span:{start:mode.start,end:name.end}};}
+    if (!token.raw?.startsWith('r#')&&(c.is('ref') || c.is('mut'))) throw unsupported(`${token.value} binding`, 'bindings are by value in the portable core', span(token, token));
     if(this.ordinaryCompletionContext()&&(c.is('..')||c.is('..=')))return readRustIntegerRangePattern(this,path,token);
     if(c.is('-')&&c.isKind('number',1)){c.next();const pattern=this.numericPattern(c.next(),token,true);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,path,token,pattern):pattern;}
     if(token.kind==='number'){c.next();const pattern=this.numericPattern(token,token,false);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,path,token,pattern):pattern;}
