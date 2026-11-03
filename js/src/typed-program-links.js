@@ -77,6 +77,7 @@ function bindingTargets(program) {
     if(node.sourceStateTransition!==undefined)walkSourcePosition(node.sourceStateTransition.position);
     if(node.sourceLoopFold!==undefined){const facet=node.sourceLoopFold;walkType(facet.control);for(const position of [facet.input,facet.item,facet.result,...facet.slots.map(slot=>slot.position)])walkSourcePosition(position);}
     if(node.sourcePlaceTransform!==undefined)for(const slot of [...node.sourcePlaceTransform.slots,...(node.sourcePlaceTransform.operands??[])])walkSourcePosition(slot.position);
+    if(node.sourceRecordPlace!==undefined){walkSourcePosition(node.sourceRecordPlace.root);walkSourcePosition(node.sourceRecordPlace.value);}
     if (node.k === 'var' && environment.has(node.name)) reference(node, 'name', schema.references.binding, environment.get(node.name));
     if (['call', 'functionRef'].includes(node.k) && declarations.has(node.fn)) reference(node, 'fn', schema.references.declaration, declarations.get(node.fn));
     if (node.k === 'ctor') {

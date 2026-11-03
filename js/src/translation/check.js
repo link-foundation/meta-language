@@ -3,6 +3,7 @@ import {checkRustOwnedVectorSourceFold} from './rust-source-loop-folds.js';
 import {checkRustFiniteLoopStateTransform} from './rust-source-state-transforms.js';
 import {checkRustSourcePlaceTransform} from './rust-source-place-transforms.js';
 import {checkRustVectorMutationInterface,checkRustVectorMutationBody} from './rust-vector-mutation-interfaces.js';
+import {checkRustRecordPlace} from './rust-record-place-regions.js';
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
 import {checkPropositionValue} from './proposition-values.js';
 import {validateFiniteRecordLoopHelpers} from './finite-record-loop-helpers.js';
@@ -167,6 +168,10 @@ function needsBranchResultContext(node, depth = 0) {
   if (node.k === 'if') return needsBranchResultContext(node.then, depth + 1) && needsBranchResultContext(node.else, depth + 1);
   return false;
 }
+
+// Field-place validation needs the actual projection over its actual owner,
+// including inside a case that already knows that owner's constructor.
+function retainRecordPlaceMatch(checker,expression){let node=expression,depth=0;while(node?.k==='let'){if(++depth>256)throw typeError('record place projection wrappers exceed their source depth budget');node=node.body;}if(node?.k==='match1')(checker.recordPlaceMatches??=new WeakSet()).add(node);}
 
 // The Math and Number functions whose value is a boolean.
 const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
@@ -645,6 +650,7 @@ class Checker {
       }
     }
     const expression = payload ? node[payload] : node;
+    if(node.sourceRecordPlace)retainRecordPlaceMatch(this,expression);
     if (expression.prototypeDefinition) throw unsupported('object prototype definition',
       'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', expression.prototypeDefinition.span);
     // Control flow passes its expected result type to every branch. Literal
@@ -662,6 +668,7 @@ class Checker {
     if(Object.hasOwn(node,'sourceStateTransition'))result.sourceStateTransition=checkRustSourceStateTransition(node.sourceStateTransition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     if(Object.hasOwn(node,'sourceLoopFold'))result.sourceLoopFold=checkRustOwnedVectorSourceFold(node.sourceLoopFold,result,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     if(Object.hasOwn(node,'sourcePlaceTransform'))result.sourcePlaceTransform=checkRustSourcePlaceTransform(node.sourcePlaceTransform,result,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name),name=>this.items.get(name));
+    if(Object.hasOwn(node,'sourceRecordPlace'))result.sourceRecordPlace=checkRustRecordPlace(node.sourceRecordPlace,result,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     return result;
   }
 
@@ -1036,8 +1043,9 @@ class Checker {
         const body = this.expr(node.body, inner, path, expected, allowLiteral);
         return { k: 'let', name: node.name, value, body, type: body.type };
       }
-      case 'match':
-        return this.expr(this.compileMatch(node, env, path), env, path, expected, allowLiteral);
+      case 'match': {
+        const compiled=this.compileMatch(node,env,path);if(node.sourceRecordPlace)retainRecordPlaceMatch(this,compiled);return this.expr(compiled,env,path,expected,allowLiteral);
+      }
       case 'match1':
         return this.match(node, env, path, expected, allowLiteral);
       case 'stringTest': {
@@ -2079,7 +2087,7 @@ class Checker {
       ? node.scrutinee.path[0]
       : null;
     const fact = variable && env.get(KNOWN)?.get(variable);
-    if (fact) return this.knownMatch(node, fact, variable, env, path, expected, allowLiteral);
+    if (fact&&!this.recordPlaceMatches?.has(node)) return this.knownMatch(node, fact, variable, env, path, expected, allowLiteral);
     const scrutinee = this.expr(node.scrutinee, env, path, undefined);
     const type = scrutinee.type;
     const cases = [];

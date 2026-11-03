@@ -40,6 +40,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   if(Object.hasOwn(value,'sourceStateTransition'))result.sourceStateTransition=structuredClone(value.sourceStateTransition);
   if(Object.hasOwn(value,'sourceLoopFold'))result.sourceLoopFold=structuredClone(value.sourceLoopFold);
   if(Object.hasOwn(value,'sourcePlaceTransform'))result.sourcePlaceTransform=structuredClone(value.sourcePlaceTransform);
+  if(Object.hasOwn(value,'sourceRecordPlace'))result.sourceRecordPlace=structuredClone(value.sourceRecordPlace);
   return result;
 }
 

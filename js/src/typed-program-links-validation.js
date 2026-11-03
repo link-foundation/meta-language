@@ -2,6 +2,7 @@ import {checkRustFnMutSourceSpecialization} from './translation/rust-fnmut-sourc
 import {checkRustSourceStateTransition} from './translation/rust-source-state-transitions.js';
 import {checkRustSourcePlaceTransform} from './translation/rust-source-place-transforms.js';
 import {checkRustVectorMutationInterface,checkRustVectorMutationBody} from './translation/rust-vector-mutation-interfaces.js';
+import {checkRustRecordPlace} from './translation/rust-record-place-regions.js';
 import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner} from './translation/rust-standard-collection-signatures.js';
 import {checkRustExclusiveSourceSignature} from './translation/rust-exclusive-source-signatures.js';
 import {checkRustBorrowedVectorSourceRegions} from './translation/rust-borrowed-source-regions.js';
@@ -226,6 +227,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       const facet=checkRustSourcePlaceTransform(node.sourcePlaceTransform,node,program.sourceLanguage,value=>value,value=>declarations.get(value.name),name=>declarations.get(name));
       for(const slot of [...facet.slots,...(facet.operands??[])]){let position=slot.position;while(position){type(position.type);position=position.arrayElementPosition;}}
     }
+    if(Object.hasOwn(node,'sourceRecordPlace')){const facet=checkRustRecordPlace(node.sourceRecordPlace,node,program.sourceLanguage,value=>value,value=>declarations.get(value.name));for(const root of [facet.root,facet.value]){let position=root;while(position){type(position.type);position=position.arrayElementPosition;}}}
     if (node.k === 'none') {
       if (!acceptOptionalLiteralAbsence(node.absence)) throw new TypeError('an absent optional value requires its concrete null or undefined tag');
       if (node.type?.kind !== 'option' || !acceptOptionalAbsence(node.type.absence ?? 'both', node.absence)) throw new TypeError('an absent optional value disagrees with its retained absence policy');

@@ -11,6 +11,7 @@ import {readRustOwnedBoxRecordParent} from './rust-owned-containers.js';
 import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,planTuplePatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
+import {attachRustRecordPlace} from './rust-record-place-regions.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
@@ -129,7 +130,7 @@ export function readRustRecordConstruction(parser,segments,path,start){
 }
 
 export function readRustRecordProjection(parser,object,field,path,where){
- const origin=readRustOwnedBoxRecordParent(parser.origins,parser.origins.origin(object,path));
+ const actual=parser.origins.origin(object,path),origin=readRustOwnedBoxRecordParent(parser.origins,actual);
  const owner=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null;
  const record=owner?parser.namedRecords.get(owner.fullName):null;
  if(!record)return parser.origins.collecting&&parser.hasRecordDeclarations?{k:'field',object,field,span:where}:null;
@@ -138,7 +139,7 @@ export function readRustRecordProjection(parser,object,field,path,where){
  const node=recordProjectionNode(parser,record,object,index,where);
  const constructor=parser.origins.lookup(record.constructor.split('.'),[],['ctor']);
  if(constructor?.fields[index])parser.origins.mark(node,projectRustOwnedRecordField(parser.origins,origin,constructor.fields[index],index,origin.wrappers.length>0&&origin.wrappers.every(layer=>layer==='reference'),where));
- return node;
+ return constructor?.fields[index]?attachRustRecordPlace(parser,node,actual,constructor.fields[index],index):node;
 }
 
 function recordProjectionNode(parser,record,object,index,where){

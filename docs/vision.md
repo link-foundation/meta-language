@@ -4638,6 +4638,25 @@ list grants no authority. Free captures must be live direct Copy values without
 loans or mutable storage identity; mutable roots require their explicit state
 parameters and result slots. Existing borrowed/owned escaping callback and
 field-granular capture obligations remain separate.
+Direct closed record fields retain an independently checked source place facet.
+Its complete executable expression must project the actual declaration field
+from its actual single-constructor owner, evaluating that owner once. Compiler
+names for unused pattern fields grant no reads or ownership transfers. The
+selected body's only value is the actual selected field binding. This graph
+remains explicit even inside a known-constructor case; ordinary case optimization
+continues elsewhere. Qualified owner/field positions, declaration index and
+original span survive Links projection and datatype-reference transport.
+Field borrows derive their loans from the actual containing storage, or the
+actual referent regions of a borrowed parent, rather than a temporary projection
+binding. Nested projections retain those original regions. Copying a scalar and
+transferring an owned field into new storage clear transient place coordinates;
+an owning field cannot move out of a shared parent. Owned concatenation consumes
+its real operands and cannot serve as a hidden copy of a borrowed owning field.
+This initial place protocol admits direct closed fields under an owned or single
+shared-reference parent. Box traversal, stored-reference fields, partial moves,
+temporary lifetime extension and disjoint field loan revisions retain their
+separate obligations. Current loans conservatively cover the containing root;
+disjoint mutable call arguments do not establish disjoint surviving field loans.
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state

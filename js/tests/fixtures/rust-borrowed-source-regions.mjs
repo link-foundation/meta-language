@@ -40,6 +40,8 @@ export const rustBorrowedSourceRegionDecisions=[
  {operation:'readRustBorrowedSourceObservationError',arguments:['copy','binary'],expected:''},
  {operation:'readRustBorrowedSourceObservationError',arguments:['borrowed vector','len'],expected:''},
  {operation:'readRustBorrowedSourceObservationRole',arguments:['reference','string','primitive','str',0,['reference']],expected:'text'},
+ {operation:'readRustBorrowedSourceObservationRole',arguments:['reference','string','library','std::string::String',0,['reference']],expected:'text'},
+ {operation:'readRustBorrowedSourceObservationRole',arguments:['reference','string','library','alloc::string::String',0,['reference']],expected:'text'},
  {operation:'readRustBorrowedSourceObservationRole',arguments:['reference','string','declaration','str',0,['reference']],expected:'reference'},
  {operation:'readRustBorrowedSourceObservationRole',arguments:['reference','string','primitive','str',0,['reference','reference']],expected:'reference'},
  {operation:'readRustBorrowedSourceMatchOperation',arguments:['match'],expected:'match'},

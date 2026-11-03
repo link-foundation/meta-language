@@ -7,6 +7,10 @@ review were performed. No represented program, test, generator, formatter,
 validation gate, compilation or CI-feedback review ran. The complete issue
 objective and all preceding obligations remain active.
 
+Continuation: [direct record field places](issue-227-record-field-place-regions-2026-11-03.md)
+adds actual containing-storage loans for the initial closed-field profile. The
+remaining callback capture and whole-project obligations below remain binding.
+
 ## Actual source/compiler path drafted
 
 The generic callback reader previously collected hidden capture borrows but did

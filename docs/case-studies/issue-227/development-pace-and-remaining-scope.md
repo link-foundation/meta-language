@@ -733,3 +733,14 @@ positive and six invalid-source originals bring the inventory to 503 positives
 (439 literal, 64 actual source), nineteen groups. Whole-root captures are covered
 by this draft; field-granular and escaping callback protocols remain explicit
 work. No execution evidence or requirement completion percentage is claimed.
+
+The [direct record field place batch](../../handoffs/issue-227-record-field-place-regions-2026-11-03.md)
+drafts loans from the actual containing storage or borrowed parent referent,
+retaining nested projections, Copy reads and fresh storage after owning moves.
+Independent validation checks the complete actual field projection; source
+review also accounted for generated wildcard bindings and known-constructor
+optimization. Eleven positive and four invalid originals bring the authored
+inventory to 514 positives (450 literal, 64 actual source), nineteen groups.
+Partial moves, disjoint surviving field loans, reference-bearing/Box storage and
+whole-project integration remain explicit work. These are unexecuted source
+drafts; they do not establish completed requirement counts or a percentage.

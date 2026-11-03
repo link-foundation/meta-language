@@ -64,7 +64,7 @@ export function readRustBorrowedSourceObservationError(role,operation){return ['
 /** @param {string} role @param {string} kind @param {string} owner
  * @param {string} path @param {number} argumentCount @param {string[]} wrappers
  * @returns {string} */
-export function readRustBorrowedSourceObservationRole(role,kind,owner,path,argumentCount,wrappers){return role==='reference'&&kind==='string'&&owner==='primitive'&&path==='str'&&argumentCount===0&&wrappers.length===1&&wrappers[0]==='reference'?'text':role;}
+export function readRustBorrowedSourceObservationRole(role,kind,owner,path,argumentCount,wrappers){return role==='reference'&&kind==='string'&&(owner==='primitive'&&path==='str'||owner==='library'&&['std::string::String','alloc::string::String'].includes(path))&&argumentCount===0&&wrappers.length===1&&wrappers[0]==='reference'?'text':role;}
 /** @param {string} role @param {string} kind @param {string} pattern
  * @param {number} fields @param {number} bindings @returns {string} */
 export function readRustBorrowedSourceMatchError(role,kind,pattern,fields,bindings){if(role!=='reference'||kind!=='data')return 'source matching requires its actual borrowed nominal place adapter';if(!['wild','bind','ctor'].includes(pattern))return 'this source pattern needs its independent binding projection';if(pattern==='ctor'&&(!Number.isSafeInteger(fields)||fields<0||fields!==bindings))return 'source constructor patterns need every actual declared field position';return '';}
