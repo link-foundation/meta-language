@@ -38,6 +38,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   const result=projectLinkedProgramExpressionValue(value,declarations,{rootedNamespace,referenceSemantics,sourceLanguage});
   if(Object.hasOwn(value,'sourcePosition'))result.sourcePosition=structuredClone(value.sourcePosition);
   if(Object.hasOwn(value,'sourceStateTransition'))result.sourceStateTransition=structuredClone(value.sourceStateTransition);
+  if(Object.hasOwn(value,'sourceLoopFold'))result.sourceLoopFold=structuredClone(value.sourceLoopFold);
   return result;
 }
 

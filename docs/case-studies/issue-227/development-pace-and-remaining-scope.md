@@ -637,3 +637,13 @@ prints, direct blocks, explicit parenthesized separators and early returns;
 three invalid-source controls preserve missing-separator boundaries. The latest
 inventory is 414 authored positives in nineteen groups, 350 literal and 64
 actual source. These remain unexecuted source controls.
+
+The [owned Vec region-interface draft](../../handoffs/issue-227-owned-loop-region-interface-2026-11-03.md)
+connects the actual admitted reduce, compiler control datatype, ordered state
+binders and completion guard to the common source-region interpreter. It drafts
+the continuing-state/capture invariant and the actual zero-iteration merge, with
+Links transport/checker integration. Nine further originals bring the declared
+inventory to 423 positives (359 literal, 64 actual source), nineteen groups.
+All generation and execution remain deferred. Shared collections, escaping loop
+results and finite-helper region interfaces remain explicit full-scope work;
+the case does not count this source batch as a completed requirement percentage.

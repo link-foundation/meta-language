@@ -3,6 +3,7 @@ import {checkRustSourceStateTransition} from './translation/rust-source-state-tr
 import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner} from './translation/rust-standard-collection-signatures.js';
 import {checkRustExclusiveSourceSignature} from './translation/rust-exclusive-source-signatures.js';
 import {checkRustBorrowedVectorSourceRegions} from './translation/rust-borrowed-source-regions.js';
+import {checkRustOwnedVectorSourceFold} from './translation/rust-source-loop-folds.js';
 import {checkJavaScriptClassOwners} from './translation/javascript-class-owners.js';
 import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
@@ -211,6 +212,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if(Object.hasOwn(node,'sourceStateTransition')){
       const facet=checkRustSourceStateTransition(node.sourceStateTransition,node.type,program.sourceLanguage,value=>value,value=>declarations.get(value.name));
       let position=facet.position;while(position){type(position.type);position=position.arrayElementPosition;}
+    }
+    if(Object.hasOwn(node,'sourceLoopFold')){
+      const facet=checkRustOwnedVectorSourceFold(node.sourceLoopFold,node,program.sourceLanguage,value=>value,value=>declarations.get(value.name));
+      type(facet.control);for(const root of [facet.input,facet.item,facet.result,...facet.slots.map(slot=>slot.position)]){let position=root;while(position){type(position.type);position=position.arrayElementPosition;}}
     }
     if (node.k === 'none') {
       if (!acceptOptionalLiteralAbsence(node.absence)) throw new TypeError('an absent optional value requires its concrete null or undefined tag');

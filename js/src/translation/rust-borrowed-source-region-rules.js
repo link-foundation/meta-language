@@ -60,7 +60,7 @@ export function reserveRustBorrowedSourcePosition(nodes,units,addNodes,addUnits)
 /** @param {boolean} selected @param {boolean} runtimeShell @returns {string} */
 export function readRustBorrowedSourceRuntimeError(selected,runtimeShell){return selected&&runtimeShell?'borrowed source body positions require their independent runtime-shell binder adapter':'';}
 /** @param {string} role @param {string} operation @returns {string} */
-export function readRustBorrowedSourceObservationError(role,operation){return role==='source state packet'?'source state packets are interpreted through their actual result/state slots':['reference','box','owned','borrowed vector'].includes(role)&&operation!=='len'?'this source observation needs an independently represented value or source trait proof':'';}
+export function readRustBorrowedSourceObservationError(role,operation){return ['source state packet','source loop packet','source loop control'].includes(role)?'source state packets are interpreted through their actual result/state slots':['reference','box','owned','borrowed vector'].includes(role)&&operation!=='len'?'this source observation needs an independently represented value or source trait proof':'';}
 /** @param {string} role @param {string} kind @param {string} owner
  * @param {string} path @param {number} argumentCount @param {string[]} wrappers
  * @returns {string} */

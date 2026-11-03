@@ -9,6 +9,7 @@ import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {checkRustSourceStateTransition} from '../src/translation/rust-source-state-transitions.js';
 import {checkRustBorrowedVectorSourceRegions} from '../src/translation/rust-borrowed-source-regions.js';
+import {checkRustOwnedVectorSourceFold} from '../src/translation/rust-source-loop-folds.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
@@ -52,4 +53,17 @@ test('nested lexical exits do not erase values read by the outer continuation',(
 });
 test('exclusive source formals retain their actual writeback carrier at callable exit',()=>{
  const row=originals.find(value=>value.name==='exclusive parameter writeback stays live after the final local statement');assert.ok(row);const checked=checkProgram(parseRust(row.source,options)),fn=checked.declarations.get('update');assert.deepEqual(fn.sourceExclusiveSignature.packet,[0]);const branches=nodes(fn.body).filter(node=>node.k==='if'&&node.type?.kind==='tuple');assert.ok(branches.length>0);for(const branch of branches)assert.ok(branch.type.elements.slice(1).some(type=>type.kind==='array'));assert.equal(output(emitJavaScript(checked).text),row.stdout);
+});
+test('owned source folds retain actual control layout and reject interface/guard edits',()=>{
+ const row=originals.find(value=>value.name==='owned loop publishes scalar state before a new readonly result');assert.ok(row);const checked=checkProgram(parseRust(row.source,options)),fold=nodes(checked.main).find(node=>node.sourceLoopFold);assert.ok(fold);const validate=(facet,node=fold)=>checkRustOwnedVectorSourceFold(facet,node,'Rust',value=>value,value=>checked.declarations.get(value.name));assert.deepEqual(validate(fold.sourceLoopFold),fold.sourceLoopFold);assert.equal(fold.sourceLoopFold.slots.length,1);assert.equal(row.source.slice(fold.sourceLoopFold.span.start,fold.sourceLoopFold.span.start+3),'for');
+ for(const change of [facet=>facet.model='trusted fold',facet=>facet.item.owner.path=['bool'],facet=>facet.slots.push(facet.slots[0]),facet=>facet.revision=1]){const facet=structuredClone(fold.sourceLoopFold);change(facet);assert.throws(()=>validate(facet));}
+ const altered=structuredClone(fold);altered.args[0].body.then=altered.args[0].body.else;assert.throws(()=>validate(altered.sourceLoopFold,altered));
+});
+test('region proof rejects removed loop interfaces and swapped same-type source slots',()=>{
+ const row=originals.find(value=>value.name==='same-type loop state slots retain distinct actual source binders');assert.ok(row);const checked=checkProgram(parseRust(row.source,options));
+ for(const change of [node=>delete node.sourceLoopFold,node=>node.sourceLoopFold.slots.reverse(),node=>node.sourceLoopFold.slots[0].binder.identity+=' forged']){const altered=structuredClone(checked),fold=nodes(altered.main).find(node=>node.sourceLoopFold);assert.ok(fold);change(fold);assert.throws(()=>checkRustBorrowedVectorSourceRegions(altered),error=>['type','unsupported'].includes(error.kind));}
+});
+test('actual owned loop region interfaces survive Links text binary and all target emissions',()=>{
+ const row=originals.find(value=>value.name==='owned loop publishes scalar state before a new readonly result');assert.ok(row);const packet=createTypedProgramLinks(row.source,'Rust',{rustSourceVersion:options.sourceVersion,rustSourceSignatureModel:profiles.sourceSignatureModel,rustExclusiveSourceModel:profiles.exclusiveSourceModel,rustFnMutSourceModel:profiles.fnMutSourceModel}),text=packet.network.toLino(),targets=['JavaScript','Rust','Lean','Rocq'],baseline=Object.fromEntries(targets.map(target=>[target,emitTypedProgramLinks(packet.network,packet.root,target)]));
+ for(const graph of [packet.network,LinkNetwork.fromLino(text),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){const checked=decodeTypedProgramLinks(graph,packet.root);assert.ok(nodes(checked.main).some(node=>node.sourceLoopFold));assert.equal(checkRustBorrowedVectorSourceRegions(checked),checked);for(const target of targets)assert.deepEqual(emitTypedProgramLinks(graph,packet.root,target),baseline[target]);assert.equal(output(baseline.JavaScript.code),row.stdout);}
 });

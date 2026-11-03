@@ -4614,6 +4614,17 @@ consumed owner a body state slot. Nested loop operands retain actual dependency
 inspection; unknown private operations preserve the full outer inventory. This
 selection changes neither source ownership invariants nor the independent
 region proof required for loop accumulators, control values and escaping results.
+Owned Vec source folds retain an explicit interface for their actual input/item,
+enclosing result, compiler control declaration and ordered source state binders.
+The checked graph validates the real initialized reduce and its completion guard;
+the interface grants no source datatype signatures or runtime ownership IDs.
+The region interpreter checks the real body and continuing-state invariant,
+requires repeated captures to retain ownership/loan epochs, and joins the initial
+zero-iteration state with the body result. Compiler control and loop packets have
+separate interpreter roles and cannot be observed as ordinary source values.
+Their complete type and declaration edges survive ordinary Links text/binary
+transport and checked projection. Shared collection iteration and borrowed item
+escaping require their own actual interfaces under the same source obligations.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.

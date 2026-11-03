@@ -40,7 +40,7 @@ All preexisting inputs, refusal controls and their indexes remain.
 
 The complete-original CI driver now includes all six finite-record originals in
 a separate group with its actual nonexclusive source profile. The inventory is
-414 authored positives in nineteen groups: 350 literal originals and 64 actual
+423 authored positives in nineteen groups: 359 literal originals and 64 actual
 source scenarios. These are declared controls, not passing results or a count
 of completed requirements. Existing CI performs native original/product checks,
 default complete CST reconstruction, and typed Links text/binary rechecks. The
@@ -53,7 +53,8 @@ can be final Unit expressions. Direct Unit blocks may omit the separator;
 parenthesized blocks may not. Six appended owned-loop originals and three
 invalid-source refusals retain ordered stdout, empty/direct blocks and actual
 function returns. These bring the owned-loop group to 38 positives and 19
-refusals. The 414-positive total above includes this follow-up. None ran.
+refusals. That checkpoint declared 414 positives; the owned-loop region successor
+adds nine, giving the 423-positive total above. None ran.
 
 Source review found that owned vector loop/sort fixture ranges spell the same
 bounds with a leading `Rust ` label, while the original driver compared the raw
@@ -65,7 +66,11 @@ runtime or assertion coverage is removed, and no outcome has been observed.
 ## Still required for signature-3 loop region checking
 
 State selection is necessary infrastructure, not a lifetime proof. The readonly
-source-region visitor still needs the following actual loop integration:
+source-region visitor needed the following actual loop integration at this
+checkpoint. The [owned-loop successor](issue-227-owned-loop-region-interface-2026-11-03.md)
+now drafts its owned Vec path and details the remaining shared-collection,
+escaping-result and finite-helper extensions. This list preserves the full
+obligations and is not a pass/completion report:
 
 1. Retain a bounded source fold interface derived from the real admitted loop:
    iterable and element positions, the generated control declaration, actual

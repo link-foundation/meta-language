@@ -1,4 +1,5 @@
 import {checkRustBorrowedVectorSourceRegions} from './rust-borrowed-source-regions.js';
+import {checkRustOwnedVectorSourceFold} from './rust-source-loop-folds.js';
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
 import {checkPropositionValue} from './proposition-values.js';
 import {validateFiniteRecordLoopHelpers} from './finite-record-loop-helpers.js';
@@ -653,6 +654,7 @@ class Checker {
     if ((node.span || (payload && expression.span)) && !result.span) result.span = node.span || expression.span;
     if(Object.hasOwn(node,'sourcePosition'))result.sourcePosition=checkRustSourceExpressionPosition(node.sourcePosition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     if(Object.hasOwn(node,'sourceStateTransition'))result.sourceStateTransition=checkRustSourceStateTransition(node.sourceStateTransition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
+    if(Object.hasOwn(node,'sourceLoopFold'))result.sourceLoopFold=checkRustOwnedVectorSourceFold(node.sourceLoopFold,result,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     return result;
   }
 
