@@ -4603,8 +4603,16 @@ Several disjoint mutable parameters may select one root; they do not create
 duplicate owners or inferred field Copy traits. Nested disjoint argument calls
 retain the latest actual root and every earlier field unchanged by those calls.
 This compiler interface supplies no source function header, reference-return
-region or callback authority. Projected intrinsic replacement expressions and
-borrowed/non-Copy place references need their own complete operation interfaces.
+region or callback authority. Direct String push_str/clear and Vec push retain a
+distinct replacement model under the same facet. It validates the actual standard
+receiver/operand positions, exact concatenation/empty-text/single-element append,
+and complete ancestor/sibling reconstruction. Ordinary operands finish once
+before the replacement; shared String suffixes retain their real loans and owned
+Vec elements transfer once. Operand lifetime names belong to the actual caller
+scope. The same root interpreter acquires the current revision and publishes the
+complete new root, without a stored epoch or invented callable header. Other
+intrinsics, callbacks and borrowed/non-Copy place references require their own
+complete operation interfaces.
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state

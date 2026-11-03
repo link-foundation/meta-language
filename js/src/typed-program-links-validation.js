@@ -222,7 +222,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if(Object.hasOwn(node,'sourcePlaceTransform')){
       const facet=checkRustSourcePlaceTransform(node.sourcePlaceTransform,node,program.sourceLanguage,value=>value,value=>declarations.get(value.name),name=>declarations.get(name));
-      for(const slot of facet.slots){let position=slot.position;while(position){type(position.type);position=position.arrayElementPosition;}}
+      for(const slot of [...facet.slots,...(facet.operands??[])]){let position=slot.position;while(position){type(position.type);position=position.arrayElementPosition;}}
     }
     if (node.k === 'none') {
       if (!acceptOptionalLiteralAbsence(node.absence)) throw new TypeError('an absent optional value requires its concrete null or undefined tag');

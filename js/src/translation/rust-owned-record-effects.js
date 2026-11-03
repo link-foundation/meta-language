@@ -16,6 +16,7 @@ import {attachRustSourceStateTransition} from './rust-source-state-transitions.j
 import {testRustOwnedRecordFieldDescendant} from './rust-owned-record-update-rules.js';
 import {retainRustSourceRegionState} from './rust-source-region-composition.js';
 import {createRustSourcePlaceCallTransform} from './rust-source-place-transforms.js';
+import {createRustSourcePlaceReplacement} from './rust-source-place-replacements.js';
 const fail=(reason,span)=>{throw unsupported('Rust ordered record state',reason,span);};
 function effects(parser){
  if(parser.ownedRecordEffects)return parser.ownedRecordEffects;
@@ -132,7 +133,7 @@ function typeOf(parser,node,path,expected=null,seen=new Set()){
 function childSlots(node,roles){const result=[];for(const role of roles){const value=node[role];if(Array.isArray(value))value.forEach((child,index)=>{const wrapped=child&&typeof child==='object'&&!child.k&&child.value&&typeof child.value==='object';result.push({role,index,child:wrapped?child.value:child,wrapper:wrapped?child:null});});else if(value&&typeof value==='object')result.push({role,index:null,child:value,wrapper:null});}return result;}
 function alpha(parser,node,environment,declarations,path,budget){
  if(++budget.nodes>readRustOwnedRecordEffectLimit('work'))fail('state lexical renaming exceeds its source budget',node.span);
- const mark=value=>parser.origins.reuseExpressionOrigin(node,node.sourcePlaceTransform?{...value,sourcePlaceTransform:{...node.sourcePlaceTransform,slots:node.sourcePlaceTransform.slots.map(slot=>({...slot,input:environment.get(slot.input)??slot.input}))}}:value);
+ const mark=value=>parser.origins.reuseExpressionOrigin(node,node.sourcePlaceTransform?{...value,sourcePlaceTransform:{...node.sourcePlaceTransform,slots:node.sourcePlaceTransform.slots.map(slot=>({...slot,input:environment.get(slot.input)??slot.input})),...(Array.isArray(node.sourcePlaceTransform.operands)?{operands:node.sourcePlaceTransform.operands.map(operand=>({...operand,input:environment.get(operand.input)??operand.input}))}:{})}}:value);
  if(node.k==='name')return node.path.length===1&&environment.has(node.path[0])?mark({...node,path:[environment.get(node.path[0])]}):node;
  if(node.k==='propositionValue'){if(!['eq','ne','lt','le','gt','ge'].includes(node.prop.p))return alpha(parser,expandSurfacePropositionValue(node.prop),environment,declarations,path,budget);return mark({...node,prop:{...node.prop,left:alpha(parser,node.prop.left,environment,declarations,path,budget),right:alpha(parser,node.prop.right,environment,declarations,path,budget)}});}
  if(node.k==='let'){const name=parser.freshProductBinding(),inner=new Map(environment);inner.set(node.name,name);const slot=readRustOwnedRecordStateDeclarations(parser).get(node.name);if(slot)declarations.set(name,slot);return mark({...node,name,value:alpha(parser,node.value,environment,declarations,path,budget),body:alpha(parser,node.body,inner,declarations,path,budget)});}
@@ -166,6 +167,12 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
    const transformed=createRustSourcePlaceCallTransform(parser,info,current,args),packet=parser.freshProductBinding(),reference={k:'name',path:[packet]},updated=new Map(current),bindings=transformed.roots.map((root,index)=>{const local=parser.freshProductBinding();updated.set(root.slot.lexical,{slot:root.slot,name:local});return {name:local,value:{k:'tupleIndex',object:reference,index:index+1}};});let body=next(mark({k:'tupleIndex',object:reference,index:0},original),updated);for(const binding of bindings.toReversed())body={k:'let',...binding,body};return {k:'let',name:packet,value:transformed.node,body,span:original.span};
   };return step(0,environment);
  }
+ function projectedIntrinsicWrite(original,info,environment,next,depth){
+  const operation=info.intrinsic.operation,value=original.args[0].value,operand=operation==='clear string'?null:operation==='append string text'&&value.k==='binary'&&value.op==='concat'?value.right:operation==='append vector element'&&value.k==='array'&&value.items.length===2&&value.items[0].spread===true&&value.items[1].spread===false?value.items[1].value:null;
+  if(operation!=='clear string'&&!operand)fail('a projected intrinsic retains its actual source operand and standard construction',original.span);
+  const complete=(after,held)=>{const prior=after.get(info.slot.lexical);if(!prior||prior.slot.root!==info.slot.root)fail('a projected replacement retains its actual latest source root',original.span);const packet=parser.freshProductBinding(),current=parser.freshProductBinding(),updated=new Map(after);updated.set(info.slot.lexical,{slot:prior.slot,name:current});return {k:'let',name:packet,value:createRustSourcePlaceReplacement(parser,info,prior,held),body:{k:'let',name:current,value:{k:'tupleIndex',object:{k:'name',path:[packet]},index:1},body:next(mark({k:'tupleIndex',object:{k:'name',path:[packet]},index:0},original),updated)},span:original.span};};
+  if(!operand)return complete(environment,null);return visit(operand,environment,(actual,after)=>{const local=parser.freshProductBinding();return {k:'let',name:local,type:readRustRecordSourceType(parser,info.intrinsic.operand.type,info.intrinsic.operand.path),value:actual,body:complete(after,local)};},depth+1,info.intrinsic.operand.type);
+ }
  function visit(value,environment,next,depth,want,future=null){if(++arena.work>readRustOwnedRecordEffectLimit('work')||depth>readRustOwnedRecordEffectLimit('depth'))fail('ordered state construction exceeds its finite source budget',value.span);
   if(future&&!joinKills.has(value)){const dead=killedBeforeNextAccess(parser,value,future,environment);if(dead)joinKills.set(value,dead.roots);}
   if(value.k==='lambda'){const body=visit(value.body,new Map(),result=>result,depth+1,value.ret);return next(mark({...value,body},value),environment);}
@@ -174,6 +181,7 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
   if(exclusive?.kind==='call')return exclusiveCall(value,exclusive.info,environment,next,depth);
   if(exclusive?.kind==='write'){
    const info=exclusive.info,prior=environment.get(info.slot.lexical);if(!prior||prior.slot.root!==info.slot.root)fail('exclusive whole-place writes retain their actual lexical state slot',value.span);
+   if(info.intrinsic&&info.fields.length&&retainRustSourceRegionState(parser))return projectedIntrinsicWrite(value,info,environment,next,depth);
    return visit(value.args[0].value,environment,(rhs,after)=>capture(rhs,readRustRecordSourceType(parser,info.field.type,info.field.path),held=>{const name=parser.freshProductBinding(),current=after.get(info.slot.lexical),snapshot=attachRustSourceStateTransition(parser,reconstructRustOwnedRecordState(parser,path,info.layouts,{k:'name',path:[current.name]},held,value.span),info.slot,'write'),updated=new Map(after);updated.set(info.slot.lexical,{slot:current.slot,name});return {k:'let',name,type:readRustRecordSourceType(parser,info.slot.origin.type,info.slot.origin.path),value:snapshot,body:next({k:'unit',span:value.span},updated)};}),depth+1,info.field.type);
   }
   if(testRustExclusiveSourcePrivateNode(value))fail('an exclusive source private operation lacks its actual selected parser continuation',value.span);

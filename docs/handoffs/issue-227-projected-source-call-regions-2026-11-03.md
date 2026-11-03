@@ -84,6 +84,10 @@ drafted requirement counts or a requirement completion percentage.
    intrinsic method path; ordinary already-admitted scalar field writes retain
    their existing rules. Preserve read order and all unchanged fields; do not remove
    it merely because callable transformations are available.
+   String push_str/clear and Vec push were subsequently drafted with that exact
+   replacement contract in
+   [projected intrinsic replacements](issue-227-projected-intrinsic-replacements-2026-11-03.md).
+   Other intrinsic helper/body interfaces remain explicit remaining work there.
 2. Extend the selected-call contract for actual callback-specialized ABIs. The
    current transformation explicitly requires a complete noncallback closed
    callee. Retain real capture binders, callback bodies, argument modes and all

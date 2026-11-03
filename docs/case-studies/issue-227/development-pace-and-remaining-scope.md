@@ -704,3 +704,13 @@ fields, method receivers, multiple roots and disjoint nested argument calls.
 Intrinsic replacement expressions, callbacks and general field-reference regions
 remain distinct full-scope paths. These edits supply no execution evidence or
 requirement completion percentage.
+
+The [projected intrinsic replacement batch](../../handoffs/issue-227-projected-intrinsic-replacements-2026-11-03.md)
+reuses the actual place/reconstruction validator and root interpreter for direct
+String push_str/clear and Vec push. It retains their ordinary executable bodies,
+operand order, shared suffix loans and owned element transfers, without native
+replacement semantics. Ten positive and four invalid-source originals bring the
+authored inventory to 477 positives (413 literal, 64 actual source), nineteen
+groups. Other intrinsic bodies, callbacks and general field-reference regions
+remain explicit work. No runtime, CI or requirement-completion evidence is
+claimed from this unexecuted code draft.

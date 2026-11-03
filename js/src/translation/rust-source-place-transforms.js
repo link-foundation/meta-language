@@ -9,6 +9,7 @@ import {checkRustSourceStateTransition} from './rust-source-state-transitions.js
 import {readRustBorrowedSourceClosedCallInterface} from './rust-borrowed-source-call-interfaces.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import {acceptRustDataTypeFieldSignatureContainer} from './rust-data-type-field-signature-rules.js';
+import {readRustSourcePlaceReplacementPlan} from './rust-source-place-replacements.js';
 const model='Rust source place transformation 1';
 const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 const name=value=>({k:'name',path:[value]});
@@ -33,14 +34,15 @@ function projection(node,position,path,input,resolveData){
  const index=path.at(-1),parent=selectedPosition(position,path.slice(0,-1),resolveData),step=match(node,parent,resolveData),chosen=step.pattern.binds[index];if(typeof chosen!=='string'||step.pattern.binds.some((name,at)=>at!==index&&name!==null)||!variable(step.row.body,chosen)||!sameType(node.type,step.fields[index].type))fail('a source field selection binds only its actual chosen field');unqualified(step.row.body);projection(node.scrutinee,position,path.slice(0,-1),input,resolveData);
 }
 function replacement(node,packet,index){unqualified(node);if(node.k!=='tupleIndex'||node.index!==index||!variable(node.object,packet))fail('a source field replacement retains its actual selected call packet slot');unqualified(node.object);}
-function reconstruction(node,position,path,input,packet,index,resolveData){
- if(!path.length){replacement(node,packet,index);return;}
+function reconstruction(node,position,path,input,packet,index,resolveData,checkReplacement=null){
+ if(!path.length){if(checkReplacement)checkReplacement(node);else replacement(node,packet,index);return;}
  const step=match(node,position,resolveData),field=path[0],leaf=path.length===1;if(!variable(node.scrutinee,input)||step.pattern.binds.includes(packet))fail('a source reconstruction consumes its actual prior root or child without shadowing the call packet');unqualified(node.scrutinee);const body=step.row.body;unqualified(body);if(body.k!=='ctor'||body.data!==step.data.fullName||body.ctor!==step.ctor.name||body.args.length!==step.fields.length)fail('a source reconstruction retains the actual constructor and every field');
- for(let at=0;at<step.fields.length;at++){const bound=step.pattern.binds[at];if(at===field){if(leaf&&bound!==null||!leaf&&typeof bound!=='string')fail('a source reconstruction retains exactly the required selected child binder');reconstruction(body.args[at],step.fields[at],path.slice(1),bound,packet,index,resolveData);}else{if(typeof bound!=='string'||!variable(body.args[at],bound))fail('a source reconstruction retains every unchanged sibling field');unqualified(body.args[at]);}}
+ for(let at=0;at<step.fields.length;at++){const bound=step.pattern.binds[at];if(at===field){if(leaf&&bound!==null||!leaf&&typeof bound!=='string')fail('a source reconstruction retains exactly the required selected child binder');reconstruction(body.args[at],step.fields[at],path.slice(1),bound,packet,index,resolveData,checkReplacement);}else{if(typeof bound!=='string'||!variable(body.args[at],bound))fail('a source reconstruction retains every unchanged sibling field');unqualified(body.args[at]);}}
 }
 function overlaps(left,right){return left.slot===right.slot&&left.fields.slice(0,Math.min(left.fields.length,right.fields.length)).every((value,index)=>value===right.fields[index]);}
 function sameOwner(left,right){return Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((value,index)=>value===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((value,index)=>sameOwner(value,right.arguments[index]));}
 export function readRustSourcePlaceTransformPlan(facet,node,language,resolveType=value=>value,resolveData=()=>null,resolveFunction=()=>null){
+ if(facet?.model==='Rust source place replacement 1')return readRustSourcePlaceReplacementPlan(facet,node,language,resolveType,resolveData);
  checkOwnedProgramContainers({sourcePlaceTransform:facet},{selectedFields:['sourcePlaceTransform'],acceptContainer:acceptRustDataTypeFieldSignatureContainer,fail});
  if(language!=='Rust'||!exact(facet,['model','slots','places','span'])||facet.model!==model||!Array.isArray(facet.slots)||facet.slots.length<1||facet.slots.length>256||!Array.isArray(facet.places)||facet.places.length<1||facet.places.length>256||!exact(facet.span,['start','end'])||!Number.isSafeInteger(facet.span.start)||!Number.isSafeInteger(facet.span.end)||facet.span.start<0||facet.span.end<=facet.span.start||node.k!=='let'||node.value?.k!=='call'||node.span?.start!==facet.span.start||node.span?.end!==facet.span.end)fail('a source place transformation retains its exact compiler model, call graph, bounded places and original span');
  if(node.sourcePosition||node.sourceStateTransition||node.sourceLoopFold)fail('a source place transformation retains its independent complete compiler interface');
@@ -57,3 +59,4 @@ export function readRustSourcePlaceTransformPlan(facet,node,language,resolveType
  return {facet:{model,slots:slots.map(({binder,position,input})=>({binder,position,input})),places,span:{...facet.span}},callee,interface:interface_,arguments:node.value.args};
 }
 export function checkRustSourcePlaceTransform(...args){return readRustSourcePlaceTransformPlan(...args).facet;}
+export {project as projectRustSourcePlace,rebuild as rebuildRustSourcePlace,selectedPosition as selectRustSourcePlacePosition,projection as checkRustSourcePlaceProjection,reconstruction as checkRustSourcePlaceReconstruction,sameOwner as sameRustSourcePlaceOwner,unqualified as checkRustSourcePlacePlumbing};
