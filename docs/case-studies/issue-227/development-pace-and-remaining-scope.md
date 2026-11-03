@@ -612,3 +612,12 @@ driver to 382 authored rows (318 literal and 64 actual-source), eighteen groups.
 Live owners, intervening root reads and unknown loops retain independent controls.
 These source changes remain unexecuted. Push cadence is reduced as requested;
 source delivery is the priority, without a new completion-percentage claim.
+
+Further source review ties nested liveness to actual outer continuations, keeps
+exclusive/callback writebacks mandatory, and handles print macro delimiters and
+Unit tails. Ten additional originals bring the combined batch to 392 authored
+positive rows (328 literal, 64 actual source), eighteen groups. Nested reads and
+output order remain independent oracles. This is source authoring, not a pass
+report; no tests, generation, validation or compilation ran. The latest captured
+instruction puts broad delivery ahead of frequent checkpoint pushes, and source
+register reconciliation remains deferred with the existing draft-phase gates.

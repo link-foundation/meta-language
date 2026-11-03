@@ -3541,6 +3541,10 @@ as reiterated in the [captured follow-through instruction](../parity/sources/ci-
 The [current bulk completion instruction](../parity/sources/continuous-bulk-completion-2026-10-19.txt)
 requires all remaining changes to be drafted and delivered. Opening a continuation
 PR is a checkpoint; implementation continues during CI under the same full scope.
+The [current delivery priority](../parity/sources/bulk-delivery-before-checkpoint-pushes-2026-11-03.txt)
+puts completing broad code drafts ahead of frequent checkpoint pushes. This run
+continues solo; committed batches need not each trigger a push. Source-register
+reconciliation and validation remain deferred during the authorized draft phase.
 Local validation uses targeted JavaScript checks and never compiles
 Rust; compiled parity and expensive workloads belong to CI.
 The [local resource instruction](../parity/sources/meta-language-local-resource-scope-2026-10-16.txt)
@@ -4599,6 +4603,10 @@ proves that it is never used again in the admitted destructor-free scope. Unknow
 operations remain conservative barriers. Function printing checks the displayed
 value separately from the continuation and retains qualifiers at the original
 value sequence point. Statement boundaries follow the actual grammar and tokens.
+Continuation analysis crosses nested lexical scopes only through their actual
+outer suffix. A branch end alone cannot prove that state is unused. Exclusive
+formals and mutable callback environments retain mandatory writeback carriers;
+complete-scope facts come only from full callable or main continuations.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.

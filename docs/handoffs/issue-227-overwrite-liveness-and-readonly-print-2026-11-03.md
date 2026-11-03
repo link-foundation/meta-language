@@ -40,9 +40,9 @@ with literal `checkpoint\ntrue\n` stdout. Additional originals cover unrelated
 writes and print order, readonly prints and mutable parameter epochs, nominal
 matches, short-circuit results, direct Unit blocks, unused roots and live joined
 owners. Refusals preserve intervening reads, parenthesized statement boundaries
-and unknown loop effects. The mixed inventory now contains 39 positives and 19
-refusals. The shared original/product driver declares 382 authored positives in
-18 groups: 318 literal originals and 64 actual-source scenarios. These counts
+and unknown loop effects. The mixed inventory now contains 49 positives and 21
+refusals. The shared original/product driver declares 392 authored positives in
+18 groups: 328 literal originals and 64 actual-source scenarios. These counts
 are inputs, not completed requirements or observed passing evidence.
 
 No tests, represented imports, source generation, validation gates, formatting or
@@ -50,3 +50,24 @@ compilation ran. No CI feedback was inspected. Root works alone and batches sour
 work ahead of pushes. Remaining broad source frontiers include nested/unknown
 state carriers, projected-field exclusive calls, internal borrowed callback values,
 standard collection/profile3 composition and complete own-project module coverage.
+
+The integrated scope pass threads actual enclosing continuations into nested
+lexical bodies. Branch ends cannot masquerade as callable ends. Exclusive
+formals/callback environments remain mandatory-live even before later overwrites.
+Abrupt completion packets and aborts are conservative scan barriers. New originals
+retain nested live carriers, outer overwrites, original print order and mandatory
+writeback values. Complete-scope flags are supplied only by full callable adapters
+and complete main continuations; loop fragments do not receive that authority.
+
+Print delimiter handling now accepts brace-delimited statement macros and final
+Unit print tails without requiring a semicolon, while non-brace invocations before
+another statement retain that requirement. Earlier boundary and non-Unit guards
+remain intact. This source batch includes 22 appended positive programs relative
+to the 370-row checkpoint, preserving one exact former refusal as positive.
+
+The separate Unit-fixture author also appends four original function controls:
+semicolon-free conditional, nominal match and direct Unit block statements,
+and a parenthesized conditional with its required semicolon. Earlier inputs and
+assertions remain. Its generated Links fixture is deliberately not regenerated
+during source drafting; these declarations do not increase the 392 state-driver
+inventory and provide no execution evidence.

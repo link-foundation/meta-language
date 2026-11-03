@@ -1115,8 +1115,8 @@ class RustParser {
         continue;
       }
       if(token.kind==='macro'&&readRustFunctionMacroDisposition(token.value)==='print'){
-        const printed=this.functionPrintValue(path);
-        if(c.eat(';')){lets.push({name:this.freshProductBinding(),value:printed,span:printed.span});continue;}
+        const opening=c.peek(1).value,printed=this.functionPrintValue(path);
+        if(c.eat(';')||opening==='{'){lets.push({name:this.freshProductBinding(),value:printed,span:printed.span});continue;}
         if(!c.is('}'))throw this.fail('expected ; or }');
         tail=printed;break;
       }
@@ -1316,8 +1316,8 @@ class RustParser {
         continue;
       }
       if (token.kind === 'macro') {
-        effects.push(this.mainMacro());
-        c.expect(';', token.value);
+        const opening=c.peek(1).value;effects.push(this.mainMacro());
+        if(!c.eat(';')&&opening!=='{'&&!c.is('}'))c.expect(';',token.value);
         continue;
       }
       const finiteLoop=this.ordinaryCompletionContext()?(readRustStandardCollectionSourceLoop(this,[])??readRustOwnedRecordFiniteLoop(this,[])):null;

@@ -19,6 +19,12 @@ inputs.push(
  ['Unit call private-name hygiene','fn empty(){} pub fn result()->i64{let ml_tuple_value0=19;empty();ml_tuple_value0}','19'],
 );
 inputs.push(['Unit call statements in a main-shaped function','fn empty(){} fn main(){;;;empty();();} pub fn result()->i64{main();20}','20']);
+inputs.push(
+ ['semicolon-free conditional statement before a value','pub fn result()->i64{if true{}else{}21}','21'],
+ ['semicolon-free nominal match statement before a value','enum Choice{First,Second} pub fn result()->i64{match Choice::First{Choice::First=>(),Choice::Second=>()}22}','22'],
+ ['semicolon-free direct Unit block statement before a value','pub fn result()->i64{{}23}','23'],
+ ['parenthesized Unit conditional retains its semicolon','pub fn result()->i64{(if true{}else{});24}','24'],
+);
 const correctedAssertions=[
  {source:'fn noop(){}fn main(){}',previousAssertion:'parseRust throws function without a result: noop returns (); only value-returning functions are portable',previousSpan:{start:0,end:9},calls:[]},
  {source:'fn noop()->(){()}fn main(){noop();}',previousAssertion:'parseRust throws main statement: main may only print, bind and assert',calls:['noop']},
