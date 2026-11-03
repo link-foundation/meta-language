@@ -959,3 +959,21 @@ The preceding commits `6610de5ea` (2026-11-04 00:50:38 +07:00) and `347efd07f`
 (01:17:17 +07:00) are 26 minutes 39 seconds apart. That interval measures source
 publication without execution or an audited requirement denominator. It is not a
 verified throughput estimate, completion percentage or full-scope finish date.
+
+The [partial-field initialization batch](../../handoffs/issue-227-partial-field-initialization-2026-11-04.md)
+joins ordinary field assignment lowering, an independently checked RHS/rebuild
+graph, actual descendant reinitialization, private partial storage transport and
+per-branch component availability, reusing that publication for checked closed
+helpers and standard String/Vec fields of partial roots. Thirty-one positive and twenty invalid originals
+plus graph/forgery/Links controls are authored and unexecuted. This illustrates a
+specific source of development cost: accepting field syntax requires preserving
+ownership through expression order, immutable snapshots, bindings, scopes and
+branch publication together. Writing a constructor or declaring a capability
+alone does not establish those semantics. Disjoint write loans, reference-bearing
+call/state contexts and generalized partial patterns remain actual code work.
+
+The preceding commits `347efd07f` (2026-11-04 01:17:17 +07:00) and `b300cda38`
+(02:08:14 +07:00) are 50 minutes 57 seconds apart. This measures source publication
+cadence including review and continuation, without execution or an audited
+requirement denominator. It cannot establish verified throughput, a completion
+percentage or a reliable full-scope finish date.

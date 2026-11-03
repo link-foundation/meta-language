@@ -126,3 +126,10 @@ remain. No assertion, prior input, oracle or gate was removed or weakened.
    ledger use, publish automatic source/schema/naming/native assets, run authorized
    JavaScript and CI-only native gates, repair actual failures and record observed
    assertions at their executed commits. Never compile Rust locally.
+
+Successor: [closed partial-field initialization](issue-227-partial-field-initialization-2026-11-04.md)
+drafts actual assignment/rebuild plans, private storage carriers and branch image
+availability for the first two items above, and applies that publication to
+checked closed helpers and String/Vec fields of partial roots. Controls remain
+unexecuted. Broader reference-bearing calls, precise disjoint write loans,
+patterns and every broader item remain actual code work, detailed there.

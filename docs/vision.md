@@ -4812,7 +4812,7 @@ alias becomes a substitute owner and no new serialized place shape is needed.
 Multiple shared-reference layers retain their complete lifetime column; the
 current containing-root proof remains conservative and does not establish a
 general per-layer lifetime substitution protocol. Stored-reference fields,
-general partial-state reinitialization, temporary lifetime extension, custom Deref and disjoint field loan
+partial-state reinitialization beyond closed declaration images, temporary lifetime extension, custom Deref and disjoint field loan
 revisions retain their separate obligations. The field/dereference distinction
 follows the [Rust field expression contract](https://doc.rust-lang.org/reference/expressions/field-expr.html)
 and [Box place dereferencing](https://doc.rust-lang.org/reference/expressions/operator-expr.html#dereference-operator).
@@ -4830,10 +4830,35 @@ original loan roots. Such a view preserves those whole loans, cannot confer owni
 transfer, and cannot relabel the original storage inventory. Field regions inherit
 their actual containing parameter lifetime; return checking follows only real
 declaration descendants and checked readonly views of allowed parameter roots.
-Complete field images are established at ordinary binding/storage publication so
+Actual field inventories are established at ordinary binding/storage publication so
 branch state joins include their components. Joined current storage rebases the
 returned value's component and loan coordinates together; earlier aliases retain
-their stale epochs. No image, ownership mask or local region identifier is accepted
+their stale epochs. Closed field assignment retains one pre-evaluated RHS, the
+actual current original binder, its complete selected declaration path and an
+independently checked wildcard/rebuild graph. The old selected leaf is never read.
+Its containing ancestors must remain initialized; the selected leaf may have moved.
+A complete owned replacement initializes exactly that leaf's actual subtree.
+Unchanged siblings retain their real available, moved or conditional state, and
+replacing a whole parent field clears its former descendant moves in both source
+ownership and the independent image interpreter.
+Checked projected helper calls and standard String/Vec field operations share
+the same component publication. Their actual selected subtrees must be fully
+initialized; unrelated moved components stay unavailable. Multiple exclusive
+formals retain distinct disjoint declaration paths and original callee/result/
+callback interfaces. Whole-root or root-only Box payload acquisition still needs
+the complete selected root. A mutating method cannot initialize a moved receiver
+by rebuilding a well-typed constructor.
+Partial snapshots travel only through private proof objects tied to genuine
+initialized current source storage. State packet construction/projection, bindings
+and scope checks preserve that proof; a public type, qualifier, constructor or
+invented mask grants no partial-state authority. Ordinary whole-value reads,
+borrows, calls and returns still require every actual component initialized.
+Branch joins retain actual per-branch component states, including newly allocated
+storage images, and mint current-storage proofs only for real returned carriers.
+Snapshot allocations are charged to the existing branch budget. Assignment still
+replaces the containing whole revision; general disjoint surviving field loans,
+reference-bearing call/state contexts, tuples and multi-constructor images retain their
+separate implementation obligations. No image, ownership mask or local region identifier is accepted
 from an archive. Actual projection graphs and source positions remain the public
 proof inputs. State replacements still conservatively invalidate their containing
 root revision; disjoint mutable calls do not establish general surviving field
