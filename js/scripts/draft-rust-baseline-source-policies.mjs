@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-descriptor-operands.js',moduleName:'javascript_descriptor_operands',sourceDependencies:true,model:'Actual preconverted property descriptor frame operands 1',programAsset:'javascript-descriptor-operands-program'},
  {sourcePath:'js/src/translation/javascript-live-handle-call-source.js',moduleName:'javascript_live_handle_call_source',sourceDependencies:true,model:'Actual live handle Call Construct Get and Set coordinators 1',programAsset:'javascript-live-handle-call-source-program'},
  {sourcePath:'js/src/translation/javascript-function-binding.js',moduleName:'javascript_function_binding',sourceDependencies:true,model:'Actual Function binding allocation metadata and getter continuations 1',programAsset:'javascript-function-binding-program'},
  {sourcePath:'js/src/translation/javascript-collection-construction-rules.js',moduleName:'javascript_collection_construction_rules',model:'Actual collection Construct storage and brand selection 1',programAsset:'javascript-collection-construction-rules-program'},
@@ -153,6 +154,7 @@ const fixtures=[
  'js/tests/fixtures/javascript-bound-construction-source.mjs',
  'js/tests/fixtures/javascript-bound-instance-of-source.mjs',
  'js/tests/fixtures/javascript-live-handle-source.mjs',
+ 'js/tests/fixtures/javascript-reflect-definition-source.mjs',
  'js/tests/fixtures/javascript-shared-species-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-collection-source.mjs',
@@ -370,6 +372,7 @@ const consumers=[
  'js/tests/translation-javascript-function-binding.test.js',
  'js/tests/translation-javascript-bound-construction.test.js',
  'js/tests/translation-javascript-live-handles.test.js',
+ 'js/tests/translation-javascript-reflect-definition.test.js',
  'js/tests/translation-javascript-iterator-protocol.test.js',
  'js/tests/translation-javascript-array-iteration.test.js',
  'js/tests/translation-javascript-array-spread.test.js',
@@ -745,6 +748,7 @@ for(const [source,target] of [
  ['javascript-bound-construction-source','javascript-bound-construction-source'],
  ['javascript-bound-instance-of-source','javascript-bound-instance-of-source'],
  ['javascript-live-handle-source','javascript-live-handle-source'],
+ ['javascript-reflect-definition-source','javascript-reflect-definition-source'],
  ['rust-exclusive-source-vectors','rust-exclusive-source-vectors'],
  ['rust-exclusive-source-strings','rust-exclusive-source-strings'],
  ['rust-exclusive-source-compounds','rust-exclusive-source-compounds'],

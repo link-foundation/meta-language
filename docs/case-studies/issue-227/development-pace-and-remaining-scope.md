@@ -715,6 +715,17 @@ snapshot controls are drafted and unexecuted. Reflective Array length descriptor
 complete native callable metadata/callback ports and the full broader objective
 remain work. This is code progress, not a requirement percentage or runtime proof.
 
+The [reflective definition batch](../../handoffs/issue-227-reflective-definitions-2026-11-03.md)
+extends the existing Object definition algorithm with Reflect's actual Boolean
+result policy. One internal descriptor operand projection joins live Node handles
+to the same Array conversion and deletion continuation, avoiding another semantic
+implementation or descriptor Object allocation. Selected callbacks and completed
+descriptors survive work/storage boundaries; bulk Object definitions retain their
+throwing policy. Fifteen native originals and independent transport, legacy,
+resource and forged-context controls are drafted and unexecuted. Complete native
+metadata/callback/root protocols and all wider frontend/grammar/concept work remain;
+this establishes neither runtime evidence nor a requirement completion percentage.
+
 The [Function binding ordinary Call batch](../../handoffs/issue-227-function-binding-calls-2026-11-03.md)
 drafts actual bound slots, ordered metadata/getter continuations, ordinary heap
 integration and constant-size projected forwarding code. Thirteen native-original

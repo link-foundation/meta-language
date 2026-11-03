@@ -7,6 +7,10 @@ generator, formatter, validation gate, compilation or CI feedback ran or was rea
 The complete requirements code draft is still unfinished; the full active goal
 and every broader obligation remain unchanged.
 
+Successor: [reflective definitions](issue-227-reflective-definitions-2026-11-03.md)
+drafts the shared Reflect result policy, complete Array descriptor continuation,
+already converted descriptor transport and resource/callback retention below.
+
 ## Actual source paths drafted
 
 `javascript-live-handles.js` replaces synthetic copied callable metadata for the

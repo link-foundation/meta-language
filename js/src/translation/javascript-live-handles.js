@@ -2,6 +2,8 @@
 // shared heap; the host targets only satisfy Proxy invariants and callable shape.
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition,locateJavaScriptOrdinaryProperty,readJavaScriptOrdinaryOwnKeys,defineJavaScriptOrdinaryProperty,deleteJavaScriptOrdinaryProperty,preventJavaScriptOrdinaryExtensions,setJavaScriptOrdinaryPrototype} from './javascript-ordinary-heap.js';
 import {createJavaScriptPropertyDescriptor} from './javascript-property-descriptors.js';
+import {projectJavaScriptDescriptorOperands} from './javascript-descriptor-operands.js';
+import {testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {testJavaScriptReflectionOrdinaryKind} from './javascript-property-reflection.js';
 const native={apply:Reflect.apply,bind:Function.prototype.bind,define:Reflect.defineProperty,delete:Reflect.deleteProperty,keys:Reflect.ownKeys,descriptor:Reflect.getOwnPropertyDescriptor,prototype:Reflect.setPrototypeOf,extensible:Reflect.isExtensible,prevent:Reflect.preventExtensions,create:Object.create,Proxy};
 /** Actual protected carrier creation never invokes a represented target body.
@@ -51,7 +53,7 @@ export function createJavaScriptLiveHandles(hooks){
    has(_target,key){const selectedKey=hooks.encode(key);synchronize();return locateJavaScriptOrdinaryProperty(hooks.heap(),value.identity,selectedKey).found;},
    ownKeys(){synchronize();const own=readJavaScriptOrdinaryOwnKeys(hooks.heap(),value.identity);if(own.error!=='')return hooks.refuse(own.error);return own.keys.map(hooks.decodePrimitive);},
    getOwnPropertyDescriptor(_target,key){synchronize();const row=current(),at=findJavaScriptOrdinaryProperty(row.properties,hooks.encode(key)),property=row.properties[at];return property===undefined?undefined:descriptor(property.descriptor);},
-   defineProperty(_target,key,proposed){current();const selectedKey=hooks.encode(key),descriptor=convert(proposed);return commit(defineJavaScriptOrdinaryProperty(hooks.heap(),value.identity,selectedKey,descriptor));},
+   defineProperty(_target,key,proposed){const row=current(),selectedKey=hooks.encode(key),descriptor=convert(proposed);if(row.$==='arrayObject'&&testJavaScriptArrayLengthKey(selectedKey)&&descriptor.valuePresent){const result=hooks.invoke('define property',value,value,[selectedKey,...projectJavaScriptDescriptorOperands(descriptor)]);if(result.$!=='boolean')return hooks.refuse('a live definition retains its actual Boolean result');synchronize();return result.value;}const defined=defineJavaScriptOrdinaryProperty(hooks.heap(),value.identity,selectedKey,descriptor);if(defined.resourceLimit===true){const result=hooks.invoke('define property',value,value,[selectedKey,...projectJavaScriptDescriptorOperands(descriptor)]);if(result.$!=='boolean')return hooks.refuse('a live definition retains its actual Boolean result');synchronize();return result.value;}return commit(defined);},
    deleteProperty(_target,key){current();const selectedKey=hooks.encode(key);return commit(deleteJavaScriptOrdinaryProperty(hooks.heap(),value.identity,selectedKey));},
    getPrototypeOf(){synchronize();const prototype=current().prototype;return prototype.$==='null'?null:hooks.decode(prototype);},
    setPrototypeOf(_target,prototype){current();const selected=hooks.encode(prototype);return commit(setJavaScriptOrdinaryPrototype(hooks.heap(),value.identity,selected));},

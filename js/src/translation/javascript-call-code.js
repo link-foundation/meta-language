@@ -66,8 +66,9 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'ordinaryDelete',destination:number,object:number,key:number} |
  * {$:'ordinaryHas',destination:number,object:number,key:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
+ * {$:'ordinaryDefine',destination:number,target:number,key:number,fields:number[],realm:bigint} |
  * {$:'propertyKey',destination:number,input:number,realm:bigint} |
- * {$:'propertyDefinition',destination:number,target:number,key:number,attributes:number,realm:bigint}} JavaScriptCallInstruction
+ * {$:'propertyDefinition',destination:number,target:number,key:number,attributes:number,realm:bigint,operation?:string}} JavaScriptCallInstruction
  */
 /** Strict functions bind the actual receiver unchanged. Lexical functions use
  * their captured receiver. Sloppy receiver boxing and arguments objects need
@@ -138,6 +139,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'primitiveWrapper':return [instruction.destination,instruction.input,instruction.prototype];
     case 'symbolAllocate':case 'symbolDescription':case 'symbolRegistry':case 'propertyKey':return [instruction.destination,instruction.input];
     case 'propertyDefinition':return [instruction.destination,instruction.target,instruction.key,instruction.attributes];
+    case 'ordinaryDefine':return [instruction.destination,instruction.target,instruction.key].concat(instruction.fields);
   }
 }
 /** @param {JavaScriptCallInstruction} instruction @returns {number} */

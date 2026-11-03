@@ -139,7 +139,7 @@ need no eager native value materialization while the carrier is extensible.
 Descriptor field presence, ordered keys, Symbols, aliases, deletion, partial
 definition and exact primitive bits remain observable. Imported operands are
 encoded before selecting the current heap for each operation.
-Four private boundary coordinators reuse actual shared Call/Construct/Get/Set
+Five private boundary coordinators reuse actual shared Call/Construct/Get/Set/Define
 instructions and the same explicit source driver as public Node execution.
 Selected accessors, setter Boolean completion, Array length conversion and
 constructor results therefore use their real portable continuations. Boundary
@@ -148,7 +148,7 @@ retains a private suspension with the actual machine; explicit retry rejects
 intervening heap changes and consumes its prior token. Snapshot data contains the
 actual code, ordinary/bound slots and frames, independently of native handle caches.
 Untranslated native callback stacks need their own portable continuation before
-source reentry. Full reflective Array descriptor conversion, unknown native
+source reentry. Unknown native
 callable metadata authority, source text/brand reflection and arbitrary callback
 ports retain their complete obligations, alongside Proxy and derived constructor
 protocols. A projected ordinary Call body alone cannot grant base-constructor
@@ -160,6 +160,27 @@ and [OrdinaryHasInstance](https://tc39.es/ecma262/2025/multipage/abstract-operat
 Live Node carriers also retain the
 [Proxy invariants](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-proxy-object-internal-methods-and-internal-slots)
 without treating a native carrier as a source CST or callable-body witness.
+
+Object.defineProperty and Reflect.defineProperty share actual target validation,
+key conversion, ordered descriptor reads and ordinary/Array definition. Their
+operation policy remains explicit through every continuation: Object returns its
+target or throws on incompatibility; Reflect returns the actual Boolean. Neither
+converts a genuine numeric/conversion throw into false. Array length definition
+performs both conversions against the latest heap and retains partial descending
+deletion, rollback length and requested writable attributes. Saved callbacks keep
+their selected callable/receiver/arguments; resource retry does not repeat a
+completed getter. Ordinary descriptor storage suspension retains the complete
+already converted descriptor separately from any raw attributes Object. Bulk
+Object definitions retain their throwing policy and exact preconverted descriptor.
+The live Node definition boundary transports six presence/payload pairs as frame
+operands and uses the same Define kernel. It allocates no substitute attributes
+Object and never re-runs ToPropertyDescriptor on a host-converted descriptor.
+This preserves absent attributes and prevents inherited fields on a represented
+prototype from changing an already converted descriptor. Machine inspection ties
+the saved target, key, descriptor fields, result policy, realm and child call to
+the actual instruction. These rules follow
+[Reflect.defineProperty](https://tc39.es/ecma262/2025/multipage/reflection.html#sec-reflect.defineproperty)
+and [ArraySetLength](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-arraysetlength).
 
 Reflect.construct checks target and actual/default newTarget before reading its
 array-like argument Object, then Gets length and every ordered index. Array.of

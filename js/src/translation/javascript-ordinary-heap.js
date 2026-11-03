@@ -330,7 +330,7 @@ export function planJavaScriptOrdinaryGet(heap, identity, key, receiver) {
  * still obey the source write mask when applying a snapshot to native storage.
  * @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity
  * @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed
- * @returns {{heap:JavaScriptOrdinaryHeap,success:boolean,error:string,writes:string[]}} */
+ * @returns {{heap:JavaScriptOrdinaryHeap,success:boolean,error:string,writes:string[],resourceLimit?:boolean}} */
 export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) {
   const heapError = readJavaScriptOrdinaryHeapError(heap);
   const keyError = readJavaScriptOrdinaryKeyError(heap, key);
@@ -345,9 +345,9 @@ export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) 
   if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='boundFunctionObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error descriptor definition requires its actual host protocol',writes:[]};
   if(object.$==='arrayObject'){
     const plan=planJavaScriptArrayPropertyDefinition(object,key,proposed);
-    if(plan.errorClass!=='')return {heap,success:false,error:plan.error,writes:[]};
+    if(plan.errorClass!=='')return {heap,success:false,error:plan.error,writes:[],...(plan.errorClass==='resource'?{resourceLimit:true}:{})};
     let count=0;for(const entry of heap.objects)count+=entry.properties.length;
-    if(count-object.properties.length+plan.object.properties.length>16384)return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[]};
+    if(count-object.properties.length+plan.object.properties.length>16384)return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[],resourceLimit:true};
     return {heap:replaceJavaScriptOrdinaryObject(heap,plan.object),success:plan.success,error:plan.error,writes:plan.writes};
   }
   const at = findJavaScriptOrdinaryProperty(object.properties, key);
@@ -356,10 +356,10 @@ export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) 
   const transition = planJavaScriptPropertyDefinition(property !== undefined, object.extensible, current, proposed);
   if (transition.disposition === 'reject') return {heap,success:false,error:transition.error,writes:[]};
   if (transition.disposition === 'keep') return {heap,success:true,error:'',writes:[]};
-  if (at < 0 && object.properties.length >= 4096) return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[]};
+  if (at < 0 && object.properties.length >= 4096) return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[],resourceLimit:true};
   let count = 0;
   for (const entry of heap.objects) count += entry.properties.length;
-  if (at < 0 && count >= 16384) return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[]};
+  if (at < 0 && count >= 16384) return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[],resourceLimit:true};
   const updated = {$:'ordinaryProperty',key,descriptor:transition.descriptor};
   const properties = at < 0 ? object.properties.concat([updated]) : object.properties.map((entry,position) => position === at ? updated : entry);
   const replacement = {...object,properties};

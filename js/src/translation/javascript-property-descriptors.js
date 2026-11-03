@@ -21,6 +21,15 @@ export function readJavaScriptPropertyDescriptorKind(descriptor) {
   return data && accessor ? 'invalid' : data ? 'data' : accessor ? 'accessor' : 'generic';
 }
 
+/** Internal partial descriptors compare only present fields, using SameValue
+ * for semantic values. Absent payloads do not establish a difference.
+ * @param {JavaScriptPropertyDescriptor} left @param {JavaScriptPropertyDescriptor} right @returns {boolean} */
+export function testJavaScriptPropertyDescriptorsSameValue(left,right){
+ for(const field of ['configurable','enumerable','writable'])if(left[field+'Present']!==right[field+'Present']||left[field+'Present']&&left[field]!==right[field])return false;
+ for(const field of ['value','getter','setter'])if(left[field+'Present']!==right[field+'Present']||left[field+'Present']&&!testJavaScriptSemanticSameValue(left[field],right[field]))return false;
+ return true;
+}
+
 /** Validate only fields actually present; absent payloads carry no meaning.
  * Descriptor conversion, getters on the descriptor object, exotic receivers,
  * proxy traps and heap ownership are separate explicit source operations.
