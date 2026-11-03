@@ -120,3 +120,7 @@ Contract: [Rust match guards](https://doc.rust-lang.org/reference/expressions/ma
 
 The current batch is a concrete source draft, not full language support or a
 requirement completion claim. No external blocker prevents continued drafting.
+
+Successor: [explicit shared-reference patterns](issue-227-shared-reference-patterns-2026-11-04.md)
+drafts actual shared referent views and their let/match integration. Exclusive,
+stored-reference and general match protocols remain detailed continuation work.

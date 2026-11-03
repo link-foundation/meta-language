@@ -229,7 +229,7 @@ export function readRustRecordPattern(parser,segments,path,aliases,start){
 
 export function readRustNominalBindingPattern(parser){
  const c=parser.cursor;
- if(parser.irrefutableSourcePlaceBinding&&!c.peek().raw?.startsWith('r#')&&(c.is('ref')||c.is('mut'))){const aliases=[],pattern=parser.pattern(parser.modulePath,aliases);return {k:'nominal',pattern,span:pattern.span};}
+ if(parser.irrefutableSourcePlaceBinding&&((!c.peek().raw?.startsWith('r#')&&(c.is('ref')||c.is('mut')))||c.is('&')||c.is('&&'))){const aliases=[],pattern=parser.pattern(parser.modulePath,aliases);return {k:'nominal',pattern,span:pattern.span};}
  if(c.peek().kind!=='identifier')return null;
  const resolved=parser.resolve([c.peek().value],parser.modulePath);
  const valueCandidate=parser.origins.lookupValueOwner(resolved,parser.modulePath),typeCandidate=parser.origins.lookupTypeOwner(resolved,parser.modulePath);

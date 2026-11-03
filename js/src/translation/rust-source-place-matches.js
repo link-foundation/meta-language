@@ -9,7 +9,7 @@ const fail=(reason,span)=>{throw unsupported('Rust source place match',reason,sp
 export function readRustSourcePlaceMatchAttemptPlan(parser){
  const c=parser.cursor,stack=[],guards=[];let pattern=true,guarded=false;
  for(let offset=0;offset<100000;offset++){const token=c.peek(offset),value=token.value;if(token.kind==='eof')return null;
-  if(pattern&&!guarded&&(['string','char','byteChar','byteString'].includes(token.kind)||token.kind==='number'&&c.peek(offset+1).value!==':'||['@','|','&','-','..='].includes(value)||['true','false'].includes(value)&&!token.raw?.startsWith('r#')))return null;
+  if(pattern&&!guarded&&(['string','char','byteChar','byteString'].includes(token.kind)||token.kind==='number'&&c.peek(offset+1).value!==':'||['@','|','-','..='].includes(value)||['true','false'].includes(value)&&!token.raw?.startsWith('r#')))return null;
   if(['(','[','{'].includes(value)){stack.push(value==='('?')':value==='['?']':'}');continue;}
   if([')',']','}'].includes(value)){if(!stack.length)return value==='}'&&guards.length&&(!pattern||!guarded)&&!guards.at(-1)&&guards.slice(0,-1).every(Boolean)?guards:null;if(stack.pop()!==value)return null;continue;}
   if(stack.length)continue;if(value==='=>'){if(!pattern)return null;guards.push(guarded);pattern=false;continue;}if(value===','){if(pattern)return null;pattern=true;guarded=false;continue;}if(pattern&&value==='if'&&!token.raw?.startsWith('r#'))guarded=true;
@@ -21,7 +21,7 @@ export function acceptRustSourcePlaceMatch(parser,scrutinee,path){
  return Boolean(owner?.k==='data'&&row?.constructors?.length===1&&['owned','copy'].includes(readRustNominalOwnershipFacts(parser.origins,{...actual,wrappers:[]}).profile)&&actual.wrappers.every(layer=>layer==='reference'));
 }
 export function acceptRustSourcePlaceMatchPattern(parser,pattern){
- const pending=[{pattern,depth:0}];let visits=0;while(pending.length){const {pattern:current,depth}=pending.pop(),budget=readRustOwnedRecordStateStorageError(++visits,depth);if(budget)fail(budget,current.span);if(parser.origins.patternReferences.get(current)||!['ctor','bind','bindOrCtor','wild'].includes(current.k))return false;pending.push(...(current.args??[]).map(pattern=>({pattern,depth:depth+1})));}return true;
+ const pending=[{pattern,depth:0}];let visits=0;while(pending.length){const {pattern:current,depth}=pending.pop(),budget=readRustOwnedRecordStateStorageError(++visits,depth);if(budget)fail(budget,current.span);if(!['ctor','bind','bindOrCtor','wild'].includes(current.k))return false;pending.push(...(current.args??[]).map(pattern=>({pattern,depth:depth+1})));}return true;
 }
 export function beginRustSourcePlaceMatch(parser,scrutinee,path,place){
  const scope=parser.origins.scope,before=parser.origins.snapshotOwnedBindings(),prefix=[];parser.origins.scope=new Map(scope);let object=scrutinee;

@@ -4912,6 +4912,22 @@ reads keep their actual evaluation order. This initial ownership-readonly guard
 protocol does not yet cover all native-valid foreign state effects; those require
 an explicit checked successor protocol, rather than weakening its protection.
 
+Explicit shared-reference patterns retain one checked shared-referent identity
+operation for each original reference layer. Complete input/result source
+positions must agree on the actual owner, payload layers and remaining lifetimes;
+one actual outer reference is removed per operation. Interpretation retains the
+original referent's real loan roots and exposes a borrowed place, without owning
+transfer or fresh allocation authority. Copy leaves can bind independent values;
+explicit `ref` leaves preserve actual source loans. Nested record and tuple-struct
+patterns continue to use real field projections. A reference pattern under an
+inherited shared default binding mode refuses in the registered Rust 2024 range.
+Mutable reference patterns retain their separate required exclusive protocol.
+These operations compose with existing single-constructor guard attempts and
+expected source positions; packet transforms keep their separate packet interface.
+Native inputs and independent layer/owner/binding/qualifier forgeries remain
+unexecuted drafts. The contract follows [Rust reference patterns](https://doc.rust-lang.org/reference/patterns.html#reference-patterns)
+and [binding modes](https://doc.rust-lang.org/reference/patterns.html#binding-modes).
+
 Reference-bearing call/state contexts, anonymous products, multi-constructor
 images, general temporary lifetime extension, exclusive-reference patterns,
 refutable/or/alias patterns, guard let chains, complete arm syntax and general

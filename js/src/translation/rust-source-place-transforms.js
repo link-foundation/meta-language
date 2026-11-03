@@ -1,5 +1,6 @@
 // A source field call retains its actual executable extraction/call/rebuild
 // graph. The facet describes original root places; it never replaces the body.
+import {readRustSourceSharedReferentPlacePlan} from './rust-source-reference-places.js';
 import {typeError,unsupported} from './diagnostics.js';
 import {sameType} from './types.js';
 import {qualifyRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
@@ -45,6 +46,7 @@ function reconstruction(node,position,path,input,packet,index,resolveData,checkR
 function overlaps(left,right){return left.slot===right.slot&&left.fields.slice(0,Math.min(left.fields.length,right.fields.length)).every((value,index)=>value===right.fields[index]);}
 function sameOwner(left,right){return Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((value,index)=>value===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((value,index)=>sameOwner(value,right.arguments[index]));}
 export function readRustSourcePlaceTransformPlan(facet,node,language,resolveType=value=>value,resolveData=()=>null,resolveFunction=()=>null){
+ if(facet?.model==='Rust source shared referent place 1')return readRustSourceSharedReferentPlacePlan(facet,node,language,resolveType,resolveData);
  if(facet?.model==='Rust source readonly match guard 1')return readRustSourceReadonlyMatchGuardPlan(facet,node,language,resolveType,resolveData);
  if(facet?.model==='Rust source readonly pattern place 1')return readRustSourceReadonlyPatternPlacePlan(facet,node,language,resolveType,resolveData);
  if(facet?.model==='Rust source place replacement 1')return readRustSourcePlaceReplacementPlan(facet,node,language,resolveType,resolveData);

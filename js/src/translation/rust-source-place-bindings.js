@@ -1,7 +1,8 @@
 // Irrefutable source bindings use the existing checked declaration projections.
 // Every selected value is held before user names enter scope, including shadows.
+import {createRustSourceSharedReferentPlace} from './rust-source-reference-places.js';
 import {unsupported} from './diagnostics.js';
-import {hasRustSourceRegionComposition} from './rust-source-region-composition.js';
+import {hasRustSourceRegionComposition,retainRustSourceRegionState} from './rust-source-region-composition.js';
 import {readRustExclusiveSourcePlaceTokens} from './rust-exclusive-source-places.js';
 import {readRustOwnedRecordMutableName,registerRustOwnedRecordMutableBinding,readRustOwnedRecordStateDeclarations} from './rust-owned-record-state.js';
 import {checkRustOwnedRecordRoot,projectRustOwnedRecordField} from './rust-owned-record-updates.js';
@@ -33,10 +34,10 @@ export function readRustSourcePatternPlace(parser,pattern,path,terminator=';'){
 export function lowerRustSourcePlaceBinding(parser,pattern,value,path,range,sourceType=null,place=false,guard=false){
  if(pattern.k!=='nominal'||!hasRustSourceRegionComposition(parser))return null;
  const root=pattern.pattern,table=parser.origins,original=table.origin(value,path),modified=testRustModifiedPlaceBinding(root);
- const pending=[root];let inspected=0;while(pending.length){const current=pending.pop();if(++inspected>65536)fail('a complete reference pattern inventory exceeds its source budget',current.span);if(table.patternReferences.get(current)){if(modified&&!table.collecting)fail('explicit reference patterns with modified bindings retain their separate reference-mode protocol',current.span);return null;}pending.push(...(current.args??[]));}
+ const pending=[root];let inspected=0;while(pending.length){const current=pending.pop();if(++inspected>65536)fail('a complete reference pattern inventory exceeds its source budget',current.span);if(table.patternReferences.get(current)&&!retainRustSourceRegionState(parser)){if(modified&&!table.collecting)fail('explicit reference patterns in closed source bodies retain their separate region protocol',current.span);return null;}pending.push(...(current.args??[]));}
  // A refutable pattern retains the ordinary match/let-else interpretation.
  const constructorCount=owner=>{const declared=table.nominalOwnershipDeclarations.get(owner);if(Array.isArray(declared?.constructors))return declared.constructors.length;let count=0,work=0;for(const entry of table.valueCatalog.values()){if(++work>65536)fail('the actual constructor inventory exceeds its source inspection budget',root.span);if(entry.k==='ctor'&&entry.owner===owner)count++;}return count;};
- const entry=root.k==='ctor'?table.lookupValueOwner(root.path,path):root.k==='bindOrCtor'?table.lookupValueOwner([root.name],path):null,owner=original.type?.kind==='named'?table.lookupTypeOwner(original.type.path,original.path):null,leaf=root.k==='bind'||root.k==='bindOrCtor'&&entry?.k!=='ctor';
+ const entry=root.k==='ctor'?table.lookupValueOwner(root.path,path):root.k==='bindOrCtor'?table.lookupValueOwner([root.name],path):null,owner=original.type?.kind==='named'?table.lookupTypeOwner(original.type.path,original.path):null,leaf=root.k==='wild'||root.k==='bind'||root.k==='bindOrCtor'&&entry?.k!=='ctor';
  if(!leaf&&(entry?.k!=='ctor'||owner?.k!=='data'||entry.owner!==owner.fullName||constructorCount(owner.fullName)!==1)){
   if(modified&&!table.collecting)fail('modified bindings need their actual irrefutable constructor inventory; refutable bindings retain a separate match protocol',root.span);if(modified)table.borrowedVectorNeedsFinalAdmission=true;return null;
  }
@@ -45,8 +46,9 @@ export function lowerRustSourcePlaceBinding(parser,pattern,value,path,range,sour
  if(!place){const name=parser.freshProductBinding();table.bind(name,value,path,sourceType);bindings.push({name,value,span:range});object=table.mark({k:'name',path:[name],span:value.span},table.scope.get(name));}
  let visits=0;
  const visit=(current,selected,borrowed,depth)=>{
-  const budget=readRustOwnedRecordStateStorageError(++visits,depth);if(budget)fail(budget,current.span);if(current.k==='wild')return;
-  const actual=table.origin(selected,path);
+  const budget=readRustOwnedRecordStateStorageError(++visits,depth);if(budget)fail(budget,current.span);const references=table.patternReferences.get(current)??0;if(references&&borrowed)fail('the Rust 2024 reference pattern requires the default move binding mode',current.span);if(references>256)fail('explicit reference pattern nesting exceeds its bounded source profile',current.span);
+  for(let count=0;count<references;count++){const source=table.origin(selected,path);if(source.wrappers[0]!=='reference'||source.sourceExclusiveMode==='exclusive')fail('an explicit shared reference pattern retains its actual shared source layer',current.span);noteRustBorrowedExpressionSourcePosition(parser,selected,path);selected=createRustSourceSharedReferentPlace(parser,selected,current.span??range);table.mark(selected,{...source,wrappers:source.wrappers.slice(1),sourceLifetimes:(source.sourceLifetimes??[]).slice(1),sourceBorrowedPlace:true,sourceOwnedResultProof:false});noteRustBorrowedExpressionSourcePosition(parser,selected,path);}
+  if(current.k==='wild')return;const actual=table.origin(selected,path);
   if(current.k==='bind'||current.k==='bindOrCtor'){
    if(current.k==='bindOrCtor'){const constructor=table.lookupValueOwner([current.name],path);if(constructor?.k==='ctor')return visit({...current,k:'ctor',path:['crate',...constructor.fullName.split('.')],args:[]},selected,borrowed,depth+1);}
    if(borrowed&&(current.sourceBindingMode||current.sourceBindingMutable))fail('the Rust 2024 binding profile allows modifiers only under the default move binding mode',current.span);
