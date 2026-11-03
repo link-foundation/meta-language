@@ -92,6 +92,10 @@ drafted requirement counts or a requirement completion percentage.
    current transformation explicitly requires a complete noncallback closed
    callee. Retain real capture binders, callback bodies, argument modes and all
    hidden state writebacks before permitting callbacks on projected places.
+   This immediate closed callback path was subsequently drafted in
+   [projected callback interfaces](issue-227-projected-callback-interfaces-2026-11-03.md).
+   Its handoff distinguishes whole captured roots from remaining field capture
+   and escaping environment obligations; no execution evidence is claimed.
 3. Continue borrowed/non-Copy place references, partial moves and disjoint field
    loans. Closed field call reconstruction does not establish general field
    reference regions. Add actual field-region paths before relaxing whole-root

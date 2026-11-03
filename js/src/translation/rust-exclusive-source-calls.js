@@ -47,6 +47,16 @@ export function readRustExclusiveSourceBorrow(parser,path,token){
  if(c.is('['))fail('array-index reference aliases need their actual indexed place and invalidation protocol',c.peek());
  const span={start:token.start,end:c.peek(-1).end},place=readRustOwnedRecordStatePlace(parser,name.value,fields,span);return acquire(parser,place,parameter.index,span);
 }
+export function beginRustExclusiveSourceArgumentFrame(parser,parameters,span){
+ const arena=initializeRustExclusiveSourceCalls(parser);if(!arena||!Array.isArray(parameters)||parameters.length>256||arena.frames.length>=256)fail('a selected source call retains its bounded actual formal acquisition frame',span);const frame={entry:{parameters},callable:parser.ownedRecordState?.currentCallable??0,borrows:[],current:null};arena.frames.push(frame);return frame;
+}
+export function selectRustExclusiveSourceArgument(parser,frame,index){
+ if(parser.exclusiveSourceCalls?.frames.at(-1)!==frame||!Number.isSafeInteger(index)||index<0||index>=frame.entry.parameters.length)fail('source arguments select their actual active formal in order');frame.current={index,origin:frame.entry.parameters[index]};
+}
+export function readRustExclusiveSourceImplicitReborrow(parser,frame){
+ if(parser.exclusiveSourceCalls?.frames.at(-1)!==frame||frame.current?.origin.sourceExclusiveMode!=='exclusive')fail('an implicit source reborrow retains its actual selected exclusive formal');const c=parser.cursor,token=c.peek(),source=token.kind==='identifier'?parser.origins.scope.get(token.value):null;if(source?.sourceExclusiveMode!=='exclusive')fail('an owned argument requires explicit &mut; implicit reborrow needs an actual exclusive source formal',token);c.next();return acquire(parser,readRustOwnedRecordStatePlace(parser,token.value,[],token),frame.current.index,token);
+}
+export function endRustExclusiveSourceArgumentFrame(parser,frame){if(parser.exclusiveSourceCalls?.frames.at(-1)!==frame)fail('source argument acquisition frames leave in their actual order');parser.exclusiveSourceCalls.frames.pop();}
 function argumentsFor(parser,entry,path,offset=0,receiver=null){
  const arena=initializeRustExclusiveSourceCalls(parser),callable=readRustOwnedRecordStateSlots(parser)[0]?.callable??parser.ownedRecordState?.currentCallable??0,frame={entry,callable,borrows:[],current:null},args=[],c=parser.cursor;if(arena.frames.length>=256||entry.parameters.length>256)fail('exclusive source calls exceed their bounded nesting or formal count',c.peek());arena.frames.push(frame);
  try{
@@ -145,7 +155,7 @@ export function recordRustExclusiveSourcePacketEffect(parser,callee,args,paramet
 // Selected source callback environments use the same actual lexical loan
 // acquisition; the source FnMut compiler supplies complete hidden formals.
 export function acquireRustExclusiveSourceStateArguments(parser,parameters,places,offset,span){
- const arena=initializeRustExclusiveSourceCalls(parser),callable=parser.ownedRecordState?.currentCallable;if(!arena||!Number.isSafeInteger(offset)||offset<0||places.length>256||parameters.length!==offset+places.length)fail('source callback state arguments retain their exact complete formal inventory',span);
+ const arena=initializeRustExclusiveSourceCalls(parser),callable=parser.ownedRecordState?.currentCallable;if(!arena||arena.frames.length>=256||!Number.isSafeInteger(offset)||offset<0||places.length>256||parameters.length!==offset+places.length)fail('source callback state arguments retain their exact complete bounded formal inventory',span);
  const frame={entry:{parameters},callable,borrows:[],current:null},args=[];arena.frames.push(frame);
  try{for(let at=0;at<places.length;at++){const index=offset+at;frame.current={index,origin:parameters[index]};args.push(acquire(parser,places[at],index,span));}return {args,borrows:frame.borrows.map((borrow,at)=>({...borrow,index:offset+at}))};}finally{arena.frames.pop();}
 }

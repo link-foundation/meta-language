@@ -4625,6 +4625,19 @@ publish the result/new state. Current usize helpers select the supported 64-bit
 source target profile and preserve exact bounds beyond binary64 precision.
 Compiler helper positions and full bodies survive Links text/binary projection;
 they grant no source callable header, stored reference or fabricated Copy trait.
+Generic callback calls acquire original mutable arguments in the same actual
+ordered frame as other source calls, retaining each explicit place through
+callback parsing and hidden state acquisition. Writeback order includes both
+original mutable formals and actual captured roots. Projected calls retain the
+actual typed inline callback and its source FnMut specialization rather than a
+function alias. Hidden state places must match their exact original capture
+binders and remain whole-root carriers under the current capture protocol.
+Immutable callback captures are derived from the complete checked lexical graph,
+including local, pattern and nested lambda binders. A missing or stored capture
+list grants no authority. Free captures must be live direct Copy values without
+loans or mutable storage identity; mutable roots require their explicit state
+parameters and result slots. Existing borrowed/owned escaping callback and
+field-granular capture obligations remain separate.
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state

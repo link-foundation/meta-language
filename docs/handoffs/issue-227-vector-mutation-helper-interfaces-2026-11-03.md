@@ -84,6 +84,10 @@ requirement counts or a completion percentage.
 2. Add projected callback-specialized call contracts with actual callback bodies,
    capture binders, parameter modes and hidden state results. The projected
    selected-call contract still requires a complete noncallback closed callee.
+   Immediate closed callback calls were subsequently drafted in
+   [projected callback interfaces](issue-227-projected-callback-interfaces-2026-11-03.md)
+   with actual explicit/hidden acquisitions and lexical capture derivation.
+   General field-granular/escaping callback protocols remain open there.
 3. Complete actual field-reference regions, partial moves, disjoint loans and
    reference-bearing/recursive storage. The current helpers admit only complete
    closed element domains already established by original source admission;

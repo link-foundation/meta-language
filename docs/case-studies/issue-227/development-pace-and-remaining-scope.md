@@ -724,3 +724,12 @@ literal, 64 actual source), nineteen groups. The body checks also cover unused
 helpers, ordered Option payload transfer and exact usize bounds. Other mutation,
 callback and general storage/loan paths remain explicit full-scope work. No
 execution evidence or requirement completion percentage is claimed.
+
+The [projected callback batch](../../handoffs/issue-227-projected-callback-interfaces-2026-11-03.md)
+connects original mutable generic formals to the actual acquisition frame and
+retains complete explicit/hidden packet order. It keeps callbacks inline and
+derives their real free bindings instead of trusting capture metadata. Thirteen
+positive and six invalid-source originals bring the inventory to 503 positives
+(439 literal, 64 actual source), nineteen groups. Whole-root captures are covered
+by this draft; field-granular and escaping callback protocols remain explicit
+work. No execution evidence or requirement completion percentage is claimed.

@@ -4,6 +4,7 @@ import {checkRustFiniteStateTransformGraph,readRustFiniteStateTransformCall,chec
 import {divergeRustSourceRegions,isRustSourceRegionDivergence} from './rust-source-region-divergence.js';
 import {readRustSourcePlaceTransformRegions} from './rust-source-place-transform-regions.js';
 import {checkRustVectorMutationInterface,checkRustVectorMutationBody} from './rust-vector-mutation-interfaces.js';
+import {checkRustClosedSourceCallback} from './rust-closed-callback-regions.js';
 // Actual checked AST and lexical binder transport into shared source decisions.
 // Region numbers below are local proof coordinates, never archived runtime IDs.
 import {typeError,unsupported} from './diagnostics.js';
@@ -70,9 +71,7 @@ class SourceRegions{
   for(let index=0;index<node.args.length;index++){
    const argument=node.args[index],parameter=interface_.parameters[index],mode=interface_.modes[index];
    if(mode==='callback'){
-    if(!callback||callback.parameter!==index||argument.k!=='lambda'||argument.params.length!==callback.parameters.length+callback.captures.length||this.contains(argument.body))fail('a closed callback retains its actual complete unqualified pure result/state body',argument);
-    this.closedOutput(callback.result,argument);for(const capture of callback.captures)this.closedOutput(capture.position,argument);for(const parameter of callback.parameters)this.closedTarget(parameter,argument);
-    for(const name of argument.captures??[]){const captured=env.get(name);if(!captured||captured.role!=='copy'||captured.regions.length)fail('an immutable callback capture needs its actual direct Copy source binder without loans',argument);this.read(captured,'read',argument);}continue;
+    if(callback?.parameter!==index)fail('a closed callback retains its actual selected formal',argument);checkRustClosedSourceCallback(this,argument,interface_,env);continue;
    }
    this.closedTarget(parameter,argument);const shared=mode==='shared'&&parameter.wrappers.length===0?{...parameter,wrappers:['reference'],lifetimes:[null]}:parameter,expected=callParameter(this.position(shared)),actual=this.compatible(this.expression(argument,env,bindings,expected,depth+1),expected,argument);values.push(actual);
    if(mode==='exclusive'){
