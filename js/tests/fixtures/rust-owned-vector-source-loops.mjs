@@ -34,6 +34,12 @@ export const rustOwnedVectorLoopOriginals=[
  {name:'empty traversal retains initial state and does not call its body',sourceVersionRange,stdout:'3\n',source:'struct Count{value:u16}fn main(){let mut unused=vec![9u16];let moved=unused;let mut count=Count{value:3u16};let values:Vec<u16>=Vec::new();for value in values{println!("body");count.value+=value;}println!("{}",count.value);}'},
  {name:'selected loop state publishes exclusive writes before break',sourceVersionRange,stdout:'7\n',source:'struct Count{value:u16}fn update(count:&mut Count){let mut unused=vec![9u16];let moved=unused;for value in vec![7u16,1u16]{count.value+=value;break;}}fn main(){let mut count=Count{value:0u16};update(&mut count);println!("{}",count.value);}'},
  {name:'head effects update outer state before the first selected body',sourceVersionRange,stdout:'7\n1\n',source:'struct Count{value:u16}fn main(){let mut count=Count{value:0u16};for value in {count.value+=1u16;vec![7u16]}{println!("{}",value);}println!("{}",count.value);}'},
+ {name:'brace println has its actual statement boundary inside a completed loop',sourceVersionRange,stdout:'7\nafter\n',source:'fn main(){for value in vec![7u16]{println!{"{}",value}println!("after");}}'},
+ {name:'bracket println is a Unit loop body tail without a semicolon',sourceVersionRange,stdout:'7\n',source:'fn main(){for value in vec![7u16]{println!["{}",value]}}'},
+ {name:'direct Unit blocks need no separator inside a completed loop',sourceVersionRange,stdout:'7\n',source:'fn main(){for value in vec![7u16]{{}println!("{}",value);}}'},
+ {name:'a direct printed block retains output order before loop break',sourceVersionRange,stdout:'7\nafter\n',source:'fn main(){for value in vec![7u16,1u16]{{println!{"{}",value}}println!("after");break;}}'},
+ {name:'parenthesized Unit conditional uses its explicit loop body separator',sourceVersionRange,stdout:'7\n',source:'fn main(){for value in vec![7u16]{(if true{}else{});println!("{}",value);}}'},
+ {name:'brace print precedes the actual owned loop function return',sourceVersionRange,stdout:'7\n7\n',source:'fn first(values:Vec<u16>)->u16{for value in values{println!{"{}",value}return value;}0u16}fn main(){println!("{}",first(vec![7u16,1u16]));}'},
 ];
 export const rustOwnedVectorLoopRefusals=[
  {name:'container remains moved after normal completion',sourceVersionRange,source:'fn main(){let values=vec![7u16];for value in values{println!("{}",value);}println!("{}",values.len());}'},
@@ -52,4 +58,7 @@ export const rustOwnedVectorLoopRefusals=[
  {name:'Box item ownership layers cannot be inferred from erased element type',sourceVersionRange,source:'fn main(){let values=vec![Box::new(String::from("z"))];for value in values{println!("{}",value);}}'},
  {name:'main return retains its separate enclosing completion frontier',sourceVersionRange,source:'fn main(){let values=vec![7u16];for _value in values{return;}}'},
  {name:'reference item pattern cannot borrow an owned scalar implicitly',sourceVersionRange,source:'fn main(){let values=vec![7u16];for &value in values{println!("{}",value);}}'},
+ {name:'parenthesis-delimited loop println requires a separator before the next effect',sourceVersionRange,compilerAccepted:false,source:'fn main(){for value in vec![7u16]{println!("{}",value)println!("after");}}'},
+ {name:'bracket-delimited loop println requires a separator before the next effect',sourceVersionRange,compilerAccepted:false,source:'fn main(){for value in vec![7u16]{println!["{}",value]println!("after");}}'},
+ {name:'parenthesized Unit block cannot inherit an inner statement boundary',sourceVersionRange,compilerAccepted:false,source:'fn main(){for value in vec![7u16]{(if true{}else{})println!("{}",value);}}'},
 ];

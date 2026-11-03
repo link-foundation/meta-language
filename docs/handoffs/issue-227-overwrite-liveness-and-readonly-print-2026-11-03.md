@@ -42,7 +42,7 @@ matches, short-circuit results, direct Unit blocks, unused roots and live joined
 owners. Refusals preserve intervening reads, parenthesized statement boundaries
 and unknown loop effects. The mixed inventory now contains 49 positives and 21
 refusals. With the later loop-state batch, the shared original/product driver
-declares 408 authored positives in 19 groups: 344 literal originals and 64
+declares 414 authored positives in 19 groups: 350 literal originals and 64
 actual-source scenarios. These counts
 are inputs, not completed requirements or observed passing evidence.
 

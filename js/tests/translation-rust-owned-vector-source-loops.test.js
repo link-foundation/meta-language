@@ -24,7 +24,7 @@ test('private IntoIterator authority cannot be forged from a source origin flag'
 });
 test('the opt-in source profile and supported language versions remain explicit',()=>{
  assert.throws(()=>parseRust(originals[0].source,{sourceVersion:'1.90.0'}));for(const sourceVersion of ['1.89.0','1.100.0'])assert.throws(()=>parseRust(originals[0].source,options(sourceVersion)));
- assert.equal(originals.length,32);assert.equal(refusals.length,16);for(const row of [...originals,...refusals]){assert.equal(row.sourceVersionRange,versions.rust);assert.match(row.source,/fn main/);}for(const row of originals)assert.equal(typeof row.stdout,'string');
+ assert.equal(originals.length,38);assert.equal(refusals.length,19);for(const row of [...originals,...refusals]){assert.equal(row.sourceVersionRange,versions.rust);assert.match(row.source,/fn main/);}for(const row of originals)assert.equal(typeof row.stdout,'string');
 });
 test('head-only and unrelated moved roots never enter owned traversal accumulator slots',()=>{
  for(const name of ['unrelated moved mutable vector is absent from the loop accumulator','consumed mutable head is not a body state slot']){const row=originals.find(value=>value.name===name);assert.ok(row);const checked=checkProgram(parseRust(row.source,options('1.90.0'))),folds=nodes(checked.main).filter(node=>node.k==='method'&&node.op==='reduce');assert.equal(folds.length,1);assert.equal(folds[0].type.kind,'tuple');assert.equal(folds[0].type.elements.length,2);assert.equal(stdout(emitJavaScript(checked).text),row.stdout);}

@@ -630,3 +630,10 @@ originals. The unified original driver now includes all six finite-loop controls
 The handoff details the still-required independent signature-3 loop interface
 and region invariant, including zero iterations and every completion path. No
 execution or compilation occurred and no completion percentage is inferred.
+
+The same loop completion reader now shares actual token boundaries with the
+ordinary function/main reader. Six more original programs cover brace/bracket
+prints, direct blocks, explicit parenthesized separators and early returns;
+three invalid-source controls preserve missing-separator boundaries. The latest
+inventory is 414 authored positives in nineteen groups, 350 literal and 64
+actual source. These remain unexecuted source controls.

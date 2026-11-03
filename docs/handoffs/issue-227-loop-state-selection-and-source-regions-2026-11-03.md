@@ -40,11 +40,27 @@ All preexisting inputs, refusal controls and their indexes remain.
 
 The complete-original CI driver now includes all six finite-record originals in
 a separate group with its actual nonexclusive source profile. The inventory is
-408 authored positives in nineteen groups: 344 literal originals and 64 actual
+414 authored positives in nineteen groups: 350 literal originals and 64 actual
 source scenarios. These are declared controls, not passing results or a count
 of completed requirements. Existing CI performs native original/product checks,
 default complete CST reconstruction, and typed Links text/binary rechecks. The
 driver was edited but never invoked in this phase.
+
+The completion-reader follow-up reuses the actual token boundary rule already
+used by ordinary function/main parsing. Brace-delimited println is a statement;
+parenthesis/bracket invocations need a separator before a following effect but
+can be final Unit expressions. Direct Unit blocks may omit the separator;
+parenthesized blocks may not. Six appended owned-loop originals and three
+invalid-source refusals retain ordered stdout, empty/direct blocks and actual
+function returns. These bring the owned-loop group to 38 positives and 19
+refusals. The 414-positive total above includes this follow-up. None ran.
+
+Source review found that owned vector loop/sort fixture ranges spell the same
+bounds with a leading `Rust ` label, while the original driver compared the raw
+string with an unlabeled range. It now removes only that exact optional label
+before the unchanged exact-bounds assertion. The actual compiler profile still
+checks the active Rust/Cargo versions and target. No supported interval, input,
+runtime or assertion coverage is removed, and no outcome has been observed.
 
 ## Still required for signature-3 loop region checking
 

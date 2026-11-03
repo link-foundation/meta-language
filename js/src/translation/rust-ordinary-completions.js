@@ -13,7 +13,7 @@ import {beginRustOwnedRecordStateBlock,endRustOwnedRecordStateBlock,readRustOwne
 import {readRustOwnedRecordFiniteLoop,readRustOwnedRecordFiniteLoopSource,lowerRustOwnedRecordLoopCompletion} from './rust-owned-record-loops.js';
 import {readRustOwnedRecordLoopLeafKind,readRustOwnedRecordLoopSignal} from './rust-owned-record-loop-rules.js';
 import {readRustExpressionCompletionLimit} from './rust-expression-completion-rules.js';
-import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative,testRustOrdinaryCompletionFallsThrough,testRustOrdinaryCompletionTransferredResult,readRustOrdinaryCompletionSnapshotError} from './rust-unit-value-rules.js';
+import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,acceptRustBlockExpressionStatementBoundary,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative,testRustOrdinaryCompletionFallsThrough,testRustOrdinaryCompletionTransferredResult,readRustOrdinaryCompletionSnapshotError} from './rust-unit-value-rules.js';
 import {isRustOwnedBindingValue} from './rust-owned-bindings.js';
 import {hasRustOrdinaryMatchCompletion,readRustOrdinaryMatchCompletion} from './rust-ordinary-match-completions.js';
 const range=(from,to)=>({start:from.start,end:Math.max(from.end,to?.kind==='eof'?from.end:to.start)});
@@ -97,15 +97,15 @@ function sequence(parser,path,open){
   }
   const finiteLoop=readRustStandardCollectionSourceLoop(parser,path)??readRustOwnedRecordFiniteLoop(parser,path);if(finiteLoop){c.eat(';');const source=readRustStandardCollectionSourceLoopOrigin(parser,finiteLoop)??readRustOwnedRecordFiniteLoopSource(parser,finiteLoop);if(source?.returns?.length){const first={node:'loop',expression:finiteLoop,exits:source.returnLeaves,continuation:leaf(parser,'value',{k:'unit',span:finiteLoop.span},path),kind:'mixed',span:finiteLoop.span};if(c.is('}'))result=first;else{const rest=sequence(parser,path,open);result={node:'sequence',first,rest,kind:readRustOrdinaryCompletionSequenceKind(first.kind,rest.kind),span:first.span};}break;}bindings.push({name:parser.freshProductBinding(),type:{kind:'unit'},value:finiteLoop,span:finiteLoop.span});continue;}
   if(['while','loop','for'].includes(token.value)&&token.kind==='identifier')throw unsupported(`${token.value} loop`,'loops over mutable state are outside the portable core; use recursion',range(token,token));
-  const expression=token.kind==='macro'&&readRustFunctionMacroDisposition(token.value)==='print'?parser.functionPrintValue(path):parser.expr(path,{statement:true});
-  const terminated=Boolean(c.eat(';')),completionKind=readRustPanicCompletionKind(expression.k,expression.op??'');
+  const print=token.kind==='macro'&&readRustFunctionMacroDisposition(token.value)==='print',bracePrint=print&&c.peek(1).value==='{',expression=print?parser.functionPrintValue(path):parser.expr(path,{statement:true}),boundary=acceptRustBlockExpressionStatementBoundary(token.value,c.peek(-1).value);
+  const terminated=Boolean(c.eat(';'))||bracePrint,completionKind=readRustPanicCompletionKind(expression.k,expression.op??'');
   if(terminated&&completionKind!=='abort'){
    const origin=parser.origins.origin(expression,path);
    if(readRustOrdinaryStatementDisposition(expression.k,parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('expression statement','statements with effects are outside the portable core in function bodies',expression.span);
    bindings.push({name:parser.freshProductBinding(),value:expression,span:expression.span});continue;
   }
   const origin=parser.origins.origin(expression,path);
-  const implicit=readRustImplicitBlockStatementDisposition(expression.k,expression.block===true,!c.is('}'),parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
+  const implicit=readRustImplicitBlockStatementDisposition(boundary?expression.k:'',boundary,!c.is('}'),parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
   if(implicit==='bind'){bindings.push({name:parser.freshProductBinding(),type:{kind:'unit'},value:expression,span:expression.span});continue;}
   if(!c.is('}')){
    if(completionKind==='abort')throw unsupported('unreachable continuation','statements after an abort are not removed by this model',expression.span);
