@@ -7,6 +7,7 @@ import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.j
 import {readRustRecordSourceType} from './rust-records.js';
 import {acceptRustPrimitiveFromSource} from './rust-primitive-from-rules.js';
 import {readRustExclusiveSourceVectorMethodArity,acceptRustExclusiveSourceVectorReceiver} from './rust-exclusive-source-vector-rules.js';
+import {attachRustVectorMutationInterface} from './rust-vector-mutation-interfaces.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive Vec source mutation',reason,span);};
 const reference=name=>({k:'name',path:[name]}),project=(name,index)=>({k:'tupleIndex',object:reference(name),index}),tuple=items=>({k:'tuple',items});
 export function readRustExclusiveSourceVectorMethod(parser,origin,method,path){
@@ -34,7 +35,7 @@ export function createRustExclusiveSourceVectorPacket(parser,place,selected,args
   if(selected.method==='pop'){
    const sum=result.standardSumSource,prior=parser.freshProductBinding(),some=value=>({k:'app',fn:{k:'name',path:sum.constructorPaths.Some},args:[value],span});
    initial=tuple([{k:'app',fn:{k:'name',path:sum.constructorPaths.None},args:[],span},empty]);
-   step={k:'match',scrutinees:[project(accumulator,0)],rows:[{patterns:[{k:'ctor',path:sum.constructorPaths.None,args:[],span}],body:tuple([some(reference(item)),project(accumulator,1)]),span},{patterns:[{k:'ctor',path:sum.constructorPaths.Some,args:[{k:'bind',name:prior,span}],span}],body:tuple([some(reference(item)),{k:'array',element:elementType,items:[{value:project(accumulator,1),spread:true},{value:reference(prior),spread:false}],span}]),span}],span};
+   step={k:'match1',scrutinee:project(accumulator,0),cases:[{pattern:{k:'ctor',path:sum.constructorPaths.None,binds:[]},body:tuple([some(reference(item)),project(accumulator,1)])},{pattern:{k:'ctor',path:sum.constructorPaths.Some,binds:[prior]},body:tuple([some(reference(item)),{k:'array',element:elementType,items:[{value:project(accumulator,1),spread:true},{value:reference(prior),spread:false}],span}])}],span};
   }else{
    const number=value=>({k:'num',value,type:rustFixedType('usize'),span});initial=tuple([reference(names[1]),empty]);
    step={k:'if',cond:{k:'binary',op:'gt',left:project(accumulator,0),right:number('0'),span},then:tuple([{k:'binary',op:'sub',left:project(accumulator,0),right:number('1'),span},{k:'array',element:elementType,items:[{value:project(accumulator,1),spread:true},{value:reference(item),spread:false}],span}]),else:reference(accumulator),span};
@@ -42,7 +43,7 @@ export function createRustExclusiveSourceVectorPacket(parser,place,selected,args
   const fold={k:'method',object:reference(names[0]),op:'reduce',args:[{k:'lambda',params:[{name:accumulator,type:ret},{name:item,type:elementType}],ret,captures:[],body:step,span},initial],span};
   if(selected.method==='pop')body=fold;else{const held=parser.freshProductBinding();body={k:'let',name:held,type:ret,value:fold,body:tuple([{k:'unit',span},project(held,1)]),span};}
  }
- const declaration={k:'fn',name:helper,generated:true,params:names.map((name,index)=>({name,type:readRustRecordSourceType(parser,parameters[index].type,parameters[index].path)})),ret:readRustRecordSourceType(parser,packetType,[]),body,span},helpers=parser.exclusiveSourceVectorHelpers??=[];
+ const declaration=attachRustVectorMutationInterface(parser,{k:'fn',name:helper,generated:true,params:names.map((name,index)=>({name,type:readRustRecordSourceType(parser,parameters[index].type,parameters[index].path)})),ret:readRustRecordSourceType(parser,packetType,[]),body,span},selected.method,parameters,element,result),helpers=parser.exclusiveSourceVectorHelpers??=[];
  if(helpers.length>=65536)fail('actual Vec source helpers exceed their finite declaration budget',span);
  parser.origins.registerCatalogEntry(helper,{k:'fn',parameters,result:packetOrigin});helpers.push(declaration);
  return {callee:['crate',helper],parameters,result};

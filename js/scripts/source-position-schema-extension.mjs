@@ -3,7 +3,7 @@
 export function extendSourcePositionSchema(before){
  const after=structuredClone(before);
  if(!after.fields||typeof after.fields!=='object'||Array.isArray(after.fields))throw new TypeError('source positions need the complete schema field vocabulary');
- for(const[field,label]of [['arrayElementPosition','array element source position'],['sourcePosition','source expression position'],['sourceStateTransition','source state transition'],['sourceLoopFold','source loop fold'],['sourcePlaceTransform','source place transformation'],['sourceStateTransform','source state transformation'],['sourceFiniteRecordLoopHelper','source finite record loop helper']]){
+ for(const[field,label]of [['arrayElementPosition','array element source position'],['sourcePosition','source expression position'],['sourceStateTransition','source state transition'],['sourceLoopFold','source loop fold'],['sourcePlaceTransform','source place transformation'],['sourceStateTransform','source state transformation'],['sourceVectorMutation','source vector mutation'],['sourceFiniteRecordLoopHelper','source finite record loop helper']]){
   if(Object.hasOwn(after.fields,field)&&after.fields[field]!==label)throw new TypeError('preserve conflicting recursive source position vocabulary');
   if(Object.entries(after.fields).some(([name,value])=>name!==field&&value===label))throw new TypeError('recursive source position labels must retain one owned field');
   after.fields[field]=label;

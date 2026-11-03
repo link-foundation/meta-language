@@ -94,6 +94,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ...(entry.sourceExclusiveSignature!==undefined?{sourceExclusiveSignature:entry.sourceExclusiveSignature}:{}),
       ...(entry.sourceFnMutSpecialization!==undefined?{sourceFnMutSpecialization:entry.sourceFnMutSpecialization}:{}),
       ...(entry.sourceStateTransform!==undefined?{sourceStateTransform:entry.sourceStateTransform}:{}),
+      ...(entry.sourceVectorMutation!==undefined?{sourceVectorMutation:entry.sourceVectorMutation}:{}),
       ...(entry.sourceFiniteRecordLoopHelper!==undefined?{sourceFiniteRecordLoopHelper:entry.sourceFiniteRecordLoopHelper}:{}),
       ...(entry.sourceStandardCollectionLibraryOwner!==undefined?{sourceStandardCollectionLibraryOwner:entry.sourceStandardCollectionLibraryOwner}:{}),
       ...(entry.sourceTypeNamespace !== undefined ? { sourceTypeNamespace: entry.sourceTypeNamespace } : {}),

@@ -4613,6 +4613,18 @@ scope. The same root interpreter acquires the current revision and publishes the
 complete new root, without a stored epoch or invented callable header. Other
 intrinsics, callbacks and borrowed/non-Copy place references require their own
 complete operation interfaces.
+Generated Vec pop/truncate/clear helpers retain a distinct compiler declaration
+interface with actual standard vector, closed element, result and optional usize
+positions. Every actual helper body is independently validated, including unused
+helpers. Pop retains the complete None/Some accumulator, current item and ordered
+remaining vector; truncate retains its positive usize guard, exact decrement and
+unchanged exhausted accumulator; clear retains Unit and the actual empty vector.
+An interface or recursion flag cannot replace those body checks. The existing
+closed-call and projected-root protocols consume the real old vector/root and
+publish the result/new state. Current usize helpers select the supported 64-bit
+source target profile and preserve exact bounds beyond binary64 precision.
+Compiler helper positions and full bodies survive Links text/binary projection;
+they grant no source callable header, stored reference or fabricated Copy trait.
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state

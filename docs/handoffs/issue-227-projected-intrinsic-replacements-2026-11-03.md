@@ -77,6 +77,10 @@ requirement counts or a completion percentage.
    helper bodies and results, String character/index operations and their
    invalidation rules. Their complete generated bodies need genuine compiler
    interfaces and independent body checks before projected callers can use them.
+   These three Vec helpers were subsequently drafted with their actual complete
+   compiler interfaces and body checks in
+   [Vec mutation helper interfaces](issue-227-vector-mutation-helper-interfaces-2026-11-03.md).
+   Other mutation and general storage/loan paths remain explicit work there.
 2. Extend projected callback-specialized calls with real callback/capture
    arguments, bodies and hidden writeback state. The selected-call transformation
    still explicitly requires a complete noncallback closed callee interface.

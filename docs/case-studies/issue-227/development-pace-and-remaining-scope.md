@@ -714,3 +714,13 @@ authored inventory to 477 positives (413 literal, 64 actual source), nineteen
 groups. Other intrinsic bodies, callbacks and general field-reference regions
 remain explicit work. No runtime, CI or requirement-completion evidence is
 claimed from this unexecuted code draft.
+
+The [Vec mutation helper interface batch](../../handoffs/issue-227-vector-mutation-helper-interfaces-2026-11-03.md)
+connects existing pop/truncate/clear algorithms to closed and projected calls
+through a compiler-only declaration ABI and independent complete body checks.
+No replacement native algorithm is introduced. Thirteen positives and four
+invalid-source originals bring the authored inventory to 490 positives (426
+literal, 64 actual source), nineteen groups. The body checks also cover unused
+helpers, ordered Option payload transfer and exact usize bounds. Other mutation,
+callback and general storage/loan paths remain explicit full-scope work. No
+execution evidence or requirement completion percentage is claimed.
