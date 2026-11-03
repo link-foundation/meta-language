@@ -67,8 +67,20 @@ and actual new.target; ordinary Calls have undefined new.target and arrows retai
 the enclosing value. Number, Boolean, String, Object and Array construction reuse
 shared conversion, wrapper, ordinary property and Array rules, preserving their
 distinct conversion/prototype/allocation order. Unsupported constructor kinds
-request implementation explicitly. Existing specialized Map/Set and derived Error
-paths retain their existing contracts until generalized through this authority.
+request implementation explicitly. Map/Set and WeakMap/WeakSet allocation and
+iterable initialization use this authority while retaining their actual distinct
+internal slots. The existing derived Error route retains its own source contract.
+All four collection constructors reuse their real portable iterable initializer
+after one generic allocation with the selected newTarget prototype. Reuse checks
+the actual suspended Construct or Array creation parent, target kind, receiver,
+newTarget, complete argument List, current allocation instruction and fresh empty
+internal slots. An ordinary receiver or constructor spelling grants no reuse.
+Map and Set fallback roots belong to newTarget's actual realm, independently of
+the target constructor realm; missing roots request authority. The initializer
+continues to own adder selection, nullish bypass, iteration, entry reads,
+IteratorClose and exact abrupt values. Constructor-frame admission checks the
+actual base-class or collection kind without dropping parent/child identity
+checks. The weak-only compatibility entry point retains its original kind scope.
 
 Reflect.construct checks target and actual/default newTarget before reading its
 array-like argument Object, then Gets length and every ordered index. Array.of

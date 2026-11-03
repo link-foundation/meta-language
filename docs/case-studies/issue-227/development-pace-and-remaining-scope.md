@@ -754,3 +754,14 @@ Six positive and two invalid originals bring the inventory to 520 positives
 interiors, other iterator protocols and whole-project integration remain work;
 the fold is not claimed to physically stop traversing the Vec after an error.
 No execution evidence or requirement completion percentage is established.
+
+The [generic collection construction batch](../../handoffs/issue-227-generic-collection-construction-2026-11-03.md)
+connects Map/Set source aliases and Reflect construction to the common actual
+target/newTarget kernel, reusing existing iterable initializer bodies and one
+branded receiver. The same receiver proof covers generic Array creation. Source
+review also corrected the generic-parent frame condition that admitted only base
+classes inside a class/collection branch. Fourteen native-original controls
+append to the existing generic constructor inventory, with independent allocation,
+forgery and foreign-realm controls. They are separate from the Rust source
+inventory above. Generated native publication, all execution and broad frontend
+completion remain deferred; no requirement percentage is inferred.

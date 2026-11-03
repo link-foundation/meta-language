@@ -7,6 +7,10 @@ source review were performed. No represented program, test, generator,
 formatter, validation gate, compilation or CI feedback ran or was reviewed.
 The complete requirements draft and active goal remain unfinished.
 
+Continuation: [generic Map/Set construction](issue-227-generic-collection-construction-2026-11-03.md)
+drafts another shared frontend integration path. All Rust iterator and callback
+work below remains outstanding; this continuation does not replace that scope.
+
 ## Actual implementation path drafted
 
 `rust-fnmut-source-iterators.js` already constructs the actual executable fold for

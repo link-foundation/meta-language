@@ -1,4 +1,4 @@
-import {readJavaScriptWeakCollectionConstructionReceiver} from './javascript-weak-collection-construction.js';
+import {readJavaScriptCollectionConstructionReceiver} from './javascript-collection-construction.js';
 import {executeJavaScriptSymbolRegistryOperation,allocateJavaScriptRegisteredSymbol,readJavaScriptSymbolRegistrationFact} from './javascript-symbol-registry.js';
 import {allocateJavaScriptWeakCollection,executeJavaScriptWeakCollectionOperation} from './javascript-weak-collections.js';
 import {readJavaScriptWeakCollectionOperationKind} from './javascript-weak-collection-rules.js';
@@ -401,7 +401,7 @@ export function readJavaScriptCallMachineError(program,machine){
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)||testJavaScriptCollectionConstructorMode(fn.receiverMode)){
       const parent=machine.frames[index-1],caller=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity),instruction=parent===undefined||caller===undefined||parent.position===0?undefined:caller.instructions[parent.position-1];
       const generic=parent?.pending.$==='waitConstruction'?parent.pending.state:parent?.pending.$==='waitArrayCreation'?parent.pending.construction:undefined;
-      if(generic!==undefined){if(!testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)||generic.phase!=='body'||generic.call?.constructing!==true||generic.target.$!=='object'||generic.target.identity!==frame.identity||!testJavaScriptSemanticSameValue(generic.receiver,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(generic.newTarget,frame.newTarget??{$:'undefined'}))return 'a base class retains its actual generic Construct call';}
+      if(generic!==undefined){if(!(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)||readJavaScriptCollectionConstructorKind(fn)===generic.mode)||generic.phase!=='body'||generic.call?.constructing!==true||generic.target.$!=='object'||generic.target.identity!==frame.identity||!testJavaScriptSemanticSameValue(generic.receiver,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(generic.newTarget,frame.newTarget??{$:'undefined'}))return 'a base class or collection retains its actual generic Construct call';}
       else if(parent!==undefined&&(parent.pending.$==='waitArrayTransform'||parent.pending.$==='waitArraySlice'||parent.pending.$==='waitArrayConcatenation')&&parent.pending.construction!==undefined){
         const state=parent.pending.construction;if(!testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)||state.phase!=='body'||state.constructor.$!=='object'||state.constructor.identity!==frame.identity||!testJavaScriptSemanticSameValue(state.receiver,frame.registers[0]??{$:'undefined'})||frame.arguments.length!==1||!testJavaScriptSemanticSameValue(frame.arguments[0]??{$:'undefined'},{$:'number',value:state.length}))return 'species source class construction retains its actual pending new operation';
       }else{
@@ -1025,7 +1025,7 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
       return {$:'machineAllocateObject',machine,prototype:template.prototype};
     }
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':{
-      const held=readJavaScriptWeakCollectionConstructionReceiver(program,machine,frame,instruction);if(held.error!=='')return {$:'machineInvalid',heap:machine.heap,reason:held.error};if(held.receiver!==undefined)return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,held.receiver))};
+      const held=readJavaScriptCollectionConstructionReceiver(program,machine,frame,instruction);if(held.error!=='')return {$:'machineInvalid',heap:machine.heap,reason:held.error};if(held.receiver!==undefined)return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,held.receiver))};
       if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='Array'){
         const receiver=registers[0]??{$:'undefined'},owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
         if(receiver.$==='null'||receiver.$==='undefined')return owner===undefined?{$:'machineInvalid',heap:machine.heap,reason:'Array iterator creation retains its actual realm'}:requestJavaScriptCallError(machine,owner.realm,'TypeError','Cannot convert undefined or null to object');
@@ -2185,7 +2185,7 @@ export function acceptJavaScriptCallConstruction(program,machine,destination,rea
  * @returns {JavaScriptCallMachineTransition} */
 export function pushJavaScriptConstructionBody(program,machine,callee,receiver,arguments_,newTarget){
  if(callee.$!=='object'||!callee.callable||receiver.$!=='object'||receiver.callable||newTarget.$!=='object'||!newTarget.callable)return {$:'machineInvalid',heap:machine.heap,reason:'construction bodies retain actual target receiver and newTarget identities'};
- const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);if(fn===undefined||fn.receiverMode!=='strict'&&fn.receiverMode!=='ordinary class'&&!['WeakMap','WeakSet'].includes(readJavaScriptCollectionConstructorKind(fn)))return {$:'machineInvalid',heap:machine.heap,reason:'construction bodies require actual registered ordinary function or base class code'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);if(fn===undefined||fn.receiverMode!=='strict'&&fn.receiverMode!=='ordinary class'&&!['Map','Set','WeakMap','WeakSet'].includes(readJavaScriptCollectionConstructorKind(fn)))return {$:'machineInvalid',heap:machine.heap,reason:'construction bodies require actual registered ordinary function, base class or collection code'};
  let slots=fn.registers,count=arguments_.length;for(const frame of machine.frames){slots+=frame.registers.length;count+=frame.arguments.length;for(const list of frame.argumentLists??[])count+=list.values.length;}if(machine.frames.length>=1024||slots>1048576||count>1048576)return {$:'machineResourceLimit',machine,reason:'construction body exceeds shared stack and argument storage bounds'};
  const child={...createJavaScriptCallFrame(fn,receiver,arguments_),newTarget};return {$:'machineContinue',machine:{$:'callMachine',heap:machine.heap,frames:machine.frames.concat([child])}};
 }

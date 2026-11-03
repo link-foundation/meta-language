@@ -12,6 +12,8 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-collection-construction-rules.js',moduleName:'javascript_collection_construction_rules',model:'Actual collection Construct storage and brand selection 1',programAsset:'javascript-collection-construction-rules-program'},
+ {sourcePath:'js/src/translation/javascript-collection-construction.js',moduleName:'javascript_collection_construction',sourceDependencies:true,model:'Actual strong and weak collection generic construction receiver ownership 1',programAsset:'javascript-collection-construction-program'},
  {sourcePath:'js/src/translation/javascript-weak-collection-construction.js',moduleName:'javascript_weak_collection_construction',sourceDependencies:true,model:'Actual weak collection generic construction receiver and initializer ownership 1',programAsset:'javascript-weak-collection-construction-program'},
  {sourcePath:'js/src/translation/javascript-weak-collection-rules.js',moduleName:'javascript_weak_collection_rules',sourceDependencies:true,model:'Actual weak collection key brand and identity rules 1',programAsset:'javascript-weak-collection-rules-program'},
  {sourcePath:'js/src/translation/javascript-weak-collections.js',moduleName:'javascript_weak_collections',sourceDependencies:true,model:'Actual represented weak collection lookup and mutation 1',programAsset:'javascript-weak-collections-program'},
@@ -276,6 +278,7 @@ const consumers=[
  'js/src/translation/rust-fallible-iterator-interfaces.js',
  'js/tests/source-state-transition-links.test.js',
  'js/tests/translation-javascript-weak-construction.test.js',
+ 'js/tests/translation-javascript-collection-construction.test.js',
  'js/tests/rust-source-project-signature-model.test.js',
  'js/scripts/rust-type-source-variant-coverage.mjs',
  'js/src/translation/javascript-heap-snapshot-authority.js',
