@@ -818,3 +818,22 @@ cover actual wrapper, collection, class and nested factory species while keeping
 the preceding saved-state protocol and every earlier assertion. Generation,
 execution and whole-project coverage remain deferred; this adds no requirement
 completion percentage.
+
+The [Function source text batch](../../handoffs/issue-227-function-source-text-2026-11-03.md)
+joins one shared CST source directory, existing original-module receipts and one
+explicit native metadata continuation. Static declarations, nested lexical sites,
+module aliases and live methods therefore share one source-text path. Restricted
+Function accessors reuse the primitive Error mechanism and actual protected
+identity; Function constructor metadata remains separate from its undrafted
+dynamic body. Sixteen literal originals and independent snapshot/authority/
+composition controls are authored and unexecuted. Textual review corrected new
+control entry selections to exported roots; existing dependency closure selects
+their private helpers. Every previous control input remains preserved.
+
+The preceding commits `fe187eb5a` (2026-11-03 22:08:31 +07:00) and `925ac8be2`
+(22:42:40 +07:00) are 34 minutes 9 seconds apart. That interval measures source
+batch publication, not verified requirements per minute. No ledger audit or
+execution ran in this continuation, so a drafted/total count or completion
+percentage remains unavailable. Remaining actual code, automatic publication and
+verification work is explicit in the new handoff; this batch supplies no finite
+whole-project completion estimate.

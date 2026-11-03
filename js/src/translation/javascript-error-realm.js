@@ -3,6 +3,7 @@ import {createJavaScriptLiveHandles} from './javascript-live-handles.js';
 import {compileJavaScriptLiveHandleInvocationFunction} from './javascript-live-handle-call-source.js';
 import {classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
 import {runJavaScriptSourceTransition} from './javascript-source-driver.js';
+import {publishJavaScriptFunctionSources} from './javascript-function-source-publication.js';
 // Host boundary for the portable Error source machine. Source definitions are
 // supplied as real declaration values, checked against the captured text and
 // NEVER invoked by this adapter. Only independently supplied realm intrinsics
@@ -18,13 +19,17 @@ import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordina
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
 import {constructJavaScriptSourceText,readJavaScriptSemanticTextString,readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {beginJavaScriptCallMachine,readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolAllocation,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
+import {beginJavaScriptCallMachine,readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolAllocation,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallFunctionText,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
 
 // External data reification only: these operations receive already primitive
 // metadata after portable wrapper semantics completed. They do not run a
 // represented constructor, coercion, getter or method as an implementation.
 const dataCarrierAuthority={object:Object,ownKeys:Reflect.ownKeys,descriptor:Reflect.getOwnPropertyDescriptor,prototype:Reflect.getPrototypeOf,setPrototype:Reflect.setPrototypeOf,extensible:Reflect.isExtensible,define:Reflect.defineProperty,prevent:Reflect.preventExtensions};
 const actualSymbolAllocator=Symbol,actualSymbolKeyFor=Reflect.getOwnPropertyDescriptor(Symbol,'keyFor')?.value;
+const functionTextPrototype=Function.prototype,functionTextReader=Reflect.getOwnPropertyDescriptor(functionTextPrototype,'toString')?.value,functionTextBind=Reflect.getOwnPropertyDescriptor(functionTextPrototype,'bind')?.value,functionTextApply=Reflect.apply;
+// Only this inert native value supplies the versioned BoundFunction text port.
+// No represented target, mutable name/length or executable body is consulted.
+let boundFunctionTextWitness;
 const primitiveValueSlots=[{kind:'number',constructor:Number,test:nativeTypes.isNumberObject,value:Reflect.getOwnPropertyDescriptor(Number.prototype,'valueOf')?.value},{kind:'boolean',constructor:Boolean,test:nativeTypes.isBooleanObject,value:Reflect.getOwnPropertyDescriptor(Boolean.prototype,'valueOf')?.value},{kind:'symbol',constructor:Symbol,test:nativeTypes.isSymbolObject,value:Reflect.getOwnPropertyDescriptor(Symbol.prototype,'valueOf')?.value},{kind:'integer',constructor:BigInt,test:nativeTypes.isBigIntObject,value:Reflect.getOwnPropertyDescriptor(BigInt.prototype,'valueOf')?.value}];
 const stringValueSlot=Reflect.getOwnPropertyDescriptor(String.prototype,'valueOf')?.value;
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
@@ -159,6 +164,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  const registry={$:'errorModuleRegistry',owners,operations:[operations],intrinsics:[...intrinsics.keys()].map(id=>({$:'errorIntrinsicOwner',identity:id,realm:identity})),realms:[identity],exoticKey:encode(realm.toPrimitive)};
  const constructorFacts=constructorDeclarations.map(declaration=>{const owner=owners.find(row=>row.source===declaration.source);if(!owner)throw new TypeError('constructor facts require their actual validated source owner');return {$:'arrayConstructorFact',identity:owner.identity,realm:owner.realm,constructable:declaration.constructable,intrinsicArray:false};});
  let module=deferModule?null:prepareJavaScriptErrorModule(capture,registry);
+ if(module!==null)module={...module,program:publishJavaScriptFunctionSources(module.program,capture,registry,declarationOwners)};
  // Only actual initial realm/declaration objects bypass live machine handles.
  // Caller data encoded afterward stays an alias of the mutable semantic heap.
  for(const row of heap.objects)hostOwned.add(row.identity);
@@ -252,10 +258,11 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(!row.extensible){if(wrapper){if(!dataCarrierAuthority.prevent(result))return refuse('wrapper data reification could not retain its actual extensibility');}else Object.preventExtensions(result);}return result;
  }
  function mergeSourceTemplates(...programs){
-  const templates=[];let selected=false,constructorDirectory;
+  const templates=[],sources=[];let selected=false,selectedSources=false,constructorDirectory;
   for(const program of programs)if(program.constructorDirectory!==undefined){if(constructorDirectory!==undefined&&!isDeepStrictEqual(constructorDirectory,program.constructorDirectory))throw new TypeError('joined source programs retain one actual constructor authority snapshot');constructorDirectory=program.constructorDirectory;}
   for(const program of programs){if(program.templates!==undefined)selected=true;for(const template of program.templates??[]){const prior=templates.find(row=>row.owner===template.owner&&row.ordinal===template.ordinal);if(prior&&!isDeepStrictEqual(prior,template))throw new TypeError('one lexical code site cannot acquire conflicting templates during source composition');if(!prior)templates.push(template);if(templates.length>4096)throw new RangeError('source composition exceeds its static template budget');}}
-  return {...(selected?{templates:templates.toSorted((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:a.ordinal-b.ordinal)}:{}),...(constructorDirectory===undefined?{}:{constructorDirectory})};
+  for(const program of programs){if(program.sources!==undefined)selectedSources=true;for(const source of program.sources??[]){const prior=sources.find(row=>row.identifier===source.identifier);if(prior&&!isDeepStrictEqual(prior,source))throw new TypeError('one source unit cannot acquire conflicting text during composition');if(!prior)sources.push(source);if(sources.length>4096)throw new RangeError('source composition exceeds its static source unit budget');}}
+  return {...(selected?{templates:templates.toSorted((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:a.ordinal-b.ordinal)}:{}),...(selectedSources?{sources}:{}),...(constructorDirectory===undefined?{}:{constructorDirectory})};
  }
  function finishSourceCapabilities(capabilities,bindings){
   if(!sourceFunctions||module!==null)throw new TypeError('source function capability publication requires its actual unpublished source module');
@@ -264,7 +271,8 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   // These private boundary owners coordinate Call/Construct/Get/Set/Define using
   // shared bytecode. Their original carrier bodies are never an execution path.
   for(const [operation,carrier]of [['call',function liveHandleCallOwner(){}],['construct',function liveHandleConstructOwner(){}],['get property',function liveHandleGetOwner(){}],['set property',function liveHandleSetOwner(){}],['define property',function liveHandleDefineOwner(){}]]){const owner=encode(carrier),fn=compileJavaScriptLiveHandleInvocationFunction(owner.identity,identity,operation);if(fn===undefined||functions.some(row=>row.identity===owner.identity))throw new TypeError('live handle coordinators retain fresh private operation owners');liveHandleEntries.set(operation,owner.identity);functions.push(fn);}
-  module={capture,registry,program:{...compiled.program,...mergeSourceTemplates(compiled.program,portableTemplateProgram),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},sourceProgram:compiled.program,sourceUnits:[],bindings,capabilities};return module;
+  const program=publishJavaScriptFunctionSources({...compiled.program,...mergeSourceTemplates(compiled.program,portableTemplateProgram),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},capture,registry,declarationOwners);
+  module={capture,registry,program,sourceProgram:compiled.program,sourceUnits:[],bindings,capabilities};return module;
  }
  function registerPortableProgram(program){
   if(!sourceFunctions||module!==null)throw new TypeError('portable operation frames must be linked before source publication');
@@ -326,6 +334,22 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const value=Reflect.apply(symbolDescriptionGetter,symbol,[]),description=value===undefined?{$:'undefined'}:value.length>65536?constructJavaScriptSourceText(value):text(value);
   return {resumed:true,description,transition:resumeJavaScriptCallFunctionNameSymbolDescription(module.program,request.machine,description)};
  }
+ function resumeFunctionText(request){
+  if(module===null||request?.$!=='machineNeedFunctionText'||!request.machine)throw new TypeError('function text metadata requires its actual published suspended request');
+  const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
+  if(actual.$!=='machineNeedFunctionText'||!testJavaScriptSemanticSameValue(actual.input,request.input)||actual.kind!==request.kind||actual.realm!==request.realm||heap!==request.machine.heap)throw new TypeError('function text metadata retains its actual callable category realm and adopted latest heap');
+  if(request.kind==='source')return {resumed:false,transition:request,reason:'original source text requires its actual CST source unit and span; compiled aliases cannot replace it'};
+  if(Function.prototype!==functionTextPrototype||Reflect.getOwnPropertyDescriptor(functionTextPrototype,'toString')?.value!==functionTextReader||Reflect.getOwnPropertyDescriptor(functionTextPrototype,'bind')?.value!==functionTextBind||Reflect.apply!==functionTextApply||typeof functionTextReader!=='function'||typeof functionTextBind!=='function')throw new TypeError('function text metadata retains its protected native readers');
+  let owner;
+  if(request.kind==='bound'){
+   const version=process.versions.node.split('.').map(Number),covered=version[0]===22&&version[1]>=15||version[0]===24;
+   if(!covered)return {resumed:false,transition:request,reason:'uncovered Node.js version for the independent bound Function native text port: '+process.versions.node};
+   if(boundFunctionTextWitness===undefined)boundFunctionTextWitness=functionTextApply(functionTextBind,function inertFunctionTextWitness(){},[null]);owner=boundFunctionTextWitness;
+  }else if(request.kind==='external')owner=reverse.get(request.input.identity);
+  if(typeof owner!=='function'||nativeTypes.isProxy(owner))return {resumed:false,transition:request,reason:'native function text requires its actual independently supplied callable owner'};
+  const raw=functionTextApply(functionTextReader,owner,[]);if(typeof raw!=='string'||raw.length===0)throw new TypeError('native function text requires actual complete nonempty text');const value=constructJavaScriptSourceText(raw);
+  return {resumed:true,value,transition:resumeJavaScriptCallFunctionText(module.program,request.machine,value)};
+ }
  function registerArrayConstructorAuthority(provider){
   if(!sourceFunctions||module!==null||arrayConstructorAuthority!==null||typeof provider!=='function')throw new TypeError('constructor metadata authority is registered once before source publication');
   arrayConstructorAuthority=provider;
@@ -356,7 +380,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const unitRegistry={...registry,owners},compiled=compileJavaScriptErrorModulePlanWithCapabilities(actual.plan,unitRegistry,bindings,capabilities);if(compiled.error)throw new TypeError(compiled.error);
   const functions=[...module.program.functions];
   for(const fn of compiled.program.functions){const previous=functions.find(row=>row.identity===fn.identity);if(previous){if(!isDeepStrictEqual(previous,fn))throw new TypeError('supplied source units must agree on every shared actual callable implementation');}else functions.push(fn);}
-  const unit={capture:actual,registry:unitRegistry,bindings,capabilities,sourceProgram:compiled.program},program={...module.program,...mergeSourceTemplates(module.program,compiled.program),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)};module={...module,program,sourceUnits:[...module.sourceUnits,unit]};
+  const unit={capture:actual,registry:unitRegistry,bindings,capabilities,sourceProgram:compiled.program},program=publishJavaScriptFunctionSources({...module.program,...mergeSourceTemplates(module.program,compiled.program),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},actual,unitRegistry);module={...module,program,sourceUnits:[...module.sourceUnits,unit]};
   for(const owner of owners)constructorFacts.push({$:'arrayConstructorFact',identity:owner.identity,realm:owner.realm,constructable:true,intrinsicArray:false});
   return {...unit,program};
  }
@@ -423,13 +447,13 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  },invoke:invokeHandle,refuse});
  embedding={get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode:decodePublic,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
   beginHandleOperation,runHandleOperation(operation,target,receiver,arguments_,options={}){return runJavaScriptSourceTransition(embedding,beginHandleOperation(operation,target,receiver,arguments_),options);},readHandleSuspension(error){return liveHandleSuspensions.get(error);},resumeHandleSuspension,
-  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeSymbolAllocation,resumeSymbolDescription,resumeFunctionNameSymbolDescription,resumeObjectPrimitivePrototype,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeSymbolAllocation,resumeSymbolDescription,resumeFunctionNameSymbolDescription,resumeFunctionText,resumeObjectPrimitivePrototype,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
   realmErrorConstructorReference(source,name){const actual=bases.get(name);if(typeof actual!=='function'||realm.errors[name]!==actual)throw new TypeError('Error namespace references retain their actual independently supplied realm constructor');const semantic=encode(actual);return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation:'actual standard '+name+' namespace',owner:'actual registered Error realm 1',callable:true,executable:false};},
   capabilityReference(source,value,{operation,owner}){const semantic=encode(value);if(semantic.$!=='object')throw new TypeError('a capability reference requires its actual native namespace or source callable identity');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:semantic.callable,executable:false};},
   opaqueCapabilities:()=>opaqueGetCapability&&opaqueSetCapability?[opaqueGetCapability,opaqueSetCapability]:[],
   encodeHostError(value){if(!nativeTypes.isNativeError(value))throw new TypeError('an IO Error result requires actual engine Error authority');return opaque(value);},
-  finishModuleInitialization(state){if(module!==null)throw new TypeError('actual source module initialization is completed exactly once');for(const slot of state.slots){const error=readJavaScriptOrdinaryValueError(heap,slot.value);if(error)throw new TypeError(error);}module=prepareJavaScriptInitializedErrorModule(capture,registry,state);return module;}
+  finishModuleInitialization(state){if(module!==null)throw new TypeError('actual source module initialization is completed exactly once');for(const slot of state.slots){const error=readJavaScriptOrdinaryValueError(heap,slot.value);if(error)throw new TypeError(error);}module=prepareJavaScriptInitializedErrorModule(capture,registry,state);module={...module,program:publishJavaScriptFunctionSources(module.program,capture,registry,declarationOwners)};return module;}
  };return embedding;
 }

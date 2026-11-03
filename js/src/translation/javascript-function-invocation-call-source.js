@@ -1,12 +1,14 @@
 // Protected call/apply bodies build specification Lists in frame-owned slots.
 // Array-like apply inputs use Get/ToLength, never the iterable spread protocol.
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptFunctionInvocationOperation(operation){return ['Function.call','Function.apply','Function.bind','Function.prototype','Reflect.apply'].includes(operation);}
+export function testJavaScriptFunctionInvocationOperation(operation){return ['Function.call','Function.apply','Function.bind','Function.toString','Function.restricted property','Function.prototype','Reflect.apply'].includes(operation);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptFunctionInvocationFunction(identity,realm,operation){
  if(!testJavaScriptFunctionInvocationOperation(operation))return undefined;
  if(operation==='Function.prototype')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'constant',destination:1,value:{$:'undefined'}},{$:'return',source:1}]};
  if(operation==='Function.bind')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'functionBind',destination:1},{$:'return',source:1}]};
+ if(operation==='Function.toString')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'functionToString',destination:1},{$:'return',source:1}]};
+ if(operation==='Function.restricted property')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'primitive',destination:1,operation:'throw restricted Function access',arguments:[]},{$:'return',source:1}]};
  /** @type {JavaScriptCallInstruction[]} */const instructions=[];
  // 1=callee, 2=thisArgument, 3=arrayLike/count, 4=index, 5=length,
  // 6=key/condition, 7=selected value, 8=one, 9=return value.

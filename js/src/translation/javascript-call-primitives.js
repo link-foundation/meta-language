@@ -28,6 +28,7 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  const parsingArity=readJavaScriptNumericParsingArity(operation);if(parsingArity>=0)return count===parsingArity?'':'numeric parsing retains every converted operand';
  const stringArity=readJavaScriptStringMethodPrimitiveArity(operation);if(stringArity>=0)return count===stringArity?'':'String operations retain every actual converted operand';
  if(!Number.isSafeInteger(count)||count<0||count>4096)return 'primitive operands exceed their explicit call register budget';
+ if(operation==='throw restricted Function access')return count===0?'':'restricted Function access ignores receiver and arguments';
  if(readJavaScriptSourceExceptionClass(operation)!=='')return count===2?'':'a source Error requires its actual text message and own-message presence';
  const integerArity=readJavaScriptCallIntegerArity(operation);
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
@@ -177,6 +178,7 @@ export function executeJavaScriptCallTextReplacement(text,search,replacement,all
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
+ if(operation==='throw restricted Function access')return {$:'primitiveError',errorClass:'TypeError',reason:"'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
  if(operation==='require Array creation length'){
   const value=values[0]??{$:'undefined'};if(value.$!=='number'||!Number.isSafeInteger(value.value)||value.value<0||Object.is(value.value,-0))return {$:'primitiveInvalid',reason:'ArrayCreate length follows actual ToLength'};

@@ -40,6 +40,8 @@ export function runJavaScriptSourceTransition(embedding,transition,{steps=65536}
    if(typeof embedding.resumeSymbolDescription!=='function')break;const response=embedding.resumeSymbolDescription(current);if(!response.resumed)break;current=response.transition;
   }else if(current.$==='machineNeedFunctionNameSymbolDescription'){
    if(typeof embedding.resumeFunctionNameSymbolDescription!=='function')break;const response=embedding.resumeFunctionNameSymbolDescription(current);if(!response.resumed)break;current=response.transition;
+  }else if(current.$==='machineNeedFunctionText'){
+   if(typeof embedding.resumeFunctionText!=='function')break;const response=embedding.resumeFunctionText(current);if(!response.resumed)break;current=response.transition;
   }else if(current.$==='machineNeedPrimitiveIteratorGet'){
    if(typeof embedding.resumePrimitiveIteratorGet!=='function')break;const response=embedding.resumePrimitiveIteratorGet(current);if(!response.resumed)break;current=response.transition;
   }else if(current.$==='machineNeedConstructorAuthority'){

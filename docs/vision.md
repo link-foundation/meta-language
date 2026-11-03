@@ -148,8 +148,25 @@ retains a private suspension with the actual machine; explicit retry rejects
 intervening heap changes and consumes its prior token. Snapshot data contains the
 actual code, ordinary/bound slots and frames, independently of native handle caches.
 Untranslated native callback stacks need their own portable continuation before
-source reentry. Unknown native
-callable metadata authority, source text/brand reflection and arbitrary callback
+source reentry. Function source text retains complete shared source units and
+exact UTF16 CST intervals for static declarations and runtime lexical templates.
+Original module receipts restore original aliases and nested sites; bootstrap
+source spelling cannot replace a missing original interval. Source data remains
+compiler metadata, independently of executable authority and execution evidence.
+Function.prototype.toString reads this metadata without ordinary name/length
+Gets or body execution. Unmapped source remains an explicit metadata request.
+Actual native owners supply their own implementation-defined text through a
+protected metadata reader; bound functions use an independent inert native bound
+witness within explicit Node.js ranges, reporting uncovered versions. Text
+grants neither callable code nor constructor authority. Suspensions retain the
+exact receiver, category and realm, with no unrelated child call. Source unit
+identifiers remain stable across module composition. Immutable snapshots retain
+these units and intervals without host caches. Public portable methods expose
+represented text; native toString on a Proxy carrier remains a native carrier
+observation. Restricted Function caller/arguments accessors retain their actual
+shared identity and portable throwing behavior; the Function constructor has
+metadata classification separately from its still required dynamic source body.
+Unknown native callable brand reflection and arbitrary callback
 ports retain their complete obligations, alongside Proxy and derived constructor
 protocols. A projected ordinary Call body alone cannot grant base-constructor
 behavior. These contracts follow
@@ -160,6 +177,10 @@ and [OrdinaryHasInstance](https://tc39.es/ecma262/2025/multipage/abstract-operat
 Live Node carriers also retain the
 [Proxy invariants](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-proxy-object-internal-methods-and-internal-slots)
 without treating a native carrier as a source CST or callable-body witness.
+Function text follows
+[Function.prototype.toString](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-function.prototype.tostring)
+and restricted access follows
+[%ThrowTypeError%](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-%throwtypeerror%).
 
 Object.defineProperty and Reflect.defineProperty share actual target validation,
 key conversion, ordered descriptor reads and ordinary/Array definition. Their

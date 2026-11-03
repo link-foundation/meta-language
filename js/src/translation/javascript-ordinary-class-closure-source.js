@@ -5,6 +5,7 @@ import {readSuppliedSourceLibraryClosure} from './source-library-closure.js';
 import {projectSourceLibraryOriginalInterval} from './source-library-classes.js';
 import {captureJavaScriptOrdinaryClassModule} from './javascript-ordinary-class-source.js';
 import {assertPlainSourceReceipt} from './source-receipt-data.js';
+import {captureJavaScriptOriginalFunctionSourceOwners} from './javascript-function-source-publication.js';
 const model='resolved supplied ordinary class source modules 1',witnesses=new WeakSet();
 
 export function captureJavaScriptOrdinaryClassSourceClosure(closure,{entryPath}={}){
@@ -40,5 +41,8 @@ export function captureJavaScriptOrdinaryClassSourceClosure(closure,{entryPath}=
  return {schemaVersion:1,artifactKind:'authenticated semantic source plan/input 1',model,entryPath,sourceClosure:actual,capture,owners,entries,completeSourceReceipts:actual.inputs.map(input=>({path:input.path,source:input.source,sourceSha256:input.sourceSha256,bytes:input.bytes,closureRanges:input.closureRanges,sourceCompositionSteps:input.sourceCompositionSteps}))};
 }
 export function checkJavaScriptOrdinaryClassSourceClosure(archive){assertPlainSourceReceipt(archive);const actual=captureJavaScriptOrdinaryClassSourceClosure(archive.sourceClosure,{entryPath:archive.entryPath});if(JSON.stringify(actual)!==JSON.stringify(archive))throw new TypeError('ordinary class module entries, aliases and complete source receipts must match actual CST recomposition');return actual;}
-export function createJavaScriptOrdinaryClassDeclarationWitness(archive){const actual=checkJavaScriptOrdinaryClassSourceClosure(archive),witness=Object.freeze({sourceSha256:actual.capture.sourceSha256,owners:Object.freeze(actual.owners.map(owner=>Object.freeze({identity:owner.identity,compiledName:owner.compiledName,originalName:owner.originalName,path:owner.path,sourceSha256:owner.sourceSha256})))});witnesses.add(witness);return witness;}
+export function createJavaScriptOrdinaryClassDeclarationWitness(archive){
+ const actual=checkJavaScriptOrdinaryClassSourceClosure(archive),owners=captureJavaScriptOriginalFunctionSourceOwners(actual).map(owner=>Object.freeze({identity:owner.identity,compiledName:owner.compiledName,originalName:owner.originalName,path:owner.path,sourceSha256:owner.sourceSha256,sourceUnit:Object.freeze({...owner.sourceUnit}),originalSpan:Object.freeze({...owner.originalSpan}),templates:Object.freeze(owner.templates.map(site=>Object.freeze({...site})))}));
+ const witness=Object.freeze({sourceSha256:actual.capture.sourceSha256,owners:Object.freeze(owners)});witnesses.add(witness);return witness;
+}
 export function readJavaScriptOrdinaryClassDeclarationWitness(capture,witness){if(!witnesses.has(witness)||witness.sourceSha256!==capture.sourceSha256)throw new TypeError('ordinary class/function alias names require their actual complete recomposed source witness');return witness.owners;}

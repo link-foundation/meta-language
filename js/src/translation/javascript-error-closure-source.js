@@ -7,6 +7,7 @@ import {projectSourceLibraryOriginalInterval} from './source-library-classes.js'
 import {captureJavaScriptErrorClassModule} from './javascript-error-classes.js';
 import {acceptSourceLibraryErrorDeclarationOwner,acceptSourceLibraryErrorEntryOwner} from './source-library-error-rules.js';
 import {assertPlainSourceReceipt} from './source-receipt-data.js';
+import {captureJavaScriptOriginalFunctionSourceOwners} from './javascript-function-source-publication.js';
 const model='resolved supplied Error source modules 1',digest=source=>createHash('sha256').update(source).digest('hex');
 const witnesses=new WeakSet();
 
@@ -51,7 +52,7 @@ export function checkSourceLibraryErrorClosure(archive){
  * is treated as source authority. The semantic archive itself stays ordinary
  * inspectable Links data; this transient marker is not serialized. */
 export function createSourceLibraryErrorDeclarationWitness(archive){
- const actual=checkSourceLibraryErrorClosure(archive),owners=actual.owners.map(owner=>Object.freeze({identity:owner.identity,compiledName:owner.compiledName,originalName:owner.originalName,path:owner.path,sourceSha256:owner.sourceSha256}));
+ const actual=checkSourceLibraryErrorClosure(archive),owners=captureJavaScriptOriginalFunctionSourceOwners(actual).map(owner=>Object.freeze({identity:owner.identity,compiledName:owner.compiledName,originalName:owner.originalName,path:owner.path,sourceSha256:owner.sourceSha256,sourceUnit:Object.freeze({...owner.sourceUnit}),originalSpan:Object.freeze({...owner.originalSpan}),templates:Object.freeze(owner.templates.map(site=>Object.freeze({...site})))}));
  const witness=Object.freeze({sourceSha256:actual.capture.sourceSha256,owners:Object.freeze(owners)});witnesses.add(witness);return witness;
 }
 

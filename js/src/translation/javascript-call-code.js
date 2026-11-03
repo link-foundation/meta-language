@@ -6,7 +6,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'copy',destination:number,source:number} |
  * {$:'argument',destination:number,index:number} |
  * {$:'argumentCount',destination:number} | {$:'argumentAt',destination:number,index:number} |
- * {$:'functionBind',destination:number} | {$:'boundFunctionCall',destination:number} |
+ * {$:'functionBind',destination:number} | {$:'boundFunctionCall',destination:number} | {$:'functionToString',destination:number} |
  * {$:'pushFinally',target:number} | {$:'finishFinally'} | {$:'completeJump',target:number,depth:number} |
  * {$:'jump',target:number} | {$:'branch',condition:number,yes:number,no:number} |
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
@@ -75,15 +75,15 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * their own source lowering, rather than an invented frame convention.
  * @typedef {{$:'callFunction',identity:bigint,realm:bigint,receiverMode:string,
  * lexicalReceiver:JavaScriptSemanticValue,parameters:number,registers:number,
- * captures:JavaScriptSemanticValue[],instructions:JavaScriptCallInstruction[],lexicalNewTarget?:JavaScriptSemanticValue}} JavaScriptCallFunction
+ * captures:JavaScriptSemanticValue[],instructions:JavaScriptCallInstruction[],lexicalNewTarget?:JavaScriptSemanticValue,source?:JavaScriptCallSourceSpan}} JavaScriptCallFunction
  */
 /** Code-only arrow templates have no heap identity. Their owner is the actual
  * registered source function; ordinals distinguish its nested lexical sites.
- * @typedef {{$:'callTemplate',owner:bigint,ordinal:number,realm:bigint,parameters:number,registers:number,captureCount:number,instructions:JavaScriptCallInstruction[],prototype:JavaScriptSemanticValue,name:JavaScriptSemanticValue,length:number,receiverMode?:string}} JavaScriptCallTemplate
+ * @typedef {{$:'callTemplate',owner:bigint,ordinal:number,realm:bigint,parameters:number,registers:number,captureCount:number,instructions:JavaScriptCallInstruction[],prototype:JavaScriptSemanticValue,name:JavaScriptSemanticValue,length:number,receiverMode?:string,source?:JavaScriptCallSourceSpan}} JavaScriptCallTemplate
  */
 /** Realm identifiers are supplied by the actual intrinsic registry. Membership
  * checks do not prove authority or allocate a substitute realm/Error object.
- * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue,templates?:JavaScriptCallTemplate[],constructorDirectory?:JavaScriptArraySpeciesDirectory}} JavaScriptCallProgram
+ * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue,templates?:JavaScriptCallTemplate[],constructorDirectory?:JavaScriptArraySpeciesDirectory,sources?:JavaScriptCallSourceUnit[]}} JavaScriptCallProgram
  */
 /** @param {number} value @param {number} limit @returns {boolean} */
 export function testJavaScriptCallCodeCoordinate(value,limit){return Number.isSafeInteger(value)&&value>=0&&value<limit&&(value!==0||1/value>0);}
@@ -96,7 +96,7 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'argumentCount':case 'functionBind':case 'boundFunctionCall':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':return [instruction.destination];
+    case 'constant':case 'argument':case 'argumentCount':case 'functionBind':case 'boundFunctionCall':case 'functionToString':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':return [instruction.destination];
     case 'arrayConcatenation':return [instruction.destination,instruction.input??0,instruction.spreadableKey];
     case 'arraySlice':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination,instruction.input??0];
     case 'argumentAt':return [instruction.destination,instruction.index];

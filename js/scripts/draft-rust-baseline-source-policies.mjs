@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-function-text.js',moduleName:'javascript_function_text',sourceDependencies:true,model:'Actual CST Function source text and explicit native metadata requests 1',programAsset:'javascript-function-text-program'},
  {sourcePath:'js/src/translation/javascript-descriptor-operands.js',moduleName:'javascript_descriptor_operands',sourceDependencies:true,model:'Actual preconverted property descriptor frame operands 1',programAsset:'javascript-descriptor-operands-program'},
  {sourcePath:'js/src/translation/javascript-live-handle-call-source.js',moduleName:'javascript_live_handle_call_source',sourceDependencies:true,model:'Actual live handle Call Construct Get and Set coordinators 1',programAsset:'javascript-live-handle-call-source-program'},
  {sourcePath:'js/src/translation/javascript-function-binding.js',moduleName:'javascript_function_binding',sourceDependencies:true,model:'Actual Function binding allocation metadata and getter continuations 1',programAsset:'javascript-function-binding-program'},
@@ -150,6 +151,7 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-function-text-source.mjs',
  'js/tests/fixtures/javascript-function-binding-source.mjs',
  'js/tests/fixtures/javascript-bound-construction-source.mjs',
  'js/tests/fixtures/javascript-bound-instance-of-source.mjs',
@@ -370,6 +372,7 @@ const consumers=[
  'js/tests/translation-javascript-species-construction.test.js',
  'js/tests/translation-javascript-shared-species-construction.test.js',
  'js/tests/translation-javascript-function-binding.test.js',
+ 'js/tests/translation-javascript-function-text.test.js',
  'js/tests/translation-javascript-bound-construction.test.js',
  'js/tests/translation-javascript-live-handles.test.js',
  'js/tests/translation-javascript-reflect-definition.test.js',
@@ -477,6 +480,7 @@ const consumers=[
  'js/src/node-source-modules.js',
  'js/src/translation/javascript-source-driver.js',
  'js/src/translation/javascript-live-handles.js',
+ 'js/src/translation/javascript-function-source-publication.js',
  'js/src/translation/javascript-host-capabilities.js',
  'js/tests/translation-javascript-host-capabilities.test.js',
  'js/src/translation/disjoint-collection-iterations.js',
@@ -745,6 +749,7 @@ for(const [source,target] of [
  ['javascript-weak-construction-source','javascript-weak-construction-source'],
  ['javascript-shared-species-construction-source','javascript-shared-species-construction-source'],
  ['javascript-function-binding-source','javascript-function-binding-source'],
+ ['javascript-function-text-source','javascript-function-text-source'],
  ['javascript-bound-construction-source','javascript-bound-construction-source'],
  ['javascript-bound-instance-of-source','javascript-bound-instance-of-source'],
  ['javascript-live-handle-source','javascript-live-handle-source'],
