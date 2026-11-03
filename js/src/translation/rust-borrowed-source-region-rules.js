@@ -50,7 +50,7 @@ export function readRustBorrowedSourceLifetimeError(demand,sources){if(demand===
  * @returns {string} */
 export function readRustBorrowedSourceTargetFieldError(kind,wrappers,child){return wrappers.includes('reference')||child||['function','tuple','record','map','set','cell'].includes(kind)?'a borrowed referent needs a closed target-copy field graph with represented source qualifiers':'';}
 /** @param {string} kind @returns {string} */
-export function readRustBorrowedSourceOperation(kind){if(kind==='toString')return 'show';if(['lit','unit','var','let','array','call','ctor','index','length','print','cast','unary','binary','math','show','concat'].includes(kind))return kind;return '';}
+export function readRustBorrowedSourceOperation(kind){if(kind==='toString')return 'show';if(['lit','unit','var','let','if','array','call','ctor','index','length','print','cast','unary','binary','math','show','concat'].includes(kind))return kind;return '';}
 /** @param {number} visits @param {number} depth @param {number} roots
  * @param {number} loans @returns {string} */
 export function readRustBorrowedSourceRegionBudgetError(visits,depth,roots,loans){for(const value of [visits,depth,roots,loans])if(!Number.isSafeInteger(value)||value<0||Object.is(value,-0))return 'invalid source region proof resource count';return visits>100000||depth>256||roots>100000||loans>1048576?'the immutable source binder and region proof exceeds its finite resource profile':'';}

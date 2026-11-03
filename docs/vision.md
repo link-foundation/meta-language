@@ -4652,6 +4652,15 @@ equivalence between separate sources. Preflight charges the copied syntax;
 materialization independently charges the complete retained helper graph and
 shared facts once. Existing node/text caps, source admission, helper witnesses
 and per-body region checks remain required.
+An actual checked abort has no normal value or continuing storage outcome.
+Source-region interpretation visits every preceding operand and reports its
+errors, then ends that path. Conditional, nominal-match and compiler-control
+joins merge only actual normal outcomes; when all alternatives abort, no return
+or writeback is fabricated. Boolean and/or retain the separate path which skips
+the right operand. A wholly aborting fold body still has its genuine initial
+zero-iteration outcome. Resource charges remain cumulative on visited aborting
+paths. Divergence is private proof control flow derived from the actual AST,
+never an archived status, caller certificate or replacement result value.
 Generated record projections bind only the selected field, leaving other fields
 wild. Nominal constructor patterns that bind only primitive Copy or immutable
 reference fields preserve their owner; bound owned payloads and whole-value bind

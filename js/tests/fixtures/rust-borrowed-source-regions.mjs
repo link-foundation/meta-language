@@ -17,6 +17,7 @@ export const rustBorrowedSourceRegionDecisions=[
  {operation:'readRustBorrowedSourceLifetimeError',arguments:['static',['a']],expected:'an expression lifetime is not supplied by its actual source binder regions'},
  {operation:'readRustBorrowedSourceTargetFieldError',arguments:['data',['reference'],false],expected:'a borrowed referent needs a closed target-copy field graph with represented source qualifiers'},
  {operation:'readRustBorrowedSourceOperation',arguments:['match'],expected:''},
+ {operation:'readRustBorrowedSourceOperation',arguments:['if'],expected:'if'},
  {operation:'readRustBorrowedSourceRegionBudgetError',arguments:[100000,256,100000,1048576],expected:''},
  {operation:'readRustBorrowedSourceRegionBudgetError',arguments:[100001,0,1,0],expected:'the immutable source binder and region proof exceeds its finite resource profile'},
  {operation:'readRustBorrowedSourceRegionBudgetError',arguments:[NaN,0,1,0],expected:'invalid source region proof resource count'},

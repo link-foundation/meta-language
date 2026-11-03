@@ -3,6 +3,7 @@
 import {unsupported} from './diagnostics.js';
 import {sameType} from './types.js';
 import {checkRustOwnedVectorSourceFold} from './rust-source-loop-folds.js';
+import {divergeRustSourceRegions,isRustSourceRegionDivergence} from './rust-source-region-divergence.js';
 import * as rules from './rust-borrowed-source-region-rules.js';
 const fail=(reason,node)=>{throw unsupported('Rust source loop regions',reason,node?.span);};
 const packetRole='source loop packet',controlRole='source loop control';
@@ -57,9 +58,9 @@ export function readRustSourceLoopMatch(visitor,node,scrutinee,env,bindings,expe
   if(arm.pattern.binds.length!==(variant.payload?1:0))fail('a loop return pattern retains its actual payload binding',node);
   for(let index=0;index<count;index++)visitor.states[index]=base[index];visitor.storages=new Map(storageBase);const local=new Map(env),ids=[],start=visitor.temporaries.length;
   if(variant.payload&&arm.pattern.binds[0]!==null)ids.push(visitor.bind(local,arm.pattern.binds[0],{...variant.payload,root:null,producer:true},node.scrutinee));
-  const result=visitor.read(visitor.expression(arm.body,local,bindings,expected,depth+1),'move',arm.body);for(const id of ids)visitor.states[id]=rules.expireRustBorrowedSourceRegion(visitor.states[id]);visitor.finishExpression(result,start,arm.body);results.push(result);visitor.branches(2*count);outcomes.push(visitor.states.slice(0,count));storageOutcomes.push(new Map(visitor.storages));
+  let result;visitor.branches(2*count);try{result=visitor.read(visitor.expression(arm.body,local,bindings,expected,depth+1),'move',arm.body);for(const id of ids)visitor.states[id]=rules.expireRustBorrowedSourceRegion(visitor.states[id]);visitor.finishExpression(result,start,arm.body);}catch(error){if(isRustSourceRegionDivergence(error))continue;throw error;}results.push(result);outcomes.push(visitor.states.slice(0,count));storageOutcomes.push(new Map(visitor.storages));
  }
- if(!results.length)fail('a loop control match retains at least one actual reachable alternative',node);
+ if(!results.length){if(!node.cases.some(arm=>scrutinee.variants.some(variant=>variant.name===arm.pattern.ctor)))fail('a loop control match retains at least one actual reachable alternative',node);divergeRustSourceRegions();}
  for(let index=0;index<count;index++){let state=outcomes[0][index];for(const outcome of outcomes.slice(1))state=rules.mergeRustBorrowedSourceRegion(state,outcome[index]);visitor.states[index]=state;}
  visitor.mergeStorages(storageBase,storageOutcomes,node,results);return visitor.joinValues(results,node);
 }
@@ -84,7 +85,7 @@ export function readRustOwnedVectorFoldRegions(visitor,node,env,bindings,depth){
  try{
   const initial=visitor.expression(node.args[1],env,bindings,null,depth+1);assertSlots(visitor,initial,facet,node.args[1]);const callback=node.args[0],count=visitor.states.length,base=visitor.states.slice(),storageBase=new Map(visitor.storages),local=new Map(env),ids=[],captures=freeBindings(visitor,callback.body,callback.params.map(parameter=>parameter.name));
   ids.push(visitor.bind(local,callback.params[0].name,{...initial,root:null,producer:true},node.args[1]));ids.push(visitor.bind(local,callback.params[1].name,visitor.value(visitor.position(facet.item),null,[],true),callback));
-  const result=visitor.read(visitor.expression(callback.body,local,bindings,null,depth+1),'move',callback.body);assertSlots(visitor,result,facet,callback.body);
+  let result;try{result=visitor.read(visitor.expression(callback.body,local,bindings,null,depth+1),'move',callback.body);}catch(error){if(!isRustSourceRegionDivergence(error))throw error;for(let index=0;index<count;index++)visitor.states[index]=base[index];visitor.storages=new Map(storageBase);for(const id of ids)visitor.states[id]=rules.expireRustBorrowedSourceRegion(visitor.states[id]);visitor.read(initial,'read',node.args[1]);return initial;}assertSlots(visitor,result,facet,callback.body);
   for(const[id,storage]of storageBase)if(!facet.slots.some(slot=>slot.binder.identity===id)&&visitor.storages.get(id)?.root!==storage.root)fail('noncarried loop state retains its unchanged actual source revision',node);
   if(visitor.storages.size!==storageBase.size)fail('iteration-local storage cannot escape a source loop body',node);
   for(const name of captures){const value=env.get(name);if(!value)fail('loop captures retain their actual enclosing lexical binders',node);for(const root of captureRoots(value))if(root<count&&visitor.states[root]!==base[root])fail('every repeated loop capture retains ownership and live loan epochs on all paths',node);visitor.read(value,'read',node);}

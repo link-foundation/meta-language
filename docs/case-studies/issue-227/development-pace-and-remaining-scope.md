@@ -681,3 +681,14 @@ in nineteen groups. This is source drafting, not executed evidence or a measure
 of completed requirements. The full scope remains active and the handoff names
 the borrowed capture, field-place, loop initialization and whole-project paths
 still requiring implementation.
+
+The [source-region divergence batch](../../handoffs/issue-227-source-region-divergence-2026-11-03.md)
+adds actual abort-path interpretation, normal-only source/control joins,
+short-circuit paths and the real zero-iteration state of an aborting fold. It
+also connects supported panic tokens to finite completion admission, preserving
+the decrement demand on every continuing path. Nine new positive originals and
+three invalid originals bring the source inventory to 455 positives (391 literal,
+64 actual source), nineteen groups. The source review identified why projected
+mutable field calls still need a complete storage contract; their guard remains.
+These code drafts remain unexecuted and do not establish a requirement-level
+completion percentage.

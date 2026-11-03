@@ -68,6 +68,9 @@ driver; no runner or version range changed.
    loan. Add explicit real borrowed capture arguments and return-region mapping
    before admitting those values. Cover ordinary return, question-mark residuals
    and diverging/abort paths; a closed helper summary must never invent a region.
+   Structured abort paths were subsequently drafted in
+   [source-region divergence](issue-227-source-region-divergence-2026-11-03.md);
+   borrowed result/capture and residual interfaces remain unfinished.
 2. Extend actual record-place regions for borrowed/non-Copy field projections,
    partial moves, disjoint loans and exclusive projected calls. Start from the
    real field path, lexical storage and current epoch; reconstruct only actual
