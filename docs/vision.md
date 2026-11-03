@@ -4588,6 +4588,9 @@ Older independent profile guards remain intact.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.
+Whole-root replacement may create a fresh epoch after an owned value moves,
+provided its lexical storage still exists and the complete replacement type
+checks. It must neither read the moved value nor revive its old aliases.
 Returned references remain derived from the real reference-bearing inputs.
 
 Signature3 borrowed-vector indexing copies the actual shared-reference element

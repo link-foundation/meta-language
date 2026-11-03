@@ -83,3 +83,7 @@ export function readRustBorrowedSourceMatchOperation(kind){return kind==='match'
 export function acceptRustBorrowedSourceBoxReference(source,target,canonical,sameLeaf){if(!canonical||!sameLeaf||source[0]!=='reference'||target[0]!=='reference'||source.length<=target.length)return false;for(let index=1;index<source.length;index+=1)if(source[index]!=='box')return false;for(let index=1;index<target.length;index+=1)if(target[index]!=='box')return false;return true;}
 /** @param {string} kind @param {string} operation @returns {string} */
 export function readRustBorrowedSourceIteratorOperation(kind,operation){if(kind==='append')return 'iterator concat';return kind==='method'&&['map','slice'].includes(operation)?'iterator '+operation:'';}
+
+/** Whole-root replacement creates a new local epoch; it never revives a dropped scope.
+ * @param {string} state @returns {string} */
+export function readRustBorrowedSourceStorageWriteError(state){return ['available','moved','possibly moved'].includes(state)?'':'a source whole-root write requires its initialized lexical storage scope';}

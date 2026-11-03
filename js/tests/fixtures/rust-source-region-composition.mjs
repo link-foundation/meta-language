@@ -22,9 +22,16 @@ export const rustSourceRegionCompositionOriginals=[
  {name:'readonly mutable formal needs separate initial parameter carrier',stdout:'',source:"fn refs<'a>(value: &'a u8, mut count: u8) -> Vec<&'a u8> { count += 1; vec![value] } fn main() {}"},
  {name:'mutable scalar parameter publishes local writes before returning independent input regions',source:"fn refs<'a>(value: &'a u8, mut count: u8) -> Vec<&'a u8> { count += 1; if count == 2 { vec![value] } else { Vec::new() } } fn main() { let value: u8 = 7; let count: u8 = 1; let view = refs(&value, count); println!(\"{}\", view.len() == 1 && count == 1); }"},
  {name:'mutable owned Vec parameter has local storage without borrowing the caller allocation',source:"fn refs<'a>(value: &'a u8, mut counts: Vec<u8>) -> Vec<&'a u8> { counts.push(7); if counts.len() == 2 { vec![value] } else { Vec::new() } } fn main() { let value: u8 = 3; let view = refs(&value, vec![9]); println!(\"{}\", view.len() == 1); }"},
+ {name:'moved mutable owner needs separate reinitialization composition proof',source:refs+'fn main() { let mut values: Vec<u8> = vec![7]; let moved = values; values = vec![9]; let value: u8 = 3; let view = refs(&value); println!("{}", values.len() == 1 && view.len() == 1); }'},
+ {name:'whole Vec reinitialization preserves moved snapshot and fresh element values',source:refs+'fn main() { let mut values: Vec<u8> = vec![7]; let moved = values; values = vec![9]; let value: u8 = 3; let view = refs(&value); println!("{}", moved[0] == 7 && values[0] == 9 && view.len() == 1); }'},
  {name:'readonly function may return parameter regions after local callback writes',source:apply+"fn refs<'a>(value: &'a u8) -> Vec<&'a u8> { let mut count: u8 = 0; let result = apply(7, |item| { count += 1; item }); vec![value] } fn main() { let value: u8 = 3; let view = refs(&value); println!(\"{}\", view.len() == 1); }"}
 ].map(row=>({...row,stdout:row.stdout??'true\n',compilerAccepted:true}));
 export const rustSourceRegionCompositionRefusals=[
+ {name:'conditional move permits subsequent complete root replacement',compilerAccepted:true,source:refs+'fn main() { let mut values: Vec<u8> = vec![7]; if true { let moved = values; } else {} values = vec![9]; let value: u8 = 3; let view = refs(&value); println!("{}", values[0] == 9 && view.len() == 1); }'},
+
+ {name:'reinitialized vector cannot revive a borrow of its old allocation',compilerAccepted:false,source:refs+'fn main() { let mut values: Vec<u8> = vec![7]; let old = &values[0]; values = vec![9]; let value: u8 = 3; let view = refs(&value); println!("{}", *old == 7 && view.len() == 1); }'},
+ {name:'reinitialization still requires complete original element type',compilerAccepted:false,source:refs+'fn main() { let mut values: Vec<u8> = vec![7]; let moved = values; values = vec![false]; let value: u8 = 3; let view = refs(&value); println!("{}", view.len() == 1); }'},
+
  {name:'mutable value parameter cannot become an escaping borrowed referent',compilerAccepted:false,source:"fn invalid<'a>(mut count: u8) -> &'a u8 { count += 1; &count } fn main() {}"},
  {name:'returned regions do not grant mutable reference parameter authority',compilerAccepted:true,source:"fn refs<'a>(value: &'a u8, count: &mut u8) -> Vec<&'a u8> { *count += 1; vec![value] } fn main() {}"},
 
@@ -37,8 +44,7 @@ export const rustSourceRegionCompositionRefusals=[
  {name:'direct scalar assignment cannot revive old borrowed-vector regions',compilerAccepted:false,source:refs+'fn main() { let mut count: u8 = 0; let old = refs(&count); count += 1; println!("{}", old.len() == 1); }'},
  {name:'branch publication cannot revive prebranch region',compilerAccepted:false,source:refs+'fn main() { let mut count: u8 = 0; let old = refs(&count); if true { count += 1; } else { count += 2; } println!("{}", old.len() == 1); }'},
  {name:'projected exclusive call in readonly main needs projected storage carrier',compilerAccepted:true,source:'struct Pair { count: u8 } fn increment(value: &mut u8) { *value += 1; } fn main() { let mut pair = Pair { count: 0 }; increment(&mut pair.count); }'},
- {name:'borrowed-vector callback local cannot hide its internal region ABI',compilerAccepted:true,source:refs+apply+'fn main() { let mut count: u8 = 0; let result = apply(7, |value| { let view = refs(&value); count += 1; value }); }'},
- {name:'moved mutable owner needs separate reinitialization composition proof',compilerAccepted:true,source:refs+'fn main() { let mut values: Vec<u8> = vec![7]; let moved = values; values = vec![9]; let value: u8 = 3; let view = refs(&value); println!("{}", values.len() == 1 && view.len() == 1); }'}
+ {name:'borrowed-vector callback local cannot hide its internal region ABI',compilerAccepted:true,source:refs+apply+'fn main() { let mut count: u8 = 0; let result = apply(7, |value| { let view = refs(&value); count += 1; value }); }'}
 ];
 // Complete unchanged Type methods/declarations, qualified as in the repository.
 // Serde-only projection is explicit; native controls retain actual serde items.

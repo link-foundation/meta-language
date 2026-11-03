@@ -81,7 +81,7 @@ No tests, source imports, generation, compilation or validation ran locally.
 
 The current driver also adds 28 actual `Type::map_children` and 33 actual
 `Type::children` controls through current-source factories. Adding eight literal mixed-region originals and three actual Type composition
-scenarios gives 359 authored positive rows across eighteen groups (295 literal
+scenarios gives 361 authored positive rows across eighteen groups (297 literal
 originals plus 64 current-source scenarios). Counts do not measure requirement completion. See
 [the native reference handoff](issue-227-actual-type-native-reference-controls-2026-11-03.md)
 for full original, projected and actual crate reference scopes. None ran locally.
@@ -95,3 +95,8 @@ The next source batch supplies mutable readonly-formal entry carriers, retains
 the exact former refusal as a positive original with empty stdout, and adds two
 used-helper positives plus two refusal boundaries. The mixed group now has
 sixteen positives and twelve refusals; source-only counts remain unverified.
+
+Whole-root replacement continuation retains its exact former linear input as
+positive and adds an old/new snapshot distinction. The mixed group now declares
+eighteen positives and fourteen refusals, including an explicit conditional-move
+packet frontier. No local behavioral observations are available.

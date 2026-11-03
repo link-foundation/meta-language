@@ -573,3 +573,10 @@ The former missing-carrier input is retained with empty stdout as positive, with
 two further used-helper originals. Positive driver scope becomes 359 authored
 rows (295 literal and 64 actual-source), still eighteen groups. Local execution
 remains deferred; this source inventory cannot establish requirement completion.
+
+The next solo source pass makes complete replacement scope explicit after moving
+an owner, retaining the former linear frontier input and adding an independent
+old/new snapshot assertion. The driver inventory becomes 361 authored positives
+(297 literal originals, 64 actual-source scenarios) in eighteen groups. Conditional
+moves remain a distinct uninitialized state-packet frontier; a lexical scope
+permission does not itself implement that carrier. No runtime results are claimed.
