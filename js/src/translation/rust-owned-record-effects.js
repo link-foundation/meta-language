@@ -181,7 +181,7 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
   if(exclusive?.kind==='call')return exclusiveCall(value,exclusive.info,environment,next,depth);
   if(exclusive?.kind==='write'){
    const info=exclusive.info,prior=environment.get(info.slot.lexical);if(!prior||prior.slot.root!==info.slot.root)fail('exclusive whole-place writes retain their actual lexical state slot',value.span);
-   if(info.intrinsic&&info.fields.length&&retainRustSourceRegionState(parser))return projectedIntrinsicWrite(value,info,environment,next,depth);
+   if(info.intrinsic&&(info.fields.length||info.intrinsic.referent)&&retainRustSourceRegionState(parser))return projectedIntrinsicWrite(value,info,environment,next,depth);
    return visit(value.args[0].value,environment,(rhs,after)=>capture(rhs,readRustRecordSourceType(parser,info.field.type,info.field.path),held=>{const name=parser.freshProductBinding(),current=after.get(info.slot.lexical),snapshot=attachRustSourceStateTransition(parser,reconstructRustOwnedRecordState(parser,path,info.layouts,{k:'name',path:[current.name]},held,value.span),info.slot,'write'),updated=new Map(after);updated.set(info.slot.lexical,{slot:current.slot,name});return {k:'let',name,type:readRustRecordSourceType(parser,info.slot.origin.type,info.slot.origin.path),value:snapshot,body:next({k:'unit',span:value.span},updated)};}),depth+1,info.field.type);
   }
   if(testRustExclusiveSourcePrivateNode(value))fail('an exclusive source private operation lacks its actual selected parser continuation',value.span);

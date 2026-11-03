@@ -4,7 +4,7 @@ import {unsupported,typeError} from './diagnostics.js';
 import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {readRustOwnedRecordStateSlots,readRustOwnedRecordStatePlace,readRustOwnedRecordStateLayout,readRustOwnedRecordMutableName,testRustOwnedRecordStatePlaceLoans,projectRustOwnedRecordStatePlace} from './rust-owned-record-state.js';
-import {readRustOwnedRecordStateFieldIdentity} from './rust-owned-record-state-rules.js';
+import {readRustOwnedRecordStateFieldIdentity,testRustOwnedRecordStateLoanOverlap} from './rust-owned-record-state-rules.js';
 import {testRustOwnedRecordFieldDescendant,readRustOwnedRecordWholeError} from './rust-owned-record-update-rules.js';
 import {testRustExclusiveSourcePlaceOverlap} from './rust-exclusive-source-loan-rules.js';
 import {readRustSourceValueName} from './rust-source-constants.js';
@@ -12,15 +12,17 @@ import {readRustExclusiveSourceStringMethod,createRustExclusiveSourceStringMutat
 import {readRustExclusiveSourceVectorMethod,createRustExclusiveSourceVectorPacket} from './rust-exclusive-source-vectors.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {captureRustOwnedStandardSumMethodValue} from './rust-owned-standard-sum-methods.js';
-import {readRustExclusiveSourcePlaceTokens,resolveRustExclusiveSourcePlannedPlace,restoreRustExclusiveSourcePlaceValue,selectRustExclusiveSourceCallReferent} from './rust-exclusive-source-places.js';
+import {readRustExclusiveSourcePlaceTokens,resolveRustExclusiveSourcePlannedPlace,restoreRustExclusiveSourcePlaceValue,selectRustExclusiveSourceCallReferent,requireRustExclusiveSourceReceiverRoot} from './rust-exclusive-source-places.js';
+import {readRustOwnedBoxRecordParent} from './rust-owned-containers.js';
+import {readRustCopyClosureValueBorrows} from './rust-copy-closure-lifetimes.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive source call',reason,span);};
 const operations={borrow:'rustExclusiveSourceBorrow',call:'rustExclusiveSourceCall',write:'rustExclusiveSourceWholeWrite'};
 export function initializeRustExclusiveSourceCalls(parser){
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'&&parser.standardCollectionSourceModel!=='Rust closed standard collections 1')return null;
  if(parser.exclusiveSourceCalls)return parser.exclusiveSourceCalls;
  const arena={borrows:[],calls:[],writes:[],frames:[],receivers:new WeakMap()};parser.exclusiveSourceCalls=arena;
- const guard=(slot,fields,span)=>{for(const frame of arena.frames)for(const borrow of frame.borrows)if(testRustExclusiveSourcePlaceOverlap(slot.lexical,fields,borrow.slot.lexical,borrow.fields))fail('an earlier selected exclusive argument still holds this overlapping source place',span);};
- parser.exclusiveSourceReadGuard=guard;parser.exclusiveSourceWriteGuard=guard;return arena;
+ const guard=(slot,fields,span,read=false)=>{for(const frame of arena.frames)for(const borrow of frame.borrows)if((!read||!borrow.reserved)&&testRustExclusiveSourcePlaceOverlap(slot.lexical,fields,borrow.slot.lexical,borrow.fields))fail('an earlier selected exclusive argument still holds this overlapping source place',span);};
+ parser.exclusiveSourceReadGuard=(slot,fields,span)=>guard(slot,fields,span,true);parser.exclusiveSourceWriteGuard=(slot,fields,span)=>guard(slot,fields,span,false);return arena;
 }
 export function selectRustExclusiveSourcePlace(parser,node,path){
  const origin=parser.origins.origin(node,path),identity=origin.sourcePlaceBindingIdentity??origin.sourceBindingIdentity,slots=readRustOwnedRecordStateSlots(parser);
@@ -36,8 +38,8 @@ function acquire(parser,place,parameter,span){
  for(const pending of arena.frames)for(const borrow of pending.borrows)if(testRustExclusiveSourcePlaceOverlap(place.slot.lexical,place.fields,borrow.slot.lexical,borrow.fields))fail('exclusive arguments retain disjoint actual places until the selected Call',span);
  if(!parser.origins.collecting&&parser.origins.sourceBindingStates.get(place.slot.root)!=='available')fail('an exclusive argument needs its still available actual owner',span);
  if(!parser.origins.collecting){for(let depth=1;depth<=place.fields.length;depth++)if((parser.origins.sourceBindingStates.get(readRustOwnedRecordStateFieldIdentity(place.slot.root,place.fields.slice(0,depth)))??'available')!=='available')fail('an exclusive argument needs every actual selected field initialized',span);const root=readRustOwnedRecordStateFieldIdentity(place.slot.root,place.fields),states=[...parser.origins.sourceBindingStates],error=readRustOwnedRecordWholeError(root,states.map(row=>row[0]),states.map(row=>row[1]));if(error)fail(error,span);}
- if(!parser.origins.collecting&&testRustOwnedRecordStatePlaceLoans(parser,place.slot,place.fields))fail('an exclusive argument overlaps an actual surviving source reference loan',span);
- const info={...place,parameter,span},index=arena.borrows.length;if(index>=100000)fail('exclusive source arguments exceed their finite construction budget',span);arena.borrows.push(info);frame.borrows.push(info);
+ if(!parser.origins.collecting&&!place.receiverReservation&&testRustOwnedRecordStatePlaceLoans(parser,place.slot,place.fields))fail('an exclusive argument overlaps an actual surviving source reference loan',span);
+ const info={...place,parameter,span,...(place.receiverReservation?{reserved:true}:{})},index=arena.borrows.length;if(index>=100000)fail('exclusive source arguments exceed their finite construction budget',span);arena.borrows.push(info);frame.borrows.push(info);
  const node={k:'math',op:operations.borrow,name:String(index),args:[],span},referent=place.referent??place.field,origin={...referent,wrappers:['reference',...referent.wrappers],sourceLifetimes:[null,...(referent.sourceLifetimes??[])],sourceExclusiveMode:'exclusive',sourceBorrowedPlace:true,sourceBindingIdentity:place.slot.root,sourceLexicalBindingIdentity:place.slot.lexical,sourceLoanBindingIdentities:[place.slot.root]};return parser.origins.mark(node,origin);
 }
 export function readRustExclusiveSourceBorrow(parser,path,token){
@@ -61,7 +63,7 @@ export function endRustExclusiveSourceArgumentFrame(parser,frame){if(parser.excl
 function argumentsFor(parser,entry,path,offset=0,receiver=null){
  const arena=initializeRustExclusiveSourceCalls(parser),callable=readRustOwnedRecordStateSlots(parser)[0]?.callable??parser.ownedRecordState?.currentCallable??0,frame={entry,callable,borrows:[],current:null},args=[],c=parser.cursor;if(arena.frames.length>=256||entry.parameters.length>256)fail('exclusive source calls exceed their bounded nesting or formal count',c.peek());arena.frames.push(frame);
  try{
-  if(receiver){frame.current={index:0,origin:entry.parameters[0]};args.push(acquire(parser,receiver,0,receiver.span));}
+  if(receiver){frame.current={index:0,origin:entry.parameters[0]};args.push(acquire(parser,{...receiver,receiverReservation:true},0,receiver.span));}
   while(!c.is(')')){
    const index=offset+args.length-(receiver?1:0),expected=entry.parameters[index];frame.current={index,origin:expected??{}};let value;
    if(expected?.sourceExclusiveMode==='exclusive'&&!c.is('&')){
@@ -81,15 +83,17 @@ export function readRustExclusiveSourceCallArguments(parser,callee,path){
 }
 export function captureRustExclusiveSourceReceiver(parser,receiver,method,path){
  const arena=initializeRustExclusiveSourceCalls(parser);if(!arena)return false;
- const origin=parser.origins.origin(receiver,path),owner=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,selected=owner?parser.inherentMethods.get(owner.fullName+'.'+method.value):null;
+ const original=parser.origins.origin(receiver,path),origin=readRustOwnedBoxRecordParent(parser.origins,original),owner=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,selected=owner?parser.inherentMethods.get(owner.fullName+'.'+method.value):null;
  const vector=parser.exclusiveSourceModel==='Rust exclusive source loans 1'&&method.value==='push'&&origin.type?.kind==='array'&&(origin.expandedSourceOwner??origin.sourceOwner)?.path.join('::')==='std::vec::Vec';
  const string=readRustExclusiveSourceStringMethod(parser,origin,method,path);
  const vectorMutation=readRustExclusiveSourceVectorMethod(parser,origin,method,path);
  if(!selected?.exclusive&&!vector&&!string&&!vectorMutation)return false;
  const place=selectRustExclusiveSourcePlace(parser,receiver,path);if(!place)fail('an exclusive receiver requires its actual mutable lexical root and field path',receiver.span);
+ requireRustExclusiveSourceReceiverRoot(parser,place,receiver);
  const callee=selected?['crate',...owner.fullName.split('.'),method.value]:null,entry=callee?parser.origins.lookupValueOwner(callee,path):null;
  const element=vector?{...parser.origins.typeOrigin(origin.type.element,origin.path),sourceOwner:(origin.expandedSourceOwner??origin.sourceOwner).arguments[0]}:null;
- arena.receivers.set(receiver,{place:{...place,span:receiver.span},callee,entry:entry??{parameters:[{...place.field,sourceExclusiveMode:'exclusive'},...(string?string.parameters:vectorMutation?vectorMutation.parameters:[element])]},vector,string,vectorMutation});return true;
+ const referent=readRustOwnedBoxRecordParent(parser.origins,place.field),payloadLayers=place.field.wrappers.length-referent.wrappers.length,selectedPlace={...place,span:receiver.span,...(payloadLayers>0&&!entry?{referent,payloadLayers}:{})};
+ arena.receivers.set(receiver,{place:selectedPlace,callee,entry:entry??{parameters:[{...referent,sourceExclusiveMode:'exclusive'},...(string?string.parameters:vectorMutation?vectorMutation.parameters:[element])]},vector,string,vectorMutation});return true;
 }
 export function readRustExclusiveSourceMethodArguments(parser,receiver,method,path){
  const record=parser.exclusiveSourceCalls?.receivers.get(receiver);if(!record)return null;
@@ -108,14 +112,26 @@ export function readRustExclusiveSourceCall(parser,callee,args,path,span){
 export function readRustExclusiveSourceMethod(parser,receiver,method,args,path,span){
  const info=parser.exclusiveSourceCalls?.receivers.get(receiver);if(!info)return null;
  if(!info.borrow)fail('exclusive receiver operands retain their ordered argument frame',span);
- if(info.string)return recordRustExclusiveSourcePlaceWrite(parser,info.place,createRustExclusiveSourceStringMutation(parser,info.place,info.string,args,path,span),path,span,false,{operation:info.string.method==='clear'?'clear string':'append string text',operand:args.length?parser.origins.origin(args[0],path):null});
- if(info.vectorMutation){const packet=createRustExclusiveSourceVectorPacket(parser,info.place,info.vectorMutation,args,path,span);return recordRustExclusiveSourcePacketEffect(parser,packet.callee,[info.borrow,...args],packet.parameters,packet.result,[{index:0,...info.place}],span);}
+ activateRustExclusiveSourceReceiver(parser,info,args,path,span);
+ const payload=info.place.referent??info.place.field,view={...info.place,field:payload},intrinsic=operation=>({operation,operand:args.length?parser.origins.origin(args[0],path):null,...(info.place.payloadLayers>0?{referent:payload}:{})}),retain=value=>info.place.payloadLayers>0?parser.origins.mark(value,{...parser.origins.origin(value,path),...info.place.field,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceBorrowedPlace:false,sourceExclusiveParameter:false,sourceOwnedResultProof:true}):value;
+ if(info.string)return recordRustExclusiveSourcePlaceWrite(parser,info.place,retain(createRustExclusiveSourceStringMutation(parser,view,info.string,args,path,span)),path,span,false,intrinsic(info.string.method==='clear'?'clear string':'append string text'));
+ if(info.vectorMutation){const packet=createRustExclusiveSourceVectorPacket(parser,view,info.vectorMutation,args,path,span);return recordRustExclusiveSourcePacketEffect(parser,packet.callee,[info.borrow,...args],packet.parameters,packet.result,[{index:0,...info.place}],span);}
  if(!info.vector)return readRustExclusiveSourceCall(parser,info.callee,[info.borrow,...args],path,span);
  if(args.length!==1)throw typeError('Vec push requires exactly its actual element argument',span);
- parser.origins.argument(parser.origins.origin(args[0],path),info.entry.parameters[1],span);
+ parser.origins.argument(parser.origins.origin(args[0],path),info.entry.parameters[1],span,parser.origins.ownedArgumentTransfers.has(args[0]));
  const prior=parser.origins.mark({k:'math',op:'rustOwnedRecordStateRead',name:String(parser.ownedRecordEffects.reads.length),args:[],span},info.place.slot.origin);parser.ownedRecordEffects.reads.push(info.place.slot);
- const selected=parser.origins.mark(projectRustOwnedRecordStatePlace(parser,info.place.layouts,prior,span),info.place.field);
- const value=parser.origins.mark({k:'array',items:[{value:selected,spread:true},{value:args[0],spread:false}],span},{...info.place.field,wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceBorrowedPlace:false,sourceExclusiveParameter:false,sourceOwnedResultProof:true});return recordRustExclusiveSourcePlaceWrite(parser,info.place,value,path,span,false,{operation:'append vector element',operand:parser.origins.origin(args[0],path)});
+ const selected=parser.origins.mark(projectRustOwnedRecordStatePlace(parser,info.place.layouts,prior,span),payload);
+ const value=parser.origins.mark({k:'array',items:[{value:selected,spread:true},{value:args[0],spread:false}],span},{...payload,wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceBorrowedPlace:false,sourceExclusiveParameter:false,sourceOwnedResultProof:true});return recordRustExclusiveSourcePlaceWrite(parser,info.place,retain(value),path,span,false,intrinsic('append vector element'));
+}
+function activateRustExclusiveSourceReceiver(parser,info,args,path,span){
+ const arena=parser.exclusiveSourceCalls,borrow=arena?.borrows[Number(info.borrow.name)];if(!borrow||!borrow.reserved||borrow.slot.lexical!==info.place.slot.lexical)fail('a mutable receiver activates its actual reserved source place once',span);
+ if(!parser.origins.collecting&&!args.some(value=>parser.origins.origin(value,path).diverging)){
+  for(let depth=0;depth<=borrow.fields.length;depth++)if((parser.origins.sourceBindingStates.get(readRustOwnedRecordStateFieldIdentity(borrow.slot.root,borrow.fields.slice(0,depth)))??'available')!=='available')fail('receiver activation retains its actual initialized place after argument evaluation',span);
+  const target=readRustOwnedRecordStateFieldIdentity(borrow.slot.root,borrow.fields),states=[...parser.origins.sourceBindingStates],error=readRustOwnedRecordWholeError(target,states.map(row=>row[0]),states.map(row=>row[1]));if(error)fail(error,span);
+  if(testRustOwnedRecordStatePlaceLoans(parser,borrow.slot,borrow.fields))fail('receiver activation cannot overlap a surviving actual source reference',span);
+  for(const value of args){if(value.k==='math'&&value.op===operations.borrow&&arena.borrows[Number(value.name)])continue;const origin=parser.origins.origin(value,path),loans=[...readRustCopyClosureValueBorrows(origin)];if(origin.wrappers.includes('reference')||origin.arrayElementPosition)loans.push(...[origin.sourceBindingIdentity,origin.sourcePlaceBindingIdentity,...(origin.sourceLoanBindingIdentities??[]),...(origin.sourcePlaceLoanBindingIdentities??[])].filter(Boolean));if(testRustOwnedRecordStateLoanOverlap(borrow.slot.root,target,loans,loans.includes(borrow.slot.lexical)))fail('a receiver operand cannot carry an overlapping reference into activation',span);}
+ }
+ borrow.reserved=false;
 }
 export function recordRustExclusiveSourcePlaceWrite(parser,place,value,path,span,reinitialize=false,intrinsic=null){
  const arena=initializeRustExclusiveSourceCalls(parser),index=arena.writes.length;if(index>=100000)fail('exclusive whole-place writes exceed their finite construction budget',span);

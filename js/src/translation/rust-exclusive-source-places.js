@@ -41,3 +41,11 @@ export function selectRustExclusiveSourceCallReferent(parser,place,parameter,spa
  const referent=readRustOwnedBoxPlaceProjection(parser.origins,source,depth);if(!referent)fail('a selected mutable formal retains each actual canonical Box coercion layer',span);
  return {...place,referent,payloadLayers:(place.payloadLayers??0)+depth};
 }
+export function requireRustExclusiveSourceReceiverRoot(parser,place,receiver){
+ const tokens=parser.sourceConstantTokens,span=receiver.span;if(!Array.isArray(tokens)||tokens.length>1000000||!span)fail('a mutable receiver retains its bounded actual source token inventory and span',span);
+ let first=0,last=tokens.length;while(first<last){const middle=Math.floor((first+last)/2);if(tokens[middle].start<span.start)first=middle+1;else last=middle;}
+ let steps=0;while(first<tokens.length&&tokens[first].start<span.end&&['(','*'].includes(tokens[first].value)){if(++steps>256)fail('a mutable receiver exceeds its bounded original place syntax',span);first++;}
+ const token=tokens[first],source=token?.kind==='identifier'?parser.origins.scope.get(token.value):null;
+ if(!source||token.start>=span.end||token.value!==place.slot.name||source.sourceLexicalBindingIdentity&&source.sourceLexicalBindingIdentity!==place.slot.lexical||source.wrappers[0]==='reference'&&source.sourceExclusiveMode!=='exclusive')fail('a mutable receiver selects its actual mutable lexical root, never a shared alias into that root',span);
+ return place;
+}

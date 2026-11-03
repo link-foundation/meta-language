@@ -4886,11 +4886,34 @@ whole-root interface and cannot become a partial payload capture. Boxed standard
 Option/Result constructors establish their real library payload owner before Box
 layer construction, preserving actual variant declarations and field positions.
 Canonical call coercion follows [Rust mutable dereference coercion](https://doc.rust-lang.org/reference/type-coercions.html#coercion-types).
+Mutable method receivers retain their actual original lexical binder and token
+span, including nested field/Box places; a shared alias into mutable storage
+cannot acquire its authority. Standard String/Vec selection uses the actual
+canonical payload view. Inherent methods retain their actual selected self formal,
+so Box projection comes from that formal rather than unconditional receiver
+erasure. Vec pop/truncate/clear reuse the real checked direct Vec helper and the
+same complete caller reconstruction used for source payload calls.
+Intrinsic String push_str/clear and Vec push retain the actual direct operation
+position on the operation expression. Independent checking proves its canonical
+projection from the complete original field, standard owner/element/suffix
+contracts, executable extraction and complete rebuild. An empty field path needs
+a genuine Box payload; direct unboxed root intrinsics keep their preceding path.
+Owning push arguments retain their actual earlier transfer without a second read
+from the consumed source binding. The facet shape and ordinary target operations
+remain unchanged.
+An implicit mutable method autoref first reserves the actual receiver place.
+Readonly argument observations may finish before activation; overlapping mutable
+acquisition and writes remain excluded. Activation checks initialized selected
+storage, surviving lexical loans and actual argument-carried references before
+the operation. Explicit mutable arguments retain their active acquisition rule.
+These source-private phases grant no archived authority and no general last-use,
+field-revision or implicit-function-reborrow lifetime proof. The ordering follows
+the [Rust compiler's two-phase method borrow protocol](https://rustc-dev-guide.rust-lang.org/borrow-check/two-phase-borrows.html).
 The ordering follows [Rust compound assignment](https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions)
 and [operator precedence](https://doc.rust-lang.org/reference/expressions.html#expression-precedence).
 Stored-reference payloads, general recursive state, per-layer lifetime
-substitution, general assignment/destructuring places, Box receiver autoderef for
-collection/String methods and general callback Box environments retain their
+substitution, general assignment/destructuring places, general readonly/custom
+receiver protocols and general callback Box environments retain their
 complete independent obligations. The ownership contract follows
 [Rust Box](https://doc.rust-lang.org/std/boxed/index.html) and the
 [assignment contract](https://doc.rust-lang.org/reference/expressions/operator-expr.html#assignment-expressions).

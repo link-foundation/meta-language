@@ -925,3 +925,21 @@ The preceding commits `0c42ff8d7` (2026-11-04 00:17:27 +07:00) and `73fe8da8e`
 (00:30:21 +07:00) are 12 minutes 54 seconds apart. This is source publication
 cadence, without behavioral execution or an audited requirement denominator.
 It cannot establish a completion percentage or whole-project finish estimate.
+
+The [Box receiver operation batch](../../handoffs/issue-227-box-receiver-operations-2026-11-04.md)
+reuses existing standard operations, actual Vec helper bodies and checked caller
+reconstruction. Original lexical receivers prevent authority through shared
+aliases; actual method autoref reservation/activation preserves readonly argument
+observations. Twenty-three positive and twelve invalid originals plus structural,
+forgery and Links controls are authored and unexecuted. Source inspection exposed
+a concrete remaining dependency: three field examples move an owning payload and
+then observe a sibling, while the current region transfer consumes the containing
+root. Their inputs and assertions remain; the handoff prioritizes genuine partial
+field ownership and reconstruction rather than reducing those observations.
+
+The preceding commits `73fe8da8e` (2026-11-04 00:30:21 +07:00) and `6610de5ea`
+(00:50:38 +07:00) are 20 minutes 17 seconds apart. This is source publication
+cadence, not verified requirement delivery. The native-valid partial-move examples
+illustrate why a drafted surface operation is not the complete ownership contract
+or a completion percentage. No execution or whole-project finish estimate is
+established by this source batch.
