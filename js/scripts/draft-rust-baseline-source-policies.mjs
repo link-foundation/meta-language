@@ -283,6 +283,7 @@ const consumers=[
  'js/src/translation/rust-source-region-composition.js',
  'js/src/translation/rust-source-region-divergence.js',
  'js/src/translation/rust-source-place-transforms.js',
+ 'js/src/translation/rust-source-field-images.js',
  'js/src/translation/rust-source-place-transform-regions.js',
  'js/src/translation/rust-source-place-replacements.js',
  'js/src/translation/rust-vector-mutation-interfaces.js',

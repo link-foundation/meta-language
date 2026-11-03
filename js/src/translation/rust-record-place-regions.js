@@ -10,6 +10,7 @@ import {sameRustSourcePlaceOwner} from './rust-source-place-transforms.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import {acceptRustDataTypeFieldSignatureContainer} from './rust-data-type-field-signature-rules.js';
 import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
+import {readRustSourceRecordProjectionOwner,projectRustSourceRecordFieldImage} from './rust-source-field-images.js';
 const model='Rust source record place 1',exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 const fail=reason=>{throw typeError(reason);};
 export function attachRustRecordPlace(parser,node,root,field,index){
@@ -34,6 +35,6 @@ export function readRustRecordPlacePlan(facet,node,language,resolveType=value=>v
 }
 export function checkRustRecordPlace(...args){return readRustRecordPlacePlan(...args).facet;}
 export function readRustRecordPlaceRegions(visitor,node,env,bindings,depth){
- const {facet,base}=readRustRecordPlacePlan(node.sourceRecordPlace,node,visitor.program.sourceLanguage,value=>value,value=>visitor.program.declarations.get(value.name));visitor.scope(facet.root,bindings,node);visitor.closedTarget(facet.root,node);if(facet.value.wrappers.length)visitor.closedTarget(facet.value,node);else visitor.closedOutput(facet.value,node);const owner=visitor.compatible(visitor.read(visitor.expression(base,env,bindings,facet.root,depth+1),'read',base),facet.root,base),borrowed=owner.role==='reference'||owner.borrowedPlace===true,places=owner.role==='reference'?owner.regions:owner.placeRegions??[owner.storageRoot??owner.root];if(!places.length||places.some(root=>root===null||root===undefined))throw unsupported('Rust source record place','a field loan retains its actual owner storage or referent regions',node.span);
- return {...visitor.value(visitor.position(facet.value),owner.root,[],owner.producer),storageRoot:owner.storageRoot,storageIdentity:undefined,borrowedPlace:borrowed,placeRegions:visitor.union([places])};
+ const {facet,base}=readRustRecordPlacePlan(node.sourceRecordPlace,node,visitor.program.sourceLanguage,value=>value,value=>visitor.program.declarations.get(value.name));visitor.scope(facet.root,bindings,node);visitor.closedTarget(facet.root,node);if(facet.value.wrappers.length)visitor.closedTarget(facet.value,node);else visitor.closedOutput(facet.value,node);const owner=readRustSourceRecordProjectionOwner(visitor,base,env,bindings,facet.root,depth);
+ return projectRustSourceRecordFieldImage(visitor,owner,facet,node);
 }

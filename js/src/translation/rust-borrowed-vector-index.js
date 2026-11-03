@@ -30,14 +30,14 @@ export function readRustSourceVectorIndexedRegion(visitor,node,env,bindings,dept
  }else if(!['owned','reference'].includes(array.role)||position.arrayElementPosition||!scalar||readRustBorrowedSourceValueRole(element.type.kind,String(element.type.bits??''),element.type.signed===true,element.owner.kind,element.owner.path.join('::'),element.owner.arguments.length,element.wrappers,Boolean(element.arrayElementPosition))!=='copy')throw unsupported('Rust source binder regions','owned vector indexing copies only its actual direct scalar element owner',node.span);
  const index=visitor.read(visitor.expression(node.index,env,bindings,null,depth+1),'read',node.index);
  if(!['copy','inferred numeric'].includes(index.role))throw unsupported('Rust source binder regions','an index retains its checked scalar coordinate without borrowed authority',node.span);
- if(array.role==='borrowed vector')return visitor.value(visitor.position(element),null,[...array.regions],false);
+ if(array.role==='borrowed vector')return {...visitor.value(visitor.position(element),null,[...array.regions],false),borrowRoots:[...(array.borrowRoots??array.regions)]};
  // Source-position validation owns the complete result qualifier. Creating a
  // shared reference borrows the actual vector allocation; copying the scalar
  // itself carries no loan of that allocation.
  if(borrowing?.length){
   if(borrowing.length!==1||borrowing[0]!=='reference')throw unsupported('Rust source binder regions','an indexed scalar borrow needs its actual single shared-reference operation',node.span);
-  const roots=array.role==='reference'?[...array.regions]:visitor.union([array.regions,[array.storageRoot??array.root??visitor.root('',true)]]);
-  return visitor.value(visitor.position({...element,wrappers:['reference'],lifetimes:[null]}),null,roots,false);
+  const places=array.role==='reference'?(array.borrowRoots??array.regions):(array.placeRoots??[array.storageRoot??array.root??visitor.root('',true)]),roots=visitor.union([array.regions,array.placeRegions??[],places]);
+  return {...visitor.value(visitor.position({...element,wrappers:['reference'],lifetimes:[null]}),null,roots,false),borrowRoots:visitor.union([array.borrowRoots??[],array.inheritedBorrowRoots??[],places])};
  }
  return visitor.value(visitor.position(element),null,[],false);
 }

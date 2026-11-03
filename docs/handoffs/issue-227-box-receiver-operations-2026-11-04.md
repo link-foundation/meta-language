@@ -119,3 +119,7 @@ and the existing [Box ownership contract](https://doc.rust-lang.org/std/boxed/in
    ledger use; publish automatic source/schema/naming/native assets; run authorized
    JavaScript and CI-only native checks; repair actual failures and record all
    observed assertions at executed commits. Never compile Rust locally.
+
+The [component image successor](issue-227-record-field-images-2026-11-04.md)
+drafts direct field transfer and sibling selection, retaining the three inputs
+above. It records remaining reinitialization/publication work; no controls ran.

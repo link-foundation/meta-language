@@ -4812,12 +4812,35 @@ alias becomes a substitute owner and no new serialized place shape is needed.
 Multiple shared-reference layers retain their complete lifetime column; the
 current containing-root proof remains conservative and does not establish a
 general per-layer lifetime substitution protocol. Stored-reference fields,
-partial moves, temporary lifetime extension, custom Deref and disjoint field loan
+general partial-state reinitialization, temporary lifetime extension, custom Deref and disjoint field loan
 revisions retain their separate obligations. The field/dereference distinction
 follows the [Rust field expression contract](https://doc.rust-lang.org/reference/expressions/field-expr.html)
 and [Box place dereferencing](https://doc.rust-lang.org/reference/expressions/operator-expr.html#dereference-operator).
-Current loans conservatively cover the containing root;
-disjoint mutable call arguments do not establish disjoint surviving field loans.
+Closed single-constructor record components have private ownership images derived
+from actual declaration fields. Each selected component has its own initialized
+region while retaining containing storage lifetime dependencies. Moving an owning
+field consumes only that component and establishes fresh storage at its new
+binding. Actual untouched siblings remain selectable; moved fields and whole-owner
+use remain unavailable. Scalar copies shed old place coordinates. Whole shared
+loans retain their complete referent images; direct field loans retain selected
+components and containing lifetimes. A checked projection may inspect its actual
+container image without claiming that the partially moved whole is usable.
+Opaque readonly reference results may have a declared-type field view under their
+original loan roots. Such a view preserves those whole loans, cannot confer owning
+transfer, and cannot relabel the original storage inventory. Field regions inherit
+their actual containing parameter lifetime; return checking follows only real
+declaration descendants and checked readonly views of allowed parameter roots.
+Complete field images are established at ordinary binding/storage publication so
+branch state joins include their components. Joined current storage rebases the
+returned value's component and loan coordinates together; earlier aliases retain
+their stale epochs. No image, ownership mask or local region identifier is accepted
+from an archive. Actual projection graphs and source positions remain the public
+proof inputs. State replacements still conservatively invalidate their containing
+root revision; disjoint mutable calls do not establish general surviving field
+loans across writes. Partially initialized state publication/reinitialization and
+general mixed pattern binding remain separate required protocols. The value/place
+distinction and partial transfer follow [Rust place semantics](https://doc.rust-lang.org/reference/expressions.html#place-expressions-and-value-expressions)
+and [partial ownership](https://doc.rust-lang.org/rust-by-example/scope/move/partial_move.html).
 Owned Box values also retain their complete positions across ordinary helper
 arguments and results, including independent scalar result/state packets. Shared
 argument instantiation distinguishes an already represented reference from a

@@ -943,3 +943,19 @@ cadence, not verified requirement delivery. The native-valid partial-move exampl
 illustrate why a drafted surface operation is not the complete ownership contract
 or a completion percentage. No execution or whole-project finish estimate is
 established by this source batch.
+
+The [record component image batch](../../handoffs/issue-227-record-field-images-2026-11-04.md)
+supplies independent field ownership roots while preserving containing storage
+lifetimes, whole-owner loans, actual declaration projections and current-root
+joins. Sixteen positive and twelve invalid originals plus same-type forgery and
+Links controls are authored and unexecuted. The three preceding Vec/sibling
+inputs retain their post-transfer observations. Source inspection required
+coordinating field ownership, direct versus whole loans, opaque readonly views,
+parameter lifetime ancestry, branch rebasing and indexed references together.
+Ordinary field reinitialization and partial-state publication still require their
+own checked plan; an existing whole constructor cannot silently restore ownership.
+
+The preceding commits `6610de5ea` (2026-11-04 00:50:38 +07:00) and `347efd07f`
+(01:17:17 +07:00) are 26 minutes 39 seconds apart. That interval measures source
+publication without execution or an audited requirement denominator. It is not a
+verified throughput estimate, completion percentage or full-scope finish date.
