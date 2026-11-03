@@ -109,7 +109,18 @@ function lowerMain(parser,main,budget){
  const rename=node=>alpha(parser,node,names,inventory,[],budget);
  // Main retains its effect algebra. A value/state packet completes before
  // the following effect, including the original structural assertion.
+ const mutatesState=node=>{
+  const pending=[node],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);if(seen.size>readRustOwnedRecordEffectLimit('inspection'))fail('state mutation inspection exceeds its actual expression budget',node.span);
+   if(['conditional','short circuit','match'].includes(readRustOwnedRecordEffectForm(value.k,value.op??'')))return true;
+   if(value.sourceStateTransition?.operation==='write')return true;
+   if(marker(value)&&readRustOwnedRecordEffectSource(parser,value)?.form!=='read')return true;
+   for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);
+  }return false;
+ };
  const evaluate=(node,expected=null)=>{
+  // An unchanged state must not be copied into a packet after a direct read
+  // has moved its owned value. Keep the actual SSA names for the next effect.
+  if(!mutatesState(node))return lower(parser,node,[],inventory,environment,expected,(result,after)=>{if(after.size!==environment.size||[...environment].some(([key,prior])=>after.get(key)?.name!==prior.name||after.get(key)?.slot!==prior.slot))fail('a read-only expression cannot publish unrecorded source state changes',node.span);return result;});
   const keys=[...environment.keys()],packetName=parser.freshProductBinding(),reference={k:'name',path:[packetName]};
   const value=lower(parser,node,[],inventory,environment,expected,(result,after)=>({k:'tuple',items:[result,...keys.map(key=>({k:'name',path:[after.get(key).name]}))]}));
   const resultType=typeOf(parser,node,[],expected),type=resultType?{kind:'tuple',elements:[resultType,...keys.map(key=>readRustRecordSourceType(parser,environment.get(key).slot.origin.type,environment.get(key).slot.origin.path))]}:null;

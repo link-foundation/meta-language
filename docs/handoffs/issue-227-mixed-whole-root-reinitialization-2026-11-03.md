@@ -23,3 +23,13 @@ groups (297 literal originals and 64 actual-source scenarios). No new native
 implementation or independent emitter is introduced. These are unexecuted inputs,
 not passing assertions or completed requirements. No tests, generation, validation
 or compilation ran; source register/ledger work stays deferred.
+
+Following the full lowering path exposed a second required piece: main previously
+packed every unchanged mutable root after a read-only expression, duplicating a
+just-moved owner. The lowerer now scans actual private operations within a finite
+budget. Linear read-only expressions use the same evaluator but return their actual
+value directly, requiring the outer state environment to remain exactly unchanged.
+Mutating and control-flow expressions retain existing packets. This removes the phantom second
+read in linear move/reinitialize sequences without adding an unchecked state path.
+Conditional branches still use their existing state joins and remain explicit
+refusals until their uninitialized carrier is drafted. No execution occurred.
