@@ -765,3 +765,13 @@ append to the existing generic constructor inventory, with independent allocatio
 forgery and foreign-realm controls. They are separate from the Rust source
 inventory above. Generated native publication, all execution and broad frontend
 completion remain deferred; no requirement percentage is inferred.
+
+The [shared species construction batch](../../handoffs/issue-227-shared-species-construction-2026-11-03.md)
+routes new Array transformation/slice/concat species requests through the existing
+common Construct algorithm, with independently checked envelope/operation
+correspondence. One parent-operation reader replaces repeated context selection;
+Map/Set roots join monotonic metadata checks. Thirteen native-original controls
+cover actual wrapper, collection, class and nested factory species while keeping
+the preceding saved-state protocol and every earlier assertion. Generation,
+execution and whole-project coverage remain deferred; this adds no requirement
+completion percentage.

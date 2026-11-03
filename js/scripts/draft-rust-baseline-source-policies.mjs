@@ -14,6 +14,7 @@ const root=new URL('../../',import.meta.url);
 const libraries=[
  {sourcePath:'js/src/translation/javascript-collection-construction-rules.js',moduleName:'javascript_collection_construction_rules',model:'Actual collection Construct storage and brand selection 1',programAsset:'javascript-collection-construction-rules-program'},
  {sourcePath:'js/src/translation/javascript-collection-construction.js',moduleName:'javascript_collection_construction',sourceDependencies:true,model:'Actual strong and weak collection generic construction receiver ownership 1',programAsset:'javascript-collection-construction-program'},
+ {sourcePath:'js/src/translation/javascript-construction-parents.js',moduleName:'javascript_construction_parents',sourceDependencies:true,model:'Actual selected parent Construct operation transport 1',programAsset:'javascript-construction-parents-program'},
  {sourcePath:'js/src/translation/javascript-weak-collection-construction.js',moduleName:'javascript_weak_collection_construction',sourceDependencies:true,model:'Actual weak collection generic construction receiver and initializer ownership 1',programAsset:'javascript-weak-collection-construction-program'},
  {sourcePath:'js/src/translation/javascript-weak-collection-rules.js',moduleName:'javascript_weak_collection_rules',sourceDependencies:true,model:'Actual weak collection key brand and identity rules 1',programAsset:'javascript-weak-collection-rules-program'},
  {sourcePath:'js/src/translation/javascript-weak-collections.js',moduleName:'javascript_weak_collections',sourceDependencies:true,model:'Actual represented weak collection lookup and mutation 1',programAsset:'javascript-weak-collections-program'},
@@ -77,7 +78,7 @@ const libraries=[
  {sourcePath:'js/src/translation/javascript-array-spread.js',moduleName:'javascript_array_spread',model:'ECMAScript 2026 Array accumulation shared iterator continuations 1',programAsset:'javascript-array-spread-program'},
  {sourcePath:'js/src/translation/javascript-array-iteration.js',moduleName:'javascript_array_iteration',model:'Live shared heap Array iterator cursor and getter continuations 1',programAsset:'javascript-array-iteration-program'},
  {sourcePath:'js/src/translation/javascript-iterator-protocol.js',moduleName:'javascript_iterator_protocol',model:'ECMAScript 2026 synchronous iterator acquisition advancement and close continuations 1',programAsset:'javascript-iterator-protocol-program'},
- {sourcePath:'js/src/translation/javascript-species-construction.js',moduleName:'javascript_species_construction',model:'Actual source species constructor prototype receiver and body continuations 1',programAsset:'javascript-species-construction-program'},
+ {sourcePath:'js/src/translation/javascript-species-construction.js',moduleName:'javascript_species_construction',sourceDependencies:true,model:'Actual source species constructor prototype receiver and body continuations 1',programAsset:'javascript-species-construction-program'},
  {sourcePath:'js/src/translation/javascript-array-transform.js',moduleName:'javascript_array_transform',model:'Actual Array map filter species and callback continuations 1',programAsset:'javascript-array-transform-program'},
  {sourcePath:'js/src/translation/javascript-array-species.js',moduleName:'javascript_array_species',model:'Actual Array species constructor selection and authority continuations 1',programAsset:'javascript-array-species-program'},
  {sourcePath:'js/src/translation/javascript-array-index-rules.js',moduleName:'javascript_array_index_rules',model:'Actual Array length and relative search index rules 1',programAsset:'javascript-array-index-rules-program'},
@@ -146,6 +147,7 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-shared-species-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-collection-source.mjs',
  'js/tests/fixtures/javascript-symbol-registry-source.mjs',
@@ -358,6 +360,7 @@ const consumers=[
  'js/tests/translation-rust-exclusive-source-admission.test.js',
  'js/tests/translation-rust-exclusive-collection-source.test.js',
  'js/tests/translation-javascript-species-construction.test.js',
+ 'js/tests/translation-javascript-shared-species-construction.test.js',
  'js/tests/translation-javascript-iterator-protocol.test.js',
  'js/tests/translation-javascript-array-iteration.test.js',
  'js/tests/translation-javascript-array-spread.test.js',
@@ -726,6 +729,7 @@ for(const [source,target] of [
  ['javascript-weak-collection-source','javascript-weak-collection-source'],
  ['javascript-symbol-registry-source','javascript-symbol-registry-source'],
  ['javascript-weak-construction-source','javascript-weak-construction-source'],
+ ['javascript-shared-species-construction-source','javascript-shared-species-construction-source'],
  ['rust-exclusive-source-vectors','rust-exclusive-source-vectors'],
  ['rust-exclusive-source-strings','rust-exclusive-source-strings'],
  ['rust-exclusive-source-compounds','rust-exclusive-source-compounds'],

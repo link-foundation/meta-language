@@ -6,13 +6,14 @@ import {readJavaScriptExecutableCallFunction} from './javascript-call-templates.
 import {readJavaScriptCollectionConstructorKind} from './javascript-collection-call-source.js';
 import {readJavaScriptConstructionStateError} from './javascript-construction.js';
 import {testJavaScriptConstructedCollectionKind,readJavaScriptConstructedCollectionAllocationKind} from './javascript-collection-construction-rules.js';
+import {readJavaScriptPendingConstruction} from './javascript-construction-parents.js';
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
  * @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction
  * @returns {{receiver:JavaScriptSemanticValue|undefined,error:string}} */
 export function readJavaScriptCollectionConstructionReceiver(program,machine,frame,instruction){
  const receiver=frame.registers[0]??{$:'undefined'};
  if(instruction.$!=='collectionAllocate'||!testJavaScriptConstructedCollectionKind(instruction.kind)||receiver.$!=='object')return {receiver:undefined,error:''};
- const parent=machine.frames[machine.frames.length-2],pending=parent?.pending,state=pending?.$==='waitConstruction'?pending.state:pending?.$==='waitArrayCreation'?pending.construction:undefined,fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
+ const parent=machine.frames[machine.frames.length-2],state=parent===undefined?undefined:readJavaScriptPendingConstruction(parent.pending),fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
  if(state===undefined||state.phase!=='body'||state.mode!==instruction.kind||state.allocationKind!==readJavaScriptConstructedCollectionAllocationKind(instruction.kind)||state.target.$!=='object'||state.target.identity!==frame.identity||!testJavaScriptSemanticSameValue(state.receiver,receiver)||!testJavaScriptSemanticSameValue(state.newTarget,frame.newTarget??{$:'undefined'})||fn===undefined||readJavaScriptCollectionConstructorKind(fn)!==instruction.kind)return {receiver:undefined,error:'collection initializer reuse requires its actual generic Construct parent, target, receiver and newTarget'};
  const directory=program.constructorDirectory;if(directory===undefined)return {receiver:undefined,error:'collection initializer reuse retains its actual constructor authority'};
  const invalid=readJavaScriptConstructionStateError(program,machine.heap,directory,state);if(invalid!=='')return {receiver:undefined,error:invalid};

@@ -6,6 +6,10 @@ only: no represented code, test, generator, formatting, validation gate,
 compilation or CI feedback ran or was reviewed. All prior requirements remain
 binding and the complete code draft remains unfinished.
 
+Continuation: [shared Array species construction](issue-227-shared-species-construction-2026-11-03.md)
+connects new species requests to the same actual constructor operation. The
+remaining broader constructor/frontend scope below remains binding.
+
 ## Actual frontend/runtime path drafted
 
 The common generic Construct kernel previously admitted weak collection targets

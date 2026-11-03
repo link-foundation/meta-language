@@ -81,6 +81,21 @@ continues to own adder selection, nullish bypass, iteration, entry reads,
 IteratorClose and exact abrupt values. Constructor-frame admission checks the
 actual base-class or collection kind without dropping parent/child identity
 checks. The weak-only compatibility entry point retains its original kind scope.
+New Array species construction retains an explicit `shared Construct species
+continuation 1` operation and delegates actual allocation, prototype acquisition,
+conversion and body execution to the same generic Construct kernel. Its species
+envelope retains the immutable selected fact and exact length; every mirrored
+phase, target/newTarget, prototype, receiver and child operand must agree with
+the actual operation. Array transformations, slice and concat keep their own
+selection, indexed definition and final-length contracts. Number/Boolean/String/
+Object species therefore retain actual wrapper slots and property restrictions;
+collection species receive the actual numeric length argument, including zero.
+Constructor errors retain the target realm. Source factories can return actual
+nested constructed replacements. A shared parent-operation reader connects
+these calls to genuine constructor frames and collection initializer reuse.
+Preceding persisted species states keep their separate original interpretation;
+new requests never select it as a semantic fallback. Authority extension preserves
+every established Map/Set prototype root alongside earlier constructor facts.
 
 Reflect.construct checks target and actual/default newTarget before reading its
 array-like argument Object, then Gets length and every ordered index. Array.of
