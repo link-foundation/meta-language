@@ -81,7 +81,7 @@ No tests, source imports, generation, compilation or validation ran locally.
 
 The current driver also adds 28 actual `Type::map_children` and 33 actual
 `Type::children` controls through current-source factories. Adding eight literal mixed-region originals and three actual Type composition
-scenarios gives 370 authored positive rows across eighteen groups (306 literal
+scenarios gives 382 authored positive rows across eighteen groups (318 literal
 originals plus 64 current-source scenarios). Counts do not measure requirement completion. See
 [the native reference handoff](issue-227-actual-type-native-reference-controls-2026-11-03.md)
 for full original, projected and actual crate reference scopes. None ran locally.
@@ -115,3 +115,8 @@ The same immediate-replacement proof now covers adjacent lexical bindings in
 readonly-result functions, with two more branch originals and private lexical
 descriptor scoping. Current mixed inventory: 27 positives and 16 refusals.
 No generation, tests or compilation ran locally.
+
+Overwrite liveness, function print sequencing and actual block-statement
+boundaries add twelve positives (including one retained former refusal), while
+keeping new invalid boundary/read cases and the unknown-loop barrier. Current
+mixed inventory: 39 positives, 19 refusals. No runtime execution is claimed.

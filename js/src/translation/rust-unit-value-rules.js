@@ -172,3 +172,7 @@ export function readRustImplicitBlockStatementDisposition(kind,block,continuatio
  if(indirected)return 'refuse';
  return collecting||proven&&type==='unit'?'bind':'refuse';
 }
+
+/** Actual expression-with-block boundaries supported by this source reader.
+ * @param {string} opening @param {string} closing @returns {boolean} */
+export function acceptRustBlockExpressionStatementBoundary(opening,closing){return ['if','match','{'].includes(opening)&&closing==='}';}

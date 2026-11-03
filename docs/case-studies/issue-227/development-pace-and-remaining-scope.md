@@ -603,3 +603,12 @@ two readonly-result function originals. Current driver inventory: 370 authored
 positives (306 literal, 64 actual source), eighteen groups. Private descriptor
 scopes are restored after lowering each binding; no new public admission flag
 or independent runtime semantics is introduced. These paths remain unexecuted.
+
+A larger solo batch shares first-access/overwrite liveness across actual
+continuations and adds readonly print sequencing and genuine block statement
+boundaries. It retains all prior programs, promoting the exact former print
+frontier with its explicit two-line stdout. Twelve added positives bring the
+driver to 382 authored rows (318 literal and 64 actual-source), eighteen groups.
+Live owners, intervening root reads and unknown loops retain independent controls.
+These source changes remain unexecuted. Push cadence is reduced as requested;
+source delivery is the priority, without a new completion-percentage claim.

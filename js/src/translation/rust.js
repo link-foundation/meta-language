@@ -97,7 +97,7 @@ import {acceptRustConstFunctionPrefix,acceptRustConstFunctionLocation,requireRus
 import {initializeRustTypeAliases,readRustTypeAliasValue,readRustTypeAliasItem,finishRustTypeAliases,resolveRustTypeAliasPath,requireRustTypeAliasValueConstructor} from './rust-type-aliases.js';
 import {planRustFormattingValue,planRustFormattingFieldTerms,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
-import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
+import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,acceptRustBlockExpressionStatementBoundary,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
 import {readRustOrdinaryFunctionCompletion,installRustOrdinaryCompletionDeclarations} from './rust-ordinary-completions.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
@@ -1146,7 +1146,7 @@ class RustParser {
       }
       if(ordinary){
         const origin=this.origins.origin(expr,path);
-        const disposition=readRustImplicitBlockStatementDisposition(expr.k,expr.block===true,!c.is('}'),this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
+        const boundary=acceptRustBlockExpressionStatementBoundary(token.value,c.tokens[c.index-1]?.value??'')||Boolean((finiteLoop||statement)&&expr.block===true),disposition=readRustImplicitBlockStatementDisposition(boundary?expr.k:'',boundary,!c.is('}'),this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
         if(disposition==='bind'){lets.push({name:this.freshProductBinding(),type:UNIT,value:expr,span:expr.span});continue;}
       }
       tail = expr;
@@ -1325,7 +1325,8 @@ class RustParser {
       if(statement)for(const binding of statement.bindings)effects.push({k:'let',...binding});
       const value=finiteLoop??statement?.value??this.expr([],{statement:true}),origin=this.origins.origin(value,[]);
       if(readRustUnitStatementDisposition(value.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('main statement','main may only print, bind, assert and evaluate direct Unit calls',span(token,token));
-      if(!c.eat(';')&&!c.is('}')&&!((finiteLoop||statement)&&value.block===true))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),value,span:value.span});
+      const boundary=this.ordinaryCompletionContext()&&acceptRustBlockExpressionStatementBoundary(token.value,c.tokens[c.index-1]?.value??'');
+      if(!c.eat(';')&&!c.is('}')&&!boundary&&!((finiteLoop||statement)&&value.block===true))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),value,span:value.span});
     }
     c.expect('}', 'fn main');
     this.origins.scope = previous;

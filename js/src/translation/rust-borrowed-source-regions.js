@@ -183,6 +183,9 @@ class SourceRegions{
    const values=node.args.map((arg,index)=>{const parameter=callParameter(this.position(signature.parameters[index]));return this.read(this.compatible(this.expression(arg,env,bindings,parameter,depth+1),parameter,arg),'move',arg);});for(const actual of values)this.read({...actual,root:null,producer:true},'read',node);
    const result=signature.result,sources=this.resultSources(result,signature.parameters);if(sources.includes(-1))fail('a source call needs its actual parameter region interface',node);
    value=this.value(this.position(result),this.root('',true),this.union(sources.map(index=>values[index].regions)),true);
+  }else if(operation==='print'){
+   const start=this.temporaries.length,shown=this.read(this.expression(node.text,env,bindings,null,depth+1),'read',node.text),error=readRustBorrowedVectorObservationError(shown.role==='borrowed vector','display')||rules.readRustBorrowedSourceObservationError(observationRole(shown),'display')||(shown.role==='source state packet'?'source state packets are projected before display':'');if(error)fail(error,node.text);this.finishExpression(shown,start,node.text);
+   value=this.expression(node.body,env,bindings,expected,depth+1);
   }else if(operation==='index'){
    value=readRustSourceVectorIndexedRegion(this,node,env,bindings,depth);
   }else if(operation==='length'){

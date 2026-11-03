@@ -4593,6 +4593,12 @@ A main join or adjacent callable binding may also omit a root immediately
 replaced by the next actual whole assignment when that replacement cannot access it. This source-derived kill
 projection must remain local to the exact join and preserve every branch effect.
 It supplies no general uninitialized value or permission to read a moved root.
+Overwrite liveness may scan later effects without moving them. A root may be
+omitted only when its first access is a complete overwrite, or a complete scan
+proves that it is never used again in the admitted destructor-free scope. Unknown
+operations remain conservative barriers. Function printing checks the displayed
+value separately from the continuation and retains qualifiers at the original
+value sequence point. Statement boundaries follow the actual grammar and tokens.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.

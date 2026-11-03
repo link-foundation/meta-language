@@ -37,3 +37,12 @@ test('conditional state packets carry written scalar slots without copying a mov
 test('immediate root replacement omits only the killed joined allocation and retains scalar state',()=>{
  const row=originals.find(value=>value.name==='immediate replacement discards one joined root while preserving another written scalar');assert.ok(row);const checked=checkProgram(parseRust(row.source,options)),branches=nodes(checked.main).filter(node=>node.k==='if'&&node.type?.kind==='tuple');assert.ok(branches.length>0);for(const branch of branches){assert.equal(branch.type.elements.length,2);assert.equal(branch.type.elements[1].kind,'fixed');assert.equal(branch.type.elements[1].bits,8);}assert.equal(output(emitJavaScript(checked).text),row.stdout);
 });
+
+test('print continuations retain actual result types without inheriting the statement Unit qualifier',()=>{
+ const row=originals.find(value=>value.name==='mutable readonly formal prints each local epoch once');assert.ok(row);const checked=checkProgram(parseRust(row.source,options)),printed=nodes(checked.declarations.get('refs').body).filter(node=>node.k==='print'&&node.type?.kind==='array');assert.ok(printed.length>0);for(const node of printed){assert.equal(node.text.type.kind,'string');assert.equal(node.body.type.kind,node.type.kind);assert.equal(node.sourceStateTransition,undefined);assert.equal(node.sourcePosition,undefined);}assert.equal(output(emitJavaScript(checked).text),row.stdout);
+});
+
+test('live joined owners keep a concrete state slot while unused source roots can be omitted',()=>{
+ const live=originals.find(value=>value.name==='live joined owner remains in the state packet until actual future reads');assert.ok(live);const checked=checkProgram(parseRust(live.source,options)),branches=nodes(checked.main).filter(node=>node.k==='if'&&node.type?.kind==='tuple');assert.ok(branches.length>0);assert.ok(branches.some(node=>node.type.elements.slice(1).some(type=>type.kind==='array')));assert.equal(output(emitJavaScript(checked).text),live.stdout);
+ for(const name of ['unused main join state needs no fabricated initialized value','never-used written arm has no state packet or extra output']){const row=originals.find(value=>value.name===name);assert.ok(row);const program=checkProgram(parseRust(row.source,options));for(const node of nodes(program.main).filter(value=>value.k==='if'&&value.type?.kind==='tuple'))assert.equal(node.type.elements.slice(1).some(type=>type.kind==='array'),false);assert.equal(output(emitJavaScript(program).text),row.stdout);}
+});

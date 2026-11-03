@@ -43,19 +43,37 @@ function changedStateRoots(parser,node){
   for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);
  }return changed;
 }
-// A narrowly scoped join kill: the immediately following actual main effect
-// replaces the complete root, and its RHS cannot access that root. Callable
-// bodies use the same adjacent lexical-binding proof. Never
-// propagate this omission into nested joins or across intervening effects.
-function killedAtImmediateReplacement(parser,node,following,environment){
- if(node.k!=='if'||following?.k!=='let')return null;
- const write=readRustExclusiveSourceNode(parser,following.value);if(write?.kind!=='write'||write.info.fields.length||write.info.layouts.length||!environment.has(write.info.slot.lexical))return null;
- const target=write.info.slot.lexical,pending=[following.value.args[0].value],seen=new Set();
- while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);if(seen.size>readRustOwnedRecordEffectLimit('inspection'))fail('complete replacement dependency inspection exceeds its budget',node.span);
-  if(value.sourceStateTransition?.binder.identity===target)return null;
-  if(marker(value)){const ordinary=readRustOwnedRecordEffectSource(parser,value),exclusive=readRustExclusiveSourceNode(parser,value);if(ordinary){if(ordinary.slot.lexical===target)return null;}else if(exclusive?.kind==='write'){if(exclusive.info.slot.lexical===target)return null;}else if(exclusive?.kind==='call'){if(exclusive.info.borrows.some(borrow=>borrow.slot.lexical===target))return null;}else return null;}
-  for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);
- }return {node,roots:new Set([target])};
+// Source-derived overwrite liveness. Intervening effects remain in place;
+// only a later complete assignment before any access can kill a join slot.
+function killedBeforeNextAccess(parser,node,continuation,environment){
+ if(!environment.size||!['if','match','match1','binary'].includes(node.k)||node.k==='binary'&&!['and','or'].includes(node.op))return null;
+ const first=new Map(),killed=new Set();let work=0,complete=true;
+ function accesses(expression){
+  const found=new Set(),pending=[expression],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);if(++work>readRustOwnedRecordEffectLimit('inspection'))fail('overwrite liveness exceeds its source inspection budget',node.span);
+   if(value.sourceStateTransition)found.add(value.sourceStateTransition.binder.identity);
+   if(marker(value)){
+    const ordinary=readRustOwnedRecordEffectSource(parser,value),exclusive=readRustExclusiveSourceNode(parser,value);
+    if(ordinary)found.add(ordinary.slot.lexical);
+    else if(exclusive?.kind==='write')found.add(exclusive.info.slot.lexical);
+    else if(exclusive?.kind==='call'){for(const borrow of exclusive.info.borrows)found.add(borrow.slot.lexical);for(let index=0;index<value.args.length;index++)if(!exclusive.info.borrows.some(borrow=>borrow.index===index))pending.push(value.args[index].value);continue;}
+    else return null;
+   }
+   for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);
+  }return found;
+ }
+ let index=continuation.index??0,body=continuation.body;const scopes=new Set();
+ for(;;){
+  const effect=continuation.effects?continuation.effects[index++]:body;if(!effect)break;
+  if(!continuation.effects){if(scopes.has(effect))fail('a source lexical continuation cannot cycle',node.span);scopes.add(effect);body=['let','print'].includes(effect.k)?effect.body:null;}
+  if(++work>readRustOwnedRecordEffectLimit('inspection'))fail('overwrite continuation exceeds its source inspection budget',node.span);
+  const expression=effect.k==='let'?effect.value:effect.k==='print'?effect.expr:effect,write=readRustExclusiveSourceNode(parser,expression),whole=write?.kind==='write'&&write.info.fields.length===0&&write.info.layouts.length===0;
+  const used=accesses(whole?expression.args[0].value:expression);if(used===null){complete=false;break;}
+  for(const root of used)if(environment.has(root)&&!first.has(root))first.set(root,'access');
+  if(whole){const root=write.info.slot.lexical;if(environment.has(root)&&!first.has(root)){first.set(root,'overwrite');killed.add(root);}}
+  if(first.size===environment.size)break;
+ }
+ if(complete)for(const root of environment.keys())if(!first.has(root))killed.add(root);
+ return killed.size?{node,roots:killed}:null;
 }
 function selectedStateKeys(parser,node,environment){const changed=changedStateRoots(parser,node);return [...environment.keys()].filter(key=>changed===null||changed.has(key));}
 function requireUnchangedState(before,after,selected,node){const written=new Set(selected);if(before.size!==after.size||[...before].some(([key,prior])=>!after.has(key)||after.get(key).slot!==prior.slot||!written.has(key)&&after.get(key).name!==prior.name))fail('state write projection must retain every actual unchanged outer slot',node?.span);}
@@ -97,7 +115,7 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
  const mark=(value,original)=>{const result=parser.origins.reuseExpressionOrigin(original,value);if(original.sourcePosition&&!Object.hasOwn(result,'sourcePosition'))result.sourcePosition=original.sourcePosition;if(original.sourceStateTransition&&!Object.hasOwn(result,'sourceStateTransition'))result.sourceStateTransition=original.sourceStateTransition;return result;};
  function capture(value,origin,next){if(acceptRustExpressionCompletionInertLeaf(value.k))return next(value);const want=typeOf(parser,value,path,origin);if(!want)fail('an earlier evaluated operand needs its actual complete type before a later state effect',value.span);const name=parser.freshProductBinding(),reference=mark({k:'name',path:[name]},value);return {k:'let',name,type:want,value,body:next(reference),span:value.span};}
  function packet(value,environment,keys,resultType,span){const items=[value,...keys.map(key=>({k:'name',path:[environment.get(key).name]}))];return {k:'tuple',items,span};}
- function phi(original,environment,build,next,depth,want){const dead=joinKills.get(original)??new Set(),keys=selectedStateKeys(parser,original,environment).filter(key=>!dead.has(key)),resultType=typeOf(parser,original,path,want);if(!resultType)fail('a branch state join needs its actual complete result type or actual enclosing annotation',original.span);const tuple={kind:'tuple',elements:[resultType,...keys.map(key=>readRustRecordSourceType(parser,environment.get(key).slot.origin.type,environment.get(key).slot.origin.path))]},built=build((result,branch)=>{requireUnchangedState(environment,branch,[...keys,...dead],original);return packet(result,branch,keys,resultType,original.span);}),value={...built},name=parser.freshProductBinding(),reference={k:'name',path:[name]},bindings=[],joined=new Map(environment);delete value.sourcePosition;delete value.sourceStateTransition;for(let index=0;index<keys.length;index+=1){const fresh=parser.freshProductBinding();bindings.push({name:fresh,value:{k:'tupleIndex',object:reference,index:index+1}});joined.set(keys[index],{...environment.get(keys[index]),name:fresh});}let body=next(mark({k:'tupleIndex',object:reference,index:0},original),joined);for(const binding of bindings.toReversed())body={k:'let',...binding,body};return {k:'let',name,type:tuple,value,body,span:original.span};}
+ function phi(original,environment,build,next,depth,want,join=original){const dead=joinKills.get(join)??new Set(),keys=selectedStateKeys(parser,original,environment).filter(key=>!dead.has(key)),resultType=typeOf(parser,original,path,want);if(!resultType)fail('a branch state join needs its actual complete result type or actual enclosing annotation',original.span);const tuple={kind:'tuple',elements:[resultType,...keys.map(key=>readRustRecordSourceType(parser,environment.get(key).slot.origin.type,environment.get(key).slot.origin.path))]},built=build((result,branch)=>{requireUnchangedState(environment,branch,[...keys,...dead],original);return packet(result,branch,keys,resultType,original.span);}),value={...built},name=parser.freshProductBinding(),reference={k:'name',path:[name]},bindings=[],joined=new Map(environment);delete value.sourcePosition;delete value.sourceStateTransition;for(let index=0;index<keys.length;index+=1){const fresh=parser.freshProductBinding();bindings.push({name:fresh,value:{k:'tupleIndex',object:reference,index:index+1}});joined.set(keys[index],{...environment.get(keys[index]),name:fresh});}let body=next(mark({k:'tupleIndex',object:reference,index:0},original),joined);for(const binding of bindings.toReversed())body={k:'let',...binding,body};return {k:'let',name,type:tuple,value,body,span:original.span};}
  function ordered(original,roles,environment,next,depth,want){const slots=childSlots(original,roles),selected=new Map();const step=(at,current)=>{if(at===slots.length){const rebuilt={...original};for(const role of roles)if(Array.isArray(original[role]))rebuilt[role]=[...original[role]];for(const [slot,value]of selected)if(slot.index===null)rebuilt[slot.role]=value;else rebuilt[slot.role][slot.index]=slot.wrapper?{...slot.wrapper,value}:value;return next(mark(rebuilt,original),current);}const slot=slots[at],later=slots.slice(at+1).some(item=>has(item.child));return visit(slot.child,current,(value,after)=>{const resume=actual=>{selected.set(slot,actual);return step(at+1,after);};return later?capture(value,null,resume):resume(value);},depth+1,null);};return step(0,environment);}
  function exclusiveCall(original,info,environment,next,depth){
   const arguments_=[],step=(index,current)=>{
@@ -126,13 +144,20 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
   if(form==='read state'){const slot=arena.reads[Number(value.name)],actual=slot?environment.get(slot.lexical):null;if(!actual)fail('a mutable read needs its actual initialized lexical state in this callable',value.span);return next(mark({k:'name',path:[actual.name]},value),environment);}
   if(form==='write state'){const info=arena.writes[Number(value.name)];if(!info||!environment.has(info.slot.lexical))fail('a mutable write cannot leave its actual lexical declaration scope',value.span);return visit(value.args[0].value,environment,(rhs,after)=>{const previous=after.get(info.slot.lexical),rhsName=parser.freshProductBinding(),stateName=parser.freshProductBinding(),updated=new Map(after);updated.set(info.slot.lexical,{slot:info.slot,name:stateName});const snapshot=attachRustSourceStateTransition(parser,reconstructRustOwnedRecordState(parser,path,info.layouts,{k:'name',path:[previous.name]},{k:'name',path:[rhsName]},value.span),info.slot,'write'),body=next({k:'unit',span:value.span},updated);return {k:'let',name:rhsName,type:readRustRecordSourceType(parser,info.field.type,info.field.path),value:rhs,body:{k:'let',name:stateName,type:readRustRecordSourceType(parser,info.slot.origin.type,info.slot.origin.path),value:snapshot,body},span:value.span};},depth+1,info.field.type);}
   if(form==='binding'){
-   const discarded=killedAtImmediateReplacement(parser,value.value,value.body,environment),previous=joinKills.get(value.value);if(discarded)joinKills.set(value.value,discarded.roots);
+   const discarded=killedBeforeNextAccess(parser,value.value,{body:value.body},environment),previous=joinKills.get(value.value);if(discarded)joinKills.set(value.value,discarded.roots);
    try{return visit(value.value,environment,(rhs,after)=>{const inner=new Map(after),slot=declarations.get(value.name);if(slot)inner.set(slot.lexical,{slot,name:value.name});return mark({...value,value:rhs,body:visit(value.body,inner,(result,done)=>{const outer=new Map(done);if(slot)outer.delete(slot.lexical);return next(result,outer);},depth+1,want)},value);},depth+1,value.type??null);}finally{if(discarded){if(previous)joinKills.set(value.value,previous);else joinKills.delete(value.value);}}
   }
-  if(form==='print')return visit(value.expr,environment,(expr,after)=>mark({...value,expr,body:visit(value.body,after,next,depth+1,want)},value),depth+1,null);
+  if(form==='print')return visit(value.expr,environment,(expr,after)=>{
+   const body=visit(value.body,after,(result,done)=>{
+    if(!value.sourcePosition&&!value.sourceStateTransition)return next(result,done);
+    const type=typeOf(parser,value.body,path)??typeOf(parser,result,path);if(!type)fail('a print result retains its complete source type before continuation',value.span);
+    const name=parser.freshProductBinding(),held=parser.origins.reuseExpressionOrigin(result,{k:'name',path:[name],span:value.span});
+    return {k:'let',name,type,value:result,body:next({...held,...(value.sourcePosition?{sourcePosition:value.sourcePosition}:{}),...(value.sourceStateTransition?{sourceStateTransition:value.sourceStateTransition}:{})},done),span:value.span};
+   },depth+1,want),printed=mark({...value,expr,body},value);delete printed.sourcePosition;delete printed.sourceStateTransition;return printed;
+  },depth+1,null);
   if(form==='conditional')return visit(value.cond,environment,(condition,after)=>phi(value,after,branch=>mark({...value,cond:condition,then:visit(value.then,new Map(after),branch,depth+1,want),else:visit(value.else,new Map(after),branch,depth+1,want)},value),next,depth,want),depth+1,{kind:'bool'});
   if(form==='short circuit')return visit(value.left,environment,(left,after)=>phi(value,after,branch=>{const short=readRustExpressionCompletionShortCircuitValue(value.op),done=branch({k:'bool',value:short},new Map(after)),right=visit(value.right,new Map(after),branch,depth+1,{kind:'bool'});return mark({k:'if',cond:left,then:short?done:right,else:short?right:done,span:value.span},value);},next,depth,{kind:'bool'}),depth+1,{kind:'bool'});
-  if(form==='match')return ordered(value,value.k==='match1'?['scrutinee']:['scrutinees'],environment,(selected,after)=>phi(value,after,branch=>value.k==='match1'?mark({...selected,cases:value.cases.map(row=>({...row,body:visit(row.body,new Map(after),branch,depth+1,want)}))},value):mark({...selected,rows:value.rows.map(row=>({...row,body:visit(row.body,new Map(after),branch,depth+1,want)}))},value),next,depth,want),depth,null);
+  if(form==='match')return ordered(value,value.k==='match1'?['scrutinee']:['scrutinees'],environment,(selected,after)=>phi(value,after,branch=>value.k==='match1'?mark({...selected,cases:value.cases.map(row=>({...row,body:visit(row.body,new Map(after),branch,depth+1,want)}))},value):mark({...selected,rows:value.rows.map(row=>({...row,body:visit(row.body,new Map(after),branch,depth+1,want)}))},value),next,depth,want,value),depth,null);
   if(form==='packet'){const operation=readRustExpressionCompletionPacketOperation(value.op);if(operation==='result')return packetVisit(value.args[0].value,1,environment,next,after=>visit(value.args[1].value,after,next,depth+1,want),depth+1,want);if(operation==='success')return visit(value.args[0].value,environment,(child,after)=>next(mark({...value,args:[{...value.args[0],value:child}]},value),after),depth+1,null);}
   const roles=readRustOwnedRecordEffectChildren(value.k);if(roles.length)return ordered(value,roles,environment,next,depth,want);
   fail('the actual source expression form needs its complete ordered state roles',value.span);
@@ -141,12 +166,12 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
  return visit(node,initial,finished,0,expected);
 }
 function lowerMain(parser,main,budget){
- const inventory=new Map(),names=new Map(),output=[];let environment=new Map(),followingEffect=null;
+ const inventory=new Map(),names=new Map(),output=[];let environment=new Map(),followingEffects={effects:main.effects,index:0};
  const rename=node=>alpha(parser,node,names,inventory,[],budget);
  // Main retains its effect algebra. A value/state packet completes before
  // the following effect, including the original structural assertion.
  const evaluate=(node,expected=null)=>{
-  const discarded=killedAtImmediateReplacement(parser,node,followingEffect,environment),keys=selectedStateKeys(parser,node,environment).filter(key=>!discarded?.roots.has(key));
+  const discarded=killedBeforeNextAccess(parser,node,followingEffects,environment),keys=selectedStateKeys(parser,node,environment).filter(key=>!discarded?.roots.has(key));
   if(keys.length===0)return lower(parser,node,[],inventory,environment,expected,(result,after)=>{requireUnchangedState(environment,after,keys,node);return result;},discarded);
   const packetName=parser.freshProductBinding(),reference={k:'name',path:[packetName]};
   const value=lower(parser,node,[],inventory,environment,expected,(result,after)=>{requireUnchangedState(environment,after,keys,node);return {k:'tuple',items:[result,...keys.map(key=>({k:'name',path:[after.get(key).name]}))]};},discarded);
@@ -177,7 +202,7 @@ function lowerMain(parser,main,budget){
  const propositionExpression=expandSurfacePropositionValue;
  const renameProp=prop=>prop.p==='bool'?{...prop,expr:rename(prop.expr)}:['eq','ne','lt','le','gt','ge'].includes(prop.p)?{...prop,left:rename(prop.left),right:rename(prop.right)}:prop.p==='not'?{...prop,arg:renameProp(prop.arg)}:['and','or','implies'].includes(prop.p)?{...prop,left:renameProp(prop.left),right:renameProp(prop.right)}:prop;
  for(const [effectIndex,effect]of main.effects.entries()){
-  followingEffect=main.effects[effectIndex+1]??null;
+  followingEffects={effects:main.effects,index:effectIndex+1};
   if(effect.k==='let'){
    const old=effect.name,name=parser.freshProductBinding(),slot=readRustOwnedRecordStateDeclarations(parser).get(old),value=evaluate(rename(effect.value),effect.type??null);
    output.push({...effect,name,value});names.set(old,name);if(slot){inventory.set(name,slot);environment.set(slot.lexical,{slot,name});}
