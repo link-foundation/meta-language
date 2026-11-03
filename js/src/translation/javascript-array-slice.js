@@ -4,7 +4,7 @@ import {readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet} from './java
 import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
-import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
+import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
 import {allocateJavaScriptArray} from './javascript-arrays.js';
 import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.js';
 import {readJavaScriptObjectSpreadStateError,stepJavaScriptObjectSpread,resumeJavaScriptObjectSpread} from './javascript-object-spread.js';
@@ -53,7 +53,7 @@ export function readJavaScriptArraySliceStateError(heap,directory,state){
  if(['ready','element getter','write','finish'].includes(state.phase)&&state.target.$!=='object')return 'slice retains its actual constructed result Object';
  if(state.phase==='allocate'&&(state.allocationPrototype===undefined||!testJavaScriptSemanticSameValue(state.allocationPrototype,directory.arrayPrototype)))return 'slice fallback allocation retains its actual realm Array prototype';
  if(state.phase==='construct'){
-  const fact=state.constructorFact,actual=fact===undefined?undefined:directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,fact.identity)];
+  const fact=state.constructorFact,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor??absent),actual=classification.$==='arrayConstructorKnown'?classification.fact:undefined;
   if(state.constructor?.$!=='object'||fact===undefined||!fact.constructable||actual===undefined||!testJavaScriptSemanticSameValue(state.constructor,state.species?.candidate??absent)||state.constructor.identity!==fact.identity||actual.constructable!==fact.constructable||actual.realm!==fact.realm||actual.intrinsicArray!==fact.intrinsicArray||actual.intrinsicKind!==fact.intrinsicKind)return 'slice construction retains the actual selected constructor fact';
  }
  if((state.phase==='finish')!==(state.assignment!==undefined))return 'slice final Set retains only its actual assignment child';

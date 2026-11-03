@@ -149,6 +149,8 @@ const libraries=[
 ];
 const fixtures=[
  'js/tests/fixtures/javascript-function-binding-source.mjs',
+ 'js/tests/fixtures/javascript-bound-construction-source.mjs',
+ 'js/tests/fixtures/javascript-bound-instance-of-source.mjs',
  'js/tests/fixtures/javascript-shared-species-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-collection-source.mjs',
@@ -364,6 +366,7 @@ const consumers=[
  'js/tests/translation-javascript-species-construction.test.js',
  'js/tests/translation-javascript-shared-species-construction.test.js',
  'js/tests/translation-javascript-function-binding.test.js',
+ 'js/tests/translation-javascript-bound-construction.test.js',
  'js/tests/translation-javascript-iterator-protocol.test.js',
  'js/tests/translation-javascript-array-iteration.test.js',
  'js/tests/translation-javascript-array-spread.test.js',
@@ -734,6 +737,8 @@ for(const [source,target] of [
  ['javascript-weak-construction-source','javascript-weak-construction-source'],
  ['javascript-shared-species-construction-source','javascript-shared-species-construction-source'],
  ['javascript-function-binding-source','javascript-function-binding-source'],
+ ['javascript-bound-construction-source','javascript-bound-construction-source'],
+ ['javascript-bound-instance-of-source','javascript-bound-instance-of-source'],
  ['rust-exclusive-source-vectors','rust-exclusive-source-vectors'],
  ['rust-exclusive-source-strings','rust-exclusive-source-strings'],
  ['rust-exclusive-source-compounds','rust-exclusive-source-compounds'],

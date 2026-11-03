@@ -5,7 +5,7 @@ import {readJavaScriptCollectionConstructorKind} from './javascript-collection-c
 // Generic base [[Construct]] over actual target/newTarget facts and realm roots.
 // Intrinsic kinds come from protected identity authority, never function spelling.
 import {readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,insertJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,defineJavaScriptOrdinaryProperty,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
-import {classifyJavaScriptArraySpeciesConstructor,readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
+import {classifyJavaScriptArraySpeciesConstructor,readJavaScriptConstructorAuthorityTarget,readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
 import {readJavaScriptExecutableCallFunction} from './javascript-call-templates.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
@@ -17,7 +17,7 @@ import {normalizeJavaScriptUnsignedInteger} from './number-bitwise-rules.js';
 import {createJavaScriptPropertyDescriptor} from './javascript-property-descriptors.js';
 import {testJavaScriptReflectionPropertyBudget} from './javascript-property-reflection.js';
 /** @typedef {{$:'constructionCallRecord',callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[],constructing:boolean,newTarget:JavaScriptSemanticValue}} JavaScriptConstructionCall */
-/** @typedef {{$:'constructionState',target:JavaScriptSemanticValue,newTarget:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[],phase:string,mode:string,prototype:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,primitive:JavaScriptSemanticValue,arrayIndex:number,allocationKind:string,conversion?:JavaScriptPrimitiveConversionState,call?:JavaScriptConstructionCall}} JavaScriptConstructionState */
+/** @typedef {{$:'constructionState',target:JavaScriptSemanticValue,newTarget:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[],phase:string,mode:string,prototype:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,primitive:JavaScriptSemanticValue,arrayIndex:number,allocationKind:string,conversion?:JavaScriptPrimitiveConversionState,call?:JavaScriptConstructionCall,operation?:JavaScriptConstructionState}} JavaScriptConstructionState */
 /** @typedef {{$:'constructionContinue',heap:JavaScriptOrdinaryHeap,state:JavaScriptConstructionState} |
  * {$:'constructionCall',heap:JavaScriptOrdinaryHeap,state:JavaScriptConstructionState,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[],constructing:boolean,newTarget:JavaScriptSemanticValue} |
  * {$:'constructionAllocate',heap:JavaScriptOrdinaryHeap,state:JavaScriptConstructionState,prototype:JavaScriptSemanticValue} |
@@ -28,8 +28,36 @@ import {testJavaScriptReflectionPropertyBudget} from './javascript-property-refl
  * {$:'constructionError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string,realm?:bigint} |
  * {$:'constructionInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'constructionResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptConstructionState,reason:string}} JavaScriptConstructionTransition */
-/** @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptSemanticValue} candidate @returns {JavaScriptArrayConstructorFact|undefined} */
-export function readJavaScriptConstructionFact(directory,candidate){return candidate.$==='object'&&candidate.callable?directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,candidate.identity)]:undefined;}
+/** @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptSemanticValue} candidate @param {JavaScriptOrdinaryHeap|undefined} heap @returns {JavaScriptArrayConstructorFact|undefined} */
+export function readJavaScriptConstructionFact(directory,candidate,heap=undefined){if(heap!==undefined){const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,candidate);return classification.$==='arrayConstructorKnown'?classification.fact:undefined;}return candidate.$==='object'&&candidate.callable?directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,candidate.identity)]:undefined;}
+/** Flatten only immutable bound slots. No property Get, receiver allocation or
+ * constructor body runs while deriving the actual delegated operands.
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptConstructionState} state
+ * @returns {{target:JavaScriptSemanticValue,newTarget:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[],error:string,resource:boolean}} */
+export function readJavaScriptBoundConstructionOperands(heap,state){
+ let target=state.target,newTarget=state.newTarget,total=state.arguments.length;const prefixes=[];
+ for(let depth=0;depth<=heap.objects.length;depth++){
+  const object=target.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)]:undefined;
+  if(object===undefined||!object.callable)return {target,newTarget,arguments:[],error:'bound construction retains its actual callable target chain',resource:false};
+  if(object.$!=='boundFunctionObject'){const arguments_=[];for(let index=prefixes.length-1;index>=0;index--)for(const value of prefixes[index]??[])arguments_.push(value);for(const value of state.arguments)arguments_.push(value);return {target,newTarget,arguments:arguments_,error:'',resource:false};}
+  total+=object.boundArguments.length;if(total>1048576)return {target,newTarget,arguments:[],error:'bound construction exceeds shared argument storage',resource:true};
+  prefixes.push(object.boundArguments);if(testJavaScriptSemanticSameValue(target,newTarget))newTarget=object.boundTarget;target=object.boundTarget;
+ }
+ return {target,newTarget,arguments:[],error:'bound construction requires an acyclic actual target graph',resource:false};
+}
+/** One normalized child suffices for the entire bound chain. Its target cannot
+ * itself be bound; source operands remain on the outer construction state.
+ * @param {JavaScriptConstructionState} state @returns {JavaScriptConstructionState} */
+export function readJavaScriptActiveConstruction(state){return state.operation??state;}
+/** @param {JavaScriptConstructionState} state @param {JavaScriptConstructionTransition} transition @returns {JavaScriptConstructionTransition} */
+export function adaptJavaScriptBoundConstruction(state,transition){
+ switch(transition.$){
+  case 'constructionContinue':case 'constructionCall':case 'constructionAllocate':case 'constructionNeedAuthority':case 'constructionNeedImplementation':case 'constructionResourceLimit':{
+   const {call:prior,...base}=state,operation=transition.state,next={...base,phase:'bound construction',operation,...(operation.call===undefined?{}:{call:operation.call})};return {...transition,state:next};
+  }
+  case 'constructionCompleted':case 'constructionThrow':case 'constructionError':case 'constructionInvalid':return transition;
+ }
+}
 /** Explicit intrinsicKind extends existing Array facts. A constructable source
  * fact separately proves that an actual strict function/base class is a
  * constructor; receiverMode alone never grants that classification.
@@ -38,12 +66,19 @@ export function readJavaScriptConstructionMode(program,heap,fact){const actual=h
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @returns {string} */
 export function readJavaScriptConstructionStateError(program,heap,directory,state){
  const invalid=readJavaScriptArraySpeciesDirectoryError(heap,directory);if(invalid!=='')return invalid;
- if(state.$!=='constructionState'||!['target','newTarget','initialize','convert','converted primitive','prototype','prototype getter','prototype fallback','Object root','allocate','array length','array elements','body'].includes(state.phase)||state.arguments.length>1048576||!Number.isSafeInteger(state.arrayIndex)||Object.is(state.arrayIndex,-0)||state.arrayIndex<0||state.arrayIndex>state.arguments.length)return 'construction retains its actual bounded argument vector and source continuation';
+ if(state.$!=='constructionState'||!['target','newTarget','initialize','bound construction','convert','converted primitive','prototype','prototype getter','prototype fallback','Object root','allocate','array length','array elements','body'].includes(state.phase)||state.arguments.length>1048576||!Number.isSafeInteger(state.arrayIndex)||Object.is(state.arrayIndex,-0)||state.arrayIndex<0||state.arrayIndex>state.arguments.length)return 'construction retains its actual bounded argument vector and source continuation';
  for(const value of [state.target,state.newTarget,state.prototype,state.receiver,state.primitive,...state.arguments]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
- const target=readJavaScriptConstructionFact(directory,state.target),newTarget=readJavaScriptConstructionFact(directory,state.newTarget);
+ const target=readJavaScriptConstructionFact(directory,state.target,heap),newTarget=readJavaScriptConstructionFact(directory,state.newTarget,heap);
  if(state.phase!=='target'&&(target===undefined||!target.constructable||state.mode!==readJavaScriptConstructionMode(program,heap,target)))return 'construction retains its actual target classification and executable or protected intrinsic kind';
  if(!['target','newTarget'].includes(state.phase)&&(newTarget===undefined||!newTarget.constructable))return 'construction retains its actual validated newTarget constructor';
  for(const fact of [target,newTarget])if(fact!==undefined){const fn=readJavaScriptExecutableCallFunction(program,heap,fact.identity);if(fn!==undefined&&fn.realm!==fact.realm)return 'construction retains the actual executable constructor realm recorded by authority';}
+ if(state.phase==='bound construction'||state.operation!==undefined){
+  const operation=state.operation,operands=readJavaScriptBoundConstructionOperands(heap,state),actual=operation?.target.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,operation.target.identity)]:undefined;
+  if(state.phase!=='bound construction'||state.mode!=='bound function'||operation===undefined||operation.operation!==undefined||actual===undefined||actual.$==='boundFunctionObject'||operands.error!==''||!testJavaScriptSemanticSameValue(operation.target,operands.target)||!testJavaScriptSemanticSameValue(operation.newTarget,operands.newTarget)||operation.arguments.length!==operands.arguments.length||operation.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,operands.arguments[index]??{$:'undefined'}))||state.conversion!==undefined||state.allocationKind!==''||state.prototype.$!=='undefined'||state.receiver.$!=='undefined'||state.primitive.$!=='undefined'||state.arrayIndex!==0)return 'bound construction retains its original operands and exact normalized non-bound shared operation';
+  const call=state.call,selected=operation.call;if((call===undefined)!==(selected===undefined)||call!==undefined&&selected!==undefined&&(call.$!==selected.$||call.constructing!==selected.constructing||!testJavaScriptSemanticSameValue(call.callee,selected.callee)||!testJavaScriptSemanticSameValue(call.receiver,selected.receiver)||!testJavaScriptSemanticSameValue(call.newTarget,selected.newTarget)||call.arguments.length!==selected.arguments.length||call.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,selected.arguments[index]??{$:'undefined'}))))return 'bound construction retains only its actual delegated child call';
+  return readJavaScriptConstructionStateError(program,heap,directory,operation);
+ }
+ if(state.mode==='bound function'&&!['newTarget','initialize'].includes(state.phase))return 'bound construction enters only its actual classification or delegation phase';
  if(!['','ordinary','array','wrapper','collection','weak collection'].includes(state.allocationKind))return 'construction retains its actual selected allocation kind';
  if(['prototype','prototype getter','prototype fallback','Object root','allocate','array length','array elements','body'].includes(state.phase)){
   const expected=testJavaScriptConstructedCollectionKind(state.mode)?readJavaScriptConstructedCollectionAllocationKind(state.mode):state.mode==='Array'?'array':['Number','Boolean','String'].includes(state.mode)||state.mode==='Object'&&testJavaScriptSemanticSameValue(state.target,state.newTarget)?'wrapper':'ordinary';if(state.allocationKind!==expected)return 'construction cannot replace the allocation kind selected by its actual constructor';
@@ -87,7 +122,7 @@ export function acceptJavaScriptConstructionConversion(heap,directory,state,tran
   case 'scalarCall':{const call={$:'constructionCallRecord',callee:transition.callee,receiver:transition.receiver,arguments:transition.arguments,constructing:false,newTarget:{$:'undefined'}};return {$:'constructionCall',heap,state:{...base,phase:'convert',conversion:transition.state,call},callee:call.callee,receiver:call.receiver,arguments:call.arguments,constructing:false,newTarget:call.newTarget};}
   case 'scalarCompleted':return {$:'constructionContinue',heap,state:{...base,phase:'prototype',primitive:transition.value,allocationKind:'wrapper'}};
   case 'scalarThrow':return {$:'constructionThrow',heap,value:transition.value};
-  case 'scalarIntrinsicError':{const fact=readJavaScriptConstructionFact(directory,state.target);return fact===undefined?{$:'constructionInvalid',heap,reason:'constructor conversion retains its actual intrinsic realm fact'}:{$:'constructionError',heap,errorClass:transition.errorClass,reason:transition.reason,realm:fact.realm};}
+  case 'scalarIntrinsicError':{const fact=readJavaScriptConstructionFact(directory,state.target,heap);return fact===undefined?{$:'constructionInvalid',heap,reason:'constructor conversion retains its actual intrinsic realm fact'}:{$:'constructionError',heap,errorClass:transition.errorClass,reason:transition.reason,realm:fact.realm};}
   case 'scalarInvalid':return {$:'constructionInvalid',heap,reason:transition.reason};
   case 'scalarResourceLimit':return {$:'constructionResourceLimit',heap,state:{...base,phase:'converted primitive',primitive:transition.value},reason:transition.reason};
  }
@@ -96,32 +131,37 @@ export function acceptJavaScriptConstructionConversion(heap,directory,state,tran
  * target constructor realm. Actual Object self-construction uses its own realm.
  * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @param {boolean} objectSelf @returns {JavaScriptConstructionTransition} */
 export function selectJavaScriptConstructionRoot(heap,directory,state,objectSelf=false){
- const candidate=objectSelf?state.target:state.newTarget,fact=readJavaScriptConstructionFact(directory,candidate),root=fact===undefined?undefined:(directory.constructorRealms??[]).find(row=>row.realm===fact.realm);
- if(root===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:candidate};
+ const candidate=objectSelf?state.target:state.newTarget,fact=readJavaScriptConstructionFact(directory,candidate,heap),root=fact===undefined?undefined:(directory.constructorRealms??[]).find(row=>row.realm===fact.realm),authority=readJavaScriptConstructorAuthorityTarget(heap,candidate)??candidate;
+ if(root===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:authority};
  let prototype=root.objectPrototype;
  if(objectSelf){const input=state.arguments[0]??{$:'undefined'};prototype=input.$==='text'||input.$==='sourceText'?root.stringPrototype:input.$==='number'?root.numberPrototype:input.$==='boolean'?root.booleanPrototype:input.$==='integer'?root.integerPrototype:input.$==='symbol'?root.symbolPrototype:root.objectPrototype;}
  else prototype=state.mode==='Array'?root.arrayPrototype:state.mode==='Number'?root.numberPrototype:state.mode==='Boolean'?root.booleanPrototype:state.mode==='String'?root.stringPrototype:state.mode==='Map'?root.mapPrototype:state.mode==='Set'?root.setPrototype:state.mode==='WeakMap'?root.weakMapPrototype:state.mode==='WeakSet'?root.weakSetPrototype:root.objectPrototype;
- if(prototype===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:candidate};
+ if(prototype===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:authority};
  return {$:'constructionContinue',heap,state:{...state,phase:'allocate',prototype}};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @param {JavaScriptSemanticValue} value @returns {JavaScriptConstructionTransition} */
-export function continueJavaScriptConstructionPrototype(heap,directory,state,value){const base={...clearJavaScriptConstructionChild(state),prototype:value,phase:value.$==='object'?'allocate':'prototype fallback'};return value.$==='object'?{$:'constructionContinue',heap,state:base}:selectJavaScriptConstructionRoot(heap,directory,base);}
+export function continueJavaScriptConstructionPrototype(heap,directory,state,value){if(state.operation!==undefined)return adaptJavaScriptBoundConstruction(state,continueJavaScriptConstructionPrototype(heap,directory,state.operation,value));const base={...clearJavaScriptConstructionChild(state),prototype:value,phase:value.$==='object'?'allocate':'prototype fallback'};return value.$==='object'?{$:'constructionContinue',heap,state:base}:selectJavaScriptConstructionRoot(heap,directory,base);}
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @returns {JavaScriptConstructionTransition} */
 export function stepJavaScriptConstruction(program,heap,directory,state){
  const error=readJavaScriptConstructionStateError(program,heap,directory,state);if(error!=='')return {$:'constructionInvalid',heap,reason:error};
+ if(state.operation!==undefined)return adaptJavaScriptBoundConstruction(state,stepJavaScriptConstruction(program,heap,directory,state.operation));
  if(state.arguments.length>4096)return {$:'constructionResourceLimit',heap,state,reason:'construction exceeds the selected 4096 argument work profile'};
  if(state.call!==undefined)return {$:'constructionCall',heap,state,callee:state.call.callee,receiver:state.call.receiver,arguments:state.call.arguments,constructing:state.call.constructing,newTarget:state.call.newTarget};
  if(state.phase==='target'||state.phase==='newTarget'){
   const candidate=state.phase==='target'?state.target:state.newTarget;if(candidate.$!=='object'||!candidate.callable)return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};
-  const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,candidate);if(classification.$==='arrayConstructorNotConstructable')return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};const fact=classification.$==='arrayConstructorKnown'?classification.fact:undefined;if(fact===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:candidate};if(!fact.constructable)return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};
+  const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,candidate);if(classification.$==='arrayConstructorNotConstructable')return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};const fact=classification.$==='arrayConstructorKnown'?classification.fact:undefined;if(fact===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:classification.$==='arrayConstructorUnknown'?classification.constructor??candidate:candidate};if(!fact.constructable)return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};
   if(state.phase==='newTarget'){
-   if(!['strict','ordinary class','Array','Number','Boolean','String','Object','Map','Set','WeakMap','WeakSet'].includes(state.mode))return requestJavaScriptConstructionImplementation(heap,state,'Construct','the actual constructor kind requires its own derived bound or exotic implementation');
+   if(!['strict','ordinary class','bound function','Array','Number','Boolean','String','Object','Map','Set','WeakMap','WeakSet'].includes(state.mode))return requestJavaScriptConstructionImplementation(heap,state,'Construct','the actual constructor kind requires its own derived or exotic implementation');
    const fn=readJavaScriptExecutableCallFunction(program,heap,fact.identity),kind=readJavaScriptConstructionMode(program,heap,fact);
-   if(fact.intrinsicKind!==undefined&&!['Array','Object','Number','Boolean','String','Map','Set','WeakMap','WeakSet'].includes(kind)||fact.intrinsicKind===undefined&&!fact.intrinsicArray&&fn!==undefined&&!['strict','ordinary class','primitive intrinsic'].includes(fn.receiverMode))return requestJavaScriptConstructionImplementation(heap,state,'newTarget prototype and realm','the actual newTarget kind requires its bound derived or Proxy prototype/realm protocol');
+   if(fact.intrinsicKind!==undefined&&!['Array','Object','Number','Boolean','String','Map','Set','WeakMap','WeakSet'].includes(kind)||kind!=='bound function'&&fact.intrinsicKind===undefined&&!fact.intrinsicArray&&fn!==undefined&&!['strict','ordinary class','primitive intrinsic'].includes(fn.receiverMode))return requestJavaScriptConstructionImplementation(heap,state,'newTarget prototype and realm','the actual newTarget kind requires its derived or Proxy prototype/realm protocol');
   }
   return {$:'constructionContinue',heap,state:state.phase==='target'?{...state,phase:'newTarget',mode:readJavaScriptConstructionMode(program,heap,fact)}:{...state,phase:'initialize'}};
  }
- if(!['strict','ordinary class','Array','Number','Boolean','String','Object','Map','Set','WeakMap','WeakSet'].includes(state.mode))return requestJavaScriptConstructionImplementation(heap,state,'Construct','the actual constructor kind requires its own derived bound or exotic implementation');
+ if(state.phase==='initialize'&&state.mode==='bound function'){
+  const operands=readJavaScriptBoundConstructionOperands(heap,state);if(operands.error!=='')return operands.resource?{$:'constructionResourceLimit',heap,state,reason:operands.error}:{$:'constructionInvalid',heap,reason:operands.error};
+  return adaptJavaScriptBoundConstruction(state,beginJavaScriptConstruction(program,heap,directory,operands.target,operands.newTarget,operands.arguments));
+ }
+ if(!['strict','ordinary class','Array','Number','Boolean','String','Object','Map','Set','WeakMap','WeakSet'].includes(state.mode))return requestJavaScriptConstructionImplementation(heap,state,'Construct','the actual constructor kind requires its own derived or exotic implementation');
  if(state.phase==='initialize'){
   if(testJavaScriptConstructedCollectionKind(state.mode)){const fn=readJavaScriptExecutableCallFunction(program,heap,state.target.identity);if(fn===undefined)return requestJavaScriptConstructionImplementation(heap,state,'collection initialization','the actual collection constructor requires its complete registered portable iterable initializer body');if(readJavaScriptCollectionConstructorKind(fn)!==state.mode)return {$:'constructionInvalid',heap,reason:'collection constructor facts and actual initializer code retain the same intrinsic kind'};}
   const input=state.arguments[0]??{$:'undefined'};
@@ -150,7 +190,7 @@ export function stepJavaScriptConstruction(program,heap,directory,state){
   return {$:'constructionAllocate',heap,state,prototype:state.prototype};
  }
  if(state.phase==='array length'){
-  const length=state.arguments[0]??{$:'undefined'};if(length.$!=='number'||state.receiver.$!=='object')return {$:'constructionInvalid',heap,reason:'single numeric Array construction retains its actual Number input and allocated receiver'};const unsigned=normalizeJavaScriptUnsignedInteger(length.value);if(unsigned!==length.value){const fact=readJavaScriptConstructionFact(directory,state.target);return fact===undefined?{$:'constructionInvalid',heap,reason:'Array construction retains its actual constructor realm'}:{$:'constructionError',heap,errorClass:'RangeError',reason:'Invalid array length',realm:fact.realm};}
+  const length=state.arguments[0]??{$:'undefined'};if(length.$!=='number'||state.receiver.$!=='object')return {$:'constructionInvalid',heap,reason:'single numeric Array construction retains its actual Number input and allocated receiver'};const unsigned=normalizeJavaScriptUnsignedInteger(length.value);if(unsigned!==length.value){const fact=readJavaScriptConstructionFact(directory,state.target,heap);return fact===undefined?{$:'constructionInvalid',heap,reason:'Array construction retains its actual constructor realm'}:{$:'constructionError',heap,errorClass:'RangeError',reason:'Invalid array length',realm:fact.realm};}
   const descriptor=createJavaScriptPropertyDescriptor('data',false,false);descriptor.value={$:'number',value:unsigned};descriptor.writable=true;const defined=defineJavaScriptOrdinaryProperty(heap,state.receiver.identity,{$:'text',units:[108,101,110,103,116,104]},descriptor);return defined.success&&defined.error===''?{$:'constructionCompleted',heap:defined.heap,value:state.receiver}:{$:'constructionInvalid',heap:defined.heap,reason:defined.error||'fresh Array length initialization must succeed'};
  }
  if(state.phase==='array elements'){
@@ -162,6 +202,7 @@ export function stepJavaScriptConstruction(program,heap,directory,state){
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @param {bigint} identity @returns {JavaScriptConstructionTransition} */
 export function resumeJavaScriptConstructionAllocation(program,heap,directory,state,identity){
+ if(state.operation!==undefined){const error=readJavaScriptConstructionStateError(program,heap,directory,state);return error!==''?{$:'constructionInvalid',heap,reason:error}:adaptJavaScriptBoundConstruction(state,resumeJavaScriptConstructionAllocation(program,heap,directory,state.operation,identity));}
  const error=readJavaScriptConstructionStateError(program,heap,directory,state);if(error!==''||state.phase!=='allocate')return {$:'constructionInvalid',heap,reason:error||'construction identity responds only to its actual allocation request'};
  const request=stepJavaScriptConstruction(program,heap,directory,state);if(request.$==='constructionResourceLimit')return request;if(request.$!=='constructionAllocate')return {$:'constructionInvalid',heap,reason:'construction identity cannot replace another source operation'};
  if(state.allocationKind==='wrapper'){
@@ -181,6 +222,7 @@ export function resumeJavaScriptConstructionAllocation(program,heap,directory,st
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @param {JavaScriptPrimitiveConversionCompletion} completion @returns {JavaScriptConstructionTransition} */
 export function resumeJavaScriptConstructionCall(program,heap,directory,state,completion){
+ if(state.operation!==undefined){const error=readJavaScriptConstructionStateError(program,heap,directory,state);return error!==''?{$:'constructionInvalid',heap,reason:error}:adaptJavaScriptBoundConstruction(state,resumeJavaScriptConstructionCall(program,heap,directory,state.operation,completion));}
  const error=readJavaScriptConstructionStateError(program,heap,directory,state)||readJavaScriptOrdinaryValueError(heap,completion.value);if(error!==''||state.call===undefined)return {$:'constructionInvalid',heap,reason:error||'construction resumes only its selected actual child call'};
  if(completion.$==='throwCompletion')return {$:'constructionThrow',heap,value:completion.value};
  if(state.phase==='convert'&&state.conversion!==undefined)return acceptJavaScriptConstructionConversion(heap,directory,state,resumeJavaScriptScalarProtocol(heap,state.conversion,completion,readJavaScriptConstructionConversionOperation(state)));

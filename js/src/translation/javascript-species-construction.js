@@ -2,7 +2,7 @@
 // States preceding that explicit model retain their exact saved interpretation.
 import {readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,insertJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {allocateJavaScriptArray} from './javascript-arrays.js';
-import {readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
+import {readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact,classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
 import {readJavaScriptExecutableCallFunction} from './javascript-call-templates.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {beginJavaScriptConstruction,stepJavaScriptConstruction,resumeJavaScriptConstructionAllocation,resumeJavaScriptConstructionCall,continueJavaScriptConstructionPrototype,readJavaScriptConstructionStateError} from './javascript-construction.js';
@@ -12,7 +12,7 @@ import {beginJavaScriptConstruction,stepJavaScriptConstruction,resumeJavaScriptC
  * {$:'speciesConstructionCall',heap:JavaScriptOrdinaryHeap,state:JavaScriptSpeciesConstructionState,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[],constructing:boolean} |
  * {$:'speciesConstructionAllocate',heap:JavaScriptOrdinaryHeap,state:JavaScriptSpeciesConstructionState,prototype:JavaScriptSemanticValue} |
  * {$:'speciesConstructionNeedAuthority',heap:JavaScriptOrdinaryHeap,state:JavaScriptSpeciesConstructionState,constructor:JavaScriptSemanticValue} |
- * {$:'speciesConstructionNeedImplementation',heap:JavaScriptOrdinaryHeap,state:JavaScriptSpeciesConstructionState,constructor:JavaScriptSemanticValue} |
+ * {$:'speciesConstructionNeedImplementation',heap:JavaScriptOrdinaryHeap,state:JavaScriptSpeciesConstructionState,constructor:JavaScriptSemanticValue,newTarget?:JavaScriptSemanticValue,arguments?:JavaScriptSemanticValue[],operation?:string,reason?:string} |
  * {$:'speciesConstructionCompleted',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'speciesConstructionThrow',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'speciesConstructionError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string,realm?:bigint} |
@@ -108,7 +108,7 @@ export function retainJavaScriptSharedSpeciesConstruction(previous,operation){
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptSpeciesConstructionState} state @returns {string} */
 export function readJavaScriptSharedSpeciesConstructionStateError(program,heap,directory,state){
- const operation=state.operation,fact=directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,state.fact.identity)];
+ const operation=state.operation,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor),fact=classification.$==='arrayConstructorKnown'?classification.fact:undefined;
  if(state.model!=='shared Construct species continuation 1'||operation===undefined||fact===undefined||!fact.constructable||fact.realm!==state.fact.realm||fact.constructable!==state.fact.constructable||fact.intrinsicArray!==state.fact.intrinsicArray||fact.intrinsicKind!==state.fact.intrinsicKind||state.constructor.$!=='object'||!state.constructor.callable||state.constructor.identity!==fact.identity||!Number.isSafeInteger(state.length)||state.length<0||Object.is(state.length,-0))return 'shared species construction retains its actual immutable constructor classification and nonnegative length';
  if(!testJavaScriptSemanticSameValue(operation.target,state.constructor)||!testJavaScriptSemanticSameValue(operation.newTarget,state.constructor)||operation.arguments.length!==1||!testJavaScriptSemanticSameValue(operation.arguments[0]??{$:'undefined'},{$:'number',value:state.length})||state.phase!==operation.phase||state.mode!==operation.mode||!testJavaScriptSemanticSameValue(state.prototype,operation.prototype)||!testJavaScriptSemanticSameValue(state.receiver,operation.receiver))return 'species construction retains the exact selected target newTarget length and shared operation';
  const call=state.call,actual=operation.call;if((call===undefined)!==(actual===undefined))return 'species construction retains its actual shared child call';
@@ -122,7 +122,7 @@ export function adaptJavaScriptSpeciesConstruction(state,transition){
   case 'constructionCall':return {$:'speciesConstructionCall',heap:transition.heap,state:retainJavaScriptSharedSpeciesConstruction(state,transition.state),callee:transition.callee,receiver:transition.receiver,arguments:transition.arguments,constructing:transition.constructing};
   case 'constructionAllocate':return {$:'speciesConstructionAllocate',heap:transition.heap,state:retainJavaScriptSharedSpeciesConstruction(state,transition.state),prototype:transition.prototype};
   case 'constructionNeedAuthority':return {$:'speciesConstructionNeedAuthority',heap:transition.heap,state:retainJavaScriptSharedSpeciesConstruction(state,transition.state),constructor:transition.constructor};
-  case 'constructionNeedImplementation':return {$:'speciesConstructionNeedImplementation',heap:transition.heap,state:retainJavaScriptSharedSpeciesConstruction(state,transition.state),constructor:transition.constructor};
+  case 'constructionNeedImplementation':return {$:'speciesConstructionNeedImplementation',heap:transition.heap,state:retainJavaScriptSharedSpeciesConstruction(state,transition.state),constructor:transition.constructor,newTarget:transition.newTarget,arguments:transition.arguments.slice(),operation:transition.operation,reason:transition.reason};
   case 'constructionResourceLimit':return {$:'speciesConstructionResourceLimit',heap:transition.heap,state:retainJavaScriptSharedSpeciesConstruction(state,transition.state),reason:transition.reason};
   case 'constructionCompleted':return {$:'speciesConstructionCompleted',heap:transition.heap,value:transition.value};
   case 'constructionThrow':return {$:'speciesConstructionThrow',heap:transition.heap,value:transition.value};

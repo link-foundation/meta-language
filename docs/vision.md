@@ -110,12 +110,31 @@ Ordinary bound Calls use a shared two-instruction body projected from actual
 immutable slots and the actual target code realm. They preserve the stored this,
 prefix arguments, supplied arguments, lexical target behavior and abrupt values.
 No new static code owner is invented for a bound identity, and a bound identity
-cannot replace an existing static declaration. Bound construction, constructor
-classification/GetFunctionRealm, OrdinaryHasInstance delegation and public
-callable metadata handles retain their full separate obligations; a projected
-ordinary Call body cannot grant base-constructor behavior. These contracts follow
+cannot replace an existing static declaration. Bound constructability and realm
+derive from the actual target chain and its independently supplied leaf authority;
+the registry cannot assign independent constructor facts to a bound identity.
+A bound intrinsic Array keeps its distinct identity. Missing classification or
+realm roots request the actual leaf owner. Common Construct keeps original source
+operands on an outer continuation and derives one non-bound shared operation by
+prepending every actual prefix in order and substituting newTarget at each matching
+bound identity. This derivation reads immutable slots, never a bound prototype or
+stored receiver, and allocates no extra receiver. Independent bound newTargets
+still receive their own actual prototype Get; fallback uses their target realm.
+The complete normalized child, selected callbacks and original operands remain
+checked at suspension. Array creation/species, slice, concat and transformation
+use the same derived authority and actual child construction context.
+OrdinaryHasInstance delegates through bound targets to full InstanceofOperator
+before a primitive-left shortcut. A bounded actual target path retains original
+source operands while the selected getter/method uses the current actual target.
+Custom Symbol.hasInstance lookup, its receiver, Boolean conversion and abrupt
+values remain observable; prototype containment does not perform this delegation.
+Public callable metadata handles, Proxy and derived constructor protocols retain
+their separate full obligations; a projected ordinary Call body alone cannot grant
+base-constructor behavior. These contracts follow
 [Function.prototype.bind](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-function.prototype.bind)
-and [bound function exotic objects](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-bound-function-exotic-objects).
+and [bound function exotic objects](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-bound-function-exotic-objects),
+[GetFunctionRealm](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-getfunctionrealm)
+and [OrdinaryHasInstance](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-ordinaryhasinstance).
 
 Reflect.construct checks target and actual/default newTarget before reading its
 array-like argument Object, then Gets length and every ordered index. Array.of

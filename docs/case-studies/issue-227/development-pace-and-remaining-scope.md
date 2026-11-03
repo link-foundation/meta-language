@@ -693,6 +693,17 @@ mutable field calls still need a complete storage contract; their guard remains.
 These code drafts remain unexecuted and do not establish a requirement-level
 completion percentage.
 
+The [bound construction batch](../../handoffs/issue-227-bound-construction-2026-11-03.md)
+reuses the common Construct kernel for actual bound target chains instead of
+adding a constructor implementation per caller. One normalized child retains
+ordered prefixes and matching newTarget substitution; constructor authority and
+realm roots derive from the existing actual leaf. Array consumers and constructor
+frames reuse this same operation. OrdinaryHasInstance adds a checked actual
+delegation path while preserving source operands. Twenty-two native originals
+and independent kernel/forgery/resource controls are authored, not executed.
+Callable handles, derived/Proxy protocols, whole own-project translation and the
+broader vision remain work; no completion percentage or execution claim follows.
+
 The [Function binding ordinary Call batch](../../handoffs/issue-227-function-binding-calls-2026-11-03.md)
 drafts actual bound slots, ordered metadata/getter continuations, ordinary heap
 integration and constant-size projected forwarding code. Thirteen native-original

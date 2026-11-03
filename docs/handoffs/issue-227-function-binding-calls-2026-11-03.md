@@ -6,6 +6,10 @@ and primary specification reading only. No represented program, test, generator,
 formatter, validation gate, compilation or CI feedback ran or was reviewed.
 Full requirements drafting remains incomplete and the active goal is unchanged.
 
+Successor: [bound construction and instanceof](issue-227-bound-construction-2026-11-03.md)
+drafts the target-chain authority, common Construct delegation, Array integration
+and OrdinaryHasInstance work described below. The remainder stays binding.
+
 ## Actual paths drafted
 
 `javascript-function-binding.js` drafts binding allocation and resumable metadata
