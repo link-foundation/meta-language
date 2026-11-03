@@ -837,3 +837,13 @@ execution ran in this continuation, so a drafted/total count or completion
 percentage remains unavailable. Remaining actual code, automatic publication and
 verification work is explicit in the new handoff; this batch supplies no finite
 whole-project completion estimate.
+
+The [canonical Box field batch](../../handoffs/issue-227-box-record-field-regions-2026-11-03.md)
+connects existing Box field parsing to the existing containing-storage proof,
+reusing the same serialized place facet and target emitters. One owner-layer
+reader serves attachment and independent validation. Fourteen positive originals,
+six invalid originals and structural/Links transport controls are appended;
+all remain unexecuted. Source review identified remaining direct-referent
+restrictions in exclusive/state and callback interfaces, which are recorded with
+concrete entry points in the handoff. This batch does not establish full borrowed
+callback, partial-move, own-project integration or requirement completion counts.

@@ -8,6 +8,10 @@ compilation or CI feedback were executed or read. The full drafting goal remains
 active and unfinished. These authored cases establish no execution evidence or
 requirement completion percentage.
 
+Continuation: [canonical Box record fields](issue-227-box-record-field-regions-2026-11-03.md)
+extends the actual Rust containing-storage proof. All remaining callable/native
+metadata and whole-project obligations below remain binding.
+
 ## Drafted source paths
 
 `javascript-function-text.js` owns shared source units, exact nonempty UTF16

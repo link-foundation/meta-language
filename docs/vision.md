@@ -4801,10 +4801,22 @@ binding. Nested projections retain those original regions. Copying a scalar and
 transferring an owned field into new storage clear transient place coordinates;
 an owning field cannot move out of a shared parent. Owned concatenation consumes
 its real operands and cannot serve as a hidden copy of a borrowed owning field.
-This initial place protocol admits direct closed fields under an owned or single
-shared-reference parent. Box traversal, stored-reference fields, partial moves,
-temporary lifetime extension and disjoint field loan revisions retain their
-separate obligations. Current loans conservatively cover the containing root;
+The place protocol retains the complete actual shared-reference prefix and
+canonical std/alloc Box chain on the original parent. Independent normalization
+checks every Box owner, argument and wrapper before selecting the actual nominal
+record and declaration field. Nested owned Box fields keep their own complete
+source positions; borrowing through them retains the original outer storage or
+actual referent loans. Transferring an owned field establishes fresh storage at
+the new binding; shared parents grant no owning transfer. No generated pattern
+alias becomes a substitute owner and no new serialized place shape is needed.
+Multiple shared-reference layers retain their complete lifetime column; the
+current containing-root proof remains conservative and does not establish a
+general per-layer lifetime substitution protocol. Stored-reference fields,
+partial moves, temporary lifetime extension, custom Deref and disjoint field loan
+revisions retain their separate obligations. The field/dereference distinction
+follows the [Rust field expression contract](https://doc.rust-lang.org/reference/expressions/field-expr.html)
+and [Box place dereferencing](https://doc.rust-lang.org/reference/expressions/operator-expr.html#dereference-operator).
+Current loans conservatively cover the containing root;
 disjoint mutable call arguments do not establish disjoint surviving field loans.
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not

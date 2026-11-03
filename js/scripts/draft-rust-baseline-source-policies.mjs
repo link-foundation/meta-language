@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/rust-record-place-owner-rules.js',moduleName:'rust_record_place_owner_rules',sourceDependencies:true,model:'Rust actual record place shared reference and canonical Box owner layers 1',programAsset:'rust-record-place-owner-program'},
  {sourcePath:'js/src/translation/javascript-function-text.js',moduleName:'javascript_function_text',sourceDependencies:true,model:'Actual CST Function source text and explicit native metadata requests 1',programAsset:'javascript-function-text-program'},
  {sourcePath:'js/src/translation/javascript-descriptor-operands.js',moduleName:'javascript_descriptor_operands',sourceDependencies:true,model:'Actual preconverted property descriptor frame operands 1',programAsset:'javascript-descriptor-operands-program'},
  {sourcePath:'js/src/translation/javascript-live-handle-call-source.js',moduleName:'javascript_live_handle_call_source',sourceDependencies:true,model:'Actual live handle Call Construct Get and Set coordinators 1',programAsset:'javascript-live-handle-call-source-program'},
