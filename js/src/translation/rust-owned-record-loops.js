@@ -2,7 +2,7 @@
 // after checking actual counter syntax, progress and every continuing exit.
 import {unsupported} from './diagnostics.js';
 import {readRustOwnedRecordStateSlots,readRustOwnedRecordStateLayout} from './rust-owned-record-state.js';
-import {readRustOwnedRecordEffectSource} from './rust-owned-record-effects.js';
+import {readRustOwnedRecordEffectSource,selectRustOwnedRecordLoopStateSlots} from './rust-owned-record-effects.js';
 import {readRustOwnedRecordLoopOperation,readRustOwnedRecordLoopCounterError,readRustOwnedRecordLoopProgressError,readRustOwnedRecordLoopWriteError,readRustOwnedRecordLoopInvariantError,readRustOwnedRecordLoopExpansionError,readRustOwnedRecordLoopExpansionReservation,readRustOwnedRecordLoopChunkName,readRustOwnedRecordLoopChunkSize,planRustOwnedRecordLoopIterations,readRustOwnedRecordLoopExitDisposition} from './rust-owned-record-loop-rules.js';
 import {readRustOwnedRecordStateFieldIdentity} from './rust-owned-record-state-rules.js';
 import {testRustOwnedRecordFieldDescendant} from './rust-owned-record-update-rules.js';
@@ -96,7 +96,7 @@ function closedTree(parser,tree,path,bound=new Set()){
 }
 function invariant(parser,before,after,slots,span){const keys=new Set([...before.keys(),...after.keys()]);for(const key of keys){if(!before.has(key)&&!slots.some(slot=>testRustOwnedRecordFieldDescendant(slot.root,key)))continue;const error=readRustOwnedRecordLoopInvariantError(rustOwnedRecordFieldState(before,key),rustOwnedRecordFieldState(after,key));if(error)fail(error,span);}}
 export function readRustOwnedRecordFiniteLoop(parser,path){
- const c=parser.cursor,start=c.peek();if(start.kind!=='identifier'||start.value!=='while'||start.raw!=='while')return null;const slots=readRustOwnedRecordStateSlots(parser);if(slots.length===0)return null;c.next();
+ const c=parser.cursor,start=c.peek();if(start.kind!=='identifier'||start.value!=='while'||start.raw!=='while')return null;let slots=readRustOwnedRecordStateSlots(parser);if(slots.length===0)return null;c.next();
  const guard=withRustStandardSumSourceContext(parser,null,()=>parser.expr(path,{noStruct:true})),before=readRustOrdinaryCompletionOwnershipSnapshot(parser),bodyStart=c.index;
  const oldDepth=parser.ownedRecordFiniteLoopDepth??0,depthError=readRustOwnedRecordNestedLoopDepthError(oldDepth+1);if(depthError)fail(depthError,{start:start.start,end:start.end});let completion,body;parser.ownedRecordFiniteLoopDepth=oldDepth+1;try{completion=completedBodyAhead(parser)&&parser.standardSumReturnOrigin?.type?readRustOrdinaryLoopCompletion(parser,path):null;body=completion?.expression??parser.block(path);}finally{parser.ownedRecordFiniteLoopDepth=oldDepth;}
  const end=c.peek(-1),span={start:start.start,end:end.end};
@@ -106,6 +106,7 @@ export function readRustOwnedRecordFiniteLoop(parser,path){
  const selected=counter(parser,guard),origin=completion?null:parser.origins.origin(body,path);if(!completion&&(!origin.proven||origin.type?.kind!=='unit'||origin.wrappers.length))fail('the finite record loop body must have its actual Unit result',body.span);
  const exits=completion?retainPaths(parser,paths(parser,completion.tree,selected)):counts(parser,body,selected,{nodes:0}).map(count=>({kind:'value',count,ownership:readRustOrdinaryCompletionOwnershipSnapshot(parser)})),progress=readRustOwnedRecordLoopProgressError(exits.map(exit=>exit.kind),exits.map(exit=>exit.count));if(progress)fail(progress,span);closed(parser,guard,path);if(completion)closedTree(parser,completion.tree,path);else closed(parser,body,path);
  for(const exit of exits)if(exit.kind==='value'||exit.kind==='continue')invariant(parser,before,exit.ownership,slots,span);
+ slots=selectRustOwnedRecordLoopStateSlots(parser,{k:'tuple',items:[guard,body],span},slots);
  const size=measure({guard,body,types:slots.map(slot=>slot.origin.type)}),arena=inventory(parser),reservation=readRustOwnedRecordLoopExpansionReservation(size.nodes,size.text);if(reservation.length!==2)fail('the complete finite record loop expansion exceeds its source budget',span);const error=readRustOwnedRecordLoopExpansionError(arena.nodes,reservation[0],reservation[1],255);if(error)fail(error,span);arena.nodes+=reservation[0]*255;
  const admission={span,counterType:selected.origin.type,slots,path:[...path],controlOwner:completion?.owner??null,returns:completion?.returns??[],returnLeaves:exits.filter(exit=>exit.kind==='return').map(exit=>exit.leaf),exits,writes:writeFootprint(parser,body)};admitted.add(admission);arena.entries.push(admission);parser.origins.restoreOwnedBindings(before);for(const exit of exits)if(exit.kind==='break')parser.origins.joinOwnedBindings(parser.origins.snapshotOwnedBindings(),exit.ownership,true,true);return parser.origins.mark(node,parser.origins.typeOrigin({kind:'unit'},path));
 }

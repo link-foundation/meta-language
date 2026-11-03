@@ -81,7 +81,7 @@ No tests, source imports, generation, compilation or validation ran locally.
 
 The current driver also adds 28 actual `Type::map_children` and 33 actual
 `Type::children` controls through current-source factories. Adding eight literal mixed-region originals and three actual Type composition
-scenarios gives 392 authored positive rows across eighteen groups (328 literal
+scenarios and the later loop-state batch gives 408 authored positive rows across nineteen groups (344 literal
 originals plus 64 current-source scenarios). Counts do not measure requirement completion. See
 [the native reference handoff](issue-227-actual-type-native-reference-controls-2026-11-03.md)
 for full original, projected and actual crate reference scopes. None ran locally.
@@ -121,7 +121,11 @@ boundaries add twelve positives (including one retained former refusal), while
 keeping new invalid boundary/read cases and the unknown-loop barrier. Current
 mixed inventory: 39 positives, 19 refusals. No runtime execution is claimed.
 
-The combined nested-scope, mandatory-writeback and print-delimiter follow-up
-brings the mixed group to 49 positive originals and 21 refusals. Full original
+The combined nested-scope, mandatory-writeback and print-delimiter checkpoint
+brought the mixed group to 49 positive originals and 21 refusals. Its original
 inventory: 392 authored positives, 328 literal plus 64 actual-source scenarios,
 eighteen groups. All deferred assertions remain unexecuted. Pushes are batched.
+
+The later [loop-state batch](issue-227-loop-state-selection-and-source-regions-2026-11-03.md)
+extends that inventory to 408 authored positives across nineteen groups; the
+mixed-region group and its refusal controls remain unchanged.

@@ -4607,6 +4607,13 @@ Continuation analysis crosses nested lexical scopes only through their actual
 outer suffix. A branch end alone cannot prove that state is unused. Exclusive
 formals and mutable callback environments retain mandatory writeback carriers;
 complete-scope facts come only from full callable or main continuations.
+Ordered collection folds and finite record chunks select their carried state
+from actual body/guard reads, writes and exclusive argument places. A consuming
+iterator head is evaluated once before its body and does not by itself make the
+consumed owner a body state slot. Nested loop operands retain actual dependency
+inspection; unknown private operations preserve the full outer inventory. This
+selection changes neither source ownership invariants nor the independent
+region proof required for loop accumulators, control values and escaping results.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.

@@ -27,6 +27,26 @@ export function readRustOwnedRecordEffectExpression(parser,path,options,readOrdi
 export function beginRustOwnedRecordShortCircuit(parser){return parser.ownedRecordEffects?parser.origins.snapshotOwnedBindings():null;}
 export function endRustOwnedRecordShortCircuit(parser,before){if(before!==null)parser.origins.joinOwnedBindings(before,parser.origins.snapshotOwnedBindings(),true,true);}
 export function readRustOwnedRecordEffectSource(parser,node){if(node?.k!=='math'||!parser.ownedRecordEffects)return null;const index=Number(node.name);if(!Number.isSafeInteger(index)||index<0||String(index)!==node.name)return null;if(node.op===readRustOwnedRecordEffectOperation('read')&&node.args.length===0){const slot=parser.ownedRecordEffects.reads[index];return slot?{form:'read',slot}:null;}if(node.op===readRustOwnedRecordEffectOperation('write')&&node.args.length===1){const source=parser.ownedRecordEffects.writes[index];return source?{form:'write',...source}:null;}return null;}
+// Select from the real outer inventory, never from caller-supplied root names.
+// Head-only values are evaluated separately by the ordered for-loop consumer.
+// Unknown private operations retain the whole inventory rather than hiding an
+// effect. Nested source loops are inspected through their actual operands.
+export function selectRustOwnedRecordLoopStateSlots(parser,node,slots){
+ const selected=new Set(),pending=[node],seen=new Set(),names=new Map(slots.map(slot=>[slot.currentName,slot.lexical]));
+ while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);if(seen.size>readRustOwnedRecordEffectLimit('inspection'))fail('loop state selection exceeds its complete source inspection budget',node?.span);
+  if(value.sourceStateTransition)selected.add(value.sourceStateTransition.binder.identity);
+  if(value.k==='name'&&value.path.length===1&&names.has(value.path[0]))selected.add(names.get(value.path[0]));
+  if(marker(value)){
+   const ordinary=readRustOwnedRecordEffectSource(parser,value),exclusive=readRustExclusiveSourceNode(parser,value);
+   if(ordinary)selected.add(ordinary.slot.lexical);
+   else if(exclusive?.kind==='write')selected.add(exclusive.info.slot.lexical);
+   else if(exclusive?.kind==='call'){for(const borrow of exclusive.info.borrows)selected.add(borrow.slot.lexical);for(let index=0;index<value.args.length;index++)if(!exclusive.info.borrows.some(borrow=>borrow.index===index))pending.push(value.args[index].value);continue;}
+   else if(!readRustStandardCollectionSourceLoopOrigin(parser,value)&&!readRustOwnedRecordFiniteLoopSource(parser,value))return slots;
+  }
+  for(const[key,child]of Object.entries(value))if(!['sourcePosition','sourceStateTransition','type'].includes(key)&&child&&typeof child==='object')pending.push(child);
+ }
+ return slots.filter(slot=>selected.has(slot.lexical));
+}
 // Exact outer-state write projection. Unknown private operations conservatively
 // retain every state slot; controller metadata is never a caller admission flag.
 function changedStateRoots(parser,node){
@@ -38,7 +58,7 @@ function changedStateRoots(parser,node){
    else if(ordinary?.form==='read'){}
    else if(exclusive?.kind==='write')changed.add(exclusive.info.slot.lexical);
    else if(exclusive?.kind==='call'){for(const borrow of exclusive.info.borrows)changed.add(borrow.slot.lexical);for(let index=0;index<value.args.length;index++)if(!exclusive.info.borrows.some(borrow=>borrow.index===index))pending.push(value.args[index].value);continue;}
-   else return null;
+   else {const loop=readRustStandardCollectionSourceLoopOrigin(parser,value)??readRustOwnedRecordFiniteLoopSource(parser,value);if(!loop)return null;const body=readRustStandardCollectionSourceLoopOrigin(parser,value)?value.args[1].value:value;for(const slot of selectRustOwnedRecordLoopStateSlots(parser,body,loop.slots))changed.add(slot.lexical);}
   }
   for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);
  }return changed;

@@ -14,6 +14,7 @@ import {rustOwnedVectorLoopOriginals as ownedVectorLoops} from '../tests/fixture
 import {rustFnMutSourceOriginals as mutableFunctions} from '../tests/fixtures/rust-fnmut-source.mjs';
 import {rustSourcePrimitiveVectorSortOriginals as primitiveVectorSort} from '../tests/fixtures/rust-source-vector-primitive-sort.mjs';
 import {rustSourceRegionCompositionOriginals as regionComposition} from '../tests/fixtures/rust-source-region-composition.mjs';
+import {rustOwnedRecordLoopOriginals as finiteRecordLoops} from '../tests/fixtures/rust-owned-record-loops.mjs';
 const sourceVersionRange='>=1.90.0 <1.100.0';
 export const rustStateSourceOriginalGroups=[
  {id:'readonly-mutable-source-region-composition',rows:regionComposition,sourceSignatureModel:'Rust source function signature 3',fnMut:true,collections:false,sourceVersionRange},
@@ -31,4 +32,5 @@ export const rustStateSourceOriginalGroups=[
  {id:'owned-vector-into-loops',rows:ownedVectorLoops,collections:false,sourceVersionRange},
  {id:'concrete-source-mutable-functions',rows:mutableFunctions,fnMut:true,collections:false,sourceVersionRange},
  {id:'primitive-vector-sort',rows:primitiveVectorSort,collections:false,sourceVersionRange},
+ {id:'finite-record-loop-state',rows:finiteRecordLoops,exclusive:false,collections:false,sourceVersionRange},
 ];

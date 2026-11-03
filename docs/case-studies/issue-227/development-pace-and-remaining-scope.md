@@ -621,3 +621,12 @@ output order remain independent oracles. This is source authoring, not a pass
 report; no tests, generation, validation or compilation ran. The latest captured
 instruction puts broad delivery ahead of frequent checkpoint pushes, and source
 register reconciliation remains deferred with the existing draft-phase gates.
+
+The [loop state selection batch](../../handoffs/issue-227-loop-state-selection-and-source-regions-2026-11-03.md)
+drafts dependency-based state selection for owned/shared collection folds and
+finite record chunks, with ten added collection originals and two finite-loop
+originals. The unified original driver now includes all six finite-loop controls:
+408 authored positives in nineteen groups (344 literal and 64 actual source).
+The handoff details the still-required independent signature-3 loop interface
+and region invariant, including zero iterations and every completion path. No
+execution or compilation occurred and no completion percentage is inferred.

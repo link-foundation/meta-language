@@ -32,4 +32,4 @@ test('every borrowed ordered original checks and executes its actual emitted std
 test('every retained refusal keeps its original source and rejects before a private iterator can escape',()=>{
  const library=actualLibrary();for(const row of refusals)assert.throws(()=>checkProgram(parseRust(row.source,options(library,'1.90.0'))),error=>['type','unsupported','syntax'].includes(error.kind),row.name);
 });
-test('actual shared-loop literals retain complete version and original stdout declarations',()=>{assert.equal(originals.length,32);assert.equal(refusals.length,18);for(const row of [...originals,...refusals]){assert.equal(row.sourceVersionRange,versions.rust);assert.match(row.source,/fn main/);}for(const row of originals)assert.equal(typeof row.stdout,'string');});
+test('actual shared-loop literals retain complete version and original stdout declarations',()=>{assert.equal(originals.length,34);assert.equal(refusals.length,18);for(const row of [...originals,...refusals]){assert.equal(row.sourceVersionRange,versions.rust);assert.match(row.source,/fn main/);}for(const row of originals)assert.equal(typeof row.stdout,'string');});

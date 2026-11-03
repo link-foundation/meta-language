@@ -16,6 +16,7 @@ import {rustOwnedRecordFieldState} from './rust-owned-record-updates.js';
 import {testRustOwnedRecordFieldDescendant} from './rust-owned-record-update-rules.js';
 import {readRustOwnedRecordLoopInvariantError,readRustOwnedRecordNestedLoopDepthError} from './rust-owned-record-loop-rules.js';
 import {UNIT} from './types.js';
+import {selectRustOwnedRecordLoopStateSlots} from './rust-owned-record-effects.js';
 const operation='rustStandardCollectionOrderedLoop',admissions=new WeakSet();
 const fail=(reason,span)=>{throw unsupported('Rust shared ordered collection loop',reason,span);};
 const name=value=>({k:'name',path:[value]}),project=(value,index)=>({k:'tupleIndex',object:name(value),index});
@@ -71,7 +72,7 @@ function freeNames(node,bound=new Set(),result=new Set(),budget={work:0}){
 }
 export function lowerRustStandardCollectionSourceLoop(parser,node,environment,next,compile){
  const source=readRustStandardCollectionSourceLoopOrigin(parser,node);if(!admissions.has(source))fail('ordered traversal needs its actual parsed source lease/pattern/completion witness',node.span);
- const slots=source.slots,keys=slots.map(slot=>slot.lexical),types=slots.map(slot=>readRustRecordSourceType(parser,slot.origin.type,slot.origin.path)),control={kind:'named',path:['crate',...source.controlOwner]},owner=control.path,constructor=(variant,args=[])=>({k:'app',fn:{k:'name',path:[...owner,variant]},args}),ret={kind:'tuple',elements:[{kind:'bool'},control,...types]},packet=(done,result,state)=>({k:'tuple',items:[{k:'bool',value:done},result,...keys.map(key=>name(state.get(key).name))]});
+ const slots=selectRustOwnedRecordLoopStateSlots(parser,node.args[1].value,source.slots),keys=slots.map(slot=>slot.lexical),types=slots.map(slot=>readRustRecordSourceType(parser,slot.origin.type,slot.origin.path)),control={kind:'named',path:['crate',...source.controlOwner]},owner=control.path,constructor=(variant,args=[])=>({k:'app',fn:{k:'name',path:[...owner,variant]},args}),ret={kind:'tuple',elements:[{kind:'bool'},control,...types]},packet=(done,result,state)=>({k:'tuple',items:[{k:'bool',value:done},result,...keys.map(key=>name(state.get(key).name))]});
  if(keys.some(key=>!environment.has(key)))fail('ordered traversal retains every actual initialized outer state root',node.span);
  return compile(node.args[0].value,environment,source.view.origin.type,(values,after)=>{
   const accumulator=parser.freshProductBinding(),input=parser.freshProductBinding(),result=parser.freshProductBinding(),initial=new Map(after),bindings=slots.map((slot,index)=>{const local=parser.freshProductBinding();initial.set(slot.lexical,{slot,name:local});return {name:local,type:types[index],value:project(accumulator,index+2)};}),finished=compile(node.args[1].value,initial,control,(value,done)=>{
