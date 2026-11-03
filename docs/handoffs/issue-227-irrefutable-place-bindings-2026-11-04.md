@@ -118,3 +118,7 @@ and [raw identifiers](https://doc.rust-lang.org/reference/identifiers.html#raw-i
    use, publish automatic native/schema/naming assets, run authorized JavaScript
    and CI-only native gates, repair actual failures and record all assertions at
    their executed exact commits. Never compile Rust locally.
+
+Successor: [guarded source place matches](issue-227-guarded-place-matches-2026-11-04.md)
+drafts single-constructor arm entry and private readonly owning guard views.
+Its remaining-work section retains general refutable/effectful matching scope.

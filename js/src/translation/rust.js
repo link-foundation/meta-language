@@ -2,6 +2,8 @@ import {readRustFnMutSourceIterator} from './rust-fnmut-source-iterators.js';
 import {readRustOwnedRecordStateDeclarations} from './rust-owned-record-state.js';
 import {acceptRustSourceRegionComposition,initializeRustSourceRegionComposition,readRustSourceRegionBodyMode,beginRustSourceRegionBody,endRustSourceRegionBody,hasRustSourceRegionComposition} from './rust-source-region-composition.js';
 import {readRustSourcePatternPlace,lowerRustSourcePlaceBinding,testRustModifiedPlaceBinding} from './rust-source-place-bindings.js';
+import {acceptRustSourcePlaceMatch,acceptRustSourcePlaceMatchPattern,beginRustSourcePlaceMatch,lowerRustSourcePlaceMatch,readRustSourcePlaceMatchAttemptPlan} from './rust-source-place-matches.js';
+import {attachRustSourceReadonlyMatchGuard} from './rust-source-match-guards.js';
 import {attachRustSourceStateTransition} from './rust-source-state-transitions.js';
 import {readRustSourceVectorSort} from './rust-source-vector-sort.js';
 import {readRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
@@ -2116,37 +2118,41 @@ class RustParser {
   match(path,provided=null) {
     const c = this.cursor;
     const token = provided?.token??c.next();
-    const scrutinee = provided?.scrutinee??withRustStandardSumSourceContext(this,null,()=>this.expr(path, { noStruct: true }));
+    const initializer=provided?.scrutinee?null:withRustStandardSumSourceContext(this,null,()=>readRustSourcePatternPlace(this,{k:'nominal'},path,'{'));
+    let scrutinee = provided?.scrutinee??initializer?.node??withRustStandardSumSourceContext(this,null,()=>this.expr(path, { noStruct: true }));
     c.expect('{', 'match');
-    const rows = [],guardedArms=[],ownershipBase=this.origins.snapshotOwnedBindings(),ownershipArms=[];
+    const rows = [],guardedArms=[],ownershipArms=[],placeArms=[];let ownershipBase=this.origins.snapshotOwnedBindings(),placeContext=null;
+    let placeMatch=Boolean(!provided&&acceptRustSourcePlaceMatch(this,scrutinee,path)&&readRustSourcePlaceMatchAttemptPlan(this));
     while (!c.is('}')) {
       this.origins.restoreOwnedBindings(ownershipBase);
       const armStart = c.peek();
       const aliases = [];
       c.eat('|');
-      const alternatives = withRustStandardSumSourceContext(this,this.origins.origin(scrutinee,path),()=>{
-        const selected=[this.pattern(path,aliases)];while(c.eat('|'))selected.push(this.pattern(path,aliases));return selected;
-      });
-      const deferredGuard=deferRustStandardSumGuard(this,alternatives,scrutinee,path,c.is('if'),aliases);
+      const previousPatternMode=this.irrefutableSourcePlaceBinding;this.irrefutableSourcePlaceBinding=placeMatch;let alternatives;
+      try{alternatives=withRustStandardSumSourceContext(this,this.origins.origin(scrutinee,path),()=>{const selected=[this.pattern(path,aliases)];while(c.eat('|'))selected.push(this.pattern(path,aliases));return selected;});}finally{this.irrefutableSourcePlaceBinding=previousPatternMode;}
+      if(placeMatch&&(alternatives.length!==1||aliases.length||!acceptRustSourcePlaceMatchPattern(this,alternatives[0]))){if(!placeContext&&!alternatives.some(testRustModifiedPlaceBinding))placeMatch=false;else throw unsupported('Rust source place match','nested refutable, alias and or-pattern arms need their complete per-path match-entry protocol',span(armStart,c.peek()));}
+      if(placeMatch&&!placeContext){placeContext=beginRustSourcePlaceMatch(this,scrutinee,path,initializer?.place===true);scrutinee=placeContext.object;ownershipBase=this.origins.snapshotOwnedBindings();}
+      const deferredGuard=placeMatch?false:deferRustStandardSumGuard(this,alternatives,scrutinee,path,c.is('if'),aliases);
       const ownedGuardError=deferredGuard?'':readRustStandardSumOwnedGuardError(isRustOwnedStandardSumValue(this.origins,this.origins.origin(scrutinee,path)),c.is('if'));
       if(ownedGuardError)throw unsupported('Rust owned standard sum guard',ownedGuardError,c.peek());
-      const previous = this.origins.scope;
-      const armScope=this.origins.cases(alternatives,scrutinee,path,deferredGuard);
-      if(deferredGuard)this.origins.scope=armScope;else this.origins.enter(armScope);
+      const previous = this.origins.scope,armStateFrame=placeMatch?beginRustOwnedRecordStateBlock(this):null;let armBindings=null,guardBindings=null;
+      if(placeMatch){this.origins.enter();const guarded=c.is('if'),bindings=alternatives[0].k==='wild'?[]:lowerRustSourcePlaceBinding(this,{k:'nominal',pattern:alternatives[0]},scrutinee,path,alternatives[0].span??armStart,null,true,guarded);if(bindings===null)throw unsupported('Rust source place match','each attempted arm retains its actual irrefutable complete binding graph',span(armStart,c.peek()));if(guarded)guardBindings=bindings;else armBindings=bindings;}
+      else{const armScope=this.origins.cases(alternatives,scrutinee,path,deferredGuard);if(deferredGuard)this.origins.scope=armScope;else this.origins.enter(armScope);}
       let body,bodyOrigin,guard;
       try{
         for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
         const ownershipGuard=this.origins.snapshotOwnedBindings();guard=c.eat('if')?withRustStandardSumSourceContext(this,null,()=>this.expr(path)):null;if(guard)this.origins.checkOwnedGuard(ownershipGuard,guard.span);
-        if(guard)this.origins.direct(guard,path,guard.span);
+        if(guard)this.origins.direct(guard,path,guard.span);if(guard&&placeMatch){guard=attachRustSourceReadonlyMatchGuard(this,guard);this.origins.scope=previous;this.origins.restoreOwnedBindings(ownershipBase);this.origins.enter();armBindings=alternatives[0].k==='wild'?[]:lowerRustSourcePlaceBinding(this,{k:'nominal',pattern:alternatives[0]},scrutinee,path,alternatives[0].span??armStart,null,true);if(armBindings===null)throw unsupported('Rust source place match','successful guard entry retains its actual owning binding graph',span(armStart,c.peek()));}
         if(deferredGuard){this.origins.scope=previous;this.origins.restoreOwnedBindings(ownershipBase);this.origins.scope=this.origins.cases(alternatives,scrutinee,path);}
         c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.transferOwnedResult(body,path);this.origins.expireOwnedBindings(ownershipBase,bodyOrigin);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
-      }finally{this.origins.scope=previous;}
+      }finally{this.origins.scope=previous;if(armStateFrame)endRustOwnedRecordStateBlock(this,armStateFrame);}
       if (body.block || body.k === 'if' || body.k === 'match') c.eat(',');
       else if (!c.is('}')) c.expect(',', 'match arm');
       if (alternatives.length > 1 && aliases.length) {
         throw unsupported('binding in an or-pattern', 'bind the value in each alternative separately', span(armStart, c.peek()));
       }
       guardedArms.push({patterns:alternatives,body,aliases:[...aliases],guard,origin:bodyOrigin,span:span(armStart,c.peek())});
+      if(placeMatch)placeArms.push({bindings:armBindings,guardBindings,body,guard,span:span(armStart,c.peek())});
       for (const alias of [...aliases].reverse()) body = { k: 'let', name: alias.name, value: alias.value, body, span: body.span };
       this.origins.mark(body, bodyOrigin);
       // `A | B => e` is one row per alternative with the same body.
@@ -2155,6 +2161,7 @@ class RustParser {
     c.expect('}', 'match');
     if (!rows.length) throw unsupported('empty match', 'uninhabited types are outside the portable core', span(token, c.peek()));
     let ownershipJoined=new Map(),ownershipReturns=false;for(const arm of ownershipArms){this.origins.joinOwnedBindings(ownershipJoined,arm.states,ownershipReturns,arm.returns);ownershipJoined=this.origins.snapshotOwnedBindings();ownershipReturns=ownershipReturns||arm.returns;}
+    if(placeMatch){const origin=this.origins.join(guardedArms.map(arm=>arm.origin)),result=lowerRustSourcePlaceMatch(this,placeContext,placeArms,path,span(token,c.peek()),origin);this.origins.transferOwnedResult(result,path);return result;}
     if(guardedArms.some(arm=>arm.guard))return lowerRustGuardedMatch(this,scrutinee,guardedArms,path,span(token,c.peek()));
     const origins = rows.map(row => this.origins.origin(row.body, path));
     const result = { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };

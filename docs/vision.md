@@ -4888,10 +4888,39 @@ bindings; mutable owning/Copy bindings initialize independent ordinary source
 storage. Explicit modifiers under an inherited shared binding mode refuse under
 the registered Rust 2024 fixture contract. Raw pattern-mode flags do not enter
 archives; actual projection graphs and source positions remain the proof inputs.
+Single-constructor place matches reuse these actual field bindings for each
+attempt. An arbitrary scrutinee evaluates once before attempts; an original
+place keeps its actual storage. Guard bindings and successful body bindings have
+separate executable graphs. Owning guard bindings retain their owning source
+type through a checked readonly place operation; actual owning moves occur only
+inside the successful continuation. A failed guard proceeds against the original
+unconsumed owner. Shared and Copy bindings preserve their actual loans and values.
+Distinct hygienic success/failure continuations prevent a guard's user names from
+capturing later source extraction or fallthrough. Mutable body bindings use real
+source storage and leave the arm's declaration scope when that arm ends.
+
+The readonly guard and pattern-place operations use two exact, bounded models in
+the existing source-place transport. Their empty external slot/place lists grant
+no ownership authority. A pattern-place operation retains its actual once-read
+projection or lexical place and identity result binding. Interpretation derives
+its real roots and mints a private readonly binding capability; no capability,
+root identifier, success flag or borrowed-place mask is serialized. Ordinary
+owning transfers from the view still fail. Nested observations retain inherited
+whole-place constraints. The guard operation retains its actual Boolean graph
+and rejects changes to pre-existing ownership or storage revisions. Printing and
+reads keep their actual evaluation order. This initial ownership-readonly guard
+protocol does not yet cover all native-valid foreign state effects; those require
+an explicit checked successor protocol, rather than weakening its protection.
+
 Reference-bearing call/state contexts, anonymous products, multi-constructor
-images, general temporary lifetime extension, exclusive-reference patterns and
-mixed refutable/guarded match bindings retain their
-separate required protocols. No image, lifetime root, disjointness claim,
+images, general temporary lifetime extension, exclusive-reference patterns,
+refutable/or/alias patterns, guard let chains, complete arm syntax and general
+effectful guards retain their separate required protocols. The current attempt
+planner recognizes guarded irrefutable attempts followed by one unguarded
+exhaustive arm, with explicit separators between arms; other forms retain their
+existing path or request their missing protocol. Native controls and independent
+forged-graph/Links controls for this extension remain unexecuted drafts. Guard
+borrowing and deferred transfers follow [Rust match guards](https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards). No image, lifetime root, disjointness claim,
 ownership mask or local region identifier is accepted from an archive. Actual
 projection graphs and source positions remain the public proof inputs. The value/place
 distinction and partial transfer follow [Rust place semantics](https://doc.rust-lang.org/reference/expressions.html#place-expressions-and-value-expressions)

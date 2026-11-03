@@ -10,6 +10,7 @@ import {readRustBorrowedSourceClosedCallInterface} from './rust-borrowed-source-
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import {acceptRustDataTypeFieldSignatureContainer} from './rust-data-type-field-signature-rules.js';
 import {readRustSourcePlaceReplacementPlan} from './rust-source-place-replacements.js';
+import {readRustSourceReadonlyMatchGuardPlan,readRustSourceReadonlyPatternPlacePlan} from './rust-source-match-guards.js';
 import {readRustRecordPlaceOwner,readRustRecordPlaceBoxProjectionDepth} from './rust-record-place-owner-rules.js';
 import {checkRustSourceExpressionPosition} from './rust-source-expression-positions.js';
 const model='Rust source place transformation 1';
@@ -44,6 +45,8 @@ function reconstruction(node,position,path,input,packet,index,resolveData,checkR
 function overlaps(left,right){return left.slot===right.slot&&left.fields.slice(0,Math.min(left.fields.length,right.fields.length)).every((value,index)=>value===right.fields[index]);}
 function sameOwner(left,right){return Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((value,index)=>value===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((value,index)=>sameOwner(value,right.arguments[index]));}
 export function readRustSourcePlaceTransformPlan(facet,node,language,resolveType=value=>value,resolveData=()=>null,resolveFunction=()=>null){
+ if(facet?.model==='Rust source readonly match guard 1')return readRustSourceReadonlyMatchGuardPlan(facet,node,language,resolveType,resolveData);
+ if(facet?.model==='Rust source readonly pattern place 1')return readRustSourceReadonlyPatternPlacePlan(facet,node,language,resolveType,resolveData);
  if(facet?.model==='Rust source place replacement 1')return readRustSourcePlaceReplacementPlan(facet,node,language,resolveType,resolveData);
  checkOwnedProgramContainers({sourcePlaceTransform:facet},{selectedFields:['sourcePlaceTransform'],acceptContainer:acceptRustDataTypeFieldSignatureContainer,fail});
  if(language!=='Rust'||!exact(facet,['model','slots','places','span'])||facet.model!==model||!Array.isArray(facet.slots)||facet.slots.length<1||facet.slots.length>256||!Array.isArray(facet.places)||facet.places.length<1||facet.places.length>256||!exact(facet.span,['start','end'])||!Number.isSafeInteger(facet.span.start)||!Number.isSafeInteger(facet.span.end)||facet.span.start<0||facet.span.end<=facet.span.start||node.k!=='let'||node.value?.k!=='call'||node.span?.start!==facet.span.start||node.span?.end!==facet.span.end)fail('a source place transformation retains its exact compiler model, call graph, bounded places and original span');
