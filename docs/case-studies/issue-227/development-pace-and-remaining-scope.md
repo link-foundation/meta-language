@@ -566,3 +566,10 @@ eighteen groups. One shared index interpreter distinguishes copied scalar values
 from references into vector storage; primitive source-owner and lifetime checks
 remain. This is unexecuted source drafting, not a measured runtime improvement
 or requirement completion. No further agents are used.
+
+A further shared entry-state adapter admits mutable owned value formals beside
+readonly results, retaining their genuine header and original binder coordinates.
+The former missing-carrier input is retained with empty stdout as positive, with
+two further used-helper originals. Positive driver scope becomes 359 authored
+rows (295 literal and 64 actual-source), still eighteen groups. Local execution
+remains deferred; this source inventory cannot establish requirement completion.

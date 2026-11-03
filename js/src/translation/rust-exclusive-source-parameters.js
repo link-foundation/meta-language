@@ -17,7 +17,6 @@ export function beginRustExclusiveSourceFunction(parser,name,path,parameters,sou
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1')return null;
  initializeRustOwnedRecordEffects(parser);
  const readonlyRegionComposition=readRustSourceRegionBodyMode(parser,sourceParameters,result)==='readonly',signature=readonlyRegionComposition?null:createRustExclusiveSourceSignature(parser,sourceParameters,result),frame=beginRustOwnedRecordStateBlock(parser,true),slots=[];
- if(readonlyRegionComposition&&mutableParameters.length)throw unsupported('Rust source region composition','readonly result helpers retain immutable source formals; mutable owned parameters need their explicit initial storage carrier');
  for(let index=0;index<parameters.length;index++)if(sourceParameters[index].sourceExclusiveMode==='exclusive'||mutableParameters.some(row=>row.name===parameters[index].name))slots.push({parameter:index,slot:registerRustExclusiveSourceStateRoot(parser,parameters[index].name,sourceParameters[index].sourceExclusiveMode==='exclusive'?'exclusive':'owned',parameters[index].span)});
  return {frame,name,path:[...path],signature,slots,readonlyRegionComposition};
 }

@@ -5,6 +5,7 @@ import {readRustOwnedRecordStateDeclarations,readRustOwnedRecordStateSlots,readR
 import {readRustRecordSourceType} from './rust-records.js';
 import {readRustExclusiveSourceLoanContextError,readRustExclusiveSourcePositionBudgetError,readRustExclusiveSourceLoanStateError,beginRustExclusiveSourceCall,finishRustExclusiveSourceCall,createRustExclusiveSourceReturnPacket,lowerRustExclusiveSourceCallWriteback} from './rust-exclusive-source-loans.js';
 import {unsupported} from './diagnostics.js';
+import {attachRustSourceStateTransition} from './rust-source-state-transitions.js';
 import {createRustSourceSignature} from './rust-source-signatures.js';
 const fail=(reason,node)=>{throw unsupported('Rust exclusive source call adapter',reason,node?.span);};
 function sameOwner(left,right){return Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((value,index)=>value===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((value,index)=>sameOwner(value,right.arguments[index]));}
@@ -49,11 +50,20 @@ export function lowerRustExclusiveSourceParsedCallable(parser,frame,declaration)
  const inventory=readRustOwnedRecordStateDeclarations(parser),actual=readRustOwnedRecordStateSlots(parser),initial=new Map();
  for(const row of frame.slots){if(!actual.some(slot=>slot.lexical===row.slot.lexical&&slot.root===row.slot.root&&slot.callable===row.slot.callable)||inventory.get(row.slot.currentName)!==row.slot)fail('exclusive source text retains actual function parameter slots',declaration);initial.set(row.slot.lexical,{slot:row.slot,name:declaration.params[row.parameter].name});}
  const exclusive=frame.slots.filter(row=>row.slot.exclusiveMode==='exclusive');
- const body=lowerRustOwnedRecordEffectBody(parser,declaration.body,frame.path,inventory,initial,declaration.ret,(value,environment)=>{
+ const parameterInitializers=[];
+ if(frame.readonlyRegionComposition)for(const row of frame.slots){
+  const parameter=declaration.params[row.parameter],slot=row.slot;
+  if(slot.exclusiveMode!=='owned'||!parameter||slot.name!==parameter.name||slot.origin.wrappers.length||slot.origin.arrayElementPosition||inventory.get(slot.currentName)!==slot)fail('a mutable readonly formal retains its actual direct owned parameter and declared storage slot',declaration);
+  const input=parser.origins.mark({k:'name',path:[parameter.name],span:parameter.span??declaration.span},slot.origin),value=attachRustSourceStateTransition(parser,input,slot,'initialize');
+  if(!value.sourceStateTransition)fail('mutable readonly parameters retain their explicit initial source storage carrier',declaration);
+  initial.set(slot.lexical,{slot,name:slot.currentName});parameterInitializers.push({name:slot.currentName,type:readRustRecordSourceType(parser,slot.origin.type,slot.origin.path),value});
+ }
+ let body=lowerRustOwnedRecordEffectBody(parser,declaration.body,frame.path,inventory,initial,declaration.ret,(value,environment)=>{
   if(!exclusive.length)return value;
   const updated=exclusive.map(row=>{const source=environment.get(row.slot.lexical);if(!source||source.slot.root!==row.slot.root)fail('exclusive source completion retains its actual parameter writeback',value);return {k:'name',path:[source.name]};});
   return {k:'tuple',items:[value,...updated],span:value.span};
  });
+ for(const initializer of parameterInitializers.toReversed())body={k:'let',...initializer,body,span:declaration.span};
  if(parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&!exclusive.length){const entry=parser.origins.lookupValueOwner(['crate',...frame.path,declaration.name],frame.path);if(!entry?.parameters||!entry.result)fail('a readonly source helper retains its actual complete function header',declaration);return {...declaration,body,sourceSignature:createRustSourceSignature(frame.readonlyRegionComposition?'Rust source function signature 3':'Rust source function signature 2',entry.parameters,entry.result,new Set(parser.lifetimeBindings))};}
  return {...declaration,body,ret:exclusive.length?{kind:'tuple',elements:[declaration.ret,...exclusive.map(row=>readRustRecordSourceType(parser,row.slot.origin.type,row.slot.origin.path))]}:declaration.ret,sourceExclusiveSignature:frame.signature};
 }

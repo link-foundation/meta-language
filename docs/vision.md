@@ -4585,6 +4585,10 @@ readonly or closed interface; composition must interpret actual ordered state
 packets, source binders and loan revisions. Closed callbacks cannot hide borrowed
 vector carriers, and whole-root admission grants no projected-field authority.
 Older independent profile guards remain intact.
+Mutable value parameters in readonly-result helpers acquire explicit local
+entry storage from their actual formal binder and complete closed referent.
+Their local writes do not grant caller mutation authority or a return region.
+Returned references remain derived from the real reference-bearing inputs.
 
 Signature3 borrowed-vector indexing copies the actual shared-reference element
 while preserving its canonical owner, lifetime and referent regions. Copying a
