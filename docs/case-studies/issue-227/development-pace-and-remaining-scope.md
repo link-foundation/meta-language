@@ -1040,3 +1040,15 @@ The preceding commits `325a5e75e` (2026-11-04 03:04:08 +07:00) and `d733d0af7`
 source drafting across context continuation and deferred control authoring. It
 measures publication cadence only, not executed throughput, a reconciled
 requirement denominator, a completion percentage or a reliable full-scope ETA.
+
+
+The [block-arm syntax batch](../../handoffs/issue-227-block-arm-syntax-2026-11-04.md)
+retains actual source comma rules after match lowering changes the core shape.
+Seven positive and two invalid originals plus three independent controls and
+seven Links/target scenarios are drafted and unexecuted. Reusing the existing
+block classification keeps this extension small; ownership graphs do not become
+source syntax evidence and parser metadata does not grant ownership authority.
+
+The preceding commits `d733d0af7` (2026-11-04 04:08:16 +07:00) and `a24f269a8`
+(04:16:17 +07:00) are 8 minutes 1 second apart. This is a publication interval,
+not observed behavior, verified throughput, completion percentage or full-scope ETA.

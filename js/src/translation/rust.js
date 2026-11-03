@@ -2138,15 +2138,15 @@ class RustParser {
       const previous = this.origins.scope,armStateFrame=placeMatch?beginRustOwnedRecordStateBlock(this):null;let armBindings=null,guardBindings=null;
       if(placeMatch){this.origins.enter();const guarded=c.is('if'),bindings=alternatives[0].k==='wild'&&!this.origins.patternReferences.get(alternatives[0])?[]:lowerRustSourcePlaceBinding(this,{k:'nominal',pattern:alternatives[0]},scrutinee,path,alternatives[0].span??armStart,null,true,guarded);if(bindings===null)throw unsupported('Rust source place match','each attempted arm retains its actual irrefutable complete binding graph',span(armStart,c.peek()));if(guarded)guardBindings=bindings;else armBindings=bindings;}
       else{const armScope=this.origins.cases(alternatives,scrutinee,path,deferredGuard);if(deferredGuard)this.origins.scope=armScope;else this.origins.enter(armScope);}
-      let body,bodyOrigin,guard;
+      let body,bodyOrigin,guard,bodyStart;
       try{
         for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
         const ownershipGuard=this.origins.snapshotOwnedBindings();guard=c.eat('if')?withRustStandardSumSourceContext(this,null,()=>this.expr(path)):null;if(guard)this.origins.checkOwnedGuard(ownershipGuard,guard.span);
         if(guard)this.origins.direct(guard,path,guard.span);if(guard&&placeMatch){guard=attachRustSourceReadonlyMatchGuard(this,guard);this.origins.scope=previous;this.origins.restoreOwnedBindings(ownershipBase);this.origins.enter();armBindings=alternatives[0].k==='wild'&&!this.origins.patternReferences.get(alternatives[0])?[]:lowerRustSourcePlaceBinding(this,{k:'nominal',pattern:alternatives[0]},scrutinee,path,alternatives[0].span??armStart,null,true);if(armBindings===null)throw unsupported('Rust source place match','successful guard entry retains its actual owning binding graph',span(armStart,c.peek()));}
         if(deferredGuard){this.origins.scope=previous;this.origins.restoreOwnedBindings(ownershipBase);this.origins.scope=this.origins.cases(alternatives,scrutinee,path);}
-        c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.transferOwnedResult(body,path);this.origins.expireOwnedBindings(ownershipBase,bodyOrigin);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
+        c.expect('=>','match arm');bodyStart=c.peek();body=this.expr(path);bodyOrigin=this.origins.transferOwnedResult(body,path);this.origins.expireOwnedBindings(ownershipBase,bodyOrigin);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
       }finally{this.origins.scope=previous;if(armStateFrame)endRustOwnedRecordStateBlock(this,armStateFrame);}
-      if (body.block || body.k === 'if' || body.k === 'match') c.eat(',');
+      if (!['(','&','&&','*','!','-'].includes(bodyStart.value)&&(body.block || body.k === 'if' || body.k === 'match')) c.eat(',');
       else if (!c.is('}')) c.expect(',', 'match arm');
       if (alternatives.length > 1 && aliases.length) {
         throw unsupported('binding in an or-pattern', 'bind the value in each alternative separately', span(armStart, c.peek()));
@@ -2161,8 +2161,8 @@ class RustParser {
     c.expect('}', 'match');
     if (!rows.length) throw unsupported('empty match', 'uninhabited types are outside the portable core', span(token, c.peek()));
     let ownershipJoined=new Map(),ownershipReturns=false;for(const arm of ownershipArms){this.origins.joinOwnedBindings(ownershipJoined,arm.states,ownershipReturns,arm.returns);ownershipJoined=this.origins.snapshotOwnedBindings();ownershipReturns=ownershipReturns||arm.returns;}
-    if(placeMatch){const origin=this.origins.join(guardedArms.map(arm=>arm.origin)),result=lowerRustSourcePlaceMatch(this,placeContext,placeArms,path,span(token,c.peek()),origin);this.origins.transferOwnedResult(result,path);return result;}
-    if(guardedArms.some(arm=>arm.guard))return lowerRustGuardedMatch(this,scrutinee,guardedArms,path,span(token,c.peek()));
+    if(placeMatch){const origin=this.origins.join(guardedArms.map(arm=>arm.origin)),result=lowerRustSourcePlaceMatch(this,placeContext,placeArms,path,span(token,c.peek()),origin);result.block=true;this.origins.transferOwnedResult(result,path);return result;}
+    if(guardedArms.some(arm=>arm.guard)){const result=lowerRustGuardedMatch(this,scrutinee,guardedArms,path,span(token,c.peek()));if(!provided)result.block=true;return result;}
     const origins = rows.map(row => this.origins.origin(row.body, path));
     const result = { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };
     this.origins.mark(result, this.origins.join(origins));this.origins.transferOwnedResult(result,path);return result;

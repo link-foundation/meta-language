@@ -7,12 +7,12 @@ import {readRustOwnedRecordStateStorageError} from './rust-owned-record-state-ru
 import {renameRustSourceMatchBindings} from './rust-owned-record-effects.js';
 const fail=(reason,span)=>{throw unsupported('Rust source place match',reason,span);};
 export function readRustSourcePlaceMatchAttemptPlan(parser){
- const c=parser.cursor,stack=[],guards=[];let pattern=true,guarded=false;
+ const c=parser.cursor,stack=[],guards=[];let pattern=true,guarded=false,blockBody=false;
  for(let offset=0;offset<100000;offset++){const token=c.peek(offset),value=token.value;if(token.kind==='eof')return null;
   if(pattern&&!guarded&&(['string','char','byteChar','byteString'].includes(token.kind)||token.kind==='number'&&c.peek(offset+1).value!==':'||['@','|','-','..='].includes(value)||['true','false'].includes(value)&&!token.raw?.startsWith('r#')))return null;
   if(['(','[','{'].includes(value)){stack.push(value==='('?')':value==='['?']':'}');continue;}
-  if([')',']','}'].includes(value)){if(!stack.length)return value==='}'&&guards.length&&(!pattern||!guarded)&&!guards.at(-1)&&guards.slice(0,-1).every(Boolean)?guards:null;if(stack.pop()!==value)return null;continue;}
-  if(stack.length)continue;if(value==='=>'){if(!pattern)return null;guards.push(guarded);pattern=false;continue;}if(value===','){if(pattern)return null;pattern=true;guarded=false;continue;}if(pattern&&value==='if'&&!token.raw?.startsWith('r#'))guarded=true;
+  if([')',']','}'].includes(value)){if(!stack.length)return value==='}'&&guards.length&&(!pattern||!guarded)&&!guards.at(-1)&&guards.slice(0,-1).every(Boolean)?guards:null;if(stack.pop()!==value)return null;if(value==='}'&&!stack.length&&!pattern&&blockBody){const next=c.peek(offset+1),startsPattern=next.kind==='identifier'&&(next.raw?.startsWith('r#')||!['else','as','await'].includes(next.value))||['&','&&','(','_','|'].includes(next.value);if(startsPattern){pattern=true;guarded=false;blockBody=false;}}continue;}
+  if(stack.length)continue;if(value==='=>'){if(!pattern)return null;guards.push(guarded);pattern=false;const first=c.peek(offset+1);blockBody=['{','if','match'].includes(first.value)&&!first.raw?.startsWith('r#');continue;}if(value===','){if(pattern)return null;pattern=true;guarded=false;blockBody=false;continue;}if(pattern&&value==='if'&&!token.raw?.startsWith('r#'))guarded=true;
  }
  fail('the complete source match attempt plan exceeds its token inspection budget',c.peek());
 }

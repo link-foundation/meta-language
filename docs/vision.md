@@ -4933,8 +4933,13 @@ images, general temporary lifetime extension, exclusive-reference patterns,
 refutable/or/alias patterns, guard let chains, complete arm syntax and general
 effectful guards retain their separate required protocols. The current attempt
 planner recognizes guarded irrefutable attempts followed by one unguarded
-exhaustive arm, with explicit separators between arms; other forms retain their
-existing path or request their missing protocol. Native controls and independent
+exhaustive arm. Block/if/match bodies admit the source language's omitted comma
+before the next arm, retaining nested delimiters, final else branches and following
+shared-reference patterns. A lowered real source match retains its existing
+source block classification, independently of its resulting core expression kind.
+Grouped and prefixed expressions keep their required separators; postfix results
+retain ordinary expression handling. This is parser metadata, not ownership
+proof. Other forms retain their existing path or request their missing protocol. Native controls and independent
 forged-graph/Links controls for this extension remain unexecuted drafts. Guard
 borrowing and deferred transfers follow [Rust match guards](https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards). No image, lifetime root, disjointness claim,
 ownership mask or local region identifier is accepted from an archive. Actual

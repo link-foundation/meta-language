@@ -94,3 +94,7 @@ and [binding modes](https://doc.rust-lang.org/reference/patterns.html#binding-mo
 
 The entire requirements draft remains active. There is no external drafting
 blocker, and this batch claims neither executed behavior nor full support.
+
+Successor: [source block-arm syntax](issue-227-block-arm-syntax-2026-11-04.md)
+drafts omitted commas after actual block/if/match bodies, including lowered
+nested matches; the general remaining syntax and semantic protocols stay binding.
