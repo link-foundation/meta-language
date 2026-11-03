@@ -558,3 +558,11 @@ source scenarios). The new three-case composition group has explicit subset
 scope; existing full-variant assertions remain unchanged. These inputs provide
 more composition coverage but remain unexecuted and do not measure completed
 requirements. No new agent or parallel batch is started.
+
+Solo continuation adds five scalar-vector indexing originals and four refusal
+inputs to the existing mixed-region matrix. The positive driver inventory becomes
+356 authored rows (292 literal originals and 64 actual-source scenarios), across
+eighteen groups. One shared index interpreter distinguishes copied scalar values
+from references into vector storage; primitive source-owner and lifetime checks
+remain. This is unexecuted source drafting, not a measured runtime improvement
+or requirement completion. No further agents are used.

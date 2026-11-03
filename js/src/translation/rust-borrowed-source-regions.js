@@ -1,4 +1,4 @@
-import {readRustBorrowedVectorIndexedRegion} from './rust-borrowed-vector-index.js';
+import {readRustSourceVectorIndexedRegion} from './rust-borrowed-vector-index.js';
 // Actual checked AST and lexical binder transport into shared source decisions.
 // Region numbers below are local proof coordinates, never archived runtime IDs.
 import {typeError,unsupported} from './diagnostics.js';
@@ -183,7 +183,7 @@ class SourceRegions{
    const result=signature.result,sources=this.resultSources(result,signature.parameters);if(sources.includes(-1))fail('a source call needs its actual parameter region interface',node);
    value=this.value(this.position(result),this.root('',true),this.union(sources.map(index=>values[index].regions)),true);
   }else if(operation==='index'){
-   value=readRustBorrowedVectorIndexedRegion(this,node,env,bindings,depth);
+   value=readRustSourceVectorIndexedRegion(this,node,env,bindings,depth);
   }else if(operation==='length'){
    const array=this.read(this.expression(node.array,env,bindings,null,depth+1),'read',node.array);const error=readRustBorrowedVectorObservationError(array.role==='borrowed vector','len');if(error)fail(error,node);value=this.value(null,null,[],false,this.visits);
   }else{

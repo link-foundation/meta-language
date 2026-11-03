@@ -4589,7 +4589,10 @@ Older independent profile guards remain intact.
 Signature3 borrowed-vector indexing copies the actual shared-reference element
 while preserving its canonical owner, lifetime and referent regions. Copying a
 reference grants no Copy/Clone or mutable authority on its referent. Vector
-allocation ownership and referenced source ownership remain distinct; the usual
+allocation ownership and referenced source ownership remain distinct. Direct
+scalar indexing also retains the actual canonical primitive owner: copying a
+scalar carries no vector loan, while taking a shared reference retains the
+actual vector allocation or borrowed parameter region. The usual
 exact usize conversion and checked bounds/error behavior still apply.
 
 Rust source state transitions retain actual original binder tokens, identities
