@@ -656,3 +656,17 @@ four further positive programs and two invalid-source controls. Declared totals:
 428 positives in nineteen groups, 364 literal and 64 actual source. No runtime
 evidence, regenerated assets or requirement-level completion claims accompany
 these source edits.
+
+The [finite-helper state-region draft](../../handoffs/issue-227-finite-helper-state-regions-2026-11-03.md)
+adds a distinct compiler function interface, independent helper body and actual
+call-graph checks, scoped proof coordinates, and Links transport. It also removes
+unnecessary nonselected record bindings and retains per-arm Copy/move semantics.
+Ten further positives bring the declared inventory to 438 (374 literal, 64
+actual source), nineteen groups. Remaining borrowed capture/field/abort/result
+frontiers are explicit in the handoff. These are unexecuted code and control
+drafts, with no requirement percentage or completion claim.
+
+The same pass detaches Copy values from local alias places without dropping
+reference loans. It retains explicit source iteration-lifetime transport for
+mutable locals in expanded chunks as remaining work. Proof scopes release local
+coordinates between functions while cumulative resource accounting remains.

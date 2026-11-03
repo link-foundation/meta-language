@@ -143,7 +143,7 @@ export function readRustRecordProjection(parser,object,field,path,where){
 
 function recordProjectionNode(parser,record,object,index,where){
  const binds=recordNames(parser,record.names.length);
- return{k:'match',scrutinees:[object],rows:[{patterns:[{k:'ctor',path:['crate',...record.constructor.split('.')],args:binds.map(name=>({k:'bind',name}))}],
+ return{k:'match',scrutinees:[object],rows:[{patterns:[{k:'ctor',path:['crate',...record.constructor.split('.')],args:binds.map((name,at)=>at===index?{k:'bind',name}:{k:'wild'})}],
   body:{k:'name',path:[binds[index]],span:where}}],span:where};
 }
 

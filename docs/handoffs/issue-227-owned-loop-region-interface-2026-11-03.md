@@ -85,9 +85,10 @@ numbers establish neither passes nor completed requirement counts.
   admission still rejects returned iterator references; this draft does not
   remove that requirement. Add exact original and invalid-lifetime controls for
   each successor rather than authorizing erased reference positions.
-- Generalize finite while-loop helper region interfaces and projected exclusive
-  fields, retaining mandatory caller/callback writebacks and exact recursive
-  referent layouts. Existing finite helper admission and acyclic checks stay.
+- Extend the [finite-helper region successor](issue-227-finite-helper-state-regions-2026-11-03.md)
+  through remaining result/capture paths and projected exclusive fields, retaining
+  mandatory caller/callback writebacks and exact recursive referent layouts.
+  Existing finite helper admission and actual acyclic checks stay.
 - Continue overwrite liveness through each actual head, body, lease and completion
   access. The [loop-aware successor](issue-227-loop-aware-overwrite-liveness-2026-11-03.md)
   drafts this for admitted nonreturning loops and retains the exact old unknown-loop

@@ -4631,6 +4631,23 @@ leases. Loop writes remain accesses, because zero iterations cannot establish
 an overwrite. Returning loops, unknown private operations, aborts and unresolved
 completion packets retain conservative barriers. Reader inventory shape or copied
 descriptors do not establish loop admission.
+Finite loop chunks retain a distinct compiler state-transformation interface:
+actual closed source binders/positions, ordered input/output slots and Unit or
+the real completion declaration. They do not invent Rust function headers.
+Every helper body is checked independently of call summaries, including current
+storage publication and nonescaping local state. Reachable helper calls must be
+actually static and acyclic; archived recursion flags grant no authority.
+Closed state parameters supply no nonstatic result loan. Proof coordinates are
+local to each callable/main scope while cumulative work/branch budgets remain.
+Generated record projections bind only the selected field, leaving other fields
+wild. Nominal constructor patterns that bind only primitive Copy or immutable
+reference fields preserve their owner; bound owned payloads and whole-value bind
+patterns retain their actual per-arm move semantics.
+Transport of scalar Copy values and immutable references detaches the copied
+value from its old local alias place without consuming that place. Reference
+copies retain every actual referent region; ending an alias scope cannot erase
+or extend the referent lifetime. Explicit mutable-state packet transport remains
+separate from ordinary Copy transfer and retains its actual storage authority.
 Mutable value parameters in readonly-result helpers acquire explicit local
 entry storage from their actual formal binder and complete closed referent.
 Their local writes do not grant caller mutation authority or a return region.

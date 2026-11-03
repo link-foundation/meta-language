@@ -263,6 +263,8 @@ const consumers=[
  'js/src/translation/rust-source-state-transitions.js',
  'js/src/translation/rust-source-loop-folds.js',
  'js/src/translation/rust-source-loop-regions.js',
+ 'js/src/translation/rust-source-state-transforms.js',
+ 'js/src/translation/rust-source-state-transform-regions.js',
  'js/src/translation/rust-source-region-composition.js',
  'js/tests/source-state-transition-links.test.js',
  'js/tests/translation-javascript-weak-construction.test.js',

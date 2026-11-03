@@ -40,7 +40,7 @@ All preexisting inputs, refusal controls and their indexes remain.
 
 The complete-original CI driver now includes all six finite-record originals in
 a separate group with its actual nonexclusive source profile. The inventory is
-428 authored positives in nineteen groups: 364 literal originals and 64 actual
+438 authored positives in nineteen groups: 374 literal originals and 64 actual
 source scenarios. These are declared controls, not passing results or a count
 of completed requirements. Existing CI performs native original/product checks,
 default complete CST reconstruction, and typed Links text/binary rechecks. The
@@ -54,8 +54,8 @@ parenthesized blocks may not. Six appended owned-loop originals and three
 invalid-source refusals retain ordered stdout, empty/direct blocks and actual
 function returns. These bring the owned-loop group to 38 positives and 19
 refusals. That checkpoint declared 414 positives; the owned-loop region successor
-adds nine, followed by five loop-aware overwrite positives for the 428-positive
-total above. None ran.
+adds nine, followed by five loop-aware overwrite and ten finite-helper/alias
+positives for the 438-positive total above. None ran.
 
 Source review found that owned vector loop/sort fixture ranges spell the same
 bounds with a leading `Rust ` label, while the original driver compared the raw

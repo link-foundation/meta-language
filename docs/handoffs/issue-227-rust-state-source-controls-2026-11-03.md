@@ -83,7 +83,7 @@ The current driver also adds 28 actual `Type::map_children` and 33 actual
 `Type::children` controls through current-source factories. With literal mixed
 region originals, three actual Type composition scenarios and the later loop
 state/completion, owned-loop region and loop-aware overwrite batches, it declares
-428 authored positives across nineteen groups: 364 literal originals plus 64
+438 authored positives across nineteen groups: 374 literal originals plus 64
 current-source scenarios. Counts do not
 measure requirement completion. See
 [the native reference handoff](issue-227-actual-type-native-reference-controls-2026-11-03.md)
@@ -139,3 +139,8 @@ The [loop-aware overwrite successor](issue-227-loop-aware-overwrite-liveness-202
 adds five positives (one exact retained former frontier), yielding 428 inputs in
 nineteen groups. The mixed group now has 63 positives and 22 refusals. All source
 execution and generation remain deferred.
+
+The [finite-helper region successor](issue-227-finite-helper-state-regions-2026-11-03.md)
+adds ten positives and three invalid-source controls. Latest inventory: 438
+positives, 374 literal and 64 actual source, nineteen groups. The mixed group
+contains 73 positives and 25 refusals, with no execution evidence claimed.

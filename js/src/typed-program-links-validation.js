@@ -4,6 +4,7 @@ import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwn
 import {checkRustExclusiveSourceSignature} from './translation/rust-exclusive-source-signatures.js';
 import {checkRustBorrowedVectorSourceRegions} from './translation/rust-borrowed-source-regions.js';
 import {checkRustOwnedVectorSourceFold} from './translation/rust-source-loop-folds.js';
+import {checkRustFiniteLoopStateTransform} from './translation/rust-source-state-transforms.js';
 import {checkJavaScriptClassOwners} from './translation/javascript-class-owners.js';
 import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
@@ -151,6 +152,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   for (const [name, entry] of program.declarations) {
     if(entry.sourceStandardCollectionLibraryOwner!==undefined){checkRustStandardCollectionLibraryOwner(entry,program.sourceLanguage);const target=targetOf(entry.sourceStandardCollectionLibraryOwner,'standardCollectionLibraryDeclaration');if(graphPatterns?target!==entry:target&&target!==entry)throw new TypeError('a collection library owner must reference its actual declaration');}
     if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if(entry.sourceExclusiveSignature!==undefined)checkRustExclusiveSourceSignature(entry.sourceExclusiveSignature,entry.params.map(parameter=>parameter.type),entry.ret,program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if(entry.sourceFnMutSpecialization!==undefined)checkRustFnMutSourceSpecialization(entry.sourceFnMutSpecialization,entry.params.map(parameter=>parameter.type),entry.ret,program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
+    if(entry.k==='fn'&&entry.sourceStateTransform!==undefined){const facet=checkRustFiniteLoopStateTransform(entry.sourceStateTransform,entry,program.sourceLanguage,value=>value,value=>declarations.get(value.name));if(facet.control)type(facet.control);for(const root of [facet.result,...facet.slots.map(slot=>slot.position)]){let position=root;while(position){type(position.type);position=position.arrayElementPosition;}}}
     if (entry.k === 'const') type(entry.type);
     if (entry.k === 'data') {
       if (!Array.isArray(entry.ctors)) throw new TypeError('a linked datatype has malformed constructors');

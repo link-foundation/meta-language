@@ -45,7 +45,7 @@ the actual `count` slot. All previous positive inputs and other refusal controls
 remain. Version ranges and the independent native original/product CI driver
 are unchanged.
 
-Current declared inventory: 428 positive inputs in nineteen groups, 364 literal
+This overwrite checkpoint declared 428 positive inputs in nineteen groups, 364 literal
 originals plus 64 actual-source scenarios. The mixed-region group has 63 positives
 and 22 refusals. Counts are source declarations, not completed requirements or
 passing evidence. The unified CI driver includes the new positives through its
@@ -61,3 +61,8 @@ collection/signature-3 composition, projected exclusive places, borrowed
 callbacks and full project translation remain under the same active goal.
 Generated schema/policy/naming/source-register publication remains deferred;
 automatic translation must supply native semantics after full drafting.
+
+The [finite-helper successor](issue-227-finite-helper-state-regions-2026-11-03.md)
+drafts compiler state/body region interfaces and primitive record projection
+semantics. Its ten further positives bring the inventory to 438; the mixed
+group has 73 positives and 25 refusals. These remain source declarations only.

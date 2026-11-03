@@ -18,6 +18,7 @@ import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-
 import {readRustOwnedRecordNestedLoopError,readRustOwnedRecordNestedLoopDepthError,readRustOwnedRecordNestedCompletionError,readRustOwnedRecordLoopFootprintError,readRustOwnedRecordLoopResidualCountError} from './rust-owned-record-loop-rules.js';
 import {readRustStandardSumTrySourceBranches} from './rust-standard-sum-completions.js';
 import {hasRustExpressionCompletion} from './rust-expression-completions.js';
+import {attachRustFiniteLoopStateTransform} from './rust-source-state-transforms.js';
 const admitted=new WeakSet();
 export function hasRustOwnedRecordLoopAdmission(value){return admitted.has(value);}
 export function assertRustOwnedRecordLoopAdmission(value){if(!hasRustOwnedRecordLoopAdmission(value))throw unsupported('finite record loop helper','the helper needs its actual admitted source counter and exit-state derivation',value?.span);}
@@ -32,7 +33,7 @@ function place(parser,node){
  const source=readRustOwnedRecordEffectSource(parser,node);if(source?.form==='read')return {slot:source.slot,indices:[],origin:source.slot.origin};
  if(node?.k!=='match'||node.scrutinees.length!==1||node.rows.length!==1)return null;const row=node.rows[0],pattern=row.patterns?.[0];if(row.patterns?.length!==1||pattern?.k!=='ctor'||row.body?.k!=='name'||row.body.path.length!==1)return null;
  const parent=place(parser,node.scrutinees[0]);if(!parent)return null;const actual=readRustOwnedRecordStateLayout(parser,parent.origin);if(!actual||pattern.path.join('.')!=='crate.'+actual.layout.constructor||pattern.args.length!==actual.entry.fields.length)return null;
- const names=pattern.args.map(pattern=>pattern.k==='bind'?pattern.name:null);if(names.some(name=>name===null)||new Set(names).size!==names.length)return null;const index=names.indexOf(row.body.path[0]);return index<0?null:{slot:parent.slot,indices:[...parent.indices,index],origin:actual.entry.fields[index]};
+ if(pattern.args.some(pattern=>!['bind','wild'].includes(pattern.k)))return null;const names=pattern.args.map(pattern=>pattern.k==='bind'?pattern.name:null),bound=names.filter(name=>name!==null);if(new Set(bound).size!==bound.length)return null;const index=names.indexOf(row.body.path[0]);return index<0?null:{slot:parent.slot,indices:[...parent.indices,index],origin:actual.entry.fields[index]};
 }
 function counter(parser,guard){if(guard?.k!=='binary'||!numeral(guard.right,0))fail('the loop head needs its actual pure counter comparison with zero',guard?.span);const selected=place(parser,guard.left);if(!selected||selected.indices.length===0)fail('the loop head needs an actual mutable record field place',guard.span);const origin=selected.origin,owner=origin.expandedSourceOwner??origin.sourceOwner,error=readRustOwnedRecordLoopCounterError(origin.type?.kind??'',origin.type?.bits??0,origin.type?.signed===true,origin.wrappers.length,owner?.kind==='primitive'&&owner.arguments.length===0?owner.path.join('::'):'',guard.op);if(!origin.proven||error)fail(error||'the loop counter needs its actual complete source proof',guard.span);return {...selected,target:readRustOwnedRecordStateFieldIdentity(selected.slot.root,selected.indices)};}
 function samePlace(left,right){return left&&left.slot.lexical===right.slot.lexical&&left.indices.length===right.indices.length&&left.indices.every((index,at)=>index===right.indices[at]);}
@@ -109,7 +110,7 @@ export function readRustOwnedRecordFiniteLoop(parser,path){
  for(const exit of exits)if(exit.kind==='value'||exit.kind==='continue')invariant(parser,before,exit.ownership,slots,span);
  slots=selectRustOwnedRecordLoopStateSlots(parser,{k:'tuple',items:[guard,body],span},slots);
  const size=measure({guard,body,types:slots.map(slot=>slot.origin.type)}),arena=inventory(parser),reservation=readRustOwnedRecordLoopExpansionReservation(size.nodes,size.text);if(reservation.length!==2)fail('the complete finite record loop expansion exceeds its source budget',span);const error=readRustOwnedRecordLoopExpansionError(arena.nodes,reservation[0],reservation[1],255);if(error)fail(error,span);arena.nodes+=reservation[0]*255;
- const admission={span,counterType:selected.origin.type,slots,path:[...path],controlOwner:completion?.owner??null,returns:completion?.returns??[],returnLeaves:exits.filter(exit=>exit.kind==='return').map(exit=>exit.leaf),exits,writes:writeFootprint(parser,body)};admitted.add(admission);arena.entries.push(admission);parser.origins.restoreOwnedBindings(before);for(const exit of exits)if(exit.kind==='break')parser.origins.joinOwnedBindings(parser.origins.snapshotOwnedBindings(),exit.ownership,true,true);return parser.origins.mark(node,parser.origins.typeOrigin({kind:'unit'},path));
+ const admission={span,counterType:selected.origin.type,slots,path:[...path],result:parser.standardSumReturnOrigin,controlOwner:completion?.owner??null,returns:completion?.returns??[],returnLeaves:exits.filter(exit=>exit.kind==='return').map(exit=>exit.leaf),exits,writes:writeFootprint(parser,body)};admitted.add(admission);arena.entries.push(admission);parser.origins.restoreOwnedBindings(before);for(const exit of exits)if(exit.kind==='break')parser.origins.joinOwnedBindings(parser.origins.snapshotOwnedBindings(),exit.ownership,true,true);return parser.origins.mark(node,parser.origins.typeOrigin({kind:'unit'},path));
 }
 export function lowerRustOwnedRecordLoopCompletion(parser,node,destination,terminal,sourceResult){
  const source=readRustOwnedRecordFiniteLoopSource(parser,node);assertRustOwnedRecordLoopAdmission(source);if(!source.controlOwner)fail('a loop return needs its actual completion carrier',node.span);source.destination=destination;
@@ -144,7 +145,7 @@ export function lowerRustOwnedRecordFiniteLoop(parser,node,environment,next,comp
     return {k:'let',name:decision,value:{k:'match1',scrutinee:value,cases},body:{k:'if',cond:{k:'tupleIndex',object:reference,index:0},then:packet(done,{k:'tupleIndex',object:reference,index:1}),else:step(index+1,done)}};
    }),else:packet(after)}));
   };
-  const fn={k:'fn',name:names[chunk],params,ret,body:step(0,initial),generated:true,sourceFiniteRecordLoopHelper:true,span:source.span};sealFiniteRecordLoopHelper(fn,source);arena.helpers.push({path:source.path,declaration:fn});
+  const fn=attachRustFiniteLoopStateTransform(parser,{k:'fn',name:names[chunk],params,ret,body:step(0,initial),generated:true,sourceFiniteRecordLoopHelper:true,span:source.span},source,controlOwner?{kind:'named',path:controlOwner}:null);sealFiniteRecordLoopHelper(fn,source);arena.helpers.push({path:source.path,declaration:fn});
  }
  const resultName=parser.freshProductBinding(),reference=name([resultName]),after=new Map(environment),bindings=[];
  keys.forEach((key,index)=>{const fresh=parser.freshProductBinding();bindings.push({name:fresh,value:{k:'tupleIndex',object:reference,index:index+1}});after.set(key,{slot:slots[index],name:fresh});});
