@@ -6,6 +6,10 @@ only: no represented program, test, generator, formatter, validation gate,
 compilation or CI feedback ran or was reviewed. Full requirements drafting
 remains incomplete and the active goal remains unchanged.
 
+Continuation: [Function binding and ordinary Calls](issue-227-function-binding-calls-2026-11-03.md)
+drafts the stored callable/metadata path. Bound construction remains explicitly
+unfinished, along with the broader scopes below.
+
 ## Actual implementation path drafted
 
 `javascript-species-construction.js` now starts every new species request through

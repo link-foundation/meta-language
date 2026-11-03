@@ -15,7 +15,7 @@ export function readJavaScriptPrimitiveWrapperStateError(heap,state){
  if(state.$!=='primitiveWrapperState'||state.input.$==='object')return 'wrapper allocation retains an actual primitive or nullish Object Call input';
  for(const value of [state.input,state.prototype]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
  if(state.prototype.$!=='object'&&state.prototype.$!=='null')return 'wrapper allocation retains its actual selected realm Object prototype';
- if(state.prototype.$==='object'){const parent=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.prototype.identity)];if(parent!==undefined&&!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(parent.$))return 'wrapper allocation with an opaque prototype requires its actual traversal protocol';}
+ if(state.prototype.$==='object'){const parent=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.prototype.identity)];if(parent!==undefined&&!['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(parent.$))return 'wrapper allocation with an opaque prototype requires its actual traversal protocol';}
  return '';
 }
 /** Inputs and state are already validated. Budgets are resource requests,

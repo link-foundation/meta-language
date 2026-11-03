@@ -19,7 +19,7 @@ export function readJavaScriptObjectSpreadStateError(heap,state){
  for(const value of [state.target,state.input,state.value,state.callee]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
  if(state.target.$!=='object')return 'object spread retains its actual ordinary literal target';
  const assignment=state.operation==='assignment';if(state.operation!==undefined&&!assignment)return 'object copy retains its actual CreateDataProperty or Set operation';
- const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];if(target===undefined||(assignment?!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(target.$):target.$!=='ordinaryObject'||target.callable))return 'object copy target retains its actual supported ordinary heap kind';
+ const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];if(target===undefined||(assignment?!['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(target.$):target.$!=='ordinaryObject'||target.callable))return 'object copy target retains its actual supported ordinary heap kind';
  if(assignment&&(state.exoticKey?.$!=='symbol'||readJavaScriptOrdinaryValueError(heap,state.exoticKey)!==''))return 'Object.assign retains its actual primitive conversion Symbol';
  if(!['keys','read','getter','write','setter','array definition'].includes(state.phase)||!Number.isSafeInteger(state.position)||state.position<0||Object.is(state.position,-0)||state.position>state.keys.length||state.keys.length>4096)return 'object spread retains its bounded key snapshot and exact cursor';
  if(state.phase==='keys'&&(state.keys.length!==0||state.position!==0)||['getter','write','setter','array definition'].includes(state.phase)&&state.position>=state.keys.length)return 'object spread phases retain their actual selected property';
@@ -80,7 +80,7 @@ export function stepJavaScriptObjectSpread(heap,state){
  if(state.excluded.some(excluded=>testJavaScriptSemanticSameValue(excluded,key)))return {$:'objectSpreadContinue',heap,state:{...state,position:state.position+1}};
  if(state.input.$==='object'){
   const input=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.input.identity)];if(input===undefined)return {$:'objectSpreadInvalid',heap,reason:'object spread source cannot disappear from its global context'};
-  if(!['ordinaryObject','closureObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject','arrayObject'].includes(input.$))return {$:'objectSpreadInvalid',heap,reason:'opaque object spread requires its actual own-key and descriptor host protocols'};
+  if(!['ordinaryObject','closureObject','boundFunctionObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject','arrayObject'].includes(input.$))return {$:'objectSpreadInvalid',heap,reason:'opaque object spread requires its actual own-key and descriptor host protocols'};
   const property=input.properties[findJavaScriptOrdinaryProperty(input.properties,key)];
   // A preceding getter can delete or hide this key. New keys are not in the
   // original snapshot; a recreated snapshotted key uses its latest descriptor.

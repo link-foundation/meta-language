@@ -102,7 +102,7 @@ export function stepJavaScriptDescriptorConversion(heap,state){
     const key={$:'text',units:field.units};
     const receiver=current.receiver;
     if(receiver.$!=='object')return {$:'descriptorInvalid',reason:'descriptor conversion retains its actual Object receiver'};
-    const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];if(actual!==undefined&&!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(actual.$))return {$:'descriptorInvalid',reason:'opaque Error descriptor reflection requires its actual host protocol'};
+    const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];if(actual!==undefined&&!['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(actual.$))return {$:'descriptorInvalid',reason:'opaque Error descriptor reflection requires its actual host protocol'};
     const property=locateJavaScriptOrdinaryProperty(heap,receiver.identity,key);
     if(!property.found){current={$:'descriptorConversion',receiver,next:current.next+1,descriptor:current.descriptor,pending:false};continue;}
     const plan=planJavaScriptOrdinaryGet(heap,receiver.identity,key,receiver);

@@ -34,7 +34,7 @@ export function readJavaScriptConstructionFact(directory,candidate){return candi
  * fact separately proves that an actual strict function/base class is a
  * constructor; receiverMode alone never grants that classification.
  * @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayConstructorFact} fact @returns {string} */
-export function readJavaScriptConstructionMode(program,heap,fact){return fact.intrinsicKind!==undefined?fact.intrinsicKind:fact.intrinsicArray?'Array':readJavaScriptExecutableCallFunction(program,heap,fact.identity)?.receiverMode??'';}
+export function readJavaScriptConstructionMode(program,heap,fact){const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,fact.identity)];return actual?.$==='boundFunctionObject'?'bound function':fact.intrinsicKind!==undefined?fact.intrinsicKind:fact.intrinsicArray?'Array':readJavaScriptExecutableCallFunction(program,heap,fact.identity)?.receiverMode??'';}
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @returns {string} */
 export function readJavaScriptConstructionStateError(program,heap,directory,state){
  const invalid=readJavaScriptArraySpeciesDirectoryError(heap,directory);if(invalid!=='')return invalid;

@@ -25,7 +25,10 @@ export function projectJavaScriptCallTemplateFunction(template,identity,captures
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @returns {JavaScriptCallFunction|undefined} */
 export function readJavaScriptExecutableCallFunction(program,heap,identity){
  const staticIndex=findJavaScriptCallCodeFunction(program,identity);if(staticIndex>=0)return program.functions[staticIndex];
- const closure=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];if(closure===undefined||closure.$!=='closureObject')return undefined;
+ const closure=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];if(closure?.$==='boundFunctionObject'){
+  let target=closure.boundTarget;for(let depth=0;depth<=heap.objects.length;depth++){if(target.$!=='object'||!target.callable)return undefined;const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)];if(object?.$!=='boundFunctionObject'){const actual=readJavaScriptExecutableCallFunction(program,heap,target.identity);return actual===undefined?undefined:{$:'callFunction',identity,realm:actual.realm,receiverMode:'strict',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'boundFunctionCall',destination:1},{$:'return',source:1}]};}target=object.boundTarget;}return undefined;
+ }
+ if(closure===undefined||closure.$!=='closureObject')return undefined;
  const template=(program.templates??[])[findJavaScriptCallTemplate(program,closure.owner,closure.ordinal)];if(template===undefined||template.captureCount!==closure.captures.length)return undefined;
  return projectJavaScriptCallTemplateFunction(template,identity,closure.captures,closure.lexicalReceiver,closure.lexicalNewTarget);
 }
@@ -52,6 +55,7 @@ export function readJavaScriptCallTemplateDirectoryError(program,heap){
   if(findJavaScriptCallCodeFunction(program,object.identity)>=0)return 'a runtime closure identity cannot also name a static code directory entry';
   const template=templates[findJavaScriptCallTemplate(program,object.owner,object.ordinal)];if(object.lexicalNewTarget!==undefined&&(template?.receiverMode??'lexical')!=='lexical')return 'only lexical closures capture an enclosing newTarget';if(template===undefined||template.captureCount!==object.captures.length)return 'every live closure retains its actual declared template and complete capture vector';
  }
+ for(const object of heap.objects)if(object.$==='boundFunctionObject'&&findJavaScriptCallCodeFunction(program,object.identity)>=0)return 'a runtime bound Function cannot replace a static executable owner';
  return '';
 }
 /** @param {JavaScriptSemanticValue} value @returns {JavaScriptPropertyDescriptor} */

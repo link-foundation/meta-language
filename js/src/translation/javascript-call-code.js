@@ -6,6 +6,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'copy',destination:number,source:number} |
  * {$:'argument',destination:number,index:number} |
  * {$:'argumentCount',destination:number} | {$:'argumentAt',destination:number,index:number} |
+ * {$:'functionBind',destination:number} | {$:'boundFunctionCall',destination:number} |
  * {$:'pushFinally',target:number} | {$:'finishFinally'} | {$:'completeJump',target:number,depth:number} |
  * {$:'jump',target:number} | {$:'branch',condition:number,yes:number,no:number} |
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
@@ -94,7 +95,7 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'argumentCount':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':return [instruction.destination];
+    case 'constant':case 'argument':case 'argumentCount':case 'functionBind':case 'boundFunctionCall':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':return [instruction.destination];
     case 'arrayConcatenation':return [instruction.destination,instruction.input??0,instruction.spreadableKey];
     case 'arraySlice':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination,instruction.input??0];
     case 'argumentAt':return [instruction.destination,instruction.index];

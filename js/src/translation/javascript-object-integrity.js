@@ -24,7 +24,7 @@ export function compileJavaScriptObjectObservationFunction(identity,realm,operat
  instructions.push({$:'objectObservation',destination:3,operation,input:1,other:2},{$:'return',source:3});return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:4,captures:[],instructions};
 }
 /** @param {string} kind @returns {boolean} */
-export function testJavaScriptOrdinaryIntegrityKind(kind){return ['ordinaryObject','closureObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(kind);}
+export function testJavaScriptOrdinaryIntegrityKind(kind){return ['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(kind);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {string} operation @param {JavaScriptSemanticValue} input @param {JavaScriptSemanticValue} other @returns {JavaScriptObjectIntegrityTransition} */
 export function beginJavaScriptObjectObservation(heap,operation,input,other){
  const error=readJavaScriptOrdinaryHeapError(heap)||readJavaScriptOrdinaryValueError(heap,input)||readJavaScriptOrdinaryValueError(heap,other);if(error!==''||!testJavaScriptObjectObservationOperation(operation))return {$:'objectIntegrityInvalid',heap,reason:error||'Object observations require their actual registered operation'};
@@ -40,7 +40,7 @@ export function beginJavaScriptObjectObservation(heap,operation,input,other){
    else if(object.primitiveData?.$==='boolean')tag='Boolean';
    else if(object.primitiveData?.$==='number')tag='Number';
    else if(object.regularExpression===true)tag='RegExp';
-  }else if(!['closureObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject','hostURLObject','hostByteBufferObject'].includes(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque builtin tags require actual internal-slot authority'};
+  }else if(!['closureObject','boundFunctionObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject','hostURLObject','hostByteBufferObject'].includes(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque builtin tags require actual internal-slot authority'};
   const units=[];for(let index=0;index<tag.length;index++)units.push(tag.charCodeAt(index));return {$:'objectIntegrityCompleted',heap,value:{$:'text',units}};
  }
  if(operation==='Object.regularExpressionSlot'){const object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;if(object!==undefined&&!testJavaScriptOrdinaryIntegrityKind(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque IsRegExp requires its actual internal-slot protocol'};return {$:'objectIntegrityCompleted',heap,value:{$:'boolean',value:object?.$==='ordinaryObject'&&object.regularExpression===true}};}

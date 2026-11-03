@@ -693,6 +693,16 @@ mutable field calls still need a complete storage contract; their guard remains.
 These code drafts remain unexecuted and do not establish a requirement-level
 completion percentage.
 
+The [Function binding ordinary Call batch](../../handoffs/issue-227-function-binding-calls-2026-11-03.md)
+drafts actual bound slots, ordered metadata/getter continuations, ordinary heap
+integration and constant-size projected forwarding code. Thirteen native-original
+controls and independent slot/cycle/resource controls remain unexecuted. The
+old Function.bind unknown-operation expectation retains its input and now checks
+the actual implementation; unknown refusal keeps a separate invalid operation.
+Bound Construct, realm classification, hasInstance and public callable metadata
+are detailed next-batch work, alongside the complete baseline and broader scope.
+No full-draft requirement count, runtime pass or percentage is inferred.
+
 The [projected source-call batch](../../handoffs/issue-227-projected-source-call-regions-2026-11-03.md)
 drafts the complete actual field extraction, selected closed callee and enclosing
 root reconstruction graph, plus current-root transport and Links integration.

@@ -8,6 +8,7 @@ export function projectJavaScriptHeapRetentionEdges(object){
  const strong=[object.prototype],weak=[],conditional=[];
  for(const property of object.properties){strong.push(property.key);const descriptor=property.descriptor;if(descriptor.valuePresent)strong.push(descriptor.value);if(descriptor.getterPresent)strong.push(descriptor.getter);if(descriptor.setterPresent)strong.push(descriptor.setter);}
  if(object.$==='closureObject')strong.push(object.lexicalReceiver,...object.captures,...(object.lexicalNewTarget===undefined?[]:[object.lexicalNewTarget]),{$:'object',identity:object.owner,callable:true});
+ if(object.$==='boundFunctionObject')strong.push(object.boundTarget,object.boundThis,...object.boundArguments);
  if(object.$==='ordinaryObject'&&object.primitiveData!==undefined)strong.push(object.primitiveData);
  if(object.$==='mapObject'||object.$==='setObject')for(const entry of object.entries)if(entry.present)strong.push(entry.key,entry.value);
  if(object.$==='weakMapObject'||object.$==='weakSetObject')for(const entry of object.weakEntries){weak.push(entry.key);if(object.$==='weakMapObject')conditional.push({key:entry.key,value:entry.value});}

@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-function-binding.js',moduleName:'javascript_function_binding',sourceDependencies:true,model:'Actual Function binding allocation metadata and getter continuations 1',programAsset:'javascript-function-binding-program'},
  {sourcePath:'js/src/translation/javascript-collection-construction-rules.js',moduleName:'javascript_collection_construction_rules',model:'Actual collection Construct storage and brand selection 1',programAsset:'javascript-collection-construction-rules-program'},
  {sourcePath:'js/src/translation/javascript-collection-construction.js',moduleName:'javascript_collection_construction',sourceDependencies:true,model:'Actual strong and weak collection generic construction receiver ownership 1',programAsset:'javascript-collection-construction-program'},
  {sourcePath:'js/src/translation/javascript-construction-parents.js',moduleName:'javascript_construction_parents',sourceDependencies:true,model:'Actual selected parent Construct operation transport 1',programAsset:'javascript-construction-parents-program'},
@@ -147,6 +148,7 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-function-binding-source.mjs',
  'js/tests/fixtures/javascript-shared-species-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-construction-source.mjs',
  'js/tests/fixtures/javascript-weak-collection-source.mjs',
@@ -361,6 +363,7 @@ const consumers=[
  'js/tests/translation-rust-exclusive-collection-source.test.js',
  'js/tests/translation-javascript-species-construction.test.js',
  'js/tests/translation-javascript-shared-species-construction.test.js',
+ 'js/tests/translation-javascript-function-binding.test.js',
  'js/tests/translation-javascript-iterator-protocol.test.js',
  'js/tests/translation-javascript-array-iteration.test.js',
  'js/tests/translation-javascript-array-spread.test.js',
@@ -730,6 +733,7 @@ for(const [source,target] of [
  ['javascript-symbol-registry-source','javascript-symbol-registry-source'],
  ['javascript-weak-construction-source','javascript-weak-construction-source'],
  ['javascript-shared-species-construction-source','javascript-shared-species-construction-source'],
+ ['javascript-function-binding-source','javascript-function-binding-source'],
  ['rust-exclusive-source-vectors','rust-exclusive-source-vectors'],
  ['rust-exclusive-source-strings','rust-exclusive-source-strings'],
  ['rust-exclusive-source-compounds','rust-exclusive-source-compounds'],

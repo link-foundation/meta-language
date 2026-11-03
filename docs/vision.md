@@ -96,6 +96,26 @@ these calls to genuine constructor frames and collection initializer reuse.
 Preceding persisted species states keep their separate original interpretation;
 new requests never select it as a semantic fallback. Authority extension preserves
 every established Map/Set prototype root alongside earlier constructor facts.
+Function binding retains a distinct callable heap entity with its actual target,
+bound receiver and ordered prefix arguments as strong internal links. Ordinary
+properties, descriptors, prototype mutation and reflection retain the same
+ordinary operations as other represented functions; internal slots do not become
+source properties. Bound target chains are acyclic actual creation graphs and
+share completed validation paths. Binding captures the target prototype before
+metadata reads, allocates once, observes own length before name and resumes actual
+metadata getters against the latest heap. Length conversion follows its Number
+domain without coercing other values; names retain exact UTF16 and their prefix.
+Metadata work limits retain captured values rather than repeating getters.
+Ordinary bound Calls use a shared two-instruction body projected from actual
+immutable slots and the actual target code realm. They preserve the stored this,
+prefix arguments, supplied arguments, lexical target behavior and abrupt values.
+No new static code owner is invented for a bound identity, and a bound identity
+cannot replace an existing static declaration. Bound construction, constructor
+classification/GetFunctionRealm, OrdinaryHasInstance delegation and public
+callable metadata handles retain their full separate obligations; a projected
+ordinary Call body cannot grant base-constructor behavior. These contracts follow
+[Function.prototype.bind](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-function.prototype.bind)
+and [bound function exotic objects](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-bound-function-exotic-objects).
 
 Reflect.construct checks target and actual/default newTarget before reading its
 array-like argument Object, then Gets length and every ordered index. Array.of
