@@ -5,6 +5,7 @@ import {readRustExclusiveSourceLoanVersionError,rustExclusiveSourceLoanProfile} 
 import {typeError,unsupported} from './diagnostics.js';
 import {typeKey} from './types.js';
 import {checkRustStandardCollectionCarrier} from './rust-standard-collection-signatures.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 export function requireRustExclusiveSourceModel(model,version){
  if(model==='')return;
  const facts=readRustSourceVersion(version),error=readRustExclusiveSourceLoanVersionError(facts.major,facts.minor);
@@ -12,9 +13,14 @@ export function requireRustExclusiveSourceModel(model,version){
 }
 export function createRustExclusiveSourceSignature(parser,parameters,result){
  if(parameters.length>256)throw unsupported('Rust exclusive source signature','the actual formal list exceeds the bounded source carrier profile');
- const mode=origin=>origin.sourceExclusiveMode==='exclusive'?'exclusive':origin.wrappers.length===1&&origin.wrappers[0]==='reference'?'shared':'value';
- const referent=origin=>{if(origin.wrappers.length>1||origin.wrappers.some(value=>value!=='reference')||origin.arrayElementPosition)throw unsupported('Rust exclusive source position','this profile needs direct owned storage and nonescaping whole-reference formals');const text=mode(origin)==='shared'&&origin.sourceOwner?.kind==='primitive'&&origin.sourceOwner.path.join('::')==='str';return text?origin:{...origin,wrappers:[],sourceLifetimes:[]};};
- if(result.wrappers.length)throw unsupported('Rust exclusive source result','returned references need their actual escape and lifetime interpretation');
+ const mode=origin=>origin.sourceExclusiveMode==='exclusive'?'exclusive':origin.wrappers[0]==='reference'?'shared':'value';
+ const referent=origin=>{
+  const owner=origin.expandedSourceOwner??origin.sourceOwner,text=mode(origin)==='shared'&&origin.wrappers.length===1&&owner?.kind==='primitive'&&owner.path.join('::')==='str';if(text)return origin;
+  const borrowed=mode(origin)!=='value',wrappers=origin.wrappers.slice(borrowed?1:0),lifetimes=(origin.sourceLifetimes??[]).slice(borrowed?1:0);
+  if(origin.arrayElementPosition||borrowed&&origin.wrappers[0]!=='reference'||!readRustRecordPlaceOwner({type:origin.type,owner,wrappers,lifetimes},false))throw unsupported('Rust exclusive source position','nonescaping call referents retain actual direct or canonical owned Box positions without stored references');
+  return {...origin,wrappers,sourceLifetimes:lifetimes};
+ };
+ if(result.wrappers.includes('reference'))throw unsupported('Rust exclusive source result','returned references need their actual escape and lifetime interpretation');
  const positions=createRustSourceSignature('Rust source function signature 2',parameters.map(referent),referent(result),new Set());
  return {model:rustExclusiveSourceLoanProfile,language:'Rust',sourceVersion:parser.exclusiveSourceVersion,parameters:positions.parameters.map((position,index)=>({mode:mode(parameters[index]),position})),result:positions.result,packet:parameters.flatMap((origin,index)=>mode(origin)==='exclusive'?[index]:[])};
 }
@@ -31,9 +37,10 @@ export function checkRustExclusiveSourceSignature(signature,parameters,result,la
  const positional=checkRustSourceSignature({model:'Rust source function signature 2',language:'Rust',parameters:signature.parameters.map(row=>row.position),result:signature.result,lifetimeBindings:[]},parameters,originalResult,language,resolveType,resolveData);
  let work=0;
  function storage(position,active=[]){
-  if(++work>65536||active.length>128||!position||!Array.isArray(position.wrappers)||!Array.isArray(position.lifetimes)||position.wrappers.length||position.lifetimes.length)throw typeError('exclusive source storage requires bounded direct owned referent positions');
+  if(++work>65536||active.length>128||!position||!Array.isArray(position.wrappers)||!Array.isArray(position.lifetimes)||position.lifetimes.length||position.arrayElementPosition)throw typeError('exclusive source storage requires bounded owned referent positions without stored references');
+  const peeled=readRustRecordPlaceOwner(position,false);if(!peeled)throw typeError('exclusive Box storage retains every actual canonical owner and wrapper');if(peeled.boxed){storage(peeled.position,active);return;}
   const type=position.type,owner=position.owner;
-  if(type.kind==='array'){if(owner.kind!=='library'||owner.path.join('::')!=='std::vec::Vec')throw typeError('exclusive vector storage retains its actual standard owner');storage({type:type.element,owner:owner.arguments[0],wrappers:[],lifetimes:[]},active);return;}
+  if(type.kind==='array'){if(owner.kind!=='library'||owner.path.join('::')!=='std::vec::Vec')throw typeError('exclusive vector storage retains its actual standard owner');const child=owner.arguments[0],wrappers=[];let leaf=child;while(leaf?.kind==='library'&&['std::boxed::Box','alloc::boxed::Box'].includes(leaf.path.join('::'))){if(wrappers.length>=128||leaf.arguments.length!==1)throw typeError('vector Box storage retains its bounded complete element owner');wrappers.push('box');leaf=leaf.arguments[0];}storage({type:type.element,owner:child,wrappers,lifetimes:[]},active);return;}
   if(type.kind==='data'){
    const data=resolveData(type),carrier=data&&checkRustStandardCollectionCarrier(data,language,resolveType,name=>resolveData({kind:'data',name}));if(carrier)return;
    const fields=data?.sourceFieldSignatures,sum=owner.kind==='library'&&['std::option::Option','std::result::Result'].includes(owner.path.join('::'));

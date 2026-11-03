@@ -4818,6 +4818,21 @@ follows the [Rust field expression contract](https://doc.rust-lang.org/reference
 and [Box place dereferencing](https://doc.rust-lang.org/reference/expressions/operator-expr.html#dereference-operator).
 Current loans conservatively cover the containing root;
 disjoint mutable call arguments do not establish disjoint surviving field loans.
+Owned Box values also retain their complete positions across ordinary helper
+arguments and results, including independent scalar result/state packets. Shared
+argument instantiation distinguishes an already represented reference from a
+referent carried by the exclusive interface: it adds only the actual outer
+borrow and preserves every Box layer. Ordinary and projected calls share this
+selection. Header adaptation removes only the selected outer parameter reference,
+never owned Box qualifiers. Independent storage checking follows canonical Box
+owners through the real closed payload graph, keeping field owners, element
+owners, resource bounds and existing recursion/destructor restrictions. Box
+results remain owning values with fresh result storage; source allocation,
+argument evaluation, early returns and state writeback retain their actual bodies.
+This value/shared call path does not establish mutable Box root, projected Box
+mutation, stored-reference payload or general recursive state authority. Those
+interfaces still need complete source wrapper and loan transport. The ownership
+contract follows [Rust Box](https://doc.rust-lang.org/std/boxed/index.html).
 State joins transport only actual written outer roots. Unchanged SSA names
 remain outside the result/state packet; moving their owned value must not
 create a phantom second read. Unknown operations retain conservative full-state

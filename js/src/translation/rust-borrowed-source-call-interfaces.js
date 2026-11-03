@@ -3,6 +3,10 @@
 import {sameType} from './types.js';
 import {unsupported} from './diagnostics.js';
 const fail=reason=>{throw unsupported('Rust closed source region call',reason);};
+// Some normalized shared formals retain a full reference (for example str),
+// while exclusive interfaces retain the referent. An owned Box layer is not
+// that outer borrow; preserve it when instantiating the actual shared operand.
+export function readRustBorrowedSourceCallParameter(position,mode){return mode==='shared'&&position.wrappers[0]!=='reference'?{...position,wrappers:['reference',...position.wrappers],lifetimes:[null,...position.lifetimes]}:position;}
 export function readRustBorrowedSourceClosedCallInterface(entry){
  if(entry?.k!=='fn')return null;if(!Array.isArray(entry.params)||!entry.ret)fail('a closed call needs its actual complete checked declaration');let parameters,result,modes,indices,callback=null,packet=false;
  const facet=entry.sourceFnMutSpecialization,exclusive=entry.sourceExclusiveSignature,signature=entry.sourceSignature;

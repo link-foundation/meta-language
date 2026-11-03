@@ -847,3 +847,17 @@ all remain unexecuted. Source review identified remaining direct-referent
 restrictions in exclusive/state and callback interfaces, which are recorded with
 concrete entry points in the handoff. This batch does not establish full borrowed
 callback, partial-move, own-project integration or requirement completion counts.
+
+The [owned Box helper call batch](../../handoffs/issue-227-owned-box-helper-calls-2026-11-03.md)
+extends existing value/shared call interfaces rather than adding another
+translation runtime. One shared-formal selector serves ordinary and projected
+calls; canonical owner-layer checking preserves Box allocation ownership through
+header/result positions and independent storage checks. Fourteen positive and
+six invalid originals plus structural/Links transport controls are appended,
+all unexecuted. Mutable Box roots and general recursive/reference-bearing state
+remain explicit work with concrete source entry points in the handoff.
+
+The preceding commits `8387f6621` (2026-11-03 23:12:12 +07:00) and `8c6005d76`
+(23:23:31 +07:00) are 11 minutes 19 seconds apart. This is a source publication
+interval, not verified requirements throughput. It supplies no audited drafted
+requirement count, completion percentage or whole-project finish estimate.

@@ -7,6 +7,10 @@ primary specification reads only. No tests, represented programs, generators,
 formatters, validation gates, compilation or CI feedback ran or was reviewed.
 The full requirements drafting goal remains active and unfinished.
 
+Continuation: [owned Box helper calls](issue-227-owned-box-helper-calls-2026-11-03.md)
+connects value/shared Box arguments and owning results to ordinary/projected
+calls. Mutable Box roots, stored references and all other scope below remain.
+
 ## Actual source changes
 
 The parser already derives field projections through actual canonical Box

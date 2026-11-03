@@ -16,7 +16,8 @@ import * as rules from './rust-borrowed-source-region-rules.js';
 import {measureRustSourcePositionMetadata} from './rust-standard-sum-source-metadata.js';
 import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
 import {sameType} from './types.js';
-import {readRustBorrowedSourceClosedCallInterface} from './rust-borrowed-source-call-interfaces.js';
+import {readRustBorrowedSourceClosedCallInterface,readRustBorrowedSourceCallParameter} from './rust-borrowed-source-call-interfaces.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 import {readRustBorrowedIteratorProjectionSyntax,readRustBorrowedIteratorCollectionError,acceptRustBorrowedIteratorWholeSlice} from './rust-borrowed-iterator-rules.js';
 const model='Rust source function signature 3';
 const references=position=>position?.wrappers.filter(value=>value==='reference').length??0;
@@ -67,7 +68,7 @@ class SourceRegions{
   // their old epoch and cannot be revived by a later conditional write.
   const rename=(value,mapping)=>{const regions=this.union([value.regions.map(root=>mapping.get(root)??root)]);if(['source state packet','source loop packet'].includes(value.role))return {...value,fields:value.fields.map(field=>rename(field,mapping)),regions};if(value.role==='source loop control')return {...value,variants:value.variants.map(variant=>({...variant,payload:variant.payload?rename(variant.payload,mapping):null})),regions};return {...value,regions};};for(let index=0;index<results.length;index++)results[index]=rename(results[index],renamings[index]);
  }
- closedOutput(position,node){if(position.wrappers.length||position.lifetimes.length||position.arrayElementPosition)fail('closed state calls do not return or publish stored references',node);this.closedTarget(position,node);if(!role(position))fail('a closed call needs its actual owned result domain',node);}
+ closedOutput(position,node){if(position.lifetimes.length||position.arrayElementPosition||!readRustRecordPlaceOwner(position,false))fail('closed state calls retain complete owned positions without returned or stored references',node);this.closedTarget(position,node);if(!role(position))fail('a closed call needs its actual owned result domain',node);}
  closedCall(node,entry,interface_,env,bindings,depth){
   if(!Array.isArray(node.args)||node.args.length!==interface_.parameters.length)fail('a closed source call retains its complete actual argument inventory',node);
   const values=[],sharedValues=[],writes=new Map(),callback=interface_.callback;for(const output of interface_.outputs)this.closedOutput(output,node);
@@ -76,7 +77,7 @@ class SourceRegions{
    if(mode==='callback'){
     if(callback?.parameter!==index)fail('a closed callback retains its actual selected formal',argument);checkRustClosedSourceCallback(this,argument,interface_,env);continue;
    }
-   this.closedTarget(parameter,argument);const shared=mode==='shared'&&parameter.wrappers.length===0?{...parameter,wrappers:['reference'],lifetimes:[null]}:parameter,expected=callParameter(this.position(shared)),actual=this.compatible(this.expression(argument,env,bindings,expected,depth+1),expected,argument);values.push(actual);
+   this.closedTarget(parameter,argument);const shared=readRustBorrowedSourceCallParameter(parameter,mode),expected=callParameter(this.position(shared)),actual=this.compatible(this.expression(argument,env,bindings,expected,depth+1),expected,argument);values.push(actual);
    if(mode==='exclusive'){
     const id=actual.storageIdentity,storage=id&&this.storages.get(id),root=actual.storageRoot;if(!storage||root!==storage.root||!sameOwner(storage.position,parameter)||[...writes.values()].some(value=>value.id===id))fail('exclusive writeback retains its distinct actual initialized whole source root and revision',argument);const capture=callback?.captures.find(row=>row.parameter===index);if(capture&&(capture.binder.identity!==id||capture.binder.name!==storage.binder.name||capture.binder.start!==storage.binder.start||capture.binder.end!==storage.binder.end))fail('a FnMut writeback retains its actual original caller capture binder',argument);this.read(actual,'read',argument);writes.set(index,{id,storage});this.states[root]=rules.consumeRustBorrowedSourceRegion(this.states[root]);if(actual.root!==null&&actual.root!==root)this.states[actual.root]=rules.consumeRustBorrowedSourceRegion(this.states[actual.root]);
    }else if(mode==='shared'){this.read(actual,'read',argument);sharedValues.push(actual);}else this.read(actual,'move',argument);
