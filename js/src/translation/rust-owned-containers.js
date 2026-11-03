@@ -80,6 +80,14 @@ export function createRustOwnedBoxConstructor(parser,argument,ownerPath,path,spa
  return table.mark({...argument,span},result);
 }
 function peel(table,origin){const result=copy(origin),owner=sourceOwner(origin);result.wrappers.shift();if(acceptRustOwnedBoxTypeNode(origin.wrappers,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1)){result.sourceOwner=copy(owner.arguments[0]);delete result.expandedSourceOwner;}const layer=origin.sourceBoxLayers?.[0];result.sourceBoxLayers=copy((origin.sourceBoxLayers??[]).slice(1));if(layer){result.sourceValueBorrowBindings=copy(layer.payloadBorrowBindings);result.sourceValueFieldBorrowBindings=copy(layer.payloadFieldBorrowBindings);}result.copyEvidence=result.wrappers.length===0&&(result.type?table.immutableProduct(table.typeOrigin(result.type,result.path)):layer?.intrinsicCopy===true);return result;}
+// Inspect the actual selected place without reading or transferring its value.
+// The owning root and every unprojected layer remain on the caller's place.
+export function readRustOwnedBoxPlaceProjection(table,origin,layers){
+ if(!table.ownedContainerSourceEnabled||!Number.isSafeInteger(layers)||layers<1||layers>256||layers>origin.wrappers.length)return null;
+ reserve(table,[origin]);let result=origin;
+ for(let index=0;index<layers;index+=1){const owner=sourceOwner(result);if(!acceptRustOwnedBoxTypeNode(result.wrappers,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1))return null;result=peel(table,result);}
+ return result;
+}
 export function finishRustOwnedBoxDereference(table,node,path,span){
  const actual=table.origin(node,path);if(!table.ownedContainerSourceEnabled||actual.wrappers[0]!=='box')return null;const facts=readRustOwnedContainerFacts(table,actual),layer=actual.sourceBoxLayers?.[0];if(facts.node!=='box'&&!isRustOwnedBoxValue(table,actual))return null;
  checkRustOwnedOrigin(table,actual,span);reserve(table,[actual]);const child=peel(table,actual),copied=facts.inner?.profile==='copy'||layer?.intrinsicCopy===true;

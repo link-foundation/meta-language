@@ -877,3 +877,20 @@ The preceding commits `8c6005d76` (2026-11-03 23:23:31 +07:00) and `c5002b3d8`
 cadence, not observed requirement delivery. No tests, compilation, gates or CI
 feedback ran in this batch, and no audited requirement denominator or finish
 estimate is established.
+
+The [Box compound place batch](../../handoffs/issue-227-box-compound-places-2026-11-04.md)
+replaces the preceding single-star syntax special case with one bounded ordered
+source policy. Actual Box layer inspection reuses existing canonical metadata;
+scalar arithmetic and full-root publication reuse existing source facets and
+writeback. Fourteen positive and six invalid originals plus independent ordering,
+forgery and Links transport controls are appended, all unexecuted. Ordinary
+payload assignment, Box receiver methods, recursive/reference-bearing state and
+all broader translator/grammar/concept obligations remain actual code work. A
+short source batch does not imply that the remaining full scope is small.
+
+The preceding commits `c5002b3d8` (2026-11-03 23:37:32 +07:00) and `fc308e1cb`
+(2026-11-04 00:02:59 +07:00) are 25 minutes 27 seconds apart. This is a source
+publication interval, not executed requirement throughput. No audited denominator,
+drafting percentage, verification percentage or full-scope finish date follows
+from those times. The status answer remains that all requirements are not yet
+drafted; the active unbounded drafting goal and detailed successor work remain.

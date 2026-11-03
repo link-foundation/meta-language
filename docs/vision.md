@@ -4844,8 +4844,22 @@ uses the real constructor graph and actual storage move checks. The original
 closed/destructor-free graph and resource bounds remain. Direct non-Box values
 use their preceding operation path. Low-level contexts use the same actual
 canonical layouts without discarding selected loan paths or complete positions.
+Built-in scalar compound places retain an ordered syntactic plan from a shared
+source policy: field postfix operations bind before unary dereferences, and
+parentheses retain their actual grouping. Each dereference selects the actual
+outer exclusive reference or one canonical owned Box layer. Field access keeps
+the actual containing root and declaration path; no immutable/shared binder or
+custom pointer receives mutation authority. The RHS finishes before reading the
+current scalar place. A copied primitive payload drives the existing arithmetic,
+then writeback retains the complete selected Box field and latest containing
+root, including siblings changed by the RHS. Primitive source positions and full
+state positions remain separate through existing Links facets and target
+emission; no additional serialized place shape is introduced. Ordinary payload
+assignment, indexed places and user-defined assignment traits remain separate.
+The ordering follows [Rust compound assignment](https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions)
+and [operator precedence](https://doc.rust-lang.org/reference/expressions.html#expression-precedence).
 Stored-reference payloads, general recursive state, per-layer lifetime
-substitution, scalar compound dereference places, Box receiver autoderef for
+substitution, ordinary payload assignments, Box receiver autoderef for
 collection/String methods and general callback Box environments retain their
 complete independent obligations. The ownership contract follows
 [Rust Box](https://doc.rust-lang.org/std/boxed/index.html) and the
