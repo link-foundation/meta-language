@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as rules from '../src/translation/javascript-class-owner-rules.js';
+import {closedClassOwnerDecisions as decisions,closedClassOwnerOriginals as originals,closedClassOwnerArchiveEdits as edits,closedClassOwnerGraphEdits as graphEdits} from './fixtures/closed-class-owner-witnesses.mjs';
+import {readCollectionCopyOriginalControl} from './support/collection-copy-integration.js';
+import {readClosedClassOwnerArchiveControl,readClosedClassOwnerGraphControl} from './support/closed-class-owner-integration.js';
+test('persistent class owner literal decisions preserve representation capabilities',()=>{for(const row of decisions)assert.deepEqual(rules[row.operation](...row.arguments),row.expected);});
+for(const row of originals)test('class owner source and complete archive matrix: '+row.name,()=>readCollectionCopyOriginalControl(row));
+for(const name of edits)test('edited class ownership reaches every direct consumer: '+name,()=>readClosedClassOwnerArchiveControl(name));
+for(const name of graphEdits)test('edited restored class graph reaches every archive transport and target: '+name,()=>readClosedClassOwnerGraphControl(name));

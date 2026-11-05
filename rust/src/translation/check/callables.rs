@@ -62,7 +62,7 @@ fn callable_type(parameters: &[impl serde::Serialize], ret: &Type) -> Type {
 
 impl Checker {
     pub(super) fn callable_reference(
-        &self,
+        &mut self,
         node: &SExpr,
         segments: &[String],
         path: &[String],
@@ -71,10 +71,29 @@ impl Checker {
         let entry = self.lookup(segments, path, node.span)?;
         let function = match entry {
             Some(Entry::Decl(name)) => match self.decls.get(&name) {
-                Some(Decl::Fn(function)) => Some((
-                    function.full_name.clone(),
-                    callable_type(&function.params, &function.ret),
-                )),
+                Some(Decl::Fn(function)) => {
+                    let plan = if self.checked_projection {
+                        Vec::new()
+                    } else {
+                        super::named_default_callables::reference_plan(
+                            self.language,
+                            &function.params,
+                        )
+                    };
+                    let initialization = (!plan.is_empty()).then(|| {
+                        (
+                            function.params.clone(),
+                            function.ret.clone(),
+                            function.module_path.clone(),
+                            plan,
+                        )
+                    });
+                    Some((
+                        function.full_name.clone(),
+                        callable_type(&function.params, &function.ret),
+                        initialization,
+                    ))
+                }
                 _ => None,
             },
             Some(Entry::External(name)) => {
@@ -83,7 +102,9 @@ impl Checker {
                         name: candidate,
                         params,
                         ret,
-                    } if *candidate == name => Some((name.clone(), callable_type(params, ret))),
+                    } if *candidate == name => {
+                        Some((name.clone(), callable_type(params, ret), None))
+                    }
                     _ => None,
                 })
             }
@@ -103,8 +124,20 @@ impl Checker {
             }
             return Ok(None);
         }
-        let (name, ty) =
+        let (name, ty, initialization) =
             function.expect("the generated reference rule selects an actual function declaration");
+        if let Some((params, ret, module_path, plan)) = initialization {
+            return self
+                .named_default_callable_reference(
+                    &name,
+                    &params,
+                    &ret,
+                    &module_path,
+                    &plan,
+                    node.span,
+                )
+                .map(Some);
+        }
         Ok(Some(Expr::new(Node::FunctionRef { func: name }, ty)))
     }
 
@@ -129,10 +162,16 @@ impl Checker {
         span: Option<Span>,
         places: &[Option<Span>],
     ) -> Result<Expr> {
+        if let Some(value) = self.excess_callable_arguments(&function, args, env, path, span)? {
+            return Ok(value);
+        }
         let (params, ret) = match &function.ty {
             Type::Function { params, ret } => (params.as_slice(), Some(ret.as_ref())),
             _ => (&[][..], None),
         };
+        let completed =
+            super::optional_callables::complete_arguments(self.language, params, args, span);
+        let args = completed.as_slice();
         let error = rules::read_callable_application_error(
             function.ty.kind(),
             number(params.len()),
@@ -204,7 +243,20 @@ impl Checker {
             kind,
             operation,
             number(count),
-            number(args.len()),
+            number(
+                selected
+                    .and_then(|field| match &field.ty {
+                        Type::Function { params, .. } => {
+                            Some(super::optional_callables::argument_count(
+                                self.language,
+                                params,
+                                args.len(),
+                            ))
+                        }
+                        _ => None,
+                    })
+                    .unwrap_or(args.len()),
+            ),
         );
         if !error.is_empty() {
             return Err(type_error(error, span));
@@ -291,6 +343,7 @@ impl Checker {
                         rocq_type: parameter.rocq_type.clone(),
                     });
                 }
+                Self::install_own_key_callback_bindings(node, &parameters, &mut inner);
                 let selected = facts
                     .value(plan[0])
                     .filter(|value| !value.is_null())

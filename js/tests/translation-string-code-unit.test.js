@@ -29,6 +29,9 @@ function observe(source) {
   return lines;
 }
 
+const [stringUnitNodeMajor,stringUnitNodeMinor]=process.versions.node.split('.').map(Number);
+assert.ok(stringUnitNodeMajor===22&&stringUnitNodeMinor>=15||stringUnitNodeMajor===24,'uncovered Node '+process.versions.node);
+
 const escapedSource = `/** @param {string} text @param {number} position @returns {number} */
 function unit(text, position) { return text.charCodeAt(position); }
 /** @param {string} text @param {number|null|undefined} position @returns {number} */
@@ -43,8 +46,7 @@ console.log(nullableUnit('ABC', null), nullableUnit('ABC', undefined), nullableU
 `;
 const escapedExpected = ['65 65 65', '55357 56832 66', '55296 57343', '65 66 65', 'NaN NaN NaN', 'NaN NaN', '65 65 67'];
 // Retain the exact escaped-source fixture and all of its original VM
-// observations below. Its unsupported literal decoder is distinct from
-// passing the same UTF-16 values to a represented String parameter.
+// observations below, alongside the preceding scalar-only input projection.
 const escapedLiteralLine = escapedSource.split('\n').find(line => line.includes('ud800'));
 assert.ok(escapedLiteralLine);
 const source = escapedSource.split('\n').filter(line => line !== escapedLiteralLine).join('\n');
@@ -62,7 +64,7 @@ test('portable code unit source preserves numeric ToIntegerOrInfinity and indivi
   assert.notEqual(readStringCodeUnit('😀', 0), '😀'.codePointAt(0));
 });
 
-test('charCodeAt checking preserves numeric defaults and surrogate parameters while source escapes remain explicit refusals', () => {
+test('charCodeAt checking preserves numeric defaults parameters and isolated source escapes', () => {
   assert.equal(readPrimitiveMethodMinimumArguments('string', 'charCodeAt'), 0);
   assert.equal(readPrimitiveMethodMaximumArguments('string', 'charCodeAt'), 1);
   assert.equal(readPrimitiveMethodDefaultForm('string', 'charCodeAt', 0), 'float');
@@ -75,8 +77,11 @@ test('charCodeAt checking preserves numeric defaults and surrogate parameters wh
     assert.equal(readPrimitiveMethodLoweringForm(receiver, operation), receiver === 'string' && operation === 'charCodeAt' ? 'code-unit-template' : 'method');
   }
   assert.deepEqual(observe(escapedSource), escapedExpected);
-  assert.throws(() => parseJavaScript(escapedSource), error => error.kind === 'unsupported'
-    && error.reason.includes('not a scalar value') && error.span.start === escapedSource.indexOf('\\ud800'));
+  // Previous refusal: unsupported /not a scalar value/ at \\ud800.
+  // ECMAScript 2025 StringLiteral SV retains this complete original input.
+  const [major,minor]=process.versions.node.split('.').map(Number);
+  assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
+  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(escapedSource))).text),escapedExpected);
   const program = checkProgram(parseJavaScript(source));
   assert.deepEqual(observe(source), expected);
   assert.deepEqual(observe(emitJavaScript(program).text), expected);
@@ -110,12 +115,17 @@ console.log(collision('A😀B',1,7,4,5));`;
 });
 
 test('charCodeAt retains explicit conversion refusals outside the represented numeric domain', () => {
-  for (const index of ['true', 'false', "'1'", '{}', '[1]']) {
+  // Full former source/assertions are retained in string-unit-calls.lino.
+  // Primitive ToIntegerOrInfinity and ignored extras replace obsolete refusals.
+  for(const [position,expected] of [['true','66'],['false','65'],["'1'",'66'],['0,1','65']]){
+    const source="console.log('ABC'.charCodeAt("+position+'));';
+    assert.deepEqual(observe(source),[expected]);
+    assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(source))).text),[expected]);
+  }
+  for (const index of ['{}', '[1]']) {
     assert.throws(() => checkProgram(parseJavaScript("console.log('ABC'.charCodeAt(" + index + '));')),
       error => error.kind === 'type' || error.kind === 'unsupported');
   }
-  assert.throws(() => checkProgram(parseJavaScript("console.log('ABC'.charCodeAt(0,1));")),
-    error => error.kind === 'unsupported' && error.reason.includes('0 to 1 arguments'));
   const program = checkProgram(parseJavaScript("console.log('ABC'.charCodeAt(0));"));
   for (const target of ['Lean', 'Rocq']) {
     const result = translateProgram("console.log('ABC'.charCodeAt(0));", 'JavaScript', target);

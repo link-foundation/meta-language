@@ -156,7 +156,7 @@ pub fn read_program_expression_operand_fields(kind: &str) -> String {
     } else if kind == "length" {
         String::from("array")
     } else if kind == "record" {
-        String::from("entries")
+        String::from("entries order")
     } else {
         String::new()
     }
@@ -247,7 +247,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
         String::from("null")
     } else if context == "effect:let" && field == "constant" {
         String::from("false")
-    } else if field == "span"
+    } else if (field == "span"
         && ((((((((((((((((((((((((((((((((((((((((((((((((((((((context == "effect:let"
             || context == "declaration:module")
             || context == "effect:print")
@@ -302,7 +302,8 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
             || (context == "expression:set"))
             || (context == "expression:map"))
             || (context == "expression:collectionSize"))
-            || (context == "expression:truthy"))
+            || (context == "expression:truthy")))
+        || (context == "expression:record" && (field == "order"))
     {
         String::from("null")
     } else {
@@ -315,7 +316,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
 pub fn read_program_type_neutral_field_default(kind: &str, field: &str) -> String {
     if ((field == "reference")
         && (((kind == "array" || kind == "record") || kind == "map") || kind == "set"))
-        || (kind == "record" && (field == "open"))
+        || (kind == "record" && ((field == "open") || (field == "ordered")))
     {
         String::from("false")
     } else {
@@ -334,7 +335,8 @@ pub fn accept_program_expression_field(kind: &str, field: &str) -> bool {
         (((field == "k" || field == "type") || field == "span") || field == "object")
             || field == "index"
     } else if kind == "record" {
-        ((field == "k" || field == "type") || field == "span") || field == "entries"
+        (((field == "k" || field == "type") || field == "span") || field == "entries")
+            || (field == "order")
     } else if kind == "recordField" {
         ((((field == "k" || field == "type") || field == "span") || field == "object")
             || field == "field")

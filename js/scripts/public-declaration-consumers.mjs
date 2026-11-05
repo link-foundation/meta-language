@@ -2,6 +2,7 @@
 import {fileURLToPath} from 'node:url';
 import {readProjectData} from './project-data.mjs';
 import {publicGrammarSourcePlaneConsumers} from './public-grammar-source-plane-consumers.mjs';
+import {publicRustSourceStateConsumers} from './public-rust-source-state-consumers.mjs';
 
 const publicModule = fileURLToPath(new URL('../src/index.js', import.meta.url));
 
@@ -972,5 +973,6 @@ export function createInvalidParser(archive:string) {
 `,
     })),
     ...publicGrammarSourcePlaneConsumers(moduleSpecifier),
+    ...publicRustSourceStateConsumers(moduleSpecifier),
   ];
 }

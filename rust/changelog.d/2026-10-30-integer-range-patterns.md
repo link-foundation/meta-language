@@ -1,0 +1,1 @@
+Draft exact Rust integer range patterns with complete-domain coverage, ordered overlapping arms and nested product/constructor matching. Shared JavaScript rules generate Rust source without enumerating domains; original/native and codec controls remain deferred until full requirements drafting is complete.

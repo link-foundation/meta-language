@@ -95,6 +95,12 @@ pub enum Type {
     /// Named fields, whose declaration order does not affect type identity.
     Record {
         fields: Vec<TypeField>,
+        /// Actual source class constructor owner, retained through graph edits.
+        #[serde(default,rename="sourceClassOwner",skip_serializing_if="Option::is_none",deserialize_with="deserialize_tuple_product_model")]
+        source_class_owner: Option<std::string::String>,
+        /// The value carries its own property order separately from its layout.
+        #[serde(default, skip_serializing_if = "is_false")]
+        ordered: bool,
         #[serde(default, skip_serializing_if = "is_false")]
         open: bool,
         #[serde(default, skip_serializing_if = "is_false")]
@@ -240,7 +246,13 @@ impl Type {
                     .map(&mut map)
                     .collect::<Result<_, _>>()?,
             },
-            Self::Record { fields, open, .. } => {
+            Self::Record {
+                fields,
+                open,
+                ordered,
+                source_class_owner,
+                ..
+            } => {
                 let mut fields: Vec<_> = fields
                     .iter()
                     .map(|field| {
@@ -255,8 +267,10 @@ impl Type {
                 });
                 Self::Record {
                     fields,
+                    source_class_owner: source_class_owner.clone(),
                     open: *open,
                     reference: self.is_reference(),
+                    ordered: *ordered,
                 }
             }
             Self::Map { key, value, .. } => Self::Map {
@@ -305,7 +319,13 @@ impl Type {
                 std::string::String::new(),
                 alternatives.iter().map(Self::key).collect(),
             ),
-            Self::Record { fields, open, .. } => {
+            Self::Record {
+                fields,
+                open,
+                ordered,
+                source_class_owner,
+                ..
+            } => {
                 let mut sorted: Vec<_> = fields.iter().collect();
                 sorted.sort_by(|first, second| {
                     first.name.encode_utf16().cmp(second.name.encode_utf16())
@@ -318,11 +338,12 @@ impl Type {
                     })
                     .collect();
                 (
-                    if *open {
+                    (if *open {
                         "open:".to_owned()
                     } else {
                         std::string::String::new()
-                    },
+                    }) + (if *ordered { "ordered:" } else { "" })
+                        + &source_class_owner.as_ref().map(|owner|format!("class:{}:",serde_json::to_string(owner).expect("class owner string serializes"))).unwrap_or_default(),
                     children,
                 )
             }

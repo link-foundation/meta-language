@@ -2,19 +2,50 @@
 //! delimiters introduce, before syntax-driven binders and extents apply.
 
 use super::{
-    BTreeMap, BTreeSet, Declaration, ProgramSourceMapping, SemanticToken, TokenKind, Visibility,
-    declaration_markers, find_token, inside_binder, matching_delimiter, next_identifier,
+    BTreeMap, BTreeSet, Declaration, JavaScriptFunctionScope, ProgramSourceMapping, SemanticToken,
+    TokenKind, Visibility, declaration_markers, find_token, inside_binder, matching_delimiter,
+    next_identifier,
 };
 
 pub(super) fn declare_javascript(
     tokens: &[SemanticToken],
     syntax: &[ProgramSourceMapping],
     brace_scopes: &BTreeMap<usize, usize>,
+    expression_scopes: &BTreeMap<usize, JavaScriptFunctionScope>,
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
+    let properties = syntax
+        .iter()
+        .filter(|node| {
+            matches!(
+                node.term.as_str(),
+                "property_identifier" | "private_property_identifier"
+            )
+        })
+        .map(|node| node.range)
+        .collect::<Vec<_>>();
     for (index, token) in tokens.iter().enumerate() {
-        if matches!(token.text.as_str(), "const" | "let" | "var" | "class") {
+        if token.kind != TokenKind::Keyword
+            || properties
+                .iter()
+                .any(|range| range.start <= token.range.start && token.range.end <= range.end)
+        {
+            continue;
+        }
+        if matches!(token.text.as_str(), "const" | "let" | "var")
+            && let Some(positions) = super::parameters::variable_positions(tokens, syntax, index)
+        {
+            for at in positions {
+                declare(tokens, at, &token.text, None, declarations, declared);
+            }
+            continue;
+        }
+        if token.text == "class" {
+            if tokens.get(index+1).is_some_and(|next|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if next.kind==TokenKind::Identifier{"identifier"}else{""})) { declare(tokens,index+1,"class",None,declarations,declared); }
+            continue;
+        }
+        if matches!(token.text.as_str(), "const" | "let" | "var") {
             let pattern = (token.text != "class")
                 .then(|| {
                     syntax.iter().find(|fact| {
@@ -56,29 +87,75 @@ pub(super) fn declare_javascript(
                 declare_next(tokens, index + 1, &token.text, None, declarations, declared);
             }
         }
-        if token.text == "function"
-            && let Some(name) = next_identifier(tokens, index + 1)
-        {
-            declare(tokens, name, "function", None, declarations, declared);
-            let open = find_token(tokens, name + 1, "(");
+        if token.text == "function" {
+            let head = index
+                + 1
+                + usize::from(tokens.get(index + 1).is_some_and(|token| token.text == "*"));
+            let name=tokens.get(head).filter(|token| crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier {"identifier"}else{""})).map(|_|head);
+            let expression = expression_scopes.get(&index);
+            if let Some(name) = name {
+                declare(
+                    tokens,
+                    name,
+                    "function",
+                    expression.and_then(|scope| scope.private_scope),
+                    declarations,
+                    declared,
+                );
+            }
+            let opening = name.map_or(head, |name| name + 1);
+            let open = tokens
+                .get(opening)
+                .filter(|token| token.text == "(")
+                .map(|_| opening);
             let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
             let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
-            let scope = body
-                .and_then(|body| brace_scopes.get(&body).copied())
-                .unwrap_or(tokens[name].scope);
-            declare_parameters(tokens, open, close, scope, declarations, declared);
+            let scope = expression
+                .map(|scope| scope.parameter_scope)
+                .or_else(|| body.and_then(|body| brace_scopes.get(&body).copied()))
+                .unwrap_or(token.scope);
+            declare_parameters(tokens, syntax, open, close, scope, declarations, declared);
         }
         if token.text == "catch" {
-            let open = find_token(tokens, index + 1, "(");
-            let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
-            let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
-            let scope = body
-                .and_then(|body| brace_scopes.get(&body).copied())
-                .unwrap_or(token.scope);
-            declare_parameters(tokens, open, close, scope, declarations, declared);
+            let fact=syntax.iter().find(|node|crate::translation::source_library_binding_rules::test_java_script_source_catch_scope_term(&node.term)&&node.range.start==token.range.start);
+            let open = fact.and_then(|_| {
+                tokens
+                    .get(index + 1)
+                    .filter(|next| next.text == "(")
+                    .map(|_| index + 1)
+            });
+            let close = open
+                .and_then(|open| matching_delimiter(tokens, open, "(", ")"))
+                .filter(|close| {
+                    fact.is_some_and(|fact| tokens[*close].range.end <= fact.range.end)
+                });
+            if let (Some(open), Some(close)) = (open, close) {
+                declare_parameters(
+                    tokens,
+                    syntax,
+                    Some(open),
+                    Some(close),
+                    tokens[open].scope,
+                    declarations,
+                    declared,
+                );
+            }
         }
         if token.text == "import" {
-            let end = find_token(tokens, index + 1, "from")
+            let statement = syntax.iter().find(|fact| {
+                fact.term == "import_statement" && fact.range.start == token.range.start
+            });
+            let end = tokens
+                .iter()
+                .enumerate()
+                .skip(index + 1)
+                .find(|(_, candidate)| {
+                    candidate.kind == TokenKind::Keyword
+                        && candidate.text == "from"
+                        && statement
+                            .is_none_or(|statement| candidate.range.end <= statement.range.end)
+                })
+                .map(|(index, _)| index)
                 .or_else(|| find_token(tokens, index + 1, ";"))
                 .unwrap_or(tokens.len());
             for cursor in index + 1..end {
@@ -216,6 +293,7 @@ pub(super) fn declare(
 
 fn declare_parameters(
     tokens: &[SemanticToken],
+    syntax: &[ProgramSourceMapping],
     open: Option<usize>,
     close: Option<usize>,
     scope: usize,
@@ -225,21 +303,14 @@ fn declare_parameters(
     let (Some(open), Some(close)) = (open, close) else {
         return;
     };
-    let mut segment = open + 1;
-    for index in open + 1..=close {
-        if index == close || tokens[index].text == "," {
-            if let Some(candidate) = next_identifier(tokens, segment).filter(|value| *value < index)
-            {
-                declare(
-                    tokens,
-                    candidate,
-                    "parameter",
-                    Some(scope),
-                    declarations,
-                    declared,
-                );
-            }
-            segment = index + 1;
-        }
+    for index in super::parameters::binding_positions(tokens, syntax, open + 1, close) {
+        declare(
+            tokens,
+            index,
+            "parameter",
+            Some(scope),
+            declarations,
+            declared,
+        );
     }
 }

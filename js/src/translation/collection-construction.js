@@ -4,6 +4,8 @@ import { createSurfaceReferenceFacts } from './surface-reference-facts.js';
 import { array } from './types.js';
 import { typeError, unsupported } from './diagnostics.js';
 import { acceptOptionalPrimitiveKind } from './optional-value-rules.js';
+import {inferCollectionCopyInput} from './collection-copies.js';
+import {planCollectionCopyInput,readCollectionCopySnapshotOperation} from './collection-copy-rules.js';
 import {
   planCollectionConstructionChecked, planCollectionConstructionInference,
   readCollectionConstructionDiagnostic, readCollectionConstructionElement,
@@ -26,15 +28,15 @@ export function inferCollectionConstruction(inference, node, env, expected) {
   const selected = readCollectionConstructionContext(node.k, expected);
   const first = selected.context ? selected.first : inference.fresh();
   if (selected.form === 1) {
-    if (node.items) inference.unify(inference.expr(node.items, env, { kind: 'array', element: first }), { kind: 'array', element: first }, node.span);
     const term = { kind: 'set', element: first };
+    if (node.items){const expected={kind:'array',element:first};inferCollectionCopyInput(inference,node,inference.expr(node.items,env,expected),expected,term,expected);}
     inference.collections.set(node, term);
     return term;
   }
   const second = selected.context ? selected.second : inference.fresh();
   const pair = { kind: 'tuple', elements: [first, second] };
-  if (node.entries) inference.unify(inference.expr(node.entries, env, { kind: 'array', element: pair }), { kind: 'array', element: pair }, node.span);
   const term = { kind: 'map', key: first, value: second };
+  if(node.entries){const expected={kind:'array',element:pair};inferCollectionCopyInput(inference,node,inference.expr(node.entries,env,expected),expected,term,expected);}
   inference.collections.set(node, term);
   return term;
 }
@@ -43,7 +45,12 @@ export function checkCollectionConstruction(checker, node, env, path, expected) 
   const want = node.type ? checker.resolveType(node.type, path, node.span) : expected;
   const selected = readCollectionConstructionContext(node.k, want);
   const element = selected.form === 1 ? selected.first : { kind: 'tuple', elements: [selected.first, selected.second] };
-  const items = checker.expr(selected.form === 1 ? node.items : node.entries, env, path, selected.context ? array(element) : undefined);
+  let items = checker.referenceValue(checker.expr(selected.form === 1 ? node.items : node.entries, env, path, selected.context ? array(element) : undefined));
+  const input=collectionFacts(items.type),copy=planCollectionCopyInput(...input.columns,node.k,input.identity);
+  if(copy[0]){
+    const first=input.facts.values[copy[1]],second=input.facts.values[copy[2]];
+    items={k:'collectionItems',object:items,op:readCollectionCopySnapshotOperation(node.k),type:array(copy[0]===1?first:{kind:'tuple',elements:[first,second]})};
+  }
   const { facts, columns, identity } = collectionFacts(items.type);
   const plan = planCollectionConstructionChecked(...columns, node.k, identity);
   if (plan[0]) throw typeError(readCollectionConstructionDiagnostic(plan[0], 'message'), node.span);

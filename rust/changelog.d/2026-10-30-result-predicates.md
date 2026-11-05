@@ -1,0 +1,1 @@
+Draft source-owned primitive integer `Result::is_ok_and` translation with contextual Copy predicates, eager callable construction and success-only invocation. Shared JavaScript rules are automatically translated into Rust; original boundary programs and cross-runtime controls are deferred to CI.

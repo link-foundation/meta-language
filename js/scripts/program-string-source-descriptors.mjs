@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData,serializeProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreOwnCodebaseRawDescriptorEdge} from './own-codebase-raw-source-descriptors.mjs';
+import {restoreReviewedOverlayProviderModuleSource} from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 const root=new URL('../../',import.meta.url);
 const policyFile='parity/self-translation/program-string-source-descriptors.lino';
 const policySha256='d404eef323e602b5f31dc88b0588d4a8a4ff5b23af98f82e0ee62540b6b39741';
@@ -36,7 +37,8 @@ export function restoreProgramStringSourceDescriptorEdge(artifact,identity,regis
   if(pin(current).sha256!==selected.edge.current.sha256)return{artifact,register:structuredClone(previousRegister)};
   assert.deepEqual(pin(current),selected.edge.current);
   const owner=selected.sourceOwner;
-  assert.deepEqual(pin(readFileSync(new URL(owner.file,root))),owner.current,'the actual checked-program projection source remains exact');
+  const historicalOwner=restoreReviewedOverlayProviderModuleSource(readFileSync(new URL(owner.file,root),'utf8'),owner.file,'f73a10b22f8d0bcfbf4707621bcc9edd6989533d');
+  assert.deepEqual(pin(historicalOwner),owner.current,'the actual checked-program projection source retains its complete certified historical view');
   verifyGitArtifactCertificate(owner.certificate,Buffer.from(owner.sourceText),{revision,path:owner.file});
   const restored=structuredClone(artifact);assert.equal(selected.edge.changes.length,2);
   const fields=new Set();

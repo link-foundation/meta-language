@@ -4,6 +4,10 @@ import test from 'node:test';
 import { tokenize } from '../src/translation/lexer.js';
 import { parseRust } from '../src/translation/rust.js';
 
+// Active source profile for the corrected byte-pattern expectation.
+const [nodeMajor,nodeMinor]=process.versions.node.split('.').map(Number);
+assert.ok(nodeMajor===22&&nodeMinor>=15||nodeMajor===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 or >=24 <25');
+
 const tokenFacts = result => result.tokens.map(({ kind, value, raw }) => [kind, value, raw]);
 
 test('Rust character tokens retain original absolute UTF16 spans and string token values', () => {
@@ -136,8 +140,16 @@ test('unsupported suffixes and character semantics refuse without scalar or Stri
         && error.span.start === source.indexOf(literal) && error.span.end === source.indexOf(literal) + literal.length);
     }
     const pattern = 'fn choose(x:u8)->u8{match x{' + literal + '=>1,_=>0}}';
-    assert.throws(() => parseRust(pattern), error => error.kind === 'unsupported'
-      && error.reason === 'character pattern: characters are outside the portable core');
+    if(literal.startsWith('b')){
+      // Rust byte patterns have u8 type (Reference literal-pattern rules).
+      // Preserve this exact input: admitted patterns reach required-main.
+      assert.throws(()=>parseRust(pattern),error=>error.kind==='syntax'
+        &&error.reason==='a Rust program needs fn main'
+        &&error.span.start===pattern.length&&error.span.end===pattern.length);
+    }else{
+      assert.throws(() => parseRust(pattern), error => error.kind === 'unsupported'
+        && error.reason === 'character pattern: characters are outside the portable core');
+    }
   }
   for (const literal of ["''", "b'é'", String.raw`b'\u{41}'`, String.raw`'\x80'`]) {
     assert.throws(() => tokenize(literal, 'Rust'), error => error.kind === 'syntax'

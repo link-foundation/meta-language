@@ -6,13 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
 import { ASCII_HOST_REGISTRATIONS, asciiHostPin, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import {restoreSharedArrayNativeFrontendSource} from './shared-array-native-frontend-history.mjs';
+import {restoreNativeCompilerHostSource} from './native-compiler-host-source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 
 export function generateAsciiTextPredicateHosts({ check = false } = {}) {
   const archive = readProjectData(new URL('parity/self-translation/ascii-text-predicate-hosts.lino', root));
   const files = verifyAsciiTextPredicateHosts(archive);
-  const artifact = readFileSync(new URL(archive.sourceArtifact.path, root));
+  const artifact = Buffer.from(restoreNativeCompilerHostSource(readFileSync(new URL(archive.sourceArtifact.path, root),'utf8'),archive.sourceArtifact.path));
   assert.deepEqual(asciiHostPin(artifact), archive.sourceArtifact.pin, 'the exact separately generated source artifact supplies this ABI');
   assert.deepEqual(readProjectData(new URL(archive.sourceArtifact.path, root)).libraryInterface, archive.sourceArtifact.libraryInterface);
   assert.equal(readFileSync(new URL(archive.assertionCorrection.path, root), 'utf8'), archive.assertionCorrection.current.source,
@@ -24,10 +26,10 @@ export function generateAsciiTextPredicateHosts({ check = false } = {}) {
   const protectedSources = new Set();
   for (const row of files) {
     const file = new URL(row.path, root);
-    if (check) assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(file, 'utf8'), row.path, 'ASCII character host'), row.source, row.path);
+    if (check) assert.equal(restoreRequiredFieldNativeHostSource(restoreSharedArrayNativeFrontendSource(readFileSync(file, 'utf8'),row.path), row.path, 'ASCII character host'), row.source, row.path);
     else if (existsSync(file)) {
       const physical = readFileSync(file, 'utf8');
-      const actual = restoreRequiredFieldNativeHostSource(physical, row.path, 'ASCII character host');
+      const actual = restoreRequiredFieldNativeHostSource(restoreSharedArrayNativeFrontendSource(physical,row.path), row.path, 'ASCII character host');
       assert.ok(actual === row.source || actual === row.predecessor, 'unknown current source must not be overwritten: ' + row.path);
       if (actual !== physical) protectedSources.add(row.path);
     }

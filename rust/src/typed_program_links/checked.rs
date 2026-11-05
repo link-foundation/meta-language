@@ -1,7 +1,7 @@
 //! Adapt the supported typed IR to the existing checker, preserving policies.
 use super::projection::{project as expression, project_type};
 use super::{Result, error, typed_program_links_schema};
-use crate::translation::check::check_program;
+use crate::translation::check::check_projected_program;
 use crate::translation::ir::{Decl, Effect, Item, Program};
 use crate::translation::primitive_value_rules::{
     accept_linked_text_conversion_kind, read_number_display_refusal,
@@ -14,7 +14,7 @@ use crate::translation::typed_program_link_rules::{
 };
 use regex::Regex;
 use serde_json::Value;
-use std::collections::HashSet;
+use std::collections::{HashMap,HashSet};
 use std::sync::OnceLock;
 
 mod declarations;
@@ -72,8 +72,32 @@ fn validate_type_records(
     value: &Value,
     data_names: &HashSet<&str>,
     source_language: &str,
+    utf16_strings: bool,
+) -> Result<()> {
+    // Preserve the original depth-first order and every per-record check while
+    // transporting traversal frames on the heap rather than the native stack.
+    let mut pending = vec![value];
+    while let Some(value) = pending.pop() {
+        validate_type_record(value, data_names, source_language, utf16_strings)?;
+        if let Some(fields) = value.as_object() {
+            pending.extend(fields.values().rev());
+        } else if let Some(values) = value.as_array() {
+            pending.extend(values.iter().rev());
+        }
+    }
+    Ok(())
+}
+
+fn validate_type_record(
+    value: &Value,
+    data_names: &HashSet<&str>,
+    source_language: &str,
+    utf16_strings: bool,
 ) -> Result<()> {
     if let Some(fields) = value.as_object() {
+        if value["kind"]=="record"&&fields.get("sourceClassOwner").is_some_and(|owner|!owner.as_str().is_some_and(|name|!name.is_empty())){
+            return Err(error("a linked class record needs its actual nonempty constructor owner"));
+        }
         if value["k"] == "binary"
             && value
                 .get("rounding")
@@ -114,6 +138,12 @@ fn validate_type_records(
                 return Err(error(refusal));
             }
         }
+        if crate::translation::rust_string_byte_length_rules::accept_rust_string_byte_length_operation(kind, value["op"].as_str().unwrap_or_default()) {
+            let args=value["args"].as_array().ok_or_else(||error("a byte count needs one actual String operand"))?;
+            let refusal=crate::translation::rust_string_byte_length_rules::read_rust_string_byte_length_argument_error(source_language,utf16_strings,serde_json::Number::from(args.len()).as_f64().expect("actual byte-count arity"),false,args.first().and_then(|value|value["type"]["kind"].as_str()).unwrap_or_default());
+            if !refusal.is_empty(){return Err(error(refusal));}
+            if value["type"]!=serde_json::json!({"kind":"fixed","bits":64,"signed":false}){return Err(error("the linked program has inconsistent Rust byte count result type"));}
+        }
         if kind == "toString" {
             let argument_kind = value["arg"]["type"]["kind"].as_str().unwrap_or_default();
             if !accept_linked_text_conversion_kind(argument_kind) {
@@ -130,9 +160,66 @@ fn validate_type_records(
             .get(kind)
             .is_some()
             && !accept_program_expression_operation(kind, value["op"].as_str().unwrap_or_default())
+            && !crate::translation::string_array_sort_rules::accept_linked_string_array_copy_sort(
+                kind, value["op"].as_str().unwrap_or_default(),
+                value["object"]["type"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["element"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["reference"].as_bool()==Some(true),
+                value["args"].as_array().map_or(-1.0, |args|serde_json::Number::from(args.len()).as_f64().expect("actual argument count")),
+            )
+            && !crate::translation::number_bitwise_rules::accept_linked_number_bitwise_operation(
+                kind,
+                value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::reference_method_rules::accept_linked_reference_method_operation(
+                kind,
+                value["op"].as_str().unwrap_or_default(),
+                value["object"]["type"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["reference"].as_bool() == Some(true),
+            )
+            && !crate::translation::record_write_source_interfaces::accept_linked_record_field_write(
+                kind,
+                value["op"].as_str().unwrap_or_default(),
+                value["object"]["type"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["reference"].as_bool() == Some(true),
+            )
+            && !crate::translation::rust_shift_rules::accept_linked_rust_checked_shift(
+                kind,value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::rust_string_byte_length_rules::accept_rust_string_byte_length_operation(kind,value["op"].as_str().unwrap_or_default())
+            && !crate::translation::array_state_method_rules::accept_linked_array_state_method(
+                kind,value["op"].as_str().unwrap_or_default(),
+                value["object"]["type"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["reference"].as_bool()==Some(true),
+            )
+            && !crate::translation::rust_primitive_bitwise_rules::accept_linked_rust_primitive_bitwise_operation(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::big_integer_bitwise_rules::accept_linked_big_integer_bitwise_operation(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::source_exception_rules::accept_linked_java_script_source_exception(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction(kind,value["op"].as_str().unwrap_or_default())
+            && !crate::translation::string_construction_rules::accept_linked_java_script_string_construction(kind,value["op"].as_str().unwrap_or_default())
+            && !(kind=="math"&&crate::translation::javascript_enumeration_rules::read_java_script_record_order_kernel_arity(value["op"].as_str().unwrap_or_default())>0.0)
+            && !crate::translation::javascript_enumeration_rules::accept_linked_ordered_record_order_read(kind,value["op"].as_str().unwrap_or_default(),value["object"]["type"]["kind"].as_str().unwrap_or_default(),value["object"]["type"]["ordered"]==true,value["object"]["type"]["reference"]==true)
         {
             return Err(error(
                 "the linked program contains an unrecognized expression operation",
+            ));
+        }
+        if kind == "method" && value["op"] == "toSorted" && value["type"] != value["object"]["type"]
+        {
+            return Err(error(
+                "copying sort result type differs from its actual receiver",
             ));
         }
         if value["k"] == "lit"
@@ -203,20 +290,47 @@ fn validate_type_records(
                 "a linked optional type has an invalid absence policy",
             ));
         }
-        for child in fields.values() {
-            validate_type_records(child, data_names, source_language)?;
-        }
-    } else if let Some(values) = value.as_array() {
-        for child in values {
-            validate_type_records(child, data_names, source_language)?;
-        }
     }
     Ok(())
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    let mut data_declarations=HashMap::new();
+    for declaration in &program.declarations {
+        if let Decl::Data(data)=declaration
+            && data_declarations.insert(data.full_name.as_str(),data).is_some()
+        { return Err(error("the linked program contains duplicate datatype declarations")); }
+    }
+    // A selected runtime interpretation cannot hide owned datatype facets.
+    for declaration in &program.declarations {
+        if let Decl::Data(data) = declaration
+            && let Some(signature) = data.source_field_signatures.as_deref()
+        {
+            crate::translation::source_data_field_signatures::check(
+                signature,
+                &data.ctors,
+                program.source_language.as_str(),
+                &data.full_name,
+                |ty| Ok(ty.clone()),
+                |ty|match ty {crate::translation::types::Type::Data {name}=>data_declarations.get(name.as_str()).copied(),_=>None},
+            )
+            .map_err(|failure| error(failure.to_string()))?;
+        }
+        if let Decl::Fn(function)=declaration
+            && let Some(signature)=function.source_signature.as_ref()
+        {
+            crate::translation::source_signatures::validate_source_signature_with_data(
+                signature,&function.params.iter().map(|parameter|parameter.ty.clone()).collect::<Vec<_>>(),&function.ret,program.source_language.as_str(),
+                |ty|Ok(ty.clone()),
+                |ty|match ty {crate::translation::types::Type::Data {name}=>data_declarations.get(name.as_str()).copied(),_=>None},
+            ).map_err(|failure|error(failure.to_string()))?;
+        }
+    }
+    crate::translation::class_owners::validate_program(program).map_err(|failure|error(failure.to_string()))?;
     crate::translation::source_const_functions::validate_const_functions(program)
         .map_err(|failure| error(failure.to_string()))?;
+    crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(program)
+        .map_err(|failure|error(failure.to_string()))?;
     if crate::translation::runtime_shell::validate_program(program)
         .map_err(|failure| error(failure.to_string()))?
         .is_some()
@@ -249,15 +363,12 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         &serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?,
         &data_names,
         program.source_language.as_str(),
+        program.utf16_strings.unwrap_or(false),
     )?;
     if program.schema_version != 1 {
         return Err(error("the linked value is not a checked typed program"));
     }
-    if !program.imports.is_empty()
-        || !program.externals.is_empty()
-        || program.output_threaded
-        || program.aborts_threaded
-    {
+    if !program.imports.is_empty() || program.output_threaded || program.aborts_threaded {
         return Err(error(
             "the Rust typed links adapter does not yet recheck imported or threaded programs",
         ));
@@ -357,16 +468,19 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         })
         .transpose()?;
     let surface = SProgram {
+        source_class_owners: program.source_class_owners.clone(),
+        source_class_methods:Vec::new(),
         reference_semantics: program.reference_semantics.then(|| true.into()),
         language: program.source_language,
         items,
         main,
         imports: Vec::new(),
-        externals: Vec::new(),
+        externals: program.externals.clone(),
         source_pure_unit_calls: program.source_pure_unit_calls.clone(),
         source_runtime_shell: program.source_runtime_shell.clone(),
     };
-    let mut checked = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let mut checked =
+        check_projected_program(&surface).map_err(|failure| error(failure.to_string()))?;
     checked.utf16_strings = program.utf16_strings;
     if checked != *program {
         let retained_records =

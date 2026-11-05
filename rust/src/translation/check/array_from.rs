@@ -3,6 +3,7 @@ use super::{
     Checker, Env, Expr, FLOAT, Node, Result, SExpr, Span, Type, array, type_error, unsupported,
 };
 use crate::translation::array_from_rules as rules;
+use crate::translation::collection_copy_rules as copy_rules;
 use crate::translation::frontend_rules::{accept_argument_count, ml_array::number_index};
 use crate::translation::surface_reference_facts::{
     SurfaceReferenceFacts, create_surface_reference_facts,
@@ -38,7 +39,8 @@ impl Checker {
         if !error.is_empty() {
             return Err(type_error(error, span));
         }
-        let object = self.expr(&args[0], env, path, None, false)?;
+        let mut object = self.expr(&args[0], env, path, None, false)?;
+        if copy_rules::accept_collection_copy_array_from_snapshot(object.ty.kind(),object.ty.is_reference()){object=Self::reference_value(object);}
         let value =
             serde_json::to_value(&object.ty).expect("a checked receiver type is serializable");
         let facts = create_surface_reference_facts(&value);
@@ -112,8 +114,15 @@ impl Checker {
         } else {
             None
         };
-        let callback =
-            self.expr_with_callable_expectation(mapper, env, path, &params, ret.as_ref())?;
+        let callback_env = self.own_key_callback_environment(&args[0], mapper, "map", env);
+        let callback = self.expr_with_callable_expectation(
+            mapper,
+            &callback_env,
+            path,
+            &params,
+            ret.as_ref(),
+        )?;
+        let callback = self.optional_callback_bridge(callback, &params, span)?;
         let Type::Function { ret, .. } = &callback.ty else {
             return Err(type_error("Array.from mapper has no function result", span));
         };
@@ -161,6 +170,7 @@ impl Checker {
             &params,
             None,
         )?;
+        let callback = self.optional_callback_bridge(callback, &params, span)?;
         let value = json!({"callback":callback.ty,"params":params});
         let facts = create_surface_reference_facts(&value);
         let child = |name| {

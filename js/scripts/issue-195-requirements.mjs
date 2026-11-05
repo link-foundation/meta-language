@@ -11,6 +11,14 @@ import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
+  draftWithoutTestsOrCompilationRequest:
+    'parity/sources/continue-bulk-draft-without-tests-or-compilation-2026-10-27.txt',
+  fullRequirementsDraftUntilFinishedRequest:
+    'parity/sources/full-requirements-drafting-until-finished-2026-10-25.txt',
+  completeDraftBeforeCiFeedbackRequest:
+    'parity/sources/complete-draft-before-ci-feedback-2026-10-25.txt',
+  continueCompleteRequirementsDraftRequest:
+    'parity/sources/continue-complete-requirements-draft-2026-10-25.txt',
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
@@ -121,6 +129,18 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt',
   latestSoloContinuationRequest:
     'parity/sources/solo-continuation-2026-10-21.txt',
+  checkpointMergeRequest:
+    'parity/sources/checkpoint-merge-and-continuation-issue-2026-10-22.txt',
+  developmentAccelerationRequest:
+    'parity/sources/development-acceleration-2026-10-23.txt',
+  continuousRequirementDeliveryRequest:
+    'parity/sources/continuous-requirement-delivery-2026-10-23.txt',
+  bulkDraftBeforeTestingRequest:
+    'parity/sources/bulk-draft-before-testing-2026-10-23.txt',
+  draftEntireScopeWithoutCodeTestsRequest:
+    'parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt',
+  checkpointContinuationIssue:
+    'https://github.com/link-foundation/meta-language/issues/227',
 });
 
 // The rows the audit of c39470d0 lists as open work.

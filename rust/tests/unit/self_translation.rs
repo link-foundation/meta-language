@@ -21,6 +21,7 @@ use meta_language::{
 };
 
 use super::issue_195_observations::{Observation, record};
+mod arithmetic_bindings;
 
 const FIXTURE: &str = "parity/self-translation/cases.lino";
 const HEADER: &str = "// meta-language:self-translation:v1 ";
@@ -133,7 +134,13 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
             })
             .map(|item| item.status)
             .collect();
-        assert_eq!(statuses, ["carried"], "{}", entry["name"]);
+        let expected_status = if entry["name"] == "nonliteral-global" {
+            arithmetic_bindings::check_original_arithmetic_binding(source, &translated.code);
+            "translated"
+        } else {
+            "carried"
+        };
+        assert_eq!(statuses, [expected_status], "{}", entry["name"]);
         assert_eq!(
             self_translate(&translated.code, "Rust", "JavaScript")
                 .unwrap()

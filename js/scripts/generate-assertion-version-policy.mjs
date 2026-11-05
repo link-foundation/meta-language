@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
+import {rustSourceStateAssertionPolicies} from './rust-source-state-assertion-policies.mjs';
 
 export function assertionVersionPolicy() {
   return {
@@ -86,7 +87,7 @@ export function assertionVersionPolicy() {
         },
         evidence: 'The existing authenticated grammar lock pins this exact released Agda1.3.3 WebAssembly artifact. Existing JavaScript focused match/rejection/divergence assertions remain in this historical sandboxed profile; this does not select the unsafe original native C scanner or apply historical recovery expectations to corrected scanner sources.',
       }],
-    }],
+    },...rustSourceStateAssertionPolicies()],
     observationBindings: [{
       testId: 'i195-assertion-explicit-version-ranges-tooling-antlr-command-order',
       assertionId: 'antlrCommandOrderHasApplicableVersionContext',

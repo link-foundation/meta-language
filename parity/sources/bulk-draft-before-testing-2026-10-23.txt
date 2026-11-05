@@ -1,0 +1,7 @@
+Capture provenance: direct user messages in the meta-language issue/PR task,
+captured 2026-10-23. The conversation does not expose message revision times.
+The following messages are preserved verbatim in their original order.
+
+Why you cannot batch draft all requirements at once and only after all of them are drafted make testing?
+
+But we can spend much less time on development if we draft everything once, and only after everything is drafted we test everything.

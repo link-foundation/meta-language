@@ -19,6 +19,8 @@ pub(super) struct SurfaceExpression {
     node: SNode,
     #[serde(default)]
     span: Option<Span>,
+    #[serde(rename="sourcePosition",default,deserialize_with="crate::translation::source_position_transport::read_present_source_position")]
+    source_position: Option<Box<crate::translation::source_signatures::RustSourceExpressionPosition>>,
     #[serde(
         default,
         deserialize_with = "raw_metadata::read_present_surface_raw_metadata"
@@ -44,10 +46,20 @@ impl TryFrom<SurfaceExpression> for SExpr {
     type Error = String;
 
     fn try_from(raw: SurfaceExpression) -> Result<Self, Self::Error> {
+        if let SNode::ReferenceIdentity { extra, .. } = &raw.node
+            && (!extra.is_empty()
+                || raw.parenthesized.is_some()
+                || raw.block.is_some()
+                || raw.source_position.is_some()
+                || matches!(raw.tag_test, TagTestPresence::Present(_)))
+        {
+            return Err("explicit reference identity needs its closed owned operands".to_owned());
+        }
         if let SNode::ReferencePayload { extra, .. } = &raw.node
             && (!extra.is_empty()
                 || raw.parenthesized.is_some()
                 || raw.block.is_some()
+                || raw.source_position.is_some()
                 || matches!(raw.tag_test, TagTestPresence::Present(_)))
         {
             return Err("a reference payload needs its closed owned expression".to_owned());
@@ -55,13 +67,14 @@ impl TryFrom<SurfaceExpression> for SExpr {
         if matches!(
             raw.node,
             SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. }
-        ) && (raw.block.is_some() || matches!(raw.tag_test, TagTestPresence::Present(_)))
+        ) && (raw.block.is_some() || raw.source_position.is_some() || matches!(raw.tag_test, TagTestPresence::Present(_)))
         {
             return Err("array binding contains an unrepresented field".to_owned());
         }
         Ok(Self {
             node: raw.node,
             span: raw.span,
+            source_position: raw.source_position,
             parenthesized: raw.parenthesized,
             block: raw.block.unwrap_or(false),
             tag_test: match raw.tag_test {

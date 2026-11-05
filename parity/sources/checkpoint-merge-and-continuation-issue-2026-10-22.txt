@@ -1,0 +1,1 @@
+Merge current pull request as soon as it is CI/CD green or finished at meaningful step, and create issue to continue developing all requiremnts we planned previously. this pull request must be merged as soon as possible.

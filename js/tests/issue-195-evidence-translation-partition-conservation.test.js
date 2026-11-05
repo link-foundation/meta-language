@@ -10,6 +10,7 @@ import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mj
 import {restoreEvidenceTranslationSourceHistory} from '../scripts/evidence-translation-source-history.mjs';
 import {generateEvidenceTranslationHistory} from '../../experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs';
 import {restoreNativeCompatibilitySourceHistory} from '../scripts/native-compatibility-source-history.mjs';
+import {restorePhysicalReportWorkflow} from '../scripts/ci-test-partition-history.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 
@@ -35,15 +36,15 @@ test('six actual evidence translation scopes preserve every original workflow by
     assert.equal(restoreEvidenceTranslationSourceHistory(row.file,current),row.sourceText);
     const unknown=current+'\n# unknown current source\n';assert.equal(restoreEvidenceTranslationSourceHistory(row.file,unknown),unknown);
   }
-  const row=fixtures.sources[0],actual=readFileSync(new URL(row.file,root),'utf8');
+  const row=fixtures.sources[0],physical=readFileSync(new URL(row.file,root),'utf8'),actual=restorePhysicalReportWorkflow(physical,row.file);
   const before='          - group: translation\n            shard: 1/1\n            partition: 1-of-1\n';
   const after=Array.from({length:6},(_,index)=>'          - group: translation\n            shard: '+(index+1)+'/6\n            partition: '+(index+1)+'-of-6\n').join('');
   assert.equal(actual.split(after).length,2);assert.equal(actual.includes(before),false);
   assert.equal(actual.replace(after,before),row.sourceText,'all original jobs, steps, tools, native flags, gates and artifact paths stay exact');
-  assert.equal(restoreEvidenceTranslationSourceHistory(row.file,actual),row.sourceText);
+  assert.equal(restoreEvidenceTranslationSourceHistory(row.file,physical),row.sourceText);
   assert.equal(restoreEvidenceTranslationSourceHistory(row.file,row.sourceText),row.sourceText);
-  const changed=actual+'\n# changed input\n';assert.equal(restoreEvidenceTranslationSourceHistory(row.file,changed),changed);
-  const job=parseWorkflow(actual).find(job=>job.id==='javascript-suite-independent');assert.ok(job);
+  const changed=physical+'\n# changed input\n';assert.equal(restoreEvidenceTranslationSourceHistory(row.file,changed),changed);
+  const job=parseWorkflow(physical).find(job=>job.id==='javascript-suite-independent');assert.ok(job);
   assert.match(job.header,/timeout-minutes: 60/u);assert.match(job.header,/fail-fast: false/u);
   const scopes=[...job.header.matchAll(/- group: translation\n\s+shard: ([1-6]\/6)\n\s+partition: ([1-6]-of-6)/gu)];
   assert.equal(scopes.length,6);assert.deepEqual(scopes.map(row=>row[1]),['1/6','2/6','3/6','4/6','5/6','6/6']);

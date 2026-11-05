@@ -50,10 +50,11 @@ pub fn accept_recursive_declaration_auxiliary_correspondence(
         {
             let at = 0f64;
             {
-                let ml_s12 = self::ml_accept_recursive_declaration_auxiliary_correspondence_loop34(
-                    whole, member, at,
-                );
-                match ml_s12 {
+                let ml_s1122 =
+                    self::ml_accept_recursive_declaration_auxiliary_correspondence_loop34(
+                        whole, member, at,
+                    );
+                match ml_s1122 {
                     self::MlAcceptRecursiveDeclarationAuxiliaryCorrespondenceLoop34Result::MlAcceptRecursiveDeclarationAuxiliaryCorrespondenceLoop34Done => {
                         true
                     }
@@ -97,19 +98,19 @@ pub fn accept_recursive_declaration_owned_emission(
                             {
                                 let ml_index35 = self::ml::Big::from_i128(0);
                                 {
-                                    let ml_s13 =
+                                    let ml_s1133 =
                                         self::ml_accept_recursive_declaration_owned_emission_loop36(
                                             occupied,
                                             &(ml_values35),
                                             ml_index35,
                                         );
-                                    match ml_s13 {
+                                    match ml_s1133 {
                                         self::MlAcceptRecursiveDeclarationOwnedEmissionLoop36Result::MlAcceptRecursiveDeclarationOwnedEmissionLoop36Done => {
                                             {
                                                 let block = 0f64;
                                                 {
-                                                    let ml_s14 = self::ml_accept_recursive_declaration_owned_emission_loop37(roles, constructor_counts, blocks, mappings, forbidden_targets, declarations, targets, mapping_offset, block);
-                                                    match ml_s14 {
+                                                    let ml_s1144 = self::ml_accept_recursive_declaration_owned_emission_loop37(roles, constructor_counts, blocks, mappings, forbidden_targets, declarations, targets, mapping_offset, block);
+                                                    match ml_s1144 {
                                                         self::MlAcceptRecursiveDeclarationOwnedEmissionLoop37Result::MlAcceptRecursiveDeclarationOwnedEmissionLoop37Done(mapping_offset_2) => {
                                                             mapping_offset_2 == ((mappings.len() as f64) / 3f64)
                                                         }
@@ -143,26 +144,24 @@ pub fn accept_recursive_declaration_owned_publication(
     completed: f64,
     proofs: &[f64],
 ) -> bool {
-    if (((!(((members > 1f64) && ((members % 1f64) == 0f64))
+    if (((((((members > 1f64) && ((members % 1f64) == 0f64))
         && (members <= 9_007_199_254_740_991f64))
-        || !(((declarations > members) && ((declarations % 1f64) == 0f64))
+        && (((declarations > members) && ((declarations % 1f64) == 0f64))
             && (declarations <= 9_007_199_254_740_991f64)))
-        || (signatures != members))
-        || (completed != members))
-        || ((proofs.len() as f64) != 7f64)
+        && (signatures == members))
+        && (completed == members))
+        && ((proofs.len() as f64) == 7f64))
     {
-        false
-    } else {
         {
             let ml_values39 = proofs.to_vec();
             {
                 let ml_index39 = self::ml::Big::from_i128(0);
                 {
-                    let ml_s15 = self::ml_accept_recursive_declaration_owned_publication_loop40(
+                    let ml_s1155 = self::ml_accept_recursive_declaration_owned_publication_loop40(
                         &(ml_values39),
                         ml_index39,
                     );
-                    match ml_s15 {
+                    match ml_s1155 {
                         self::MlAcceptRecursiveDeclarationOwnedPublicationLoop40Result::MlAcceptRecursiveDeclarationOwnedPublicationLoop40Done => {
                             true
                         }
@@ -173,6 +172,8 @@ pub fn accept_recursive_declaration_owned_publication(
                 }
             }
         }
+    } else {
+        false
     }
 }
 
@@ -211,14 +212,14 @@ pub fn accept_deferred_declaration_parameters(
             {
                 let ml_index42 = self::ml::Big::from_i128(0);
                 {
-                    let ml_s16 = self::ml_accept_deferred_declaration_parameters_loop44(
+                    let ml_s1166 = self::ml_accept_deferred_declaration_parameters_loop44(
                         terms,
                         texts,
                         names,
                         &(ml_values42),
                         ml_index42,
                     );
-                    match ml_s16 {
+                    match ml_s1166 {
                         self::MlAcceptDeferredDeclarationParametersLoop44Result::MlAcceptDeferredDeclarationParametersLoop44Done => {
                             true
                         }
@@ -263,7 +264,7 @@ pub fn read_declaration_deferred_binding(
         {
             let at = 0f64;
             {
-                let ml_s17 = self::ml_read_declaration_deferred_binding_loop53(
+                let ml_s1177 = self::ml_read_declaration_deferred_binding_loop53(
                     terms,
                     parents,
                     starts,
@@ -272,7 +273,7 @@ pub fn read_declaration_deferred_binding(
                     source_bytes,
                     at,
                 );
-                match ml_s17 {
+                match ml_s1177 {
                     self::MlReadDeclarationDeferredBindingLoop53Result::MlReadDeclarationDeferredBindingLoop53Done => {
                         {
                             let top = self::read_deferred_declaration_children(terms, parents, 0f64);
@@ -284,7 +285,7 @@ if ml_library_inequality_1 {
                                 {
                                     let declaration = self::read_required_number_fact(&(top), 0f64);
                                     {
-                                        let ml_s19 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
+                                        let ml_s1199 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
                                             {
                                                 let selected = -1f64;
                                                 {
@@ -294,8 +295,8 @@ if ml_library_inequality_1 {
                                                         {
                                                             let ml_index46 = self::ml::Big::from_i128(0);
                                                             {
-                                                                let ml_s20 = self::ml_read_declaration_deferred_binding_loop62(terms, selected, exports, &(ml_values46), ml_index46);
-                                                                match ml_s20 {
+                                                                let ml_s2200 = self::ml_read_declaration_deferred_binding_loop62(terms, selected, exports, &(ml_values46), ml_index46);
+                                                                match ml_s2200 {
                                                                     self::MlReadDeclarationDeferredBindingLoop62Result::MlReadDeclarationDeferredBindingLoop62Done(selected_2, exports_2) => {
                                                                         if (exports_2 != 1f64) || (selected_2 < 0f64) {
                                                                             self::MlReadDeclarationDeferredBindingJoin54::MlReadDeclarationDeferredBindingJoin54Return(Vec::<f64>::new())
@@ -318,14 +319,14 @@ if ml_library_inequality_1 {
                                         } else {
                                             self::MlReadDeclarationDeferredBindingJoin54::MlReadDeclarationDeferredBindingJoin54Next(declaration)
                                         };
-                                        match ml_s19 {
+                                        match ml_s1199 {
                                             self::MlReadDeclarationDeferredBindingJoin54::MlReadDeclarationDeferredBindingJoin54Next(declaration_3) => {
                                                 {
                                                     let kind = self::read_required_text_fact(terms, declaration_3);
                                                     {
                                                         let name = -1f64;
                                                         {
-                                                            let ml_s26 = if kind == "lexical_declaration" {
+                                                            let ml_s2266 = if kind == "lexical_declaration" {
                                                                 {
                                                                     let constant = 0f64;
                                                                     {
@@ -335,8 +336,8 @@ if ml_library_inequality_1 {
                                                                             {
                                                                                 let ml_index47 = self::ml::Big::from_i128(0);
                                                                                 {
-                                                                                    let ml_s27 = self::ml_read_declaration_deferred_binding_loop56(terms, constant, binding, &(ml_values47), ml_index47);
-                                                                                    match ml_s27 {
+                                                                                    let ml_s2277 = self::ml_read_declaration_deferred_binding_loop56(terms, constant, binding, &(ml_values47), ml_index47);
+                                                                                    match ml_s2277 {
                                                                                         self::MlReadDeclarationDeferredBindingLoop56Result::MlReadDeclarationDeferredBindingLoop56Done(constant_2, binding_2) => {
                                                                                             if (constant_2 != 1f64) || (binding_2 < 0f64) {
                                                                                                 self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Return(Vec::<f64>::new())
@@ -350,8 +351,8 @@ if ml_library_inequality_1 {
                                                                                                             {
                                                                                                                 let ml_index48 = self::ml::Big::from_i128(0);
                                                                                                                 {
-                                                                                                                    let ml_s28 = self::ml_read_declaration_deferred_binding_loop57(terms, fields, name, value, equals, &(ml_values48), ml_index48);
-                                                                                                                    match ml_s28 {
+                                                                                                                    let ml_s2288 = self::ml_read_declaration_deferred_binding_loop57(terms, fields, name, value, equals, &(ml_values48), ml_index48);
+                                                                                                                    match ml_s2288 {
                                                                                                                         self::MlReadDeclarationDeferredBindingLoop57Result::MlReadDeclarationDeferredBindingLoop57Done(name_2, value_2, equals_2) => {
                                                                                                                             if ((name_2 < 0f64) || (value_2 < 0f64)) || (equals_2 != 1f64) {
                                                                                                                                 self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Return(Vec::<f64>::new())
@@ -365,8 +366,8 @@ if ml_library_inequality_1 {
                                                                                                                                             {
                                                                                                                                                 let ml_index49 = self::ml::Big::from_i128(0);
                                                                                                                                                 {
-                                                                                                                                                    let ml_s29 = self::ml_read_declaration_deferred_binding_loop58(terms, fields, parents, texts, parameters, body, &(ml_values49), ml_index49);
-                                                                                                                                                    match ml_s29 {
+                                                                                                                                                    let ml_s2299 = self::ml_read_declaration_deferred_binding_loop58(terms, fields, parents, texts, parameters, body, &(ml_values49), ml_index49);
+                                                                                                                                                    match ml_s2299 {
                                                                                                                                                         self::MlReadDeclarationDeferredBindingLoop58Result::MlReadDeclarationDeferredBindingLoop58Done(parameters_2, body_2) => {
                                                                                                                                                             if (parameters_2 != 1f64) || (body_2 != 1f64) {
                                                                                                                                                                 self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Return(Vec::<f64>::new())
@@ -415,8 +416,8 @@ if ml_library_inequality_1 {
                                                                                 {
                                                                                     let ml_index50 = self::ml::Big::from_i128(0);
                                                                                     {
-                                                                                        let ml_s30 = self::ml_read_declaration_deferred_binding_loop59(terms, fields, name, body_3, classes, &(ml_values50), ml_index50);
-                                                                                        match ml_s30 {
+                                                                                        let ml_s3300 = self::ml_read_declaration_deferred_binding_loop59(terms, fields, name, body_3, classes, &(ml_values50), ml_index50);
+                                                                                        match ml_s3300 {
                                                                                             self::MlReadDeclarationDeferredBindingLoop59Result::MlReadDeclarationDeferredBindingLoop59Done(name_3, body_4, classes_2) => {
                                                                                                 if ((classes_2 != 1f64) || (name_3 < 0f64)) || (body_4 < 0f64) {
                                                                                                     self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Return(Vec::<f64>::new())
@@ -428,8 +429,8 @@ if ml_library_inequality_1 {
                                                                                                             {
                                                                                                                 let ml_index51 = self::ml::Big::from_i128(0);
                                                                                                                 {
-                                                                                                                    let ml_s31 = self::ml_read_declaration_deferred_binding_loop60(terms, fields, parents, texts, constructors, &(ml_values51), ml_index51);
-                                                                                                                    match ml_s31 {
+                                                                                                                    let ml_s3311 = self::ml_read_declaration_deferred_binding_loop60(terms, fields, parents, texts, constructors, &(ml_values51), ml_index51);
+                                                                                                                    match ml_s3311 {
                                                                                                                         self::MlReadDeclarationDeferredBindingLoop60Result::MlReadDeclarationDeferredBindingLoop60Done => {
                                                                                                                             self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Next(name_3)
                                                                                                                         }
@@ -455,11 +456,11 @@ if ml_library_inequality_1 {
                                                                 } else {
                                                                     self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Return(Vec::<f64>::new())
                                                                 };
-                                                            match ml_s26 {
+                                                            match ml_s2266 {
                                                                 self::MlReadDeclarationDeferredBindingJoin55::MlReadDeclarationDeferredBindingJoin55Next(name_4) => {
                                                                     {
                                                                         let actual_name = self::read_required_text_fact(texts, name_4);
-                                                                        if ((((actual_name.encode_utf16().count() as f64) == 0f64) || actual_name.contains("\\")) || (actual_name == "eval")) || (actual_name == "arguments") {
+                                                                        if ((((actual_name.encode_utf16().count() as f64) == 0f64) || actual_name.contains('\\')) || (actual_name == "eval")) || (actual_name == "arguments") {
                                                                             Vec::<f64>::new()
                                                                         } else {
                                                                             vec![if kind == "class_declaration" {
@@ -505,11 +506,11 @@ pub fn accept_declaration_deferred_module_scope(forms: &[String]) -> bool {
         {
             let ml_index63 = self::ml::Big::from_i128(0);
             {
-                let ml_s32 = self::ml_accept_declaration_deferred_module_scope_loop64(
+                let ml_s3322 = self::ml_accept_declaration_deferred_module_scope_loop64(
                     &(ml_values63),
                     ml_index63,
                 );
-                match ml_s32 {
+                match ml_s3322 {
                     self::MlAcceptDeclarationDeferredModuleScopeLoop64Result::MlAcceptDeclarationDeferredModuleScopeLoop64Done => {
                         true
                     }
@@ -824,10 +825,10 @@ pub fn ml_read_declaration_dependency_components_loop8(
                 {
                     let pending = vec![root];
                     {
-                        let ml_s33 = self::ml_read_declaration_dependency_components_loop9(
+                        let ml_s3333 = self::ml_read_declaration_dependency_components_loop9(
                             starts, counts, targets, visited, finished, pending,
                         );
-                        match ml_s33 {
+                        match ml_s3333 {
                             self::MlReadDeclarationDependencyComponentsLoop9Result::MlReadDeclarationDependencyComponentsLoop9Done(visited_2, finished_2) => {
                                 {
                                     let root_3 = root + 1f64;

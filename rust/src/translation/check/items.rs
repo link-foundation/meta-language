@@ -10,6 +10,12 @@ use super::{
 };
 
 impl Checker {
+    pub(super) fn refuse_callable_data_observation(&self,ty:&Type,operation:&str,span:Option<Span>)->Result<()>{
+        if crate::translation::class_owners::accept_type_observation(ty,self.source_class_owners.as_ref(),operation){return Ok(());}
+        let facts=crate::translation::callable_data::read_callable_data_facts(ty,&|name|match self.decls.get(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let reason=crate::translation::callable_data_derivation_rules::read_callable_data_observation_error(operation,facts.callable);
+        if reason.is_empty(){Ok(())}else{Err(unsupported("callable aggregate observation",&reason,span))}
+    }
     pub(super) fn declare(&mut self, items: &[SItem], path: &[String]) -> Result<()> {
         for item in items {
             let name = item.name().to_owned();
@@ -41,7 +47,8 @@ impl Checker {
                 )?;
             }
             let owned_loop = matches!(item, SItem::Fn(function) if function.source_loop.is_some());
-            if name.starts_with("ml_") && !generated && !owned_loop {
+            if self.language != "JavaScript" && name.starts_with("ml_") && !generated && !owned_loop
+            {
                 return Err(unsupported(
                     "reserved identifier",
                     &format!("{name} uses the translator's reserved ml_ prefix"),
@@ -75,6 +82,7 @@ impl Checker {
                     span,
                     generated: data.generated,
                     output: false,
+                    source_field_signatures: None,
                     source_unit_clone_derivation: data
                         .source_unit_clone_derivation
                         .as_deref()
@@ -187,9 +195,35 @@ impl Checker {
                     fields,
                 });
             }
+            let source_fields = if let Some(signature) = item.source_field_signatures.as_deref() {
+                let mut signature = signature.clone();
+                for constructor in &mut signature.ctors {
+                    for position in &mut constructor.fields {
+                        super::super::source_signatures::resolve_source_position(position,&mut |ty|self.resolve_type(Some(ty),path,item.span))?;
+                    }
+                }
+                Some(Box::new(signature))
+            } else {
+                None
+            };
             if let Some(Decl::Data(entry)) = self.decls.get_mut(&full(path, &item.name)) {
                 entry.ctors = ctors;
+                entry.source_field_signatures = source_fields;
             }
+        }
+        // Every actual layout and each field's original declaration context is
+        // now available before a nested sum signature consults the registry.
+        for (item,path) in &flat {
+            let SItem::Data(item) = item else { continue };
+            let Some(signature) = item.source_field_signatures.as_deref() else { continue };
+            let name = full(path,&item.name);
+            let Some(Decl::Data(entry)) = self.decls.get(&name) else { continue };
+            let source_fields = crate::translation::source_data_field_signatures::check(
+                signature,&entry.ctors,self.language.as_str(),&name,
+                |ty|self.resolve_type(Some(ty),path,item.span),
+                |ty|match ty {Type::Data {name} => match self.decls.get(name) {Some(Decl::Data(data))=>Some(data),_=>None},_=>None},
+            )?;
+            if let Some(Decl::Data(entry)) = self.decls.get_mut(&name) { entry.source_field_signatures=Some(Box::new(source_fields)); }
         }
         for (item, path) in &flat {
             let SItem::Fn(item) = item else { continue };
@@ -220,9 +254,9 @@ impl Checker {
                     .iter_mut()
                     .chain(std::iter::once(&mut signature.result))
                 {
-                    position.ty = self.resolve_type(Some(&position.ty), path, item.span)?;
+                    super::super::source_signatures::resolve_source_position(position,&mut |ty|self.resolve_type(Some(ty),path,item.span))?;
                 }
-                super::super::source_signatures::validate_source_signature(
+                super::super::source_signatures::validate_source_signature_with_data(
                     signature,
                     &params
                         .iter()
@@ -230,6 +264,8 @@ impl Checker {
                         .collect::<Vec<_>>(),
                     &ret,
                     self.language.as_str(),
+                    |ty|self.resolve_type(Some(ty),path,item.span),
+                    |ty|match ty {Type::Data {name} => match self.decls.get(name) {Some(Decl::Data(data))=>Some(data),_=>None},_=>None},
                 )?;
             }
             if let Some(annotation) = &annotated_ret
@@ -266,6 +302,9 @@ impl Checker {
                             .collect(),
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
+                        own_properties: Vec::new(),
+                        nominal_spread_absences: Vec::new(),
+                        own_key_callback: None,
                     };
                     let body = self.expr(&item.body, &env, path, Some(&ret), false)?;
                     let body = self.coerce(body, &ret, item.span)?;
@@ -306,6 +345,9 @@ impl Checker {
                             .collect(),
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
+                        own_properties: Vec::new(),
+                        nominal_spread_absences: Vec::new(),
+                        own_key_callback: None,
                     };
                     let mut prop = self.prop(&item.prop, &env, path)?;
                     // `theorem t : ∀ n, P n` and `theorem t (n) : P n` state the same
@@ -521,6 +563,7 @@ impl Checker {
         style: ShowStyle,
     ) -> Result<Expr> {
         let value = self.expr(expr, env, path, None, false)?;
+        self.refuse_callable_data_observation(&value.ty,"display",expr.span)?;
         let refusal = crate::translation::primitive_value_rules::read_number_display_refusal(
             self.language.as_str(),
             value.ty.kind(),
@@ -621,6 +664,7 @@ impl Checker {
                         prop.span,
                     ));
                 }
+                for binder in &checked{self.refuse_callable_data_observation(&binder.ty,"proof",prop.span)?;}
                 let mut inner = env.clone();
                 for binder in &checked {
                     inner.bind_local(&binder.name, binder.ty.clone());
@@ -667,6 +711,7 @@ impl Checker {
                     _ => BinaryOp::Ge,
                 };
                 let (left, right) = self.operands(&pair.left, &pair.right, env, path, prop.span)?;
+                self.refuse_callable_data_observation(&left.ty,"comparison",prop.span)?;
                 if matches!(left.ty, Type::Tuple { .. }) {
                     return Err(unsupported(
                         "comparison of tuples",
@@ -737,7 +782,11 @@ impl Checker {
 
     pub(super) fn fresh_name(&mut self, prefix: &str) -> String {
         self.fresh += 1;
-        format!("{prefix}{}", self.fresh)
+        crate::translation::source_identifiers::render_source_generated_identifier(
+            &self.generated_prefix,
+            prefix,
+            self.fresh,
+        )
     }
 
     pub(super) fn unify(
@@ -784,13 +833,11 @@ impl Checker {
         if then.ty.same(&otherwise.ty) {
             return Ok((then, otherwise));
         }
-        if matches!(then.node, Node::Abort { .. }) {
-            let ty = otherwise.ty.clone();
-            return Ok((Expr { ty, ..then }, otherwise));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&then, &otherwise.ty) {
+            return Ok((abrupt, otherwise));
         }
-        if matches!(otherwise.node, Node::Abort { .. }) {
-            let ty = then.ty.clone();
-            return Ok((then, Expr { ty, ..otherwise }));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&otherwise, &then.ty) {
+            return Ok((then, abrupt));
         }
         if let Some(expected) = expected {
             let then = coerce(then, expected, self.language, span, None)?;

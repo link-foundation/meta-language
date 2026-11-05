@@ -1,0 +1,1 @@
+Draft bounded tracked-source inventories and shared literal construct-candidate statistics for selecting complete own-code translation batches. Preserve source hashes and explicit UTF16/LF coordinates; lexical candidates are not parser coverage or requirement-completion evidence.

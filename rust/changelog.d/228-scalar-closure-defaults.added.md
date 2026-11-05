@@ -1,0 +1,1 @@
+Draft ordinary defaults in local arrows, function expressions and object methods through existing ordered parameter entries. Reuse optional callable arguments and callback bridges, preserving captures, lazy failures and initializer order. Named and constant scalar routes retain their prior lowering. Verification remains deferred.

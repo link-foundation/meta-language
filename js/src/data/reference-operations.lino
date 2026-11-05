@@ -22,3 +22,5 @@
 (clear-map-entries: (kind map) (method clear) (primitive clear-map-entries) (mutates true) (program (read-reference receiver value) (invoke-map-method clear value arguments result) (write-reference receiver value) (return-value result)))
 (read-map-entry: (kind map) (method get) (primitive read-map-entry) (mutates false) (program (read-reference receiver value) (invoke-map-method get value arguments result) (return-value result)))
 (read-map-membership: (kind map) (method has) (primitive read-map-membership) (mutates false) (program (read-reference receiver value) (invoke-map-method has value arguments result) (return-value result)))
+(fill-array-elements: (kind array) (method fill) (primitive fill-array-elements) (mutates true) (program (read-reference receiver value) (invoke-array-method fill value arguments result) (write-reference receiver value) (return-value result)))
+(copy-array-elements-within: (kind array) (method copyWithin) (primitive copy-array-elements-within) (mutates true) (program (read-reference receiver value) (invoke-array-method copyWithin value arguments result) (write-reference receiver value) (return-value result)))

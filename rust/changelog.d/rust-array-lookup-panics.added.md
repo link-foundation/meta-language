@@ -1,0 +1,1 @@
+Draft standard copied/cloned array lookup unwrap and literal expect consumers through shared source-derived presence plans, preserving original failure messages, source owners and receiver/index evaluation order. Original/native controls remain deferred.

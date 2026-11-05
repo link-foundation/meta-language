@@ -1,0 +1,17 @@
+// Source authoring with exact complete predecessors retained before emission.
+// Removed files must be obsolete generated parts from the recorded committed
+// library, with exact bytes still present. No source behavior is executed.
+import {readFileSync,unlinkSync,existsSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readProjectData,writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const root=new URL('../../',import.meta.url),revision='e5bc7acc';
+const names=['primitive-associated-call','primitive-inherent-copy','primitive-from','primitive-integer-constant','primitive-try-from','primitive-expression','primitive-default'];
+const prior=names.map(name=>{const path='parity/self-translation/rust-'+name+'-rules-native.lino',bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:16*1024*1024}),current=readFileSync(new URL(path,root));if(!current.equals(bytes))throw new TypeError('source isolation requires its complete committed predecessor: '+path);return{name,path,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),record:readProjectData(new URL(path,root))};});
+writeProjectData(new URL('parity/fixtures/history/rust-primitive-owner-path-predecessors-e5bc7acc.lino',root),{schemaVersion:1,revision,recipes:prior.map(({record,...item})=>item),boundary:'Complete preceding source-generation recipes, declarations, source/import contexts and emitted files retained before source factoring. Source membership and byte retention establish no behavioral equivalence or runtime evidence.'});
+await import('./draft-rust-primitive-owner-path-rules.mjs');globalThis.gc?.();
+const removed=[];
+for(const item of prior){await import('./draft-rust-'+item.name+'-rules.mjs');globalThis.gc?.();const current=readProjectData(new URL(item.path,root)),kept=new Set(current.files.map(file=>file.path));for(const file of item.record.files){if(kept.has(file.path))continue;if(!/^rust_[a-z_]+\/part_[0-9]+\.rs$/u.test(file.path))throw new TypeError('only recorded obsolete generated source parts may be removed');const path='rust/src/translation/'+file.path,actual=new URL(path,root);if(!existsSync(actual))throw new TypeError('a recorded predecessor part is absent: '+path);const bytes=readFileSync(actual),committed=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});if(!bytes.equals(committed)||bytes.toString('utf8')!==file.source)throw new TypeError('preserve an edited or uncommitted source part: '+path);removed.push({path,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),retainedRecipe:item.path,retainedRevision:revision});unlinkSync(actual);}}
+writeProjectData(new URL('parity/self-translation/rust-primitive-owner-path-isolation.lino',root),{schemaVersion:1,revision,predecessors:'parity/fixtures/history/rust-primitive-owner-path-predecessors-e5bc7acc.lino',removed,boundary:'Source-only module factoring. Every removed obsolete generated part matched its complete original committed recipe and exact checkout bytes; the full preceding recipe/source is retained. No plan, parser fixture, represented program, test, validation gate, runtime evidence or native compiler executed.'});
+process.stdout.write('Authored isolated primitive owner path sources; retained '+prior.length+' complete predecessor recipes and removed '+removed.length+' obsolete generated source parts.\n');

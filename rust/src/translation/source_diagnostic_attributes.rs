@@ -92,6 +92,7 @@ pub const fn token_kind(token: &Token) -> &'static str {
         TokenKind::String => "string",
         TokenKind::Character => "char",
         TokenKind::ByteCharacter => "byteChar",
+        TokenKind::ByteString => "byteString",
         TokenKind::Interpolation => "interpolation",
         TokenKind::Template => "template",
         TokenKind::Eof => "eof",

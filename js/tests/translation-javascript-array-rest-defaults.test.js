@@ -11,7 +11,10 @@ import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-ne
 import { checkJavaScriptArrayBindingWrapper } from '../src/translation/array-binding-validation.js';
 import { readJavaScriptArrayDefaultConstraints } from '../src/translation/array-binding-inference.js';
 import { readArrayBindingSourceModule } from '../scripts/generate-array-binding-rules.mjs';
-import { accepted, refused } from './fixtures/array-binding-cases.mjs';
+import { accepted, refused, correctedBindingRefusals, bindingAssertionCorrectionBasis } from './fixtures/array-binding-cases.mjs';
+
+const [nodeMajor,nodeMinor]=process.versions.node.split('.').map(Number);
+assert.ok(nodeMajor===22&&nodeMinor>=15||nodeMajor===24,'uncovered Node '+process.versions.node);
 
 function execute(source) {
   const lines = [];
@@ -32,14 +35,35 @@ for (const fixture of accepted) test(fixture.id, () => {
   }
 });
 
-for (const [id, source] of refused) test(id + ' retains an explicit obligation', () => {
+for (const [id, source] of refused) test(id + ' retains original input and its active assertion', () => {
+  const correction=correctedBindingRefusals.find(row=>row.id===id);
+  if(correction){
+    assert.ok(bindingAssertionCorrectionBasis.source);
+    assert.equal(correction.previousAssertion,'checkProgram throws for the original input');
+    assert.equal(execute(source),correction.expected);
+    const checked=checkProgram(parseJavaScript(source)),packet=encodeTypedProgramLinks(checked);
+    const rust=emitRust(checked).text;
+    for(const program of [checked,decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()),packet.root),decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network)),packet.root)]){
+      assert.equal(execute(emitJavaScript(program).text),correction.expected);
+      assert.equal(emitRust(program).text,rust);
+    }
+    return;
+  }
+  if (id === 'reserved-prefix') {
+    // ECMAScript permits ml_; retain the original input and independent oracle.
+    const runnable = source + '\nconsole.log(f([2,3]));';
+    const checked = checkProgram(parseJavaScript(runnable));
+    assert.equal(execute(runnable),'1\n');
+    assert.equal(execute(emitJavaScript(checked).text),execute(runnable));
+    return;
+  }
   assert.throws(() => checkProgram(parseJavaScript(source)));
 });
 
 test('defaults retain null instead of treating it as undefined', () => {
   const source = 'function selected(){const [value=7]=[null];return value;}console.log(selected());';
   assert.equal(execute(source), 'null\n');
-  assert.throws(() => checkProgram(parseJavaScript(source)), /array binding default/u);
+  assert.equal(execute(emitJavaScript(checkProgram(parseJavaScript(source))).text),'null\n');
 });
 
 test('binding scope retains the RHS and initializer temporal dead zones', () => {

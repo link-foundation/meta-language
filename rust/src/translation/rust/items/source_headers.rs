@@ -47,6 +47,15 @@ impl RustParser {
         children: Vec<SourceOwner>,
         ty: &Type,
     ) -> SourceOwner {
+        if head[0] == "fn"
+            && let Type::Function { params, .. } = ty
+        {
+            let mut arguments = children;
+            if arguments.len() == params.len() {
+                arguments.push(owner("unit", Vec::new(), Vec::new()));
+            }
+            return owner("function", Vec::new(), arguments);
+        }
         if head[0] == "&" {
             if head.iter().any(|part| part == "[") {
                 return owner("slice", Vec::new(), children);
@@ -65,6 +74,18 @@ impl RustParser {
                     .next()
                     .expect("a grouped type has a parsed child"),
             };
+        }
+        if let Type::Named { path, .. } = ty
+            && let Some(actual) = self
+                .origins
+                .lookup_type_owner(path, &self.origins.current_type.path)
+            && matches!(actual.declaration, super::super::SourceDeclaration::Data)
+        {
+            return owner(
+                "declaration",
+                actual.full_name.split('.').map(str::to_owned).collect(),
+                children,
+            );
         }
         self.named_source_type_owner(head, children)
     }
@@ -118,6 +139,8 @@ impl RustParser {
     }
 
     pub(in super::super) fn parse_type(&mut self) -> Result<Type> {
+        if self.origins.owned_container_source_enabled{let error=crate::translation::rust_owned_recursive_datatype_rules::read_rust_owned_container_depth_error((self.source_owner_frames.len()+1) as f64,0.0);if !error.is_empty(){return Err(unsupported("Rust owned container",&error,None));}}
+        self.split_reference_type_token();
         // Readonly dispatch also needs actual owners; publishing the captured
         // header facet remains independently opt-in.
         let head = self.source_type_head();
@@ -134,6 +157,15 @@ impl RustParser {
             .pop()
             .expect("the type namespace frame is owned");
         let ty = result?;
+        if !self.shared_array_handle_source_model.is_empty()
+            && !self.origins.current_type.wrappers.is_empty()
+        {
+            return Err(unsupported(
+                "Rust shared array handle source",
+                "borrowed or boxed source type wrappers need an independent composition proof",
+                None,
+            ));
+        }
         let primitive_children = self
             .primitive_owner_frames
             .pop()
@@ -145,20 +177,25 @@ impl RustParser {
                     .then(|| primitive_children[0].clone())
                     .flatten()
             });
-        self.origins
-            .current_type
-            .primitive_owner_position
-            .clone_from(&primitive);
+        if self.origins.current_type.expanded_source_owner.is_none()
+            || self.origins.current_type.primitive_owner_position.is_none()
+        {
+            self.origins.current_type.primitive_owner_position.clone_from(&primitive);
+        }
         let owner = if primitive.is_some() {
             SourceOwner {
                 kind: "primitive".to_owned(),
                 path: vec!["f64".to_owned()],
                 arguments: Vec::new(),
             }
+        } else if let Some(owner) = self.origins.current_type.expanded_source_owner.clone() {
+            owner
         } else {
             self.source_type_owner(&head, children, &ty)
         };
         self.origins.current_type.source_owner = Some(owner.clone());
+        if self.origins.borrowed_vector_source_enabled&&(self.origins.current_type.array_element_position.is_some()||self.origins.current_type.wrappers.first().is_some_and(|wrapper|wrapper=="reference")&&self.origins.current_type.source_lifetimes.first().and_then(Option::as_deref)==Some("static")){self.origins.borrowed_vector_needs_final_admission=true;}
+        self.check_owned_box_source_type(&self.origins.current_type,Some(super::super::Span::new(self.cursor.peek().start,self.cursor.peek().end)))?;
         let namespace_spelling = if head[0] != "&" && head[0] != "(" {
             head
         } else if namespace_children.len() == 1 && !head.iter().any(|part| part == "[") {
@@ -191,34 +228,16 @@ impl RustParser {
         lifetime_bindings: Vec<String>,
         scalar_loop: bool,
     ) -> Result<Option<SourceSignature>> {
-        if self.source_signature_model.is_empty() && !scalar_loop {
+        if self.source_signature_model.is_empty() && !scalar_loop && !self.retain_source_type_owners
+        {
             return Ok(None);
         }
-        let position = |origin: &SourceOrigin| -> Result<SourceTypeSignature> {
-            Ok(SourceTypeSignature {
-                ty: origin.ty.clone().ok_or_else(|| {
-                    unsupported(
-                        "Rust source signature",
-                        "a parsed header needs its value type",
-                        None,
-                    )
-                })?,
-                wrappers: origin.wrappers.clone(),
-                lifetimes: origin.source_lifetimes.clone(),
-                owner: origin.source_owner.clone().ok_or_else(|| {
-                    unsupported(
-                        "Rust source signature",
-                        "a parsed header needs its actual type owner",
-                        None,
-                    )
-                })?,
-            })
-        };
+        let position = |origin: &SourceOrigin| -> Result<SourceTypeSignature> {super::super::borrowed_vectors::source_type_position(origin)};
         Ok(Some(SourceSignature {
-            model: if self.source_signature_model.is_empty() {
-                "Rust source function signature 1".into()
+            model: if scalar_loop && self.source_signature_model.is_empty() {
+                "Rust source function signature 1".to_owned()
             } else {
-                self.source_signature_model.clone()
+                crate::translation::rust_source_owner_retention_rules::select_rust_retained_source_signature_model(&self.source_signature_model,self.retain_source_type_owners)
             },
             language: "Rust".to_owned(),
             parameters: parameters.iter().map(position).collect::<Result<_>>()?,

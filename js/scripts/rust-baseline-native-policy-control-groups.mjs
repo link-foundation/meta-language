@@ -1,0 +1,127 @@
+// Authored generation inputs, not runtime observations. The future source
+// author must reconcile each selected fixture coordinate before publishing.
+const selection=(name,exportName)=>({path:'js/tests/fixtures/'+name+'.mjs',exportName});
+export const rustBaselineNativePolicyControlGroups=[
+ {sourcePath:'js/src/translation/rust-borrowed-iterator-rules.js',moduleName:'authored_borrowed_iterator_controls',testName:'all_literal_borrowed_iterator_controls',fixtureSelections:[{...selection('rust-borrowed-iterators','rustBorrowedIteratorDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/javascript-array-objects.js',moduleName:'authored_array_object_controls',testName:'all_literal_array_object_controls',fixtureSelections:[{...selection('javascript-array-objects','javascriptArrayObjectDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/rust-mutable-record-loan-rules.js',moduleName:'authored_mutable_record_loan_controls',testName:'all_literal_mutable_record_loan_controls',fixtureSelections:[selection('rust-mutable-record-loans','rustMutableRecordLoanDecisions')]},
+ {sourcePath:'js/src/translation/rust-borrowed-source-region-rules.js',moduleName:'authored_borrowed_source_region_controls',testName:'all_literal_borrowed_source_region_controls',fixtureSelections:[selection('rust-borrowed-source-regions','rustBorrowedSourceRegionDecisions')]},
+ {sourcePath:'js/src/translation/javascript-primitive-methods.js',moduleName:'authored_primitive_method_controls',testName:'all_literal_primitive_method_controls',fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveMethodDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/javascript-call-primitives.js',moduleName:'authored_primitive_addition_controls',testName:'all_literal_primitive_addition_controls',fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveAdditionDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/javascript-collection-rules.js',moduleName:'authored_inspectable_collection_controls',testName:'all_literal_inspectable_collection_controls',fixtureSelections:[{...selection('javascript-inspectable-collections','javascriptInspectableCollectionDecisions'),profile:'exact pure fixture data 2'}]},
+ ...[
+  ['javascript-source-text-rules','source_text_profile','javascriptSourceTextProfileDecisions'],
+  ['javascript-semantic-values','source_text_semantic','javascriptSourceTextSemanticDecisions'],
+  ['javascript-descriptor-conversion','source_text_boolean','javascriptSourceTextBooleanDecisions'],
+  ['javascript-call-primitives','source_text_primitive','javascriptSourceTextPrimitiveDecisions'],
+ ].map(([source,name,exportName])=>({sourcePath:'js/src/translation/'+source+'.js',moduleName:'authored_'+name+'_controls',testName:'all_literal_'+name+'_controls',fixtureSelections:[{...selection('javascript-source-text',exportName),profile:'exact pure fixture data 2'}]})),
+ {sourcePath:'js/src/translation/javascript-ordinary-class-rules.js',moduleName:'authored_ordinary_class_controls',testName:'all_literal_ordinary_class_controls',fixtureSelections:[selection('javascript-ordinary-class-source','javascriptOrdinaryClassDecisions')]},
+ {sourcePath:'js/src/translation/javascript-host-capability-rules.js',moduleName:'authored_host_capability_mode_controls',testName:'all_literal_host_capability_mode_controls',fixtureSelections:[
+  selection('javascript-host-capabilities','javascriptHostCapabilityDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/javascript-module-initialization-rules.js',moduleName:'authored_runtime_module_initialization_controls',testName:'all_literal_runtime_module_initialization_controls',fixtureSelections:[
+  selection('runtime-data-module-initialization','runtimeDataModuleDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-borrowed-vector-rules.js',moduleName:'authored_borrowed_vector_position_controls',testName:'all_literal_borrowed_vector_position_controls',aliases:true,fixtureSelections:[
+  selection('rust-borrowed-vector-positions','rustBorrowedVectorPositionDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-loop-rules.js',moduleName:'authored_owned_record_loop_controls',testName:'all_literal_owned_record_loop_controls',fixtureSelections:[
+  selection('rust-owned-record-loops','rustOwnedRecordLoopDecisions'),
+  selection('rust-owned-record-loops','rustOwnedRecordLoopMalformedNumbers'),
+  selection('rust-owned-record-nested-loops','rustOwnedRecordNestedLoopDecisions'),
+  selection('rust-owned-record-loop-residuals','rustOwnedRecordLoopResidualDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/source-library-error-rules.js',moduleName:'authored_source_library_error_controls',testName:'all_literal_source_library_error_controls',aliases:true,fixtureSelections:[
+  selection('source-library-error-composition','sourceLibraryErrorDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/javascript-error-construction-rules.js',moduleName:'authored_error_construction_controls',testName:'all_literal_error_construction_controls',aliases:true,fixtureSelections:[
+  {path:'js/tests/fixtures/javascript-error-classes.mjs',exportName:'javascriptErrorClassDecisions',profile:'exact pure fixture data 2'},
+  {path:'js/tests/fixtures/javascript-error-classes.mjs',exportName:'javascriptErrorClassAllocationDecisions',profile:'exact pure fixture data 2'},
+ ]},
+ {sourcePath:'js/src/translation/source-library-class-rules.js',moduleName:'authored_source_library_class_controls',testName:'all_literal_source_library_class_controls',aliases:true,fixtureSelections:[
+  selection('source-library-class-composition','sourceLibraryClassDecisions'),
+  selection('source-library-class-re-exports','sourceLibraryClassReExportDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-recursive-datatype-rules.js',moduleName:'authored_owned_recursive_container_controls',testName:'all_literal_owned_recursive_container_controls',fixtureSelections:[
+  selection('rust-owned-recursive-containers','rustOwnedRecursiveContainerDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/proposition-value-rules.js',moduleName:'authored_proposition_value_controls',testName:'all_literal_proposition_value_controls',fixtureSelections:[
+  selection('proposition-values','propositionValueDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-unit-value-rules.js',moduleName:'authored_owned_record_completion_controls',testName:'all_literal_owned_record_completion_controls',fixtureSelections:[
+  selection('rust-owned-record-completions','rustOwnedRecordCompletionDecisions'),
+  selection('rust-ordinary-match-completions','rustOrdinaryMatchCompletionDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-effect-rules.js',moduleName:'authored_owned_record_effect_controls',testName:'all_literal_owned_record_effect_controls',aliases:true,fixtureSelections:[
+  selection('rust-owned-record-effects','rustOwnedRecordEffectDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/formal-datatype-alias-rules.js',moduleName:'authored_formal_datatype_alias_controls',testName:'all_literal_formal_datatype_alias_controls',fixtureSelections:[
+  selection('formal-datatype-aliases','formalDatatypeAliasDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/callable-data-derivation-rules.js',moduleName:'authored_formal_mutual_datatype_controls',testName:'all_literal_formal_mutual_datatype_controls',fixtureSelections:[
+  selection('formal-mutual-datatypes','formalMutualDatatypeDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-state-rules.js',moduleName:'authored_owned_record_state_controls',testName:'all_literal_owned_record_state_controls',fixtureSelections:[
+  selection('rust-owned-record-state','rustOwnedRecordStateDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/javascript-class-owner-rules.js',moduleName:'authored_class_owner_controls',testName:'all_literal_class_owner_controls',fixtureSelections:[
+  selection('closed-class-owner-witnesses','closedClassOwnerDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-place-rules.js',moduleName:'authored_owned_record_place_controls',testName:'all_literal_owned_record_place_controls',fixtureSelections:[
+  selection('rust-owned-record-places','rustOwnedRecordPlaceDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/formal-datatype-module-rules.js',moduleName:'authored_formal_datatype_module_controls',testName:'all_literal_formal_datatype_module_controls',fixtureSelections:[
+  selection('formal-datatype-modules','formalDatatypeModuleDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/datatype-dependency-group-rules.js',moduleName:'authored_datatype_dependency_group_controls',testName:'all_literal_datatype_dependency_group_controls',fixtureSelections:[
+  selection('datatype-dependency-groups','datatypeDependencyGroupDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-update-rules.js',moduleName:'authored_owned_record_update_controls',testName:'all_literal_owned_record_update_controls',fixtureSelections:[
+  selection('rust-owned-record-updates','rustOwnedRecordUpdateDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-copy-closure-rules.js',moduleName:'authored_copy_closure_value_controls',testName:'all_literal_copy_closure_value_controls',fixtureSelections:[
+  selection('rust-copy-closure-values','rustCopyClosureValueDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-nominal-ownership-rules.js',moduleName:'authored_nominal_ownership_controls',testName:'all_literal_nominal_ownership_controls',fixtureSelections:[
+  selection('rust-nominal-standard-sum-ownership','rustNominalStandardSumOwnershipDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/javascript-class-observation-rules.js',moduleName:'authored_class_observation_controls',testName:'all_literal_class_observation_controls',fixtureSelections:[
+  selection('closed-class-prototype-methods','closedClassPrototypeObservationDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-standard-sum-method-rules.js',moduleName:'authored_owned_sum_method_controls',testName:'all_literal_owned_sum_method_controls',fixtureSelections:[
+  selection('rust-owned-standard-sum-methods','rustOwnedStandardSumMethodDecisions'),
+  selection('rust-standard-default-values','rustStandardDefaultDecisions'),
+  selection('rust-standard-sum-clones','rustStandardSumCloneDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-standard-sum-callback-rules.js',moduleName:'authored_owned_sum_callback_controls',testName:'all_literal_owned_sum_callback_controls',fixtureSelections:[
+  selection('rust-owned-standard-sum-callbacks','rustOwnedStandardSumCallbackDecisions'),
+  selection('rust-owned-standard-sum-move-captures','rustOwnedStandardSumMoveCaptureDecisions'),
+  selection('rust-owned-standard-sum-bind-callbacks','rustOwnedStandardSumBindDecisions'),
+  selection('rust-standard-sum-copy-owned-callbacks','rustStandardSumCopyOwnedCallbackDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-standard-sum-combinator-rules.js',moduleName:'authored_sum_combinator_controls',testName:'all_literal_sum_combinator_controls',fixtureSelections:[
+  selection('rust-standard-sum-combinators','rustStandardSumCombinatorDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-standard-sum-guard-rules.js',moduleName:'authored_sum_guard_alternative_controls',testName:'all_literal_sum_guard_alternative_controls',fixtureSelections:[
+  selection('rust-standard-sum-guard-alternatives','rustStandardSumGuardAlternativeDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-standard-sum-nested-rules.js',moduleName:'authored_nested_sum_controls',testName:'all_literal_nested_sum_controls',fixtureSelections:[
+  selection('rust-standard-sum-nested','rustStandardSumNestedDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/collection-copy-rules.js',moduleName:'authored_collection_copy_controls',testName:'all_literal_collection_copy_controls',fixtureSelections:[
+  selection('collection-copies','collectionCopyDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-standard-sum-source-rules.js',moduleName:'authored_owned_sum_propagation_controls',testName:'all_literal_owned_sum_propagation_controls',fixtureSelections:[
+  selection('rust-standard-sum-owned-propagation','rustStandardSumOwnedPropagationDecisions'),
+  selection('rust-standard-sum-primitive-question-conversions','rustStandardSumPrimitiveQuestionDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/disjoint-collection-iteration-rules.js',moduleName:'authored_disjoint_collection_iteration_controls',testName:'all_literal_disjoint_collection_iteration_controls',fixtureSelections:[
+  selection('disjoint-collection-iterations','disjointCollectionIterationDecisions'),
+  selection('disjoint-collection-item-iterations','disjointCollectionItemIterationDecisions'),
+  selection('disjoint-collection-spreads','disjointCollectionSpreadDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/javascript-class-source-rules.js',moduleName:'authored_closed_class_default_controls',testName:'all_literal_closed_class_default_controls',fixtureSelections:[
+  selection('closed-class-collection-defaults','closedClassCollectionDefaultDecisions'),
+  selection('closed-class-prototype-methods','closedClassPrototypeDecisions'),
+ ]},
+];

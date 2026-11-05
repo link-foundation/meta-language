@@ -1,0 +1,33 @@
+// Pure source author controls, never fixture/policy execution or observations.
+export const exactFixtureAuthoringOriginals=[
+ {name:'BigInt and undefined preserve distinct exact data tags',source:'export const data = [18446744073709551615n, undefined, null, -0];',expected:'[18446744073709551615n,undefined,null,-0]'},
+ {name:'actual local aggregate constructor retains shorthand and fresh defaults',source:"const make=(identity,callable=false)=>({identity,callable});export const data=[make(7n),make(2n,true)];",expected:'[{"identity":7n,"callable":false},{"identity":2n,"callable":true}]'},
+ {name:'array spreads and actual slice indexes preserve order',source:'const values=[1n,2n,3n];export const data=[...values.slice(1),undefined];',expected:'[2n,3n,undefined]'},
+ {name:'record spread overwrite preserves actual first property position',source:'const base={first:1n,last:2n};export const data={...base,first:9n,next:undefined};',expected:'{"first":9n,"last":2n,"next":undefined}'},
+ {name:'pure fixed-field selector copies only actual retained input rows',source:'const rows=[{identity:1n},{identity:2n},{identity:7n}];export const data=rows.filter(row=>row.identity!==2n);',expected:'[{"identity":1n},{"identity":7n}]'},
+ {name:'whole export text template is literal source data',source:'export const data=[`literal source text`];',expected:'["literal source text"]'},
+ {name:'negative hexadecimal BigInt remains an exact signed integer',source:'export const data=[-0xFFn];',expected:'[-255n]'},
+ {name:'undefined spelling follows the actual initialized local declaration',source:'const undefined=7;export const data=[undefined];',expected:'[7]'},
+ {name:'unpaired source code unit remains exact UTF16 text',source:'export const data=["\\uD800"];',expected:'["\\ud800"]'},
+ {name:'ordinary integer property keys retain enumeration order through spreads',source:'const base={"2":"two","1":"one",tail:true};export const data={...base,"0":"zero"};',expected:'{"0":"zero","1":"one","2":"two","tail":true}'},
+ {name:'constant aliases share their actual descriptor while spreads allocate a new outer record',source:'const row={value:1};export const data=[row,row,{...row}];',expected:'[{"value":1},{"value":1},{"value":1}]',aliases:true},
+];
+export const exactFixtureAuthoringRefusals=[
+ {name:'policy function call is not literal fixture construction',source:'export const data=policy(1);'},
+ {name:'scalar helper cannot compute an expected oracle',source:'const expected=()=>true;export const data=expected();'},
+ {name:'arithmetic is not an aggregate data constructor',source:'const make=(x)=>({value:x+1});export const data=make(1);'},
+ {name:'statements cannot hide policy evaluation inside a helper',source:'const make=(x)=>{return {value:x};};export const data=make(1);'},
+ {name:'unselected dynamic initializer cannot mutate captured data unnoticed',source:'export const data=[];const ignored=mutate(data);'},
+ {name:'top level mutations cannot be omitted',source:'export const data=[];data.push(1);'},
+ {name:'noninteger slice bounds cannot trigger coercion',source:'const values=[1,2];export const data=values.slice("1");'},
+ {name:'arbitrary methods cannot execute',source:'const values=[1,2];export const data=values.map(x=>x);'},
+ {name:'selector policy calls cannot execute',source:'const values=[1,2];export const data=values.filter(x=>policy(x));'},
+ {name:'sparse array slots require their own future descriptor',source:'export const data=[,1];'},
+ {name:'prototype setter syntax is not plain data',source:'export const data={__proto__:null};'},
+ {name:'forward uninitialized const references cannot be guessed',source:'const first=second;const second=[];export const data=first;'},
+ {name:'cyclic declarations cannot fabricate finite data',source:'const first=first;export const data=first;'},
+ {name:'later default parameter shadows an outer initialized binding',source:'const later=1;const make=(first=later,later=2)=>({first,later});export const data=make();'},
+ {name:'custom iterables are not array spreads',source:'export const data=[...unknown];'},
+ {name:'template interpolation cannot compute an oracle',source:'export const data=[`${policy()}`];'},
+ {name:'chained selectors require a separate exact expression profile',source:'const values=[{x:1}];export const data=values.filter(value=>value.x===1===true);'},
+];

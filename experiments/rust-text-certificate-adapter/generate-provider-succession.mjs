@@ -7,7 +7,7 @@ import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifa
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {checkProjectData,writeProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
-import {OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,readReviewedOverlayProviderSuccessionHistory,
+import {readReviewedOverlayProviderReview,readReviewedOverlayProviderSuccessionHistory,
  verifyReviewedOverlayProviderSuccessionHistory,verifyCurrentReviewedOverlayProviderSources,
  deriveReviewedOverlayProviderPolicy,deriveReviewedOverlayProviderReceipts} from './provider-succession.mjs';
 const root=new URL('../../',import.meta.url);
@@ -123,7 +123,7 @@ export async function updateReviewedOverlayProviderSuccession({check=false,revis
     assert.match(revision,/^[a-f0-9]{40}$/u,'supply one complete actual committed source epoch');
     assert.equal(original.profiles.some(row=>row.sourceCommit===revision),false,'a committed epoch is appended once');
     const last=original.profiles.at(-1);
-    const review=last.sourceCommit===OVERLAY_PROVIDER_APPEND_REVIEW.previous?OVERLAY_PROVIDER_APPEND_REVIEW:OVERLAY_PROVIDER_REFERENCE_REVIEW;
+    const review=readReviewedOverlayProviderReview(last.sourceCommit);
     assert.equal(last.sourceCommit,review.previous,'this review applies to the exact preceding provider profile');
     const capture=file=>{
       const{blob,certificate}=captureGitArtifactCertificate(revision,file);

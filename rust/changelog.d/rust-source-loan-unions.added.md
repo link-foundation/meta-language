@@ -1,0 +1,1 @@
+Draft immutable source loan unions through nested Rust conditionals, match arms, indexed places, reference annotations and scalar reborrows. Shared JavaScript rules generate Rust and paired Links assets; copies detach while later loans validate every possible owner. Preserve the former valid refusal input and defer all behavioral controls during full requirements drafting.

@@ -1,11 +1,12 @@
-//! The exactly specified part of `Math` and `Number`: each function is exact
-//! or correctly rounded, so every target computes the same binary64 value.
+//! Owned Math/Number builtins use shared kernels; power's canonical definition
+//! retains separate implementation-approximation obligations.
 
 use super::{FLOAT, GLOBALS};
 use super::{JavaScriptParser, Result, SArrayItem, SExpr, SNode, Token, node, span, unsupported};
 
 /// The functions, by the path a program calls them by, and the op each is.
 const MATH: [(&str, &str); 15] = [
+    ("Object.is", "testJavaScriptPrimitiveSameValue"),
     ("Math.abs", "abs"),
     ("Math.floor", "floor"),
     ("Math.ceil", "ceil"),
@@ -13,14 +14,13 @@ const MATH: [(&str, &str); 15] = [
     ("Math.round", "round"),
     ("Math.sign", "sign"),
     ("Math.sqrt", "sqrt"),
+    ("Math.pow", "powerJavaScriptNumberArguments"),
     ("Math.max", "max"),
     ("Math.min", "min"),
     ("Number.isInteger", "isInteger"),
     ("Number.isSafeInteger", "isSafeInteger"),
     ("Number.isFinite", "isFinite"),
     ("Number.isNaN", "isNaN"),
-    ("isFinite", "isFinite"),
-    ("isNaN", "isNaN"),
 ];
 
 /// Their constants, as the source text of the Number each one is.
@@ -56,6 +56,39 @@ impl JavaScriptParser {
     pub(super) fn math(&mut self, token: &Token, name: &str) -> Result<Option<SExpr>> {
         let called = self.cursor.is("(");
         let standard_owner = self.has_standard_builtin_owner(token);
+        let mut numeric_builtin =
+            crate::translation::string_number_rules::read_java_script_number_builtin_operation(
+                name,
+            );
+        if numeric_builtin.is_empty() {
+            numeric_builtin=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_builtin_operation(name);
+        }
+        if numeric_builtin.is_empty() {
+            numeric_builtin=crate::translation::string_construction_rules::read_java_script_string_construction_operation(name);
+        }
+        if numeric_builtin.is_empty() {
+            numeric_builtin=crate::translation::optional_value_rules::read_java_script_boolean_builtin_operation(name);
+        }
+        if numeric_builtin.is_empty() {
+            numeric_builtin=crate::translation::array_classification_rules::read_java_script_array_classification_builtin_operation(name);
+        }
+        if numeric_builtin.is_empty() {
+            numeric_builtin = crate::translation::javascript_own_property_rules::read_java_script_own_property_builtin_operation(name);
+        }
+        if numeric_builtin.is_empty() {
+            numeric_builtin=crate::translation::javascript_enumeration_rules::read_java_script_enumeration_builtin_operation(name);
+        }
+        if called && standard_owner && !numeric_builtin.is_empty() {
+            let args = self.spread_arguments(name)?;
+            return Ok(Some(node(
+                SNode::Math {
+                    op: numeric_builtin,
+                    name: name.to_owned(),
+                    args,
+                },
+                self.to_here(token),
+            )));
+        }
         if let Some(value) = lookup(&CONSTANTS, name).filter(|_| !called) {
             if !standard_owner {
                 return Err(unsupported(
@@ -90,7 +123,7 @@ impl JavaScriptParser {
     }
 
     /// Arguments that may spread arrays, `(a, ...xs)`, as array items.
-    fn spread_arguments(&mut self, context: &str) -> Result<Vec<SArrayItem>> {
+    pub(super) fn spread_arguments(&mut self, context: &str) -> Result<Vec<SArrayItem>> {
         self.cursor.expect("(", Some(context))?;
         let mut args = Vec::new();
         while !self.cursor.is(")") {

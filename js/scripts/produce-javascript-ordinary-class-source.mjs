@@ -1,0 +1,60 @@
+// Future bounded diagnostic producer. Every original/refusal and transport
+// remains represented even when another generated/native product is missing.
+import assert from 'node:assert/strict';
+import {selectVersionedAssertion} from './assertion-version-ranges.mjs';
+import {once} from 'node:events';
+import {javascriptWeakCollectionOriginals as weakCollections,javascriptWeakCollectionAssertionPolicy as weakCollectionPolicy} from '../tests/fixtures/javascript-weak-collection-source.mjs';
+import {javascriptSymbolRegistryOriginals as symbolRegistry,javascriptSymbolRegistryAssertionPolicy as symbolRegistryPolicy} from '../tests/fixtures/javascript-symbol-registry-source.mjs';
+import {javascriptWeakConstructionOriginals as weakConstruction,javascriptWeakConstructionAssertionPolicy as weakConstructionPolicy} from '../tests/fixtures/javascript-weak-construction-source.mjs';
+import {javascriptArraySortOriginals as arraySort} from '../tests/fixtures/javascript-array-sort-source.mjs';
+import {javascriptArrayCopyOriginals as arrayCopy} from '../tests/fixtures/javascript-array-copy-source.mjs';
+import {javascriptArrayConcatenationOriginals as arrayConcatenation} from '../tests/fixtures/javascript-array-concatenation-source.mjs';
+import {javascriptArraySliceOriginals as arraySlice} from '../tests/fixtures/javascript-array-slice-source.mjs';
+import {javascriptObjectAssignmentCoercionOriginals as objectAssignmentCoercion} from '../tests/fixtures/javascript-object-assignment-coercion.mjs';
+import {javascriptArrayMutationBoxingOriginals as arrayMutationBoxing} from '../tests/fixtures/javascript-array-mutation-boxing.mjs';
+import {javascriptArrayReadBoxingOriginals as arrayReadBoxing} from '../tests/fixtures/javascript-array-read-boxing.mjs';
+
+import {javascriptArrayJoinOriginals as arrayJoin} from '../tests/fixtures/javascript-array-join-source.mjs';
+import {javascriptConstructionOriginals as construction} from '../tests/fixtures/javascript-construction-source.mjs';
+import {javascriptArrayCreationOriginals as arrayCreation} from '../tests/fixtures/javascript-array-creation.mjs';
+import {javascriptWrapperMaterializationOriginals as wrapperMaterialization} from '../tests/fixtures/javascript-wrapper-materialization.mjs';
+import {observeWrapperMaterialization} from '../tests/support/wrapper-materialization.js';
+import {javascriptPrimitiveWrapperOriginals as primitiveWrappers} from '../tests/fixtures/javascript-primitive-wrappers.mjs';
+import {javascriptObjectFromEntriesOriginals as objectFromEntries} from '../tests/fixtures/javascript-object-from-entries-source.mjs';
+import {javascriptStringCaseProfileOriginals as stringCaseProfiles,javascriptStringCaseProfileVersions} from '../tests/fixtures/javascript-string-case-profile.mjs';
+import {javascriptCollectionForEachOriginals as collectionForEach} from '../tests/fixtures/javascript-collection-for-each-source.mjs';
+import {javascriptOrdinaryClassOriginals as cases,javascriptOrdinaryClassRefusals as refusals} from '../tests/fixtures/javascript-ordinary-class-source.mjs';
+import {readOrdinaryClassSourceOriginalDiagnostic,readOrdinaryClassSourceRefusalDiagnostic} from '../tests/support/ordinary-class-source-controls.js';
+import {createControlDiagnostics} from '../tests/support/control-diagnostics.js';
+import {readActiveRuntimeDataVersions} from '../src/translation/runtime-data-module.js';
+import {javascriptOrdinaryClassClosureOriginals as closures,javascriptOrdinaryClassScopeWorkloads as workloads} from '../tests/fixtures/javascript-ordinary-class-closures.mjs';
+import {readOrdinaryClassClosureOriginalDiagnostic} from '../tests/support/ordinary-class-closure-controls.js';
+const model='actual ordinary class source execution controls 1',diagnostic=createControlDiagnostics();diagnostic.attempt('actual Node/shared source version profile',readActiveRuntimeDataVersions);let failures=diagnostic.failures.length;
+const arguments_=process.argv.slice(2);if(arguments_.length!==0&&(arguments_.length!==2||arguments_[0]!=='--group'||!arguments_[1]))throw new TypeError('use optional --group NAME');const selectedGroup=arguments_[1];let selectedCount=0;
+function readStringCaseProfileDiagnostic(definition){if(process.versions.node.split('.')[0]!=='24'||process.versions.unicode!==javascriptStringCaseProfileVersions.unicode)throw new TypeError('uncovered original String casing profile: Node '+process.versions.node+' Unicode '+process.versions.unicode+'; requires '+javascriptStringCaseProfileVersions.node+' Unicode '+javascriptStringCaseProfileVersions.unicode);return readOrdinaryClassSourceOriginalDiagnostic(definition);}
+async function write(text){if(!process.stdout.write(text))await once(process.stdout,'drain');}
+await write(JSON.stringify({model,nodeVersion:process.versions.node,unicodeVersion:process.versions.unicode}).slice(0,-1));
+for(const group of [{key:'arraySort',rows:arraySort,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayCopy',rows:arrayCopy,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayConcatenation',rows:arrayConcatenation,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arraySlice',rows:arraySlice,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'objectAssignmentCoercion',rows:objectAssignmentCoercion,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayMutationBoxing',rows:arrayMutationBoxing,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayReadBoxing',rows:arrayReadBoxing,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayJoin',rows:arrayJoin,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'construction',rows:construction,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayCreation',rows:arrayCreation,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'cases',rows:cases,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'wrapperMaterialization',rows:wrapperMaterialization,read:definition=>readOrdinaryClassSourceOriginalDiagnostic(definition,{observeResult:observeWrapperMaterialization})},{key:'primitiveWrappers',rows:primitiveWrappers,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'objectFromEntries',rows:objectFromEntries,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'collectionForEach',rows:collectionForEach,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'stringCaseProfiles',rows:stringCaseProfiles,read:readStringCaseProfileDiagnostic},{key:'closures',rows:closures,read:readOrdinaryClassClosureOriginalDiagnostic},{key:'workloads',rows:workloads,read:readOrdinaryClassClosureOriginalDiagnostic},{key:'refusals',rows:refusals,read:readOrdinaryClassSourceRefusalDiagnostic}]){
+ if(selectedGroup!==undefined&&group.key!==selectedGroup)continue;selectedCount+=1;await emitSourceGroup(group);
+}
+for(const group of [{key:'weakCollections',rows:weakCollections,read:versionedOriginal(weakCollectionPolicy)},{key:'symbolRegistry',rows:symbolRegistry,read:versionedOriginal(symbolRegistryPolicy,{prepareArguments:registeredSymbolArguments})},{key:'weakConstruction',rows:weakConstruction,read:versionedOriginal(weakConstructionPolicy)}]){if(selectedGroup!==undefined&&group.key!==selectedGroup)continue;selectedCount+=1;await emitSourceGroup(group);}
+if(selectedGroup!==undefined&&selectedCount!==1)throw new TypeError('one actual source group must match --group');
+await write(',"diagnostics":'+JSON.stringify({assertions:diagnostic.assertions,failures:diagnostic.failures})+'}\n');
+if(failures){process.stderr.write(model+': '+failures+' assertions failed; all original definitions retained\n');process.exitCode=1;}
+async function emitSourceGroup(group){
+ await write(','+JSON.stringify(group.key)+':[');let first=true;
+ for(const definition of group.rows){
+  let record;try{record=await group.read(definition);if(!record||!Array.isArray(record.diagnostics?.assertions)||!Array.isArray(record.diagnostics?.failures))throw new TypeError('every source control retains all assertion diagnostics');}
+  catch(error){record={definition,diagnostics:{assertions:['control construction'],failures:[{assertion:'control construction',name:String(error?.name??'Error').slice(0,128),message:String(error?.message??error).slice(0,4096)}]}};}
+  let encoded;try{encoded=JSON.stringify(record);}catch(error){record={definition,diagnostics:{assertions:[...record.diagnostics.assertions,'control serialization'],failures:[...record.diagnostics.failures,{assertion:'control serialization',message:String(error?.message??error).slice(0,4096)}]}};encoded=JSON.stringify(record);}
+  if(encoded.length>16*1024*1024){record={definition,diagnostics:{assertions:[...record.diagnostics.assertions,'bounded source control serialization'],failures:[...record.diagnostics.failures,{assertion:'bounded source control serialization',message:'actual products unavailable at explicit 16 MiB per-case bound'}]}};encoded=JSON.stringify(record);}
+  failures+=record.diagnostics.failures.length;await write((first?'':',')+encoded);first=false;
+ }
+ await write(']');
+}
+
+// Literal witness descriptors are converted only at the native input boundary,
+// then the embedding records the actual host identity. The represented registry
+// never uses this function to implement allocation or lookup.
+function registeredSymbolArguments(values){return values.map(value=>{if(value?.$!=='registeredSymbol')return value;assert.deepEqual(Object.keys(value).sort(),['$','key']);assert.equal(typeof value.key,'string');return Symbol.for(value.key);});}
+function versionedOriginal(policy,options){return definition=>{assert.equal(selectVersionedAssertion(policy,process.versions.node).expected,true);return readOrdinaryClassSourceOriginalDiagnostic(definition,options);};}

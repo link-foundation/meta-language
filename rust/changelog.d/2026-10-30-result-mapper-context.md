@@ -1,0 +1,1 @@
+Draft scalar Result mapper inference from the actual typed eager default, including literal and diverging callback results. Preserve callback-based inference when the default has no known scalar type. Independent original controls remain deferred.

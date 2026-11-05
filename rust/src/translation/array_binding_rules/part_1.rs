@@ -1,11 +1,7 @@
-// Generated from the complete checked JavaScript source and recorded dependencies.
-// Do not edit by hand.
-use super::MlAcceptJavaScriptArrayBindingNameLoop1Result;
-use super::MlReadArrayBindingFactFieldLoop2Result;
-use super::MlReadArrayBindingInitializerEndLoop3Result;
-use super::ml_accept_java_script_array_binding_name_loop1;
-use super::ml_read_array_binding_fact_field_loop2;
-use super::ml_read_array_binding_initializer_end_loop3;
+// Generated from complete js/src/translation/array-binding-rules.js. Do not edit by hand.
+use super::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Result;
+use super::read_array_binding_fact_field;
+use super::source_ml_source1_temporary_accept_java_script_array_binding_name_loop1;
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
@@ -454,34 +450,99 @@ pub mod ml_string {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (self::ml_string::Text::from_units(vec![
+            109, 105, 115, 115, 105, 110, 103, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32, 78,
+            117, 109, 98, 101, 114, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32, 118,
+            97, 108, 117, 101,
+        ]))
+        .0,
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> self::ml_string::Text {
-    panic!("{}", "missing required text fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (self::ml_string::Text::from_units(vec![
+            109, 105, 115, 115, 105, 110, 103, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32, 116,
+            101, 120, 116, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32, 118, 97, 108,
+            117, 101,
+        ]))
+        .0,
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (self::ml_string::Text::from_units(vec![
+            109, 105, 115, 115, 105, 110, 103, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32, 66,
+            111, 111, 108, 101, 97, 110, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32,
+            118, 97, 108, 117, 101,
+        ]))
+        .0,
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                105, 110, 118, 97, 108, 105, 100, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32,
+                78, 117, 109, 98, 101, 114, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110,
+                32, 112, 111, 115, 105, 116, 105, 111, 110,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_number_fact)
     }
@@ -493,13 +554,19 @@ pub fn read_required_text_fact(
     values: &[self::ml_string::Text],
     index: f64,
 ) -> self::ml_string::Text {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                105, 110, 118, 97, 108, 105, 100, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32,
+                116, 101, 120, 116, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32, 112,
+                111, 115, 105, 116, 105, 111, 110,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_text_fact)
     }
@@ -508,13 +575,19 @@ pub fn read_required_text_fact(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                105, 110, 118, 97, 108, 105, 100, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32,
+                66, 111, 111, 108, 101, 97, 110, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109,
+                110, 32, 112, 111, 115, 105, 116, 105, 111, 110,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_boolean_fact)
     }
@@ -588,14 +661,16 @@ pub fn accept_java_script_array_binding_name(
         {
             let index = 0f64;
             {
-                let ml_s1 =
-                    self::ml_accept_java_script_array_binding_name_loop1(name, reserved, index);
-                match ml_s1 {
-                        self::MlAcceptJavaScriptArrayBindingNameLoop1Result::MlAcceptJavaScriptArrayBindingNameLoop1Done => {
+                let source_ml_source2_s1 =
+                    self::source_ml_source1_temporary_accept_java_script_array_binding_name_loop1(
+                        name, reserved, index,
+                    );
+                match source_ml_source2_s1 {
+                        self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Result::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Done => {
                             true
                         }
-                        self::MlAcceptJavaScriptArrayBindingNameLoop1Result::MlAcceptJavaScriptArrayBindingNameLoop1Return(ml_result1) => {
-                            ml_result1
+                        self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Result::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Return(source_ml_source1_temporary_result1) => {
+                            source_ml_source1_temporary_result1
                         }
                     }
             }
@@ -815,69 +890,6 @@ pub fn plan_java_script_array_default_inference(
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_array_binding_fact_field(
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    node: f64,
-    field: &self::ml_string::Text,
-) -> f64 {
-    if ((node < 0f64) || (node >= (starts.len() as f64))) || (node >= (counts.len() as f64)) {
-        -1f64
-    } else {
-        {
-            let at = self::read_required_number_fact(starts, node);
-            {
-                let end = at + self::read_required_number_fact(counts, node);
-                {
-                    let ml_s2 = self::ml_read_array_binding_fact_field_loop2(
-                        labels, targets, field, at, end,
-                    );
-                    match ml_s2 {
-                        self::MlReadArrayBindingFactFieldLoop2Result::MlReadArrayBindingFactFieldLoop2Done => {
-                            -1f64
-                        }
-                        self::MlReadArrayBindingFactFieldLoop2Result::MlReadArrayBindingFactFieldLoop2Return(ml_result2) => {
-                            ml_result2
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_array_binding_initializer_end(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    start: f64,
-) -> f64 {
-    {
-        let index = start;
-        {
-            let closes = Vec::<self::ml_string::Text>::new();
-            {
-                let ml_s3 = self::ml_read_array_binding_initializer_end_loop3(
-                    kinds, values, start, index, closes,
-                );
-                match ml_s3 {
-                    self::MlReadArrayBindingInitializerEndLoop3Result::MlReadArrayBindingInitializerEndLoop3Done => {
-                        -1f64
-                    }
-                    self::MlReadArrayBindingInitializerEndLoop3Result::MlReadArrayBindingInitializerEndLoop3Return(ml_result3) => {
-                        ml_result3
                     }
                 }
             }

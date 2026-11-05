@@ -7,12 +7,48 @@ use super::{
 };
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::javascript_record_parameter_rules::{self as rules, ml_string::Text};
+use crate::translation::record_callable_parameter_rules::{
+    self as callable_rules, ml_string::Text as CallableText,
+};
+use crate::translation::record_closure_parameter_rules::{
+    self as closure_rules, ml_string::Text as ClosureText,
+};
 
 #[derive(Clone)]
 pub(super) struct RecordParameters {
     pub(super) parameters: Vec<SParam>,
     source_names: Vec<String>,
     bindings: Vec<RecordBinding>,
+    array_entries: Option<Vec<super::array_formal_parameters::ArrayFormalEntry>>,
+    object_entries: Option<Vec<super::recursive_object_bindings::RecursiveObjectEntry>>,
+}
+impl RecordParameters {
+    pub(super) fn from_recursive_object_formals(
+        parameters: Vec<SParam>,
+        source_names: Vec<String>,
+        entries: Vec<super::recursive_object_bindings::RecursiveObjectEntry>,
+    ) -> Self {
+        Self {
+            parameters,
+            source_names,
+            bindings: Vec::new(),
+            array_entries: None,
+            object_entries: Some(entries),
+        }
+    }
+    pub(super) fn from_array_formals(
+        parameters: Vec<SParam>,
+        source_names: Vec<String>,
+        entries: Vec<super::array_formal_parameters::ArrayFormalEntry>,
+    ) -> Self {
+        Self {
+            parameters,
+            source_names,
+            bindings: Vec::new(),
+            array_entries: Some(entries),
+            object_entries: None,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -23,9 +59,12 @@ struct RecordBinding {
     parameter_span: Span,
     span: Span,
     binding_span: Span,
+    property_span: Span,
+    fallback: Option<SExpr>,
+    excluded: Option<Vec<(String, Span)>>,
 }
 
-fn reserved_names() -> &'static [Text] {
+pub(super) fn reserved_names() -> &'static [Text] {
     static NAMES: OnceLock<Vec<Text>> = OnceLock::new();
     NAMES.get_or_init(|| {
         let policy =
@@ -40,7 +79,7 @@ fn reserved_names() -> &'static [Text] {
     })
 }
 
-const fn token_kind(token: &Token) -> &'static str {
+pub(super) const fn token_kind(token: &Token) -> &'static str {
     match token.kind {
         TokenKind::Punct => "punct",
         TokenKind::Identifier => "identifier",
@@ -54,7 +93,7 @@ const fn token_kind(token: &Token) -> &'static str {
     }
 }
 
-const fn parameter(name: String, place: Span) -> SParam {
+pub(super) const fn parameter(name: String, place: Span) -> SParam {
     SParam {
         name,
         optional: false,
@@ -195,6 +234,54 @@ impl JavaScriptParser {
         doc: Option<&JsDoc>,
         asynchronous: bool,
     ) -> Result<Option<RecordParameters>> {
+        self.read_record_parameter_syntax(
+            doc,
+            asynchronous,
+            "ordinary named function declaration",
+            false,
+        )
+    }
+
+    pub(super) fn read_record_closure_parameters(
+        &mut self,
+        method: bool,
+        expression: bool,
+    ) -> Result<Option<RecordParameters>> {
+        let context =
+            closure_rules::read_java_script_record_closure_context(method, expression).to_string();
+        self.read_record_parameter_syntax(None, false, &context, false)
+    }
+
+    pub(super) fn read_record_constant_parameters(
+        &mut self,
+        doc: Option<&JsDoc>,
+        asynchronous: bool,
+        expression: bool,
+    ) -> Result<Option<RecordParameters>> {
+        let context =
+            callable_rules::read_java_script_record_constant_context(expression).to_string();
+        self.read_record_parameter_syntax(doc, asynchronous, &context, true)
+    }
+    pub(super) fn read_record_namespace_parameters(
+        &mut self,
+        doc: Option<&JsDoc>,
+        asynchronous: bool,
+    ) -> Result<Option<RecordParameters>> {
+        self.read_record_parameter_syntax(
+            doc,
+            asynchronous,
+            "ordinary namespace object method",
+            true,
+        )
+    }
+
+    fn read_record_parameter_syntax(
+        &mut self,
+        doc: Option<&JsDoc>,
+        asynchronous: bool,
+        context: &str,
+        callable: bool,
+    ) -> Result<Option<RecordParameters>> {
         let start = self.cursor.index;
         let Some(opening) = start
             .checked_sub(1)
@@ -237,21 +324,50 @@ impl JavaScriptParser {
         let documentation_parameters = serde_json::Number::from(documentation_parameters)
             .as_f64()
             .expect("a source parameter count is a Number");
-        if !rules::accept_java_script_record_parameter_profile(
-            &Text::from_text("ordinary named function declaration"),
-            asynchronous,
-            documentation_parameters,
-            false,
-            false,
-        ) {
+        let admitted = if callable {
+            callable_rules::accept_java_script_record_callable_parameter_profile(
+                &CallableText::from_text(context),
+                asynchronous,
+                documentation_parameters,
+            )
+        } else if context == "ordinary named function declaration" {
+            rules::accept_java_script_record_parameter_profile(
+                &Text::from_text(context),
+                asynchronous,
+                documentation_parameters,
+                false,
+                false,
+            )
+        } else {
+            closure_rules::accept_java_script_record_closure_parameter_profile(
+                &ClosureText::from_text(context),
+                asynchronous,
+                documentation_parameters,
+            )
+        };
+        if !admitted && callable {
+            return Err(unsupported(
+                "record callable source profile",
+                "ordinary non-simple callables require synchronous bodies without parameter documentation tags",
+                Some(selected.span()),
+            ));
+        }
+        if !admitted {
             return Err(unsupported(
                 "record parameter source profile",
                 "the initial named declaration profile requires synchronous functions without parameter documentation tags",
                 Some(selected.span()),
             ));
         }
-        let values =
-            rules::plan_java_script_record_parameters(&kinds, &values, 0.0, reserved_names());
+        if let Some(syntax) = self.read_recursive_object_formals(&interval, start, context)? {
+            return Ok(Some(syntax));
+        }
+        let values = rules::plan_java_script_source_record_parameters_with_rest(
+            &kinds,
+            &values,
+            0.0,
+            reserved_names(),
+        );
         if values.first().is_some_and(|value| *value < 0.0) {
             let token = values
                 .get(1)
@@ -259,6 +375,10 @@ impl JavaScriptParser {
                 .and_then(number_index)
                 .and_then(|at| interval.get(at))
                 .unwrap_or_else(|| self.cursor.peek());
+            // Reason eight carries the actual rejected BoundName position.
+            if values[0].to_bits() == (-8f64).to_bits() {
+                crate::translation::lexer::require_java_script_identifier_role(token, true)?;
+            }
             return Err(unsupported(
                 "record parameter binding",
                 &format!(
@@ -297,10 +417,22 @@ impl JavaScriptParser {
                 .collect();
             self.record_parameter_names = Some(names);
         }
+        let binding_positions =
+            rules::read_java_script_record_formal_default_binding_positions(&values);
+        let bound_names = binding_positions
+            .iter()
+            .map(|position| {
+                interval[number_index(*position).expect("actual admitted BoundName position")]
+                    .value
+                    .clone()
+            })
+            .collect::<Vec<_>>();
         let mut syntax = RecordParameters {
             parameters: Vec::new(),
             source_names: Vec::new(),
             bindings: Vec::new(),
+            array_entries: None,
+            object_entries: None,
         };
         while plan.at < values.len() {
             let form = plan.position()?;
@@ -314,6 +446,7 @@ impl JavaScriptParser {
             }
             if form == 0 {
                 let token = plan.token(&interval)?;
+                crate::translation::lexer::require_java_script_identifier_role(&token, true)?;
                 syntax
                     .parameters
                     .push(parameter(token.value.clone(), token.span()));
@@ -349,22 +482,56 @@ impl JavaScriptParser {
                     break name;
                 }
             };
-            let parameter_span = span(&open, &close);
+            let parameter_span = Span::new(open.start, close.end);
             syntax
                 .parameters
                 .push(parameter(name.clone(), parameter_span));
+            let mut excluded = Vec::new();
             for _ in 0..pairs {
                 let property = plan.token(&interval)?;
+                let binding = values[plan.at];
                 let local = plan.token(&interval)?;
+                let first = values[plan.at];
+                let last = values[plan.at + 1];
+                plan.at += 2;
+                crate::translation::lexer::require_java_script_identifier_role(&local, true)?;
+                let fallback = if let Some(first) = number_index(first) {
+                    let last = number_index(last).expect("actual source initializer end");
+                    Some(self.read_formal_initializer(
+                        &interval,
+                        super::formal_initializers::FormalInitializer {
+                            interval_positions: (first, last, start),
+                            binding_positions: &binding_positions,
+                            binding,
+                            bound_names: &bound_names,
+                            context,
+                            profile: "record formal default",
+                        },
+                    )?)
+                } else {
+                    None
+                };
                 syntax.bindings.push(RecordBinding {
                     parameter: name.clone(),
                     property: property.value.clone(),
                     name: local.value.clone(),
                     parameter_span,
-                    span: span(&property, &local),
+                    span: Span::new(
+                        property.start,
+                        fallback
+                            .as_ref()
+                            .and_then(|value| value.span)
+                            .map_or(local.end, |place| place.end),
+                    ),
                     binding_span: local.span(),
+                    property_span: property.span(),
+                    fallback,
+                    excluded: (first == -2.0).then(|| excluded.clone()),
                 });
                 syntax.source_names.push(local.value);
+                if first != -2.0 {
+                    excluded.push((property.value.clone(), property.span()));
+                }
             }
         }
         if syntax.parameters.len() != count {
@@ -382,6 +549,17 @@ impl JavaScriptParser {
         &mut self,
         syntax: &RecordParameters,
     ) -> Result<Vec<Stmt>> {
+        self.read_record_parameter_body_with(syntax, Self::block_statements)
+    }
+
+    pub(super) fn read_record_parameter_body_with<F>(
+        &mut self,
+        syntax: &RecordParameters,
+        read_body: F,
+    ) -> Result<Vec<Stmt>>
+    where
+        F: FnOnce(&mut Self) -> Result<Vec<Stmt>>,
+    {
         let names = syntax.source_names.iter().cloned().collect::<HashSet<_>>();
         if self.cursor.is_kind(TokenKind::Punct) && self.cursor.is("{") {
             self.check_record_parameter_directives()?;
@@ -406,45 +584,108 @@ impl JavaScriptParser {
                 .tag_binding(name, super::tag_context::TagReceiverFact::Declared(None));
         }
         let before = self.lexical.read_count();
-        let statements = self.block_statements()?;
-        let bound_writes = self
+        let statements = read_body(self)?;
+        let written = self
             .lexical
             .assigned_names_since(before)
-            .any(|name| names.contains(name));
-        // The ordinary source parser owns its earlier var-declaration refusal.
-        if !rules::accept_java_script_record_parameter_profile(
-            &Text::from_text("ordinary named function declaration"),
-            false,
-            0.0,
-            bound_writes,
-            false,
-        ) {
-            return Err(unsupported(
-                "record parameter body",
-                "parameter writes, captured writes and var redeclarations need the separate mutable initialization interpretation",
-                syntax.bindings.first().map(|binding| binding.span),
-            ));
-        }
-        let mut prefix = syntax
-            .bindings
-            .iter()
-            .map(|binding| Stmt::Const {
-                name: binding.name.clone(),
-                value: SExpr::new(
-                    SNode::Field {
-                        object: Box::new(SExpr::new(
-                            SNode::Name {
-                                path: vec![binding.parameter.clone()],
+            .filter(|name| names.contains(*name))
+            .map(str::to_owned)
+            .collect::<HashSet<_>>();
+        let mut prefix = if let Some(entries) = &syntax.object_entries {
+            entries
+                .iter()
+                .map(|entry| {
+                    let mutable = !entry.temporary
+                        && rules::read_java_script_record_parameter_binding_statement(
+                            written.contains(&entry.name),
+                        )
+                        .to_string()
+                            == "let";
+                    if mutable {
+                        Stmt::Let {
+                            name: entry.name.clone(),
+                            value: entry.value.clone(),
+                            span: entry.span,
+                        }
+                    } else {
+                        Stmt::Const {
+                            name: entry.name.clone(),
+                            value: entry.value.clone(),
+                            span: entry.span,
+                        }
+                    }
+                })
+                .collect()
+        } else if let Some(entries) = &syntax.array_entries {
+            super::array_formal_parameters::binding_statements(entries, &written)
+        } else {
+            syntax
+                .bindings
+                .iter()
+                .map(|binding| {
+                    let object = SExpr::new(
+                        SNode::Name {
+                            path: vec![binding.parameter.clone()],
+                        },
+                        Some(binding.parameter_span),
+                    );
+                    let value = if let Some(excluded) = &binding.excluded {
+                        crate::translation::object_rest::source_read(object, excluded, binding.span)
+                    } else if let Some(fallback) = &binding.fallback {
+                        SExpr::new(
+                            SNode::Math {
+                                op: rules::read_java_script_record_formal_default_operation()
+                                    .to_string(),
+                                name: String::new(),
+                                args: vec![
+                                    crate::translation::surface::SArrayItem::new(object, false),
+                                    crate::translation::surface::SArrayItem::new(
+                                        SExpr::new(
+                                            SNode::Str {
+                                                value: binding.property.clone(),
+                                            },
+                                            Some(binding.property_span),
+                                        ),
+                                        false,
+                                    ),
+                                    crate::translation::surface::SArrayItem::new(
+                                        fallback.clone(),
+                                        false,
+                                    ),
+                                ],
                             },
-                            Some(binding.parameter_span),
-                        )),
-                        field: binding.property.clone(),
-                    },
-                    Some(binding.span),
-                ),
-                span: binding.binding_span,
-            })
-            .collect::<Vec<_>>();
+                            Some(binding.span),
+                        )
+                    } else {
+                        SExpr::new(
+                            SNode::Field {
+                                object: Box::new(object),
+                                field: binding.property.clone(),
+                            },
+                            Some(binding.span),
+                        )
+                    };
+                    if rules::read_java_script_record_parameter_binding_statement(
+                        written.contains(&binding.name),
+                    )
+                    .to_string()
+                        == "let"
+                    {
+                        Stmt::Let {
+                            name: binding.name.clone(),
+                            value,
+                            span: binding.binding_span,
+                        }
+                    } else {
+                        Stmt::Const {
+                            name: binding.name.clone(),
+                            value,
+                            span: binding.binding_span,
+                        }
+                    }
+                })
+                .collect::<Vec<_>>()
+        };
         prefix.extend(statements);
         Ok(prefix)
     }

@@ -226,6 +226,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("TruthValue", "TruthValue", "type"),
     ("VerificationIssue", "VerificationIssue", "type"),
     ("VerificationReport", "VerificationReport", "type"),
+    (
+        "acceptIntrinsicModuleInitializerScope",
+        "accept_intrinsic_module_initializer_scope",
+        "function",
+    ),
     ("acceptsText", "accepts_text", "function"),
     ("accessModeIsMutable", "AccessMode::is_mutable", "method"),
     ("accessModeIsReadOnly", "AccessMode::is_read_only", "method"),
@@ -302,6 +307,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createDynamicLanguageCommandProgramLinks",
+        "create_dynamic_language_command_program_links",
+        "function",
+    ),
+    (
         "createGlobalConceptSpace",
         "create_global_concept_space",
         "function",
@@ -311,11 +321,46 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "create_global_concept_space_parser",
         "function",
     ),
+    (
+        "createGrammarCompositionBatchLinks",
+        "create_grammar_composition_batch_links",
+        "function",
+    ),
     ("createGrammarParser", "compile_feature_grammar", "function"),
+    (
+        "createJavaScriptArrayFormalParameterProgramLinks",
+        "create_java_script_array_formal_parameter_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptRecordCallableParameterProgramLinks",
+        "create_java_script_record_callable_parameter_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptRecordClosureParameterProgramLinks",
+        "create_java_script_record_closure_parameter_program_links",
+        "function",
+    ),
     (
         "createProgramSnapshot",
         "ProgramRepresentation::serialize_snapshot",
         "method",
+    ),
+    (
+        "createRustByteStringProgramLinks",
+        "create_rust_byte_string_program_links",
+        "function",
+    ),
+    (
+        "createSourceDefinitionFormalFunctionLinks",
+        "create_source_definition_formal_function_links",
+        "function",
+    ),
+    (
+        "createSourceDefinitionProgramLinks",
+        "create_source_definition_program_links",
+        "function",
     ),
     (
         "createTypedProgramLinks",
@@ -435,6 +480,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "encodeTypedProgramLinks",
         "encode_typed_program_links",
+        "function",
+    ),
+    (
+        "encodeTypedProgramLinksWithRecordShapes",
+        "encode_typed_program_links_with_record_shapes",
+        "function",
+    ),
+    (
+        "encodeTypedProgramLinksWithValueSharing",
+        "encode_typed_program_links_with_value_sharing",
         "function",
     ),
     ("eraseTypeScript", "erase_type_script", "function"),
@@ -608,9 +663,24 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "readGrammarCompositionBatchLinks",
+        "read_grammar_composition_batch_links",
+        "function",
+    ),
+    (
+        "readIntrinsicModuleInitializerBinding",
+        "read_intrinsic_module_initializer_binding",
+        "function",
+    ),
+    (
         "readProgramSnapshot",
         "ProgramRepresentation::from_snapshot",
         "method",
+    ),
+    (
+        "readRefinedRegularGrammarInferenceLinks",
+        "read_refined_regular_grammar_inference_links",
+        "function",
     ),
     (
         "readResourceDescriptionNTriplesSource",
@@ -645,6 +715,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
+    (
+        "refineRegularGrammarInference",
+        "refine_regular_grammar_inference",
+        "function",
+    ),
     ("rejectPredicateHost", "RejectPredicateHost", "type"),
     ("renameGrammarRule", "rename_grammar_rule", "function"),
     (
@@ -684,7 +759,17 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("renderSyntaxTree", "SyntaxTree::render", "method"),
     ("restoreSourceNames", "restore_source_names", "function"),
     ("runApiStyleFixture", "run_api_style_fixture", "function"),
+    (
+        "runDynamicLanguageCommand",
+        "run_dynamic_language_command",
+        "function",
+    ),
     ("runGrammarCommand", "run_grammar_command", "function"),
+    (
+        "runSourceDefinitionCommand",
+        "run_source_definition_command",
+        "function",
+    ),
     ("scriptLanguage", "script_language", "function"),
     ("selfTranslate", "self_translate", "function"),
     (
@@ -706,6 +791,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("sniffLanguage", "sniff_language", "function"),
+    (
+        "sourceDefinitionCatalog",
+        "source_definition_catalog",
+        "function",
+    ),
+    (
+        "sourceDefinitionEntry",
+        "source_definition_entry",
+        "function",
+    ),
     ("sourceMeanings", "source_meanings_in", "function"),
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),
     ("splitGrammarSource", "split_grammar_source", "function"),

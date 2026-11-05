@@ -317,6 +317,8 @@ impl<'a> LeanParser<'a> {
         let mut main = None;
         self.items(&mut main, &mut items, &[])?;
         Ok(SProgram {
+            source_class_owners: None,
+        source_class_methods:Vec::new(),
             reference_semantics: None,
             language: Language::Lean,
             items,
@@ -496,6 +498,7 @@ impl<'a> LeanParser<'a> {
             span: Some(self.span_to_next(&start)),
             generated: false,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
         })
     }
 
@@ -625,6 +628,8 @@ impl<'a> LeanParser<'a> {
             let body = self.with_bound(0, Self::expr)?;
             self.end_decl(&start, "termination_by")?;
             return Ok(Definition::Fn(Box::new(SFn {
+                source_finite_record_loop_helper:false,
+                source_finite_record_loop_witness:None,
                 semantic_ret: None,
                 name,
                 params,
@@ -663,6 +668,8 @@ impl<'a> LeanParser<'a> {
         );
         self.end_decl(&start, "termination_by")?;
         Ok(Definition::Fn(Box::new(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params.into_iter().chain(extra).collect(),

@@ -325,3 +325,7 @@ export function requireInferenceJoinAlias(kind, alias, original) {
 export function acceptOptionalLiteralAbsence(absence) {
   return absence === 'null' || absence === 'undefined';
 }
+
+/** Boolean uses ToBoolean without object primitive conversion.
+ * @param {string} name @returns {string} */
+export function readJavaScriptBooleanBuiltinOperation(name){return name==='Boolean'?'convertJavaScriptBooleanValue':'';}

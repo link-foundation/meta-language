@@ -47,10 +47,10 @@ function parseNumber(value, message) {
   return Number(value);
 }
 
-function parseLinkId(value) {
+function parseLinkId(value, identifier = value => LinkId.from(value).asU64()) {
   try {
     if (typeof value !== 'string' || !/^\d+$/u.test(value)) throw new TypeError('invalid numeric token');
-    return LinkId.from(value).asU64();
+    return identifier(value);
   }
   catch { throw structureError(`invalid link id \`${value}\``); }
 }
@@ -60,18 +60,18 @@ function parseLinkId(value) {
  * records. Throws `LinoSerializationError` on the same inputs Rust's
  * `LinkNetwork::from_lino` rejects.
  */
-export function decodeCanonicalStatements(statements) {
+export function decodeCanonicalStatements(statements, identifier = value => LinkId.from(value).asU64()) {
   const records = [];
   for (const statement of statements) {
     if (statement.id === null || statement.id === undefined || statement.values.length === 0) {
       throw structureError('top-level statement must be an identified link');
     }
-    const id = parseLinkId(statement.id);
+    const id = parseLinkId(statement.id, identifier);
     const references = [];
     let metaFields;
     for (const value of statement.values) {
       if (value.values.length === 0 && value.id !== null) {
-        references.push(parseLinkId(value.id));
+        references.push(parseLinkId(value.id, identifier));
       } else if (value.id === 'meta') {
         metaFields = value.values;
       } else {

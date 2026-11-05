@@ -8,6 +8,7 @@ import { checkProjectData, writeProjectData, readProjectData } from './project-d
 import { ASCII_HOST_REVISION, ASCII_HOST_ADDITIONS, ASCII_HOST_REGISTRATIONS,
   ASCII_HOST_EDITS, ASCII_ASSERTION_EDITS, asciiHostPin, replayAsciiHostEdits, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import {restoreSharedArrayNativeFrontendSource} from './shared-array-native-frontend-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 
@@ -32,7 +33,7 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     const source = blob.toString('utf8');
     assert.deepEqual(Buffer.from(source), blob);
     const replay = replayAsciiHostEdits(source, specification.changes);
-    assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(new URL(specification.path, root), 'utf8'), specification.path, 'ASCII character host'), replay.source,
+    assert.equal(restoreRequiredFieldNativeHostSource(restoreSharedArrayNativeFrontendSource(readFileSync(new URL(specification.path, root), 'utf8'),specification.path), specification.path, 'ASCII character host'), replay.source,
       'capture the exact finite reviewed successor, without unrelated source drift');
     return { path: specification.path, source, certificate, current: asciiHostPin(replay.source), edits: replay.edits };
   });

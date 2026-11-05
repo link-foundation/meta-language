@@ -69,5 +69,6 @@ pub(super) fn project_data(data: &DataDecl, program: &Program) -> Result<SItem> 
         span: data.span,
         generated: data.generated,
         source_unit_clone_derivation: data.source_unit_clone_derivation.clone().map(Box::new),
+        source_field_signatures: data.source_field_signatures.clone(),
     }))
 }

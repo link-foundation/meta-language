@@ -1,0 +1,1 @@
+Draft ordinary JavaScript class methods named get, set, async and static, including constructor-owned methods, through shared automatically translated rules. Retain complete modifier and detached-receiver obligations; controls are authored for deferred CI execution.

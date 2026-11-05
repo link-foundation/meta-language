@@ -8,22 +8,44 @@ import { readFileSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import {TranslationError} from './translation/diagnostics.js';
 import { runGrammarCommand } from './grammar-interchange.js';
 import { SelfTranslationError, selfTranslate, selfTranslationLanguage } from './self-translation.js';
+import { runMetaLanguageArchiveCommand } from './meta-language-archive-cli.js';
+import { runDynamicLanguageCommand } from './dynamic-language-cli.js';
+import {runSourceDefinitionCommand} from './source-definition-cli.js';
+import {runSourceModuleRequestCommand} from './source-module-request-cli.js';
+import {runProjectTranslationArchiveCommand} from './project-translation-archive-cli.js';
+import {runUnsignedGraphCommand} from './unsigned-graph-cli.js';
+import {runUnsignedSourceCommand} from './unsigned-source-cli.js';
+import {runRustSourceProjectCommand} from './rust-source-project-cli.js';
 
 const USAGE = 'usage: meta-language grammar <command> [options]; run meta-language grammar help\n'
+  + '       meta-language archive <command> [options]; run meta-language archive help\n'
+  + '       meta-language language <command> [options]; run meta-language language help\n'
+  + '       meta-language definition <command> [options]; run meta-language definition help\n'
+  + '       meta-language module-requests <file> [--language <JavaScript|TypeScript>] [--tsx] [--binary]\n'
+  + '       meta-language project-translation <inventory.lino> --to <language> [--abstract] [--binary]\n'
+  + '       meta-language source-project <inventory.lino> --entry <path> [--library] [--to <language> | --binary]\n'
+  + '       meta-language exact-graph <file> [--input-binary] [--binary | --to <target>] [--root <decimal>] [--rebase <decimal>]\n'
+  + '       meta-language exact-source <file> --language <language> [--first-id <decimal>] [--typed | --rust-source-owners] [--to <target> | --binary]\n'
   + '       meta-language translate --to <language> [--from <language>] [--items] <file>\n';
-const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] <file>\n'
+const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] [--semantic] [--rust-source-version <version>] <file>\n'
   + 'Translates a module between JavaScript, TypeScript and Rust; --from defaults to the file\'s extension\n'
   + 'and --items prints each top-level item\'s status instead of the translation.\n';
 
 /** Runs `meta-language translate` over `args`. */
 function runTranslateCommand(args, { readFile }) {
-  const options = { from: null, to: null, items: false, file: null };
+  const options = { from: null, to: null, items: false, semantic: false, file: null };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--help' || arg === '-h') return { exitCode: 0, stdout: TRANSLATE_USAGE, stderr: '' };
     if (arg === '--items') options.items = true;
+    else if (arg === '--semantic') options.semantic = true;
+    else if(arg==='--rust-source-version'){
+      if(options.rustSourceVersion!==undefined||index+1>=args.length||args[index+1].startsWith('-'))return {exitCode:2,stdout:'',stderr:'error: an explicit unique --rust-source-version value is required\n'+TRANSLATE_USAGE};
+      options.rustSourceVersion=args[++index];
+    }
     else if ((arg === '--from' || arg === '--to') && index + 1 < args.length) options[arg.slice(2)] = args[++index];
     else if (!arg.startsWith('--') && options.file === null) options.file = arg;
     else return { exitCode: 2, stdout: '', stderr: `error: unexpected argument ${arg}\n${TRANSLATE_USAGE}` };
@@ -32,22 +54,30 @@ function runTranslateCommand(args, { readFile }) {
   const from = options.from ?? selfTranslationLanguage(options.file.split('.').pop());
   if (from === null) return { exitCode: 2, stdout: '', stderr: `error: pass --from; the extension of ${options.file} names no language\n` };
   try {
-    const result = selfTranslate(readFile(options.file), from, options.to);
+    const result = selfTranslate(readFile(options.file), from, options.to, { semanticTranslation: options.semantic, rustSourceVersion:options.rustSourceVersion });
     const stdout = options.items
       ? result.items.map(({ term, start, end, status, reason }) => `${start}..${end} ${term} ${status}${reason ? ` (${reason})` : ''}\n`).join('')
       : result.code;
     return { exitCode: 0, stdout, stderr: '' };
   } catch (error) {
-    if (!(error instanceof SelfTranslationError)) throw error;
+    if (!(error instanceof SelfTranslationError)&&!(error instanceof TranslationError)) throw error;
     return { exitCode: 1, stdout: '', stderr: `error: ${error.message}\n` };
   }
 }
 
 /** Runs the tool over `args` and returns `{ exitCode, stdout, stderr }`. */
-export function runCommandLine(args, { readFile = (file) => readFileSync(file, 'utf8') } = {}) {
+export function runCommandLine(args, { readFile = (file) => readFileSync(file, 'utf8'), readBytes = (file) => readFileSync(file) } = {}) {
   const [group, ...rest] = args;
   if (group === 'grammar') return runGrammarCommand(rest, { readFile });
   if (group === 'translate') return runTranslateCommand(rest, { readFile });
+  if (group === 'archive') return runMetaLanguageArchiveCommand(rest, { readFile, readBytes });
+  if (group === 'language') return runDynamicLanguageCommand(rest, { readFile, readBytes });
+  if (group === 'definition') return runSourceDefinitionCommand(rest);
+  if(group==='module-requests')return runSourceModuleRequestCommand(rest,{readFile});
+  if(group==='project-translation')return runProjectTranslationArchiveCommand(rest,{readFile});
+  if (group === 'exact-graph') return runUnsignedGraphCommand(rest,{readFile,readBytes});
+  if (group === 'exact-source') return runUnsignedSourceCommand(rest,{readFile});
+  if (group === 'source-project') return runRustSourceProjectCommand(rest,{readFile});
   if (group === '--help' || group === '-h' || group === 'help') return { exitCode: 0, stdout: USAGE, stderr: '' };
   return { exitCode: 2, stdout: '', stderr: group === undefined ? USAGE : `error: unknown command ${group}\n${USAGE}` };
 }

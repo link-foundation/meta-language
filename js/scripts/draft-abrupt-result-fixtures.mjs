@@ -1,0 +1,17 @@
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const cases=[];
+function add(name,body,value,abort=null,errorClass='TypeError'){cases.push({name,entry:'abruptResultCase'+cases.length,source:'export function compute(){'+body+'}',value,abort,...(abort===null?{}:{errorClass,messagePresent:true,messageUnits:Array.from({length:abort.length},(_,index)=>abort.charCodeAt(index))})});}
+add('guarded loop retains its continuation value','let value=0;for(let i=0;i<2;i+=1){if(i===0){const name="doc";if(name==="cfg")throw new TypeError("configured");}value+=i+3;}return value;','7');
+add('selected loop guard throws instead of returning Unit','let value=0;for(let i=0;i<2;i+=1){if(i===0){const name="cfg";if(name==="cfg")throw new TypeError("configured");}value+=i+3;}return value;',null,'configured');
+add('a Boolean result stays independent of a throwing branch','if(false){const message="bad";throw new TypeError(message);}return true;','true');
+add('a String result stays independent of a throwing branch','if(false){const message="bad";throw new RangeError(message);}return "seven";','seven');
+add('a BigInt result stays independent of a throwing branch','if(false){const message="bad";throw new Error(message);}return 7n;','7');
+add('a captured constructor argument remains nonreturning','if(true){const message="bad";throw new TypeError(message,3);}return 7;',null,'bad');
+add('a nested selected constructor remains nonreturning','if(true){if(false)throw new TypeError("first");else throw new RangeError("second");}return 7;',null,'second','RangeError');
+add('an ordinary else result is never retagged as a throw','if(false)throw new TypeError("bad");else return 7;','7');
+add('nested guards keep their ordinary scalar continuation','let result=7;if(true){const name="doc";if(name==="cfg"){throw new TypeError("bad");}}return result;','7');
+add('a throw retains exact astral source message units','if(true){const message="😀";throw new TypeError(message);}return false;',null,'😀');
+add('a constructor expression retains all captured arguments','if(true)throw new TypeError("bad",3,4);return 7;',null,'bad');
+add('a returning record branch keeps its actual field type','const value=true?{number:7}:undefined;if(value===undefined)throw new TypeError("bad");return value.number;','7');
+writeProjectData(new URL('../../parity/fixtures/abrupt-results.lino',import.meta.url),{schemaVersion:1,model:'nonreturning typed computation result roles 1',sourceLanguage:'JavaScript',cases,refusals:[],source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),versions:{JavaScript:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},references:['https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-throw-statement'],assertions:['onlyProvenNonreturningResultRolesCanRetype','constructorOperandsAndSourceClassUnitsPresencePreserved','letPrintAndBothBranchEffectsRetained','ordinaryUnitValuesUnknownCallsAndPartialBranchFailuresNeverBecomeBottom','completeSourceHistoryNativeProductsBothCodecsFourEmissions'],boundary:'Future independent source controls, not executed observations. The result-role rule handles known checked raises/aborts and their complete terminal wrappers. General never/async/catch/finally/control-flow semantics and every preceding language obligation remain required.'});

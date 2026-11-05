@@ -64,6 +64,42 @@ env:
   DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
 
 jobs:
+  rust-state-source-originals:
+    name: Rust State Source Originals and Emitted Products
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [check]
+    if: ${{ !cancelled() && needs.check.result == 'success' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.22.0
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+      - name: Install source control dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+      - name: Compare every complete original and emitted product
+        env:
+          CI: 'true'
+          META_LANGUAGE_NATIVE_RUST_STATE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --expose-gc --max-old-space-size=1024 js/scripts/run-rust-state-source-originals.mjs --execute
+      - name: Retain every measured assertion and source product
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-state-source-originals-${{ github.sha }}
+          path: issue-195-artifacts/rust-state-source/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Clean project-owned regenerable caches
+        if: ${{ !cancelled() }}
+        run: env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown --project-owned-only --no-preflight --no-docker
+
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
     name: Detect Changes

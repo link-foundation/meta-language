@@ -1,0 +1,41 @@
+// Authored inputs and independent literal outcomes; no execution observations.
+const number=value=>({$:'sourceConstant',value:{$:'number',value}});
+const text=value=>({$:'sourceConstant',value:{$:'text',units:Array.from(value,ch=>ch.charCodeAt(0))}});
+const binding=identity=>({$:'sourceBinding',identity});
+const transfer=(target,continuing=false)=>({$:'sourceControlJump',target,continuing});
+const attempt=(identity,body,handler)=>({$:'sourceTry',identity,body,handler});
+const returned=value=>({$:'sourceReturn',value:text(value)});
+const oneCase=(body,after)=>({$:'sourceSwitch',target:10,value:number(1),clauses:[{$:'sourceSwitchCase',value:number(1),body}],after});
+export const javascriptSourceControlCases=[
+ {name:'switch retains its input across a selector binding assignment',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = 3; switch (value) { case (value = 9): return "changed"; case 3: return "initial"; } return "missing"; }',
+  expression:{$:'sourceLocalLet',identity:1,mutable:true,value:number(3),body:{$:'sourceSwitch',target:10,value:binding(1),clauses:[{$:'sourceSwitchCase',value:{$:'sourceAssignBinding',identity:1,value:number(9)},body:returned('changed')},{$:'sourceSwitchCase',value:number(3),body:returned('initial')}],after:returned('missing')}},
+  expected:{kind:'value',value:{$:'text',units:[105,110,105,116,105,97,108]}}},
+ {name:'break removes the exited inner catch before a following throw',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { switch (1) { case 1: try { break; } catch (error) { return "wrong"; } } throw "outside"; }',
+  expression:oneCase(attempt(50,transfer(10),returned('wrong')),{$:'sourceThrow',value:text('outside')}),expected:{kind:'throw',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
+ {name:'break retains the enclosing catch while removing the exited inner catch',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { try { switch (1) { case 1: try { break; } catch (error) { return "wrong"; } } throw "outside"; } catch (error) { return error; } }',
+  expression:attempt(90,oneCase(attempt(91,transfer(10),returned('wrong')),{$:'sourceThrow',value:text('outside')}),binding(90)),expected:{kind:'value',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
+ {name:'continue executes the for update before testing its condition again',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = 0; for (; value < 3; value += 1) { if (value === 1) continue; } return value; }',
+  expression:{$:'sourceLocalLet',identity:1,mutable:true,value:number(0),body:{$:'sourceWhile',target:10,condition:{$:'sourceNumberBinary',operator:'lessThan',left:binding(1),right:number(3)},body:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:binding(1),right:number(1)},yes:transfer(10,true),no:number(0)},update:{$:'sourceAssignBinding',identity:1,value:{$:'sourceNumberBinary',operator:'add',left:binding(1),right:number(1)}},after:binding(1)}},expected:{kind:'value',value:{$:'number',value:3}}},
+ {name:'post-test continue selects the trailing condition',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = 0; do { value += 1; continue; } while (value < 3); return value; }',
+  expression:{$:'sourceLocalLet',identity:1,mutable:true,value:number(0),body:{$:'sourceWhile',target:10,postTest:true,body:{$:'sourceLet',identity:2,value:{$:'sourceAssignBinding',identity:1,value:{$:'sourceNumberBinary',operator:'add',left:binding(1),right:number(1)}},body:transfer(10,true)},condition:{$:'sourceNumberBinary',operator:'lessThan',left:binding(1),right:number(3)},after:binding(1)}},expected:{kind:'value',value:{$:'number',value:3}}},
+ {name:'labelled block break removes only the exited catch handler',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { try { exit: { try { break exit; } catch (error) { return "wrong"; } } throw "outside"; } catch (error) { return error; } }',
+  expression:attempt(90,{$:'sourceControlBlock',target:10,body:attempt(91,transfer(10),returned('wrong')),after:{$:'sourceThrow',value:text('outside')}},binding(90)),expected:{kind:'value',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
+
+ {name:'object spread copy drives the same compiler and native machine',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { const input = { value: 3 }; const output = { ...input, value: 7 }; return output.value; }',
+  expression:{$:'sourceLet',identity:1,value:{$:'sourceObject',realm:1000n,prototype:{$:'sourceConstant',value:{$:'null'}},properties:[{$:'sourceObjectProperty',key:text('value'),value:number(3)}]},body:{$:'sourceLet',identity:2,value:{$:'sourceObject',realm:1000n,prototype:{$:'sourceConstant',value:{$:'null'}},properties:[{$:'sourceObjectSpread',input:binding(1)},{$:'sourceObjectProperty',key:text('value'),value:number(7)}]},body:{$:'sourceGet',object:binding(2),key:text('value')}}},expected:{kind:'value',value:{$:'number',value:7}}},
+
+ {name:'postfix numeric conversion shares the compiler and native machine',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = "7"; const old = value++; return old === 7 && value === 8; }',
+  expression:{$:'sourceLocalLet',identity:1,mutable:true,value:text('7'),body:{$:'sourceLet',identity:2,value:{$:'sourcePrimitive',operation:'coerce primitive numeric',arguments:[binding(1)]},body:{$:'sourceLet',identity:3,value:{$:'sourcePrimitive',operation:'increment numeric value',arguments:[binding(2)]},body:{$:'sourceLet',identity:4,value:{$:'sourceAssignBinding',identity:1,value:binding(3)},body:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:binding(2),right:number(7)},yes:{$:'sourceStrictEqual',left:binding(1),right:number(8)},no:{$:'sourceConstant',value:{$:'boolean',value:false}}}}}}},expected:{kind:'value',value:{$:'boolean',value:true}}},
+
+ {name:'object copy exclusions preserve rest data through shared compiler and native replay',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { const input = { keep: 7, drop: 9 }; const { drop, ...rest } = input; return rest.keep === 7 && rest.drop === undefined; }',
+  expression:{$:'sourceLet',identity:1,value:{$:'sourceObject',realm:1000n,prototype:{$:'sourceConstant',value:{$:'null'}},properties:[{$:'sourceObjectProperty',key:text('keep'),value:number(7)},{$:'sourceObjectProperty',key:text('drop'),value:number(9)}]},body:{$:'sourceLet',identity:2,value:{$:'sourceObject',realm:1000n,prototype:{$:'sourceConstant',value:{$:'null'}},properties:[{$:'sourceObjectSpread',input:binding(1),excluded:[text('drop')]}]},body:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:{$:'sourceGet',object:binding(2),key:text('keep')},right:number(7)},yes:{$:'sourceStrictEqual',left:{$:'sourceGet',object:binding(2),key:text('drop')},right:{$:'sourceConstant',value:{$:'undefined'}}},no:{$:'sourceConstant',value:{$:'boolean',value:false}}}}},expected:{kind:'value',value:{$:'boolean',value:true}}},
+
+];
+export const javascriptSourceControlRefusals=[
+ {name:'continue cannot select a labelled noniteration block',reason:'break and continue retain an active actual target and handler depth',expression:{$:'sourceControlBlock',target:10,body:transfer(10,true),after:number(0)}},
+ {name:'post-test loops cannot invent an update expression',reason:'a post-test loop retains its actual separate condition without an invented update',expression:{$:'sourceWhile',target:10,postTest:true,condition:number(0),body:number(0),update:number(0),after:number(0)}},
+
+ {name:'continue cannot select a switch target',reason:'break and continue retain an active actual target and handler depth',expression:oneCase(transfer(10,true),number(0))},
+ {name:'break cannot select an inactive target',reason:'break and continue retain an active actual target and handler depth',expression:transfer(999)},
+ {name:'nested scopes cannot reuse one target identity',reason:'control scopes require unique actual source targets within their lexical budget',expression:{$:'sourceWhile',target:10,condition:number(1),body:oneCase(number(0),number(0)),after:number(0)}},
+];

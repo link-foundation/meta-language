@@ -1,0 +1,1 @@
+Draft contextual scalar lookup mapping with shared deferred closure results, supporting untyped integer defaults and known mapper results across copied/cloned lookups. Preserve source order and guarded reads, and retain Rust literal domains. Behavioral controls remain deferred.

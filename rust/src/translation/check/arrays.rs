@@ -48,6 +48,9 @@ impl Checker {
         path: &[String],
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
+        Self::for_of_iterable_value(object, span)
+    }
+    pub(super) fn for_of_iterable_value(object: Expr, span: Option<Span>) -> Result<Expr> {
         let form = crate::translation::array_value_rules::read_array_iterable_form(
             object.ty.kind(),
             object.ty.is_reference(),
@@ -98,6 +101,28 @@ impl Checker {
                 "this value needs an operational iterator representation",
                 span,
             )),
+        }
+    }
+
+    pub(super) fn array_formal_iterable(
+        &mut self,
+        args: &[SArrayItem],
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+    ) -> Result<Expr> {
+        if self.language != Language::JavaScript || args.len() != 1 || args[0].spread {
+            return Err(type_error(
+                "an array formal iterator needs one actual operand",
+                span,
+            ));
+        }
+        let object = self.expr(&args[0].value, env, path, None, false)?;
+        let form=crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_form(&crate::translation::array_formal_parameter_rules::ml_string::Text::from_text(object.ty.kind()),object.ty.is_reference()).to_string();
+        if form == "tuple" {
+            Ok(object)
+        } else {
+            Self::for_of_iterable_value(object, span)
         }
     }
 
@@ -155,6 +180,11 @@ impl Checker {
                 }
             });
             let value = self.expr(&item.value, env, path, want.as_ref(), false)?;
+            let value = if item.spread {
+                Self::reference_value(value)
+            } else {
+                value
+            };
             let place = item.value.span.or(span);
             let mut ty = if item.spread {
                 value.ty.element().cloned().ok_or_else(|| {
@@ -202,6 +232,16 @@ impl Checker {
             ));
         };
         let ty = array(element);
+        if parts.len() == 1 && items.len() == 1 && items[0].spread {
+            let right = parts.remove(0);
+            return Ok(Expr::new(
+                Node::Append {
+                    left: Box::new(Expr::new(Node::Array { items: Vec::new() }, ty.clone())),
+                    right: Box::new(right),
+                },
+                ty,
+            ));
+        }
         let mut parts = parts.into_iter();
         let Some(first) = parts.next() else {
             return Ok(Expr::new(Node::Array { items: Vec::new() }, ty));
@@ -350,6 +390,55 @@ impl Checker {
             == Some(true);
         let array = self.expr(object, env, path, None, false)?;
         let array = Self::reference_value(array);
+        if !self.checked_projection
+            && let Some(value) = self.javascript_nullish_access(
+                (&array, object),
+                super::javascript_nullish_fields::JavaScriptPropertyAccess::Index(node),
+                env,
+                path,
+                expected,
+                span,
+            )?
+        {
+            return Ok(value);
+        }
+        if self.language == Language::JavaScript
+            && !self.checked_projection
+            && let Some(value) =
+                self.guarded_record_index(node, array.clone(), env, path, expected)?
+        {
+            return Ok(value);
+        }
+        let literal = if self.language == Language::JavaScript && !self.checked_projection {
+            super::javascript_indexed_properties::literal_index_source(node, array.ty.kind())
+        } else {
+            None
+        };
+        if let Some(SExpr {
+            node: super::SNode::Field { field, .. },
+            ..
+        }) = &literal
+        {
+            if let Some(absent) =
+                self.javascript_absent_record_property(&array, field, expected, span)
+            {
+                return Ok(absent);
+            }
+            return Self::checked_named_property(array, field, span);
+        }
+        let index = match &literal {
+            Some(SExpr {
+                node: super::SNode::Index { index, .. },
+                ..
+            }) => index.as_ref(),
+            _ => index.as_ref(),
+        };
+        if self.language == Language::JavaScript
+            && !self.checked_projection
+            && array.ty == Type::String
+        {
+            return self.javascript_string_index(array, (index, span), env, path);
+        }
         if let Type::Tuple { elements } = &array.ty
             && let super::SNode::Num {
                 value, negative, ..
@@ -393,12 +482,16 @@ impl Checker {
                 place,
             ));
         }
-        Ok(self.array_index_result(
+        let (array, index, bindings) = self.capture_array_source_operands(array, index, env);
+        let result = self.array_index_result(
             array,
             index,
             element,
             (optional, proven_in_bounds),
             expected,
+        );
+        Ok(super::array_source_operands::wrap_array_source_operands(
+            result, bindings,
         ))
     }
 

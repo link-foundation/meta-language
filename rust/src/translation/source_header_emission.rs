@@ -43,7 +43,7 @@ fn value_type(ty: &Type) -> Result<()> {
     Ok(())
 }
 
-fn policy() -> &'static Value {
+pub(crate) fn source_header_policy() -> &'static Value {
     static POLICY: OnceLock<Value> = OnceLock::new();
     POLICY.get_or_init(|| {
         crate::read_structured_data_lino(include_str!("../data/rust-source-header-emission.lino"))
@@ -64,6 +64,14 @@ const fn semantics_name(semantics: Option<Semantics>) -> &'static str {
 pub fn validate_rust_source_header_emission_model(model: &str) -> Result<()> {
     if !accept_rust_source_header_emission_model(model)
         && !super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model)
+        && !super::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(
+            model,
+        )
+        && !super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model)
+        && !super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
+        && !super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+        && !super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+        && !super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model)
     {
         return Err(unsupported(
             "Rust source header emission model",
@@ -132,7 +140,7 @@ pub fn read_rust_primitive_source_headers(
         let fields = serde_json::to_value(declaration)
             .map_err(|_| fail("the declaration needs its actual checked field inventory"))?;
         let unrepresented = fields.as_object().unwrap().keys().any(|field| {
-            !policy()["declarationFields"]
+            !source_header_policy()["declarationFields"]
                 .as_array()
                 .unwrap()
                 .iter()
@@ -184,7 +192,7 @@ pub fn read_rust_primitive_source_headers(
                 .as_object()
                 .ok_or_else(|| fail("the parameter needs its actual checked field inventory"))?;
             let unrepresented = parameter_fields.keys().any(|field| {
-                !policy()["parameterFields"]
+                !source_header_policy()["parameterFields"]
                     .as_array()
                     .unwrap()
                     .iter()
@@ -218,7 +226,7 @@ pub fn read_rust_primitive_source_headers(
                 path,
                 !position.owner.arguments.is_empty(),
                 position.wrappers.iter().any(|wrapper| {
-                    !policy()["parameterWrappers"]
+                    !source_header_policy()["parameterWrappers"]
                         .as_array()
                         .unwrap()
                         .iter()

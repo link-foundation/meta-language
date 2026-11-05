@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {assertRustFreshVectorResultCorrection} from './support/rust-fresh-vector-result-corrections.js';
 import test from 'node:test';
 import vm from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -58,16 +59,11 @@ test('number and boolean constructor algorithms check Rust to JavaScript and Jav
     assert.deepEqual(observed(emitJavaScript(returned).text, entry.name, entry.inputs, entry.surface.items[0].params.map(parameter => parameter.type)), entry.expected, id);
   }
 });
-test('legacy profile and unsupported fresh result premises keep explicit refusals', () => {
+test('the exact earlier refusal is corrected while the explicit result profile retains its premises', () => {
   const legacy = readProjectData(new URL('../../parity/fixtures/rust-array-source.lino', import.meta.url));
   const original = legacy.invalid.find(entry => entry.id === fixture.legacyRefusal);
   assert.equal(original.source, 'fn values()->Vec<f64>{vec![1f64]} fn main(){}');
-  assert.throws(() => parseRust(original.source), error => {
-    assert.equal(error.kind, original.kind);
-    assert.equal(error.reason, original.reason);
-    assert.deepEqual(error.span, original.span);
-    return true;
-  });
+  assertRustFreshVectorResultCorrection(original);
   assert.doesNotThrow(() => checkProgram(parseRust(original.source, options)));
   for (const entry of fixture.invalid) assert.throws(() => checkProgram(parseRust(entry.source, options)), error => {
     assert.equal(error.kind, entry.kind, entry.id);

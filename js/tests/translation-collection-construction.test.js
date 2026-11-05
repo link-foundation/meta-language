@@ -75,7 +75,7 @@ test('collection checked admission preserves all original shapes diagnostics and
     array({kind:'tuple',elements:[{kind:'record',fields:[]},number]})]) for(const declared of [false,true]) {
     const node={k:kind,[kind==='set'?'items':'entries']:{k:'fixture',type},span:{start:3,end:7},
       ...(declared?{type:kind==='set'?{kind,element:number}:{kind,key:text,value:number}}:{})};
-    const make=()=>({trace:[],resolveType(value){this.trace.push(['resolve',value]);return value;},expr(value,env,path,want){this.trace.push(['expr',value,want]);return value;}});
+    const make=()=>({trace:[],referenceValue(value){return value;},resolveType(value){this.trace.push(['resolve',value]);return value;},expr(value,env,path,want){this.trace.push(['expr',value,want]);return value;}});
     const run=(fn,host)=>{try{return {value:plain(fn(host)),trace:plain(host.trace)};}catch(error){return {error:{kind:error.kind,message:error.message,details:error.details,span:error.span},trace:plain(host.trace)};}};
     const a=run(host=>original.call(host,node,new Map(),[],undefined),make());
     const b=run(host=>checkCollectionConstruction(host,node,new Map(),[],undefined),make());

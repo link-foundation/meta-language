@@ -61,17 +61,20 @@ export function percentEncode(value) {
     return '%';
   }
   if (/^[0-9A-Za-z_.-]+$/u.test(source)) return source;
-  let encoded = '';
+  const pieces = [], chunk = [];
   for (const byte of textEncoder.encode(source)) {
     const unreserved = (byte >= 0x30 && byte <= 0x39)
       || (byte >= 0x41 && byte <= 0x5a)
       || (byte >= 0x61 && byte <= 0x7a)
       || byte === 0x2d || byte === 0x5f || byte === 0x2e;
-    encoded += unreserved
+    chunk.push(unreserved
       ? String.fromCharCode(byte)
-      : `%${byte.toString(16).toUpperCase().padStart(2, '0')}`;
+      : `%${byte.toString(16).toUpperCase().padStart(2, '0')}`);
+    // Flatten bounded pieces instead of retaining one string node per byte.
+    if(chunk.length===4096){pieces.push(chunk.join(''));chunk.length=0;}
   }
-  return encoded;
+  if(chunk.length)pieces.push(chunk.join(''));
+  return pieces.join('');
 }
 
 /** Reverses `percentEncode`. */

@@ -76,6 +76,7 @@ pub struct Expr {
     pub node: Node,
     pub ty: Type,
     pub span: Option<Span>,
+    pub source_position: Option<Box<super::source_signatures::RustSourceExpressionPosition>>,
 }
 
 impl Expr {
@@ -85,6 +86,7 @@ impl Expr {
             node,
             ty,
             span: None,
+            source_position: None,
         }
     }
 
@@ -112,6 +114,10 @@ impl Expr {
             _ => None,
         }
     }
+    /// Reuses the existing proposition emitter/checker semantics for the
+    /// atomic value bridge; no new equality decision is inferred from type.
+    #[must_use]
+    pub fn proposition_value_atom(&self)->Option<Prop>{match &self.node{Node::PropositionValue{op,left,right,domain,same_value}if crate::translation::proposition_value_rules::accept_proposition_value_comparison(op.name())=>Some(Prop::compare(*op,Comparison{left:(**left).clone(),right:(**right).clone(),domain:domain.clone(),same_value:*same_value})),_=>None}}
 
     /// The `k` discriminant.
     #[must_use]
@@ -159,13 +165,18 @@ impl Expr {
             | Node::OptionalIndexNumber { arg }
             | Node::StringPoints { object: arg }
             | Node::CollectionItems { object: arg, .. }
+            | Node::CollectionSize { object: arg }
             | Node::StringMap { string: arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
             | Node::TupleIndex { object: arg, .. }
             | Node::RecordField { object: arg, .. }
             | Node::Length { array: arg } => vec![arg],
-            Node::Record { entries } => entries.iter().map(|entry| &entry.value).collect(),
+            Node::Record { entries, order } => entries
+                .iter()
+                .map(|entry| &entry.value)
+                .chain(order.iter().map(AsRef::as_ref))
+                .collect(),
             Node::Method { object, args, .. } => std::iter::once(object.as_ref())
                 .chain(args.iter().flatten())
                 .collect(),
@@ -174,7 +185,13 @@ impl Expr {
                 search: right,
                 ..
             }
+            | Node::CollectionRead {
+                object: left,
+                key: right,
+                ..
+            }
             | Node::Binary { left, right, .. }
+            | Node::PropositionValue { left, right, .. }
             | Node::Coalesce { left, right }
             | Node::StrictEqual { left, right, .. }
             | Node::Append { left, right }
@@ -234,7 +251,7 @@ impl Expr {
             Node::Map { entries } => Node::Map {
                 entries: Box::new(visit(entries)),
             },
-            Node::Record { entries } => Node::Record {
+            Node::Record { entries, order } => Node::Record {
                 entries: entries
                     .iter()
                     .map(|entry| RecordEntry {
@@ -242,6 +259,7 @@ impl Expr {
                         value: visit(&entry.value),
                     })
                     .collect(),
+                order: order.as_ref().map(|value| Box::new(visit(value))),
             },
             Node::RecordField {
                 object,
@@ -350,6 +368,14 @@ impl Expr {
                 object: Box::new(visit(object)),
                 op: op.clone(),
             },
+            Node::CollectionSize { object } => Node::CollectionSize {
+                object: Box::new(visit(object)),
+            },
+            Node::CollectionRead { object, op, key } => Node::CollectionRead {
+                object: Box::new(visit(object)),
+                op: op.clone(),
+                key: Box::new(visit(key)),
+            },
             Node::Length { array } => Node::Length {
                 array: Box::new(visit(array)),
             },
@@ -438,6 +464,7 @@ impl Expr {
                 message: message.clone(),
                 order: *order,
             },
+            Node::PropositionValue{op,left,right,domain,same_value}=>Node::PropositionValue{op:*op,left:Box::new(visit(left)),right:Box::new(visit(right)),domain:domain.clone(),same_value:*same_value},
             Node::Binary {
                 op,
                 left,
@@ -498,6 +525,7 @@ impl Expr {
             node,
             ty: self.ty.clone(),
             span: self.span,
+            source_position: self.source_position.clone(),
         }
     }
 }
@@ -754,10 +782,20 @@ fn read_present_program_string_representation<'de, D: serde::Deserializer<'de>>(
     bool::deserialize(deserializer).map(Some)
 }
 
+/// A present class interpretation cannot be erased into an absent selector.
+pub(crate) fn read_present_source_class_owners<'de,D:serde::Deserializer<'de>>(deserializer:D)->std::result::Result<Option<serde_json::Value>,D::Error>{
+    let value=serde_json::Value::deserialize(deserializer)?;
+    if value.is_null(){return Err(<D::Error as serde::de::Error>::custom("present source class owners cannot be null"));}
+    Ok(Some(value))
+}
+
 /// A checked portable-core program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Program {
+    /// Checked constructor ownership retained when source classes become data.
+    #[serde(default,skip_serializing_if="Option::is_none",deserialize_with="read_present_source_class_owners")]
+    pub source_class_owners: Option<serde_json::Value>,
     /// Selected shared-reference representation; false retains its default omission.
     #[serde(default, skip_serializing_if = "is_false")]
     pub reference_semantics: bool,
@@ -860,11 +898,18 @@ impl<'a> Scope<'a> {
     }
 
     pub fn fresh(&mut self, name: &str) -> String {
+        let name = crate::translation::source_identifiers::render_source_target_identifier(name);
         // A suffixed name is legal on its own: `end_2` needs none of the quoting of Lean's `«end»`.
-        let mut candidate = (self.ident)(name);
+        let mut candidate = crate::translation::source_identifiers::render_source_target_identifier(
+            &(self.ident)(&name),
+        );
         let mut index = 2;
         while self.used.contains(&candidate) {
-            candidate = (self.ident)(&format!("{name}_{index}"));
+            candidate =
+                crate::translation::source_identifiers::render_source_target_identifier(&(self
+                    .ident)(
+                    &format!("{name}_{index}"),
+                ));
             index += 1;
         }
         self.used.insert(candidate.clone());

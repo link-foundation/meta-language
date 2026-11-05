@@ -1,0 +1,48 @@
+// Independent original/decision declarations. No compiler or runtime ran.
+const sourceVersionRange='>=1.90.0 <1.100.0';
+export const rustStandardSumPrimitiveQuestionDecisions=[
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'u8','u16',90],expected:['copy','u16','integer exact']},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'owned',0,false,true,true,'u8','u16',99],expected:['owned','u16','integer exact']},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'bool','u16',90],expected:['copy','u16','boolean integer']},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'u16','f64',90],expected:['copy','f64','floating exact']},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'u16','u8',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'usize','u64',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'u64','f64',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,false,true,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,false,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,false,true,true,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'owned',1,false,true,true,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'borrowed',0,false,true,true,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::option::Option','std::result::Result',true,'copy',0,true,true,true,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['local::Result','local::Result',true,'copy',0,true,true,true,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',false,'copy',0,true,true,true,'u8','u16',90],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'u8','u16',89],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'u8','u16',100],expected:[]},
+ {operation:'readRustStandardSumPrimitiveQuestionConversionPlan',arguments:['std::result::Result','std::result::Result',true,'copy',0,true,true,true,'u8','u8',90],expected:[]},
+ {operation:'acceptRustStandardSumPrimitiveQuestionCompletion',arguments:['copy',false],expected:true},
+ {operation:'acceptRustStandardSumPrimitiveQuestionCompletion',arguments:['owned',true],expected:true},
+ {operation:'acceptRustStandardSumPrimitiveQuestionCompletion',arguments:['owned',false],expected:false},
+ {operation:'acceptRustStandardSumPrimitiveQuestionCompletion',arguments:['',true],expected:false},
+ {operation:'acceptRustStandardSumQuestionContext',arguments:['std::result::Result','std::result::Result',true,true,'u8 actual identity','u16 actual identity'],expected:false},
+ {operation:'acceptRustStandardSumOwnedQuestionContext',arguments:['std::result::Result','std::result::Result',true,'owned',0,'u8 actual identity','u16 actual identity'],expected:false},
+];
+export const rustStandardSumPrimitiveQuestionOriginals=[
+ {name:'primitive residual From evaluates receiver once and skips success effects on error',sourceVersionRange,stdout:'input\nafter\n7\ninput\n9\n',source:'fn input(flag:bool)->Result<u8,u8>{println!("input");if flag{Ok(7u8)}else{Err(9u8)}}fn keep(flag:bool)->Result<u8,u16>{let number=input(flag)?;println!("after");Ok(number)}fn reveal(value:Result<u8,u16>)->u16{match value{Ok(number)=>u16::from(number),Err(error)=>error}}fn main(){println!("{}",reveal(keep(true)));println!("{}",reveal(keep(false)));}'},
+ {name:'owned success survives primitive error conversion and error branch produces actual owned Result',sourceVersionRange,stdout:'text\n9\n',source:'fn keep(value:Result<String,u8>)->Result<String,u16>{let text=value?;Ok(text)}fn main(){println!("{}",keep(Ok(String::from("text"))).unwrap_or_default());let error=match keep(Err(9u8)){Ok(_)=>0u16,Err(code)=>code};println!("{}",error);}'},
+ {name:'boolean residual conversion uses actual standard From values',sourceVersionRange,stdout:'1\n0\n',source:'fn keep(value:Result<u8,bool>)->Result<u8,u16>{Ok(value?)}fn reveal(value:Result<u8,u16>)->u16{match value{Ok(number)=>u16::from(number),Err(error)=>error}}fn main(){println!("{}",reveal(keep(Err(true))));println!("{}",reveal(keep(Err(false))));}'},
+ {name:'signed residual widening retains negative value and exact primitive owner',sourceVersionRange,stdout:'-7\n',source:'fn keep(value:Result<u8,i8>)->Result<u8,i64>{Ok(value?)}fn main(){let error=match keep(Err(-7i8)){Ok(_)=>0i64,Err(code)=>code};println!("{}",error);}'},
+ {name:'pointer residual target uses actual From rather than same-width erasure',sourceVersionRange,stdout:'9\n',source:'fn keep(value:Result<u8,u8>)->Result<u8,usize>{Ok(value?)}fn main(){let error=match keep(Err(9u8)){Ok(_)=>0usize,Err(code)=>code};println!("{}",error);}'},
+ {name:'qualified alias error owners still use actual primitive From relation',sourceVersionRange,stdout:'9\n',source:'type Small=u8;type Wide=u16;fn keep(value:Result<u8,Small>)->Result<u8,Wide>{Ok(value?)}fn main(){let error=match keep(Err(9u8)){Ok(_)=>0u16,Err(code)=>code};println!("{}",error);}'},
+ {name:'floating residual conversion follows exact integer floating plan',sourceVersionRange,stdout:'true\n',source:'fn keep(value:Result<u8,u16>)->Result<u8,f64>{Ok(value?)}fn main(){let correct=match keep(Err(257u16)){Ok(_)=>false,Err(error)=>error==257.0};println!("{}",correct);}'},
+ {name:'none-span residual conversion preserves the distinct successful question payload origin',sourceVersionRange,stdout:'70000\n9\n',source:'fn keep(value:Result<u32,u8>)->Result<u32,u16>{let number=value?;Ok(number)}fn main(){println!("{}",keep(Ok(70000u32)).unwrap_or(0u32));let error=match keep(Err(9u8)){Ok(_)=>0u16,Err(code)=>code};println!("{}",error);}'},
+ {name:'stacked primitive residual conversions retain each selected real error field',sourceVersionRange,stdout:'3\n5\n7\n',source:'fn keep(value:Result<Result<u8,u8>,u8>)->Result<u8,u16>{Ok(value??)}fn reveal(value:Result<u8,u16>)->u16{match value{Ok(number)=>u16::from(number),Err(error)=>error}}fn main(){println!("{}",reveal(keep(Err(3u8))));println!("{}",reveal(keep(Ok(Err(5u8)))));println!("{}",reveal(keep(Ok(Ok(7u8)))));}'},
+ {name:'primitive conversion never consumes a source Copy Result operand',sourceVersionRange,stdout:'true\n70000\n',source:'fn keep(value:Result<u32,u8>)->Result<u32,u16>{Ok(value?)}fn main(){let original:Result<u32,u8>=Ok(70000u32);let result=keep(original);println!("{}",original.is_ok());println!("{}",result.unwrap_or(0u32));}'},
+];
+export const rustStandardSumPrimitiveQuestionRefusals=[
+ {name:'narrowing residual requires a nonexistent primitive From',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn keep(value:Result<u8,u16>)->Result<u8,u8>{Ok(value?)}fn main(){}'},
+ {name:'same-width pointer residual errors never invent a portable From implementation',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn keep(value:Result<u8,usize>)->Result<u8,u64>{Ok(value?)}fn main(){}'},
+ {name:'large integer residual never guesses a lossy From to binary64',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn keep(value:Result<u8,u64>)->Result<u8,f64>{Ok(value?)}fn main(){}'},
+ {name:'unknown residual owner cannot become a primitive conversion certificate',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn keep(value:Result<u8,u8>)->Result<u8,Missing>{Ok(value?)}fn main(){}'},
+ {name:'user From implementation retains its independent interpretation obligation',sourceVersionRange,originalCompilerOutcome:'accept',source:'struct Error;impl From<u8> for Error{fn from(value:u8)->Self{Error}}fn keep(value:Result<u8,u8>)->Result<u8,Error>{Ok(value?)}fn main(){}'},
+ {name:'primitive residual conversion never preserves a moved owned receiver',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn keep(value:Result<String,u8>)->Result<String,u16>{let text=value?;println!("{}",value.is_ok());Ok(text)}fn main(){}'},
+];

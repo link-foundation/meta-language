@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::sync::Arc;
+mod allocation;
 
 use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
@@ -233,7 +234,8 @@ impl Link {
 /// Mutable links network for CST, AST, semantic, and self-description links.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinkNetwork {
-    pub(crate) next_id: u64,
+    /// Every u64 identity and the distinct 2^64 exhausted marker.
+    pub(crate) next_id: u128,
     pub(crate) links: BTreeMap<LinkId, Arc<Link>>,
     pub(crate) terms: BTreeMap<Arc<str>, LinkId>,
     pub(crate) concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
@@ -309,11 +311,12 @@ impl LinkNetwork {
         output
     }
 
-    /// Parses plain source text into a lossless token network.
+    /// Parses registered source languages into their full lossless concrete trees.
     ///
-    /// This is the default parse operation. It is lossless by construction; use
-    /// [`LinkNetwork::projected_links`] when a lower-level view should be
-    /// stripped away for CST, AST, or semantic-only work.
+    /// This default operation retains syntax hierarchy, fields, source tokens,
+    /// trivia, spans, and recovery information supplied by the selected parser.
+    /// Use [`LinkNetwork::projected_links`] for an explicitly selected view;
+    /// selecting a view leaves the complete concrete network intact.
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
         let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
@@ -612,6 +615,7 @@ impl LinkNetwork {
 
     /// Inserts a labeled field relation as a regular link.
     pub fn insert_field(&mut self, parent: LinkId, label: &str, child: LinkId) -> LinkId {
+        self.require_allocation_capacity(if self.terms.contains_key(label) { 1 } else { 2 });
         let label_link = self.insert_typed_point(
             label,
             LinkType::Field,
@@ -811,6 +815,21 @@ impl LinkNetwork {
         self.link(id).and_then(|link| link.metadata().definition())
     }
 
+    /// Replace existing metadata without changing IDs, references or explicit caches.
+    /// Returns false for an absent identity, without interning unused metadata.
+    pub fn set_link_metadata(&mut self, id: LinkId, metadata: LinkMetadata) -> bool {
+        if !self.links.contains_key(&id) {
+            return false;
+        }
+        let metadata = self.intern_metadata(metadata);
+        let link = self
+            .links
+            .get_mut(&id)
+            .expect("the stored link retains its identity");
+        *Arc::make_mut(link).metadata_mut() = metadata;
+        true
+    }
+
     /// Sets a source span on an existing link.
     pub fn set_span(&mut self, id: LinkId, span: SourceSpan) -> bool {
         let Some(link) = self.links.get_mut(&id) else {
@@ -844,8 +863,8 @@ impl LinkNetwork {
         link_type: LinkType,
         definition: Option<&str>,
     ) -> LinkId {
-        let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
         if let Some(id) = self.terms.get(term).copied() {
+            let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
             if let Some(definition) = definition
                 && let Some(link) = self.links.get_mut(&id)
             {
@@ -855,6 +874,7 @@ impl LinkNetwork {
         }
 
         let id = self.allocate_id();
+        let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
         let term = self.intern_arc(Arc::from(term));
         let mut metadata = LinkMetadata::new()
             .with_link_type(link_type)
@@ -955,12 +975,6 @@ impl LinkNetwork {
 
         self.strings.insert(Arc::clone(&value));
         value
-    }
-
-    const fn allocate_id(&mut self) -> LinkId {
-        let id = LinkId(self.next_id);
-        self.next_id += 1;
-        id
     }
 }
 

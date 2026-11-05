@@ -11,7 +11,9 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { readProjectData, serializeProjectData } from './project-data.mjs';
+import { readProjectData, serializeProjectData, resolveProjectDataPath } from './project-data.mjs';
+
+import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const registerPath = join(root, 'parity/naming/canonical-concepts.json');
@@ -62,7 +64,11 @@ export function formatConceptRecords(records) {
 }
 
 async function main() {
-  const register = readProjectData(registerPath);
+  const actualRegister=resolveProjectDataPath(registerPath);
+  const register = actualRegister.endsWith('.lino')
+    ? readBootstrapStructuredDataLino(await readFile(actualRegister,'utf8'))
+    : readProjectData(registerPath);
+  globalThis.gc?.();
   const text = serializeProjectData(buildConceptRecords(register), CONCEPT_RECORD_PATHS[0]);
   const distinctions = readProjectData(join(root, 'parity/required-concept-distinctions.json'));
   const identities = new Set(register.concepts.map(({ id }) => id));

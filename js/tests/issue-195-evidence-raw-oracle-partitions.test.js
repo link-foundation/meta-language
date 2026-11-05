@@ -6,6 +6,7 @@ import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
 import {restoreRawOracleContractPartitionHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
+import {restoreCiTestPartitionWorkflow} from '../scripts/ci-test-partition-history.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
 
@@ -70,7 +71,9 @@ test('the entire current test source retains every original call body hash and a
 
 test('two required raw contract cells preserve complete commands limits and the preceding whole workflow',()=>{
   const {history}=generateRawOracleContractPartitions({check:true}),path='.github/workflows/js.yml';
-  const currentSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  // The complete certified predecessor owns these original scheduling assertions.
+  // Current physical partitions have independent conservation controls.
+  const currentSource=restoreCiTestPartitionWorkflow(readFileSync(new URL('../../'+path,import.meta.url),'utf8'));
   const previousSource=history.sources.find(row=>row.path===path).source;
   assert.equal(restoreRawOracleContractPartitionHistory(currentSource,path),previousSource);
   const previous=parseWorkflow(previousSource),current=parseWorkflow(currentSource);

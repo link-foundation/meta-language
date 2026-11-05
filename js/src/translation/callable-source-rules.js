@@ -2,6 +2,7 @@
 // identify the actual input values; they are never source text or host callbacks.
 
 import { readRequiredNumberFact, readRequiredTextFact, readRequiredBooleanFact } from './fact-column-rules.js';
+import { acceptJavaScriptWhitespaceUnit } from './javascript-whitespace-rules.js';
 import { readTypeSeparatorPositions } from './type-syntax-rules.js';
 
 // Linked policy decisions begin.
@@ -11,6 +12,7 @@ export function readCallableStatementRole(kind) {
   if (kind === 'assign') return 'assign';
   if (kind === 'assignReference') return 'reference';
   if (kind === 'return' || kind === 'expr' || kind === 'print') return 'read';
+  if (kind === 'throw') return 'exception';
   if (kind === 'block') return 'block';
   if (kind === 'if') return 'branch';
   if (kind === 'switch') return 'switch';
@@ -23,7 +25,7 @@ export function readCallableStatementRole(kind) {
 // Linked callable type whitespace decisions begin.
 /** @param {number} unit @returns {boolean} */
 export function acceptCallableTypeWhitespace(unit) {
-  return unit >= 9 && unit <= 13 || unit === 32 || unit === 160 || unit === 5760 || unit >= 8192 && unit <= 8202 || unit === 8232 || unit === 8233 || unit === 8239 || unit === 8287 || unit === 12288 || unit === 65279;
+  return acceptJavaScriptWhitespaceUnit(unit);
 }
 // Linked callable type whitespace decisions end.
 
@@ -193,6 +195,23 @@ function callableParameterNames(texts, starts, counts, labels, targets, paramete
   return names;
 }
 
+/** Names bound by complete source patterns are local to their actual row.
+ * @param {string[]} texts @param {number[]} starts @param {number[]} counts
+ * @param {string[]} labels @param {number[]} targets @param {number} node
+ * @returns {string[]} */
+export function readCallableSourcePatternNames(texts,starts,counts,labels,targets,node){
+ if(node<0)return [];
+ const kind=callableTag(texts,starts,counts,labels,targets,node,'k');
+ let names=[];
+ if(kind==='alias'||kind==='bind'||kind==='bindOrCtor')names.push(callableTag(texts,starts,counts,labels,targets,node,'name'));
+ if(kind==='alias'||kind==='natAdd')return names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,kind==='alias'?'pattern':'inner')));
+ if(kind==='ctor'||kind==='tuple'){
+  const args=callableField(starts,counts,labels,targets,node,'args');let at=0;
+  while(args>=0&&at<readRequiredNumberFact(counts,args)){names=names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableElement(starts,counts,targets,args,at)));at+=1;}
+ }
+ return names;
+}
+
 /**
  * Surface references retain the original first-use order. Lambda and let
  * binders suppress only their own body references, never initializer uses.
@@ -220,6 +239,17 @@ export function readCallableFreeReferences(forms, texts, starts, counts, labels,
     const value = readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, node, 'value'), bound, checked);
     const name = callableTag(texts, starts, counts, labels, targets, node, 'name');
     return value.concat(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, node, 'body'), bound.concat([name]), checked));
+  }
+  if(!checked&&kind==='match'){
+    let references=readCallableFreeReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'scrutinees'),bound,checked);
+    const rows=callableField(starts,counts,labels,targets,node,'rows');let at=0;
+    while(rows>=0&&at<readRequiredNumberFact(counts,rows)){
+      const row=callableElement(starts,counts,targets,rows,at),patterns=callableField(starts,counts,labels,targets,row,'patterns');let index=0,names=[];
+      while(patterns>=0&&index<readRequiredNumberFact(counts,patterns)){names=names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableElement(starts,counts,targets,patterns,index)));index+=1;}
+      references=references.concat(readCallableFreeReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'guard'),bound.concat(names),checked));
+      references=references.concat(readCallableFreeReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'body'),bound.concat(names),checked));at+=1;
+    }
+    return references;
   }
   if (checked && kind === 'match') {
     let references = readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, node, 'scrutinee'), bound, checked);
@@ -277,6 +307,66 @@ function callableReadEvents(references) {
   return events;
 }
 
+/** Assigned cell carriers retain lexical lambda/let boundaries just like reads.
+ * @param {string[]} forms @param {string[]} texts @param {number[]} starts
+ * @param {number[]} counts @param {string[]} labels @param {number[]} targets
+ * @param {number} node @param {string[]} bound @returns {number[]} */
+function callableAssignedExpressionReferences(forms, texts, starts, counts, labels, targets, node, bound) {
+  if (node < 0 || readRequiredTextFact(forms, node) !== 'object' && readRequiredTextFact(forms, node) !== 'array') return [];
+  const kind = callableTag(texts, starts, counts, labels, targets, node, 'k');
+  if(kind==='match'){
+    let references=callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'scrutinees'),bound);
+    const rows=callableField(starts,counts,labels,targets,node,'rows');let at=0;
+    while(rows>=0&&at<readRequiredNumberFact(counts,rows)){
+      const row=callableElement(starts,counts,targets,rows,at),patterns=callableField(starts,counts,labels,targets,row,'patterns');let index=0,names=[];
+      while(patterns>=0&&index<readRequiredNumberFact(counts,patterns)){names=names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableElement(starts,counts,targets,patterns,index)));index+=1;}
+      references=references.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'guard'),bound.concat(names)));
+      references=references.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'body'),bound.concat(names)));at+=1;
+    }
+    return references;
+  }
+  if (kind === 'let') {
+    const value = callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'value'),bound);
+    return value.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'body'),bound.concat([callableTag(texts,starts,counts,labels,targets,node,'name')])));
+  }
+  if (kind === 'lambda') {
+    const params = callableField(starts,counts,labels,targets,node,'params');
+    let assigned = callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'body'),bound.concat(callableParameterNames(texts,starts,counts,labels,targets,params)));
+    let index = 0;
+    while (params >= 0 && index < readRequiredNumberFact(counts,params)) {
+      const parameter = callableElement(starts,counts,targets,params,index);
+      assigned = assigned.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,parameter,'default'),bound));
+      index += 1;
+    }
+    return assigned;
+  }
+  let assigned = [];
+  if (kind === 'cellWrite') {
+    const cell = callableField(starts,counts,labels,targets,node,'cell');
+    const path = callableField(starts,counts,labels,targets,cell,'path');
+    if (callableTag(texts,starts,counts,labels,targets,cell,'k') === 'name' && path >= 0 && readRequiredNumberFact(counts,path) === 1) {
+      const name = callableElement(starts,counts,targets,path,0);
+      if (!callableBound(bound,callableText(texts,name))) assigned = [1,name];
+    }
+  }
+  let at = readRequiredNumberFact(starts,node);
+  while (at < readRequiredNumberFact(starts,node) + readRequiredNumberFact(counts,node)) {
+    const label = readRequiredTextFact(labels,at);
+    if (label !== 'span' && label !== 'type' && label !== 'data')
+      assigned = assigned.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,readRequiredNumberFact(targets,at),bound));
+    at += 1;
+  }
+  return assigned;
+}
+
+/** @param {string[]} forms @param {string[]} texts @param {number[]} starts
+ * @param {number[]} counts @param {string[]} labels @param {number[]} targets
+ * @param {number} node @param {string[]} bound @returns {number[]} */
+function callableExpressionEvents(forms,texts,starts,counts,labels,targets,node,bound) {
+  return callableReadEvents(readCallableFreeReferences(forms,texts,starts,counts,labels,targets,node,bound,false))
+    .concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,node,bound));
+}
+
 /**
  * Event pairs are [0, free name], [1, assigned name], [2, declaration].
  * Declaration events are visible to the following statement, and leave a
@@ -319,30 +409,31 @@ function callableStatementUses(forms, texts, starts, counts, labels, targets, st
   const role = readCallableStatementRole(callableTag(texts, starts, counts, labels, targets, statement, 's'));
   const name = callableField(starts, counts, labels, targets, statement, 'name');
   const value = callableField(starts, counts, labels, targets, statement, 'value');
-  if (role === 'declare') return callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, value, bound, false)).concat([2, name]);
+  if (role === 'declare') return callableExpressionEvents(forms, texts, starts, counts, labels, targets, value, bound).concat([2, name]);
   if (role === 'assign') {
-    const reads = callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, value, bound, false));
+    const reads = callableExpressionEvents(forms, texts, starts, counts, labels, targets, value, bound);
     return callableBound(bound, callableText(texts, name)) ? reads : reads.concat([0, name, 1, name]);
   }
-  if (role === 'read') return callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'expr'), bound, false));
+  if (role === 'read') return callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'expr'), bound);
+  if (role === 'exception') return callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'exception'), bound);
   if (role === 'reference') {
-    let references = readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'object'), bound, false);
-    references = references.concat(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'index'), bound, false));
-    return callableReadEvents(references.concat(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, value, bound, false)));
+    return callableExpressionEvents(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,statement,'object'),bound)
+      .concat(callableExpressionEvents(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,statement,'index'),bound),
+        callableExpressionEvents(forms,texts,starts,counts,labels,targets,value,bound));
   }
   if (role === 'block') {
     const events = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'body'), bound);
     return callableTruthy(forms, texts, callableField(starts, counts, labels, targets, statement, 'inline')) ? events : callableNestedEvents(events);
   }
   if (role === 'branch' || role === 'loop') {
-    const reads = callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), bound, false));
+    const reads = callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), bound);
     if (role === 'loop') return reads.concat(callableNestedEvents(readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'body'), bound)));
     const yes = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'then'), bound);
     const no = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'else'), bound);
     return reads.concat(callableNestedEvents(yes), callableNestedEvents(no));
   }
   if (role === 'switch') {
-    let events = callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'discriminant'), bound, false));
+    let events = callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'discriminant'), bound);
     const clauses = callableField(starts, counts, labels, targets, statement, 'clauses');
     let at = 0;
     while (clauses >= 0 && at < readRequiredNumberFact(counts, clauses)) {
@@ -361,7 +452,7 @@ function callableStatementUses(forms, texts, starts, counts, labels, targets, st
       at += 2;
     }
     let events = callableNestedEvents(initial);
-    events = events.concat(callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), inner, false)));
+    events = events.concat(callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), inner));
     const update = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'update'), inner);
     at = 0;
     while (at < update.length) {
@@ -785,6 +876,14 @@ function callableCellObservations(forms, texts, starts, counts, labels, targets,
   if (node < 0 || readRequiredTextFact(forms, node) !== 'object' && readRequiredTextFact(forms, node) !== 'array') return [];
   let events = [];
   if (callableTag(texts, starts, counts, labels, targets, node, 's') === 'assign') events = [1, callableField(starts, counts, labels, targets, node, 'name')];
+  if (callableTag(texts,starts,counts,labels,targets,node,'k') === 'cellWrite') {
+    const cell = callableField(starts,counts,labels,targets,node,'cell');
+    const path = callableField(starts,counts,labels,targets,cell,'path');
+    if (callableTag(texts,starts,counts,labels,targets,cell,'k') === 'name' && path >= 0 && readRequiredNumberFact(counts,path) === 1) {
+      const name = callableElement(starts,counts,targets,path,0);
+      events = events.concat([0,name,1,name]);
+    }
+  }
   if (callableTag(texts, starts, counts, labels, targets, node, 'k') === 'lambda') {
     const captured = callableField(starts, counts, labels, targets, node, 'captures');
     const assigned = callableField(starts, counts, labels, targets, node, 'assignedCaptures');

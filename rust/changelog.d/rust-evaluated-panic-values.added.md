@@ -1,0 +1,1 @@
+Draft evaluated Rust String panic messages with source-derived guards and rendering, including eager computed expect messages. Shared output-effect sums carry exact messages to Lean and Rocq; direct Rust/JavaScript targets raise the evaluated value. Deferred controls retain the former computed-message input and its historical refusal.

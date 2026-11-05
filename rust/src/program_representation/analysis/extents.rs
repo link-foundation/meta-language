@@ -7,8 +7,8 @@
 
 use super::declarations::declare;
 use super::{
-    BTreeMap, BTreeSet, Declaration, ProgramRange, ProgramSourceMapping, SemanticToken, TokenKind,
-    char_at, identifier_continue, identifier_start, mark,
+    BTreeMap, BTreeSet, Declaration, JavaScriptFunctionScope, ProgramRange, ProgramSourceMapping,
+    SemanticToken, TokenKind, char_at, identifier_continue, identifier_start, mark,
 };
 
 const RUST_ITEMS: &[&str] = &[
@@ -153,32 +153,62 @@ pub(super) fn declare_syntax_binders(
     tokens: &[SemanticToken],
     syntax: &[ProgramSourceMapping],
     language: &str,
+    function_scopes: &BTreeMap<usize, JavaScriptFunctionScope>,
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
     let token_at = token_starts(tokens);
     for fact in syntax {
-        let Some(&first) = token_at.get(&fact.range.start) else {
+        let first = token_at.get(&fact.range.start).copied().or_else(|| {
+            if language == "JavaScript" && fact.term == "method_definition" {
+                tokens.iter().position(|token| {
+                    token.range.start >= fact.range.start && token.range.start < fact.range.end
+                })
+            } else {
+                None
+            }
+        });
+        let Some(first) = first else {
             continue;
         };
+        let parameter_scope = if language == "JavaScript"
+            && matches!(fact.term.as_str(), "arrow_function" | "method_definition")
+        {
+            function_scopes
+                .get(&first)
+                .map(|scope| scope.parameter_scope)
+        } else {
+            None
+        };
         let mut binder = |index: usize, kind: &str| {
-            declare(tokens, index, kind, None, declarations, declared);
+            declare(
+                tokens,
+                index,
+                kind,
+                if kind == "parameter" {
+                    parameter_scope
+                } else {
+                    None
+                },
+                declarations,
+                declared,
+            );
         };
         let term = fact.term.as_str();
         if language == "JavaScript" {
             if term == "arrow_function" {
                 let (open, close) = arrow_parameters(tokens, first);
-                for index in open..=close {
-                    let previous = index
-                        .checked_sub(1)
-                        .map(|previous| tokens[previous].text.as_str());
-                    if tokens
-                        .get(index)
-                        .is_some_and(|token| token.kind == TokenKind::Identifier)
-                        && (index == open || matches!(previous, Some("(" | "," | "...")))
-                    {
-                        binder(index, "parameter");
-                    }
+                for index in super::parameters::binding_positions(tokens, syntax, open, close + 1) {
+                    binder(index, "parameter");
+                }
+            }
+            if term == "method_definition"
+                && let Some((open, close)) = function_scopes
+                    .get(&first)
+                    .and_then(|scope| scope.parameter_interval)
+            {
+                for index in super::parameters::binding_positions(tokens, syntax, open, close) {
+                    binder(index, "parameter");
                 }
             }
         } else if language == "Rust" {

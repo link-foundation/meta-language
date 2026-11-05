@@ -1,6 +1,8 @@
+import {readRustSourceVersion} from './translation/rust-source-versions.js';
 // The checked semantic program, represented entirely by inspectable links.
 // No source text, source envelope, JSON AST payload or cached emission is stored.
 import { readRuntimeProjectData } from './project-data-loader.js';
+import {readTypedProgramRecordShapeProfile,selectTypedProgramRecordShapes,readTypedProgramRecordShapeFields,compactTypedProgramRecordShapes} from './typed-program-record-shapes.js';
 import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { parseJavaScript } from './translation/javascript.js';
@@ -8,6 +10,8 @@ import { parseRust } from './translation/rust.js';
 import { checkProgram } from './translation/check.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust } from './translation/emit-rust.js';
+import { emitLean } from './translation/emit-lean.js';
+import { emitRocq } from './translation/emit-rocq.js';
 import { validateLinkedTypedProgram } from './typed-program-links-validation.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
@@ -16,6 +20,7 @@ import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgra
 
 export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-links-schema.json', import.meta.url)));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
+const sharingProfile=Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-value-sharing.lino',import.meta.url)));
 const idOf = (id) => id.asU64();
 const labelOf = (name) => schema.fields[name] ?? name.replace(/[A-Z]/gu, (letter) => ` ${letter.toLowerCase()}`);
 const fieldOf = (label) => Object.entries(schema.fields).find(([, value]) => value === label)?.[0]
@@ -44,14 +49,35 @@ function bindingTargets(program) {
     else if (['array', 'option', 'set', 'cell'].includes(type.kind)) walkType(type.element);
     else if (type.kind === 'tuple') type.elements.forEach(walkType);
     else if (type.kind === 'union') type.alternatives.forEach(walkType);
-    else if (type.kind === 'record') type.fields.forEach(field => walkType(field.type));
+    else if (type.kind === 'record') {
+      if(Object.hasOwn(type,'sourceClassOwner'))reference(type,'sourceClassOwner',schema.references.classConstructor,declarations.get(type.sourceClassOwner));
+      type.fields.forEach(field => walkType(field.type));
+    }
     else if (type.kind === 'map') { walkType(type.key); walkType(type.value); }
     else if (type.kind === 'function') { type.params.forEach(walkType); walkType(type.ret); }
+  }
+  function walkSourcePosition(position) {
+    const pending=[position],seen=new WeakSet();
+    while(pending.length){
+      const current=pending.pop();
+      if(!current||typeof current!=='object'||seen.has(current))continue;
+      seen.add(current);
+      if(++referenceVisits>100_000)throw new TypeError('the linked source positions exceed their reference resource limit');
+      walkType(current.type);
+      if(current.arrayElementPosition!==undefined)pending.push(current.arrayElementPosition);
+    }
   }
   function walk(node, environment) {
     if (!node || typeof node !== 'object') return;
     if (++referenceVisits > 100_000) throw new TypeError('the linked program exceeds its reference resource limit');
     for (const field of ['type', 'domain', 'from', 'to']) walkType(node[field]);
+    // These facets also occur on let/lambda/match nodes whose lexical walk
+    // returns early. Retain actual datatype edges before visiting their scope.
+    if(node.sourcePosition!==undefined)walkSourcePosition(node.sourcePosition.position);
+    if(node.sourceStateTransition!==undefined)walkSourcePosition(node.sourceStateTransition.position);
+    if(node.sourceLoopFold!==undefined){const facet=node.sourceLoopFold;walkType(facet.control);for(const position of [facet.input,facet.item,facet.result,...facet.slots.map(slot=>slot.position)])walkSourcePosition(position);}
+    if(node.sourcePlaceTransform!==undefined)for(const slot of [...node.sourcePlaceTransform.slots,...(node.sourcePlaceTransform.operands??[])])walkSourcePosition(slot.position);
+    if(node.sourceRecordPlace!==undefined){walkSourcePosition(node.sourceRecordPlace.root);walkSourcePosition(node.sourceRecordPlace.value);}
     if (node.k === 'var' && environment.has(node.name)) reference(node, 'name', schema.references.binding, environment.get(node.name));
     if (['call', 'functionRef'].includes(node.k) && declarations.has(node.fn)) reference(node, 'fn', schema.references.declaration, declarations.get(node.fn));
     if (node.k === 'ctor') {
@@ -107,38 +133,67 @@ function bindingTargets(program) {
     for (const parameter of entry.params ?? entry.binders ?? []) walkType(parameter.type);
     walkType(entry.ret ?? entry.type);
     if (entry.k === 'fn' && entry.sourceSignature !== undefined) {
-      for (const position of [...entry.sourceSignature.parameters, entry.sourceSignature.result]) walkType(position.type);
+      for (const position of [...entry.sourceSignature.parameters, entry.sourceSignature.result]) walkSourcePosition(position);
     }
+    if(entry.sourceStandardCollectionLibraryOwner!==undefined){const owner=entry.sourceStandardCollectionLibraryOwner,target=declarations.get(owner.declaration);if(!target)throw new TypeError('a collection library owner requires its actual declaration');reference(owner,'declaration',schema.references.standardCollectionLibraryDeclaration,target);}
+    if(entry.k==='data'&&entry.sourceStandardCollectionCarrier!==undefined){const facet=entry.sourceStandardCollectionCarrier;walkType(facet.kernelType);for(const [field,role]of [['kernelDeclaration','standardCollectionKernel'],['packetDeclaration','standardCollectionPacket']]){const target=declarations.get(facet.kernelLibrary[field]);if(!target)throw new TypeError('a collection carrier requires actual kernel and packet declarations');reference(facet.kernelLibrary,field,schema.references[role],target);}}
+    if(entry.k==='fn'&&entry.sourceFnMutSpecialization!==undefined){const facet=entry.sourceFnMutSpecialization;for(const row of [...facet.typeArguments,...facet.parameters,...facet.callback.captures])walkSourcePosition(row.position);for(const position of facet.callback.parameters)walkSourcePosition(position);walkSourcePosition(facet.callback.result);walkSourcePosition(facet.result);}
+    if(entry.k==='fn'&&entry.sourceExclusiveSignature!==undefined){for(const parameter of entry.sourceExclusiveSignature.parameters)walkSourcePosition(parameter.position);walkSourcePosition(entry.sourceExclusiveSignature.result);}
+    if(entry.k==='fn'&&entry.sourceStateTransform!==undefined){const facet=entry.sourceStateTransform;if(facet.control)walkType(facet.control);walkSourcePosition(facet.result);for(const slot of facet.slots)walkSourcePosition(slot.position);}
+    if(entry.k==='fn'&&entry.sourceVectorMutation!==undefined){const facet=entry.sourceVectorMutation;for(const position of [...facet.parameters,facet.element,facet.result])walkSourcePosition(position);}
+    if(entry.k==='fn'&&entry.sourceFallibleIterator!==undefined){const facet=entry.sourceFallibleIterator;for(const position of [...facet.parameters,facet.item,facet.mapped,facet.result])walkSourcePosition(position);}
     for (const constructor of entry.ctors ?? []) for (const field of constructor.fields) walkType(field.type);
+    for(const constructor of entry.sourceFieldSignatures?.ctors??[])for(const field of constructor.fields)walkSourcePosition(field);
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));
     walk(entry.body ?? entry.value, environment);
   }
   walk(program.main, new Map());
-  return { targets, patternOverrides };
+  return { targets, patternOverrides, typeNodes:seenTypes };
 }
 
-export function encodeTypedProgramLinks(program, { provenance } = {}) {
+export function encodeTypedProgramLinks(program, { provenance, valueSharing='', recordShapes='' } = {}) {
+  if(recordShapes!==''){if(recordShapes!==readTypedProgramRecordShapeProfile().model)throw new TypeError('unregistered typed program record shape profile');}
+  if(valueSharing!==''&&(valueSharing!==sharingProfile.model||sharingProfile.schemaVersion!==1||sharingProfile.scalarValues!==true||sharingProfile.typeRecords!==true||sharingProfile.sourceSpans!==true||sharingProfile.occurrences!==false))throw new TypeError('unregistered typed program value sharing profile');
   validateLinkedTypedProgram(program);
   recheckLinkedTypedProgram(program);
   const network = new LinkNetwork();
   const identities = new WeakMap();
-  const { targets, patternOverrides } = bindingTargets(program);
+  const { targets, patternOverrides, typeNodes } = bindingTargets(program);
+  const scalars=new Map(),types=new Map(),shapes=new Map(),shapeIdentities=new WeakMap(),activeShapes=new WeakSet();let shapeVisits=0;
+  // Exact shape keys use child identities, retaining ordered fields, complete
+  // metadata and signed-zero spellings without expanding a shared type DAG.
+  // Only declared type roots use this key; expression/binder owners never do.
+  function shape(value,depth=0){
+    if(depth>256||++shapeVisits>1000000)throw new TypeError('typed value sharing exceeds its structural resource limit');
+    if(value&&typeof value==='object'&&shapeIdentities.has(value))return shapeIdentities.get(value);
+    const object=value&&typeof value==='object';if(object&&activeShapes.has(value))throw new TypeError('typed value sharing refuses cyclic type structure');
+    if(object&&!Array.isArray(value)&&(Object.getPrototypeOf(value)!==Object.prototype&&Object.getPrototypeOf(value)!==null))throw new TypeError('typed value sharing requires canonical data objects');
+    if(object)for(const key of Object.keys(value))if(!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value'))throw new TypeError('typed value sharing refuses accessor-driven type structure');
+    if(object)activeShapes.add(value);
+    const key=object?Array.isArray(value)?JSON.stringify(['array',value.map(child=>shape(child,depth+1))]):JSON.stringify(['record',Object.entries(value).map(([field,child])=>[field,shape(child,depth+1)])]):JSON.stringify([value===null?'null':typeof value,typeof value==='number'&&Object.is(value,-0)?'-0':String(value)]);
+    let identity=shapes.get(key);if(identity===undefined){identity=shapes.size;shapes.set(key,identity);}
+    if(object){activeShapes.delete(value);shapeIdentities.set(value,identity);}return identity;
+  }
   const pending = [];
-  function encode(value) {
+  function encode(value,field='',source=true) {
     if (value && typeof value === 'object') {
       if (identities.has(value)) return identities.get(value);
       if (!(Array.isArray(value) || value instanceof Map || Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) throw new TypeError('a typed program contains a non-data host object');
+      const span=source&&field==='span'&&value!==null&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null)&&Object.keys(value).length===2&&Object.hasOwn(value,'start')&&Object.hasOwn(value,'end');
+      const typeIdentity=valueSharing&&(typeNodes.has(value)||span)?shape(value):null;
+      if(typeIdentity!==null&&types.has(typeIdentity)){const id=types.get(typeIdentity);identities.set(value,id);return id;}
       const kind = Array.isArray(value) ? 'array' : value instanceof Map ? 'map' : 'record';
       const id = network.insertLink([], metadata(schema.containers[kind]));
       identities.set(value, id);
-      if (kind === 'array') network.link(id).setReferences(value.map(encode));
-      else if (kind === 'map') network.link(id).setReferences([...value].map(([key, item]) => encode([key, item])));
+      if(typeIdentity!==null)types.set(typeIdentity,id);
+      if (kind === 'array') network.link(id).setReferences(value.map(child=>encode(child,'',source)));
+      else if (kind === 'map') network.link(id).setReferences([...value].map(([key, item]) => encode([key, item],'',source)));
       else {
         const references = targets.get(value) ?? [];
         for (const [name, item] of Object.entries(patternOverrides.get(value) ?? value)) {
           const target = references.find(reference => reference.field === name);
           if (target) pending.push({ parent: id, ...target });
-          else network.insertFieldRelation(id, labelOf(name), encode(item));
+          else network.insertFieldRelation(id, labelOf(name), encode(item,name,source));
         }
       }
       return id;
@@ -147,14 +202,19 @@ export function encodeTypedProgramLinks(program, { provenance } = {}) {
     if (!schema.scalars[kind]) throw new TypeError(`a typed program contains a ${kind} host value`);
     const definition = kind === 'null' || kind === 'undefined' ? undefined
       : kind === 'number' && Object.is(value, -0) ? '-0' : String(value);
-    return network.insertLink([], metadata(schema.scalars[kind], definition));
+    const scalarKey=valueSharing?JSON.stringify([kind,definition??null]):null;
+    if(valueSharing&&scalars.has(scalarKey))return scalars.get(scalarKey);
+    const id=network.insertLink([], metadata(schema.scalars[kind], definition));if(valueSharing)scalars.set(scalarKey,id);return id;
   }
   const body = encode(program);
   for (const reference of pending) network.insertFieldRelation(reference.parent, reference.label, encode(reference.target));
   const root = network.insertLink([body], metadata(schema.root, String(schema.schemaVersion)));
-  if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', encode(provenance));
-  return { network, root };
+  if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', encode(provenance,'',false));
+  return recordShapes?compactTypedProgramRecordShapes(network,root,schema.language,schema.containers.record):{network,root};
 }
+
+export function encodeTypedProgramLinksWithValueSharing(program,provenance,profile){if(typeof profile!=='string'||profile==='')throw new TypeError('unregistered typed program value sharing profile');return encodeTypedProgramLinks(program,{provenance,valueSharing:profile});}
+export function encodeTypedProgramLinksWithRecordShapes(program,provenance,profile){if(typeof profile!=='string'||profile==='')throw new TypeError('unregistered typed program record shape profile');return encodeTypedProgramLinks(program,{provenance,recordShapes:profile});}
 
 function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {
   const rootLink = network.link(root);
@@ -165,6 +225,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
     if (!fields.has(key)) fields.set(key, []);
     fields.get(key).push(relation);
   }
+  const recordShapes=selectTypedProgramRecordShapes(network,root,schema.language);
   const objects = new Map();
   const active = new Set();
   const pending = [];
@@ -184,9 +245,10 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
       objects.set(key, value);
       active.add(key);
       if (kind === 'record') {
-        if (link.references().length) throw new TypeError('a program record has positional references');
+        if(link.references().length&&!recordShapes)throw new TypeError('a program record has positional references');
+        const recordFields=link.references().length?readTypedProgramRecordShapeFields(network,link,schema.language,recordShapes,fields):(fields.get(key)??[]);
         const labels = new Set();
-        for (const relation of fields.get(key) ?? []) {
+        for (const relation of recordFields) {
           if (labels.has(relation.label)) throw new TypeError('a program record contains a duplicate field');
           labels.add(relation.label);
           if (acceptProgramReferenceField(relation.label)) pending.push({ owner: value, label: relation.label, target: relation.child });
@@ -321,9 +383,17 @@ export function readTypedProgramBindingIdentities(network, root) {
 export function createTypedProgramLinks(source, language, options = {}) {
   const canonical = /^(?:rust|rs)$/iu.test(language) ? 'Rust' : /^(?:javascript|js|mjs)$/iu.test(language) ? 'JavaScript' : null;
   if (!canonical) throw new TypeError('typed linked source import currently reads JavaScript and Rust');
+  const sourceVersion=options.rustSourceVersion,sourceVersionSelected=sourceVersion!==undefined;
+  const exclusiveSourceModel=options.rustExclusiveSourceModel,fnMutSourceModel=options.rustFnMutSourceModel,standardCollectionSourceModel=options.rustStandardCollectionSourceModel,standardCollectionSourceLibrary=options.rustStandardCollectionSourceLibrary,standardCollectionPointerWidth=options.rustStandardCollectionPointerWidth;
+  if(sourceVersionSelected&&canonical!=='Rust')throw new TypeError('a Rust source version requires Rust source');
+  const sharedArraySelected = options.rustSharedArrayHandleSourceModel !== undefined;
   const arraySelected = options.rustArrayResultModel !== undefined;
   const completionSelected = options.rustCompletionModel !== undefined;
   const signatureSelected = options.rustSourceSignatureModel !== undefined;
+  const exclusiveSelected=exclusiveSourceModel!==undefined;
+  const fnMutSelected=fnMutSourceModel!==undefined;
+  const standardCollectionSelected=standardCollectionSourceModel!==undefined;
+  const standardCollectionWidthSelected=standardCollectionPointerWidth!==undefined;
   const loopSelected = options.rustScalarLoopModel !== undefined;
   const javaScriptLoopSelected = options.javaScriptScalarLoopModel !== undefined;
   const emptyOptionSelected=options.rustEmptyOptionSourceModel!==undefined;
@@ -333,7 +403,12 @@ export function createTypedProgramLinks(source, language, options = {}) {
   const namespaceSelected = options.rustTypeNamespaceModel !== undefined;
   const runtimeShellSelected=options.rustRuntimeShellModel!==undefined;
   const pureUnitSelected=options.rustPureUnitCallModel!==undefined;
-  const selected = arraySelected || completionSelected || signatureSelected || loopSelected || javaScriptLoopSelected||primitiveSelected||emptyOptionSelected||namespaceSelected||pureUnitSelected||ownedLocalSelected||constFunctionSelected||runtimeShellSelected;
+  const selected = fnMutSelected||standardCollectionWidthSelected||standardCollectionSelected||exclusiveSelected||sourceVersionSelected||sharedArraySelected || arraySelected || completionSelected || signatureSelected || loopSelected || javaScriptLoopSelected||primitiveSelected||emptyOptionSelected||namespaceSelected||pureUnitSelected||ownedLocalSelected||constFunctionSelected||runtimeShellSelected;
+  if((standardCollectionSelected||standardCollectionSourceLibrary!==undefined)&&canonical!=='Rust')throw new TypeError('a Rust standard collection source library requires Rust source');
+  if(standardCollectionWidthSelected&&!standardCollectionSelected)throw new TypeError('a Rust collection target width requires its explicit source interpretation');
+  if(standardCollectionSourceLibrary!==undefined&&!standardCollectionSelected)throw new TypeError('a Rust standard collection library requires its explicit source interpretation');
+  if(fnMutSelected&&(canonical!=='Rust'||exclusiveSourceModel!=='Rust exclusive source loans 1'))throw new TypeError('a Rust FnMut source model requires the actual exclusive source profile');
+  if(exclusiveSelected&&canonical!=='Rust')throw new TypeError('a Rust exclusive source model requires Rust source');
   if(runtimeShellSelected&&canonical!=='Rust')throw new TypeError('a Rust runtime shell model requires Rust source');
   if(pureUnitSelected&&canonical!=='Rust')throw new TypeError('a Rust pure Unit-call model requires Rust source');
   if(emptyOptionSelected&&canonical!=='Rust')throw new TypeError('a Rust empty option source model requires Rust source');
@@ -341,27 +416,30 @@ export function createTypedProgramLinks(source, language, options = {}) {
   if(ownedLocalSelected&&canonical!=='Rust')throw new TypeError('a Rust owned local state model requires Rust source');
   if(constFunctionSelected&&canonical!=='Rust')throw new TypeError('a Rust const function model requires Rust source');
   if(primitiveSelected&&canonical!=='Rust')throw new TypeError('a Rust primitive owner model requires Rust source');
+  if(sharedArraySelected&&canonical!=='Rust')throw new TypeError('a Rust shared array handle source model requires Rust source');
   if (arraySelected && canonical !== 'Rust') throw new TypeError('a Rust array result model requires Rust source');
   if (completionSelected && canonical !== 'Rust') throw new TypeError('a Rust completion model requires Rust source');
   if (signatureSelected && canonical !== 'Rust') throw new TypeError('a Rust source signature model requires Rust source');
   if (loopSelected && canonical !== 'Rust') throw new TypeError('a Rust scalar loop model requires Rust source');
   if (javaScriptLoopSelected && canonical !== 'JavaScript') throw new TypeError('a JavaScript scalar loop model requires JavaScript source');
-  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel, scalarLoopModel: options.rustScalarLoopModel,primitiveOwnerModel:options.rustPrimitiveOwnerModel,emptyOptionSourceModel:options.rustEmptyOptionSourceModel,typeNamespaceModel:options.rustTypeNamespaceModel,pureUnitCallModel:options.rustPureUnitCallModel,localValueStateModel:options.rustOwnedLocalStateModel,constFunctionModel:options.rustConstFunctionModel,runtimeShellModel:options.rustRuntimeShellModel }) : parseJavaScript(source, {...options.context, ...(javaScriptLoopSelected ? {scalarLoopModel: options.javaScriptScalarLoopModel} : {})}));
+  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { sourceVersion,exclusiveSourceModel:exclusiveSourceModel,fnMutSourceModel:fnMutSourceModel,standardCollectionSourceModel:standardCollectionSourceModel,standardCollectionSourceLibrary:standardCollectionSourceLibrary,standardCollectionPointerWidth:standardCollectionPointerWidth,sharedArrayHandleSourceModel: options.rustSharedArrayHandleSourceModel, arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel, scalarLoopModel: options.rustScalarLoopModel,primitiveOwnerModel:options.rustPrimitiveOwnerModel,emptyOptionSourceModel:options.rustEmptyOptionSourceModel,typeNamespaceModel:options.rustTypeNamespaceModel,pureUnitCallModel:options.rustPureUnitCallModel,localValueStateModel:options.rustOwnedLocalStateModel,constFunctionModel:options.rustConstFunctionModel,runtimeShellModel:options.rustRuntimeShellModel }) : parseJavaScript(source, {...options.context, ...(javaScriptLoopSelected ? {scalarLoopModel: options.javaScriptScalarLoopModel} : {})}));
   if (options.utf16Strings) program.utf16Strings = true;
   const provenance = selected ? {
-    sourceProfile: { language: canonical, ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}), ...(loopSelected ? {rustScalarLoopModel: options.rustScalarLoopModel} : {}), ...(javaScriptLoopSelected ? {javaScriptScalarLoopModel: options.javaScriptScalarLoopModel} : {}),...(primitiveSelected?{rustPrimitiveOwnerModel:options.rustPrimitiveOwnerModel}:{}),...(emptyOptionSelected?{rustEmptyOptionSourceModel:options.rustEmptyOptionSourceModel}:{}),...(namespaceSelected?{rustTypeNamespaceModel:options.rustTypeNamespaceModel}:{}),...(pureUnitSelected?{rustPureUnitCallModel:options.rustPureUnitCallModel}:{}),...(ownedLocalSelected?{rustOwnedLocalStateModel:options.rustOwnedLocalStateModel}:{}),...(constFunctionSelected?{rustConstFunctionModel:options.rustConstFunctionModel}:{}),...(runtimeShellSelected?{rustRuntimeShellModel:options.rustRuntimeShellModel}:{}) },
+    sourceProfile: { language: canonical,...(fnMutSelected?{rustFnMutSourceModel:fnMutSourceModel}:{}),...(standardCollectionWidthSelected?{rustStandardCollectionPointerWidth:standardCollectionPointerWidth}:{}),...(standardCollectionSelected?{rustStandardCollectionSourceModel:standardCollectionSourceModel}:{}),...(exclusiveSelected?{rustExclusiveSourceModel:exclusiveSourceModel}:{}),...(sourceVersionSelected?{rustSourceVersion:readRustSourceVersion(sourceVersion).spelling}:{}), ...(sharedArraySelected ? {rustSharedArrayHandleSourceModel: options.rustSharedArrayHandleSourceModel} : {}), ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}), ...(loopSelected ? {rustScalarLoopModel: options.rustScalarLoopModel} : {}), ...(javaScriptLoopSelected ? {javaScriptScalarLoopModel: options.javaScriptScalarLoopModel} : {}),...(primitiveSelected?{rustPrimitiveOwnerModel:options.rustPrimitiveOwnerModel}:{}),...(emptyOptionSelected?{rustEmptyOptionSourceModel:options.rustEmptyOptionSourceModel}:{}),...(namespaceSelected?{rustTypeNamespaceModel:options.rustTypeNamespaceModel}:{}),...(pureUnitSelected?{rustPureUnitCallModel:options.rustPureUnitCallModel}:{}),...(ownedLocalSelected?{rustOwnedLocalStateModel:options.rustOwnedLocalStateModel}:{}),...(constFunctionSelected?{rustConstFunctionModel:options.rustConstFunctionModel}:{}),...(runtimeShellSelected?{rustRuntimeShellModel:options.rustRuntimeShellModel}:{}) },
     userProvenance: options.provenance ?? null,
   } : options.provenance;
-  return encodeTypedProgramLinks(program, { ...options, provenance });
+  return encodeTypedProgramLinks(program, {provenance,valueSharing:options.valueSharing,recordShapes:options.recordShapes});
 }
 
 export function emitTypedProgramLinks(network, root, target, options = {}) {
   const program = decodeTypedProgramLinks(network, root);
-  const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript : null;
-  if (!emit) throw new TypeError('typed linked emission currently writes JavaScript and Rust');
+  const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript
+    : /^lean$/iu.test(target) ? emitLean : /^rocq$/iu.test(target) ? emitRocq : null;
+  if (!emit) throw new TypeError('typed linked emission writes JavaScript, Rust, Lean and Rocq');
   if (options.rustSourceHeaderEmissionModel !== undefined && emit !== emitRust) throw new TypeError('a Rust source header emission model requires Rust target');
   if (options.javaScriptScopedBindingEmissionModel !== undefined && emit !== emitJavaScript) throw new TypeError('a JavaScript scoped binding emission model requires JavaScript target');
-  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel, arrayConsumption: true }) : emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel});
+  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel, arrayConsumption: true })
+    : emit === emitJavaScript ? emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel}) : emit(program);
   return { code: emitted.text, language: emitted.language, mappings: emitted.mappings,
     assumptions: emitted.assumptions, encodings: emitted.encodings, theorems: emitted.theorems };
 }

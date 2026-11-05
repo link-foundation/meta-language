@@ -12,6 +12,8 @@ impl RocqParser {
         let mut main = None;
         let items = self.items(&mut main, &[])?;
         Ok(SProgram {
+            source_class_owners: None,
+        source_class_methods:Vec::new(),
             reference_semantics: None,
             language: Language::Rocq,
             items,
@@ -275,6 +277,7 @@ impl RocqParser {
             span: Some(span(&start, self.peek())),
             generated: false,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
         })
     }
 
@@ -437,6 +440,8 @@ impl RocqParser {
             self.skip_obligations(&start, annotation)?;
         }
         Ok(Definition::Fn(Box::new(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params

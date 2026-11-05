@@ -1,7 +1,9 @@
 use std::collections::BTreeSet;
 use std::fs;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
+mod archive_cli;
 
 use clap::{Parser, Subcommand, ValueEnum};
 
@@ -11,7 +13,7 @@ use meta_language::{
     emit_lark, emit_pest, emit_tree_sitter_grammar_js, evaluate, grammar_concept_translation_rules,
     grammar_from_lino, grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf,
     import_gbnf, import_lark, import_pest, import_tree_sitter_json, infer_cfg,
-    parse_grammar_surface, run_grammar_command, self_translate, self_translation_language,
+    parse_grammar_surface, run_grammar_command, self_translation_language,
     translate_grammar_surface, write_grammar_surface,
 };
 
@@ -27,6 +29,58 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Read exact saved Links and optionally rebase or emit current typed graphs.
+    #[command(disable_help_flag = true)]
+    ExactGraph {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
+    /// Export complete exact-ID CST or checked source Links; run exact-source help.
+    #[command(disable_help_flag = true)]
+    ExactSource {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
+    /// Draft a project while retaining every original concrete source graph.
+    #[command(disable_help_flag = true)]
+    ProjectTranslation {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
+    /// Export complete concrete source and module-request links.
+    #[command(disable_help_flag = true)]
+    ModuleRequests {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
+    /// Compose an original Rust source inventory into checked Links or source.
+    #[command(disable_help_flag = true)]
+    SourceProject {
+        /// Shared source-project operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
+    /// Discover and export complete typed source definitions; run definition help.
+    #[command(disable_help_flag = true)]
+    Definition {
+        /// Source definition operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
+    /// Prepare, extend and parse dynamic language archives; run language help.
+    #[command(disable_help_flag = true)]
+    Language {
+        /// Dynamic language operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
+    /// Pack, select and extend complete graph archives; run archive help.
+    #[command(disable_help_flag = true)]
+    Archive {
+        /// Archive operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Print the built-in self-description roots.
     Describe,
     /// Import, validate, convert, merge, rename, export and round-trip
@@ -51,6 +105,12 @@ enum Command {
         /// Print each top-level item's status instead of the translation.
         #[arg(long)]
         items: bool,
+        /// Translate actual emitted code without restoring saved originals.
+        #[arg(long)]
+        semantic: bool,
+        /// Stable Rust source std snapshot, independent of the emitted target.
+        #[arg(long)]
+        rust_source_version: Option<String>,
     },
     /// Parse text into a lossless token network and verify it is clean.
     Verify {
@@ -229,6 +289,90 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Command::ProjectTranslation { args } => {
+            let output = meta_language::run_project_translation_archive_command(&args, |path| {
+                fs::read_to_string(path).map_err(|error| error.to_string())
+            });
+            if !output.stdout.is_empty() {
+                std::io::stdout()
+                    .write_all(&output.stdout)
+                    .unwrap_or_else(|error| fail(error.to_string()));
+            }
+            if !output.stderr.is_empty() {
+                eprint!("{}", output.stderr);
+            }
+            std::process::exit(output.exit_code);
+        }
+        Command::ExactGraph { args } => {
+            let output = meta_language::run_unsigned_graph_command(
+                &args,
+                |path| fs::read_to_string(path).map_err(|error| error.to_string()),
+                |path| fs::read(path).map_err(|error| error.to_string()),
+            );
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
+        Command::ExactSource { args } => {
+            let output = meta_language::run_unsigned_source_command(&args, |path| {
+                fs::read_to_string(path).map_err(|error| error.to_string())
+            });
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
+        Command::ModuleRequests { args } => {
+            let output = meta_language::run_source_module_request_command(&args, |path| {
+                fs::read_to_string(path).map_err(|error| error.to_string())
+            });
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
+        Command::SourceProject { args } => {
+            let output = meta_language::run_rust_source_project_command(&args, |path| {
+                fs::read_to_string(path).map_err(|error| error.to_string())
+            });
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
+        Command::Definition { args } => {
+            let output = meta_language::run_source_definition_command(&args);
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
+        Command::Language { args } => {
+            let output = meta_language::run_dynamic_language_command(
+                &args,
+                |path| fs::read_to_string(path).map_err(|error| error.to_string()),
+                |path| fs::read(path).map_err(|error| error.to_string()),
+            );
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
+        Command::Archive { args } => {
+            let output = archive_cli::run(&args);
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
         Command::Describe => describe(),
         Command::Grammar { args } => grammar(&args),
         Command::Translate {
@@ -236,7 +380,16 @@ fn main() {
             from,
             to,
             items,
-        } => translate(&file, from.as_deref(), &to, items),
+            semantic,
+            rust_source_version,
+        } => translate(
+            &file,
+            from.as_deref(),
+            &to,
+            items,
+            semantic,
+            rust_source_version,
+        ),
         Command::Verify { language, text } => verify(&language, &text),
         Command::Infer {
             examples,
@@ -270,7 +423,14 @@ fn grammar(args: &[String]) {
     std::process::exit(output.exit_code);
 }
 
-fn translate(file: &Path, from: Option<&str>, to: &str, items: bool) {
+fn translate(
+    file: &Path,
+    from: Option<&str>,
+    to: &str,
+    items: bool,
+    semantic: bool,
+    rust_source_version: Option<String>,
+) {
     let extension = file.extension().and_then(|extension| extension.to_str());
     let Some(from) = from.or_else(|| extension.and_then(self_translation_language)) else {
         eprintln!(
@@ -283,7 +443,12 @@ fn translate(file: &Path, from: Option<&str>, to: &str, items: bool) {
         eprintln!("error: cannot read {}: {error}", file.display());
         std::process::exit(1);
     });
-    match self_translate(&source, from, to) {
+    let options = meta_language::SelfTranslationOptions {
+        semantic_translation: semantic,
+        rust_source_version,
+        ..meta_language::SelfTranslationOptions::default()
+    };
+    match meta_language::self_translate_with(&source, from, to, &options) {
         Ok(result) if items => {
             for item in result.items {
                 let reason = item

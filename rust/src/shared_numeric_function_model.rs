@@ -264,7 +264,7 @@ fn read_shared_function_value_model(
         let name = network
             .link(directory)
             .into_iter()
-            .flat_map(|link| link.references())
+            .flat_map(crate::Link::references)
             .find_map(|id| {
                 let pair = network.link(*id)?.references();
                 if pair.get(1).copied() != Some(selected) {

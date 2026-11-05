@@ -1,0 +1,25 @@
+// Deferred controls: source authors may syntax-parse, never import this module.
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {runInNewContext} from 'node:vm';
+import {readProjectData} from '../scripts/project-data.mjs';
+import {createRustSourceOwnerProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
+import {LinkNetwork} from '../src/network.js';
+import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import * as rules from '../src/translation/rust-pattern-match-rules.js';
+const fixture=readProjectData(new URL('../../parity/fixtures/rust-pattern-matches.lino',import.meta.url));
+function nodes(value,predicate){if(!value||typeof value!=='object')return [];return [...(predicate(value)?[value]:[]),...Object.values(value).flatMap(child=>nodes(child,predicate))];}
+const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
+for(const [index,row]of fixture.premises.entries())test('pattern macro decision '+index,()=>assert.deepEqual(rules[row.operation](...row.args),row.expected));
+for(const row of fixture.cases)test(row.name,()=>{
+ const original=row.source+'fn main(){}',concrete=LinkNetwork.parse(original,'Rust');for(const network of [concrete,LinkNetwork.fromLino(concrete.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(concrete))])assert.equal(network.reconstructText(),original);
+ const packet=createRustSourceOwnerProgramLinks(original),program=decodeTypedProgramLinks(packet.network,packet.root);
+ for(const network of [packet.network,LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
+  const restored=decodeTypedProgramLinks(network,packet.root);for(const count of row.callCounts??[])assert.equal(nodes(restored.declarations.get('result').body,node=>node.k==='call'&&node.fn===count.source).length,count.expected,row.name);assert.deepEqual([...restored.declarations].map(([name,entry])=>[name,entry.sourceSignature]),[...program.declarations].map(([name,entry])=>[name,entry.sourceSignature]));
+  for(const target of ['JavaScript','Rust','Lean','Rocq'])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),emitTypedProgramLinks(packet.network,packet.root,target));
+  const emission=emitTypedProgramLinks(network,packet.root,'JavaScript'),name=emission.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='result').target,execute=()=>runInNewContext(emission.code.replace(/^export /gmu,'')+'\n'+name+'()',{}, {timeout:1000});
+  if(row.abort===null)assert.equal(String(execute()),row.value);else assert.throws(execute,error=>error.message===row.abort);
+ }
+});
+for(const row of fixture.refusals)test(row.name,()=>assert.throws(()=>createRustSourceOwnerProgramLinks(row.source),error=>error.kind===row.kind&&error.reason===row.reason));
+

@@ -81,6 +81,7 @@ Makefile.coq.conf
 # Upstream grammar sources and compiled oracles are temporary downloads.
 # Acquisition receipts, licenses, notices and our patches remain tracked.
 /.external-grammars/
+/.cache/unicode-case-source/
 /js/src/vendor/grammars/
 /js/oracles/grammars/
 /rust/vendor/

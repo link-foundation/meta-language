@@ -17,7 +17,7 @@ use std::rc::Rc;
 use super::Language;
 use super::diagnostics::{ErrorKind, Result, TranslationError, unsupported};
 use super::emit_common::{
-    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations, unthreaded,
+    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, dependencies, order_declarations_with_dependencies, unthreaded,
 };
 use super::ir::{
     ByZero, Case, DataDecl, Decl, Effect, Expr, FnDecl, Hints, LitValue, Main, Node, Param,
@@ -38,6 +38,7 @@ mod mutual;
 mod optional_values;
 mod proofs;
 mod records;
+mod unit_strings;
 
 use self::arrays::{FLOAT_INDEX, LIST_AT};
 pub use self::floats::FLOAT_PRELUDE;
@@ -46,6 +47,11 @@ use self::math::MATH;
 use self::mutual::Mutual;
 
 const KEYWORDS: &[&str] = &[
+    "MLStringNumber",
+    "MLBigIntegerConversion",
+    "MLUtf16Text",
+    "MLUnicodeCase",
+    "MLRecordPropertyOrder",
     "as",
     "at",
     "cofix",
@@ -238,10 +244,16 @@ enum Helper {
     Tactics,
     Decide,
     Emit,
+    StringNumber,
+    BigIntegerConversion,
+    Utf16Text,
+    UnicodeCase,
+    RecordPropertyOrder,
+    SourceExceptionObservation,
 }
 
 impl Helper {
-    const ALL: [Self; 18] = [
+    const ALL: [Self; 24] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -260,6 +272,12 @@ impl Helper {
         Self::Tactics,
         Self::Decide,
         Self::Emit,
+        Self::StringNumber,
+        Self::BigIntegerConversion,
+        Self::Utf16Text,
+        Self::UnicodeCase,
+        Self::RecordPropertyOrder,
+        Self::SourceExceptionObservation,
     ];
 
     fn render_definition(self) -> String {
@@ -295,6 +313,12 @@ impl Helper {
             Self::Tactics => TACTICS,
             Self::Decide => DECIDE,
             Self::Emit => EMIT,
+            Self::StringNumber => include_str!("runtime/string-number.v"),
+            Self::BigIntegerConversion => include_str!("runtime/big-integer-conversion.v"),
+            Self::Utf16Text => include_str!("runtime/utf16-text.v"),
+            Self::UnicodeCase => include_str!("runtime/unicode-case.v"),
+            Self::RecordPropertyOrder => include_str!("runtime/record-property-order.v"),
+            Self::SourceExceptionObservation => include_str!("runtime/source-exception.v"),
         }
     }
 }
@@ -352,8 +376,12 @@ fn internal(message: String) -> TranslationError {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rocq(source: &Program) -> Result<Emitted> {
+    super::class_owners::validate_program(source)?;
+    let prepared = super::ordered_record_preparation::prepare(source)?;
+    let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Rocq")?;
-    let state = EmitState::new(
+    let utf16_strings = super::formal_unit_strings::requires(program);
+    let mut state = EmitState::new(
         program,
         Language::Rocq,
         ident,
@@ -364,13 +392,25 @@ pub fn emit_rocq(source: &Program) -> Result<Emitted> {
             ..EmitOptions::default()
         },
     );
+    let plan=super::formal_datatype_modules::plan_formal_datatype_modules(program)?;
+    let aliases=super::formal_datatype_aliases::capture_formal_datatype_aliases(&plan.aliases,&state)?;
+    let alias_dependencies=super::formal_datatype_modules::formal_datatype_module_dependencies(&plan)?;
+    state.relocate_datatypes(&plan.program,&plan.aliases)?;
+    let program=&plan.program;
     RocqEmitter {
         program,
         state,
-        helpers: HashSet::from([Helper::Tactics]),
+        aliases:super::formal_datatype_aliases::FormalDatatypeAliases::new(aliases,"Rocq"),
+        alias_dependencies,
+        helpers: if utf16_strings {
+            HashSet::from([Helper::Tactics, Helper::Utf16Text, Helper::FloatIndex])
+        } else {
+            HashSet::from([Helper::Tactics])
+        },
+        utf16_strings,
         nat_functions: HashMap::new(),
         current: None,
-        uses_float: false,
+        uses_float: utf16_strings,
     }
     .file()
 }
@@ -389,8 +429,11 @@ struct Current {
 }
 
 struct RocqEmitter<'p> {
+    utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
+    aliases:super::formal_datatype_aliases::FormalDatatypeAliases,
+    alias_dependencies:HashMap<String,HashSet<String>>,
     helpers: HashSet<Helper>,
     /// Functions recursive on a natural: the decreasing parameter and the arity.
     nat_functions: HashMap<String, (usize, usize)>,
@@ -400,22 +443,30 @@ struct RocqEmitter<'p> {
 
 impl RocqEmitter<'_> {
     fn file(mut self) -> Result<Emitted> {
+        if self.utf16_strings {
+            self.floats();
+            self.state.encode("utf16-formal-strings","source strings are ordered UTF-16 code-unit columns represented by natural numbers 0..65535; generated complete shared operations retain isolated units, and scalar display alone replaces unpaired surrogates");
+        }
         let program = self.program;
         let mut blocks: Vec<String> = Vec::new();
-        let order = order_declarations(program, true)?;
+        blocks.extend(self.aliases.open(&[],&self.state)?);
+        let order = order_declarations_with_dependencies(program,true,&self.alias_dependencies)?;
         let mut open_modules: Vec<String> = Vec::new();
         let groups = mutual_groups(program);
+        let data_groups=datatype_groups(program)?;
         for entry in order {
-            self.move_to(&mut open_modules, entry.module_path(), &mut blocks);
+            self.move_to(&mut open_modules, entry.module_path(), &mut blocks)?;
             blocks.push(match (entry, groups.get(entry.full_name())) {
                 (_, Some(group)) if std::ptr::eq(group[0], entry) => self.mutual(group)?,
                 (_, Some(_)) => continue,
-                (Decl::Data(data), None) => self.data(entry, data)?,
+                (Decl::Data(data), None) => if let Some(group)=data_groups.get(entry.full_name()){if std::ptr::eq(group[0],entry){self.mutual_data(group)?}else{continue;}}else{self.data(entry,data)?},
                 (Decl::Fn(function), None) => self.function(entry, function)?,
                 (Decl::Theorem(theorem), None) => self.theorem(entry, theorem)?,
             });
+            if let Some(group)=data_groups.get(entry.full_name()){self.aliases.complete(group);}else{self.aliases.complete(&[entry]);}
         }
-        self.move_to(&mut open_modules, &[], &mut blocks);
+        self.move_to(&mut open_modules, &[], &mut blocks)?;
+        blocks.extend(self.aliases.close(&[],&self.state)?);self.aliases.finish()?;
         let main_text = match &program.main {
             Some(main) => Some(self.main(main)?),
             None => None,
@@ -456,20 +507,23 @@ impl RocqEmitter<'_> {
     }
 
     /// Closes and opens `Module` blocks until `path` is the open module.
-    fn move_to(&self, open_modules: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>) {
+    fn move_to(&mut self, open_modules: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>)->Result<()> {
         let common = open_modules
             .iter()
             .zip(path)
             .take_while(|(open, wanted)| open == wanted)
             .count();
         while open_modules.len() > common {
+            blocks.extend(self.aliases.close(open_modules,&self.state)?);
             blocks.push(format!("End {}.", self.module_name(open_modules)));
             open_modules.pop();
         }
         while open_modules.len() < path.len() {
             open_modules.push(path[open_modules.len()].clone());
             blocks.push(format!("Module {}.", self.module_name(open_modules)));
+            blocks.extend(self.aliases.open(open_modules,&self.state)?);
         }
+        Ok(())
     }
 
     fn module_name(&self, path: &[String]) -> &str {
@@ -497,9 +551,20 @@ impl RocqEmitter<'_> {
                 "float".to_owned()
             }
             Type::Bool => "bool".to_owned(),
-            Type::String => "string".to_owned(),
+            Type::String => {
+                if self.utf16_strings {
+                    super::formal_string_unit_rules::read_formal_string_unit_type("Rocq")
+                } else {
+                    "string".to_owned()
+                }
+            }
             Type::Unit => "unit".to_owned(),
-            Type::Output => "list string".to_owned(),
+            Type::Output => if self.utf16_strings {
+                "list (list N)"
+            } else {
+                "list string"
+            }
+            .to_owned(),
             Type::Option { element, absence } => {
                 let element = self.ty(element)?;
                 if absence == "both" {
@@ -540,12 +605,23 @@ impl RocqEmitter<'_> {
                     format!("({})%type", parts.join(" * "))
                 }
             }
-            Type::Record { fields, .. } => {
+            Type::Record {
+                fields, ordered, ..
+            } => {
                 let children = fields
                     .iter()
                     .map(|field| self.ty(&field.ty))
                     .collect::<Result<Vec<_>>>()?;
-                super::record_emission_rules::render_record_type("Rocq", &children)
+                let payload = super::record_emission_rules::render_record_type("Rocq", &children);
+                if *ordered {
+                    crate::translation::ordered_record_layout_rules::render_ordered_record_type(
+                        "Rocq",
+                        &payload,
+                        &self.ty(&crate::translation::types::array(Type::Float))?,
+                    )
+                } else {
+                    payload
+                }
             }
             Type::Union { .. } => {
                 return Err(crate::translation::diagnostics::type_error(
@@ -575,12 +651,16 @@ impl RocqEmitter<'_> {
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
+        self.data_definition(entry,data,"Inductive",".",false)
+    }
+    fn data_definition(&mut self, entry: &Decl, data: &DataDecl,keyword:&str,terminator:&str,mutual:bool) -> Result<String> {
+        if !mutual&&dependencies(entry).contains(&data.full_name){crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;}
         fn lists(ty: &Type) -> bool {
             ty.element()
                 .is_some_and(|element| matches!(element, Type::Data { .. }) || lists(element))
         }
         let name = self.state.local_name(&data.full_name).to_owned();
-        let mut lines = vec![format!("Inductive {name} : Type :=")];
+        let mut lines = vec![format!("{keyword} {name} : Type :=")];
         for ctor in &data.ctors {
             let mut fields = String::new();
             for field in &ctor.fields {
@@ -596,10 +676,15 @@ impl RocqEmitter<'_> {
             .ctors
             .iter()
             .any(|ctor| ctor.fields.iter().any(|field| lists(&field.ty)));
-        if nested {
+        if nested&&keyword=="Inductive"&&!mutual {
             lines.insert(0, "#[warnings=\"-register-all\"]".to_owned());
         }
-        Ok(lines.join("\n") + ".")
+        Ok(lines.join("\n") + terminator)
+    }
+    fn mutual_data(&mut self,group:&[&Decl])->Result<String>{
+        for entry in group{let ty=Type::Data{name:entry.full_name().to_owned()};let lookup=|name:&str|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None};if crate::translation::callable_data::read_callable_data_facts(&ty,&lookup)?.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&ty,&lookup)?;}}
+        crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:group[0].full_name().to_owned()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let mut lines=Vec::new();for(index,entry)in group.iter().enumerate(){let Decl::Data(data)=entry else{return Err(unsupported("formal mutual datatype","the complete component needs actual data declarations",None));};lines.push(self.data_definition(entry,data,if index==0{"Inductive"}else{"with"},if index+1==group.len(){"."}else{""},true)?);}Ok(crate::translation::callable_data_derivation_rules::render_formal_datatype_rocq_mutual_block(&lines))
     }
 
     /// Recursion that decreases a natural by one each call, in a function whose

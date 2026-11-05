@@ -302,19 +302,19 @@ pub fn ml_read_declaration_dependency_components_loop12(
                                     {
                                         let at = 0f64;
                                         {
-                                            let ml_s34 = self::ml_read_declaration_dependency_components_loop15(starts, counts, targets, assigned, pending, members, leader, at);
-                                            match ml_s34 {
+                                            let ml_s3344 = self::ml_read_declaration_dependency_components_loop15(starts, counts, targets, assigned, pending, members, leader, at);
+                                            match ml_s3344 {
                                                 self::MlReadDeclarationDependencyComponentsLoop15Result::MlReadDeclarationDependencyComponentsLoop15Done(assigned_2, members_2, leader_2) => {
                                                     {
                                                         let ml_values6 = members_2;
                                                         {
                                                             let ml_index6 = self::ml::Big::from_i128(0);
                                                             {
-                                                                let ml_s35 = self::ml_read_declaration_dependency_components_loop16(vertices, leaders, leader_2, &(ml_values6), ml_index6);
-                                                                match ml_s35 {
-                                                                    self::MlReadDeclarationDependencyComponentsLoop16Result::MlReadDeclarationDependencyComponentsLoop16Done(vertices_2, leaders_2) => {
+                                                                let ml_s3355 = self::ml_read_declaration_dependency_components_loop16(vertices, leaders, leader_2, &(ml_values6), ml_index6);
+                                                                match ml_s3355 {
+                                                                    self::MlReadDeclarationDependencyComponentsLoop16Result::MlReadDeclarationDependencyComponentsLoop16Done(vertices_2, component_representatives) => {
                                                                         {
-                                                                            (assigned, vertices, leaders, position) = (assigned_2, vertices_2, leaders_2, position_2);
+                                                                            (assigned, vertices, leaders, position) = (assigned_2, vertices_2, component_representatives, position_2);
                                                                             continue;
                                                                         }
                                                                     }
@@ -486,14 +486,14 @@ pub fn ml_read_recursive_declaration_source_owners_loop22(
                                 {
                                     let root = 0f64;
                                     {
-                                        let ml_s36 = self::ml_read_recursive_declaration_source_owners_loop23(root_starts, root_ends, start, end, role, owner, root);
-                                        match ml_s36 {
+                                        let ml_s3366 = self::ml_read_recursive_declaration_source_owners_loop23(root_starts, root_ends, start, end, role, owner, root);
+                                        match ml_s3366 {
                                             self::MlReadRecursiveDeclarationSourceOwnersLoop23Result::MlReadRecursiveDeclarationSourceOwnersLoop23Done(owner_2) => {
                                                 if owner_2 < 0f64 {
                                                     self::MlReadRecursiveDeclarationSourceOwnersLoop22Result::MlReadRecursiveDeclarationSourceOwnersLoop22Return(Vec::<f64>::new())
                                                 } else {
                                                     {
-                                                        let ml_s37 = if role == 0f64 {
+                                                        let ml_s3377 = if role == 0f64 {
                                                             if self::contains_declaration_dependency(&(roots), owner_2) {
                                                                 self::MlReadRecursiveDeclarationSourceOwnersJoin24::MlReadRecursiveDeclarationSourceOwnersJoin24Return(Vec::<f64>::new())
                                                             } else {
@@ -505,14 +505,14 @@ pub fn ml_read_recursive_declaration_source_owners_loop22(
                                                         } else {
                                                             self::MlReadRecursiveDeclarationSourceOwnersJoin24::MlReadRecursiveDeclarationSourceOwnersJoin24Next(roots)
                                                         };
-                                                        match ml_s37 {
+                                                        match ml_s3377 {
                                                             self::MlReadRecursiveDeclarationSourceOwnersJoin24::MlReadRecursiveDeclarationSourceOwnersJoin24Next(roots_3) => {
                                                                 {
-                                                                    let owners_2 = { let (ml_append_right, ml_append_left) = (vec![owner_2], owners); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                                    let collected_source_owners = { let (ml_append_right, ml_append_left) = (vec![owner_2], owners); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                     {
                                                                         let declaration_2 = declaration + 1f64;
                                                                         {
-                                                                            (owners, roots, declaration) = (owners_2, roots_3, declaration_2);
+                                                                            (owners, roots, declaration) = (collected_source_owners, roots_3, declaration_2);
                                                                             continue;
                                                                         }
                                                                     }
@@ -753,8 +753,8 @@ pub fn ml_accept_recursive_declaration_auxiliary_closure_loop29(
                                 {
                                     let declaration = 0f64;
                                     {
-                                        let ml_s38 = self::ml_accept_recursive_declaration_auxiliary_closure_loop32(owners, roles, owner, &(pending_2), declaration);
-                                        match ml_s38 {
+                                        let ml_s3388 = self::ml_accept_recursive_declaration_auxiliary_closure_loop32(owners, roles, owner, &(pending_2), declaration);
+                                        match ml_s3388 {
                                             self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop32Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop32Done => {
                                                 {
                                                     let root_3 = root + 1f64;
@@ -847,11 +847,11 @@ pub fn ml_accept_recursive_declaration_auxiliary_closure_loop28(
                     {
                         let at = first;
                         {
-                            let ml_s39 =
+                            let ml_s3399 =
                                 self::ml_accept_recursive_declaration_auxiliary_closure_loop33(
                                     owners, roles, targets, source, last, at,
                                 );
-                            match ml_s39 {
+                            match ml_s3399 {
                                 self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop33Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop33Done => {
                                     {
                                         let source_2 = source + 1f64;

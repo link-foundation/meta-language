@@ -1,5 +1,4 @@
-// Generated from the complete checked JavaScript source and recorded dependencies.
-// Do not edit by hand.
+// Generated from complete js/src/translation/array-classification-rules.js. Do not edit by hand.
 // JavaScript Number equality and separate arithmetic rounding are preserved.
 // Array index casts retain the existing checked runtime guards.
 #![allow(

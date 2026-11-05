@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {restoreCiTestPartitionWorkflow} from './ci-test-partition-history.mjs';
 
 const root=new URL('../../',import.meta.url),revision='6ca7b4a02a524e096d4f34fb7f9df39e16263328';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
@@ -44,7 +45,7 @@ export function generateTranslationWorkflowHistory({check=false}={}) {
         value=>artifactStep(artifactScopes[index++])+value);
       assert.equal(index,3);
     }
-    const current=restoreEvidenceTranslationSourceHistory(file,restoreCurrentCiRepairSource(readFileSync(new URL(file,root),'utf8'),file));assert.equal(current,expected,'only the declared complete scheduling changes are admitted');
+    const current=restoreEvidenceTranslationSourceHistory(file,restoreCurrentCiRepairSource(restoreCiTestPartitionWorkflow(readFileSync(new URL(file,root),'utf8')),file));assert.equal(current,expected,'only the declared complete scheduling changes are admitted');
     let start=0,end=sourceText.length,finish=current.length;
     while(start<end&&start<finish&&sourceText[start]===current[start])start++;
     while(end>start&&finish>start&&sourceText[end-1]===current[finish-1]){end--;finish--;}

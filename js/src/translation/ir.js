@@ -5,6 +5,7 @@
 
 import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
 import { readCallableOwnedParameters } from './callable-source.js';
+import { renderSourceTargetIdentifier } from './source-identifier-rules.js';
 
 /** A per-declaration name supply: target-legal, unique, deterministic. */
 export class Scope {
@@ -14,9 +15,10 @@ export class Scope {
   }
 
   fresh(name) {
+    name = renderSourceTargetIdentifier(name);
     // A suffixed name is legal on its own: `end_2` needs none of the quoting of Lean's `«end»`.
-    let candidate = this.ident(name);
-    for (let index = 2; this.used.has(candidate); index += 1) candidate = this.ident(`${name}_${index}`);
+    let candidate = renderSourceTargetIdentifier(this.ident(name));
+    for (let index = 2; this.used.has(candidate); index += 1) candidate = renderSourceTargetIdentifier(this.ident(`${name}_${index}`));
     this.used.add(candidate);
     return candidate;
   }

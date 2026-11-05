@@ -1,0 +1,1 @@
+Draft primitive `Object.is` translation through shared SameValue rules, preserving NaN, signed zero, nullable tags, missing arguments and ordered extra-argument effects. Generated source and future controls are unexecuted.

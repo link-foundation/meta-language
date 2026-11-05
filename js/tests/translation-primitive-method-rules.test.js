@@ -43,10 +43,16 @@ test('primitive array joins preserve number text nullable cells UTF16 separators
   }
 });
 
-test('primitive array joins retain structured conversion arity and non-scalar escape refusals',()=>{
+test('primitive array joins retain structured conversion arity and isolated source units',()=>{
   assert.throws(()=>checkProgram(parseJavaScript("console.log([{value:1}].join());")),/array join: joining structured values/u);
   assert.throws(()=>checkProgram(parseJavaScript("console.log([1].join(',',','));")),/expects 0 to 1 arguments/u);
-  assert.throws(()=>parseJavaScript("console.log(['\\uD800'].join());"),/not a scalar value/u);
+  // Corrected by ECMAScript 2025 StringLiteral SV; the preceding expectation
+  // was /not a scalar value/u. Preserve the original source and observe units.
+  const [major,minor]=process.versions.node.split('.').map(Number);
+  assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
+  const source="console.log(['\\uD800'].join());";
+  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(source))).text),observe(source));
+  assert.equal(observe(source)[0].charCodeAt(0),0xd800);
 });
 
 test('primitive methods retain default slots, UTF-16 results and actual evaluation order', () => {

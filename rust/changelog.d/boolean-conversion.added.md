@@ -1,0 +1,1 @@
+Draft Boolean conversion through shared truth operations with complete argument effects, and admit the actual unshadowed BigInt owner to its exact conversion path. Add public optional-value graphs and prepared, unexecuted source/native/codec controls.

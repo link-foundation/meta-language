@@ -55,9 +55,11 @@ test('a call that leaves out defaulted parameters passes the defaults in every t
   assert.ok(rust.includes('crate::size(String::from("ab"), Vec::<f64>::new())'), rust);
 });
 
-test('defaults that are not filled in by a call are refused with a reason', () => {
-  assert.match(refusal('function f(a = 1, b) {\n  return b;\n}\n'), /parameter b after a default/u);
-  assert.match(refusal('function f(a, b = a) {\n  return b;\n}\nconsole.log(f(1));\n'), /default reading parameter a/u);
+test('the retained dependent and nontrailing defaults now preserve their source values',()=>{
+  requireSequentialDefaultVersion();
+  const original='function f(a = 1, b) {\n  return b;\n}\n';
+  parseJavaScript(original);assertParameterDefaultCalls(original+'console.log(f(undefined,7));\n','7\n');
+  assertParameterDefaultCalls('function f(a, b = a) {\n  return b;\n}\nconsole.log(f(1));\n','1\n');
 });
 
 test('default calls resolve names outside the callers local scope', () => {
@@ -215,6 +217,9 @@ test('pure and omitted parameter defaults keep their existing call bytes and sco
   const omitted = 'function base(){return 7;}function chosen(value=base()){return value;}console.log(chosen());';
   assertParameterDefaultCalls(omitted, '7\n');
   assert.ok(emitRust(checkProgram(parseJavaScript(omitted))).text.includes('crate::chosen(crate::base())'));
-  assert.match(refusal('function f(a,b=a){return b;}console.log(f(1));'), /default reading parameter a/u);
-  assert.match(refusal('function f(a=1,b){return b;}'), /parameter b after a default/u);
+  requireSequentialDefaultVersion();
+  assertParameterDefaultCalls('function f(a,b=a){return b;}console.log(f(1));','1\n');
+  const original='function f(a=1,b){return b;}';parseJavaScript(original);assertParameterDefaultCalls(original+'console.log(f(undefined,7));','7\n');
 });
+
+function requireSequentialDefaultVersion(){const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered sequential default assertion runtime '+process.versions.node);}

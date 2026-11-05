@@ -17,7 +17,6 @@ use meta_language::{
     encode_link_network_binary, read_structured_data_lino,
 };
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -82,6 +81,13 @@ import {tokenize} from './js/src/translation/lexer.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from './js/src/translation/array-binding-policy.js';
 import * as rules from './js/src/translation/javascript-record-parameter-rules.js';
 const mode=process.argv[1],source=process.argv[2];
+// Native template tokens have an empty text column; their actual parts/raw
+// stay opaque to these lexical decisions. Keep every original source token.
+const tokenText=t=>{
+ if(t.kind==='template'&&!Object.hasOwn(t,'value'))return '';
+ if(typeof t.value!=='string')throw new TypeError('unrepresented token text fact');
+ return t.value;
+};
 if(mode==='raw-error'){
  let name=null;try{runInNewContext(source,{console:{log(){}}},{timeout:1000});}catch(error){name=error.name;}
  process.stdout.write(structuredDataToLino({name}));
@@ -89,13 +95,13 @@ if(mode==='raw-error'){
  const surface=parseJavaScript(source,{externals:[{k:'const',name:'record_parameter_value1',type:{kind:'float'},literal:false}]});
  process.stdout.write(structuredDataToLino({surface}));
 }else if(mode==='plans'){
- const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(t=>t.value);
+ const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(tokenText);
  const rows=[];for(let end=0;end<=tokens.length;end++)rows.push({kinds:kinds.slice(0,end),values:values.slice(0,end),
  plan:rules.planJavaScriptRecordParameters(kinds.slice(0,end),values.slice(0,end),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings),
  found:rules.findJavaScriptRecordParameterPattern(kinds.slice(0,end),values.slice(0,end),0)});
  process.stdout.write(structuredDataToLino(rows));
 }else if(mode==='directives'){
- const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(t=>t.value);
+ const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(tokenText);
  const raws=tokens.map(t=>source.slice(t.start,t.end));
  const lines=tokens.map((t,i)=>/[\n\r\u2028\u2029]/u.test(source.slice(i===0?0:tokens[i-1].end,t.start)));
  const rows=[];for(let end=0;end<=tokens.length;end++){
@@ -329,7 +335,7 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
         let source = fs::read(root().join(owner["path"].as_str().unwrap())).unwrap();
         assert_eq!(source.len() as u64, owner["bytes"].as_u64().unwrap());
         assert_eq!(
-            format!("{:x}", Sha256::digest(&source)),
+            super::issue_195_translation_pairs::sha256(&source),
             owner["sourceSha256"].as_str().unwrap()
         );
         if let Some(declaration) = owner["declaration"].as_str() {
@@ -633,9 +639,6 @@ fn actual_parameter_sources_keep_every_unsupported_profile_scope_and_call_bounda
         "function f({a},other){other=2;return a+other;}",
         "function f({a}){const a=2;return a;}",
         "function f({a}){let a=2;return a;}",
-        "const f=({a})=>a;",
-        "const f=function({a}){return a;};",
-        "const Namespace={f({a}){return a;}};",
         "async function f({a}){return a;}",
         "/** @param {{a:number}} options */function f({a}){return a;}",
         "function ordinary(value=/{a,b}/){return 1;}",
@@ -680,6 +683,28 @@ fn actual_parameter_sources_keep_every_unsupported_profile_scope_and_call_bounda
                 "{source}"
             );
         }
+    }
+}
+
+#[test]
+fn ordinary_callable_record_contexts_retain_all_three_original_inputs_with_corrected_coverage() {
+    versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/record-callable-parameters.lino"
+    ))
+    .unwrap();
+    for row in fixture["legacy"].as_array().unwrap() {
+        let source = row["source"].as_str().unwrap();
+        parse_javascript(source).unwrap();
+        let source = format!("{source}console.log({});", row["call"].as_str().unwrap());
+        let surface = parse_javascript(&source).unwrap();
+        check_program(&surface).unwrap();
+        let bridge = javascript_bridge("source", &source);
+        assert!(bridge.get("error").is_none(), "{}", bridge);
+        assert_eq!(
+            bridge["lines"],
+            serde_json::json!([row["value"].as_str().unwrap()])
+        );
     }
 }
 
@@ -773,4 +798,73 @@ fn actual_shadowed_builtin_owners_and_non_simple_strict_directives_cannot_be_sil
                 .is_some_and(|construct| construct.starts_with("shadowed standard"))
         );
     }
+}
+
+#[test]
+fn record_parameter_writes_reuse_actual_local_cells_and_preserve_original_inputs() {
+    versions();
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/javascript-program/record-parameter-write-oracle.mjs",
+        "JavaScript record parameter writes",
+        meta_language::create_javascript_record_parameter_program_links,
+    );
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/record-parameter-writes.lino"
+    ))
+    .unwrap();
+    let directory = TemporaryDirectory::new("record_parameter_write_corrections");
+    for (index, row) in fixture["correctedAssertions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .enumerate()
+    {
+        assert_eq!(
+            row["previousAssertion"],
+            "checkProgram(parseJavaScript(source)) throws /record parameter|mutable|capture|var declaration/"
+        );
+        let source = format!(
+            "{}\nconsole.log({});",
+            row["source"].as_str().unwrap(),
+            row["call"].as_str().unwrap()
+        );
+        let expected = format!("{}\n", row["value"].as_str().unwrap());
+        observe_javascript(&source, &expected);
+        let program = check_program(&parse_javascript(&source).unwrap()).unwrap();
+        observe_javascript(&emit_javascript(&program).unwrap().text, &expected);
+        let packet = meta_language::encode_typed_program_links(&program).unwrap();
+        for network in archives(&packet.network) {
+            let restored = decode_typed_program_links(&network, packet.root).unwrap();
+            observe_javascript(&emit_javascript(&restored).unwrap().text, &expected);
+        }
+        let emitted =
+            emit_rust_with_array_consumption(&program, RustEmissionOptions::default(), false, true)
+                .unwrap();
+        let binary = compile(
+            &emitted.text,
+            &directory,
+            &format!("original_parameter_write_{index}"),
+        );
+        observe_native(&binary, &expected);
+    }
+}
+
+#[test]
+fn actual_record_closure_parameters_preserve_bindings_captures_and_local_writes() {
+    versions();
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/javascript-program/record-closure-parameters.mjs",
+        "JavaScript record closure parameter contexts",
+        meta_language::create_java_script_record_closure_parameter_program_links,
+    );
+}
+
+#[test]
+fn actual_record_callable_parameters_preserve_constant_and_namespace_contexts() {
+    versions();
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/javascript-program/record-callable-parameters.mjs",
+        "JavaScript ordinary record callable parameter contexts",
+        meta_language::create_java_script_record_callable_parameter_program_links,
+    );
 }

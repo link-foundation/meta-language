@@ -213,7 +213,7 @@ impl Decoder<'_> {
                     ));
                 }
                 let role = read_program_reference_role(label);
-                if role == "declaration" {
+                if role == "declaration" || role == "classConstructor" {
                     if self.kind(*target) != "fn" || !ownership.declaration_ids.contains(target) {
                         return Err(error(
                             "a linked declaration reference is unresolved or has an invalid target",

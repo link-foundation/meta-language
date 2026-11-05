@@ -224,7 +224,7 @@ fn island(
             return Err(fail("foreign or dangling definition reference"));
         }
         result.links.insert(*id, Arc::new(link.clone()));
-        result.next_id = result.next_id.max(id.as_u64().saturating_add(1));
+        result.observe_identifier(id);
     }
     let registrations: BTreeSet<_> = registered.iter().copied().collect();
     if registrations.len() != registered.len() {

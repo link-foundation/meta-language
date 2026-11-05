@@ -14,3 +14,6 @@ export function readJavaScriptArrayClassificationPlan(kind, element) {
   if (selected === 'record' || selected === 'data' || selected === 'set' || selected === 'map' || selected === 'cell' || selected === 'function') return [false, false];
   return [];
 }
+
+/** @param {string} name @returns {string} */
+export function readJavaScriptArrayClassificationBuiltinOperation(name){return name==='Array.isArray'?'testJavaScriptArrayValue':'';}

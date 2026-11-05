@@ -1,0 +1,70 @@
+// Explicit source adapter over actual parser-owned slots and the established
+// state/completion lowerer. This entry does not parse or admit &mut syntax.
+import {lowerRustOwnedRecordEffectBody} from './rust-owned-record-effects.js';
+import {readRustOwnedRecordStateDeclarations,readRustOwnedRecordStateSlots,readRustOwnedRecordStateCallable} from './rust-owned-record-state.js';
+import {readRustRecordSourceType} from './rust-records.js';
+import {readRustExclusiveSourceLoanContextError,readRustExclusiveSourcePositionBudgetError,readRustExclusiveSourceLoanStateError,beginRustExclusiveSourceCall,finishRustExclusiveSourceCall,createRustExclusiveSourceReturnPacket,lowerRustExclusiveSourceCallWriteback} from './rust-exclusive-source-loans.js';
+import {unsupported} from './diagnostics.js';
+import {attachRustSourceStateTransition} from './rust-source-state-transitions.js';
+import {createRustSourceSignature} from './rust-source-signatures.js';
+import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
+const fail=(reason,node)=>{throw unsupported('Rust exclusive source call adapter',reason,node?.span);};
+function sameOwner(left,right){return Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((value,index)=>value===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((value,index)=>sameOwner(value,right.arguments[index]));}
+function slotPosition(slot,expected){const origin=slot.origin,owner=origin?.expandedSourceOwner??origin?.sourceOwner;const budget=readRustExclusiveSourcePositionBudgetError({type:origin?.type,owner,wrappers:origin?.wrappers});if(budget)return budget;return origin?.proven===true&&readRustRecordPlaceOwner({type:origin.type,owner,wrappers:origin.wrappers,lifetimes:origin.sourceLifetimes??[]},false)&&origin.wrappers.length===expected.wrappers.length&&origin.wrappers.every((layer,index)=>layer===expected.wrappers[index])&&origin.type?.kind===expected.type.kind&&(origin.sourceCollectionTypeIdentity??'')===(expected.collectionTypeIdentity??'')&&sameOwner(owner,expected.owner)?'':'an exclusive parameter slot needs its actual proven referent type source owner and complete Box layers';}
+// parameterSlots: [{parameter,binder,lexical}], projected from the actual
+// source header's exclusive formals after admission has established referents.
+// Every supplied lexical identity must already exist in the parser's slot map.
+export function lowerRustExclusiveSourceCallable(parser,context,callee,declaration,modulePath,parameterSlots){
+ const invalid=readRustExclusiveSourceLoanContextError(context);if(invalid)fail(invalid,declaration);
+ const entry=context.callables.find(row=>row.identity===callee),expected=entry?.parameters.map((row,index)=>({...row,index})).filter(row=>row.mode==='exclusive');
+ if(!entry||!expected?.length||declaration?.k!=='fn'||entry.path.join('::')!==['crate',...modulePath,declaration.name].join('::')||declaration.params.length!==entry.parameters.length||!Array.isArray(parameterSlots)||parameterSlots.length!==expected.length)fail('the adapter retains its actual callable declaration and every exclusive formal',declaration);
+ if(Object.hasOwn(declaration,'sourceSignature'))fail('exclusive packet adaptation requires its separate source-signature profile; existing immutable signature facets cannot be relabeled',declaration);
+ if(parser?.origins?.collecting!==false||!parser.ownedRecordEffects)fail('exclusive body adaptation requires the actual completed source origin inventory and state-effect arena',declaration);
+ const inventory=readRustOwnedRecordStateDeclarations(parser),slots=readRustOwnedRecordStateSlots(parser),callable=readRustOwnedRecordStateCallable(parser),initial=new Map(),bound=[];
+ for(let index=0;index<expected.length;index++){
+  const formal=expected[index],binding=parameterSlots[index],actual=context.binders.find(row=>row.identity===binding.binder),slot=slots.find(row=>row.lexical===binding.lexical),parameter=declaration.params[formal.index];
+  if(binding.parameter!==formal.index||actual?.mode!=='exclusive'||actual.name!==parameter.name||actual.lexical!==binding.lexical||!slot||slot.callable!==callable||slot.name!==parameter.name||!slot.root||slot.origin.sourceBindingIdentity!==slot.root||slot.origin.sourceLexicalBindingIdentity!==slot.lexical||!inventory.has(slot.currentName)||inventory.get(slot.currentName)!==slot)fail('exclusive formals retain actual parser binder, callable, root and lexical slot identities',declaration);
+  const error=slotPosition(slot,formal.position);if(error)fail(error,declaration);
+  initial.set(slot.lexical,{slot,name:parameter.name});bound.push({formal,binding,slot});
+ }
+ const ret=readRustRecordSourceType(parser,entry.result.type,modulePath),resultTypes=[ret,...bound.map(row=>readRustRecordSourceType(parser,row.formal.position.type,modulePath))];
+ const body=lowerRustOwnedRecordEffectBody(parser,declaration.body,modulePath,inventory,initial,ret,(value,environment)=>{
+  const referents=bound.map(row=>{const current=environment.get(row.slot.lexical);if(!current||current.slot.root!==row.slot.root||current.slot.lexical!==row.slot.lexical)fail('every normal or source completion retains its actual exclusive root state',value);return {parameter:row.formal.index,value:{k:'name',path:[current.name]}};});
+  const packet=createRustExclusiveSourceReturnPacket(context,callee,value,referents);if(packet.$!=='rustExclusiveSourceLowered')fail(packet.reason,value);return packet.expression;
+ });
+ return {declaration:{...declaration,ret:{kind:'tuple',elements:resultTypes},body},interface:{callee,originalParameters:declaration.params,originalResult:declaration.ret,exclusiveParameters:parameterSlots.map(row=>({...row}))}};
+}
+// Argument expressions have already been held once by the ordinary source
+// evaluator. Acquired loans persist across following argument evaluation;
+// this adapter performs the actual call and writes back before continuation.
+export function lowerRustExclusiveSourceInvocation(context,state,callee,evaluatedArguments,arguments_,roots,names,continuation){
+ const invalid=readRustExclusiveSourceLoanStateError(context,state);if(invalid)return {$:'rustExclusiveSourceLoweringInvalid',reason:invalid};
+ const selected=beginRustExclusiveSourceCall(context,state,callee,arguments_);if(selected.$!=='rustExclusiveSourceContinue')return {$:'rustExclusiveSourceLoweringInvalid',reason:selected.reason};
+ const entry=context.callables.find(row=>row.identity===callee),packet={k:'app',fn:{k:'name',path:entry.path},args:evaluatedArguments},lowered=lowerRustExclusiveSourceCallWriteback(context,selected.state,packet,roots,names,continuation);
+ if(lowered.$!=='rustExclusiveSourceLowered')return lowered;const finished=finishRustExclusiveSourceCall(context,selected.state,selected.state.call.identity);return finished.$==='rustExclusiveSourceContinue'?{...lowered,state:finished.state}:{$:'rustExclusiveSourceLoweringInvalid',reason:finished.reason};
+}
+// Actual source-text admission supplies these slots directly from the live
+// parser frame. No caller context or externally supplied position can replace
+// its physical declaration/header or actual lexical state environment.
+export function lowerRustExclusiveSourceParsedCallable(parser,frame,declaration){
+ if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'||declaration.name!==frame.name||Object.hasOwn(declaration,'sourceSignature'))fail('exclusive source text retains its actual separate header and function owner',declaration);
+ const inventory=readRustOwnedRecordStateDeclarations(parser),actual=readRustOwnedRecordStateSlots(parser),initial=new Map();
+ for(const row of frame.slots){if(!actual.some(slot=>slot.lexical===row.slot.lexical&&slot.root===row.slot.root&&slot.callable===row.slot.callable)||inventory.get(row.slot.currentName)!==row.slot)fail('exclusive source text retains actual function parameter slots',declaration);initial.set(row.slot.lexical,{slot:row.slot,name:declaration.params[row.parameter].name});}
+ const exclusive=frame.slots.filter(row=>row.slot.exclusiveMode==='exclusive');
+ const parameterInitializers=[];
+ if(frame.readonlyRegionComposition)for(const row of frame.slots){
+  const parameter=declaration.params[row.parameter],slot=row.slot;
+  if(slot.exclusiveMode!=='owned'||!parameter||slot.name!==parameter.name||slot.origin.arrayElementPosition||!readRustRecordPlaceOwner({type:slot.origin.type,owner:slot.origin.expandedSourceOwner??slot.origin.sourceOwner,wrappers:slot.origin.wrappers,lifetimes:slot.origin.sourceLifetimes??[]},false)||inventory.get(slot.currentName)!==slot)fail('a mutable readonly formal retains its actual owned parameter Box layers and declared storage slot',declaration);
+  const input=parser.origins.mark({k:'name',path:[parameter.name],span:parameter.span??declaration.span},slot.origin),value=attachRustSourceStateTransition(parser,input,slot,'initialize');
+  if(!value.sourceStateTransition)fail('mutable readonly parameters retain their explicit initial source storage carrier',declaration);
+  initial.set(slot.lexical,{slot,name:slot.currentName});parameterInitializers.push({name:slot.currentName,type:readRustRecordSourceType(parser,slot.origin.type,slot.origin.path),value});
+ }
+ let body=lowerRustOwnedRecordEffectBody(parser,declaration.body,frame.path,inventory,initial,declaration.ret,(value,environment)=>{
+  if(!exclusive.length)return value;
+  const updated=exclusive.map(row=>{const source=environment.get(row.slot.lexical);if(!source||source.slot.root!==row.slot.root)fail('exclusive source completion retains its actual parameter writeback',value);return {k:'name',path:[source.name]};});
+  return {k:'tuple',items:[value,...updated],span:value.span};
+ });
+ for(const initializer of parameterInitializers.toReversed())body={k:'let',...initializer,body,span:declaration.span};
+ if(parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&!exclusive.length){const entry=parser.origins.lookupValueOwner(['crate',...frame.path,declaration.name],frame.path);if(!entry?.parameters||!entry.result)fail('a readonly source helper retains its actual complete function header',declaration);return {...declaration,body,sourceSignature:createRustSourceSignature(frame.readonlyRegionComposition?'Rust source function signature 3':'Rust source function signature 2',entry.parameters,entry.result,new Set(parser.lifetimeBindings))};}
+ return {...declaration,body,ret:exclusive.length?{kind:'tuple',elements:[declaration.ret,...exclusive.map(row=>readRustRecordSourceType(parser,row.slot.origin.type,row.slot.origin.path))]}:declaration.ret,sourceExclusiveSignature:frame.signature};
+}

@@ -18,6 +18,9 @@ import {selfTranslate} from '../src/self-translation.js';
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
 import {readStringRelativeCharacterTemplateGeneration} from '../scripts/generate-string-relative-character-template.mjs';
 
+const [stringUnitNodeMajor,stringUnitNodeMinor]=process.versions.node.split('.').map(Number);
+assert.ok(stringUnitNodeMajor===22&&stringUnitNodeMinor>=15||stringUnitNodeMajor===24,'uncovered Node '+process.versions.node);
+
 const source=`/** @param {string} text @param {number} position @returns {string|undefined} */
 function relativeCharacter(text,position){return text.at(position);}
 /** @param {string} text @param {number|null|undefined} position @returns {string|undefined} */
@@ -54,8 +57,15 @@ console.log('%s %s %s','ABC'.at(undefined),'ABC'.at(null),'ABC'.at(NaN));`;
 function collision(text,position,Math,Number){const readStringRelativeCharacter=999;return text.at(position);}`;
   const translated=runInNewContext(emitJavaScript(checkProgram(parseJavaScript(collision))).text+';collision;');
   assert.equal(translated('ABC',-1,8,9),'C');
-  for(const position of ['true','false',"'1'",'{}','[1]'])assert.throws(()=>checkProgram(parseJavaScript("console.log('ABC'.at("+position+'));')));
-  assert.throws(()=>checkProgram(parseJavaScript("console.log('ABC'.at(0,1));")),/expects 0 to 1 arguments/u);
+  // Full former assertions and inputs are retained in string-unit-calls.lino.
+  // ECMAScript 2025 ToIntegerOrInfinity admits these primitive inputs.
+  for(const [position,expected] of [['true','B'],['false','A'],["'1'",'B'],['0,1','A']]){
+    const source="console.log('ABC'.at("+position+'));';
+    const observe=text=>{const lines=[];runInNewContext(text,{console:{log:value=>lines.push(String(value))}});return lines;};
+    assert.deepEqual(observe(source),[expected]);
+    assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(source))).text),[expected]);
+  }
+  for(const position of ['{}','[1]'])assert.throws(()=>checkProgram(parseJavaScript("console.log('ABC'.at("+position+'));')));
   assert.throws(()=>checkProgram(parseJavaScript('/** @returns {string} */function wrong(){return "".at(0);}')));
   const array='/** @param {number[]} values @returns {number|undefined} */function last(values){return values.at(-1);}';
   // Keep the original array input. The complete relative-array source lambda

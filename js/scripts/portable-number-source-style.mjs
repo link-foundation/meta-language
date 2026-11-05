@@ -246,13 +246,23 @@ export function readPortableNumberSourceStyles(source) {
   let current = source;
   const actions = [];
   let boundary = source.length;
+  // Equal function text can belong to distinct, independently proved modules.
+  // Keep every range check; record one exact program context when function
+  // text alone cannot own an unambiguous replay action.
+  const programContext=changes.some(change=>source.split(change.from).length!==2);
   for (const change of changes.sort((left, right) => right.start - left.start)) {
     assert.ok(change.end <= boundary, 'numeric styles refuse overlapping function owners');
-    assert.equal(current.split(change.from).length, 2, 'a recorded numeric source context has exactly one owned occurrence');
-    const action = {op:'replace', field:'source', from:change.from, to:change.to};
-    actions.push(action);
+    assert.equal(current.slice(change.start,change.end),change.from,'numeric styles retain the complete exact source of each proved function owner');
+    if(!programContext){
+      assert.equal(current.split(change.from).length, 2, 'a recorded numeric source context has exactly one owned occurrence');
+      actions.push({op:'replace',field:'source',from:change.from,to:change.to});
+    }
     current = current.slice(0, change.start) + change.to + current.slice(change.end);
     boundary = change.start;
+  }
+  if(programContext){
+    assert.equal(source.split(source).length,2,'a recorded numeric source context has exactly one owned occurrence');
+    actions.push({op:'replace',field:'source',from:source,to:current});
   }
   return {source:current, actions};
 }

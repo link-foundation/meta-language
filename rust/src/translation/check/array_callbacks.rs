@@ -57,7 +57,20 @@ impl Checker {
                 node.span,
             ));
         };
-        let object = self.expr(object, env, path, None, false)?;
+        let source = object.as_ref();
+        let object = self.expr(source, env, path, None, false)?;
+        if !self.checked_projection
+            && let Some(value) = self.javascript_nullish_access(
+                (&object, source),
+                super::javascript_nullish_fields::JavaScriptPropertyAccess::Method(op, args),
+                env,
+                path,
+                expected.concrete(),
+                node.span,
+            )?
+        {
+            return Ok(value);
+        }
         let object = Self::reference_value(object);
         let Type::Array { element, .. } = &object.ty else {
             return self
@@ -108,6 +121,7 @@ impl Checker {
             .and_then(Option::as_ref)
             .ok_or_else(|| type_error(signature_error(op, &UNIT, &params, ret), node.span))?;
         let callback = self.expr_with_callable_expectation(callback, env, path, &params, ret)?;
+        let callback = self.optional_callback_bridge(callback, &params, node.span)?;
         let error = signature_error(op, &callback.ty, &params, ret);
         if !error.is_empty() {
             return Err(type_error(error, node.span));

@@ -1,0 +1,337 @@
+//! Identity allocation and snapshots; state decisions are generated shared rules.
+use super::{Result, SExpr, SNode, SourceOrigin, SourceOrigins, Span, Type, unsupported};
+use crate::translation::rust_owned_binding_rules as rules;
+use std::collections::{HashMap, HashSet};
+impl SourceOrigins {
+    pub(in super::super) fn owned_binding_state_count(&self)->usize{self.source_binding_states.len()}
+    pub(in super::super) fn owned_binding_state_text_size(&self)->usize{self.source_binding_states.iter().map(|(identity,state)|identity.len()+state.len()).sum()}
+    pub(in super::super) fn owned_temporary_state_cost(&self)->(usize,usize){(self.source_temporary_bindings.len(),self.source_temporary_bindings.iter().map(String::len).sum())}
+    pub(in super::super) fn ensure_owned_record_field_state(&mut self,identity:&str){self.source_binding_states.entry(identity.to_owned()).or_insert_with(||"available".to_owned());}
+    pub(in super::super) fn set_owned_record_field_state(&mut self,identity:&str,state:&str){self.source_binding_states.insert(identity.to_owned(),state.to_owned());}
+    pub(in super::super) fn check_owned_record_whole(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{
+        if self.collecting||origin.source_binding_identity.is_none(){return Ok(());}let boxed=self.owned_box_record_owner(origin).is_some();if !boxed{let mut direct=origin.clone();direct.wrappers.clear();if self.nominal_ownership_facts(&direct).profile!="owned"{return Ok(());}}let (identities,states):(Vec<_>,Vec<_>)=self.source_binding_states.iter().map(|(identity,state)|(identity.clone(),state.clone())).unzip();let error=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_whole_error(origin.source_binding_identity.as_deref().unwrap_or(""),&identities,&states);if error.is_empty(){Ok(())}else{Err(unsupported("Rust record field ownership",&error,span))}
+    }
+    pub(in super::super) fn assign_copy_closure_lexical_binding(&mut self,mut origin:SourceOrigin)->SourceOrigin{
+        if !self.collecting{let identity=format!("lexical {}",self.next_source_binding_identity);self.next_source_binding_identity+=1;origin.source_lexical_binding_identity=Some(identity.clone());self.source_binding_states.insert(identity,"available".to_owned());}self.promote_mutable_record_value_loans(origin)
+    }
+    pub(in super::super) fn copy_closure_lexical_state(&self,identity:&str)->&str{self.source_binding_states.get(identity).map_or("",String::as_str)}
+    pub(in super::super) fn owned_standard_sum_argument_transferred(&self,node:&SExpr)->bool{
+        node.span.is_some_and(|span|self.owned_argument_transfers.contains(&span))
+    }
+    pub(in super::super) fn owned_standard_sum_recorded_call(&self,node:&SExpr)->bool{
+        node.span.is_some_and(|span|self.fresh_calls.contains(&span))
+    }
+    pub(in super::super) fn owned_standard_sum_recorded_vector(&self,node:&SExpr)->bool{node.span.is_some_and(|span|self.fresh_vector_constructors.contains(&span))}
+    pub(in super::super) fn track_owned_bindings(&self) -> bool {
+        rules::accept_rust_owned_binding_tracking(
+            self.collecting,
+            self.owned_binding_excluded
+                || self.owned_local_values
+                || self.shared_array_handles
+                || !self.array_result_model.is_empty(),
+        )
+    }
+    pub(in super::super) fn owned_binding_value(&self, origin: &SourceOrigin) -> bool {
+        self.track_owned_bindings()
+            && (rules::accept_rust_owned_binding_value(
+                origin.ty.as_ref().map_or("", Type::kind),
+                origin
+                    .array_source_model
+                    .or(origin.text_source_model)
+                    .unwrap_or(""),
+                origin.wrappers.len() as f64,
+                origin.proven,
+            ) || self.is_owned_standard_sum_value(origin) || self.is_owned_nominal_value(origin) || self.is_owned_box_value(origin))
+    }
+    pub(in super::super) fn check_owned_origin(
+        &self,
+        origin: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        self.validate_copy_closure_value_borrows(origin,span)?;
+        if !self.track_owned_bindings() {
+            return Ok(());
+        }
+        self.check_owned_record_whole(origin,span)?;
+        let identities = rules::project_rust_owned_loan_bindings(
+            origin.source_binding_identity.as_deref().unwrap_or(""),
+            &origin.source_loan_binding_identities,
+        );
+        let states = identities
+            .iter()
+            .map(|id| {
+                self.source_binding_states
+                    .get(id)
+                    .cloned()
+                    .unwrap_or_default()
+            })
+            .collect::<Vec<_>>();
+        let error = rules::read_rust_owned_loan_read_error(&states);
+        if !error.is_empty() {
+            return Err(unsupported("Rust owned binding", &error, span));
+        }
+        Ok(())
+    }
+    pub(in super::super) fn register_owned_binding(
+        &mut self,
+        mut origin: SourceOrigin,
+    ) -> SourceOrigin {
+        if rules::accept_rust_owned_binding_registration(self.owned_binding_value(&origin),origin.source_borrowed_place) {
+            let id = self.next_source_binding_identity.to_string();
+            self.next_source_binding_identity += 1;
+            origin.source_binding_identity = Some(id.clone());
+            origin.source_extending_temporary_bindings.clear();
+            origin.source_place_binding_identity = None;
+            origin.source_loan_binding_identities.clear();
+            origin.source_place_loan_binding_identities.clear();
+            origin.source_standard_sum_pattern_move=false;
+            origin.source_nominal_pattern_move=false;
+            self.source_binding_states
+                .insert(id, "available".to_owned());
+        }
+        origin
+    }
+    pub(in super::super) fn available_owned_binding(&self, origin: &SourceOrigin) -> bool {
+        self.owned_binding_value(origin)
+            && origin.source_binding_identity.as_ref().is_some_and(|id| {
+                rules::read_rust_owned_binding_read_error(
+                    self.source_binding_states
+                        .get(id)
+                        .map_or("", String::as_str),
+                )
+                .is_empty()
+            })
+    }
+    pub(in super::super) fn check_owned_place_move(
+        &self,
+        origin: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        let error = rules::read_rust_owned_place_move_error(
+            self.track_owned_bindings(),
+            origin.source_borrowed_place,
+            self.owned_binding_value(origin),
+        );
+        if !error.is_empty() {
+            return Err(unsupported("Rust owned binding", &error, span));
+        }
+        self.check_mutable_record_loan_move(origin,span)
+    }
+    pub(in super::super) fn consume_owned_binding(
+        &mut self,
+        origin: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<bool> {
+        self.check_owned_place_move(origin, span)?;
+        if !self.owned_binding_value(origin) || origin.source_binding_identity.is_none() {
+            return Ok(false);
+        }
+        self.check_owned_origin(origin, span)?;
+        let id = origin.source_binding_identity.as_ref().unwrap();
+        let state =
+            rules::consume_rust_owned_binding_state(self.source_binding_states.get(id).unwrap());
+        self.source_binding_states.insert(id.clone(), state);
+        Ok(true)
+    }
+    pub(in super::super) fn check_owned_name(&self, node: &SExpr, path: &[String]) -> Result<()> {
+        if let SNode::Name { path: names } = &node.node {
+            if names.len() == 1 {
+                if let Some(origin) = self.scope.get(&names[0]) {
+                    self.check_owned_origin(origin, node.span)?;
+                }
+            }
+        }
+        let _ = path;
+        Ok(())
+    }
+    pub(in super::super) fn transfer_owned_result(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+    ) -> Result<SourceOrigin> {
+        let origin = self.origin(node, path);
+        self.check_owned_place_move(&origin, node.span)?;
+        if !self.owned_binding_value(&origin)
+            || !rules::accept_rust_owned_result_transfer(
+                origin.source_binding_identity.is_some(),
+                self.available_owned_binding(&origin),
+                origin.source_owned_result_proof,
+                origin.fresh_array_value.is_some()
+                    || node
+                        .span
+                        .is_some_and(|place| self.fresh_vector_constructors.contains(&place)),
+            )
+        {
+            return Ok(origin);
+        }
+        self.consume_owned_binding(&origin, node.span)?;
+        let mut result = self.register_owned_binding(origin);
+        result.source_owned_result_proof = true;
+        if let Some(id) = result.source_binding_identity.as_ref() {
+            self.source_temporary_bindings.insert(id.clone());
+        }
+        self.mark(node, result.clone());
+        Ok(result)
+    }
+    pub(in super::super) fn owned_temporary_frame(&self) -> HashSet<String> {
+        self.source_temporary_bindings.clone()
+    }
+    pub(in super::super) fn restore_owned_temporary_frame(&mut self,frame:HashSet<String>){
+        self.source_temporary_bindings=frame;
+    }
+    pub(in super::super) fn capture_owned_borrow(&mut self, origin: SourceOrigin) -> SourceOrigin {
+        if !self.owned_binding_value(&origin)
+            || origin.source_binding_identity.is_some()
+            || origin.source_borrowed_place
+        {
+            return origin;
+        }
+        let result = self.register_owned_binding(origin);
+        if let Some(id) = result.source_binding_identity.as_ref() {
+            self.source_temporary_bindings.insert(id.clone());
+        }
+        result
+    }
+    pub(in super::super) fn finish_owned_expression(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+        frame: &HashSet<String>,
+        extending: bool,
+    ) {
+        let origin = self.origin(node, path);
+        let carried=self.mutable_record_carried_loans(&origin);
+        for id in self.source_temporary_bindings.clone() {
+            let Some(state) = self.source_binding_states.get(&id).cloned() else {
+                continue;
+            };
+            if carried.contains(&id)&&state=="available"{continue;}
+            let disposition = rules::read_rust_owned_temporary_disposition(
+                frame.contains(&id),
+                extending && origin.source_extending_temporary_bindings.contains(&id),
+                self.owned_binding_value(&origin)
+                    && origin.source_binding_identity.as_ref() == Some(&id),
+            );
+            if disposition == "extend" {
+                self.source_temporary_bindings.remove(&id);
+            } else if disposition == "expire" {
+                self.source_binding_states
+                    .insert(id.clone(), rules::expire_rust_owned_binding_state(&state));
+                self.source_temporary_bindings.remove(&id);
+                self.retire_mutable_record_loan(&id);
+            }
+        }
+    }
+    pub(in super::super) fn prepare_owned_argument(
+        &mut self,
+        node: &SExpr,
+        parameter: Option<&SourceOrigin>,
+        path: &[String],
+    ) -> Result<()> {
+        if !parameter.is_some_and(|value| self.owned_binding_value(value)) {
+            return Ok(());
+        }
+        let origin = self.origin(node, path);
+        if self.consume_owned_binding(&origin, node.span)? {
+            if let Some(place) = node.span {
+                self.owned_argument_transfers.insert(place);
+            }
+        }
+        Ok(())
+    }
+    pub(in super::super) fn expire_owned_bindings(
+        &mut self,
+        before: &HashMap<String, String>,
+        result: &SourceOrigin,
+    ) -> Result<()> {
+        self.expire_owned_bindings_with_retained_regions(before,result,&[])
+    }
+    /// Transport only: callers establish the actual outlives proof before
+    /// selecting these exact IDs. All ordinary escaping-loan checks still run.
+    pub(in super::super) fn expire_owned_bindings_with_retained_regions(
+        &mut self,
+        before: &HashMap<String, String>,
+        result: &SourceOrigin,
+        retained_regions: &[String],
+    ) -> Result<()> {
+        let retained=retained_regions.iter().map(String::as_str).collect::<HashSet<_>>();
+        let carried=self.mutable_record_carried_loans(result);
+        let surviving_loans=self.source_binding_states.keys().filter(|id|self.mutable_record_loan_survives(id,before,&carried)).cloned().collect::<HashSet<_>>();
+        let escaping = if self.owned_binding_value(result) {
+            result.source_binding_identity.clone()
+        } else {
+            None
+        };
+        let surviving_fields=self.source_binding_states.keys().filter(|id|{let root=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_ultimate_root(id);!root.is_empty()&&self.source_binding_states.get(&root).is_some_and(|state|state=="available")&&(before.contains_key(&root)||escaping.as_ref()==Some(&root)||result.source_extending_temporary_bindings.contains(&root))}).cloned().collect::<HashSet<_>>();
+        for (id, state) in &mut self.source_binding_states {
+            if !retained.contains(id.as_str())&&!before.contains_key(id)&&!surviving_fields.contains(id)&&!surviving_loans.contains(id)
+                && escaping.as_ref() != Some(id)
+                && !result.source_extending_temporary_bindings.contains(id)
+            {
+                *state = rules::expire_rust_owned_binding_state(state);
+            }
+        }
+        self.restore_mutable_record_loan_index();
+        self.validate_standard_sum_borrowed_result(result,None)?;
+        self.validate_copy_closure_value_borrows(result,None)?;
+        Ok(())
+    }
+    pub(in super::super) fn snapshot_owned_bindings(&self) -> HashMap<String, String> {
+        self.source_binding_states.clone()
+    }
+    pub(in super::super) fn restore_owned_bindings(&mut self, snapshot: HashMap<String, String>) {
+        self.source_binding_states = snapshot;
+        self.restore_mutable_record_loan_index();
+    }
+    pub(in super::super) fn join_owned_bindings(
+        &mut self,
+        left: &HashMap<String, String>,
+        right: &HashMap<String, String>,
+        left_returns: bool,
+        right_returns: bool,
+    ) {
+        let ids = left
+            .keys()
+            .chain(right.keys())
+            .cloned()
+            .collect::<HashSet<_>>();
+        self.source_binding_states = ids
+            .into_iter()
+            .map(|id| {
+                let state = rules::merge_rust_owned_binding_states(
+                    &super::super::owned_record_updates::field_state(left,&id),
+                    &super::super::owned_record_updates::field_state(right,&id),
+                    left_returns,
+                    right_returns,
+                );
+                (id, state)
+            })
+            .collect();
+        self.restore_mutable_record_loan_index();
+    }
+    pub(in super::super) fn check_owned_guard(
+        &self,
+        before: &HashMap<String, String>,
+        span: Option<Span>,
+    ) -> Result<()> {
+        let ids = before.keys().chain(self.source_binding_states.keys().filter(|id|!crate::translation::rust_owned_record_update_rules::read_rust_owned_record_field_root(id).is_empty())).collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
+        let left = ids
+            .iter()
+            .map(|id| super::super::owned_record_updates::field_state(before,id))
+            .collect::<Vec<_>>();
+        let right = ids
+            .iter()
+            .map(|id| {
+                super::super::owned_record_updates::field_state(&self.source_binding_states,id)
+            })
+            .collect::<Vec<_>>();
+        if !rules::accept_rust_owned_binding_guard(&left, &right) {
+            return Err(unsupported(
+                "Rust owned binding",
+                "owned consumption in guards needs its complete fallthrough path proof",
+                span,
+            ));
+        }
+        Ok(())
+    }
+}

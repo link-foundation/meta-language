@@ -176,9 +176,12 @@ test('pointer fields, owned strings, datatypes and nominal products retain preci
     ['fn main() { let pointer = &1u32; let pair = (pointer, true); }', /immutable Rust tuple product/u],
     ['fn main() { let pair = (Box::new(1u32), true); }', /immutable Rust tuple product/u],
     ['fn main() { let pair = (String::from("x"), true); }', /immutable tuple product/u],
-    ['struct Pair(u32, bool); fn main() {}', /Rust struct item/u],
+    ['struct Pair(u32, bool); fn main() {}', /Rust struct item/u, 'tuple-struct'],
   ];
-  for (const [source, message] of cases) assert.throws(() => checkRust(source), error => error.kind === 'unsupported' && message.test(error.message), source);
+  for (const [source, message, correction] of cases) {
+    if(correction)assertCorrectedProductSource(source,message,correction);
+    else assert.throws(() => checkRust(source), error => error.kind === 'unsupported' && message.test(error.message), source);
+  }
 });
 
 test('tuple binding refuses mutation, references, refutable coverage and duplicate names', () => {
@@ -190,10 +193,23 @@ test('tuple binding refuses mutation, references, refutable coverage and duplica
     ['fn main() { let (value, true) = (1u32, true); }', /refutable product binding/u],
     ['fn main() { let (value,) = (1u32, true); }', /tuple binding has the wrong number of fields/u],
     ['fn main() { let () = 1u32; }', /unit product binding/u],
-    ['fn main() { let pair = (1u32, true); let value = match pair { (value, _) => value }; }', /tuple match pattern/u],
+    ['fn main() { let pair = (1u32, true); let value = match pair { (value, _) => value }; }', /tuple match pattern/u, 'tuple-match'],
   ];
-  for (const [source, message] of cases) assert.throws(() => checkRust(source), error => message.test(error.message), source);
+  for (const [source, message, correction] of cases) {
+    if(correction)assertCorrectedProductSource(source,message,correction);
+    else assert.throws(() => checkRust(source), error => message.test(error.message), source);
+  }
 });
+
+// Source forms now have complete shared lowering. Retain the exact old inputs
+// and assertions as declarations, with additive original-Rust value products.
+function assertCorrectedProductSource(source,message,correction){
+  const fixture=readProjectData(new URL('../../parity/fixtures/rust-product-correction-'+correction+'.lino',import.meta.url));
+  assert.equal(fixture.cases[0].source,source);
+  assert.ok(fixture.source.startsWith(source));
+  assert.deepEqual(fixture.cases[0].previousExpectation,{kind:'unsupported',messagePattern:message.source});
+  assert.doesNotThrow(()=>checkRust(source));
+}
 
 test('tuple index spelling rejects separators, leading zeros, suffixes and non-decimal forms', () => {
   for (const spelling of ['00', '01', '0_0', '0u32', '1f64', '1e0', '0.01']) {

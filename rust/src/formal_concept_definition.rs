@@ -180,6 +180,19 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
     {
         return Err("the formal primitive model differs from its supported declaration".to_owned());
     }
+    let normalized = if model == "checked typed program"
+        || model == SHARED_NUMERIC_FUNCTION_MODEL
+        || model == SHARED_BOOLEAN_FUNCTION_MODEL
+        || model == BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL
+    {
+        Some(
+            crate::typed_program_links::expand_typed_program_record_shapes(network, body)
+                .map_err(|error| error.to_string())?,
+        )
+    } else {
+        None
+    };
+    let network = normalized.as_ref().unwrap_or(network);
     let mut exclusions = BTreeSet::from([(value.root, "provenance".to_owned())]);
     let mut meaning = None;
     if model == "checked typed program"
@@ -337,7 +350,7 @@ pub fn encode_formal_concept_definition(
 
 // Private graph constructor for the additive declaration-value entry API.
 // The public options type and original wrapper constructor remain unchanged.
-pub(crate) fn encode_formal_function_declaration_context(
+pub fn encode_formal_function_declaration_context(
     network: &LinkNetwork,
     typed_root: LinkId,
     entry_declaration: LinkId,

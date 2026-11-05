@@ -179,7 +179,9 @@ pub fn encode_link_network_binary(
     network: &LinkNetwork,
     options: BinaryLinksOptions,
 ) -> Result<Vec<u8>, BinaryLinksError> {
-    let mut fields = vec![2.0, number(network.next_id)?, length(network.links.len())?];
+    let next_id = u64::try_from(network.next_id)
+        .map_err(|_| fail("unsafe integer is outside the interoperable Number profile"))?;
+    let mut fields = vec![2.0, number(next_id)?, length(network.links.len())?];
     if network.links.len() > options.record_limit {
         return Err(fail("record resource limit exceeded"));
     }
@@ -376,7 +378,7 @@ pub fn decode_link_network_binary(
         {
             network.terms.insert(Arc::from(term), identity);
         }
-        network.next_id = network.next_id.max(identity.as_u64() + 1);
+        network.observe_identifier(identity);
         network.links.insert(
             identity,
             Arc::new(Link {
@@ -413,7 +415,7 @@ pub fn decode_link_network_binary(
                 return Err(fail("duplicate selected-syntax key"));
             }
         }
-        network.next_id = next_identity;
+        network.next_id = u128::from(next_identity);
     }
     Ok(network)
 }

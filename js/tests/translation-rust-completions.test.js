@@ -73,9 +73,10 @@ test('closed Rust completions preserve ten independent original pairs and source
   assert.throws(()=>parseRust(fixture.cases[0].rust,options(fixture.cases[0])),/function without a result: ml_main/u,'full emitted-main wrapper admission remains a separate source proof');
 });
 
-test('default direct-return and return-expression oracles remain exact while selected escaping and unsafe completions refuse',()=>{
+test('default terminal return keeps its original source and corrected value admission while unsafe completions refuse',()=>{
   assert.equal(fixture.legacy.length,2);assert.equal(fixture.invalid.length,24);
-  for(const entry of fixture.legacy)exactRefusal(entry);
+  assert.doesNotThrow(()=>checkProgram(parseRust(fixture.legacy[0].source)));
+  exactRefusal(fixture.legacy[1]);
   assert.equal(fixture.legacy[0].id,'frontend-rust/frontend-rust-negativeEarlyReturn');
   assert.equal(fixture.legacy[0].reason,'early return: write the result as the tail expression of the block');
   assert.deepEqual(fixture.legacy[0].span,{start:22,end:28});

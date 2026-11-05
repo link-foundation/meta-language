@@ -13,13 +13,14 @@ import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_LOOP_SOURCE,pinSc
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
 import {generateJavaScriptMutableArrayBindings} from '../scripts/generate-javascript-mutable-array-bindings.mjs';
 import {generateScopedIterationNativeHostSourceHistory} from '../scripts/generate-scoped-iteration-native-host-source-history.mjs';
+import {readBorrowedJavaScriptBodySourceHistory,verifyBorrowedJavaScriptBodySourceHistory,restoreBorrowedJavaScriptBodySource} from '../scripts/borrowed-javascript-body-source-history.mjs';
 const root=new URL('../../',import.meta.url),read=file=>readFileSync(new URL(file,root));
 
 test('source epoch controls select a covered Node runtime and keep the complete current and old declaration hosts',()=>{
   const[major,minor]=process.versions.node.split('.').map(Number);
   assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 || >=24 <25 required');
   const packet=readScopedIterationNativeHostSourceHistory(),specification=SCOPED_ITERATION_NATIVE_SOURCE;
-  assert.equal(packet.current.source,read(specification.file).toString('utf8'));
+  assert.equal(packet.current.source,restoreBorrowedJavaScriptBodySource(read(specification.file).toString('utf8'),specification.file));
   assert.equal(packet.current.bytes-packet.previous.bytes,57);
   assert.equal(restoreScopedIterationNativeHostSource(packet.current.source,specification.file,'required field native host'),packet.previous.source);
   const old=readRequiredFieldNativeHostSuccession().sources.find(row=>row.file===specification.file);assert.ok(old);
@@ -86,4 +87,22 @@ test('both mutable-array historical author modes preserve the complete current l
   const file=SCOPED_ITERATION_NATIVE_LOOP_SOURCE.file,artifact='parity/self-translation/javascript-mutable-array-binding-hosts.lino',before=[read(file),read(artifact)];
   generateJavaScriptMutableArrayBindings({check:true});generateJavaScriptMutableArrayBindings();
   assert.deepEqual(read(file),before[0]);assert.deepEqual(read(artifact),before[1]);
+});
+
+test('borrowed body source history keeps both complete certified hosts and refuses unknown successors',()=>{
+ const packet=readBorrowedJavaScriptBodySourceHistory(),historical=readScopedIterationNativeHostSourceHistory();
+ assert.equal(packet.previous.source,historical.current.source);
+ assert.equal(packet.current.source,read(packet.file).toString('utf8'));
+ assert.notEqual(packet.previous.source,packet.current.source);
+ assert.equal(restoreBorrowedJavaScriptBodySource(packet.current.source,packet.file),packet.previous.source);
+ for(const source of [packet.current.source+'\n',packet.current.source.slice(1),packet.previous.source])assert.equal(restoreBorrowedJavaScriptBodySource(source,packet.file),source);
+ assert.equal(restoreBorrowedJavaScriptBodySource(packet.current.source,packet.file+'.unknown'),packet.current.source);
+ for(const mutate of [value=>{value.current.source+='\n';},value=>{value.current.certificate.path='unknown.rs';},value=>{value.currentRevision='0'.repeat(40);},value=>{value.changes[0].count++;},value=>{value.extra='unrepresented';}]){
+  const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyBorrowedJavaScriptBodySourceHistory(changed));
+ }
+ const saved=encodeStructuredDataLinks(packet);
+ const canonical=LinkNetwork.fromLino(saved.network.toLino());
+ for(const network of [canonical,decodeLinkNetworkBinary(encodeLinkNetworkBinary(canonical))]){
+  const restored=decodeStructuredDataLinks(network,saved.root);assert.deepEqual(restored,packet);verifyBorrowedJavaScriptBodySourceHistory(restored);
+ }
 });

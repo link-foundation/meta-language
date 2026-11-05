@@ -1,0 +1,1 @@
+Draft closed JavaScript record reads as undefined while preserving receiver effects, inherited-name boundaries and own-property membership. Absence-only nullish fallbacks retain the fallback's actual type. Native decisions reuse shared translated source definitions; full behavior verification is deferred.

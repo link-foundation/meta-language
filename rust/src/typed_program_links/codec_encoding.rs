@@ -170,10 +170,13 @@ fn semantic_targets(
     targets: &mut Targets,
     remaining: &mut usize,
 ) -> Result<()> {
-    *remaining = remaining
-        .checked_sub(1)
-        .ok_or_else(|| error("the linked program exceeds its reference resource limit"))?;
     if let Some(object) = value.as_object() {
+        // The JavaScript reference walk counts owned records. Scalars cannot
+        // own a declaration reference; array containers only order children.
+        // The decoder retains its independent complete structural limits.
+        *remaining = remaining
+            .checked_sub(1)
+            .ok_or_else(|| error("the linked program exceeds its reference resource limit"))?;
         let kind = value["k"].as_str().unwrap_or_default();
         let type_kind = value["kind"].as_str().unwrap_or_default();
         for (role, label) in typed_program_links_schema()["references"]
@@ -186,6 +189,9 @@ fn semantic_targets(
             let label = label.as_str().unwrap();
             let field = read_program_reference_source_field(label, kind, type_kind);
             if field.is_empty() {
+                continue;
+            }
+            if value.get(&field).is_none()&&typed_program_links_schema()["optionalReferenceRoles"].as_array().is_some_and(|roles|roles.iter().any(|optional|optional.as_str()==Some(role.as_str()))){
                 continue;
             }
             let name = value[&field]
@@ -239,9 +245,14 @@ fn bindings(
     targets: &mut Targets,
     remaining: &mut usize,
 ) -> Result<()> {
-    *remaining = remaining
-        .checked_sub(1)
-        .ok_or_else(|| error("the linked program exceeds its binding resource limit"))?;
+    if !value.is_object() && !value.is_array() {
+        return Ok(());
+    }
+    if value.is_object() {
+        *remaining = remaining
+            .checked_sub(1)
+            .ok_or_else(|| error("the linked program exceeds its binding resource limit"))?;
+    }
     let kind = value["k"].as_str().unwrap_or_default();
     if let Some(proposition) = value["p"].as_str() {
         let form = read_program_proposition_binding_form(proposition);
@@ -431,6 +442,8 @@ struct Encoder {
     targets: Targets,
     pending: Vec<(LinkId, String, String)>,
     runtime_value: Option<Value>,
+    share_values: bool,
+    scalars: HashMap<(String, Option<String>), LinkId>,
 }
 impl Encoder {
     fn ordered_items(
@@ -512,10 +525,19 @@ impl Encoder {
             return Ok(*existing);
         }
         if let Some(object) = value.as_object() {
-            let type_key = value["kind"]
+            let mut type_key = value["kind"]
                 .as_str()
                 .filter(|_| path.starts_with("/declarations/") || path.starts_with("/main/"))
                 .map(|_| serde_json::to_string(value).unwrap());
+            if self.share_values
+                && path.ends_with("/span")
+                && !path.starts_with("/provenance/")
+                && object.len() == 2
+                && object.contains_key("start")
+                && object.contains_key("end")
+            {
+                type_key = Some(serde_json::to_string(value).unwrap());
+            }
             if let Some(existing) = type_key.as_ref().and_then(|key| self.types.get(key)) {
                 self.identities.insert(path.to_owned(), *existing);
                 return Ok(*existing);
@@ -559,7 +581,13 @@ impl Encoder {
                 Value::String(value) => ("string", Some(value.clone())),
                 _ => unreachable!("containers were handled above"),
             };
-            Ok(self.network.insert_link(
+            let key = (kind.to_owned(), definition.clone());
+            if self.share_values {
+                if let Some(id) = self.scalars.get(&key) {
+                    return Ok(*id);
+                }
+            }
+            let id = self.network.insert_link(
                 [],
                 metadata(
                     typed_program_links_schema()["scalars"][kind]
@@ -567,12 +595,23 @@ impl Encoder {
                         .unwrap(),
                     definition.as_deref(),
                 ),
-            ))
+            );
+            if self.share_values {
+                self.scalars.insert(key, id);
+            }
+            Ok(id)
         }
     }
 }
 
 pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
+    encode_values(program, provenance, false)
+}
+pub(super) fn encode_values(
+    program: &Program,
+    provenance: Option<&Value>,
+    share_values: bool,
+) -> Result<TypedProgramLinks> {
     let mut value = serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?;
     for (index, declaration) in program.declarations.iter().enumerate() {
         if let Decl::Fn(function) = declaration {
@@ -713,6 +752,8 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
         targets,
         pending: Vec::new(),
         runtime_value: program.source_runtime_shell.as_ref().map(|_| value.clone()),
+        share_values,
+        scalars: HashMap::new(),
     };
     let body = encoder.container("record");
     for (field, child) in value.as_object().unwrap() {

@@ -1,0 +1,1 @@
+Draft checked-integer `map_or_else` with scalar callbacks, preserving eager factory order and selected-branch invocation. Reuse actual callback result origins, shared owner checks and automatically translated policies. Independent controls remain deferred.

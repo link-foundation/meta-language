@@ -1,0 +1,30 @@
+// Future original/native lengths and exact predecessor source contexts.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const cases=[];
+function add(name,body,value,ret='i64',prefix=''){cases.push({name,module:'array_length_case_'+cases.length,source:prefix+'pub fn result()->'+ret+'{'+body+'}',value,abort:null});}
+add('an ordinary vector length has an exact usize result','let values=vec![3i64,4i64];values.len()','2','usize');
+add('an empty vector retains an exact zero length','let values=Vec::<i64>::new();values.len()','0','usize');
+add('a local exact length participates in source integer arithmetic','let values=vec![3i64,4i64];let count=values.len();count+5','7','usize');
+add('the same vector remains available after measuring its length','let values=vec![3i64,4i64];let first=values.len();first+values.len()+3','7','usize');
+add('an exact length compares with its source integer literal','let values=vec![3i64,4i64];if values.len()==2{7}else{8}','7');
+add('an exact length supports the opposite comparison direction','let values=vec![3i64,4i64];if 2==values.len(){7}else{8}','7');
+add('a nonempty length is greater than zero','let values=vec![3i64];if values.len()>0{7}else{8}','7');
+add('an empty exact length is not greater than zero','let values=Vec::<i64>::new();if values.len()>0{8}else{7}','7');
+add('a typed local retains the exact unsigned width','let values=vec![3i64,4i64];let count:usize=values.len();count+5','7','usize');
+add('an exact vector length can be converted to a signed source width','let values=vec![3i64,4i64];values.len() as i64','2');
+add('an exact count reaches a named usize parameter','let values=vec![3i64,4i64];read(values.len())','7','i64','fn read(count:usize)->i64{(count+5) as i64}');
+add('a readonly vector parameter supplies its exact length','let values=vec![3i64,4i64];read(&values)','2','usize','fn read(values:&Vec<i64>)->usize{values.len()}');
+add('a readonly slice parameter supplies its exact length','let values=vec![3i64,4i64];read(&values)','2','usize','fn read(values:&[i64])->usize{values.len()}');
+add('a Boolean element domain has the same exact count','let values=vec![true,false];values.len()','2','usize');
+add('a binary64 element domain has the same exact count','let values=vec![3.0f64,4.0f64];values.len()','2','usize');
+add('a direct temporary vector is measured once','vec![3i64,4i64].len()','2','usize');
+add('an exact length retains ordinary conditional control','let values=vec![3i64,4i64];if values.len()==2{return 7;}8','7');
+add('an exact count is a Copy closure capture','let values=vec![3i64,4i64];let count=values.len();let read=||->usize{count+5};read()','7','usize');
+add('a typed Copy closure can return an exact local count','let read=||->usize{let values=vec![3i64,4i64];values.len()+5};read()','7','usize');
+add('the preceding explicit binary64 length path remains available','let values=vec![3i64,4i64];values.len() as f64','2','f64');
+add('the original empty query retains its Boolean result','let values=Vec::<i64>::new();if values.is_empty(){7}else{8}','7');
+const revision='485bab80',history=['js/src/translation/rust.js','js/src/translation/check.js','js/src/typed-program-expression-projection.js','js/src/translation/emit-rust.js','js/src/translation/emit-lean.js','js/src/translation/emit-rocq.js','rust/src/translation/rust/expressions.rs','rust/src/translation/check.rs','rust/src/typed_program_links/projection.rs','rust/src/translation/emit_rust/arrays.rs','rust/src/translation/emit_lean/arrays.rs','rust/src/translation/emit_rocq/arrays.rs'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return {path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/rust-array-lengths.lino',import.meta.url),{schemaVersion:1,model:'ordinary exact 64-bit Rust array length through existing integer operations 1',cases,refusals:[],history,source:cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024; source target_pointer_width=64'},references:['https://doc.rust-lang.org/std/vec/struct.Vec.html#method.len'],assertions:['actualOrdinaryVectorAndSliceSourceOwner','exactUnsigned64CountWithoutNumberConversion','existingExplicitBinary64AndEmptyQueriesRetained','receiverEvaluatedOnceAndRetainedAfterRead','fixedWidthCountSurvivesProjectionAndBothCodecs','completePredecessorsFourEmissionsAndNativeProducts'],boundary:'Unexecuted future controls. Uses the existing 64-bit Rust usize source model and represented immutable arrays. Exact count is the existing Length primitive with an explicit unsigned 64-bit codomain; its projection reconstructs the same count. Other target widths, full usize arithmetic, mutable/custom collection ownership, UTF-8 String byte counts and all earlier requirements remain obligations.'});

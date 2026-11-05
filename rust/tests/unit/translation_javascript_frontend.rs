@@ -98,12 +98,14 @@ fn documented_collections_preserve_nested_type_arguments_and_exact_arities() {
         (
             "{items: Map<string, Set<number[]>>}",
             Type::Record {
+                source_class_owner: None,
                 fields: vec![meta_language::translation::types::TypeField {
                     name: "items".to_owned(),
                     ty: nested,
                 }],
                 open: false,
                 reference: false,
+                ordered: false,
             },
         ),
     ] {

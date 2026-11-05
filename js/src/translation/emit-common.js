@@ -5,6 +5,9 @@
 
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
+import { renderSourceTargetIdentifier } from './source-identifier-rules.js';
+import {acceptOrderedRecordNumberStorage} from './ordered-record-layout-rules.js';
+import {planDatatypeDependencyGroups} from './datatype-dependency-group-rules.js';
 
 /** Assumption texts are fixed so that contracts compare across runtimes. */
 export const ASSUMPTIONS = {
@@ -42,24 +45,7 @@ export class EmitState {
 
   /** Target names are fixed up front, so references never depend on emission order. */
   assign() {
-    const namespace = (key) => {
-      // Root declarations may not redeclare the target's prelude (`rootReserved`).
-      if (!this.taken.has(key)) {
-        const root = key.endsWith(':') ? this.options.rootReserved ?? [] : [];
-        this.taken.set(key, new Set([...this.reserved, ...root]));
-      }
-      return this.taken.get(key);
-    };
-    const claim = (space, name) => {
-      const used = namespace(space);
-      let candidate = name;
-      for (let index = 2; used.has(candidate) || this.isGenerated(candidate, used); index += 1) candidate = `${name}_${index}`;
-      for (const name of [candidate, ...this.generatedFor(candidate)]) {
-        used.add(name);
-        this.claimed.add(name);
-      }
-      return candidate;
-    };
+    const claim = (space, name) => this.claimTargetName(space,name);
     const moduleName = this.options.moduleSegment ?? this.ident;
     // JavaScript modules are values; Rust modules share the type namespace.
     let moduleSpace = 'module';
@@ -87,6 +73,40 @@ export class EmitState {
           this.ctorNames.set(`${entry.fullName}#${ctor.name}`, claim(ctorSpace, ctorBase));
         }
       }
+    }
+  }
+
+  /** Claim private target names without releasing any existing public name. */
+  claimTargetName(space,name){
+    name=renderSourceTargetIdentifier(name);
+    if(!this.taken.has(space))this.taken.set(space,new Set([...this.reserved,...(space.endsWith(':')?this.options.rootReserved??[]:[])]));
+    const used=this.taken.get(space);let candidate=name;
+    for(let index=2;used.has(candidate)||this.isGenerated(candidate,used);index+=1)candidate=`${name}_${index}`;
+    for(const claimed of [candidate,...this.generatedFor(candidate)]){used.add(claimed);this.claimed.add(claimed);}
+    return candidate;
+  }
+
+  /** Start from original public naming, then claim private lifted names.
+   * All original names remain reserved for the explicit emitted aliases. */
+  relocateDatatypes(program,aliases){
+    const seen=new Set();
+    const sourceKeys=Object.keys(this.program);
+    if(sourceKeys.length!==Object.keys(program).length||sourceKeys.some(key=>key!=='declarations'&&this.program[key]!==program[key])||this.program.declarations.size!==program.declarations.size)throw unsupported('formal datatype target names','target placement must preserve the complete original program');
+    for(const alias of aliases){
+      const source=this.program.declarations.get(alias.sourceFullName),target=program.declarations.get(alias.targetFullName);
+      if(seen.has(alias.sourceFullName)||source?.k!=='data'||target?.k!=='data'||source.fullName!==target.fullName||source.name!==target.name||source.ctors!==target.ctors||source.modulePath.join('.')!==alias.sourceModulePath.join('.')||target.modulePath.join('.')!==alias.targetModulePath.join('.')||target.modulePath.length>=source.modulePath.length||!target.modulePath.every((part,index)=>part===source.modulePath[index]))throw unsupported('formal datatype target names','relocation requires its exact original nominal owner and target prefix');
+      if(Object.keys(source).length!==Object.keys(target).length||Object.keys(source).some(key=>key!=='modulePath'&&source[key]!==target[key])||alias.sourceName!==source.name||alias.constructors.length!==source.ctors.length||alias.constructors.some((name,index)=>name!==source.ctors[index].name))throw unsupported('formal datatype target names','target placement must preserve every original datatype fact and constructor alias');
+      for(let depth=1;depth<=target.modulePath.length;depth+=1)if(!this.moduleNames.has(target.modulePath.slice(0,depth).join('.')))throw unsupported('formal datatype target names','a lifted module prefix must belong to the original source');
+      seen.add(alias.sourceFullName);
+    }
+    for(const [name,entry]of this.program.declarations)if(!seen.has(name)&&program.declarations.get(name)!==entry)throw unsupported('formal datatype target names','target placement must preserve every unmoved declaration');
+    this.program=program;
+    for(const alias of aliases){
+      const entry=program.declarations.get(alias.targetFullName),space=`term:${entry.modulePath.join('.')}`;
+      const local=this.claimTargetName(this.options.typeSpace?`type:${entry.modulePath.join('.')}`:space,(this.options.typeName??this.ident)(entry.name));
+      const path=entry.modulePath.map((_,index)=>this.moduleNames.get(entry.modulePath.slice(0,index+1).join('.')));
+      this.names.set(entry.fullName,{local,path});
+      for(const ctor of entry.ctors){const ctorSpace=this.options.ctorStyle==='module'?space:`ctor:${entry.fullName}`;this.ctorNames.set(`${entry.fullName}#${ctor.name}`,this.claimTargetName(ctorSpace,(this.options.ctorName??this.ident)(ctor.name)));}
     }
   }
 
@@ -209,8 +229,18 @@ export function unthreaded(what) {
 export function dependencies(entry) {
   const found = new Set();
   const types = (type) => {
-    if (type?.kind === 'data') found.add(type.name);
-    if (type?.kind === 'array') types(type.element);
+    const pending=type?[type]:[],seen=new Set();
+    while(pending.length){
+      const value=pending.pop();if(seen.has(value))continue;seen.add(value);
+      if(seen.size>100000)throw unsupported('datatype dependencies','the actual type graph exceeds its traversal budget');
+      if(value.kind==='data')found.add(value.name);
+      else if(['array','option','set','cell'].includes(value.kind))pending.push(value.element);
+      else if(value.kind==='map')pending.push(value.key,value.value);
+      else if(value.kind==='tuple')pending.push(...value.elements);
+      else if(value.kind==='union')pending.push(...value.alternatives);
+      else if(value.kind==='record')pending.push(...value.fields.map(field=>field.type));
+      else if(value.kind==='function')pending.push(...value.params,value.ret);
+    }
   };
   const visit = (node) => {
     if (!node || typeof node !== 'object') return;
@@ -255,6 +285,7 @@ export function typeChildren(type) {
 }
 
 export function typeContains(program, type, kind, seen = new Set()) {
+  if(kind==='float'&&acceptOrderedRecordNumberStorage(type.kind,type.ordered===true))return true;
   if (type.kind === kind) return true;
   if (type.kind === 'data') {
     if (seen.has(type.name)) return false;
@@ -274,7 +305,7 @@ export function numberDependence(program) {
     const visit = (value) => {
       if (found || !value || typeof value !== 'object') return;
       if (Array.isArray(value)) value.forEach(visit);
-      else if (value.kind === 'float') found = true;
+      else if (value.kind === 'float'||acceptOrderedRecordNumberStorage(value.kind??'',value.ordered===true)) found = true;
       else Object.values(value).forEach(visit);
     };
     visit(node);
@@ -336,17 +367,37 @@ export function mutualGroups(program) {
     .filter((other) => reach.get(entry.fullName).has(other.fullName) && reach.get(other.fullName).has(entry.fullName))]));
 }
 
+/** Actual datatype SCCs, retaining source order within every mutual unit.
+ * Positivity, finite constructors and target blocks are checked separately. */
+export function datatypeGroups(program){
+  const members=[...program.declarations.values()].filter(entry=>entry.k==='data');
+  if(members.length>8192)throw unsupported('datatype dependencies','the complete datatype dependency graph exceeds its bounded source profile');
+  const positions=new Map(members.map((entry,index)=>[entry.fullName,index])),ends=[],edges=[];
+  for(const entry of members){for(const name of dependencies(entry))if(positions.has(name)){if(edges.length>=131072)throw unsupported('datatype dependencies','the complete datatype dependency graph exceeds its bounded source profile');edges.push(positions.get(name));}ends.push(edges.length);}
+  const plan=planDatatypeDependencyGroups(members.length,ends,edges);
+  if(plan.length!==members.length)throw unsupported('datatype dependencies','the complete datatype dependency graph exceeds its bounded source profile');
+  const units=new Map();for(let index=0;index<members.length;index+=1){const representative=plan[index];if(!Number.isInteger(representative)||representative<0||representative>=members.length)throw unsupported('datatype dependencies','the shared component plan has an invalid actual owner');const unit=units.get(representative)??[];unit.push(members[index]);units.set(representative,unit);}
+  const result=new Map();for(const group of units.values())if(group.length>1)for(const entry of group)result.set(entry.fullName,group);
+  return result;
+}
+
 /**
  * Declarations in an order where each follows everything it uses. Source
  * order is kept where possible and, among ready declarations, the ones in
  * the module being emitted come first so modules stay contiguous.
  */
-export function orderDeclarations(program, { requireContiguousModules = false } = {}) {
+export function orderDeclarations(program, { requireContiguousModules = false,extraDependencies=new Map() } = {}) {
   const entries = [...program.declarations.values()];
   const position = new Map(entries.map((entry, index) => [entry.fullName, index]));
   const pending = new Map(entries.map((entry) => [entry.fullName, dependencies(entry)]));
+  if(!(extraDependencies instanceof Map)||extraDependencies.size>8192)throw unsupported('target declaration dependencies','extra ordering dependencies require a bounded actual declaration directory');
+  let extraEdges=0;
+  for(const [name,edges]of extraDependencies){
+    if(!position.has(name)||!(edges instanceof Set))throw unsupported('target declaration dependencies','extra ordering dependencies require actual declared owners');
+    for(const edge of edges){if(!position.has(edge)||++extraEdges>131072)throw unsupported('target declaration dependencies','extra ordering dependencies require bounded actual declaration edges');pending.get(name).add(edge);}
+  }
   // A group of mutually recursive functions is ready, and placed, as one.
-  const groups = mutualGroups(program);
+  const groups = new Map([...mutualGroups(program),...datatypeGroups(program)]);
   const unit = (entry) => groups.get(entry.fullName) ?? [entry];
   const done = new Set();
   const order = [];

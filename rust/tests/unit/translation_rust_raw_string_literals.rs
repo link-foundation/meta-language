@@ -335,12 +335,36 @@ fn malformed_raw_tokens_and_isolated_cr_refuse_without_widening_other_prefixes()
         assert_eq!(error.span, Some(Span::new(start, start + 1)));
         assert!(create_typed_program_links(&source, "Rust").is_err());
     }
+    // Rust Reference lex.token.str-byte-raw. The full original assertions and
+    // every input remain in rust-byte-string-assertion-history.lino.
+    let byte_profile = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-byte-string-literals.lino"
+    ))
+    .unwrap();
     for entry in data["unchangedPrefixes"].as_array().unwrap() {
         let source = entry.as_str().unwrap();
-        assert_eq!(
-            tokenize(source, Language::Rust).unwrap().tokens[0].kind,
-            TokenKind::Identifier
-        );
+        let expectation = byte_profile["legacyRawPrefixExpectations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["source"] == source)
+            .expect("every original source needs its declared version profile");
+        let expected = match expectation["kind"].as_str().unwrap() {
+            "identifier" => TokenKind::Identifier,
+            "byteString" => TokenKind::ByteString,
+            other => panic!(
+                "uncovered Rust lexical profile {other}; {}",
+                byte_profile["versions"]["Rust"]
+            ),
+        };
+        let result = tokenize(source, Language::Rust).unwrap();
+        let token = &result.tokens[0];
+        assert_eq!(token.kind, expected);
+        if expected == TokenKind::ByteString {
+            assert_eq!(token.raw, source);
+            assert_eq!(token.value, "76616c7565");
+            assert!(token.suffix.is_empty());
+        }
         assert!(create_typed_program_links(&source_for(source), "Rust").is_err());
     }
     for source in ["r\"value\"suffix", "r#\"value\"##"] {
@@ -941,6 +965,7 @@ fn rust_character_selection_preserves_lifetimes_labels_strings_comments_and_fore
 
 #[test]
 fn rust_character_suffixes_and_typed_semantics_remain_explicitly_unsupported() {
+    super::translation_string_array_copy_sort::require_rust_profile();
     for literal in ["'a'word", "b'a'u8", "'a'_suffix", "'a'λ"] {
         let source = format!("// 😀\n{literal}");
         let error = tokenize(&source, Language::Rust).unwrap_err();
@@ -977,11 +1002,19 @@ fn rust_character_suffixes_and_typed_semantics_remain_explicitly_unsupported() {
         }
         let source = format!("fn choose(x:u8)->u8{{match x{{{literal}=>1,_=>0}}}}");
         let error = meta_language::translation::rust::parse_rust(&source).unwrap_err();
-        assert_eq!(error.kind, ErrorKind::Unsupported);
-        assert_eq!(
-            error.reason,
-            "character pattern: characters are outside the portable core"
-        );
+        if literal.starts_with('b') {
+            // Same original input; the actual u8 pattern now reaches required-main.
+            assert_eq!(error.kind, ErrorKind::Syntax);
+            assert_eq!(error.reason, "a Rust program needs fn main");
+            let end = source.encode_utf16().count();
+            assert_eq!(error.span, Some(Span::new(end, end)));
+        } else {
+            assert_eq!(error.kind, ErrorKind::Unsupported);
+            assert_eq!(
+                error.reason,
+                "character pattern: characters are outside the portable core"
+            );
+        }
     }
     for literal in ["''", "b'é'", r"b'\u{41}'", r"'\x80'"] {
         let error = tokenize(literal, Language::Rust).unwrap_err();

@@ -132,6 +132,7 @@ pub(super) fn lower_imperative_with_captures(
     }
     let mut lowering = Lowering {
         function: name.to_owned(),
+        prefix: parser.generated_prefix.clone(),
         renames: 0,
         generated: std::mem::take(&mut parser.generated),
         count: parser.generated_count,
@@ -163,7 +164,8 @@ pub(super) fn lower_imperative_with_captures(
         .collect();
     scope.extend(params.iter().map(|param| Var {
         source: param.name.clone(),
-        ir: crate::translation::callable_source_rules::render_callable_cell_parameter_name(
+        ir: crate::translation::source_identifiers::render_source_cell_parameter(
+            &lowering.prefix,
             &param.name,
             lowering.cells.contains(&param.name),
         ),
@@ -176,11 +178,11 @@ pub(super) fn lower_imperative_with_captures(
             lowering.cells.contains(&parameter.name),
         );
         if !allocation.is_empty() {
-            let name =
-                crate::translation::callable_source_rules::render_callable_cell_parameter_name(
-                    &parameter.name,
-                    true,
-                );
+            let name = crate::translation::source_identifiers::render_source_cell_parameter(
+                &lowering.prefix,
+                &parameter.name,
+                true,
+            );
             body = let_node(
                 name,
                 node(
@@ -202,6 +204,7 @@ pub(super) fn lower_imperative_with_captures(
 
 struct Lowering {
     function: String,
+    prefix: String,
     renames: usize,
     generated: Vec<SItem>,
     count: usize,
@@ -280,7 +283,7 @@ impl Lowering {
     fn declare(&mut self, scope: &[Var], source: &str) -> Vec<Var> {
         let ir = if lookup(scope, source).is_some() {
             self.renames += 1;
-            format!("ml_{source}_{}", self.renames)
+            format!("{}shadow_{source}_{}", self.prefix, self.renames)
         } else {
             source.to_owned()
         };
@@ -295,7 +298,10 @@ impl Lowering {
 
     fn generated_name(&mut self, kind: &str) -> String {
         self.count += 1;
-        format!("ml_{}_{kind}{}", self.function, self.count)
+        format!(
+            "{}temporary_{}_{kind}{}",
+            self.prefix, self.function, self.count
+        )
     }
 
     /// The statements from `index` on; `ctx` says what falling off their end,
@@ -377,7 +383,14 @@ impl Lowering {
                 let value = renamed(expr, scope)?;
                 return (ctx.ret)(self, value);
             }
-            Stmt::Throw { message, span } => {
+            Stmt::Throw {
+                message,
+                exception,
+                span,
+            } => {
+                if let Some(exception) = exception {
+                    return renamed(exception, scope);
+                }
                 return Ok(node(
                     SNode::Abort {
                         message: message.clone(),
@@ -805,7 +818,7 @@ impl Lowering {
             Rc::new(move |_, _| Ok(next.make(current())))
         };
         if exits.ret > 0 {
-            let result = format!("ml_result{}", self.count);
+            let result = format!("{}temporary_result{}", self.prefix, self.count);
             let body = (ctx.ret)(self, named(&result, place))?;
             let returned = alternative("return", &[result], body);
             inner.ret = Rc::new(move |_, value| Ok(returned.make(vec![value])));
@@ -827,6 +840,7 @@ impl Lowering {
             span: Some(place),
             generated: true,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
         }));
         let scrutinee = self.compound(statement, &inner, scope)?;
         Ok(node(

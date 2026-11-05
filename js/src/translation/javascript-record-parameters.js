@@ -1,12 +1,31 @@
-// Named-declaration transport only. Existing common parameters()/closures are
-// unchanged. The shared plans own syntax/BoundNames/profile admission.
+// Actual named/closure/callable contexts retain their separate admission rules.
+// Shared plans own syntax, BoundNames and entry binding decisions.
 import { unsupported } from './diagnostics.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
-import { findJavaScriptRecordParameterPattern, planJavaScriptRecordParameters,
-  acceptJavaScriptRecordParameterProfile, findJavaScriptRecordParameterStrictDirective } from './javascript-record-parameter-rules.js';
+import { findJavaScriptRecordParameterPattern, planJavaScriptSourceRecordParametersWithRest,readJavaScriptRecordFormalDefaultBindingPositions,readJavaScriptRecordFormalDefaultOperation,
+  acceptJavaScriptRecordParameterProfile, readJavaScriptRecordParameterBindingStatement, findJavaScriptRecordParameterStrictDirective } from './javascript-record-parameter-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
+import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+import {readJavaScriptRecordClosureContext,acceptJavaScriptRecordClosureParameterProfile} from './record-closure-parameter-rules.js';
+import {readJavaScriptRecordConstantContext,acceptJavaScriptRecordCallableParameterProfile} from './record-callable-parameter-rules.js';
+import {readJavaScriptFormalInitializer} from './formal-initializers.js';
+import {constructJavaScriptObjectRestSource} from './object-rest.js';
+import {readJavaScriptRecursiveObjectFormals} from './recursive-object-formals.js';
+
 export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
+  return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,'ordinary named function declaration');
+}
+export function readJavaScriptRecordClosureParameters(parser,method,expression){
+  return readJavaScriptRecordParameterSyntax(parser,null,false,readJavaScriptRecordClosureContext(method,expression));
+}
+export function readJavaScriptRecordConstantParameters(parser,doc,asynchronous,expression){
+  return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,readJavaScriptRecordConstantContext(expression),true);
+}
+export function readJavaScriptRecordNamespaceParameters(parser,doc,asynchronous){
+  return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,'ordinary namespace object method',true);
+}
+function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,callable=false){
   const c = parser.cursor;
   const start = c.index, opening = c.tokens[start - 1];
   // Only the actual formal interval supplies decision facts. Matching ignores
@@ -18,10 +37,17 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   const kinds = interval.map(token => token.kind), values = interval.map(token => token.value);
   const selected = findJavaScriptRecordParameterPattern(kinds, values, 0);
   if (selected < 0) return null;
-  if (!acceptJavaScriptRecordParameterProfile('ordinary named function declaration', asynchronous,
-    doc?.params.size ?? 0, false, false)) throw unsupported('record parameter source profile',
+  const profile=callable?acceptJavaScriptRecordCallableParameterProfile(context,asynchronous,doc?.params.size??0):context==='ordinary named function declaration'
+    ?acceptJavaScriptRecordParameterProfile(context,asynchronous,doc?.params.size??0,false,false)
+    :acceptJavaScriptRecordClosureParameterProfile(context,asynchronous,doc?.params.size??0);
+  if(!profile&&callable)throw unsupported('record callable source profile','ordinary non-simple callables require synchronous bodies without parameter documentation tags',interval[selected]);
+  if (!profile) throw unsupported('record parameter source profile',
     'the initial named declaration profile requires synchronous functions without parameter documentation tags', interval[selected]);
-  const plan = planJavaScriptRecordParameters(kinds, values, 0, JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
+  const recursive=readJavaScriptRecursiveObjectFormals(parser,interval,start,context);
+  if(recursive)return recursive;
+  const plan = planJavaScriptSourceRecordParametersWithRest(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
+  // Reason eight identifies the actual rejected BoundName, never a property.
+  if (plan[0] === -8 && interval[plan[1]]) requireJavaScriptIdentifierRole(interval[plan[1]], true);
   if (plan[0] < 0) throw unsupported('record parameter binding',
     'a nonempty flat required object pattern needs distinct lexical names; defaults, arrays, nested/rest/computed patterns are separate obligations (reason ' + (-plan[0]) + ')',
     interval[plan[1]] ?? c.peek());
@@ -37,12 +63,15 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
     }
     return interval[position];
   };
+  const positions=readJavaScriptRecordFormalDefaultBindingPositions(plan);
+  const readDefault=(first,last,binding)=>readJavaScriptFormalInitializer(parser,{tokens:interval,start,first,last,binding,positions,context,profile:'record formal default'});
   let cursor = 2;
   while (cursor < plan.length) {
     const form = plan[cursor++], slot = plan[cursor++];
     if (slot !== parameters.length) throw unsupported('record parameter source transport', 'logical arguments retain their actual ordered slots', opening);
     if (form === 0) {
       const position = plan[cursor++], token = actual(position);
+      requireJavaScriptIdentifierRole(token, true);
       parameters.push({ name: token.value, type: null, span: { start: token.start, end: token.end } });
       sourceNames.push(token.value);sourcePlan.push(0, slot, start + position);continue;
     }
@@ -63,13 +92,17 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
     // token carrying this generated name. No extra IR/provenance field exists.
     const parameterSpan = { start: open.start, end: end.end };
     parameters.push({ name, type: null, span: parameterSpan });
+    const excluded=[];
     for (let index = 0; index < count; index += 1) {
-      const propertyPosition = plan[cursor++], localPosition = plan[cursor++];
+      const propertyPosition = plan[cursor++], localPosition = plan[cursor++],first=plan[cursor++],last=plan[cursor++];
       const property = actual(propertyPosition), local = actual(localPosition);
+      requireJavaScriptIdentifierRole(local, true);
+      const fallback=first>=0?readDefault(first,last,localPosition):null;
       bindings.push({ parameter: name, property: property.value, name: local.value,
-        parameterSpan, span: { start: property.start, end: local.end },
+        fallback,excluded:first===-2?excluded.slice():null,propertySpan:{start:property.start,end:property.end},parameterSpan, span: { start: property.start, end: fallback?.span?.end??local.end },
         bindingSpan: { start: local.start, end: local.end } });
       sourceNames.push(local.value);sourcePlan.push(start + propertyPosition, start + localPosition);
+      if(first!==-2)excluded.push(property);
     }
   }
   if (parameters.length !== plan[1]) throw unsupported('record parameter source transport', 'every actual argument slot must be represented', opening);
@@ -78,6 +111,15 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
 }
 
 export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody) {
+  if(syntax.patternEntries)return readJavaScriptPatternParameterBody(parser,syntax,readBody,written=>syntax.patternEntries.map(entry=>({s:entry.temporary?'const':readJavaScriptRecordParameterBindingStatement(written.has(entry.name)),name:entry.name,value:entry.value,span:entry.span})));
+  return readJavaScriptPatternParameterBody(parser,syntax,readBody,written=>syntax.bindings.map(binding=>{
+    const object={k:'name',path:[binding.parameter],span:binding.parameterSpan};
+    const value=binding.excluded!==null?constructJavaScriptObjectRestSource(object,binding.excluded,binding.span):binding.fallback?{k:'math',op:readJavaScriptRecordFormalDefaultOperation(),name:'',args:[{value:object,spread:false},{value:{k:'str',value:binding.property,span:binding.propertySpan},spread:false},{value:binding.fallback,spread:false}],span:binding.span}:{k:'field',object,field:binding.property,span:binding.span};
+    return {s:readJavaScriptRecordParameterBindingStatement(written.has(binding.name)),name:binding.name,value,span:binding.bindingSpan};
+  }));
+}
+
+export function readJavaScriptPatternParameterBody(parser,syntax,readBody,constructPrefix){
   const names = new Set(syntax.sourceNames);
   // A non-simple formal list cannot acquire a same-scope let/const binding.
   // Reuse actual declaration discovery; nested lexical shadows stay separate.
@@ -109,16 +151,10 @@ export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody)
   }
   const before = parser.lexicalReads.length;
   const statements = readBody();
-  // Conservatively reject a same-spelled nested-shadow write too. Accepting
-  // additional mutable owners requires its own lexical initialization proof.
-  const boundWrites = parser.lexicalReads.slice(before).some(read => read.assignment && names.has(read.name));
-  // The ordinary statement reader already refuses every var declaration.
-  if (!acceptJavaScriptRecordParameterProfile('ordinary named function declaration', false, 0, boundWrites, false)) {
-    throw unsupported('record parameter body',
-      'parameter writes, captured writes and var redeclarations need the separate mutable initialization interpretation', syntax.bindings[0]?.span);
-  }
-  const prefix = syntax.bindings.map(binding => ({ s: 'const', name: binding.name,
-    value: { k: 'field', object: { k: 'name', path: [binding.parameter], span: binding.parameterSpan },
-      field: binding.property, span: binding.span }, span: binding.bindingSpan }));
+  // Actual writes initialize an ordinary mutable local before the body. A
+  // same-spelled nested shadow can conservatively allocate an unused local
+  // cell; the ordinary lexical lowerer still owns the actual assignment.
+  const written=new Set(parser.lexicalReads.slice(before).filter(read=>read.assignment&&names.has(read.name)).map(read=>read.name));
+  const prefix=constructPrefix(written);
   return [...prefix, ...statements];
 }

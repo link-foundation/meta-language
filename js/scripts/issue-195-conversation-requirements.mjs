@@ -23,6 +23,9 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK': [
+    'AGENTS.md', 'docs/vision.md', 'js/scripts/issue-195-sources.mjs',
+  ],
   'I195-CONVERSATION-CRITICAL-DELIVERY': [
     'js/scripts/issue-195-requirements.mjs', 'js/scripts/issue-195-acceptance-lib.mjs',
     'js/tests/issue-195-evidence-critical-delivery.test.js',
@@ -665,4 +668,24 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Deliver full JavaScript and Rust parsing and source emission, with complete concrete syntax by default, and translation between both languages for the real project codebase as the most critical end-to-end baseline. Validate complete source inventories, lossless source reconstruction and executable semantics independently; carried original source, registration or declarations do not establish semantic translation. Complete the remaining languages and capabilities after this baseline while preserving every inherited requirement.',
       ['javascriptRustCompleteParsingAndEmissionPrioritized', 'realOwnSourceInventoryExercised', 'bidirectionalExecutableTranslationChecked', 'defaultConcreteSyntaxAndLosslessSourceRetained', 'remainingScopePreserved']],
   ]),
+  ...rows('bulkDraftBeforeTestingRequest', 'parity/sources/bulk-draft-before-testing-2026-10-23.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING', 'complete outstanding requirements drafted before integrated testing',
+      'Draft every outstanding requirement and known CI repair before testing the complete integrated batch. Include shared behavior, both runtime adapters, automatic translation and complete fixtures; refresh generated histories and manifests once after drafting, then execute required validation. Continue independent drafting while existing CI executes, preserve every inherited gate and distinguish unverified drafts from executed evidence.',
+      ['allOutstandingRequirementsDraftedBeforeTesting', 'knownCiRepairsIncluded', 'metadataIntegratedOnceAfterDrafting', 'completeValidationRetained', 'draftAndEvidenceDistinguished']],
+  ], true),
+  ...rows('completeDraftBeforeCiFeedbackRequest', 'parity/sources/complete-draft-before-ci-feedback-2026-10-25.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK', 'complete all implementation drafts before addressing CI feedback',
+      'Continue drafting every inherited issue, pull-request and conversation requirement in implementation code. Commits and coherent batch pushes are authorized to collect later feedback. Do not investigate or address any CI feedback until the entire implementation draft is complete; terminal run status may be read only to coordinate pushes. This current phase supersedes the earlier obligation to repair previous CI errors before pushing. Preserve all gates, recorded failures and later verification obligations, and retain the prohibition on code testing until every requirement has its complete code draft.',
+      ['allImplementationDraftsPrecedeCiFeedbackInvestigation', 'draftCommitsAndCoherentPushesAuthorized', 'ciGatesAndLaterVerificationRetained', 'noCodeTestsBeforeFullDraftRetained']],
+  ], true),
+  ...rows('draftEntireScopeWithoutCodeTestsRequest', 'parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'no code testing before exactly all requirements have implementation drafts',
+      'Continue drafting exactly the full issue, pull-request and conversation scope in implementation code. Do not run code tests, validation, behavioral comparisons or fixture oracles until every requirement has an implementation draft. Preserve all fixtures, assertions and later verification obligations. A registry entry, carried source, stub or unexecuted test declaration is insufficient implementation drafting, and drafting is distinct from verified delivery.',
+      ['everyRequirementHasImplementationDraft', 'codeExecutionForTestingDeferredUntilWholeDraft', 'allLaterVerificationRetained', 'stubsAndDeclarationsDoNotReplaceBehavior']],
+  ], true),
+  ...rows('draftWithoutTestsOrCompilationRequest', 'parity/sources/continue-bulk-draft-without-tests-or-compilation-2026-10-27.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-DRAFT-WITHOUT-COMPILATION', 'continue actual implementation drafting without local compilation',
+      'Continue bulk drafting all inherited requirements in implementation code while any requirement remains undrafted. A handoff preserves remaining work and does not replace continuing that work. Execute no local code tests or build compilation during this drafting phase; retain every required later compilation, behavioral verification, fixture, assertion and CI gate. Source-only code generation remains drafting, with no original/generated program execution or executable build artifact presented as verification.',
+      ['remainingHandoffWorkContinuesInImplementationCode', 'noLocalBuildCompilationDuringDrafting', 'noCodeTestsBeforeFullDraft', 'allLaterCompilationAndVerificationRetained']],
+  ], true),
 ]);

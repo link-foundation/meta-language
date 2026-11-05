@@ -1,3 +1,4 @@
+import {restoreTypedSourceDescriptorHostSource} from './typed-source-descriptor-host-history.mjs';
 // Finite normal author: independently certify a8, then append one exact edge.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -81,7 +82,7 @@ export function generateCurrentOwnCodebaseRawSourceDescriptors({check=false}={})
   const writes=[...result.outputs.map(row=>({...row,previous:[artifact,register,loan].find(input=>input.file===row.file).sourceText})),
     ...adapters.map(row=>({file:row.file,source:deriveCurrentOwnCodebaseRawDescriptorSource(row),previous:row.sourceText}))];
   // Validate every input before the first write, and keep repeated authors exact.
-  for(const row of writes){const actual=readFileSync(new URL(row.file,root),'utf8');assert.ok(actual===row.previous||actual===row.source||recordedOutputs.some(old=>old.file===row.file&&old.source===actual)||acceptCurrentRawPredecessorOutput(actual,row.file),'unreviewed whole input: '+row.file);if(check)assert.equal(actual,row.source);}
+  for(const row of writes){const physical=readFileSync(new URL(row.file,root),'utf8'),actual=check?restoreTypedSourceDescriptorHostSource(physical,row.file):physical;assert.ok(actual===row.previous||actual===row.source||recordedOutputs.some(old=>old.file===row.file&&old.source===actual)||acceptCurrentRawPredecessorOutput(actual,row.file),'unreviewed whole input: '+row.file);if(check)assert.equal(actual,row.source);}
   const helperPath=new URL(helper,root),source=readFileSync(helperPath,'utf8'),pattern=/^const policySha256='(?:PENDING|[a-f0-9]{64})';$/mu;
   assert.equal(source.split(pattern).length,2);
   const packetSource=readFileSync(new URL(policy.output,root),'utf8');

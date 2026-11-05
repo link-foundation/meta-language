@@ -4,7 +4,8 @@ import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { readRuntimeProjectData } from './project-data-loader.js';
 import { RESOURCE_DESCRIPTION_SCHEMA, importResourceDescriptionGraph, decodeResourceDescriptionGraph } from './resource-description-graphs.js';
-import { acceptResourceDescriptionIdentifier, acceptResourceDescriptionLanguage } from './resource-description-rules.js';
+import { acceptResourceDescriptionLanguage } from './resource-description-rules.js';
+import { acceptResourceDescriptionIdentifierText } from './resource-description-identifiers.js';
 import { readResourceDescriptionNTriplesToken, readResourceDescriptionNTriplesScalar, readResourceDescriptionNTriplesCanonicalEscape } from './resource-description-ntriples-rules.js';
 import { readResourceDescriptionNTriplesTransition, readResourceDescriptionNTriplesRole, acceptResourceDescriptionNTriplesFinalState } from './resource-description-ntriples-characters.js';
 
@@ -27,8 +28,7 @@ const fail = (kind, offset, message) => { throw new ResourceDescriptionNTriplesE
 const lexicalErrors = { 1: 'invalid Unicode scalar', 2: 'empty language tag', 3: 'invalid blank node label', 4: 'invalid Unicode scalar escape',
   5: 'unknown character escape', 6: 'illegal unescaped character', 7: 'unterminated term', 8: 'unexpected syntax character' };
 function identifier(value, offset) {
-  if (value.includes('[') || value.includes(']')) fail('unsupported', offset, 'bracketed identifiers require an address grammar outside this profile');
-  if (!acceptResourceDescriptionIdentifier(units(value))) fail('malformed', offset, 'an absolute identifier is required');
+  if (!acceptResourceDescriptionIdentifierText(value)) fail('malformed', offset, 'an absolute identifier is required');
   return { kind: 'identifier', value };
 }
 function tokenValue(source, input, start, end, kind) {

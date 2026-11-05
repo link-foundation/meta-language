@@ -5,6 +5,7 @@ import { acceptFormalFunctionDeclaration, acceptFormalFunctionDependency, includ
 import { decodeTypedProgramLinks, encodeTypedProgramLinks, TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
 import { LinkNetwork } from './network.js';
 import { LinkId } from './primitives.js';
+import {expandTypedProgramRecordShapes} from './typed-program-record-shapes.js';
 
 const entryName = 'selected_function_definition';
 const key = id => LinkId.from(id).asU64();
@@ -92,9 +93,10 @@ function redirectSignature(original, chosen, generated, wrapper, redirects) {
  * model; unrelated declarations and main effects do not enter its meaning.
  */
 export function encodeFormalFunctionDefinition(value, declaration, { provenance } = {}) {
-  const network = value?.network ?? (typeof value?.links === 'string' ? LinkNetwork.fromLino(value.links) : null);
+  let network = value?.network ?? (typeof value?.links === 'string' ? LinkNetwork.fromLino(value.links) : null);
   if (!(network instanceof LinkNetwork)) fail('a checked linked program is required');
   const root = LinkId.from(value.root);
+  network=expandTypedProgramRecordShapes(network,root,TYPED_PROGRAM_LINKS_SCHEMA.language,TYPED_PROGRAM_LINKS_SCHEMA.containers.record).network;
   // Preserve all existing unsupported/unknown formal-basis outcomes.
   encodeFormalConceptDefinition({ network, root });
   const program = decodeTypedProgramLinks(network, root);
@@ -115,7 +117,7 @@ export function encodeFormalFunctionDefinition(value, declaration, { provenance 
   const params = chosen.params.map(parameter => ({ ...parameter }));
   const call = { k: 'call', fn: chosen.fullName, args: params.map(parameter => ({ k: 'var', name: parameter.name, type: parameter.type })), type: chosen.ret };
   const wrapper = { ...chosen, name: entryName, fullName: entryName, modulePath: [], params, body: call, recursive: false, decreasing: null, generated: true };
-  delete wrapper.span; delete wrapper.mutual; delete wrapper.sourceSignature;
+  delete wrapper.span; delete wrapper.mutual; delete wrapper.sourceSignature; delete wrapper.sourceExclusiveSignature; delete wrapper.sourceFnMutSpecialization;
   delete wrapper.sourceLoop;
   declarations.set(entryName, wrapper);
   const projected = { ...program, items: [...declarations.values()], declarations, main: { effects: [] } };
@@ -134,9 +136,10 @@ export function encodeFormalFunctionDefinition(value, declaration, { provenance 
  * only an explicit formal-root edge selects its actual owned identity.
  */
 export function encodeFormalFunctionDeclarationValue(value, declaration, { provenance } = {}) {
-  const network = value?.network ?? (typeof value?.links === 'string' ? LinkNetwork.fromLino(value.links) : null);
+  let network = value?.network ?? (typeof value?.links === 'string' ? LinkNetwork.fromLino(value.links) : null);
   if (!(network instanceof LinkNetwork)) fail('a checked linked program is required');
   const root = LinkId.from(value.root);
+  network=expandTypedProgramRecordShapes(network,root,TYPED_PROGRAM_LINKS_SCHEMA.language,TYPED_PROGRAM_LINKS_SCHEMA.containers.record).network;
   encodeFormalConceptDefinition({ network, root });
   const program = decodeTypedProgramLinks(network, root);
   const input = directory(network, root, relations(network));

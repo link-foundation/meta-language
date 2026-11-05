@@ -37,6 +37,9 @@ impl RustParser {
             .expect("a native token position has a finite binary64 representation");
         let plan = plan_rust_literal_match_pattern(&kinds, &values, start, close);
         let Some(end) = plan.first().copied().and_then(number_index) else {
+            if self.ordinary_completion_context() {
+                return self.pattern_match(token, path, receiver, close);
+            }
             return Err(unsupported(
                 "Rust literal matches!",
                 "only a nonempty string-literal alternative list without guards or bindings is represented",
@@ -74,6 +77,9 @@ impl RustParser {
                 shadowed,
             )
         {
+            if self.ordinary_completion_context() {
+                return self.pattern_match(token, path, receiver, close);
+            }
             return Err(unsupported(
                 "Rust literal matches! receiver",
                 "the scrutinee needs its actual proven unshadowed borrowed str source owner",

@@ -255,6 +255,9 @@ pub fn encode_formal_function_definition(
     selector: FormalFunctionSelector<'_>,
     provenance: Option<&Value>,
 ) -> Result<FormalConceptArchive, String> {
+    let expanded = crate::typed_program_links::expand_typed_program_record_shapes(network, root)
+        .map_err(|error| error.to_string())?;
+    let network = &expanded;
     encode_formal_concept_definition(
         FormalConceptDefinitionInput::LinkedProgram { network, root },
         FormalConceptDefinitionOptions::default(),
@@ -443,6 +446,9 @@ pub fn encode_formal_function_declaration_value(
     selector: FormalFunctionSelector<'_>,
     provenance: Option<&Value>,
 ) -> Result<FormalConceptArchive, String> {
+    let expanded = crate::typed_program_links::expand_typed_program_record_shapes(network, root)
+        .map_err(|error| error.to_string())?;
+    let network = &expanded;
     encode_formal_concept_definition(
         FormalConceptDefinitionInput::LinkedProgram { network, root },
         FormalConceptDefinitionOptions::default(),

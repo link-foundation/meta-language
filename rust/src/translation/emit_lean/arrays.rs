@@ -29,6 +29,32 @@ impl LeanEmitter<'_> {
     /// An array literal, an append, an element read or a length.
     pub(super) fn array_expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
         Ok(match &e.node {
+            Node::CollectionSize { object } => {
+                let value = self.expr(object, depth)?;
+                crate::translation::collection_access_rules::render_collection_size_expression(
+                    "Lean", &value,
+                )
+            }
+            Node::CollectionRead { object, op, key } => {
+                let key_type = match &object.ty {
+                    Type::Map { key, .. } | Type::Set { element: key, .. } => key.as_ref(),
+                    _ => unreachable!("checked collection access owner"),
+                };
+                let float_key = key_type.is_float();
+                let value = self.expr(object, depth)?;
+                let search = self.expr(key, depth)?;
+                crate::translation::collection_access_rules::render_collection_read_expression(
+                    "Lean",
+                    object.ty.kind(),
+                    op,
+                    &value,
+                    &search,
+                    float_key,
+                    "",
+                    "",
+                    "",
+                )
+            }
             Node::Array { items } => {
                 let mut texts = Vec::with_capacity(items.len());
                 for item in items {
@@ -105,6 +131,13 @@ impl LeanEmitter<'_> {
                 }
             }
             Node::Length { array } => {
+                let (bits, signed) = match &e.ty {
+                    Type::Fixed { bits, signed } => (*bits, *signed),
+                    _ => (0, false),
+                };
+                if crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result("length",e.ty.kind(),f64::from(bits),signed,array.ty.kind()) {
+                    return Ok(crate::translation::rust_array_length_rules::render_rust_exact_array_length("Lean", &self.expr(array,depth)?));
+                }
                 if array.ty == Type::String {
                     return Ok(
                         crate::translation::frontend_rules::render_string_length_expression(

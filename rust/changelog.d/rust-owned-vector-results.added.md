@@ -1,0 +1,1 @@
+Draft transfers of owned scalar vectors through block, conditional and match results, returned parameters/local bindings and checked function forwarding. Retain prior valid refusal inputs as corrected admission controls alongside positive and invalid-reuse originals. No behavioral verification has run during requirements drafting.

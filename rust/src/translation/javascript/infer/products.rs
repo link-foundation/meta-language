@@ -2,7 +2,7 @@
 
 use super::{
     Env, HashMap, HashSet, Inference, ROOT, Result, SExpr, SItem, SNode, SProgram, Span, Term,
-    Type, collect_functions, fill_arrays, fill_fields, fill_functions, type_error,
+    Type, Signature, collect_functions, fill_arrays, fill_fields, fill_functions, type_error,
 };
 use crate::translation::frontend_rules::{
     accept_argument_count, accept_java_script_optional_tuple_context,
@@ -49,6 +49,8 @@ fn infer_javascript_types_with_observations(
         return Ok((program, observed));
     }
     let mut inference = Inference::new(&program.items);
+    inference.source_class_methods=program.source_class_methods.clone();
+    inference.source_class_owners=program.source_class_owners.clone();
     inference.record_expressions = observe;
     let inferred = inference.run(&functions, &program)?;
     let mut expression_types = if observe {
@@ -103,12 +105,17 @@ fn infer_javascript_types_with_observations(
     let mut inferred = inferred.into_iter();
     fill_functions(&mut program.items, &mut inferred);
     fill_fields(&mut program.items, &inference);
-    if !arrays.is_empty() || !expression_types.is_empty() {
-        fill_arrays(&mut program, &arrays, &expression_types);
+    let copies=inference.collection_copies.iter().map(|(node,term)|(*node,inference.surface(term,None))).collect::<HashMap<_,_>>();
+    if !arrays.is_empty() || !expression_types.is_empty() || !copies.is_empty(){
+        for(previous,current)in fill_arrays(&mut program,&arrays,&mut expression_types,&copies){
+            if let Some(method)=inference.property_methods.remove(&previous){inference.property_methods.insert(current,method);}
+            if inference.array_includes.remove(&previous){inference.array_includes.insert(current);}
+        }
     }
     super::methods::fill_methods(
         &mut program,
         &inference.array_includes,
+        &inference.property_methods,
         &mut expression_types,
     );
     super::super::reference_analysis::mark_shared_reference_types(
@@ -133,6 +140,46 @@ impl Inference {
             }
         }
         self.iterables = waiting;
+        Ok(progress)
+    }
+
+    pub(super) fn solve_array_formal_iterables(&mut self) -> Result<bool> {
+        let mut progress = false;
+        let mut waiting = Vec::new();
+        for constraint in std::mem::take(&mut self.array_formal_iterables) {
+            let object = self.resolve(&constraint.object);
+            let form=crate::translation::array_formal_parameter_rules::read_java_script_array_formal_inference_form(&crate::translation::array_formal_parameter_rules::ml_string::Text::from_text(super::optional_values::kind(&object))).to_string();
+            match form.as_str() {
+                "wait" => {
+                    waiting.push(constraint);
+                    continue;
+                }
+                "identity" => {
+                    self.unify(&constraint.result, &constraint.object, constraint.place)?
+                }
+                "iterate" => {
+                    let element = self.array_from_iterable_element(&object).ok_or_else(|| {
+                        type_error(
+                            "an array formal parameter needs a represented iterable",
+                            constraint.place,
+                        )
+                    })?;
+                    self.unify(
+                        &constraint.result,
+                        &Term::Array(Box::new(element)),
+                        constraint.place,
+                    )?;
+                }
+                _ => {
+                    return Err(type_error(
+                        "an array formal parameter needs a represented iterable",
+                        constraint.place,
+                    ));
+                }
+            }
+            progress = true;
+        }
+        self.array_formal_iterables = waiting;
         Ok(progress)
     }
 
@@ -293,13 +340,41 @@ impl Inference {
                 )
             })
             .collect::<Result<Vec<_>>>()?;
+        self.call_terms(signature,arg_terms,&args.iter().map(|arg|arg.span).collect::<Vec<_>>(),place)
+    }
+
+    pub(super) fn call_terms(&mut self,signature:Option<Signature>,mut arg_terms:Vec<Term>,spans:&[Option<Span>],place:Option<Span>)->Result<Term>{
         #[allow(clippy::cast_precision_loss)]
-        let argument_count = args.len() as f64;
-        let Some(signature) = signature
-            .filter(|signature| accept_argument_count(signature.defaults.clone(), argument_count))
-        else {
+        let argument_count = if let Some(signature) = &signature {
+            let plan = crate::translation::excess_argument_rules::plan_java_script_excess_arguments(
+                "JavaScript",
+                serde_json::Number::from(signature.params.len())
+                    .as_f64()
+                    .expect("actual parameters"),
+                serde_json::Number::from(arg_terms.len())
+                    .as_f64()
+                    .expect("actual arguments"),
+            );
+            if !plan.is_empty() {
+                arg_terms.truncate(signature.params.len());
+            }
+            arg_terms.len() as f64
+        } else {
+            arg_terms.len() as f64
+        };
+        let Some(signature) = signature.filter(|signature| {
+            accept_argument_count(signature.defaults.clone(), argument_count)
+                || arg_terms.len() <= signature.params.len()
+        }) else {
             return Ok(self.fresh(false));
         };
+        arg_terms = self.complete_missing_callable_arguments(
+            &signature.params,
+            &arg_terms,
+            &signature.defaults,
+            place,
+            false,
+        );
         self.calls.push(super::CallArguments {
             parameters: signature.params.clone(),
             arguments: arg_terms.clone(),
@@ -307,12 +382,7 @@ impl Inference {
             optional_params: signature.optional_params.clone(),
             place,
         });
-        for (index, ((term, param), arg)) in arg_terms
-            .iter()
-            .zip(&signature.params)
-            .zip(args)
-            .enumerate()
-        {
+        for (index, (term, param)) in arg_terms.iter().zip(&signature.params).enumerate() {
             let Some((value, _)) = self.parameter_default_argument_inference(
                 signature.defaults[index],
                 signature.optional_params[index],
@@ -320,7 +390,11 @@ impl Inference {
             ) else {
                 continue;
             };
-            self.unify(&value, param, arg.span.or(place))?;
+            self.unify(
+                &value,
+                param,
+                spans.get(index).copied().flatten().or(place),
+            )?;
             if let Term::Var(variable) = param
                 && matches!(self.resolve(&value), Term::Option { .. })
             {
@@ -363,9 +437,71 @@ impl Inference {
     pub(super) fn solve_product_indices(&mut self) -> Result<bool> {
         let mut progress = false;
         let mut waiting = Vec::new();
-        for constraint in std::mem::take(&mut self.indices) {
-            match self.resolve(&constraint.object) {
+        for mut constraint in std::mem::take(&mut self.indices) {
+            let object = self.resolve(&constraint.object);
+            if matches!(object, Term::Var(_)) {
+                waiting.push(constraint);
+                continue;
+            }
+            if !matches!(object, Term::Option { .. })
+                && let Some(key) = constraint.property.take()
+            {
+                let kind = match &object {
+                    Term::Array(_) => "array",
+                    Term::Tuple(_) => "tuple",
+                    Term::Known(ty) => ty.kind(),
+                    _ => "value",
+                };
+                let units = key.encode_utf16().map(f64::from).collect::<Vec<_>>();
+                let index = crate::translation::javascript_literal_property_rules::read_java_script_literal_property_index(&units);
+                if crate::translation::javascript_literal_property_rules::read_java_script_literal_property_form(kind, index) == "field" {
+                    self.fields.push(super::FieldOf { object: constraint.object, field: key, result: constraint.result, place: constraint.place });
+                    progress = true;
+                    continue;
+                }
+                constraint.index = index;
+                constraint.literal = true;
+            }
+            match object {
                 Term::Var(_) => waiting.push(constraint),
+                Term::Option { element, .. } => {
+                    if !matches!(self.resolve(&element), Term::Known(Type::Unit)) {
+                        self.indices.push(super::IndexOf {
+                            object: *element,
+                            property: constraint.property,
+                            record_name_key: constraint.record_name_key,
+                            index: constraint.index,
+                            literal: constraint.literal,
+                            optional: constraint.optional,
+                            proven_in_bounds: constraint.proven_in_bounds,
+                            result: constraint.result,
+                            place: constraint.place,
+                        });
+                    }
+                    progress = true;
+                }
+                Term::Record(record) if constraint.record_name_key => {
+                    if record.borrow().open {
+                        waiting.push(constraint);
+                        continue;
+                    }
+                    let fields = record
+                        .borrow()
+                        .fields
+                        .iter()
+                        .map(|(_, term)| term.clone())
+                        .collect::<Vec<_>>();
+                    let element = fields.first().cloned().unwrap_or_else(|| self.fresh(false));
+                    for field in fields {
+                        self.unify(&element, &field, constraint.place)?;
+                    }
+                    let value = super::optional_values::optional(element, "undefined");
+                    self.unify(&constraint.result, &value, constraint.place)?;
+                    if let Term::Var(variable) = constraint.result {
+                        self.bindings[variable] = Some(value);
+                    }
+                    progress = true;
+                }
                 Term::Tuple(elements) => {
                     if constraint.literal {
                         let element = super::super::products::product_index_position(
@@ -375,6 +511,17 @@ impl Inference {
                         .and_then(|index| elements.get(index))
                         .ok_or_else(|| type_error("tuple index out of range", constraint.place))?;
                         self.unify(&constraint.result, element, constraint.place)?;
+                    }
+                    progress = true;
+                }
+                Term::Known(Type::String) => {
+                    let value = super::optional_values::optional(
+                        Term::Known(crate::translation::types::STRING),
+                        "undefined",
+                    );
+                    self.unify(&constraint.result, &value, constraint.place)?;
+                    if let Term::Var(variable) = constraint.result {
+                        self.bindings[variable] = Some(value);
                     }
                     progress = true;
                 }
@@ -402,6 +549,7 @@ impl Inference {
                 }
             }
         }
+        waiting.extend(std::mem::take(&mut self.indices));
         self.indices = waiting;
         Ok(progress)
     }

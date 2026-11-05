@@ -239,9 +239,28 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
   assert.ok(starts.length, 'a complete portable library has emitted public declarations');
   const prefix = lines.slice(0, starts[0]).join('\n');
   starts.push(lines.length);
-  const parts = [''];
+  const parts = [''], nestedFiles=[];
   for (let index = 0; index + 1 < starts.length; index += 1) {
-    const item = lines.slice(starts[index], starts[index + 1]).join('\n').trim();
+    let item = lines.slice(starts[index], starts[index + 1]).join('\n').trim();
+    if(item.split('\n').length>maximumLines){
+      const module=/^pub mod ([a-z][a-z_0-9]*) \{/mu.exec(item);
+      assert.ok(module,'an oversized generated function/type body cannot be split; only complete inline modules can be recursively placed: '+(item.match(/^pub (?:(?:const )?fn|enum|struct) [^\n{]+/mu)?.[0]??'unidentified declaration')+'; lines='+item.split('\n').length+'; limit='+maximumLines);
+      const itemTokens=tokenize(item,'Rust').tokens,first=itemTokens.findIndex(token=>token.kind==='identifier'&&token.value==='pub');
+      assert.ok(first>=0&&itemTokens[first+1]?.value==='mod'&&itemTokens[first+2]?.value===module[1],'nested placement cannot split an enclosing function/type body');
+      const name=module[1],block=readSourceTextRustBlock(item,'mod',name);
+      const blockTokens=tokenize(block,'Rust').tokens;
+      const opening=blockTokens.find(token=>token.kind==='punct'&&token.value==='{');
+      const closing=blockTokens.filter(token=>token.kind==='punct'&&token.value==='}').at(-1);
+      assert.ok(opening&&closing&&item.split(block).length===2,'nested placement needs one whole actual inline module');
+      const body=block.slice(opening.end,closing.start);
+      const bodyTokens=tokenize(body,'Rust').tokens;
+      assert.ok(!bodyTokens.some((token,index)=>token.kind==='identifier'&&token.value==='super'&&bodyTokens[index+1]?.value==='::'),'nested placement needs an explicit relocation proof before moving parent-relative paths');
+      const formatted=spawnSync('rustfmt',['--edition','2024','--emit','stdout'],{input:body,encoding:'utf8',maxBuffer:8*1024*1024});
+      assert.equal(formatted.status,0,formatted.stderr??formatted.error?.message);
+      const children=partitionPortableRustLibrary(formatted.stdout,{notice,directory:name,maximumLines});
+      for(const child of children)nestedFiles.push({path:directory+'/'+(child.path??name+'.rs'),source:child.source});
+      item=item.replace(block,'#[path = "'+name+'.rs"]\npub mod '+name+';');
+    }
     assert.ok(item.split('\n').length <= maximumLines, 'a generated declaration must fit a bounded source module without splitting its body');
     const previous = parts.at(-1);
     if (previous && previous.split('\n').length + item.split('\n').length + 2 > maximumLines) parts.push(item);
@@ -276,5 +295,5 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
     const text = notice + imports.stdout + (imports.stdout ? '\n' : '') + part + '\n';
     assert.ok(text.split('\n').length < 1000, 'explicit sibling imports retain a bounded child module');
     return {path: `${directory}/part_${index + 1}.rs`, source: text};
-  })];
+  }),...nestedFiles];
 }

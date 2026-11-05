@@ -18,6 +18,7 @@ mod raw_metadata;
 pub use raw_metadata::SurfaceRawMetadata;
 mod nodes;
 pub use nodes::SNode;
+pub use super::finite_record_loop_helpers::FiniteRecordLoopWitness;
 pub(crate) mod array_bindings;
 mod record_entry;
 pub use record_entry::SRecordEntry;
@@ -51,6 +52,8 @@ pub struct SExpr {
     pub node: SNode,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
+    #[serde(rename="sourcePosition",skip_serializing_if="Option::is_none")]
+    pub source_position: Option<Box<super::source_signatures::RustSourceExpressionPosition>>,
     /// Grouping is raw source metadata, with absence independent of its value.
     #[serde(
         default,
@@ -86,6 +89,7 @@ impl SExpr {
             parenthesized: None,
             block: false,
             tag_test: None,
+            source_position: None,
         }
     }
 
@@ -213,6 +217,20 @@ pub enum Flavor {
     Exact,
     Checked,
     Clamp,
+    Wrapping,
+}
+
+impl Flavor {
+    /// The shared serialized operation qualifier.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Exact => "exact",
+            Self::Checked => "checked",
+            Self::Clamp => "clamp",
+            Self::Wrapping => "wrapping",
+        }
+    }
 }
 
 /// A source prototype definition, preserved until the checker refuses it.
@@ -318,7 +336,22 @@ pub struct SPattern {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum SPatternNode {
+    IntegerRange {
+        lower: Option<Box<SPattern>>,
+        upper: Option<Box<SPattern>>,
+        inclusive: bool,
+    },
     Wild,
+    /// Bind the actual matched column before testing its nested pattern.
+    Alias {
+        name: String,
+        pattern: Box<SPattern>,
+    },
+    Tuple {
+        args: Vec<SPattern>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rest: Option<usize>,
+    },
     /// A lone name: a nullary constructor when the scrutinee type has one, else a binder.
     BindOrCtor {
         name: String,
@@ -343,6 +376,21 @@ pub enum SPatternNode {
         negative: bool,
     },
     StrLit {
+        value: String,
+    },
+    /// Explicit numeric suffix type and primitive source owner.
+    TypedNumLit {
+        #[serde(deserialize_with = "numeral")]
+        value: String,
+        #[serde(rename = "type")]
+        ty: Type,
+        owner: String,
+        #[serde(default, skip_serializing_if = "is_false")]
+        negative: bool,
+    },
+    /// A Rust byte-character pattern retains its u8 literal type.
+    ByteLit {
+        #[serde(deserialize_with = "numeral")]
         value: String,
     },
     /// Lean's `n + 2`; `add` holds the numeral's decimal digits.
@@ -558,10 +606,25 @@ pub struct SData {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_unit_clone_derivation: Option<Box<serde_json::Value>>,
+    /// Complete original field-type owners, selected independently of body lowering.
+    #[serde(
+        default,
+        rename = "sourceFieldSignatures",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_data_field_signatures::read_present"
+    )]
+    pub source_field_signatures:
+        Option<Box<crate::translation::source_data_field_signatures::RustDataTypeFieldSignatures>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SFn {
+    /// Restriction selector; only an opaque admitted-loop witness authenticates it.
+    #[serde(default,rename="sourceFiniteRecordLoopHelper",skip_serializing_if="is_false")]
+    pub source_finite_record_loop_helper: bool,
+    /// Transient source proof transport, never reconstructible from JSON/Links.
+    #[serde(skip)]
+    pub source_finite_record_loop_witness: Option<std::sync::Arc<FiniteRecordLoopWitness>>,
     /// Actual complete pure Unit header and body sites under the selected model.
     #[serde(
         default,
@@ -744,6 +807,13 @@ pub struct SMain {
 /// A parsed source program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SProgram {
+    /// Actual class constructor ownership, also retained by checked projection.
+    #[serde(default,rename="sourceClassOwners",skip_serializing_if="Option::is_none",deserialize_with="super::ir::read_present_source_class_owners")]
+    pub source_class_owners: Option<serde_json::Value>,
+    /// Source-only closed class brand/method/helper triples. The checker
+    /// consumes dispatch into ordinary calls; checked archives carry no table.
+    #[serde(default,rename = "sourceClassMethods",skip_serializing_if = "Vec::is_empty")]
+    pub source_class_methods: Vec<String>,
     /// Preserve the raw program representation selector without erasing null.
     #[serde(
         default,

@@ -8,6 +8,20 @@ use super::{
     SNode, SPatternNode, SRow, Span, Type, decrement, surface_let, type_error, unsupported,
 };
 
+fn pattern_owners(pattern: &super::SPattern) -> Vec<String> {
+    match &pattern.node {
+        SPatternNode::Alias { pattern, .. } => pattern_owners(pattern),
+        SPatternNode::IntegerRange { lower, upper, .. } => [lower, upper]
+            .into_iter()
+            .flatten()
+            .flat_map(|pattern| pattern_owners(pattern))
+            .collect(),
+        SPatternNode::ByteLit { .. } => vec!["u8".to_owned()],
+        SPatternNode::TypedNumLit { owner, .. } => vec![owner.clone()],
+        _ => vec![String::new()],
+    }
+}
+
 impl Checker {
     /// Compiles a surface match (several scrutinees, nested and literal
     /// patterns) into single-level constructor matches and literal if-chains.
@@ -23,7 +37,36 @@ impl Checker {
     ) -> Result<SExpr> {
         let mut lets = Vec::new();
         let mut columns = Vec::new();
-        for scrutinee in scrutinees {
+        for (column, source) in scrutinees.iter().enumerate() {
+            let owners = rows
+                .iter()
+                .filter_map(|row| row.patterns.get(column))
+                .flat_map(pattern_owners)
+                .collect::<Vec<_>>();
+            let (kind, typed) = match &source.node {
+                SNode::Num { ty, .. } => ("num", ty.is_some()),
+                _ => ("", false),
+            };
+            let inference_error=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_inference_error(self.language.as_str(),kind,typed,&owners);
+            if !inference_error.is_empty() {
+                return Err(type_error(&inference_error, source.span.or(span)));
+            }
+            let owner=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_inference(self.language.as_str(),kind,typed,&owners);
+            let inferred;
+            let scrutinee = if !owner.is_empty() {
+                let mut value = source.clone();
+                if let SNode::Num { ty, .. } = &mut value.node {
+                    *ty = if owner == "f64" {
+                        Some(crate::translation::types::FLOAT)
+                    } else {
+                        crate::translation::types::rust_fixed_type(&owner)
+                    };
+                }
+                inferred = value;
+                &inferred
+            } else {
+                source
+            };
             let checked = self.expr(scrutinee, env, path, None, false)?;
             if let Some(name) = env.local(scrutinee) {
                 columns.push(Column {
@@ -81,7 +124,11 @@ impl Checker {
                 };
                 patterns.push(self.normalise_pattern(pattern, &column.ty, span)?);
             }
-            normalised.push(Row { patterns, ..row });
+            normalised.push(super::pattern_aliases::project_pattern_alias_row(
+                Row { patterns, ..row },
+                columns,
+                span,
+            )?);
         }
         let first = &normalised[0];
         let Some(refutable) = first
@@ -105,6 +152,13 @@ impl Checker {
         };
         let column = columns[refutable].clone();
         let pivot = first.patterns[refutable].clone();
+        if matches!(column.ty, Type::Fixed { .. })
+            && normalised
+                .iter()
+                .any(|row| matches!(row.patterns[refutable], NPat::Interval { .. }))
+        {
+            return self.compile_integer_range_column(columns, &normalised, refutable, span);
+        }
         let rest = |patterns: &[NPat]| -> Vec<NPat> {
             patterns
                 .iter()
@@ -126,6 +180,9 @@ impl Checker {
             .filter(|(index, _)| *index != refutable)
             .map(|(_, column)| column.clone())
             .collect();
+        if matches!(pivot, NPat::Tuple { .. }) {
+            return self.compile_tuple_pattern_column(columns, &normalised, refutable, span);
+        }
         // A natural column that also holds successor patterns splits on zero and
         // successor, which decrements its literal patterns.
         let nat = column.ty == Type::Nat
@@ -330,7 +387,69 @@ impl Checker {
             args: Vec::new(),
         };
         match pattern.node {
+            SPatternNode::IntegerRange {
+                lower,
+                upper,
+                inclusive,
+            } => self.normalise_integer_range(
+                lower.map(|value| *value),
+                upper.map(|value| *value),
+                inclusive,
+                ty,
+                at,
+            ),
+            SPatternNode::Alias {
+                name,
+                pattern: inner,
+            } => Ok(NPat::Alias {
+                name,
+                pattern: Box::new(self.normalise_pattern(NPat::Surface(*inner), ty, at)?),
+            }),
             SPatternNode::Wild => Ok(NPat::Wild),
+            SPatternNode::Tuple { args, rest } => {
+                let width = match ty {
+                    Type::Tuple { elements } => Some(elements.len()),
+                    Type::Unit => Some(0),
+                    _ => None,
+                };
+                let count = |value| {
+                    f64::from(
+                        u32::try_from(value)
+                            .expect("source tuple width fits the shared array limit"),
+                    )
+                };
+                let plan =
+                    crate::translation::rust_source_render_interfaces::plan_tuple_pattern_fields(
+                        width.map_or(-1.0, count),
+                        count(args.len()),
+                        rest.map_or(-1.0, count),
+                    );
+                if plan.first() != Some(&0.0) {
+                    return Err(type_error(
+                        "tuple pattern has the wrong type or number of fields",
+                        at,
+                    ));
+                }
+                let Type::Tuple { elements } = ty else {
+                    return Ok(NPat::Wild);
+                };
+                let mut normalised = Vec::new();
+                for (position, index) in plan.into_iter().skip(1).enumerate() {
+                    normalised.push(if index < 0.0 {
+                        NPat::Wild
+                    } else {
+                        let source_index = index.to_string().parse::<usize>().map_err(|_| {
+                            type_error("tuple pattern plan has an invalid source index", at)
+                        })?;
+                        self.normalise_pattern(
+                            NPat::Surface(args[source_index].clone()),
+                            &elements[position],
+                            span,
+                        )?
+                    });
+                }
+                Ok(NPat::Tuple { args: normalised })
+            }
             SPatternNode::Bind { name } => Ok(NPat::Bind(name)),
             SPatternNode::BindOrCtor { name } => {
                 if let Type::Data { name: data_name } = ty
@@ -366,6 +485,11 @@ impl Checker {
                 Ok(NPat::Bind(name))
             }
             SPatternNode::NumLit { value, negative } => {
+                let context_error=crate::translation::rust_numeric_pattern_rules::read_rust_source_integer_pattern_context_error(self.language.as_str(),if *ty==Type::Float{"float"}else{""});
+                if !context_error.is_empty() {
+                    return Err(type_error(&context_error, span));
+                }
+
                 // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
                 // Numerals up to NAT_PATTERN_UNFOLD unfold to successor chains; larger
                 // ones are equality tests, so a pattern never costs a node per unit.
@@ -391,6 +515,66 @@ impl Checker {
                     None,
                 );
                 self.literal_pattern(value, ty, span)
+            }
+            SPatternNode::TypedNumLit {
+                value,
+                ty: literal_type,
+                owner,
+                negative,
+            } => {
+                let (kind, bits, signed) = match &literal_type {
+                    Type::Fixed { bits, signed } => ("fixed", bits.to_string(), *signed),
+                    Type::Float => ("float", String::new(), false),
+                    _ => ("", String::new(), false),
+                };
+                let error=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_type_error(&owner,kind,&bits,signed);
+                let error = if error.is_empty() {
+                    crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_negation_error(&owner,negative)
+                } else {
+                    error
+                };
+                if !error.is_empty() {
+                    return Err(type_error(&error, span));
+                }
+                self.literal_pattern(
+                    SExpr::new(
+                        SNode::Num {
+                            value,
+                            ty: Some(literal_type),
+                            negative,
+                            unit: false,
+                        },
+                        None,
+                    ),
+                    ty,
+                    span,
+                )
+            }
+            SPatternNode::ByteLit { value } => {
+                let (kind, bits, signed) = match ty {
+                    Type::Fixed { bits, signed } => ("fixed", f64::from(*bits), *signed),
+                    _ => ("", 0.0, false),
+                };
+                let error=crate::translation::rust_byte_pattern_rules::read_rust_source_byte_pattern_type_error(kind,bits,signed);
+                if !error.is_empty() {
+                    return Err(type_error(&error, span));
+                }
+                self.literal_pattern(
+                    SExpr::new(
+                        SNode::Num {
+                            value,
+                            ty: Some(Type::Fixed {
+                                bits: 8,
+                                signed: false,
+                            }),
+                            negative: false,
+                            unit: false,
+                        },
+                        None,
+                    ),
+                    ty,
+                    span,
+                )
             }
             SPatternNode::BoolLit { value, .. } => {
                 self.literal_pattern(SExpr::new(SNode::Bool { value }, None), ty, span)

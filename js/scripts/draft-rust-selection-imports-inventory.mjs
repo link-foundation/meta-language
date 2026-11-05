@@ -1,0 +1,3 @@
+import {draftTranslationProfileInventory} from './draft-translation-profile-inventory.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+draftTranslationProfileInventory({id:'rust-selection-imports',fixture:'rust-selection-imports',programAsset:'rust-primitive-selection-program',sourceLanguage:'Rust',experimentPath:'experiments/rust-records/selection-imports.mjs',nativeTest:'translation_rust_selection_imports',javascript:['js/src/translation/rust-primitive-selections.js','js/src/translation/rust.js','js/tests/translation-rust-selection-imports.test.js'],rust:['rust/src/translation/rust/expressions/primitive_selections.rs','rust/src/translation/rust/items.rs','rust/tests/unit/translation_rust_selection_imports.rs']});

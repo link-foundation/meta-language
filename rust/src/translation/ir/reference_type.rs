@@ -41,6 +41,8 @@ impl Serialize for Expr {
             reference_operation: Option<String>,
             #[serde(skip_serializing_if = "Option::is_none")]
             span: Option<Span>,
+            #[serde(rename="sourcePosition",skip_serializing_if="Option::is_none")]
+            source_position: Option<&'a crate::translation::source_signatures::RustSourceExpressionPosition>,
         }
         ExpressionWire {
             node: &self.node,
@@ -56,6 +58,7 @@ impl Serialize for Expr {
                 field: read_surface_reference_result_field(self.kind()),
             },
             span: self.span,
+            source_position: self.source_position.as_deref(),
         }
         .serialize(serializer)
     }
@@ -73,6 +76,8 @@ impl<'de> Deserialize<'de> for Expr {
             reference_operation: Option<String>,
             #[serde(default)]
             span: Option<Span>,
+            #[serde(rename="sourcePosition",default,deserialize_with="crate::translation::source_position_transport::read_present_source_position")]
+            source_position: Option<Box<crate::translation::source_signatures::RustSourceExpressionPosition>>,
         }
         let wire = ExpressionWire::deserialize(deserializer)?;
         let operation =
@@ -93,6 +98,7 @@ impl<'de> Deserialize<'de> for Expr {
             node: wire.node,
             ty: serde_json::from_value(wire.ty).map_err(<D::Error as serde::de::Error>::custom)?,
             span: wire.span,
+            source_position: wire.source_position,
         })
     }
 }

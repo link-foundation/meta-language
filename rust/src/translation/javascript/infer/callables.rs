@@ -3,6 +3,9 @@
 use super::term_facts::TermFacts;
 use super::{Env, HashSet, Inference, Result, SExpr, SNode, Span, Term, Type, type_error};
 use crate::translation::callable_source_rules as rules;
+mod missing_arguments;
+mod named_defaults;
+mod optional_arguments;
 
 pub(super) fn has_structural_inference(value: &serde_json::Value) -> bool {
     match value {
@@ -22,7 +25,7 @@ pub(super) fn has_structural_inference(value: &serde_json::Value) -> bool {
                     .unwrap_or_default()
                     .to_owned()
             };
-            rules::require_callable_structural_inference(
+            (fields.get("k").and_then(serde_json::Value::as_str)==Some("math") && (text("op")==crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation()||text("op")==crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation())) || rules::require_callable_structural_inference(
                 &(text("k")),
                 &(text("kind")),
                 &(text("op")),
@@ -153,22 +156,50 @@ impl Inference {
             [name] => env.get(name).cloned(),
             _ => None,
         };
+        let signature = if local.is_none() && matches!(head.node, SNode::Name { .. }) {
+            self.signature(path)
+        } else {
+            None
+        };
+        let value_kind =
+            signature
+                .as_ref()
+                .map_or("", |signature| match self.resolve(&signature.ret) {
+                    Term::Function { .. } => "function",
+                    Term::Known(ref ty) => ty.kind(),
+                    _ => "",
+                });
+        let constant = crate::translation::rust_module_value_rules::require_callable_constant_application_capture(head.node.kind(),local.is_some(),if signature.as_ref().is_some_and(|signature|signature.constant_value){"const"}else{""},value_kind);
         if rules::require_callable_named_inference(
             head.node.kind(),
             super::super::callables::number(path.len()),
             local.is_some(),
-        ) {
+        ) && !constant
+        {
             return self.call(path, arguments, env, place);
         }
         let function = match local {
             Some(local) => local,
             None => self.expr(head, env)?,
         };
-        let arguments = arguments
+        let mut arguments = arguments
             .iter()
             .map(|argument| self.expr(argument, env))
             .collect::<Result<Vec<_>>>()?;
         let resolved = self.resolve(&function);
+        if matches!(resolved, Term::Var(_)) {
+            let result = self.fresh(false);
+            self.computed_calls.push(super::ComputedCall {
+                function,
+                arguments,
+                result: result.clone(),
+                place,
+            });
+            return Ok(result);
+        }
+        if let Term::Function { params, .. } = &resolved {
+            arguments = self.complete_optional_callable_terms(params, &arguments, place);
+        }
         let (kind, count) = match &resolved {
             Term::Function { params, .. } => ("function", params.len()),
             Term::Known(ty) => (ty.kind(), 0),
@@ -216,10 +247,10 @@ impl Inference {
         expected: Option<&Term>,
     ) -> Result<Term> {
         match &node.node {
-            SNode::FunctionValue { path } => Ok(self.signature(path).map_or_else(
-                || self.fresh(false),
-                |signature| Self::callable_term(&signature.params, &signature.ret),
-            )),
+            SNode::FunctionValue { path } => match self.signature(path) {
+                Some(signature) => self.named_default_reference_term(&signature, node.span),
+                None => Ok(self.fresh(false)),
+            },
             SNode::Lambda { params, body, .. } => {
                 let expected = expected.map(|term| self.resolve(term));
                 let mut facts = TermFacts::new(&[expected]);
@@ -243,6 +274,7 @@ impl Inference {
                         selection[1],
                         selection[2].to_bits() == 1.0_f64.to_bits(),
                     )?;
+                    let term = self.body_entry_parameter_term(parameter, term);
                     scope.insert(parameter.name.clone(), term.clone());
                     parameters.push(term);
                 }

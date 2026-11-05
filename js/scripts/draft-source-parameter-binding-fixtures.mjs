@@ -1,0 +1,332 @@
+// Literal source/contracts only. Never tokenize, parse or run these controls.
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const plans=[];
+function plan(name,values,candidates,defaults,computed,expected){plans.push({name,values,kinds:values.map(value=>['=',',','(',')','[',']','{','}',':'].includes(value)?'punct':value==='function'?'keyword':'identifier'),candidates:values.map((_,index)=>candidates.includes(index)),defaultFirsts:defaults.map(row=>row[0]),defaultLasts:defaults.map(row=>row[1]),computedFirsts:computed.map(row=>row[0]),computedLasts:computed.map(row=>row[1]),expected});}
+plan('ordinary names',['first',',','second'],[0,2],[],[],[0,2]);
+plan('nested initializer call commas',['value','=','call','(','left',',','right',')',',','other'],[0,2,4,6,9],[[0,8]],[],[0,9]);
+plan('computed property names',['{','[','key',']',':','value','}'],[2,5],[],[[1,4]],[5]);
+plan('shorthand object defaults',['{','value','=','source','}'],[1,3],[[1,4]],[],[1]);
+plan('nested defaults before outer defaults',['{','value','=','fallback','}','=','source',',','second'],[1,3,6,8],[[1,4],[0,7]],[],[1,8]);
+plan('defaults wholly inside computed keys',['{','[','function','(','a','=','b',')','{','}','(',')',']',':','value','}'],[4,6,14],[[4,7]],[[1,13]],[14]);
+plan('empty formals',[],[],[],[],[]);
+plan('invalid default interval',['value','=','source'],[0,2],[[-1,3]],[],[-1]);
+plan('default without its actual equals',['value','source'],[0,1],[[0,2]],[],[-1]);
+plan('outer-before-inner columns refuse',['{','value','=','fallback','}','=','source'],[1,3,6],[[0,7],[1,4]],[],[-1]);
+plans.push({name:'incomplete candidate column',values:['value'],kinds:['identifier'],candidates:[],defaultFirsts:[],defaultLasts:[],computedFirsts:[],computedLasts:[],expected:[-1]});
+const context='const left=2,right=3;function combine(a,b){return a+b;}';
+const cases=[
+ {name:'named default calls retain free arguments',source:'function choose(value=combine(left,right),other=0){return value+other;}',context,probe:'choose()',value:'5',bindings:[['choose','function',0],['value','parameter',1],['other','parameter',1]],unresolved:['combine','left','right'],rename:{name:'other',replacement:'extra',source:'function choose(value=combine(left,right),extra=0){return value+extra;}'}},
+ {name:'arrow default calls retain free arguments',source:'const choose=(value=combine(left,right),other=0)=>value+other;',context,probe:'choose()',value:'5',bindings:[['choose','const',0],['value','parameter',1],['other','parameter',1]],unresolved:['combine','left','right'],rename:{name:'other',replacement:'extra',source:'const choose=(value=combine(left,right),extra=0)=>value+extra;'}},
+ {name:'nested object binding names exclude property keys',source:'function choose({source:value=fallback(left,right),nested:{item},...rest}){return value+item+rest.extra;}',context:'const left=2,right=3;function fallback(a,b){return a+b;}',probe:'choose({nested:{item:7},extra:11})',value:'23',bindings:[['choose','function',0],['value','parameter',1],['item','parameter',1],['rest','parameter',1]],unresolved:['fallback','left','right'],rename:{name:'value',replacement:'selected',source:'function choose({source:selected=fallback(left,right),nested:{item},...rest}){return selected+item+rest.extra;}'}},
+ {name:'nested shorthand renames preserve the original property',source:'function choose({source:value=fallback(left,right),nested:{item},...rest}){return value+item+rest.extra;}',context:'const left=2,right=3;function fallback(a,b){return a+b;}',probe:'choose({nested:{item:7},extra:11})',value:'23',bindings:[['choose','function',0],['value','parameter',1],['item','parameter',1],['rest','parameter',1]],unresolved:['fallback','left','right'],rename:{name:'item',replacement:'chosen',source:'function choose({source:value=fallback(left,right),nested:{item: chosen},...rest}){return value+chosen+rest.extra;}'}},
+ {name:'array holes nested defaults and rest retain actual names',source:'function choose([first,,{item:second=seed},...rest]){return first+second+rest.length;}',context:'const seed=7;',probe:'choose([2,0,{},4,5])',value:'11',bindings:[['choose','function',0],['first','parameter',1],['second','parameter',1],['rest','parameter',1]],unresolved:['seed'],rename:{name:'second',replacement:'last',source:'function choose([first,,{item:last=seed},...rest]){return first+last+rest.length;}'}},
+ {name:'computed keys stay reads rather than declarations',source:'function choose({[key]:value=seed}){return value;}',context:'const key="chosen",seed=7;',probe:'choose({})',value:'7',bindings:[['choose','function',0],['value','parameter',1]],unresolved:['key','seed'],rename:{name:'value',replacement:'selected',source:'function choose({[key]:selected=seed}){return selected;}'}},
+ {name:'computed nested functions retain their separate parameters',source:'function choose({[(function(a=seed){return "chosen";})()]:value}){return value;}',context:'const seed=7;',probe:'choose({chosen:13})',value:'13',bindings:[['choose','function',0],['a','parameter',0],['value','parameter',1]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'function choose({[(function(a=seed){return "chosen";})()]:selected}){return selected;}'}},
+ {name:'default function parameters retain their own lexical owner',source:'function choose(read=function nested(inner=seed){return inner;},value=read()){return value;}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['choose','function',0],['read','parameter',1],['nested','function',0],['inner','parameter',1],['value','parameter',1]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'function choose(read=function nested(inner=seed){return inner;},selected=read()){return selected;}'}},
+ {name:'rest parameter patterns retain every binding',source:'function choose(...[first,second]){return first+second;}',context:'',probe:'choose(3,7)',value:'10',bindings:[['choose','function',0],['first','parameter',1],['second','parameter',1]],unresolved:[],rename:{name:'first',replacement:'start',source:'function choose(...[start,second]){return start+second;}'}},
+ {name:'arrows retain nested object and array parameters',source:'const choose=({source:value=seed},[first,...rest])=>value+first+rest.length;',context:'const seed=7;',probe:'choose({},[3,4,5])',value:'12',bindings:[['choose','const',0],['value','parameter',1],['first','parameter',1],['rest','parameter',1]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'const choose=({source:selected=seed},[first,...rest])=>selected+first+rest.length;'}},
+ {name:'catch patterns retain their actual renamed binding',source:'function choose(){try{throw {source:13};}catch({source:value}){return value;}}',context:'',probe:'choose()',value:'13',bindings:[['choose','function',0],['value','parameter',1]],unresolved:[],rename:{name:'value',replacement:'selected',source:'function choose(){try{throw {source:13};}catch({source:selected}){return selected;}}'}},
+ {name:'template interpolation commas stay inside defaults',source:'function choose(value=`${left,right}`,other=0){return value+other;}',context:'const left=2,right=3;',probe:'choose()',value:'30',bindings:[['choose','function',0],['value','parameter',1],['other','parameter',1]],unresolved:['left','right'],rename:{name:'other',replacement:'extra',source:'function choose(value=`${left,right}`,extra=0){return value+extra;}'}},
+ {name:'parenthesized comma defaults stay inside their initializer',source:'function choose(value=(left,right),other=0){return value+other;}',context:'const left=2,right=3;',probe:'choose()',value:'3',bindings:[['choose','function',0],['value','parameter',1],['other','parameter',1]],unresolved:['left','right'],rename:{name:'other',replacement:'extra',source:'function choose(value=(left,right),extra=0){return value+extra;}'}},
+ {name:'regular expression commas stay opaque',source:'function choose(value=/a,b/,other=0){return value.test("a,b")?other+1:0;}',context:'',probe:'choose()',value:'1',bindings:[['choose','function',0],['value','parameter',1],['other','parameter',1]],unresolved:[],rename:{name:'other',replacement:'extra',source:'function choose(value=/a,b/,extra=0){return value.test("a,b")?extra+1:0;}'}}
+];
+cases.push(
+ {name:'private methods retain lexical parameters and member names separately',source:'class Box{#read(value=seed){return value;}read(){return this.#read();}}function choose(){return new Box().read();}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['Box','class',1],['value','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'class Box{#read(selected=seed){return selected;}read(){return this.#read();}}function choose(){return new Box().read();}'}},
+ {name:'method patterns reuse full object array and rest binding discovery',source:'const object={read({source:value=seed},[first,...rest]){return value+first+rest.length;}};function choose(){return object.read({},[3,4,5]);}',context:'const seed=7;',probe:'choose()',value:'12',bindings:[['object','const',1],['value','parameter',1],['first','parameter',1],['rest','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'const object={read({source:selected=seed},[first,...rest]){return selected+first+rest.length;}};function choose(){return object.read({},[3,4,5]);}'}},
+ {name:'private property spans retain their separate member namespace',source:'class Box{#value=13;read(){return this.#value;}}const object=new Box();function choose(){return object.read();}',context:'',probe:'choose()',value:'13',bindings:[['Box','class',1],['object','const',1],['choose','function',0]],unresolved:[],rename:{name:'object',kind:'const',replacement:'record',source:'class Box{#value=13;read(){return this.#value;}}const record=new Box();function choose(){return record.read();}'}},
+ {name:'multiple ordinary declarations retain every binding',source:'const first=left,second=right;function choose(){return first+second;}',context:'const left=2,right=3;',probe:'choose()',value:'5',bindings:[['first','const',1],['second','const',1],['choose','function',0]],unresolved:['left','right'],rename:{name:'second',kind:'const',replacement:'last',source:'const first=left,last=right;function choose(){return first+last;}'}},
+ {name:'nested declaration patterns reuse the same binding census',source:'const {source:value=seed,nested:{item},...rest}=input;function choose(){return value+item+rest.extra;}',context:'const seed=7,input={nested:{item:3},extra:11};',probe:'choose()',value:'21',bindings:[['value','const',1],['item','const',1],['rest','const',1],['choose','function',0]],unresolved:['seed','input'],rename:{name:'item',kind:'const',replacement:'chosen',source:'const {source:value=seed,nested:{item: chosen},...rest}=input;function choose(){return value+chosen+rest.extra;}'}},
+ {name:'array declaration lists retain independent initializer reads',source:'let [first,,{item:second=seed},...rest]=input,other=13;function choose(){return first+second+rest.length+other;}',context:'const seed=7,input=[2,0,{},4,5];',probe:'choose()',value:'24',bindings:[['first','let',1],['second','let',1],['rest','let',1],['other','let',1],['choose','function',0]],unresolved:['seed','input'],rename:{name:'other',kind:'let',replacement:'extra',source:'let [first,,{item:second=seed},...rest]=input,extra=13;function choose(){return first+second+rest.length+extra;}'}},
+ {name:'uninitialized declarations preserve repeated var aliases',source:'var first;var first,second=13;function choose(){return first===undefined?second:0;}',context:'',probe:'choose()',value:'13',bindings:[['first','var',2],['second','var',1],['choose','function',0]],unresolved:['undefined'],rename:{name:'first',kind:'var',replacement:'initial',source:'var initial;var initial,second=13;function choose(){return initial===undefined?second:0;}'}},
+ {name:'keyword property names never introduce declarations',source:'const object={const:value,let:value,var:value,class:value};function choose(){return object.const+object.let+object.var+object.class;}',context:'const value=3;',probe:'choose()',value:'12',bindings:[['object','const',4],['choose','function',0]],unresolved:['value','value','value','value'],rename:{name:'object',kind:'const',replacement:'record',source:'const record={const:value,let:value,var:value,class:value};function choose(){return record.const+record.let+record.var+record.class;}'}}
+);
+cases.push(
+ {name:'class methods retain their own parameter environment',source:'class Box{read(value=seed){return value;}}const object=new Box();function choose(){return object.read();}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['Box','class',1],['value','parameter',1],['object','const',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'class Box{read(selected=seed){return selected;}}const object=new Box();function choose(){return object.read();}'}},
+ {name:'computed method names cannot be captured by their parameters',source:'const object={[key](key=seed){return key;}};function choose(){return object.chosen();}',context:'const key="chosen",seed=7;',probe:'choose()',value:'7',bindings:[['object','const',1],['key','parameter',1],['choose','function',0]],unresolved:['key','seed'],rename:{name:'key',replacement:'selected',source:'const object={[key](selected=seed){return selected;}};function choose(){return object.chosen();}'}},
+ {name:'getter and setter parameters retain their own environment',source:'const object={get value(){return seed;},set value(value){saved=value;}};function choose(){object.value=object.value;return saved;}',context:'const seed=7;let saved=0;',probe:'choose()',value:'7',bindings:[['object','const',2],['value','parameter',1],['choose','function',0]],unresolved:['seed','saved','saved'],rename:{name:'value',replacement:'selected',source:'const object={get value(){return seed;},set value(selected){saved=selected;}};function choose(){object.value=object.value;return saved;}'}},
+ {name:'computed method expressions retain their separate function parameters',source:'const object={[(function(inner=seed){return "chosen";})()](inner=seed){return inner;}};function choose(){return object.chosen();}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['object','const',1],['inner','parameter',0],['inner','parameter',1],['choose','function',0]],unresolved:['seed','seed'],rename:{name:'inner',occurrence:1,replacement:'selected',source:'const object={[(function(inner=seed){return "chosen";})()](selected=seed){return selected;}};function choose(){return object.chosen();}'}},
+ {name:'quoted method names still provide formal scopes',source:'const object={"read"(value=seed){return value;}};function choose(){return object.read();}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['object','const',1],['value','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'const object={"read"(selected=seed){return selected;}};function choose(){return object.read();}'}},
+ {name:'numeric method names still provide formal scopes',source:'const object={1(value=seed){return value;}};function choose(){return object[1]();}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['object','const',1],['value','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'const object={1(selected=seed){return selected;}};function choose(){return object[1]();}'}},
+ {name:'static methods retain their own formal environment',source:'class Box{static read(value=seed){return value;}}function choose(){return Box.read();}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['Box','class',1],['value','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'class Box{static read(selected=seed){return selected;}}function choose(){return Box.read();}'}},
+ {name:'constructor parameters do not rename instance property names',source:'class Box{constructor(value=seed){this.value=value;}}function choose(){return new Box().value;}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['Box','class',1],['value','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'class Box{constructor(selected=seed){this.value=selected;}}function choose(){return new Box().value;}'}},
+ {name:'generator methods retain their formal environment',source:'const object={*read(value=seed){yield value;}};function choose(){return object.read().next().value;}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['object','const',1],['value','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',replacement:'selected',source:'const object={*read(selected=seed){yield selected;}};function choose(){return object.read().next().value;}'}}
+);
+cases.push(
+ {name:'for let bindings own the complete header and body',source:'let total=0;for(let index=0;index<2;index++){total+=index;}function choose(){return total;}',context:'',probe:'choose()',value:'1',bindings:[['total','let',2],['index','let',3],['choose','function',0]],unresolved:[],rename:{name:'index',kind:'let',replacement:'cursor',source:'let total=0;for(let cursor=0;cursor<2;cursor++){total+=cursor;}function choose(){return total;}'}},
+ {name:'for let bindings do not escape the loop',source:'let total=0;for(let index=0;index<2;index++){total+=index;}const after=typeof index;function choose(){return total+after;}',context:'',probe:'choose()',value:'1undefined',bindings:[['total','let',2],['index','let',3],['after','const',1],['choose','function',0]],unresolved:['index'],rename:{name:'index',kind:'let',replacement:'cursor',source:'let total=0;for(let cursor=0;cursor<2;cursor++){total+=cursor;}const after=typeof index;function choose(){return total+after;}'}},
+ {name:'for let shadowing retains the outer declaration',source:'const index=99;let total=0;for(let index=0;index<2;index++){total+=index;}function choose(){return index+total;}',context:'',probe:'choose()',value:'100',bindings:[['index','const',1],['total','let',2],['index','let',3],['choose','function',0]],unresolved:[],rename:{name:'index',kind:'let',replacement:'cursor',source:'const index=99;let total=0;for(let cursor=0;cursor<2;cursor++){total+=cursor;}function choose(){return index+total;}'}},
+ {name:'for of object patterns exclude collection and default reads',source:'let total=0;for(const {source:value=seed,nested:{item}} of input){total+=value+item;}function choose(){return total;}',context:'const seed=2,input=[{nested:{item:3}},{source:5,nested:{item:7}}];',probe:'choose()',value:'17',bindings:[['total','let',2],['value','const',1],['item','const',1],['choose','function',0]],unresolved:['seed','input'],rename:{name:'item',kind:'const',replacement:'chosen',source:'let total=0;for(const {source:value=seed,nested:{item: chosen}} of input){total+=value+chosen;}function choose(){return total;}'}},
+ {name:'for of array patterns retain holes defaults and rest',source:'let total=0;for(const [first,,{item:second=seed},...rest] of input){total+=first+second+rest.length;}function choose(){return total;}',context:'const seed=7,input=[[2,0,{},4,5]];',probe:'choose()',value:'11',bindings:[['total','let',2],['first','const',1],['second','const',1],['rest','const',1],['choose','function',0]],unresolved:['seed','input'],rename:{name:'second',kind:'const',replacement:'last',source:'let total=0;for(const [first,,{item:last=seed},...rest] of input){total+=first+last+rest.length;}function choose(){return total;}'}},
+ {name:'for in collection reads are not declarations',source:'let total=0;for(const key in input){total+=input[key];}function choose(){return total;}',context:'const input={first:2,second:3};',probe:'choose()',value:'5',bindings:[['total','let',2],['key','const',1],['choose','function',0]],unresolved:['input','input'],rename:{name:'key',kind:'const',replacement:'cursor',source:'let total=0;for(const cursor in input){total+=input[cursor];}function choose(){return total;}'}},
+ {name:'for of collection uses the loop temporal dead zone binding',source:'let outcome=0;try{for(const input of input){outcome+=input;}}catch(error){outcome=7;}function choose(){return outcome;}',context:'const input=[3,7];',probe:'choose()',value:'7',bindings:[['outcome','let',3],['input','const',2],['error','parameter',0],['choose','function',0]],unresolved:[],rename:{name:'input',kind:'const',replacement:'element',source:'let outcome=0;try{for(const element of element){outcome+=element;}}catch(error){outcome=7;}function choose(){return outcome;}'}},
+ {name:'for var bindings retain their enclosing var environment',source:'var total=0;for(var index=0;index<2;index++){total+=index;}function choose(){return total+index;}',context:'',probe:'choose()',value:'3',bindings:[['total','var',2],['index','var',4],['choose','function',0]],unresolved:[],rename:{name:'index',kind:'var',replacement:'cursor',source:'var total=0;for(var cursor=0;cursor<2;cursor++){total+=cursor;}function choose(){return total+cursor;}'}},
+ {name:'nested loop bindings remain distinct identities',source:'let total=0;for(let index=0;index<2;index++){for(let index=0;index<2;index++){total+=index;}}function choose(){return total;}',context:'',probe:'choose()',value:'2',bindings:[['total','let',2],['index','let',2],['index','let',3],['choose','function',0]],unresolved:[],rename:{name:'index',kind:'let',occurrence:1,replacement:'cursor',source:'let total=0;for(let index=0;index<2;index++){for(let cursor=0;cursor<2;cursor++){total+=cursor;}}function choose(){return total;}'}}
+);
+cases.push(
+ {name:'catch object shorthand retains its property and lexical owner',source:'let total=0;try{throw {value:7};}catch({value}){total=value;}function choose(){return total;}',context:'',probe:'choose()',value:'7',bindings:[['total','let',2],['value','parameter',1],['choose','function',0]],unresolved:[],rename:{name:'value',replacement:'selected',source:'let total=0;try{throw {value:7};}catch({value: selected}){total=selected;}function choose(){return total;}'}},
+ {name:'catch pattern defaults resolve earlier catch bindings',source:'let total=0;try{throw {first:3};}catch({first,second=first+seed}){total=first+second;}function choose(){return total;}',context:'const seed=7;',probe:'choose()',value:'13',bindings:[['total','let',2],['first','parameter',2],['second','parameter',1],['choose','function',0]],unresolved:['seed'],rename:{name:'first',replacement:'selected',source:'let total=0;try{throw {first:3};}catch({first: selected,second=selected+seed}){total=selected+second;}function choose(){return total;}'}},
+ {name:'catch initializer closures retain later catch binding identities',source:'let total=0;try{throw {};}catch({read=()=>value,value=7}){total=read();}function choose(){return total;}',context:'',probe:'choose()',value:'7',bindings:[['total','let',2],['read','parameter',1],['value','parameter',1],['choose','function',0]],unresolved:[],rename:{name:'value',replacement:'selected',source:'let total=0;try{throw {};}catch({read=()=>selected,value: selected=7}){total=read();}function choose(){return total;}'}},
+ {name:'computed catch property names remain references',source:'let total=0;try{throw {value:7};}catch({[key]:value}){total=value;}function choose(){return total;}',context:'const key="value";',probe:'choose()',value:'7',bindings:[['total','let',2],['value','parameter',1],['choose','function',0]],unresolved:['key'],rename:{name:'value',replacement:'selected',source:'let total=0;try{throw {value:7};}catch({[key]:selected}){total=selected;}function choose(){return total;}'}},
+ {name:'optional catch cannot borrow later function parameters',source:'let total=0;try{throw 1;}catch{total=7;}function choose(value=total){return value;}',context:'',probe:'choose()',value:'7',bindings:[['total','let',2],['value','parameter',1],['choose','function',0]],unresolved:[],rename:{name:'value',replacement:'selected',source:'let total=0;try{throw 1;}catch{total=7;}function choose(selected=total){return selected;}'}},
+ {name:'catch parameters do not escape into surrounding reads',source:'const error=3;let total=0;try{throw 7;}catch(error){total=error;}function choose(){return total+error;}',context:'',probe:'choose()',value:'10',bindings:[['error','const',1],['total','let',2],['error','parameter',1],['choose','function',0]],unresolved:[],rename:{name:'error',replacement:'caught',source:'const error=3;let total=0;try{throw 7;}catch(caught){total=caught;}function choose(){return total+error;}'}}
+);
+cases.push(
+ {name:'named class expressions retain a private recursive name',source:'const Box=class Inner{read(){return Inner;}};function choose(){return new Box().read()===Box;}',context:'',probe:'choose()',value:'true',bindings:[['Box','const',2],['Inner','class',1],['choose','function',0]],unresolved:[],rename:{name:'Inner',kind:'class',replacement:'Local',source:'const Box=class Local{read(){return Local;}};function choose(){return new Box().read()===Box;}'}},
+ {name:'private class expression names remain unbound outside the class',source:'const Box=class Inner{read(){return Inner;}};const after=typeof Inner;function choose(){return (new Box().read()===Box)+after;}',context:'',probe:'choose()',value:'trueundefined',bindings:[['Box','const',2],['Inner','class',1],['after','const',1],['choose','function',0]],unresolved:['Inner'],rename:{name:'Inner',kind:'class',replacement:'Local',source:'const Box=class Local{read(){return Local;}};const after=typeof Inner;function choose(){return (new Box().read()===Box)+after;}'}},
+ {name:'class expression self names shadow surrounding names only inside the class',source:'const Inner=3;const Box=class Inner{static read(){return Inner;}};function choose(){return (Box.read()===Box)+Inner;}',context:'',probe:'choose()',value:'4',bindings:[['Inner','const',1],['Box','const',2],['Inner','class',1],['choose','function',0]],unresolved:[],rename:{name:'Inner',kind:'class',replacement:'Local',source:'const Inner=3;const Box=class Local{static read(){return Local;}};function choose(){return (Box.read()===Box)+Inner;}'}},
+ {name:'anonymous class expressions never declare their method names',source:'const Box=class{read(){return seed;}};function choose(){return new Box().read();}',context:'const seed=7;',probe:'choose()',value:'7',bindings:[['Box','const',1],['choose','function',0]],unresolved:['seed'],rename:{name:'Box',kind:'const',replacement:'Container',source:'const Container=class{read(){return seed;}};function choose(){return new Container().read();}'}},
+ {name:'anonymous class heritage remains an external reference',source:'const Box=class extends Base{read(){return seed;}};function choose(){return new Box().read();}',context:'class Base{}const seed=7;',probe:'choose()',value:'7',bindings:[['Box','const',1],['choose','function',0]],unresolved:['Base','seed'],rename:{name:'Box',kind:'const',replacement:'Container',source:'const Container=class extends Base{read(){return seed;}};function choose(){return new Container().read();}'}},
+ {name:'class heritage self references retain the private temporal dead zone',source:'let outcome=0;try{const Box=class Inner extends Inner{};outcome=Box;}catch(error){outcome=7;}function choose(){return outcome;}',context:'',probe:'choose()',value:'7',bindings:[['outcome','let',3],['Box','const',1],['Inner','class',1],['error','parameter',0],['choose','function',0]],unresolved:[],rename:{name:'Inner',kind:'class',replacement:'Local',source:'let outcome=0;try{const Box=class Local extends Local{};outcome=Box;}catch(error){outcome=7;}function choose(){return outcome;}'} }
+);
+cases.push(
+ {name:'static block var bindings do not become method globals',source:'let total=0;class Box{static{var value=seed;total=value;}static read(){return typeof value;}}function choose(){return total+Box.read();}',context:'const seed=7;',probe:'choose()',value:'7undefined',bindings:[['total','let',2],['Box','class',1],['value','var',1],['choose','function',0]],unresolved:['seed','value'],rename:{name:'value',kind:'var',replacement:'selected',source:'let total=0;class Box{static{var selected=seed;total=selected;}static read(){return typeof value;}}function choose(){return total+Box.read();}'}},
+ {name:'static block vars cannot capture a method outer binding',source:'const value=3;let total=0;class Box{static{var value=seed;total=value;}static read(){return value;}}function choose(){return total+Box.read();}',context:'const seed=7;',probe:'choose()',value:'10',bindings:[['value','const',1],['total','let',2],['Box','class',1],['value','var',1],['choose','function',0]],unresolved:['seed'],rename:{name:'value',kind:'var',replacement:'selected',source:'const value=3;let total=0;class Box{static{var selected=seed;total=selected;}static read(){return value;}}function choose(){return total+Box.read();}'}},
+ {name:'separate static blocks own separate var identities',source:'let total=0;class Box{static{var value=2;total+=value;}static{var value=5;total+=value;}}function choose(){return total;}',context:'',probe:'choose()',value:'7',bindings:[['total','let',3],['Box','class',0],['value','var',1],['value','var',1],['choose','function',0]],unresolved:[],rename:{name:'value',kind:'var',occurrence:1,replacement:'selected',source:'let total=0;class Box{static{var value=2;total+=value;}static{var selected=5;total+=selected;}}function choose(){return total;}'}},
+ {name:'nested ordinary blocks hoist vars only to their static block',source:'let total=0;class Box{static{{var value=7;}total=value;}}function choose(){return total;}',context:'',probe:'choose()',value:'7',bindings:[['total','let',2],['Box','class',0],['value','var',1],['choose','function',0]],unresolved:[],rename:{name:'value',kind:'var',replacement:'selected',source:'let total=0;class Box{static{{var selected=7;}total=selected;}}function choose(){return total;}'}},
+ {name:'static block closures capture the block variable environment',source:'let read;class Box{static{var value=7;read=()=>value;}}function choose(){return read();}',context:'',probe:'choose()',value:'7',bindings:[['read','let',2],['Box','class',0],['value','var',1],['choose','function',0]],unresolved:[],rename:{name:'value',kind:'var',replacement:'selected',source:'let read;class Box{static{var selected=7;read=()=>selected;}}function choose(){return read();}'}}
+);
+cases.push(...[
+ {
+  "name": "regular expression quotes cannot conceal following references",
+  "source": "function choose(value=seed){const pattern=/\"/;return pattern.test('\"')?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "pattern",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const pattern=/\"/;return pattern.test('\"')?selected:0;}"
+  }
+ },
+ {
+  "name": "regular expression character classes retain comment markers",
+  "source": "function choose(value=seed){const pattern=/[/*\"']/;return pattern.test('\"')?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "pattern",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const pattern=/[/*\"']/;return pattern.test('\"')?selected:0;}"
+  }
+ },
+ {
+  "name": "regular expression content and flags never become lexical reads",
+  "source": "function choose(value=seed){const pattern=/value/gi;return pattern.test(\"VALUE\")?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "pattern",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const pattern=/value/gi;return pattern.test(\"VALUE\")?selected:0;}"
+  }
+ },
+ {
+  "name": "template substitutions preserve regular expression brace ownership",
+  "source": "function choose(value=seed){return `${/[\"}]/.test('\"')?value:0}`;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){return `${/[\"}]/.test('\"')?selected:0}`;}"
+  }
+ },
+ {
+  "name": "nested template substitutions share actual literal ownership",
+  "source": "function choose(value=seed){return `outer ${`inner ${/[\"}]/.test('\"')?value:0}`}`;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "outer inner 7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){return `outer ${`inner ${/[\"}]/.test('\"')?selected:0}`}`;}"
+  }
+ },
+ {
+  "name": "template substitutions preserve regular expression comment characters",
+  "source": "function choose(value=seed){return `${/[/*\"']/ .test('\"')?value:0}`;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){return `${/[/*\"']/ .test('\"')?selected:0}`;}"
+  }
+ },
+ {
+  "name": "division remains an expression rather than an opaque literal",
+  "source": "function choose(value=seed){const quotient=value/2;return quotient;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "3.5",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "quotient",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const quotient=selected/2;return quotient;}"
+  }
+ },
+ {
+  "name": "ordinary string contents retain same named source words",
+  "source": "function choose(value=seed){const text=\"value // /*\";return text.includes(\"value\")?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "text",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const text=\"value // /*\";return text.includes(\"value\")?selected:0;}"
+  }
+ }
+]);
+writeProjectData(new URL('../../parity/fixtures/source-parameter-bindings.lino',import.meta.url),{schemaVersion:1,model:'actual JavaScript formal binding positions 1',versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024',language:'ECMAScript 2025 strict source'},terms:[{term:'identifier',expected:true,root:true},{term:'shorthand_property_identifier_pattern',expected:true,root:false},{term:'property_identifier',expected:false,root:false},{term:'shorthand_property_identifier',expected:false,root:false},{term:'computed_property_name',expected:false,root:false},{term:'object_pattern',expected:false,root:true},{term:'array_pattern',expected:false,root:true}],plans,cases,boundary:'Unexecuted literal controls. Actual CST leaf roles and complete default/computed intervals select bindings in parameters, methods, catch patterns and ordinary declarations; they do not validate complete source semantics or establish full-language translation. Every original and exact rename remains independent of the shared policy. Exotic syntax, malformed-source recovery and complete own-codebase translation retain separate controls.'});

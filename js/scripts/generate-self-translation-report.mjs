@@ -7,7 +7,7 @@
 // local run (pass --modules to measure a few modules).
 //
 //   node js/scripts/generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]
-//     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--list]
+//     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--physical-part K/N] [--list]
 //     [--replay-plan selected-blockers.lino]
 //
 // The whole tree takes over an hour on one runner, so CI splits it: `--shard
@@ -36,9 +36,10 @@ import { parseProgrammingLanguage } from '../src/programming-language-parser.js'
 import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
+import {measureReportModules} from './self-translation-report-queue.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
-import {partitionMeasuredWorkloads} from './test-groups.mjs';
+import {partitionReportMeasuredWorkloads,selectReportPhysicalPart} from './report-workload-costs.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -87,21 +88,35 @@ function listSourceModules() {
 }
 
 /**
- * The K-th measured-cost shard; every complete current source appears once.
+ * Eight CI report cells use measured cost. Other requested geometries retain
+ * the original byte-balanced contract and every complete source appears once.
  */
 function shardOf(files, index, count) {
-  return partitionMeasuredWorkloads(files,count)[index-1];
+  if(count===8&&files.length>=count)return partitionReportMeasuredWorkloads(files,count)[index-1];
+  const loads = Array(count).fill(0);
+  const shards = Array.from({ length: count }, () => []);
+  const sized = files.map((file) => ({ file, size: readFileSync(join(root, file)).length }));
+  sized.sort((a, b) => b.size - a.size || a.file.localeCompare(b.file));
+  for (const { file, size } of sized) {
+    const target = loads.indexOf(Math.min(...loads));
+    loads[target] += size;
+    shards[target].push(file);
+  }
+  return shards[index - 1].sort();
 }
 
 function selectedModules(replayPlan) {
   const shard = option('--shard');
+  const part = option('--physical-part');
+  assert.ok(!part || shard && !option('--modules') && !option('--replay-plan'), '--physical-part requires an entire logical shard');
   if (!shard) return modules(replayPlan);
   const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(shard);
   if (!match || Number(match[1]) > Number(match[2])) {
     console.error(`--shard takes K/N with 1 <= K <= N, not ${shard}`);
     process.exit(2);
   }
-  return shardOf(modules(replayPlan), Number(match[1]), Number(match[2]));
+  const selected = shardOf(modules(replayPlan), Number(match[1]), Number(match[2]));
+  return part ? selectReportPhysicalPart(selected, part) : selected;
 }
 
 /** The hand-written Rust module `module` corresponds to, or null. */
@@ -491,7 +506,7 @@ async function main() {
   }
   const outDir = option('--out-dir');
   if (!outDir) {
-    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js | --replay-plan plan.lino] [--decorators file.lino] [--shard K/N] [--list]');
+    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js | --replay-plan plan.lino] [--decorators file.lino] [--shard K/N] [--physical-part K/N] [--list]');
     process.exit(2);
   }
   const decoratorsText = readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8');
@@ -512,38 +527,17 @@ async function main() {
     const file = join(root, 'js/src', module);
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
-  const worker = process.env.CI === 'true' ? createReportMeasurementWorker(decoratorsText) : null;
-  let pending = null;
-  const finish = async () => {
-    if (!pending) return;
-    const { module, started, result } = pending;
-    pending = null;
-    const outcome = await result;
-    if (outcome.error) failures.push({ module, error: outcome.error });
-    else {
-      rows.push(outcome.row);
-      console.error(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
-    }
-  };
+  const workers = [];
   try {
-    for (const module of selected) {
-      const started = performance.now();
-      console.error(`self-translation report: resolving ${module}`);
-      try {
-        const moduleContext = context(posix.relative('js/src', module));
-        // Resolve this context while the preceding module is being measured.
-        // Complete results in their original source order before starting another.
-        await finish();
-        console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
-        pending = { module, started, result: worker
-          ? worker.measure(module, moduleContext).then(row => ({ row }), error => ({ error: String(error?.message ?? error) }))
-          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) }) };
-      } catch (error) {
-        failures.push({ module, error: String(error?.message ?? error) });
-      }
-    }
-    await finish();
-  } finally { await worker?.close(); }
+    if(process.env.CI==='true')for(let index=0;index<2;index++)workers.push(createReportMeasurementWorker(decoratorsText));
+    await measureReportModules(selected,{
+      workers:workers.length?workers.map(worker=>(module,context)=>worker.measure(module,context)):[(module,context)=>measureSelfTranslationModule(module,decorators,context)],
+      resolveContext:module=>context(posix.relative('js/src',module)),
+      start:(module,phase,started)=>console.error(`self-translation report: ${phase} ${module}${phase==='measuring'?` (imports ${Math.round(performance.now()-started)} ms)`:''}`),
+      record:(module,row,started)=>{rows.push(row);console.error(`self-translation report: recorded ${module} (${Math.round(performance.now()-started)} ms)`);},
+      failure:(module,error)=>failures.push({module,error:String(error?.message??error)}),
+    });
+  } finally { await Promise.all(workers.map(worker=>worker.close())); }
   mkdirSync(outDir, { recursive: true });
   const data = {
     schemaVersion: 1,

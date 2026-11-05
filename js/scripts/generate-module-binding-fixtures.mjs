@@ -1,0 +1,23 @@
+import { writeProjectData } from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const provider='export function add(value){return value+1;}\nexport default function providerDefault(value){return value+2;}';
+const cases=[
+  ['named import','import {add} from "./provider.js";export function run(){return add(4);}','add','localAdd','import {add as localAdd} from "./provider.js";export function run(){return localAdd(4);}',[['run',[], '5']]],
+  ['aliased import','import {add as selected} from "./provider.js";export function run(){return selected(4);}','selected','localAdd','import {add as localAdd} from "./provider.js";export function run(){return localAdd(4);}',[['run',[],'5']]],
+  ['default import','import selected from "./provider.js";export function run(){return selected(4);}','selected','localDefault','import localDefault from "./provider.js";export function run(){return localDefault(4);}',[['run',[],'6']]],
+  ['namespace import','import * as selected from "./provider.js";export function run(){return selected.add(4);}','selected','localModule','import * as localModule from "./provider.js";export function run(){return localModule.add(4);}',[['run',[],'5']]],
+  ['external imported homograph','import {add as selected} from "./provider.js";function add(value){return value+10;}export function run(){return selected(1)+add(1);}','add','localAdd','import {add as selected} from "./provider.js";function localAdd(value){return value+10;}export function run(){return selected(1)+localAdd(1);}',[['run',[],'13']]],
+  ['export shorthand','function add(value){return value+1;}export {add};','add','localAdd','function localAdd(value){return value+1;}export {localAdd as add};',[['add',['4'],'5']]],
+  ['export alias','function add(value){return value+1;}export {add as selected};','add','localAdd','function localAdd(value){return value+1;}export {localAdd as selected};',[['selected',['4'],'5']]],
+  ['external reexport','const add=3;export {add} from "./provider.js";export function run(){return add;}','add','localAdd','const localAdd=3;export {add} from "./provider.js";export function run(){return localAdd;}',[['run',[],'3'],['add',['4'],'5']]],
+  ['external aliased reexport','const add=3;export {add as selected} from "./provider.js";export function run(){return add;}','add','localAdd','const localAdd=3;export {add as selected} from "./provider.js";export function run(){return localAdd;}',[['run',[],'3'],['selected',['4'],'5']]],
+  ['namespace exported homograph','export * as selected from "./provider.js";const selected=3;export function run(){return selected;}','selected','localModule','export * as selected from "./provider.js";const localModule=3;export function run(){return localModule;}',[['run',[],'3'],['selected.add',['4'],'5']]],
+  ['UTF8 local import offset','// λ prefix\nimport {add} from "./provider.js";export function run(){return add(4);}','add','λ','// λ prefix\nimport {add as λ} from "./provider.js";export function run(){return λ(4);}',[['run',[],'5']]],
+  ['nested shadow and literal preservation','import {add} from "./provider.js";function nested(add){return add+1;}const spelling="add";export function run(){return add(2)+nested(3)+spelling.length;}','add','localAdd','import {add as localAdd} from "./provider.js";function nested(add){return add+1;}const spelling="add";export function run(){return localAdd(2)+nested(3)+spelling.length;}',[['run',[],'10']]],
+].map(([name,source,binding,replacement,expectedSource,observations])=>({name,source,binding,replacement,expectedSource,observations:observations.map(([entry,arguments_,value])=>({entry,arguments:arguments_,value}))}));
+writeProjectData(new URL('../../parity/fixtures/module-bindings.lino',import.meta.url),{
+  schemaVersion:1,model:'actual JavaScript module name and lexical binding roles 1',provider,cases,
+  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0; ECMAScript modules',Rust:'>=1.90.0 <1.100.0; edition 2024'},
+  sourceBasis:'https://tc39.es/ecma262/2025/multipage/ecmascript-language-scripts-and-modules.html#sec-imports ; https://tc39.es/ecma262/2025/multipage/ecmascript-language-scripts-and-modules.html#sec-exports ; imported/exported names and local lexical bindings retain separate roles.',
+  boundary:'Future independent original and renamed Node module observations, exact CST/source/field assertions, paired native rename source and full editable definition/codec/four-emission controls. No observations. This field profile does not establish full module semantic translation or contextual/escaped identifier analysis.'
+});

@@ -16,7 +16,7 @@ use std::fmt::Write as _;
 use super::Language;
 use super::diagnostics::{Result, type_error, unsupported};
 use super::emit_common::{
-    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations,
+    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, dependencies, order_declarations_with_dependencies,
     unthreaded,
 };
 use super::ir::{
@@ -32,15 +32,22 @@ use super::types::Type;
 
 mod arrays;
 mod callables;
+mod casts;
 mod helpers;
 mod main;
 mod math;
 mod optional_values;
 mod records;
 mod types;
+mod unit_strings;
 use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
+    "MLStringNumber",
+    "MLBigIntegerConversion",
+    "MLUtf16Text",
+    "MLUnicodeCase",
+    "MLRecordPropertyOrder",
     "abbrev",
     "at",
     "attribute",
@@ -187,8 +194,12 @@ fn generated(name: &str) -> Vec<String> {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_lean(source: &Program) -> Result<Emitted> {
+    super::class_owners::validate_program(source)?;
+    let prepared = super::ordered_record_preparation::prepare(source)?;
+    let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Lean")?;
-    let state = EmitState::new(
+    let utf16_strings = super::formal_unit_strings::requires(program);
+    let mut state = EmitState::new(
         program,
         Language::Lean,
         ident,
@@ -200,10 +211,22 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
             ..EmitOptions::default()
         },
     );
+    let plan=super::formal_datatype_modules::plan_formal_datatype_modules(program)?;
+    let aliases=super::formal_datatype_aliases::capture_formal_datatype_aliases(&plan.aliases,&state)?;
+    let alias_dependencies=super::formal_datatype_modules::formal_datatype_module_dependencies(&plan)?;
+    state.relocate_datatypes(&plan.program,&plan.aliases)?;
+    let program=&plan.program;
     LeanEmitter {
         program,
         state,
-        helpers: HashSet::new(),
+        aliases:super::formal_datatype_aliases::FormalDatatypeAliases::new(aliases,"Lean"),
+        alias_dependencies,
+        helpers: if utf16_strings {
+            HashSet::from(["utf16Text"])
+        } else {
+            HashSet::new()
+        },
+        utf16_strings,
         successors: HashMap::new(),
         uses_number: Dependence::numbers(program),
         uses_partial: Dependence::partial(program),
@@ -212,8 +235,11 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
 }
 
 struct LeanEmitter<'p> {
+    utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
+    aliases:super::formal_datatype_aliases::FormalDatatypeAliases,
+    alias_dependencies:HashMap<String,HashSet<String>>,
     helpers: HashSet<&'static str>,
     // Inside `| p + 1 =>` of a match on `x`, `x` is written `p + 1`: Lean's
     // structural recursion sees through the pattern but not the variable.
@@ -224,21 +250,28 @@ struct LeanEmitter<'p> {
 
 impl LeanEmitter<'_> {
     fn file(mut self) -> Result<Emitted> {
+        if self.utf16_strings {
+            self.state.encode("utf16-formal-strings","source strings are ordered UTF-16 code-unit columns represented by natural numbers 0..65535; generated complete shared operations retain isolated units, and scalar display alone replaces unpaired surrogates");
+        }
         let mut blocks = Vec::new();
+        blocks.extend(self.aliases.open(&[],&self.state)?);
         let mut open: Vec<String> = Vec::new();
         let groups = mutual_groups(self.program);
-        for entry in order_declarations(self.program, false)? {
-            self.move_to(&mut open, entry.module_path(), &mut blocks);
+        let data_groups=datatype_groups(self.program)?;
+        for entry in order_declarations_with_dependencies(self.program,self.aliases.has_aliases(),&self.alias_dependencies)? {
+            self.move_to(&mut open, entry.module_path(), &mut blocks)?;
             let block = match (entry, groups.get(entry.full_name())) {
                 (_, Some(group)) if std::ptr::eq(group[0], entry) => self.mutual(group)?,
                 (_, Some(_)) => continue,
-                (Decl::Data(data), None) => self.data(entry, data)?,
+                (Decl::Data(data), None) => if let Some(group)=data_groups.get(entry.full_name()){if std::ptr::eq(group[0],entry){self.mutual_data(group)?}else{continue;}}else{self.data(entry,data)?},
                 (Decl::Fn(function), None) => self.function(entry, function)?,
                 (Decl::Theorem(theorem), None) => self.theorem(entry, theorem)?,
             };
+            if let Some(group)=data_groups.get(entry.full_name()){self.aliases.complete(group);}else{self.aliases.complete(&[entry]);}
             blocks.push(block);
         }
-        self.move_to(&mut open, &[], &mut blocks);
+        self.move_to(&mut open, &[], &mut blocks)?;
+        blocks.extend(self.aliases.close(&[],&self.state)?);self.aliases.finish()?;
         let main = match &self.program.main {
             Some(main) => Some(self.main(main)?),
             None => None,
@@ -264,6 +297,26 @@ impl LeanEmitter<'_> {
                 lines.push(String::new());
             }
         }
+        if self.helpers.contains("stringNumber") {
+            lines.push(include_str!("runtime/string-number.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("bigIntegerConversion") {
+            lines.push(include_str!("runtime/big-integer-conversion.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("utf16Text") {
+            lines.push(include_str!("runtime/utf16-text.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("unicodeCase") {
+            lines.push(include_str!("runtime/unicode-case.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("recordPropertyOrder") {
+            lines.push(include_str!("runtime/record-property-order.lean").to_owned());
+            lines.push(String::new());
+        }
         for block in blocks {
             lines.push(block);
             lines.push(String::new());
@@ -277,20 +330,23 @@ impl LeanEmitter<'_> {
     }
 
     /// Closes and opens namespaces so that `path` is the open one.
-    fn move_to(&self, open: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>) {
+    fn move_to(&mut self, open: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>)->Result<()> {
         let common = open
             .iter()
             .zip(path)
             .take_while(|(left, right)| left == right)
             .count();
         while open.len() > common {
+            blocks.extend(self.aliases.close(open,&self.state)?);
             blocks.push(format!("end {}", self.module_name(open)));
             open.pop();
         }
         while open.len() < path.len() {
             open.push(path[open.len()].clone());
             blocks.push(format!("namespace {}", self.module_name(open)));
+            blocks.extend(self.aliases.open(open,&self.state)?);
         }
+        Ok(())
     }
 
     fn module_name(&self, path: &[String]) -> String {
@@ -298,6 +354,12 @@ impl LeanEmitter<'_> {
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
+        self.data_definition(entry,data,false)
+    }
+    fn data_definition(&mut self, entry: &Decl, data: &DataDecl, mutual:bool) -> Result<String> {
+        let facts=crate::translation::callable_data::read_callable_data_facts(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let profile=if facts.callable&&!mutual{Some(crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?)}else{None};
+        let self_profile=if !mutual&&!facts.callable&&dependencies(entry).contains(&data.full_name){crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?.remove(&data.full_name)}else{None};
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         let mut lines = vec![format!("inductive {name} where")];
@@ -312,15 +374,17 @@ impl LeanEmitter<'_> {
         }
         // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
         // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
-        let deriving = if data.output {
-            "Inhabited"
-        } else if self.undecidable(&data.full_name, &mut HashSet::new()) {
-            "Repr, Inhabited"
-        } else {
-            "Repr, DecidableEq, Inhabited"
-        };
-        lines.push(format!("  deriving {deriving}"));
+        let undecidable=self.undecidable(&data.full_name,&mut HashSet::new());
+        let deriving = if mutual||self_profile.is_some(){crate::translation::callable_data_derivation_rules::read_formal_datatype_lean_block_derivation(facts.callable,data.output,undecidable)}else{crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Lean",facts.callable,false,data.output,undecidable)};
+        if let Some(profile)=profile.filter(|profile|profile.recursive){let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}else if !deriving.is_empty(){lines.push(format!("  deriving {deriving}"));}
+        if let Some(profile)=self_profile{let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}
         Ok(lines.join("\n"))
+    }
+    fn mutual_data(&mut self,group:&[&Decl])->Result<String>{
+        for entry in group{let ty=Type::Data{name:entry.full_name().to_owned()};let lookup=|name:&str|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None};if crate::translation::callable_data::read_callable_data_facts(&ty,&lookup)?.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&ty,&lookup)?;}}
+        let profiles=crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:group[0].full_name().to_owned()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let mut lines=vec!["mutual".to_owned()];for entry in group{let Decl::Data(data)=entry else{return Err(unsupported("formal mutual datatype","the complete component needs actual data declarations",None));};lines.push(self.data_definition(entry,data,true)?);}lines.push("end".to_owned());
+        let mut defaults=group.to_vec();defaults.sort_by_key(|entry|profiles[entry.full_name()].rank);for entry in defaults{let Decl::Data(data)=entry else{unreachable!("validated actual data component")};let witness=&data.ctors[profiles[entry.full_name()].witness];lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(self.state.local_name(&data.full_name),&self.state.ctor_ref(&data.full_name,&witness.name,"."),witness.fields.len() as f64));}Ok(lines.join("\n"))
     }
 
     fn definition(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
@@ -515,6 +579,19 @@ impl LeanEmitter<'_> {
     }
 
     fn expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
+        if let Some(copy) =
+            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
+                self.program.source_language.as_str(),
+                e,
+            )
+        {
+            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
+            let value = self.expr(copy, depth)?;
+            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("Lean",&value));
+        }
+        if let Some(text) = super::formal_unit_strings::expression(self, e, depth)? {
+            return Ok(text);
+        }
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&e.node, Node::Ctor { frozen: true, .. })
         {
@@ -552,7 +629,12 @@ impl LeanEmitter<'_> {
             }
         }
         Ok(match &e.node {
-            Node::Record { entries } => self.record_value(entries, depth)?,
+            Node::Record { entries, order } => self.record_value(
+                entries,
+                order.as_deref(),
+                matches!(&e.ty, Type::Record { ordered: true, .. }),
+                depth,
+            )?,
             Node::RecordField { object, index, .. } => self.record_field(object, *index, depth)?,
             Node::ReferenceAllocate { .. }
             | Node::ReferenceRead { .. }
@@ -671,6 +753,19 @@ impl LeanEmitter<'_> {
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
             Node::Method { object, op, args } => {
+                if op == "toSorted" {
+                    return Err(unsupported(
+                        "array copying sort",
+                        "this target needs an explicit UTF-16 string ordering interpretation",
+                        e.span,
+                    ));
+                }
+                if op == "readJavaScriptRecordPropertyOrder" {
+                    let rendered = self.expr(object, depth)?;
+                    return crate::translation::ordered_record_values::order_read(
+                        "Lean", e, &rendered,
+                    );
+                }
                 if matches!(object.ty, Type::Array { .. }) && op == "map" {
                     let callback = args
                         .first()
@@ -716,6 +811,7 @@ impl LeanEmitter<'_> {
                     "Lean", op, &object, &search,
                 )
             }
+            Node::PropositionValue{..}=>self.check(&e.proposition_value_atom().ok_or_else(||unsupported("proposition value","an actual checked comparison is required",e.span))?)?,
             Node::ToString { arg, console } => {
                 if arg.ty == Type::String {
                     self.expr(arg, depth)?
@@ -740,6 +836,9 @@ impl LeanEmitter<'_> {
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
             | Node::CollectionItems { .. } => self.array_expr(e, depth)?,
+            Node::CollectionSize { .. } | Node::CollectionRead { .. } => {
+                self.array_expr(e, depth)?
+            }
             Node::Math { .. } => self.math(e, depth)?,
             // Output threading leaves no `print` node.
             Node::Print { .. } => {
@@ -761,29 +860,6 @@ impl LeanEmitter<'_> {
             parts.push(self.expr(arg, depth)?);
         }
         Ok(format!("({})", parts.join(" ")))
-    }
-
-    fn text_of(&mut self, arg: &Expr, depth: usize, console: bool) -> Result<String> {
-        if matches!(arg.ty, Type::Data { .. } | Type::Unit) {
-            return Err(unsupported(
-                "output of structured values",
-                &format!("a {} value has no portable textual form", arg.ty.kind()),
-                arg.span,
-            ));
-        }
-        if arg.ty.is_float() {
-            self.helpers.insert("jsNumber");
-            if console {
-                self.helpers.insert("jsConsole");
-            }
-            let function = if console {
-                "ml_js_console"
-            } else {
-                "ml_js_number"
-            };
-            return Ok(format!("({function} {})", self.expr(arg, depth)?));
-        }
-        Ok(format!("(toString {})", self.expr(arg, depth)?))
     }
 
     fn binary(&mut self, e: &Expr, depth: usize) -> Result<String> {
@@ -909,29 +985,6 @@ impl LeanEmitter<'_> {
             arms.push(format!("{}| {text} => {}", pad(depth + 1), body?));
         }
         Ok(format!("(match {subject} with\n{})", arms.join("\n")))
-    }
-
-    fn cast(
-        &mut self,
-        arg: &Expr,
-        from: &Type,
-        to: &Type,
-        flavor: Flavor,
-        depth: usize,
-    ) -> Result<String> {
-        let arg = self.expr(arg, depth)?;
-        let natural_from = from.is_natural();
-        let natural_to = to.is_natural();
-        if natural_from == natural_to {
-            return Ok(arg);
-        }
-        if natural_from {
-            return Ok(format!("(Int.ofNat {arg})"));
-        }
-        if flavor == Flavor::Checked {
-            unthreaded("a checked conversion to a natural");
-        }
-        Ok(format!("(Int.toNat {arg})"))
     }
 }
 

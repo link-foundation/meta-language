@@ -1,3 +1,4 @@
+import {readRustTypeAliasStringMemberOwner} from './rust-type-aliases.js';
 // Source-only adapters. Queries project to existing value operations, while
 // the linked policy proves their primitive owner and immutable source layers.
 import { BOOL, FLOAT, STRING } from './types.js';
@@ -56,7 +57,7 @@ export function readRustStringEmptyQuery(parser, receiver, args, range) {
 /** Project only an actually resolved standard String's zero-argument new. */
 export function readRustEmptyStringConstructor(parser, segments, args, path, range) {
   if (segments.at(-1) !== 'new' || segments.length < 2) return null;
-  const owner = readRustSourceTypeOwner(parser, segments.slice(0, -1), [], STRING);
+  const owner = readRustTypeAliasStringMemberOwner(parser,segments,path)??readRustSourceTypeOwner(parser, segments.slice(0, -1), [], STRING);
   if (owner.kind !== 'library' || !acceptRustReadOnlyQueryOwner('string empty', owner.kind, owner.path.join('::'))) return null;
   if (args.length) throw new TranslationError('type', `String::new expects 0 arguments but got ${args.length}`, range);
   return parser.origins.mark({ k: 'str', value: '', span: range }, {
