@@ -1,5 +1,12 @@
 # Issue 227: delivery pace, remaining requirements and forecast
 
+Latest review: [November 6 timing and delivery analysis](delivery-time-analysis-2026-11-06.md),
+with every checkpoint in the three defined task history ranges, the latest 32
+step explanations and an explicit solo-capacity budget. It extends this historical
+case through implementation commit `2ae737862`; the earlier team-size/calendar
+examples below retain their original dates and must not be quoted as current
+measured forecasts. The new ranges remain low-confidence planning judgments.
+
 Prepared 2026-11-01 while three GPT-6.1-sol medium agents continue source
 drafting. The committed reference is
 `a14ce9a1ab7549ae114b8cee90c4ee08c428fac6`; subsequent working-tree drafts are
