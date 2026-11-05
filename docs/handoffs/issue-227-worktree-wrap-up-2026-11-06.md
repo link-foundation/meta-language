@@ -39,18 +39,38 @@ history under different commit identities; this audit preserves the exact
 original objects rather than treating patch similarity as an ancestry proof.
 
 The automatically captured [publication manifest](issue-227-worktree-publication-2026-11-06.lino)
-maps each local branch and exact tip to
-`archive/worktree-wrap-up-2026-11-06/<original-branch>`. These archive branches
-preserve historical snapshots; they do not integrate old experiments or repairs
-into the current implementation and do not establish that their code passes.
-They are created without force updates or local branch deletion. An atomic push
-publishes this audit commit on the current continuation branch and every archive
-ref together. Fresh remote equality is checked after the push; the manifest is a
-publication declaration, not a fabricated prior observation.
+maps each local branch and exact tip to an archival tag under
+`archive/worktree-wrap-up-2026-11-06/<original-branch>`. These tags preserve
+historical snapshots; they do not integrate old experiments or repairs into the
+current implementation and do not establish that their code passes. No tag is
+an application release. Local branches and existing remote refs are retained.
 
-The workflow's push trigger selects `main`; the archive refs do not target that
-branch and have no opened PRs. Only the existing continuation PR receives the
-new audit commit. The source drafting phase and no-local-Rust rule are retained.
+GitHub rejected the initial 124-reference atomic branch push with
+`fatal error in commit_refs_rules`. A 20-reference branch batch and a single
+short branch name failed with the same error. The repository safety ruleset was
+inspected read-only; it protects branch deletion and non-fast-forward changes.
+No rules or bypass settings were changed. The API could not create a branch for
+a commit rejected from Git's quarantine because that object was not present.
+GitHub accepted publication as an archival tag. Archival tags are therefore
+published in small atomic batches, followed by the current branch's audit
+commit. Push receipts are retained under the local archive directory. Fresh
+remote equality is checked afterward; the manifest declares exact intended refs
+rather than fabricating a prior observation.
+
+The workflow's push trigger selects `main`. Archive tag creation neither targets
+that branch nor publishes a GitHub release or opens a PR. Only the existing
+continuation PR receives the new audit commit. The source drafting phase and
+no-local-Rust rule are retained.
+
+
+## Archive verification before the final audit push
+
+A fresh remote-ref lookup matched all 123 archival tags to their declared exact
+commit IDs. Reachability against available fresh remote commit refs found no
+unpublished tip on any other local branch; only this current audit's own commit
+remained pending its final push. The exact-ref receipt is retained as
+`.git/local-session-archives/2026-11-06/verified-archive-refs.lino`. Final current
+branch equality and both checkouts' clean status are checked after that push.
 
 ## Registrations inspected
 
