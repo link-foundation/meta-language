@@ -15,8 +15,9 @@ import {captureRustOwnedStandardSumMethodValue} from './rust-owned-standard-sum-
 import {readRustExclusiveSourcePlaceTokens,resolveRustExclusiveSourcePlannedPlace,restoreRustExclusiveSourcePlaceValue,selectRustExclusiveSourceCallReferent,requireRustExclusiveSourceReceiverRoot} from './rust-exclusive-source-places.js';
 import {readRustOwnedBoxRecordParent} from './rust-owned-containers.js';
 import {readRustCopyClosureValueBorrows} from './rust-copy-closure-lifetimes.js';
+import {readRustOwnedRecordEffectOperation} from './rust-owned-record-effect-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive source call',reason,span);};
-const operations={borrow:'rustExclusiveSourceBorrow',call:'rustExclusiveSourceCall',write:'rustExclusiveSourceWholeWrite'};
+const operations={borrow:'rustExclusiveSourceBorrow',call:readRustOwnedRecordEffectOperation('call'),write:'rustExclusiveSourceWholeWrite'};
 export function initializeRustExclusiveSourceCalls(parser){
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'&&parser.standardCollectionSourceModel!=='Rust closed standard collections 1')return null;
  if(parser.exclusiveSourceCalls)return parser.exclusiveSourceCalls;

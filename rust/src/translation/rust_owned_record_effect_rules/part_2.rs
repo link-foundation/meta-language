@@ -1,7 +1,12 @@
 // Generated from complete js/src/translation/rust-owned-record-effect-rules.js. Do not edit by hand.
-use super::MlTemporaryPlanConditionalMatchArmsLoop3Result;
 use super::ml_array;
 use super::read_required_number_fact;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanConditionalMatchArmsLoop3Result {
+    MlTemporaryPlanConditionalMatchArmsLoop3Done(Vec<f64>),
+    MlTemporaryPlanConditionalMatchArmsLoop3Return(Vec<f64>),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

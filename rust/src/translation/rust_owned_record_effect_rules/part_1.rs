@@ -1,4 +1,5 @@
 // Generated from complete js/src/translation/rust-owned-record-effect-rules.js. Do not edit by hand.
+use super::MlTemporaryPlanConditionalMatchArmsLoop3Result;
 use super::source_ml_temporary_plan_conditional_match_arms_loop3;
 
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
@@ -569,6 +570,8 @@ pub fn read_rust_owned_record_effect_form(kind: &str, operation: &str) -> String
         String::from("write state")
     } else if (kind == "math") && (operation == "rustOwnedRecordStatePacket") {
         String::from("write state packet")
+    } else if (kind == "math") && (operation == "rustExclusiveSourceCall") {
+        String::from("call state packet")
     } else if kind == "propositionValue" {
         String::from("proposition comparison")
     } else {
@@ -647,6 +650,8 @@ pub fn read_rust_owned_record_effect_operation(operation: &str) -> String {
         String::from("rustOwnedRecordStateWrite")
     } else if operation == "packet" {
         String::from("rustOwnedRecordStatePacket")
+    } else if operation == "call" {
+        String::from("rustExclusiveSourceCall")
     } else {
         String::new()
     }
@@ -891,10 +896,4 @@ pub fn source_ml_temporary_plan_conditional_match_arms_loop4(
         }
         return { layers };
     }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanConditionalMatchArmsLoop3Result {
-    MlTemporaryPlanConditionalMatchArmsLoop3Done(Vec<f64>),
-    MlTemporaryPlanConditionalMatchArmsLoop3Return(Vec<f64>),
 }

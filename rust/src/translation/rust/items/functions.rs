@@ -375,7 +375,8 @@ impl RustParser {
         let previous_sum_expected=std::mem::replace(&mut self.standard_sum_source.expected_origin,Some(source_result.clone()));
         let previous_source_region_body_closed =
             std::mem::replace(&mut self.source_region_body_closed, source_region_body_closed);
-        let body_read:Result<SExpr>=(|| {
+        let source_state_frame = self.begin_fn_mut_source_function_state();
+        let body_read: Result<SExpr> = source_state_frame.as_ref().map_err(Clone::clone).and_then(|frame| {
         let body = if scalar_loop {
             if !path.is_empty() {
                 return Err(unsupported(
@@ -405,6 +406,8 @@ impl RustParser {
                 body
             } else if self.ordinary_completion_selected() {
                 self.ordinary_function_completion(path, &ret, &source_result)?
+            } else if frame.is_some() {
+                self.read_record_state_block(path, true)?
             } else {
                 self.block_with_context(path, true)?
             }
@@ -412,7 +415,10 @@ impl RustParser {
             self.closed_function_completion(path)?
         };
         Ok(body)
-        })();
+        });
+        if let Some(token) = source_state_frame? {
+            self.end_owned_record_state_block(token)?;
+        }
         self.source_region_body_closed = previous_source_region_body_closed;
         self.standard_sum_source.return_origin=previous_sum_return;
         self.standard_sum_source.expected_origin=previous_sum_expected;

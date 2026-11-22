@@ -575,6 +575,7 @@ impl RustParser {
         }
         let ownership=Some(self.origins.snapshot_owned_bindings());
         let record_state_callable=self.begin_owned_record_state_callable();
+        let capture_frame = self.enter_fn_mut_source_capture(Some(start.span()));
         let temporaries=Some(self.origins.owned_temporary_frame());
         let outer = self.origins.enter(None);
         for (parameter, origin) in params.iter().zip(bindings.iter().cloned()) {
@@ -584,7 +585,7 @@ impl RustParser {
         }
         let outer_sum_return=std::mem::replace(&mut self.standard_sum_source.return_origin,result_origin.clone());
         let outer_sum_expected=std::mem::replace(&mut self.standard_sum_source.expected_origin,result_origin.clone());
-        let read: Result<SExpr> = (|| {
+        let read: Result<SExpr> = capture_frame.as_ref().map_err(Clone::clone).and_then(|frame| {
             let mut projections = Vec::new();
             for (index, pattern) in patterns.into_iter().enumerate() {
                 if let Some(pattern) = pattern {
@@ -612,6 +613,8 @@ impl RustParser {
                     && self.ordinary_completion_selected()
                 {
                     self.ordinary_function_completion(path, ret, origin)?
+                } else if frame.is_some() {
+                    self.read_record_state_block(path, true)?
                 } else {
                     self.block_with_context(path, true)?
                 }
@@ -688,13 +691,17 @@ impl RustParser {
             }
             self.origins.mark(&body, body_origin);
             Ok(body)
-        })();
+        });
         self.origins.scope = outer.clone();
         self.standard_sum_source.return_origin=outer_sum_return;
         self.standard_sum_source.expected_origin=outer_sum_expected;
         if let Some(ownership)=ownership{self.origins.restore_owned_bindings(ownership);}
         if let Some(temporaries)=temporaries{self.origins.restore_owned_temporary_frame(temporaries);}
+        let captures = capture_frame.and_then(|frame| {
+            self.leave_fn_mut_source_capture(frame, read.is_ok(), Some(start.span()))
+        });
         self.end_owned_record_state_callable(record_state_callable);
+        captures?;
         let body = read?;
         let statements = serde_json::json!([{"s":"return", "expr":&body}]);
         let facts = create_surface_reference_facts(&statements);

@@ -3,18 +3,23 @@
 use super::{
     Result, RustParser, SExpr, SNode, SourceOrigin, Span, Token, Type,
     borrowed_vectors::source_type_position, fn_mut_source_declarations::FnMutSourceDeclaration,
-    fn_mut_source_headers::FnMutSourceInstance, span, type_error, unsupported,
+    fn_mut_source_headers::FnMutSourceInstance, owned_record_effects::CallablePlace, span,
+    type_error, unsupported,
 };
 use crate::translation::{
-    source_fn_mut_specializations::{Callback, Parameter, RustFnMutSpecialization},
+    source_fn_mut_specializations::{Callback, Capture, Parameter, RustFnMutSpecialization},
     source_signatures::SourceOwner,
 };
 
-pub(super) fn fn_mut_result_packet(result: &SourceOrigin, path: &[String]) -> Result<SourceOrigin> {
-    let position = source_type_position(result)?;
+pub(super) fn fn_mut_result_packet(
+    result: &SourceOrigin,
+    states: &[SourceOrigin],
+    path: &[String],
+) -> Result<SourceOrigin> {
+    let positions = std::iter::once(result).chain(states).map(source_type_position).collect::<Result<Vec<_>>>()?;
     let mut packet = SourceOrigin::with_type(
         Type::Tuple {
-            elements: vec![position.ty],
+            elements: positions.iter().map(|position| position.ty.clone()).collect(),
         },
         path,
         Vec::new(),
@@ -22,7 +27,7 @@ pub(super) fn fn_mut_result_packet(result: &SourceOrigin, path: &[String]) -> Re
     packet.source_owner = Some(SourceOwner {
         kind: "tuple".to_owned(),
         path: Vec::new(),
-        arguments: vec![position.owner],
+        arguments: positions.into_iter().map(|position| position.owner).collect(),
     });
     Ok(packet)
 }
@@ -95,10 +100,26 @@ impl RustParser {
             ));
         }
         let result = header.callback.result.clone();
-        let call = self
+        let mut parameters = header.callback.parameters.clone();
+        let states = header.state_parameters.clone();
+        let mut call = self
             .read_copy_closure_call(callee, arguments, path, location)?
             .ok_or_else(|| type_error("the original source formal must be callable", location))?;
-        Ok(self.unpack_fn_mut_result(call, result, path))
+        let SNode::App { args: inputs, .. } = &mut call.node else {
+            return Err(type_error("the actual callback must retain its application", location));
+        };
+        let mut places = Vec::new();
+        for slot in states {
+            let input = SExpr::new(SNode::Name { path: vec![slot.current_name.clone()] }, None);
+            places.push(CallablePlace { parameter: inputs.len(), slot: slot.clone(), layouts: Vec::new(), position: slot.origin.clone() });
+            parameters.push(slot.origin);
+            inputs.push(input);
+        }
+        if places.is_empty() {
+            Ok(self.unpack_fn_mut_result(call, result, path))
+        } else {
+            self.retain_callable_packet(call, parameters, places, result)
+        }
     }
 
     pub(super) fn read_fn_mut_source_invocation(
@@ -125,6 +146,7 @@ impl RustParser {
         let callback_formal = &preview.callback.owner.callback;
         self.cursor.expect("(", Some("source FnMut call"))?;
         let mut arguments = Vec::new();
+        let mut captures = Vec::new();
         for (index, parameter) in preview.resolved.parameters.iter().enumerate() {
             if index > 0 {
                 self.cursor.expect(",", Some("source FnMut arguments"))?;
@@ -146,7 +168,8 @@ impl RustParser {
                         Some(self.peek().span()),
                     ));
                 }
-                let mut closure = if preview
+                self.begin_fn_mut_source_capture_read()?;
+                let read = if preview
                     .callback
                     .parameters
                     .iter()
@@ -155,27 +178,37 @@ impl RustParser {
                 {
                     let mut expected = parameter.clone();
                     expected.copy_evidence = Some(());
-                    self.read_expected_copy_closure(path, Some(&expected))?
+                    self.read_expected_copy_closure(path, Some(&expected))
                 } else {
                     self.read_owned_callback_closure(
                         path,
                         &preview.callback.parameters,
                         Some(&preview.callback.result),
-                    )?
+                    )
                 };
+                let selected = self.fn_mut_source_capture_read.take().expect("the selected source callback retains its capture reader");
+                let mut closure = read?;
+                captures = selected.captures.ok_or_else(|| type_error("the selected callback must finish its original closure body", closure.span))?;
                 self.origins.argument(
                     &self.origins.origin(&closure, path),
                     parameter,
                     closure.span,
                 )?;
-                let SNode::Lambda { ret, body, .. } = &mut closure.node else {
+                let SNode::Lambda { params, ret, body, .. } = &mut closure.node else {
                     return Err(type_error(
                         "the actual callback needs its checked body",
                         closure.span,
                     ));
                 };
-                *ret = fn_mut_result_packet(&preview.callback.result, path)?.ty;
-                **body = pack((**body).clone());
+                let states = captures.iter().map(|capture| capture.alias.origin.clone()).collect::<Vec<_>>();
+                *ret = fn_mut_result_packet(&preview.callback.result, &states, path)?.ty;
+                for capture in &captures {
+                    params.push(self.callback_state_parameter(&capture.alias, closure.span)?);
+                    self.retain_callable_state_parameter(capture.alias.current_name.clone(), capture.alias.clone(), true)?;
+                }
+                if captures.is_empty() {
+                    **body = pack((**body).clone());
+                }
                 closure
             } else {
                 let argument =
@@ -193,7 +226,13 @@ impl RustParser {
         }
         self.cursor.eat(",");
         let close = self.cursor.expect(")", Some("source FnMut call"))?;
-        let actual = self.replay_fn_mut_source_declaration(declaration, Vec::new(), true)?;
+        let actual = self.replay_fn_mut_source_declaration(declaration, Vec::new(), true, captures.clone())?;
+        if captures.len() != actual.state_parameters.len() {
+            return Err(type_error(
+                "source FnMut replay must retain every ordered callback state parameter",
+                span(start, &close),
+            ));
+        }
         let name = self.fresh_product_binding();
         let source_version = self
             .fn_mut_source_declarations
@@ -202,7 +241,7 @@ impl RustParser {
             .source_version
             .clone();
         let result = actual.resolved.result;
-        let parameters = actual
+        let mut parameters = actual
             .resolved
             .parameters
             .iter()
@@ -220,7 +259,23 @@ impl RustParser {
                     position: source_type_position(origin)?,
                 })
             })
-            .collect::<Result<_>>()?;
+            .collect::<Result<Vec<_>>>()?;
+        let mut parameter_origins = actual.resolved.parameters.clone();
+        let mut places = Vec::new();
+        let mut captured_parameters = Vec::new();
+        let mut function = actual.function;
+        for (capture, slot) in captures.into_iter().zip(&actual.state_parameters) {
+            let parameter = parameters.len();
+            let position = source_type_position(&slot.origin)?;
+            if let Some(binder) = capture.binder {
+                captured_parameters.push(Capture { parameter, binder, position: position.clone() });
+            }
+            parameters.push(Parameter { mode: "exclusive".to_owned(), position });
+            parameter_origins.push(slot.origin.clone());
+            function.params.push(self.callback_state_parameter(slot, span(start, &close))?);
+            arguments.push(SExpr::new(SNode::Name { path: vec![capture.outer.current_name.clone()] }, span(start, &close)));
+            places.push(CallablePlace { parameter, slot: capture.outer, layouts: Vec::new(), position: slot.origin.clone() });
+        }
         let callback = Callback {
             parameter: callback_formal.index,
             parameters: actual
@@ -230,12 +285,14 @@ impl RustParser {
                 .map(source_type_position)
                 .collect::<Result<_>>()?,
             result: source_type_position(&actual.callback.result)?,
-            captures: Vec::new(),
+            captures: captured_parameters,
         };
-        let mut function = actual.function;
         function.name = name.clone();
-        function.ret = fn_mut_result_packet(&result, &declaration.owner)?.ty;
-        function.body = pack(function.body);
+        let states = actual.state_parameters.iter().map(|slot| slot.origin.clone()).collect::<Vec<_>>();
+        function.ret = fn_mut_result_packet(&result, &states, &declaration.owner)?.ty;
+        if places.is_empty() {
+            function.body = pack(function.body);
+        }
         function.source_signature = None;
         function.source_fn_mut_specialization = Some(Box::new(RustFnMutSpecialization {
             model: "Rust closed source FnMut specializations 1".to_owned(),
@@ -246,7 +303,7 @@ impl RustParser {
             callback,
             parameters,
             result: source_type_position(&result)?,
-            packet: Vec::new(),
+            packet: places.iter().map(|place| place.parameter).collect(),
         }));
         self.fn_mut_source_instances.push(FnMutSourceInstance {
             owner: declaration.owner.clone(),
@@ -265,6 +322,10 @@ impl RustParser {
             },
             location,
         );
-        Ok(self.unpack_fn_mut_result(call, result, path))
+        if places.is_empty() {
+            Ok(self.unpack_fn_mut_result(call, result, path))
+        } else {
+            self.retain_callable_packet(call, parameter_origins, places, result)
+        }
     }
 }

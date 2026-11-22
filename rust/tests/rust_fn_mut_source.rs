@@ -56,3 +56,32 @@ fn direct_callback_calls_replay_every_call_in_the_original_declaration() {
         );
     }
 }
+
+#[test]
+fn repeated_callbacks_retain_the_original_mutable_capture() {
+    let source = "
+        fn twice(value: u8, mut map: impl FnMut(u8) -> u8) -> u8 {
+            let first = map(value);
+            map(first)
+        }
+        fn main() {
+            let mut count: u8 = 0;
+            let result = twice(4, |value| { count += 1; value + count });
+            println!(\"{}\", result == 7 && count == 2);
+        }
+    ";
+    let surface =
+        parse_rust_with_fn_mut_source_model(source, FN_MUT_MODEL, EXCLUSIVE_MODEL, "1.93.2")
+            .unwrap();
+    let facet = surface.items.iter().find_map(|item| match item {
+        SItem::Fn(function) => function.source_fn_mut_specialization.as_ref(),
+        _ => None,
+    }).expect("the original callback function has a checked specialization");
+    assert_eq!(facet.packet, [2]);
+    let [capture] = facet.callback.captures.as_slice() else {
+        panic!("the original closure captures one mutable root");
+    };
+    assert_eq!(capture.parameter, 2);
+    assert_eq!(&source[capture.binder.start..capture.binder.end], "count");
+    check_program(&surface).unwrap();
+}
