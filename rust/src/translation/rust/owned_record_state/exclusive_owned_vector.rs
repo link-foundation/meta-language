@@ -22,16 +22,20 @@ impl RustParser {
             return Ok(None);
         };
         let span = receiver.span;
-        let owner = actual
+        let referent = (!actual.wrappers.is_empty())
+            .then(|| self.origins.peel_closed_owned_box_state(&actual))
+            .flatten();
+        let receiver_origin = referent.as_ref().unwrap_or(&actual);
+        let owner = receiver_origin
             .expanded_source_owner
             .as_ref()
-            .or(actual.source_owner.as_ref());
+            .or(receiver_origin.source_owner.as_ref());
         let selected = owner.and_then(|owner| {
             vector_rules::accept_rust_exclusive_source_vector_receiver(
                 "array",
-                actual.array_source_model.unwrap_or(""),
-                actual.wrappers.len() as f64,
-                actual.proven || self.origins.collecting,
+                receiver_origin.array_source_model.unwrap_or(""),
+                receiver_origin.wrappers.len() as f64,
+                receiver_origin.proven || self.origins.collecting,
                 &owner.kind,
                 &owner.path.join("::"),
                 owner.arguments.len() as f64,
@@ -79,6 +83,7 @@ impl RustParser {
         let operand = self.read_expected_copy_closure(path, Some(&expected));
         self.standard_sum_source.expected_origin = previous;
         let operand = operand?;
+        self.check_reserved_place_operand_effects(receiver, &operand)?;
         self.cursor.eat(",");
         let end = self.cursor.expect(")", Some("Vec push"))?;
         let span = Some(Span::new(
@@ -110,7 +115,8 @@ impl RustParser {
                 ));
             }
         }
-        let result = if !layouts.is_empty() && slot.source_binder.is_some() {
+        let result = if (!layouts.is_empty() || referent.is_some()) && slot.source_binder.is_some()
+        {
             self.owned_record_effect_vector_append(
                 CollectionPlace {
                     slot,
@@ -118,6 +124,7 @@ impl RustParser {
                     target,
                 },
                 field,
+                referent,
                 operand,
                 expected,
                 path,

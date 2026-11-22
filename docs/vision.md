@@ -5253,7 +5253,9 @@ String concatenation and one-element Vec append inside checked field writeback.
 It checks the actual nested selected-field extraction before replacing that
 field's revision and retains the sibling field revisions and their loans. Vec
 append checks the actual standard vector element owner and moves its operand
-through the replacement packet.
+through the replacement packet. A native boxed receiver carries the actual
+canonical Box payload qualifier on its operation. An empty field path requires
+that qualifier and the reconstructed root keeps its original Box storage owner.
 An implicit mutable method autoref first reserves the actual receiver place.
 Readonly argument observations may finish before activation; overlapping mutable
 acquisition and writes remain excluded. Activation checks initialized selected

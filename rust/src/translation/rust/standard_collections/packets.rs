@@ -437,7 +437,7 @@ impl RustParser {
         }
         self.origins.check_owned_origin(&left_origin, location)?;
         self.origins.check_owned_origin(&right_origin, location)?;
-        self.check_collection_operand_effects(left, right)?;
+        self.check_reserved_place_operand_effects(left, right)?;
         let library = Rc::clone(
             &self
                 .standard_collections
@@ -1280,7 +1280,7 @@ impl RustParser {
                 self.origins
                     .prepare_owned_argument(&argument, Some(expected), module)?;
             }
-            self.check_collection_operand_effects(receiver, &argument)?;
+            self.check_reserved_place_operand_effects(receiver, &argument)?;
             arguments.push(argument);
         }
         if !arguments.is_empty() {

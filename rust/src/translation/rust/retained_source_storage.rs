@@ -334,6 +334,32 @@ mod tests {
     }
 
     #[test]
+    fn boxed_string_replacement_retains_its_actual_payload_position() {
+        let source = r#"fn main() {
+            let mut text = Box::new(String::from("discarded"));
+            text.clear();
+            text.push_str("kept");
+            println!("{}", *text);
+        }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        assert_eq!(wire.matches("\"operation\":\"clear string\"").count(), 1);
+        assert_eq!(
+            wire.matches("\"operation\":\"append string text\"").count(),
+            1
+        );
+        assert_eq!(wire.matches("\"slot\":0,\"fields\":[]").count(), 2);
+    }
+
+    #[test]
     fn projected_vector_append_keeps_the_actual_selected_field_and_element() {
         let source = r#"struct Buffer { values: Vec<u8>, tag: u8 }
             fn main() {

@@ -15,7 +15,13 @@ use crate::translation::source_place_transforms::SourcePlaceOperation;
 
 #[derive(Default)]
 pub(super) struct OwnedRecordEffects{reads:Vec<Slot>,writes:Vec<Write>,packets:Vec<(CollectionPlace,Type)>,pub(super) loops:super::owned_record_loops::FiniteRecordLoopState,pub(super) loop_scope:Option<usize>}
-struct Write{slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,intrinsic:Option<(SourcePlaceOperation, Option<SourceOrigin>)>}
+struct Write{slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,intrinsic:Option<Replacement>}
+#[derive(Clone)]
+struct Replacement {
+ operation:SourcePlaceOperation,
+ operand:Option<SourceOrigin>,
+ referent:Option<SourceOrigin>,
+}
 pub(super) enum EffectSource<'a>{Read(&'a Slot),Write{slot:&'a Slot,target:&'a str}}
 type Environment=BTreeMap<String,(Slot,String)>;
 fn fail(reason:&str)->super::TranslationError{unsupported("Rust ordered record state",reason,None)}
@@ -176,7 +182,8 @@ impl Transport<'_>{
   let ordinal=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state write"))?;
   let write=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.writes.get(ordinal)).ok_or_else(||fail("unknown actual state write"))?;
   let (slot,layouts,field,intrinsic)=(write.slot.clone(),write.layouts.clone(),write.field.clone(),write.intrinsic.clone());
-  let operand_origin=intrinsic.as_ref().map_or(Some(&field),|(_, operand)|operand.as_ref());
+  let operand_origin=intrinsic.as_ref().map_or(Some(&field),|replacement|replacement.operand.as_ref());
+  let referent=intrinsic.as_ref().and_then(|replacement|replacement.referent.as_ref());
   let expected=operand_origin.and_then(|origin|origin.ty.as_ref().map(|ty|(origin,ty))).map(|(origin,ty)|encode(&self.parser.record_source_type(ty,&origin.path))).transpose()?;
   let span=node.get("span").cloned().map(serde_json::from_value::<Span>).transpose().map_err(|_|fail("a field assignment needs its actual source span"))?;
   let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,expected.as_ref())?;
@@ -189,15 +196,15 @@ impl Transport<'_>{
   }
   let fresh=self.parser.fresh_product_binding();
   let root_type=encode(&self.parser.record_source_type(slot.origin.ty.as_ref().ok_or_else(||fail("a mutable root lost its actual type"))?,&slot.origin.path))?;
-  if !layouts.is_empty()&&slot.source_binder.is_some(){
+  if slot.source_binder.is_some()&&(!layouts.is_empty()||referent.is_some()){
    let span=span.ok_or_else(||fail("a field assignment needs its actual complete source span"))?;
    let root=self.parser.retain_source_fold_slot(&slot)?;
-   let operation=intrinsic.as_ref().map_or(SourcePlaceOperation::AssignField,|(operation,_)|*operation);
+   let operation=intrinsic.as_ref().map_or(SourcePlaceOperation::AssignField,|replacement|replacement.operation);
    let operands=operand_origin.map(|origin|self.parser.retain_source_region_position(origin,Some(span)).map(|position|SourcePlaceOperand{input:rhs.clone(),position})).transpose()?.into_iter().collect::<Vec<_>>();
    let replacement=self.parser.fresh_product_binding();
    let rebuilt=self.parser.fresh_product_binding();
    let state=self.parser.rebuild_record_state(&layouts,0,decode(name(&previous))?,decode(name(&replacement))?,Some(span))?;
-   let operand=match operation{
+   let mut operand=match operation{
     SourcePlaceOperation::AssignField=>{
      let mut operand=name(&rhs);
      operand["sourcePosition"]=encode(&RustSourceExpressionPosition{model:"Rust borrowed expression source position 1".into(),position:operands[0].position.clone()})?;
@@ -213,6 +220,10 @@ impl Transport<'_>{
      json!({"k":"array","items":[{"value":encode(&selected)?,"spread":true},{"value":name(&rhs),"spread":false}]})
     }
    };
+   if let Some(referent)=referent{
+    let position=self.parser.retain_source_region_position(referent,Some(span))?;
+    operand["sourcePosition"]=encode(&RustSourceExpressionPosition{model:"Rust borrowed expression source position 1".into(),position})?;
+   }
    let facet=RustSourcePlaceTransform::Replacement{
     operation,
     slots:vec![SourcePlaceSlot{binder:root.binder,position:root.position,input:previous}],
@@ -285,7 +296,7 @@ impl Transport<'_>{
  fn items(&mut self,items:&mut Value,path:&[String])->Result<()>{for item in items.as_array_mut().into_iter().flatten(){if text(item,"k")=="module"{let mut nested=path.to_vec();nested.push(text(item,"name").to_owned());self.items(&mut item["items"],&nested)?;}else if text(item,"k")=="fn"&&contains(&item["body"],true,&mut self.inspection,Some(&self.parser.owned_record_state.declarations))?{self.path=path.to_vec();let body=self.alpha(item["body"].take(),&HashMap::new(),0)?;let expected=item.get("ret").cloned();let result=self.visit(body,Environment::new(),0,expected.as_ref())?;item["body"]=wrap(result.bindings,result.value);}}Ok(())}
 }
 impl RustParser{
- pub(super) fn check_collection_operand_effects(&self,left:&SExpr,right:&SExpr)->Result<()>{
+ pub(super) fn check_reserved_place_operand_effects(&self,left:&SExpr,right:&SExpr)->Result<()>{
   let Some(place)=super::owned_record_loops::place(self,left) else{return Ok(());};
   if self.origins.collecting{return Ok(());}
   let slot=place.slot;
@@ -297,12 +308,12 @@ impl RustParser{
   while let Some(value)=pending.pop(){
    if !value.is_object()&&!value.is_array(){continue;}
    count+=1;
-   if count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("collection operands exceed their source inspection budget"));}
+   if count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("reserved-place operands exceed their source inspection budget"));}
    if text(value,"k")=="math"
     && let Some(EffectSource::Write{slot:other,target:written})=self.owned_record_effect_source_parts(text(value,"op"),text(value,"name"),value["args"].as_array().map_or(0,Vec::len))
     && other.lexical==slot.lexical
     && (written==target.as_str()||super::owned_record_policy::fields::test_rust_owned_record_field_descendant(written,&target)||super::owned_record_policy::fields::test_rust_owned_record_field_descendant(&target,written))
-   {return Err(fail("a later operand cannot mutate an already borrowed collection"));}
+   {return Err(fail("a later operand cannot mutate an overlapping reserved place"));}
    match value{Value::Array(values)=>pending.extend(values),Value::Object(values)=>pending.extend(values.values()),_=>{}}
   }
   Ok(())
@@ -337,20 +348,21 @@ impl RustParser{
   Ok(node)
  }
  pub(super) fn owned_record_effect_string_replacement(
-  &mut self,place:CollectionPlace,field:SourceOrigin,operand:Option<(SExpr,SourceOrigin)>,path:&[String],span:Option<Span>,
+  &mut self,place:CollectionPlace,field:SourceOrigin,referent:Option<SourceOrigin>,operand:Option<(SExpr,SourceOrigin)>,path:&[String],span:Option<Span>,
  )->Result<SExpr>{
-  let (value,intrinsic)=match operand{
+  let (value,(operation,operand))=match operand{
    Some((value,origin))=>(value,(SourcePlaceOperation::AppendStringText,Some(origin))),
    None=>(SExpr::new(super::SNode::Unit,span),(SourcePlaceOperation::ClearString,None)),
   };
   let CollectionPlace{slot,layouts,target}=place;
-  self.record_owned_write(Write{slot,layouts,field,target,intrinsic:Some(intrinsic)},value,path,span)
+  let intrinsic=Some(Replacement{operation,operand,referent});
+  self.record_owned_write(Write{slot,layouts,field,target,intrinsic},value,path,span)
  }
  pub(super) fn owned_record_effect_vector_append(
-  &mut self,place:CollectionPlace,field:SourceOrigin,value:SExpr,element:SourceOrigin,path:&[String],span:Option<Span>,
+  &mut self,place:CollectionPlace,field:SourceOrigin,referent:Option<SourceOrigin>,value:SExpr,element:SourceOrigin,path:&[String],span:Option<Span>,
  )->Result<SExpr>{
   let CollectionPlace{slot,layouts,target}=place;
-  let intrinsic=Some((SourcePlaceOperation::AppendVectorElement,Some(element)));
+  let intrinsic=Some(Replacement{operation:SourcePlaceOperation::AppendVectorElement,operand:Some(element),referent});
   self.record_owned_write(Write{slot,layouts,field,target,intrinsic},value,path,span)
  }
  pub(super) fn is_collection_mutation_statement(&self,node:&SExpr)->bool{

@@ -63,8 +63,11 @@ pub struct SourcePlaceOperand {
 }
 
 pub(super) fn plain(node: &Expr) -> bool {
-    node.source_position.is_none()
-        && node.source_state_transition.is_none()
+    node.source_position.is_none() && plain_place_operation(node)
+}
+
+fn plain_place_operation(node: &Expr) -> bool {
+    node.source_state_transition.is_none()
         && node.source_loop_fold.is_none()
         && node.source_record_place.is_none()
         && node.source_place_transform.is_none()
@@ -319,7 +322,6 @@ pub(super) fn check_place_transform<'data>(
         || node.source_loop_fold.is_some()
         || node.source_record_place.is_some()
         || selected.slot != 0
-        || selected.fields.is_empty()
         || selected.fields.len() > 128
         || root.input.is_empty()
         || root.input.len() > 4096
@@ -355,7 +357,7 @@ pub(super) fn check_place_transform<'data>(
             Node::Lit {
                 value: LitValue::Text(text),
             },
-        ) if text.is_empty() && plain(value) => (None, None),
+        ) if text.is_empty() && plain_place_operation(value) => (None, None),
         (
             SourcePlaceOperation::AppendStringText,
             Node::Binary {
@@ -367,9 +369,9 @@ pub(super) fn check_place_transform<'data>(
                 rounding: None,
                 by_zero: None,
             },
-        ) if plain(value) => (Some(right.as_ref()), Some(left.as_ref())),
+        ) if plain_place_operation(value) => (Some(right.as_ref()), Some(left.as_ref())),
         (SourcePlaceOperation::AppendVectorElement, Node::Append { left, right })
-            if plain(value) && plain(right) && right.ty == value.ty =>
+            if plain_place_operation(value) && plain(right) && right.ty == value.ty =>
         {
             let Node::Array { items } = &right.node else {
                 return Err(fail());
@@ -444,8 +446,30 @@ pub(super) fn check_place_transform<'data>(
         seen: names,
         lifetime: std::marker::PhantomData,
     };
-    let target = reconstruction.field(state, &position, &selected.fields, &root.input)?;
-    if target.ty != value.ty
+    let stored = reconstruction.field(state, &position, &selected.fields, &root.input)?;
+    let mut payload = false;
+    let target = match value.source_position.as_deref() {
+        Some(qualifier) if *operation != SourcePlaceOperation::AssignField => {
+            if qualifier.model != "Rust borrowed expression source position 1" {
+                return Err(fail());
+            }
+            let referent = check_position(
+                &qualifier.position,
+                &value.ty,
+                language,
+                &mut resolve_type,
+                &mut *reconstruction.resolve_data,
+            )?;
+            payload = match box_projection_depth(&stored, &referent) {
+                Some(1..) => true,
+                _ => return Err(fail()),
+            };
+            referent
+        }
+        _ => stored,
+    };
+    if (selected.fields.is_empty() && !payload)
+        || target.ty != value.ty
         || !target.lifetimes.is_empty()
         || target.array_element_position.is_some()
     {

@@ -25,16 +25,20 @@ impl RustParser {
             receiver.span.map_or(method.start, |span| span.start),
             method.end,
         ));
-        let owner = actual
+        let referent = (!actual.wrappers.is_empty())
+            .then(|| self.origins.peel_closed_owned_box_state(&actual))
+            .flatten();
+        let receiver_origin = referent.as_ref().unwrap_or(&actual);
+        let owner = receiver_origin
             .expanded_source_owner
             .as_ref()
-            .or(actual.source_owner.as_ref());
+            .or(receiver_origin.source_owner.as_ref());
         if !self.origins.collecting
             && !string_rules::accept_rust_exclusive_source_string_receiver(
                 "string",
-                actual.text_source_model.unwrap_or(""),
-                actual.wrappers.len() as f64,
-                actual.proven,
+                receiver_origin.text_source_model.unwrap_or(""),
+                receiver_origin.wrappers.len() as f64,
+                receiver_origin.proven,
                 owner.map_or("", |owner| owner.kind.as_str()),
                 &owner.map_or_else(String::new, |owner| owner.path.join("::")),
                 owner.map_or(-1.0, |owner| owner.arguments.len() as f64),
@@ -69,6 +73,7 @@ impl RustParser {
             let suffix = self.with_standard_sum_source_context(None, |parser| {
                 parser.expr(path, Default::default())
             })?;
+            self.check_reserved_place_operand_effects(receiver, &suffix)?;
             let mut origin = self.origins.origin(&suffix, path);
             let owner = origin
                 .expanded_source_owner
@@ -126,7 +131,7 @@ impl RustParser {
                 span,
             ));
         }
-        if !source_fields.is_empty() && slot.source_binder.is_some() {
+        if (!source_fields.is_empty() || referent.is_some()) && slot.source_binder.is_some() {
             let result = self.owned_record_effect_string_replacement(
                 super::CollectionPlace {
                     slot,
@@ -134,6 +139,7 @@ impl RustParser {
                     target,
                 },
                 field,
+                referent,
                 suffix,
                 path,
                 span,
