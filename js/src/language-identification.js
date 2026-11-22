@@ -3,9 +3,12 @@
 // `language-trigrams.js` data, counted in Unicode scalar values so both
 // runtimes reach the same verdict for the same text.
 import { LANGUAGE_TRIGRAMS } from './language-trigrams.js';
+import { minimumLanguageLead, trigramConfidence } from './language-identification-confidence.js';
 
 const MAX_LENGTH = 2048;
 const MAX_DIFFERENCE = 300;
+const MINIMUM_LETTERS = 3;
+const DEFAULT_CONFIDENCE = 0.06;
 
 const SCRIPTS = LANGUAGE_TRIGRAMS.scripts;
 const MODELS = new Map(
@@ -18,6 +21,9 @@ const MODELS = new Map(
   ]),
 );
 const LANGUAGES = new Map(Object.entries(LANGUAGE_TRIGRAMS.languages));
+const CYRILLIC_LANGUAGES = new Map(Object.entries(LANGUAGE_TRIGRAMS.cyrillicLanguages));
+const CYRILLIC_ALPHABETS = new Map(Object.entries(LANGUAGE_TRIGRAMS.cyrillicAlphabets)
+  .map(([code, letters]) => [code, new Set(letters)]));
 
 // ECMAScript `\s`, spelled out so Rust can match it exactly.
 const WHITESPACE = new Set([
@@ -28,6 +34,93 @@ const WHITESPACE = new Set([
 
 /** Engine term recorded on identification annotations. */
 export const LANGUAGE_IDENTIFIER_TERM = 'identifier:trigram';
+
+/** Ranks language evidence globally and within each continuous script span. */
+export function rankLanguageIdentification(text, { minimumConfidence = DEFAULT_CONFIDENCE } = {}) {
+  if (typeof minimumConfidence !== 'number' || !(minimumConfidence >= 0 && minimumConfidence <= 1)) {
+    throw new RangeError('minimumConfidence must be between zero and one');
+  }
+
+  const spans = [];
+  const evidence = new Map();
+  let letterCount = 0;
+  let byteOffset = 0;
+  let examinedCharacters = 0;
+  let run;
+  for (const character of text) {
+    if (examinedCharacters >= MAX_LENGTH) break;
+    examinedCharacters += 1;
+    const start = byteOffset;
+    const codePoint = character.codePointAt(0);
+    byteOffset += codePoint <= 0x7f ? 1 : codePoint <= 0x7ff ? 2 : codePoint <= 0xffff ? 3 : 4;
+    const script = SCRIPTS.find(({ ranges }) => inRanges(codePoint, ranges))?.name;
+    if (script === undefined) {
+      if (run && run.characters.at(-1) !== ' ') run.characters.push(' ');
+      continue;
+    }
+    if (run?.script !== script) {
+      if (run) record(run);
+      run = { script, start, end: byteOffset, characters: [], letters: 0 };
+    }
+    run.characters.push(character);
+    run.end = byteOffset;
+    run.letters += 1;
+  }
+  if (run) record(run);
+
+  const candidates = rankCandidates([...evidence].map(([language, score]) => ({
+    language, confidence: score / letterCount,
+  })));
+  return { language: selectLanguage(candidates, minimumConfidence), candidates, spans };
+
+  function record({ script, start, end, characters, letters }) {
+    if (characters.at(-1) === ' ') characters.pop();
+    const candidates = rankScript(script, characters, letters);
+    for (const { language, confidence } of candidates) {
+      evidence.set(language, (evidence.get(language) ?? 0) + confidence * letters);
+    }
+    letterCount += letters;
+    spans.push({ script, start, end, language: selectLanguage(candidates, minimumConfidence), candidates });
+  }
+}
+
+function rankCandidates(candidates) {
+  return candidates.sort((left, right) => right.confidence - left.confidence);
+}
+
+function selectLanguage(candidates, minimumConfidence) {
+  const [first, second] = candidates;
+  if (!first || first.confidence < minimumConfidence) return null;
+  if (second && !minimumLanguageLead(first.confidence, second.confidence)) return null;
+  return first.language;
+}
+
+function rankScript(script, characters, letters) {
+  if (letters < MINIMUM_LETTERS) return [];
+  const models = MODELS.get(script);
+  if (models === undefined) {
+    const language = LANGUAGES.get(script);
+    return language ? [{ language, confidence: 1 }] : [];
+  }
+
+  const trigrams = trigramCounts(characters);
+  const maximumDistance = trigrams.length * MAX_DIFFERENCE;
+  if (maximumDistance === 0) return [];
+  const cyrillicLetters = script === 'Cyrillic'
+    ? [...new Set(cleanCharacters(characters).filter((character) => character !== ' '))]
+    : [];
+  const candidates = [];
+  for (const [code, model] of models) {
+    const alphabet = CYRILLIC_ALPHABETS.get(code);
+    if (alphabet && cyrillicLetters.some((character) => !alphabet.has(character))) continue;
+    const distance = trigramDistance(trigrams, model);
+    if (distance < maximumDistance) {
+      candidates.push({ language: LANGUAGES.get(code) ?? CYRILLIC_LANGUAGES.get(code),
+        confidence: trigramConfidence(distance, maximumDistance, letters) });
+    }
+  }
+  return rankCandidates(candidates);
+}
 
 /**
  * Returns the canonical name of the supported natural language the text is
@@ -46,11 +139,12 @@ export function identifyLanguage(text) {
   const trigrams = trigramCounts(characters);
   let best;
   for (const [code, model] of models) {
+    if (!LANGUAGES.has(code)) continue;
     const distance = trigramDistance(trigrams, model);
     if (best === undefined || distance < best.distance) best = { code, distance };
   }
   // A distance of MAX_DIFFERENCE per character means no trigram matched.
-  if (best.distance >= characters.length * MAX_DIFFERENCE) return undefined;
+  if (!best || best.distance >= characters.length * MAX_DIFFERENCE) return undefined;
   return LANGUAGES.get(best.code);
 }
 

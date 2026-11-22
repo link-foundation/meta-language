@@ -214,6 +214,7 @@ use meta_language::language_catalog as _;
 use meta_language::language_entry as _;
 use meta_language::language_for_path as _;
 use meta_language::language_support as _;
+use meta_language::link_network::rank_language_identification as _;
 use meta_language::lower_grammar as _;
 use meta_language::lower_graphql as _;
 use meta_language::lower_sql as _;

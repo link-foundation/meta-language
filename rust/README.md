@@ -101,6 +101,10 @@ description, an interactive WebAssembly demo, and the full
 - `NATURAL_LANGUAGE_GRAMMAR_FIXTURES` with pass/fail grammaticality fixtures
   for the ten natural-language targets, including provenance for the
   repo-authored sentences and UD-derived tag vocabulary.
+- `link_network::rank_language_identification(text, None)` returns ranked
+  language candidates and UTF-8 byte spans for each script. Pass `Some(threshold)`
+  to set a confidence threshold. Unknown language is `None`, and spans with
+  fewer than three script letters have an empty candidate list.
 - Coverage targets for full `txt`, Markdown, HTML, PDF, and DOCX support, mixed
   grammar embedding, ten programming-language parser targets, and ten
   natural-language parser targets.

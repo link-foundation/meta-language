@@ -89,6 +89,11 @@ abbreviations. For example, lowercase continuation can keep `руб.` within a
 Russian sentence, while `т. д.` can end a sentence before an uppercase start.
 Both runtimes execute the same generated rules and retain all source tokens.
 
+Language identification reads shared Links data for scripts, alphabets and
+trigram models. The public ranked result carries a document-level estimate and
+separate script spans in UTF-8 bytes. A low score or a close match leaves the
+language unknown, with any candidates still available to callers.
+
 ### Global concept space
 
 All grammars of all languages inhabit **one global concept space**. It includes

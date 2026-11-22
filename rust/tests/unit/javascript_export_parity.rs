@@ -460,6 +460,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("grammarProvenance", "grammar_provenance", "function"),
     ("idKey", "LinkId::as_u64", "method"),
+    (
+        "identifyLanguage",
+        "link_network::rank_language_identification",
+        "function",
+    ),
     ("importAbnf", "import_abnf", "function"),
     ("importAntlr", "import_antlr", "function"),
     ("importBnf", "import_bnf", "function"),

@@ -1790,6 +1790,30 @@ export function compileGrammar(
   grammar: Grammar | NormalizedGrammar,
   options?: GrammarParserOptions,
 ): GrammarParser;
+export interface LanguageIdentificationCandidate {
+  readonly language: string;
+  readonly confidence: number;
+}
+
+export interface LanguageIdentificationSpan {
+  readonly script: string;
+  readonly start: number;
+  readonly end: number;
+  readonly language: string | null;
+  readonly candidates: readonly LanguageIdentificationCandidate[];
+}
+
+export interface LanguageIdentification {
+  readonly language: string | null;
+  readonly candidates: readonly LanguageIdentificationCandidate[];
+  readonly spans: readonly LanguageIdentificationSpan[];
+}
+
+export function identifyLanguage(
+  text: string,
+  options?: { readonly minimumConfidence?: number },
+): LanguageIdentification;
+
 export function parseWithGrammar(
   grammar: Grammar | NormalizedGrammar,
   source: string | Uint8Array,

@@ -15,6 +15,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   sentenceAbbreviations: 'https://github.com/link-foundation/meta-language/issues/232',
   grammarAssetAvailability: 'https://github.com/link-foundation/meta-language/issues/244',
   pdfStreamNullCharacters: 'https://github.com/link-foundation/meta-language/issues/239',
+  rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
@@ -389,6 +390,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       implementationEntryPoints: {
         javascript: ['js/src/pdf-grammar.js', 'js/tests/pdf-grammar.test.js'],
         rust: ['rust/src/pdf_grammar.rs', 'rust/tests/unit/pdf_grammar.rs'],
+      },
+    },
+    {
+      id: 'I195-NATURAL-LANGUAGE-IDENTIFICATION-RANKING',
+      source: ISSUE_195_SOURCES.rankedLanguageIdentification,
+      language: 'natural language identification',
+      version: 'franc-min and franc 6.2.0, Unicode CLDR 48 alphabet data',
+      construct: 'ranked language candidates and script span evidence',
+      expectedBehavior: 'The package APIs rank evidence from the requested Cyrillic language models, give an unknown result below a configurable confidence threshold, keep sparse input explicit, and return mixed-script half-open UTF-8 spans.',
+      fixture: 'parity/fixtures/ranked-language-identification.lino',
+      selector: 'the reported Cyrillic, mixed-script and short inputs with additional Cyrillic models and Unicode boundaries',
+      assertions: ['rankedCyrillicModels', 'explicitUnknownThreshold', 'shortTextEvidence', 'utf8ScriptSpans'],
+      implementationEntryPoints: {
+        javascript: ['js/src/language-identification.js', 'js/tests/natural-language.test.js'],
+        rust: ['rust/src/language_identification.rs', 'rust/tests/unit/language_identification.rs'],
       },
     },
   ];

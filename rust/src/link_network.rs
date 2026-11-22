@@ -7,6 +7,10 @@ use crate::embedded_region_parser;
 use crate::language_catalog::{
     GrammarProvenance, canonical_language_name, grammar_provenance, language_catalog,
 };
+pub use crate::language_identification::{
+    InvalidLanguageConfidence, LanguageIdentification, LanguageIdentificationCandidate,
+    LanguageIdentificationSpan, rank_language_identification,
+};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;

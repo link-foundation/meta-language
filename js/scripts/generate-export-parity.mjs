@@ -31,6 +31,7 @@ const rustItemsPath = path.join(root, 'rust/tests/unit/javascript_export_parity/
  * spells the item for the compiler where a generic needs its parameters.
  */
 export const OVERRIDES = Object.freeze({
+  identifyLanguage: { rust: 'link_network::rank_language_identification' },
   importResourceDescriptionNTriples: { rust: 'import_resource_description_ntriples' },
   emitResourceDescriptionNTriples: { rust: 'emit_resource_description_ntriples' },
   readResourceDescriptionNTriplesSource: { rust: 'read_resource_description_ntriples_source' },

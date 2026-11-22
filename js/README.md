@@ -202,6 +202,26 @@ bounded domain` or fails, and the proof stays with the source kernel. A
 statement that holds on the bounded domain but not in general therefore passes
 the check while every kernel rejects it.
 
+## Identify languages in text
+
+```js
+import { identifyLanguage } from 'meta-language';
+
+const result = identifyLanguage('Привет! Bonjour tout le monde', { minimumConfidence: 0.06 });
+console.log(result.language); // French
+for (const { language, start, end } of result.spans) {
+  console.log(language, start, end); // Russian 0 12, French 14 35
+}
+```
+
+`candidates` lists languages from highest to lowest confidence. Confidence is
+a score from zero to one based on trigram evidence. `language` is `null` when
+the leading candidate falls below the threshold or two candidates score within
+three percent of each other. The default threshold is `0.06`. A span with fewer
+than three script letters has no candidates. Longer spans with sparse evidence
+can also be unknown. The detector examines up to 2,048 Unicode scalar values
+and reports half-open UTF-8 byte spans.
+
 ## Parity
 
 Every feature in [`../parity/language-features.lino`](../parity/language-features.lino)
