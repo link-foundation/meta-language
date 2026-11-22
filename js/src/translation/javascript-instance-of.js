@@ -95,16 +95,18 @@ export function stepJavaScriptInstanceOf(heap,state){
   const call={$:'instanceOfCall',callee:get.callee,receiver:get.receiver,arguments:get.arguments};return {$:'instanceOfCall',heap,state:{...state,phase:'prototype getter',call},callee:call.callee,receiver:call.receiver,arguments:call.arguments};
  }
  if(state.phase!=='walk')return {$:'instanceOfInvalid',heap,reason:'instanceof continuation requires its selected call completion'};
- if(state.cursor.$==='null')return finishJavaScriptInstanceOf(heap,state,false);
- if(state.cursor.$!=='object')return {$:'instanceOfInvalid',heap,reason:'instanceof traversal retains its actual Object cursor'};
- if(state.visited.includes(state.cursor.identity))return {$:'instanceOfInvalid',heap,reason:'instanceof cannot fabricate a result for a cyclic exotic prototype path'};
+ const cursor=state.cursor;
+ if(cursor.$==='null')return finishJavaScriptInstanceOf(heap,state,false);
+ if(cursor.$!=='object')return {$:'instanceOfInvalid',heap,reason:'instanceof traversal retains its actual Object cursor'};
+ const identity=cursor.identity;
+ if(state.visited.includes(identity))return {$:'instanceOfInvalid',heap,reason:'instanceof cannot fabricate a result for a cyclic exotic prototype path'};
  if(state.visited.length===4096)return {$:'instanceOfResourceLimit',heap,state,reason:'instanceof prototype traversal exceeds its explicit path budget'};
- const entry=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.cursor.identity)];if(entry===undefined)return {$:'instanceOfInvalid',heap,reason:'instanceof cursor must retain its actual heap identity'};
+ const entry=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];if(entry===undefined)return {$:'instanceOfInvalid',heap,reason:'instanceof cursor must retain its actual heap identity'};
  // Known native Error/URL/Array/byte-buffer rows authenticate a real prototype
  // at their private boundary. No Proxy [[GetPrototypeOf]] trap is simulated.
  const prototype=entry.prototype;if(prototype.$==='null')return finishJavaScriptInstanceOf(heap,state,false);
  if(testJavaScriptSemanticSameValue(prototype,state.prototype))return finishJavaScriptInstanceOf(heap,state,true);
- return {$:'instanceOfContinue',heap,state:{...state,cursor:prototype,visited:state.visited.concat([state.cursor.identity])}};
+ return {$:'instanceOfContinue',heap,state:{...state,cursor:prototype,visited:state.visited.concat([identity])}};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptInstanceOfState} state @param {JavaScriptSemanticCompletion} completion @returns {JavaScriptInstanceOfTransition} */
 export function resumeJavaScriptInstanceOf(heap,state,completion){

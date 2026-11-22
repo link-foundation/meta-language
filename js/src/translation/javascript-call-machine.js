@@ -19,7 +19,7 @@ import {beginJavaScriptInstanceOf,stepJavaScriptInstanceOf,resumeJavaScriptInsta
 import {testJavaScriptObjectObservationOperation,beginJavaScriptObjectObservation,stepJavaScriptObjectIntegrity,readJavaScriptObjectIntegrityStateError} from './javascript-object-integrity.js';
 import {testJavaScriptObjectEnumerationOperation,beginJavaScriptObjectEnumeration,stepJavaScriptObjectEnumeration,resumeJavaScriptObjectEnumerationAllocation,resumeJavaScriptObjectEnumerationGetter,readJavaScriptObjectEnumerationStateError} from './javascript-own-enumeration.js';
 import {constructJavaScriptPropertyFunctionName,constructJavaScriptSymbolFunctionName} from './javascript-function-names.js';
-import {findJavaScriptCallArgumentList,readJavaScriptCallArgumentListsError,openJavaScriptCallArgumentList,appendJavaScriptCallArgument,retainJavaScriptCallArgumentLists} from './javascript-call-argument-lists.js';
+import {findJavaScriptCallArgumentList,countJavaScriptCallArgumentListValues,readJavaScriptCallArgumentListsError,openJavaScriptCallArgumentList,appendJavaScriptCallArgument,retainJavaScriptCallArgumentLists} from './javascript-call-argument-lists.js';
 import {createJavaScriptPropertyDescriptor,testJavaScriptPropertyDescriptorsSameValue} from './javascript-property-descriptors.js';
 import {beginJavaScriptArgumentRest,stepJavaScriptArgumentRest,resumeJavaScriptArgumentRestAllocation,readJavaScriptArgumentRestStateError} from './javascript-argument-rest.js';
 import {findJavaScriptIteratorRegion,readJavaScriptIteratorRegionsError,insertJavaScriptIteratorRegion,updateJavaScriptIteratorRegion,removeJavaScriptIteratorRegion,testJavaScriptIteratorRegionSlot} from './javascript-iterator-regions.js';
@@ -836,8 +836,10 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(suspended&&state.call===undefined)return 'iterator child retains its actual selected getter or method';return '';
       }
       case 'waitArraySpread':{
-        const instruction=frame.position===0?undefined:fn.instructions[frame.position-1];
-        if(instruction?.$!=='arraySpread'||instruction.destination!==pending.destination||instruction.realm!==pending.realm||pending.realm!==fn.realm)return 'Array spread retains its actual source instruction, destination and realm';
+        if(frame.position===0)return 'Array spread retains its actual source instruction, destination and realm';
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='arraySpread')return 'Array spread retains its actual source instruction, destination and realm';
+        if(instruction.destination!==pending.destination||instruction.realm!==pending.realm||pending.realm!==fn.realm)return 'Array spread retains its actual source instruction, destination and realm';
         const error=readJavaScriptArraySpreadStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(frame.registers[instruction.target]??{$:'undefined'},pending.state.target)||
            !testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||
@@ -1380,8 +1382,8 @@ function acceptJavaScriptCallArgumentListsUpdate(machine,next,update){
         const active=machine.frames[position];
         count+=active.arguments.length;
         const activeLists=active.argumentLists;
-        if(position===machine.frames.length-1){for(const list of updatedLists)count+=list.values.length;}
-        else if(activeLists!==undefined){for(const list of activeLists)count+=list.values.length;}
+        if(position===machine.frames.length-1)count+=countJavaScriptCallArgumentListValues(updatedLists);
+        else if(activeLists!==undefined)count+=countJavaScriptCallArgumentListValues(activeLists);
       }
       if(count>1048576)return {$:'machineResourceLimit',machine,reason:'argument Lists share the complete actual stack argument storage budget'};
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,argumentLists:update.lists})};
@@ -1399,7 +1401,8 @@ export function stepJavaScriptCallMachine(program,machine){
   switch(pending.$){
     case 'waitArrayCreation':{
      if(pending.error!==undefined)return {$:'machineAllocateError',machine,realm:pending.error.realm,errorClass:pending.error.errorClass,reason:pending.error.reason};
-     if(pending.construction!==undefined){const directory=program.constructorDirectory;return directory===undefined?{$:'machineInvalid',heap:machine.heap,reason:'Array construction requires actual authority'}:acceptJavaScriptCallArrayConstruction(program,machine,stepJavaScriptConstruction(program,machine.heap,directory,pending.construction));}
+     const construction=pending.construction;
+     if(construction!==undefined){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array construction requires actual authority'};return acceptJavaScriptCallArrayConstruction(program,machine,stepJavaScriptConstruction(program,machine.heap,directory,construction));}
      if(pending.fallback!==undefined)return requestJavaScriptCallArrayFallback(program,machine,pending.destination,pending.realm,pending.state,pending.fallback);
      return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,stepJavaScriptArrayCreation(machine.heap,pending.state));
     }

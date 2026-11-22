@@ -5,6 +5,8 @@ import {testJavaScriptIteratorRegionSlot} from './javascript-iterator-regions.js
 /** @typedef {{$:'argumentListsUpdated',lists:JavaScriptCallArgumentList[]} | {$:'argumentListsInvalid',reason:string} | {$:'argumentListsResourceLimit',reason:string}} JavaScriptCallArgumentListsUpdate */
 /** @param {JavaScriptCallArgumentList[]} lists @param {number} slot @returns {number} */
 export function findJavaScriptCallArgumentList(lists,slot){for(let at=0;at<lists.length;at++)if(lists[at]?.slot===slot)return at;return -1;}
+/** @param {JavaScriptCallArgumentList[]} lists @returns {number} */
+export function countJavaScriptCallArgumentListValues(lists){let count=0;for(const list of lists)count+=list.values.length;return count;}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptCallArgumentList[]} lists @param {number} depth @returns {string} */
 export function readJavaScriptCallArgumentListsError(heap,lists,depth){
  if(!Number.isSafeInteger(depth)||depth<0||depth>1024||Object.is(depth,-0)||lists.length>128)return 'argument Lists retain bounded actual handler depth and nesting';let previous=-1,count=0;
