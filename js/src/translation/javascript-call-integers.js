@@ -3,14 +3,11 @@ import {applyBigIntegerBitwiseOperation} from './big-integer-bitwise-rules.js';
 import {applyJavaScriptNumberBitwiseOperation} from './number-bitwise-rules.js';
 import {divideJavaScriptBigInteger,powerJavaScriptBigInteger,compareJavaScriptNumberBigInteger,compareJavaScriptStringBigIntegerUnits} from './big-integer-conversion-rules.js';
 import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
+import {readJavaScriptCallIntegerWidth as readIntegerWidth} from './javascript-call-integer-width.js';
 
-/** The selected resource profile bounds intermediate work separately from
- * arbitrary-integer language semantics. -1 denotes an oversized input.
- * @param {bigint} value @returns {number} */
-export function readJavaScriptCallIntegerWidth(value){
- let rest=value<0n?-value:value,width=0;
- while(rest>0n){if(width>=4096)return -1;rest/=2n;width+=1;}
- return width;
+/** @param {bigint} value @returns {number} */
+export function readJavaScriptCallIntegerWidth(value) {
+ return readIntegerWidth(value);
 }
 /** @param {string} operation @returns {number} */
 export function readJavaScriptCallIntegerBitCode(operation){
@@ -95,12 +92,12 @@ export function executeJavaScriptCallMixedIntegerComparison(operation,values){
  * @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallIntegerWrapping(operation,values){
  const width=values[0]??{$:'undefined'},input=values[1]??{$:'undefined'};
- const invalid={$:'primitiveInvalid',reason:'integer wrapping consumes its completed ToIndex and ToBigInt operands'};
- if(!['wrap signed integer','wrap unsigned integer'].includes(operation))return invalid;
- if(width.$!=='number')return invalid;
+ const invalid='integer wrapping consumes its completed ToIndex and ToBigInt operands';
+ if(!['wrap signed integer','wrap unsigned integer'].includes(operation))return {$:'primitiveInvalid',reason:invalid};
+ if(width.$!=='number')return {$:'primitiveInvalid',reason:invalid};
  const bitWidth=width.value;
- if(!Number.isSafeInteger(bitWidth)||bitWidth<0)return invalid;
- if(input.$!=='integer')return invalid;
+ if(!Number.isSafeInteger(bitWidth)||bitWidth<0)return {$:'primitiveInvalid',reason:invalid};
+ if(input.$!=='integer')return {$:'primitiveInvalid',reason:invalid};
  const integer=input.value;
  if(bitWidth===0)return {$:'primitiveValue',value:{$:'integer',value:0n}};
  if(bitWidth>4096||readJavaScriptCallIntegerWidth(integer)<0)return {$:'primitiveResourceLimit',reason:'integer wrapping exceeds the selected 4096-bit work profile'};

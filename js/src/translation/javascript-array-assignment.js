@@ -54,7 +54,11 @@ export function continueJavaScriptArrayAssignmentDefinition(exoticKey,transition
   case 'arrayPropertyComplete':return {$:'arrayAssignmentCompleted',heap:transition.heap,success:transition.success,writes:transition.writes};
   case 'arrayError':return {$:'arrayAssignmentError',heap:transition.heap,errorClass:transition.errorClass,reason:transition.reason};
   case 'arrayInvalid':return {$:'arrayAssignmentInvalid',heap:transition.heap,reason:transition.reason};
-  case 'arrayResourceLimit':return transition.state===undefined?{$:'arrayAssignmentInvalid',heap:transition.heap,reason:'an allocation resource outcome cannot substitute an Array definition continuation'}:{$:'arrayAssignmentResourceLimit',heap:transition.heap,state:{$:'arrayAssignmentDefinition',definition:transition.state,exoticKey},reason:transition.reason};
+  case 'arrayResourceLimit':{
+   const definition=transition.state;
+   if(definition===undefined)return {$:'arrayAssignmentInvalid',heap:transition.heap,reason:'an allocation resource outcome cannot substitute an Array definition continuation'};
+   return {$:'arrayAssignmentResourceLimit',heap:transition.heap,state:{$:'arrayAssignmentDefinition',definition,exoticKey},reason:transition.reason};
+  }
   case 'arrayNormal':return {$:'arrayAssignmentInvalid',heap:transition.heap,reason:'Array assignment cannot substitute an allocation completion'};
  }
 }

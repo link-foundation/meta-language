@@ -83,7 +83,16 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     trace('rendered typed links');
   }
   globalThis.gc?.();
-  const emitted = emitRust(nativeSelection.program, { arrayConsumption: true });
+  let emitted;
+  try {
+    emitted = emitRust(nativeSelection.program, { arrayConsumption: true });
+  } catch (error) {
+    if (traceEnabled && error?.span) {
+      const {start,end}=error.span;
+      console.error('Native emission source:', JSON.stringify(source.slice(Math.max(0,start-160),Math.min(end+160,start+480))));
+    }
+    throw error;
+  }
   trace('emitted Rust');
   const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
   if (!header) throw new TypeError('the source translator omitted its library attributes');

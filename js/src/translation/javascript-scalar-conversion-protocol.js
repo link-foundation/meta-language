@@ -1,6 +1,6 @@
-import {readJavaScriptIntegerProtocolOperationError} from './javascript-call-integer-conversion.js';
+import {executeJavaScriptCallScalarConversion,readJavaScriptCallScalarConversionError} from './javascript-call-scalar-conversion.js';
 import {beginJavaScriptPrimitiveConversion,stepJavaScriptPrimitiveConversion,resumeJavaScriptPrimitiveConversion} from './javascript-primitive-conversion.js';
-import {executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
+import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
 
 /** Every callback is actual registered code. Resource refusal retains the
  * completed primitive so a caller never needs to replay conversion effects.
@@ -13,9 +13,7 @@ import {executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
  * {$:'scalarResourceLimit',value:JavaScriptSemanticValue,reason:string}} JavaScriptScalarConversionTransition
  */
 /** @param {string} operation @returns {string} */
-export function readJavaScriptScalarProtocolOperationError(operation){
- return operation==='convert explicit number'||operation==='coerce primitive number'||operation==='coerce primitive numeric'||operation==='convert primitive value'||operation==='convert number primitive value'||operation==='convert primitive text'||readJavaScriptIntegerProtocolOperationError(operation)===''?'':'scalar conversion requires its actual registered Number, integer or text source operation';
-}
+export function readJavaScriptScalarProtocolOperationError(operation){return readJavaScriptCallScalarConversionError(operation);}
 /** @param {string} operation @returns {string} */
 export function readJavaScriptScalarProtocolHint(operation){return operation==='convert primitive text'?'string':operation==='convert primitive value'?'default':'number';}
 /** @param {string} operation @param {JavaScriptPrimitiveConversionTransition} transition @returns {JavaScriptScalarConversionTransition} */
@@ -33,7 +31,8 @@ export function finishJavaScriptScalarProtocol(operation,transition){
 /** @param {string} operation @param {JavaScriptSemanticValue} value @returns {JavaScriptScalarConversionTransition} */
 export function finishJavaScriptScalarPrimitive(operation,value){
  const error=readJavaScriptScalarProtocolOperationError(operation);if(error!=='')return {$:'scalarInvalid',reason:error};
- const result=executeJavaScriptCallPrimitive(operation,[value]);
+ const invalid=readJavaScriptSemanticValueError(value);if(invalid!=='')return {$:'scalarInvalid',reason:invalid};
+ const result=executeJavaScriptCallScalarConversion(operation,value);
  switch(result.$){
   case 'primitiveValue':return {$:'scalarCompleted',value:result.value};
   case 'primitiveError':return {$:'scalarIntrinsicError',errorClass:result.errorClass,reason:result.reason};

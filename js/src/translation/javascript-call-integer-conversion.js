@@ -1,7 +1,7 @@
 // Actual primitive BigInt conversions share the existing integer-string and
 // exact integral binary64 definitions. Objects need a represented continuation.
 import {convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger,readJavaScriptBigIntegerConversionErrorClass,readJavaScriptBigIntegerConversionMessagePieces} from './big-integer-conversion-rules.js';
-import {readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
+import {readJavaScriptCallIntegerWidth} from './javascript-call-integer-width.js';
 import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 
 /** @param {string} operation @returns {string} */

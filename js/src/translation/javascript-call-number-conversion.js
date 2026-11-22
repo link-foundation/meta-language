@@ -2,7 +2,7 @@
 // integer rounding definitions. Object conversion belongs to its resumable
 // ToPrimitive protocol, never an invented host conversion or property read.
 import {convertJavaScriptStringNumberUnits,convertJavaScriptBigIntegerNumber} from './string-number-rules.js';
-import {readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
+import {readJavaScriptCallIntegerWidth} from './javascript-call-integer-width.js';
 import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 
 /** @param {string} operation @param {JavaScriptSemanticValue} value @returns {JavaScriptCallPrimitiveResult} */
