@@ -3,6 +3,7 @@
 mod document;
 mod emit;
 mod import;
+mod numeric_ranges;
 mod property_names;
 mod recovery;
 mod schema;

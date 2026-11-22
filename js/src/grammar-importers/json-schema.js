@@ -5,6 +5,7 @@ import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-doc
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { lowerLarkRegex } from './lark-regex.js';
 import { additionalPropertyName } from './json-schema-property-names.js';
+import { signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
 const space = ref('json_space');
@@ -100,36 +101,6 @@ function constantExpression(instance) {
     })));
   }
   return literal(JSON.stringify(instance));
-}
-
-function signedIntegerRange(first, last) {
-  function rangeWithWidth(a, b) {
-    const left = Number(a[0]);
-    const right = Number(b[0]);
-    const width = a.length - 1;
-    if (width === 0) return left === right ? literal(a) : charRange(a, b);
-    if (left === right) return seq(literal(a[0]), rangeWithWidth(a.slice(1), b.slice(1)));
-    const alternatives = [seq(literal(a[0]), rangeWithWidth(a.slice(1), '9'.repeat(width)))];
-    if (right - left > 1) alternatives.push(seq(charRange(String(left + 1), String(right - 1)), repeat(charRange('0', '9'), width, width)));
-    alternatives.push(seq(literal(b[0]), rangeWithWidth('0'.repeat(width), b.slice(1))));
-    return choice(...alternatives);
-  }
-  function unsigned(min, max) {
-    const widths = [];
-    const low = String(min);
-    const high = String(max ?? min);
-    for (let width = low.length; width <= high.length; width += 1) {
-      const start = width === low.length ? low : `1${'0'.repeat(width - 1)}`;
-      const end = max !== null && width === high.length ? high : '9'.repeat(width);
-      widths.push(rangeWithWidth(start, end));
-    }
-    if (max === null) widths.push(seq(charRange('1', '9'), repeat(charRange('0', '9'), high.length)));
-    return choice(...widths);
-  }
-  const parts = [];
-  if (first === null || first <= 0) parts.push(seq(literal('-'), unsigned(last === null ? 0 : Math.max(0, -last), first === null ? null : -first)));
-  if (last === null || last >= 0) parts.push(unsigned(Math.max(0, first ?? 0), last));
-  return choice(...parts);
 }
 
 function uuidExpression() {
@@ -376,6 +347,13 @@ export function importJsonSchema(schema) {
     const keywords = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum'].filter(key => rules[key] !== undefined);
     if (type === 'integer') report(pointer, 'type', 'The decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
     if (keywords.length === 0) return ref(type);
+    if (type === 'number') {
+      const decimal = signedDecimalRange(rules);
+      if (decimal !== undefined) {
+        if (decimal) report(pointer, 'type', 'The bounded decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.');
+        return decimal;
+      }
+    }
     const first = Math.max(Math.ceil(rules.minimum ?? -Infinity), Math.floor(rules.exclusiveMinimum ?? -Infinity) + 1);
     const last = Math.min(Math.floor(rules.maximum ?? Infinity), Math.ceil(rules.exclusiveMaximum ?? Infinity) - 1);
     if (type === 'integer' && (first === -Infinity || Number.isSafeInteger(first)) && (last === Infinity || Number.isSafeInteger(last))) {

@@ -8,6 +8,7 @@ use super::super::{
     CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule, import::lower_lark_regex,
     parse_grammar_links,
 };
+use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_range};
 use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
 use super::{JsonSchemaIssue, pointer_child};
@@ -128,92 +129,6 @@ fn constant(value: &Value) -> Expression {
         ),
         _ => EXPRESSION.term(value.to_string()),
     }
-}
-
-fn digit(character: u8) -> Expression {
-    EXPRESSION.term(char::from(character).to_string())
-}
-
-fn digit_range(first: u8, last: u8) -> Expression {
-    if first == last {
-        digit(first)
-    } else {
-        EXPRESSION.char_range(char::from(first), char::from(last))
-    }
-}
-
-fn fixed_width(low: &[u8], high: &[u8]) -> Expression {
-    let (first, remaining_low) = low.split_first().expect("nonempty number spelling");
-    let (last, remaining_high) = high.split_first().expect("nonempty number spelling");
-    let width = remaining_low.len();
-    if width == 0 {
-        return digit_range(*first, *last);
-    }
-    if first == last {
-        return EXPRESSION.seq([digit(*first), fixed_width(remaining_low, remaining_high)]);
-    }
-    let mut alternatives = vec![EXPRESSION.seq([
-        digit(*first),
-        fixed_width(remaining_low, &vec![b'9'; width]),
-    ])];
-    if last - first > 1 {
-        alternatives.push(EXPRESSION.seq([
-            digit_range(first + 1, last - 1),
-            EXPRESSION.repeat(digit_range(b'0', b'9'), width, Some(width)),
-        ]));
-    }
-    alternatives.push(EXPRESSION.seq([
-        digit(*last),
-        fixed_width(&vec![b'0'; width], remaining_high),
-    ]));
-    EXPRESSION.choice_unordered(alternatives)
-}
-
-fn unsigned_range(min: u64, max: Option<u64>) -> Expression {
-    let low = min.to_string();
-    let high = max.unwrap_or(min).to_string();
-    let widths = (low.len()..=high.len()).map(|width| {
-        let start = if width == low.len() {
-            low.clone()
-        } else {
-            format!("1{}", "0".repeat(width - 1))
-        };
-        let end = if max.is_some() && width == high.len() {
-            high.clone()
-        } else {
-            "9".repeat(width)
-        };
-        fixed_width(start.as_bytes(), end.as_bytes())
-    });
-    let longer = max.is_none().then(|| {
-        EXPRESSION.seq([
-            digit_range(b'1', b'9'),
-            EXPRESSION.repeat(digit_range(b'0', b'9'), high.len(), None),
-        ])
-    });
-    EXPRESSION.choice_unordered(widths.chain(longer))
-}
-
-fn signed_range(first: Option<i64>, last: Option<i64>) -> Expression {
-    let mut parts = Vec::new();
-    if first.is_none_or(|value| value <= 0) {
-        parts.push(EXPRESSION.seq([
-            EXPRESSION.term("-"),
-            unsigned_range(
-                last.filter(|value| *value < 0).map_or(0, i64::unsigned_abs),
-                first.map(i64::unsigned_abs),
-            ),
-        ]));
-    }
-    if last.is_none_or(|value| value >= 0) {
-        parts.push(unsigned_range(
-            first
-                .filter(|value| *value > 0)
-                .map_or(0, i64::unsigned_abs),
-            last.map(i64::unsigned_abs),
-        ));
-    }
-    EXPRESSION.choice_unordered(parts)
 }
 
 fn safe_range(first: char, last: char) -> bool {
@@ -787,8 +702,18 @@ impl<'schema> Importer<'schema> {
                     if minimum > maximum {
                         return None;
                     }
-                    return Some(signed_range(integer(minimum), integer(maximum)));
+                    return Some(signed_integer_range(integer(minimum), integer(maximum)));
                 }
+            }
+        }
+        if name == "number" && !limits.is_empty() {
+            match signed_decimal_range(schema) {
+                DecimalRange::Allowed(decimal) => {
+                    self.report(pointer, "type", "The bounded decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.");
+                    return Some(decimal);
+                }
+                DecimalRange::Empty => return None,
+                DecimalRange::Unsupported => {}
             }
         }
         for keyword in limits {
