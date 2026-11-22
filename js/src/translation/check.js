@@ -1399,8 +1399,11 @@ class Checker {
     const receiver = preparedReceiver??this.expr(node.object, env, path, undefined);
     const prototype=checkClosedClassMethodCall(this,node,receiver,env,path,expected);if(prototype)return prototype;
     if(node.op==='toSorted'&&receiver.type.kind==='array'){
-      if(!acceptLinkedStringArrayCopySort('method',node.op,receiver.type.kind,receiver.type.element.kind,receiver.type.reference===true,node.args.length))throw unsupported('array copying sort','the default copying sort needs an immutable dense primitive string array and no comparator or extra arguments',node.span);
-      return {k:'method',object:receiver,op:node.op,args:[],type:receiver.type,span:node.span};
+      // The closed array cell contains a dense value. Copying sort reads it
+      // once, then the enclosing source context allocates the independent result.
+      const snapshot = this.referenceValue(receiver);
+      if(!acceptLinkedStringArrayCopySort('method',node.op,snapshot.type.kind,snapshot.type.element.kind,snapshot.type.reference===true,node.args.length))throw unsupported('array copying sort','the default copying sort needs a dense primitive string array and no comparator or extra arguments',node.span);
+      return {k:'method',object:snapshot,op:node.op,args:[],type:snapshot.type,span:node.span};
     }
     const nullable=this.checkedProjection?null:checkJavaScriptNullishAccess(this,node,receiver,env,path,expected);
     if(nullable)return nullable;

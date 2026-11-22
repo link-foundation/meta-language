@@ -82,8 +82,9 @@ impl Checker {
             return Ok(value);
         }
         if operation == "toSorted" {
+            let snapshot = Self::reference_value(object);
             return self
-                .primitive_method_on_checked_receiver(object, operation, args, env, path, span);
+                .primitive_method_on_checked_receiver(snapshot, operation, args, env, path, span);
         }
         if crate::translation::array_state_method_rules::accept_linked_array_state_method(
             "method",
@@ -149,7 +150,7 @@ impl Checker {
             ) {
                 return Err(unsupported(
                     "array copying sort",
-                    "the default copying sort needs an immutable dense primitive string array and no comparator or extra arguments",
+                    "the default copying sort needs a dense primitive string array and no comparator or extra arguments",
                     span,
                 ));
             }

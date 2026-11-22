@@ -793,7 +793,7 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
       }
       case 'waitCollectionForEach':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction?.$!=='collectionForEach'||instruction.destination!==pending.destination||pending.realm!==fn.realm||instruction.operation!==pending.state.operation)return 'collection callback continuation retains its actual operation destination and realm';
+        if(instruction===undefined||instruction.$!=='collectionForEach'||instruction.destination!==pending.destination||pending.realm!==fn.realm||instruction.operation!==pending.state.operation)return 'collection callback continuation retains its actual operation destination and realm';
         const error=readJavaScriptCollectionForEachStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.callback,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.thisArgument,frame.arguments[1]??{$:'undefined'}))return 'collection callbacks retain their actual receiver callback and thisArgument';
         if(suspended&&pending.state.call===undefined)return 'a collection callback child retains its actual selected call';return '';
