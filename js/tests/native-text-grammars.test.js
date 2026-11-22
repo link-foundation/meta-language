@@ -94,3 +94,23 @@ test('editing a native sentence production changes its executable boundaries', (
   assert.equal(after.tree.children.length, 1);
   assert.equal(after.tree.children[0].end, Buffer.byteLength(source));
 });
+
+test('sentence spans retain abbreviations in context and preserve true boundaries', (context) => {
+  const fixtureFile = 'parity/fixtures/natural-language-sentence-abbreviations.lino';
+  const examples = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
+  for (const { language, source, sentences } of examples) {
+    const network = LinkNetwork.parse(source, language);
+    const bytes = Buffer.from(source);
+    const represented = network.links().map((link) => link.metadata())
+      .filter(({ linkType, term }) => linkType === LinkType.Syntax && term === 'sentence')
+      .map(({ span: { byteRange: { start, end } } }) => bytes.subarray(start, end).toString());
+    assert.deepEqual(represented, sentences, source);
+    assert.equal(network.reconstructText(), source);
+    assert.ok(network.verifyFullMatch().isClean(), source);
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-GRAMMAR-SENTENCE-ABBREVIATIONS', suffix: 'behavior',
+    fixtureId: 'i195-grammar-sentence-abbreviations', fixtureFile,
+    assertions: ['sentenceSpansMatchExpectedText', 'sourceReconstructsExactly', 'parseHasNoRecoveryErrors'], testName: context.name,
+  });
+});

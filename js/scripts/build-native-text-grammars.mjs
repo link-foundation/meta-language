@@ -22,6 +22,45 @@ function characterClass(specification, negated = false) {
   ], negated);
 }
 
+function sentenceBody(specification, word, terminals) {
+  const { beforeName, beforeContinuation, dotted, spaced } = specification.sentenceAbbreviations;
+  const horizontalSpace = characterClass({ categories: ['Zs'], characters: [9] });
+  const letter = characterClass({ categories: ['L'] });
+  const digit = characterClass({ categories: ['Nd'] });
+  const upper = characterClass({ categories: ['Lu', 'Lt'] });
+  const lowercaseOrDigit = characterClass({ categories: ['Ll', 'Nd'] });
+  const letterOrDigit = characterClass({ categories: ['L', 'Nd'] });
+  const period = expression.literal('.');
+  const followedBy = (character) => expression.and(expression.seq(expression.repeat1(horizontalSpace), character));
+  const spelling = (text) => expression.seq(...Array.from(text, (character) => {
+    const cases = [...new Set([character.toLowerCase(), character.toUpperCase()])];
+    return cases.length === 1 ? expression.literal(character)
+      : characterClass({ characters: cases.map((value) => value.codePointAt(0)) });
+  }));
+  const abbreviation = (forms, following) => expression.seq(
+    expression.orderedChoice(...forms.map(spelling)), followedBy(following),
+  );
+  const compound = (forms, separator, following) => forms.flatMap(([first, second]) => {
+    const opening = expression.seq(spelling(first), separator);
+    const ending = spelling(second);
+    return [
+      expression.seq(opening, ending, followedBy(following)),
+      expression.seq(opening, expression.and(ending)),
+    ];
+  });
+  const digits = expression.repeat1(digit);
+  return expression.orderedChoice(
+    ...compound(dotted, expression.empty(), letterOrDigit),
+    ...compound(spaced, expression.repeat0(horizontalSpace), lowercaseOrDigit),
+    abbreviation(beforeName, letter),
+    abbreviation(beforeContinuation, lowercaseOrDigit),
+    expression.seq(upper, period, followedBy(upper)),
+    expression.seq(digits, expression.repeat1(expression.seq(period, digits))),
+    expression.repeat1(word),
+    expression.seq(expression.not(terminals), expression.any()),
+  );
+}
+
 /** A full native grammar: region boundaries, lexemes and validation are links. */
 export function buildNativeTextGrammar(specification) {
   const whitespace = characterClass(specification.whitespace);
@@ -36,7 +75,7 @@ export function buildNativeTextGrammar(specification) {
   const line = expression.seq(immediateToken(expression.repeat0(expression.seq(expression.not(newline), expression.any()))), expression.orderedChoice(newline, end));
   const sentence = expression.seq(
     expression.and(expression.any()),
-    immediateToken(expression.repeat0(expression.seq(expression.not(terminals), expression.any()))),
+    immediateToken(expression.repeat0(sentenceBody(specification, word, terminals))),
     expression.orderedChoice(immediateToken(expression.seq(expression.repeat1(terminals), expression.repeat0(closing), expression.repeat0(whitespace))), end),
   );
   const opening = expression.literal(specification.parentheses.opening);

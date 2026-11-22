@@ -82,6 +82,13 @@ Both runtime packages, the Rust crate `meta-language` and the npm package
 this, and the runtime-parity rows of the ledger check it again on shared
 fixtures.
 
+The default natural-language grammar produces sentence links whose UTF-8 spans
+cover the original text, including sentence-final spacing. Its shared Links
+rules keep periods inside decimal numbers, initials and context-dependent
+abbreviations. For example, lowercase continuation can keep `руб.` within a
+Russian sentence, while `т. д.` can end a sentence before an uppercase start.
+Both runtimes execute the same generated rules and retain all source tokens.
+
 ### Global concept space
 
 All grammars of all languages inhabit **one global concept space**. It includes

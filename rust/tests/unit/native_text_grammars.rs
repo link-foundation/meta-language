@@ -8,6 +8,47 @@ use serde_json::Value;
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native-text.lino");
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-text-grammars.lino");
+const SENTENCE_EXAMPLES: &str =
+    include_str!("../../../parity/fixtures/natural-language-sentence-abbreviations.lino");
+
+#[test]
+fn sentence_abbreviations_preserve_context_and_true_boundaries() {
+    let examples: Value = super::project_data::read_project_data(SENTENCE_EXAMPLES).unwrap();
+    for example in examples.as_array().unwrap() {
+        let language = example["language"].as_str().unwrap();
+        let source = example["source"].as_str().unwrap();
+        let expected: Vec<_> = example["sentences"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|sentence| sentence.as_str().unwrap())
+            .collect();
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        let represented: Vec<_> = network
+            .query_links(&LinkQuery::by_type(LinkType::Syntax).with_term("sentence"))
+            .iter()
+            .map(|sentence| {
+                let range = sentence.metadata().span().unwrap().byte_range();
+                &source[range.start()..range.end()]
+            })
+            .collect();
+        assert_eq!(represented, expected, "{source}");
+        assert_eq!(network.reconstruct_text(), source);
+        assert!(network.verify_full_match(None).is_clean(), "{source}");
+    }
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-SENTENCE-ABBREVIATIONS",
+        suffix: "behavior",
+        fixture_id: "i195-grammar-sentence-abbreviations",
+        fixture_file: "parity/fixtures/natural-language-sentence-abbreviations.lino",
+        assertions: &[
+            "sentenceSpansMatchExpectedText",
+            "sourceReconstructsExactly",
+            "parseHasNoRecoveryErrors",
+        ],
+        test_name: "sentence_abbreviations_preserve_context_and_true_boundaries",
+    });
+}
 
 #[test]
 fn native_text_grammar_files_are_identical_in_both_packages() {

@@ -12,6 +12,8 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
+  sentenceAbbreviations: 'https://github.com/link-foundation/meta-language/issues/232',
+  grammarAssetAvailability: 'https://github.com/link-foundation/meta-language/issues/244',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
@@ -339,6 +341,53 @@ function requirement({
     implementationEntryPoints,
     verifications,
   };
+}
+
+function buildLanguageTaskRequirements(fixtureCatalog) {
+  const entries = [
+    {
+      id: 'I195-GRAMMAR-SENTENCE-ABBREVIATIONS',
+      source: ISSUE_195_SOURCES.sentenceAbbreviations,
+      language: 'English and Russian',
+      version: 'shared native text grammar selected by the active catalog',
+      construct: 'context-dependent periods inside lossless sentence spans',
+      expectedBehavior: 'The default parser keeps common abbreviations, initials and decimal periods within a sentence when source context indicates continuation. It preserves true sentence boundaries and every source byte without adding recovery errors.',
+      fixture: 'parity/fixtures/natural-language-sentence-abbreviations.lino',
+      selector: 'all original reproductions and positive and negative boundary examples',
+      assertions: ['sentenceSpansMatchExpectedText', 'sourceReconstructsExactly', 'parseHasNoRecoveryErrors'],
+      implementationEntryPoints: {
+        javascript: ['js/src/data/native-text-grammar.lino', 'js/tests/native-text-grammars.test.js'],
+        rust: ['rust/src/data/native-text-grammar.lino', 'rust/tests/unit/native_text_grammars.rs'],
+      },
+    },
+    {
+      id: 'I195-GRAMMAR-PARSER-AVAILABILITY',
+      source: ISSUE_195_SOURCES.grammarAssetAvailability,
+      language: 'all standalone default catalog parsers',
+      version: 'active catalog and grammar lock, Node.js 22 or later',
+      construct: 'inspect standalone default parser availability before parsing',
+      expectedBehavior: 'The default parser API lists every canonical language in catalog order. JavaScript reports the required missing WebAssembly asset paths without loading a grammar. Rust reports its compiled-in parsers as available.',
+      fixture: 'parity/language-grammar-inventory.json',
+      selector: 'canonical catalog order and the standalone default parser profiles',
+      assertions: ['languagesListedInCatalogOrder', 'standaloneAvailabilityMatchesAssets'],
+      implementationEntryPoints: {
+        javascript: ['js/src/network.js', 'js/tests/grammar-parser-availability.test.js'],
+        rust: ['rust/src/link_network.rs', 'rust/tests/unit/language_catalog.rs'],
+      },
+    },
+  ];
+  return entries.map(({ id, source, language, version, construct, expectedBehavior, fixture, selector, assertions, implementationEntryPoints }) => {
+    const fixtureId = id.toLowerCase();
+    fixtureCatalog[fixtureId] = pinnedFixture(fixture, selector);
+    const requiredRuntimes = ['javascript', 'rust'];
+    return requirement({
+      id, source, area: 'default-cst', scope: { language, version, edition: 'current default', construct, aliases: [], extensions: [] },
+      expectedBehavior, requiredRuntimes, implementationEntryPoints,
+      verifications: requiredRuntimes.map((runtime) => verification({
+        requirementId: id, runtime, suffix: 'behavior', fixtureIds: [fixtureId], assertions,
+      })),
+    });
+  });
 }
 
 function languageDetails(language) {
@@ -978,6 +1027,7 @@ export async function buildIssue195Manifest(root) {
     ...buildCrossCuttingRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildValidationAndDeliveryRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildGateRequirements(fixtureCatalog),
+    ...buildLanguageTaskRequirements(fixtureCatalog),
     ...buildCacheCleanupRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.cacheCleanup,
     }),
