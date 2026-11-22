@@ -7200,6 +7200,12 @@ parameter binding afterward. The shared source form constructs the same copy
 node for lexical and formal adapters. Every preceding required-only and
 default-only exported planner keeps its original rest refusals.
 
+A tagged JavaScript value can also use this copy when inference ties the result
+to the same declared data type. The checker preserves the actual variant,
+copies retained slots and clears excluded optional slots. The shared selection
+rule checks every constructor and rejects removal of the tag or a required
+field. This path uses the existing checked constructor and match nodes.
+
 Twenty additional future source products and six refusals cover these contexts,
 multi-pattern slots, actual order, empty copies, captures, local rebinding,
 fresh identity and shared children. The exact formerly refused callback source

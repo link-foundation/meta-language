@@ -842,23 +842,27 @@ pub fn replace_utf16_text(
                 {
                     let from = 0f64;
                     {
-                        let source_ml_source1_s10 =
-                            self::source_ml_temporary_replace_utf16_text_loop24(
-                                text,
-                                search,
-                                replacement,
-                                all,
-                                result,
-                                &(plan),
-                                start,
-                                from,
-                            );
-                        match source_ml_source1_s10 {
-                            self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(result_2, start_2) => {
-                                {
-                                    let at = start_2;
+                        let searching = true;
+                        {
+                            let source_ml_source1_s10 =
+                                self::source_ml_temporary_replace_utf16_text_loop24(
+                                    text,
+                                    search,
+                                    replacement,
+                                    all,
+                                    result,
+                                    &(plan),
+                                    start,
+                                    from,
+                                    searching,
+                                );
+                            match source_ml_source1_s10 {
+                                self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(result_2, start_2) => {
                                     {
-                                        self::source_ml_temporary_replace_utf16_text_loop25(text, result_2, at)
+                                        let at = start_2;
+                                        {
+                                            self::source_ml_temporary_replace_utf16_text_loop25(text, result_2, at)
+                                        }
                                     }
                                 }
                             }
@@ -920,10 +924,4 @@ pub fn source_ml_temporary_read_java_script_utf8_string_units_loop4(
             self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Done(index, scalar)
         };
     }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptUtf8StringUnitsJoin3 {
-    MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(f64, f64, f64),
-    MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Return(Vec<f64>),
 }

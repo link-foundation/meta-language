@@ -46,6 +46,34 @@ pub(super) fn positions(names: &[String], excluded: &[String]) -> Vec<usize> {
         })
         .collect()
 }
+
+pub(super) fn accept_nominal<'a>(
+    constructors: impl Iterator<Item = Vec<(Option<&'a str>, bool)>>,
+    excluded: &[String],
+) -> bool {
+    if excluded.iter().any(|name| name == "$") {
+        return false;
+    }
+    let statuses = constructors
+        .map(|fields| {
+            excluded
+                .iter()
+                .map(|name| {
+                    match fields
+                        .iter()
+                        .find(|(field, _)| *field == Some(name.as_str()))
+                    {
+                        None => -1.0,
+                        Some((_, true)) => 1.0,
+                        Some((_, false)) => 0.0,
+                    }
+                })
+                .collect()
+        })
+        .collect::<Vec<Vec<f64>>>();
+    super::object_rest_rules::accept_java_script_nominal_object_rest(&statuses)
+}
+
 pub(super) fn source_read(object: SExpr, excluded: &[(String, Span)], span: Span) -> SExpr {
     let items = excluded
         .iter()

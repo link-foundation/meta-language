@@ -438,9 +438,16 @@ class Inference {
       for(const constraint of [...this.objectRestFields]){
         const owner=this.resolve(constraint.object),form=readJavaScriptObjectRestOwnerForm(owner.kind,owner.open===true);
         if(form==='wait')continue;
-        if(form!=='copy')throw unsupported('object rest receiver','every actual enumerable own field and its source order must be represented',constraint.where);
-        const fields=[...owner.fields].sort((left,right)=>left.name<right.name?-1:left.name>right.name?1:0);
-        this.unify(constraint.result,{kind:'record',fields:selectJavaScriptObjectRestActualFields(fields,constraint.excluded),open:false},constraint.where);
+        if(owner.kind==='data'){
+          const target=this.resolve(constraint.result);
+          if(target.kind==='var')continue;
+          if(target.kind!=='data'||target.name!==owner.name||!acceptJavaScriptNominalObjectRestConstructors(this.data.get(owner.name)??[],constraint.excluded))
+            throw unsupported('nominal object rest receiver','the actual tag and every required constructor field must be retained in the same declared owner',constraint.where);
+        }else{
+          if(form!=='copy')throw unsupported('object rest receiver','every actual enumerable own field and its source order must be represented',constraint.where);
+          const fields=[...owner.fields].sort((left,right)=>left.name<right.name?-1:left.name>right.name?1:0);
+          this.unify(constraint.result,{kind:'record',fields:selectJavaScriptObjectRestActualFields(fields,constraint.excluded),open:false},constraint.where);
+        }
         this.objectRestFields.splice(this.objectRestFields.indexOf(constraint),1);progress=true;
       }
       for (const constraint of [...this.fields]) {
@@ -1145,6 +1152,7 @@ class Inference {
         }
         if(node.op===readJavaScriptObjectRestOperation()){
           const operands=readJavaScriptObjectRestOperands(node),object=this.expr(operands.object,env),result=this.fresh();
+          if(expected)this.unify(result,expected,node.span);
           this.objectRestFields.push({object,excluded:operands.excluded,result,where:node.span});return result;
         }
         if(node.op===readJavaScriptRecordFormalDefaultOperation()){
@@ -1665,5 +1673,5 @@ import {readJavaScriptArrayFormalIterableOperation,readJavaScriptArrayFormalInfe
 import {readJavaScriptRecordFormalDefaultOperation,readJavaScriptRecordFormalDefaultFieldForm} from './javascript-record-parameter-rules.js';
 import {readJavaScriptRecordFormalDefaultOperands} from './record-formal-defaults.js';
 import {readJavaScriptObjectRestOperation,readJavaScriptObjectRestOwnerForm} from './object-rest-rules.js';
-import {readJavaScriptObjectRestOperands,selectJavaScriptObjectRestActualFields} from './object-rest.js';
+import {readJavaScriptObjectRestOperands,selectJavaScriptObjectRestActualFields,acceptJavaScriptNominalObjectRestConstructors} from './object-rest.js';
 import {readJavaScriptRecursiveBindingIterableOperation,readJavaScriptRecursiveBindingIterableForm} from './recursive-binding-rules.js';

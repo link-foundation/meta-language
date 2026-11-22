@@ -1,6 +1,7 @@
 //! Actual inference owners and shared selected field positions.
 use super::{Env, Inference, Rc, RecordTerm, RefCell, Result, Span, Term};
 use crate::translation::object_rest_rules as rules;
+use crate::translation::types::Type;
 pub(super) struct RestFields {
     object: Term,
     excluded: Vec<String>,
@@ -31,7 +32,40 @@ impl Inference {
         let mut progress = false;
         for constraint in std::mem::take(&mut self.object_rest_fields) {
             let mut owner = self.resolve(&constraint.object);
-            if let Term::Known(ty @ crate::translation::types::Type::Record { .. }) = &owner {
+            if let Term::Known(Type::Data { name }) = &owner {
+                let target = self.resolve(&constraint.result);
+                if matches!(target, Term::Var(_)) {
+                    waiting.push(constraint);
+                    continue;
+                }
+                let constructors = self
+                    .data
+                    .iter()
+                    .filter(|(owner, _)| owner == name)
+                    .flat_map(|(_, constructors)| constructors)
+                    .map(|constructor| {
+                        constructor
+                            .fields
+                            .iter()
+                            .map(|field| (field.name.as_deref(), field.optional))
+                            .collect()
+                    });
+                if !matches!(&target, Term::Known(Type::Data { name: target }) if target == name)
+                    || !crate::translation::object_rest::accept_nominal(
+                        constructors,
+                        &constraint.excluded,
+                    )
+                {
+                    return Err(crate::translation::diagnostics::unsupported(
+                        "nominal object rest receiver",
+                        "the actual tag and every required constructor field must be retained in the same declared owner",
+                        constraint.place,
+                    ));
+                }
+                progress = true;
+                continue;
+            }
+            if let Term::Known(ty @ Type::Record { .. }) = &owner {
                 owner = self.declared(Some(ty));
             }
             let (kind, mut fields, open, mut optional_fields) = match &owner {

@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {runInNewContext} from 'node:vm';
+import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {parseJavaScript} from '../src/translation/javascript.js';
@@ -91,6 +92,20 @@ function compute(tree) {
  const translated=runInNewContext(javascript.text+'\n'+entry);
  for(const value of [null,undefined,{$:'twig'},{$:'trunk',value:3}]){
   assert.equal(translated(value),original(value));
+ }
+});
+test('contextual nominal rest removes an optional field and keeps other own fields',()=>{
+ const source=readFileSync(new URL('../../experiments/javascript-program/nominal-object-rest.mjs',import.meta.url),'utf8');
+ assert.equal(runInNewContext(source+'\ncompute();'),true);
+ const program=checkProgram(parseJavaScript(source)),{network,root}=encodeTypedProgramLinks(program);
+ for(const restored of [LinkNetwork.fromLino(network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(network))]){
+  const javascript=emitJavaScript(decodeTypedProgramLinks(restored,root));
+  const entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
+  assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),true);
+ }
+ for(const selector of ['value','$:tag']){
+  const invalid=source.replace('const {child,...rest}',`const {${selector},...rest}`);
+  assert.throws(()=>checkProgram(parseJavaScript(invalid)),/actual tag and every required constructor field/u);
  }
 });
 test('every complete preceding source remains exact',()=>{assert.equal(fixture.predecessors.length,11);for(const row of fixture.predecessors){const record=readProjectData(new URL('../../'+row.retained,import.meta.url));assert.equal(record.path,row.path);assert.equal(record.revision,row.revision);assert.equal(Buffer.byteLength(record.source),row.bytes);assert.equal(createHash('sha256').update(record.source).digest('hex'),row.sha256);}});

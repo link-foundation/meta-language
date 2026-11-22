@@ -1,6 +1,6 @@
 //! Selected actual typed fields and source order into the existing record IR.
 use super::{Checker, Env, Expr, Node, Result, SArrayItem, Span, Type, array, unsupported};
-use crate::translation::ir::RecordEntry;
+use crate::translation::ir::{Case, Pattern, RecordEntry};
 use crate::translation::object_rest_rules as rules;
 impl Checker {
     pub(super) fn object_rest(
@@ -14,6 +14,10 @@ impl Checker {
             crate::translation::object_rest::operands(args, span, self.language.as_str())?;
         let value = self.expr(&source, env, path, None, false)?;
         let value = Self::reference_value(value);
+        if let Type::Data { name } = &value.ty {
+            let name = name.clone();
+            return self.nominal_object_rest(value, &name, &excluded, span);
+        }
         let Type::Record {
             fields,
             open,
@@ -117,6 +121,82 @@ impl Checker {
                 name,
                 value: Box::new(value),
                 body: Box::new(body),
+            },
+            ty,
+        )
+        .with_span(span))
+    }
+
+    fn nominal_object_rest(
+        &mut self,
+        value: Expr,
+        name: &str,
+        excluded: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
+        let constructors = self.data_decl(name)?.ctors.clone();
+        let fields = constructors.iter().map(|constructor| {
+            constructor
+                .fields
+                .iter()
+                .map(|field| (Some(field.name.as_str()), field.optional))
+                .collect()
+        });
+        if !crate::translation::object_rest::accept_nominal(fields, excluded) {
+            return Err(unsupported(
+                "nominal object rest receiver",
+                "the actual tag and every required constructor field must be retained",
+                span,
+            ));
+        }
+        let ty = value.ty.clone();
+        let cases = constructors
+            .iter()
+            .map(|constructor| {
+                let binds = constructor
+                    .fields
+                    .iter()
+                    .map(|field| {
+                        (!excluded.contains(&field.name))
+                            .then(|| self.fresh_name("ml_nominal_rest_field"))
+                    })
+                    .collect::<Vec<_>>();
+                let args = constructor
+                    .fields
+                    .iter()
+                    .zip(&binds)
+                    .map(|(field, binding)| {
+                        let node = match binding {
+                            Some(name) => Node::Var { name: name.clone() },
+                            None => Node::None {
+                                absence: "undefined".to_owned(),
+                            },
+                        };
+                        Expr::new(node, field.ty.clone())
+                    })
+                    .collect();
+                Case {
+                    pattern: Pattern::Ctor {
+                        data: name.to_owned(),
+                        ctor: constructor.name.clone(),
+                        binds,
+                    },
+                    body: Expr::new(
+                        Node::Ctor {
+                            data: name.to_owned(),
+                            ctor: constructor.name.clone(),
+                            args,
+                            frozen: false,
+                        },
+                        ty.clone(),
+                    ),
+                }
+            })
+            .collect();
+        Ok(Expr::new(
+            Node::Match {
+                scrutinee: Box::new(value),
+                cases,
             },
             ty,
         )

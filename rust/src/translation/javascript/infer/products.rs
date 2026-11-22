@@ -228,6 +228,13 @@ impl Inference {
                 self.record_expr(node, entries, env, Some(&expected))?
             }
             (SNode::CtorObject { .. }, _) => self.infer_ctor_object(node, env, Some(&expected))?,
+            (SNode::Math { op, args, .. }, _)
+                if op == &crate::translation::object_rest_rules::read_java_script_object_rest_operation().to_string() =>
+            {
+                let result = self.object_rest_term(args, env, node.span)?;
+                self.unify(&result, &expected, node.span)?;
+                result
+            }
             (SNode::Match { .. }, _) => self.infer_match_expression(node, env, Some(&expected))?,
             (SNode::Lambda { .. } | SNode::CellWrite { .. }, _) => {
                 self.callable_expr(node, env, Some(&expected))?

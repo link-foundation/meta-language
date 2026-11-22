@@ -13,6 +13,12 @@ export function readJavaScriptObjectRestOwnerForm(kind,open){
  if(kind==='var'||kind==='record'&&open)return 'wait';
  return kind==='record'?'copy':'unsupported';
 }
+/** A nominal copy keeps its actual tag and may remove only optional fields.
+ * @param {number[][]} excludedFields @returns {boolean} */
+export function acceptJavaScriptNominalObjectRest(excludedFields){
+ if(excludedFields.length===0)return false;
+ return excludedFields.every(fields=>fields.every(field=>field===-1||field===1));
+}
 /** @param {number[][]} names @param {number[][]} excluded @returns {number[]} */
 export function selectJavaScriptObjectRestFields(names,excluded){
  if(!acceptJavaScriptRecordOrderNames(names))throw new TypeError('object rest needs every canonical actual own-field name');
