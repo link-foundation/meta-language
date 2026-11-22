@@ -119,6 +119,7 @@ pub struct ParseConfiguration {
     embedded_region_depth_limit: usize,
     embedded_region_count_limit: usize,
     embedded_region_byte_limit: usize,
+    decode_document_streams: bool,
 }
 
 impl ParseConfiguration {
@@ -136,7 +137,19 @@ impl ParseConfiguration {
             embedded_region_depth_limit: DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT,
             embedded_region_count_limit: DEFAULT_EMBEDDED_REGION_COUNT_LIMIT,
             embedded_region_byte_limit: DEFAULT_EMBEDDED_REGION_BYTE_LIMIT,
+            decode_document_streams: true,
         }
+    }
+
+    /// Controls optional decoding of PDF content and Unicode mapping streams.
+    #[must_use]
+    pub const fn with_document_stream_decoding(mut self, enabled: bool) -> Self {
+        self.decode_document_streams = enabled;
+        self
+    }
+
+    pub(crate) const fn decode_document_streams(self) -> bool {
+        self.decode_document_streams
     }
 
     /// Bounds recursive CST attachment independently of each parser's budgets.

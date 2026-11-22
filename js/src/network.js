@@ -238,7 +238,7 @@ export class LinkNetwork {
         named: true, span, definition: diagnostic.error, flags: LinkFlags.error() }));
     });
     const parsedParts = parts.map(part => {
-      const network = LinkNetwork.parse(part.text, 'DOCX', configuration);
+      const { network } = LinkNetwork._parseWithLinks(part.text, 'DOCX', configuration);
       return { ...part, network, clean: network.verifyFullMatch().isClean() };
     });
     const hasError = recovery.length > 0 || parsedParts.some(part => !part.clean);

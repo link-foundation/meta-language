@@ -414,6 +414,47 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
     },
     ...[
       {
+        id: 'I195-I239-PDF-CONTENT-STREAMS',
+        construct: 'linked decoded page content and located stream errors',
+        expectedBehavior: 'Both PDF parse entry points preserve the original file and expose Flate-decoded content operators in linked documents with the encoded range. An option disables stream decoding and corrupt encoded data identifies the affected range.',
+        selector: 'the Flate page content, both binary input modes, disabled decoding and corrupt data',
+        assertions: ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError'],
+      },
+      {
+        id: 'I195-I239-PDF-FONT-UNICODE',
+        construct: 'font Unicode mappings and decoded visible text in page order',
+        expectedBehavior: 'The visible PDF projection follows the page tree and show-text operators, maps glyph codes through ToUnicode CMaps and simple-font encodings, and returns the covering original stream or literal source range.',
+        selector: 'reverse physical page order, an inherited Identity-H font with bfchar and bfrange, and a WinAnsi Difference',
+        assertions: ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges'],
+      },
+    ].map(entry => ({
+      ...entry,
+      source: ISSUE_195_SOURCES.pdfStreamNullCharacters,
+      language: 'PDF',
+      version: 'PDF 1.7, ISO 32000-1:2008 stream and text operators',
+      fixture: 'parity/fixtures/pdf-document.lino',
+      implementationEntryPoints: {
+        javascript: ['js/src/pdf-document.js', 'js/src/pdf-text-fonts.js', 'js/tests/pdf-document.test.js'],
+        rust: ['rust/src/link_network/visible_document_text/pdf_document.rs', 'rust/src/link_network/visible_document_text/pdf_text_fonts.rs', 'rust/tests/unit/document_containers.rs'],
+      },
+    })),
+    {
+      id: 'I195-I239-WORDPROCESSING-PACKAGE',
+      source: ISSUE_195_SOURCES.pdfStreamNullCharacters,
+      language: 'WordprocessingML',
+      version: 'ECMA-376 transitional and strict namespaces with PKWARE APPNOTE 6.3.10 stored or deflated ZIP entries',
+      construct: 'linked Open Packaging Conventions parts and visible text ranges',
+      expectedBehavior: 'Both binary entry points open stored and deflated WordprocessingML packages and link the document, headers, footers and notes. The visible projection preserves text, tabs and breaks with original source ranges, and corrupt parts have located diagnostics without loss of original bytes.',
+      fixture: 'parity/fixtures/wordprocessing-package.lino',
+      selector: 'stored and deflated packages with the original part XML, exact or covering ranges, and a damaged stored part',
+      assertions: ['opcPackageKeepsStoredAndDeflatedParts', 'opcVisibleTextKeepsEncodedAndStoredRanges', 'corruptOpcPartKeepsLocatedError'],
+      implementationEntryPoints: {
+        javascript: ['js/src/open-packaging-conventions.js', 'js/src/visible-document-text.js', 'js/tests/wordprocessing-package.test.js'],
+        rust: ['rust/src/link_network/visible_document_text/document_package.rs', 'rust/src/link_network/visible_document_text/mod.rs', 'rust/tests/unit/document_containers.rs'],
+      },
+    },
+    ...[
+      {
         id: 'I195-I235-GRAMMAR-SEARCH-SPANS',
         construct: 'grammar search and original-text coordinates',
         expectedBehavior: 'A compiled grammar finds the reported price phrases and returns their half-open locations and concrete trees. JavaScript uses UTF-16 offsets for match ranges and Rust uses byte offsets. Whole-input parsing keeps its existing acceptance behavior.',

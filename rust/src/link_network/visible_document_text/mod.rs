@@ -6,8 +6,16 @@ use super::{LinkId, LinkNetwork, LinkType};
 use crate::{language_catalog::canonical_language_name, source::ByteRange};
 
 mod character_references;
+mod document_container;
+mod document_container_policy;
+pub(crate) mod document_package;
 mod document_text_policy;
+pub(crate) mod pdf_document;
+mod pdf_text_fonts;
 use character_references::{ReferenceSyntax, character_reference};
+pub use document_container::DerivedDocument;
+pub(crate) use document_container::byte_source_span;
+use document_container::{BinaryStringCoordinates, binary_string_bytes};
 use document_text_policy::document_scalar_is_whitespace;
 
 /// Controls how a document projects into visible text.
@@ -54,7 +62,7 @@ pub enum VisibleDocumentTextSpanKind {
     Replacement,
 }
 
-/// One monotonic range mapping, with UTF-8 byte coordinates on both sides.
+/// One range mapping, with UTF-8 output and original source byte coordinates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct VisibleDocumentTextSpan {
     /// Range in the projected text.
@@ -70,7 +78,7 @@ pub struct VisibleDocumentTextSpan {
 pub struct VisibleDocumentText {
     /// Projected readable text.
     pub text: String,
-    /// Ordered, contiguous output ranges and monotonic source ranges.
+    /// Ordered, contiguous output ranges. Encoded documents can reorder source ranges.
     pub map: Vec<VisibleDocumentTextSpan>,
 }
 
@@ -81,21 +89,23 @@ impl VisibleDocumentText {
         if start >= end || !self.text.is_char_boundary(start) || !self.text.is_char_boundary(end) {
             return None;
         }
-        let first = self
-            .map
-            .get(self.map.partition_point(|span| span.text.end() <= start))?;
-        let last = self
-            .map
-            .get(self.map.partition_point(|span| span.text.end() < end))?;
-        Some(ByteRange::new(
-            source_offset(first, start, false),
-            source_offset(last, end, true),
-        ))
+        let first = self.map.partition_point(|span| span.text.end() <= start);
+        let last = self.map.partition_point(|span| span.text.end() < end);
+        let mut source_start = usize::MAX;
+        let mut source_end = 0;
+        for span in self.map.get(first..=last)? {
+            source_start =
+                source_start.min(source_offset(span, start.max(span.text.start()), false));
+            source_end = source_end.max(source_offset(span, end.min(span.text.end()), true));
+        }
+        Some(ByteRange::new(source_start, source_end))
     }
 }
 
 fn source_offset(span: &VisibleDocumentTextSpan, offset: usize, end: bool) -> usize {
-    if span.kind == VisibleDocumentTextSpanKind::Source {
+    if span.kind == VisibleDocumentTextSpanKind::Source
+        && span.source.end() - span.source.start() == span.text.end() - span.text.start()
+    {
         return span.source.start() + offset - span.text.start();
     }
     if end {
@@ -114,6 +124,40 @@ impl LinkNetwork {
             .find(|link| link.metadata().link_type() == Some(LinkType::Language))
             .and_then(|link| link.metadata().term())
             .and_then(canonical_language_name);
+        if language == Some("PDF") {
+            let mut chunks = Vec::new();
+            for link in self.links() {
+                let metadata = link.metadata();
+                if metadata.link_type() != Some(LinkType::Semantic)
+                    || metadata.language() != Some("PDF")
+                {
+                    continue;
+                }
+                let (Some(range), Some(value)) = (
+                    metadata.span().map(|span| span.byte_range()),
+                    metadata.definition(),
+                ) else {
+                    continue;
+                };
+                if metadata.term() == Some("PDF text line") {
+                    chunks.push(Chunk::new(
+                        ByteRange::new(range.start(), range.start()),
+                        ChunkKind::Separator(false),
+                    ));
+                }
+                if matches!(metadata.term(), Some("PDF text line" | "PDF text run")) {
+                    chunks.push(Chunk::new(range, ChunkKind::Replace(value)));
+                }
+            }
+            return Projection::new(options).project(chunks, "");
+        }
+        if language == Some("DOCX")
+            && self
+                .links()
+                .any(|link| link.metadata().term() == Some("docx_package"))
+        {
+            return self.project_package(options);
+        }
         let source = self.reconstruct_text();
         let whole = ByteRange::new(0, source.len());
         let mut chunks = Vec::new();
@@ -134,6 +178,72 @@ impl LinkNetwork {
             _ => chunks.push(Chunk::new(whole, ChunkKind::Text(None, true))),
         }
         Projection::new(options).project(chunks, &source)
+    }
+
+    fn project_package(&self, options: VisibleDocumentTextOptions<'_>) -> VisibleDocumentText {
+        let documents = self.derived_documents();
+        let source = documents
+            .iter()
+            .any(|part| part.encoding == "binary-string")
+            .then(|| self.reconstruct_text());
+        let mut result = Projection::new(options);
+        for part in documents {
+            let projected = part.network.visible_text(options);
+            if projected.text.is_empty() {
+                continue;
+            }
+            let range = part.source_range;
+            if !result.output.text.is_empty() {
+                result.append(
+                    options.block_separator,
+                    ByteRange::new(range.start(), range.start()),
+                    VisibleDocumentTextSpanKind::Separator,
+                );
+            }
+            if part.compression == "stored" {
+                let bytes = source
+                    .as_ref()
+                    .and_then(|source| source.get(range.start()..range.end()))
+                    .and_then(binary_string_bytes);
+                let coordinates = bytes.as_deref().map(BinaryStringCoordinates::new);
+                let offset = |position| {
+                    range.start()
+                        + coordinates
+                            .as_ref()
+                            .map_or(position, |index| index.text_offset(position))
+                };
+                for span in projected.map {
+                    if coordinates.is_some() && span.kind == VisibleDocumentTextSpanKind::Source {
+                        let text = &projected.text[span.text.start()..span.text.end()];
+                        let mut source_start = offset(span.source.start());
+                        for (index, character) in text.char_indices() {
+                            let width = character.len_utf8();
+                            let source_end =
+                                source_start + if character.is_ascii() { 1 } else { width * 2 };
+                            result.append(
+                                &text[index..index + width],
+                                ByteRange::new(source_start, source_end),
+                                span.kind,
+                            );
+                            source_start = source_end;
+                        }
+                    } else {
+                        result.append(
+                            &projected.text[span.text.start()..span.text.end()],
+                            ByteRange::new(offset(span.source.start()), offset(span.source.end())),
+                            span.kind,
+                        );
+                    }
+                }
+            } else {
+                result.append(
+                    &projected.text,
+                    range,
+                    VisibleDocumentTextSpanKind::Replacement,
+                );
+            }
+        }
+        result.output
     }
 }
 
@@ -163,7 +273,7 @@ struct SyntaxRecord<'source> {
     term: &'source str,
     language: Option<&'static str>,
     range: ByteRange,
-    children: &'source [LinkId],
+    children: Vec<LinkId>,
 }
 
 struct DocumentSyntax<'source> {
@@ -173,7 +283,7 @@ struct DocumentSyntax<'source> {
 
 impl<'source> DocumentSyntax<'source> {
     fn new(network: &'source LinkNetwork, source: &'source str) -> Self {
-        let records = network
+        let mut records: BTreeMap<_, _> = network
             .links()
             .filter_map(|link| {
                 let metadata = link.metadata();
@@ -191,11 +301,58 @@ impl<'source> DocumentSyntax<'source> {
                         term: metadata.term()?,
                         language: metadata.language().and_then(canonical_language_name),
                         range,
-                        children: link.references(),
+                        children: Vec::new(),
                     },
                 ))
             })
             .collect();
+        // Native parser links reference their parents. A JavaScript network
+        // read from Links Notation has child references. Span containment
+        // gives the direction except for wrappers with identical spans.
+        let points_to_parent = network.links().any(|link| {
+            records.contains_key(&link.id())
+                && link.references().iter().any(|id| {
+                    network.link(*id).is_some_and(|target| {
+                        target.metadata().link_type() == Some(LinkType::Document)
+                    })
+                })
+        });
+        for link in network
+            .links()
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+        {
+            for &id in link.references() {
+                let (Some(current), Some(target)) = (records.get(&link.id()), records.get(&id))
+                else {
+                    continue;
+                };
+                if id == link.id() || current.language != target.language {
+                    continue;
+                }
+                let (parent, child) = if current.range == target.range {
+                    if points_to_parent {
+                        (id, link.id())
+                    } else {
+                        (link.id(), id)
+                    }
+                } else if current.range.start() <= target.range.start()
+                    && target.range.end() <= current.range.end()
+                {
+                    (link.id(), id)
+                } else if target.range.start() <= current.range.start()
+                    && current.range.end() <= target.range.end()
+                {
+                    (id, link.id())
+                } else {
+                    continue;
+                };
+                records
+                    .get_mut(&parent)
+                    .expect("syntax parent exists")
+                    .children
+                    .push(child);
+            }
+        }
         Self { source, records }
     }
 
@@ -388,8 +545,25 @@ impl<'source> DocumentSyntax<'source> {
     }
 
     fn docx_selections(&self, records: &[&SyntaxRecord<'source>]) -> Vec<Chunk<'source>> {
+        const TRANSITIONAL: &str = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+        const STRICT: &str = "http://purl.oclc.org/ooxml/wordprocessingml/main";
         let mut chunks = Vec::new();
+        let mut bindings = BTreeMap::from([("w", TRANSITIONAL)]);
+        let mut scopes: Vec<(usize, BTreeMap<_, _>)> = Vec::new();
         for record in records.iter().filter(|record| record.term == "element") {
+            while scopes
+                .last()
+                .is_some_and(|(end, _)| *end <= record.range.start())
+            {
+                let (_, previous) = scopes.pop().expect("nonempty namespace scope");
+                for (prefix, namespace) in previous {
+                    if let Some(namespace) = namespace {
+                        bindings.insert(prefix, namespace);
+                    } else {
+                        bindings.remove(prefix);
+                    }
+                }
+            }
             let Some(open) = self.child(record, |term| matches!(term, "STag" | "EmptyElemTag"))
             else {
                 continue;
@@ -397,19 +571,81 @@ impl<'source> DocumentSyntax<'source> {
             let Some(name) = self.child(open, |term| term == "Name") else {
                 continue;
             };
-            let kind = match self.read(name.range) {
-                "w:p" => ChunkKind::Separator(false),
-                "w:tab" => ChunkKind::Replace("\t"),
-                "w:br" | "w:cr" => ChunkKind::Separator(true),
-                "w:t" => {
+            let mut previous = BTreeMap::new();
+            for attribute in open
+                .children
+                .iter()
+                .filter_map(|id| self.records.get(id))
+                .filter(|child| child.term == "Attribute")
+            {
+                let Some(declaration) = self.child(attribute, |term| term == "Name") else {
+                    continue;
+                };
+                let prefix = match self.read(declaration.range) {
+                    "xmlns" => "",
+                    qualified => {
+                        let Some(prefix) = qualified.strip_prefix("xmlns:") else {
+                            continue;
+                        };
+                        prefix
+                    }
+                };
+                let Some(value) = self.child(attribute, |term| term == "AttValue") else {
+                    continue;
+                };
+                let value = self.read(value.range);
+                if let Some(namespace) = value.get(1..value.len().saturating_sub(1)) {
+                    let old = bindings.insert(prefix, namespace);
+                    previous.entry(prefix).or_insert(old);
+                }
+            }
+            if !previous.is_empty() {
+                scopes.push((record.range.end(), previous));
+            }
+            let qualified = self.read(name.range);
+            let (prefix, name) = qualified.split_once(':').unwrap_or(("", qualified));
+            if !matches!(bindings.get(prefix).copied(), Some(TRANSITIONAL | STRICT)) {
+                continue;
+            }
+            let kind = match name {
+                "p" => ChunkKind::Separator(false),
+                "tab" => ChunkKind::Replace("\t"),
+                "br" | "cr" => ChunkKind::Separator(true),
+                "t" => {
                     if let Some(close) = self.child(record, |term| term == "ETag")
                         && open.range.end() < close.range.start()
                     {
-                        let range = ByteRange::new(open.range.end(), close.range.start());
-                        chunks.push(Chunk::new(
-                            range,
-                            ChunkKind::Text(Some(ReferenceSyntax::Xml), true),
-                        ));
+                        let mut start = open.range.end();
+                        if let Some(content) = self.child(record, |term| term == "content") {
+                            for child in content
+                                .children
+                                .iter()
+                                .filter_map(|id| self.records.get(id))
+                                .filter(|child| {
+                                    matches!(child.term, "CDSect" | "Comment" | "PI" | "element")
+                                })
+                            {
+                                if start < child.range.start() {
+                                    chunks.push(Chunk::new(
+                                        ByteRange::new(start, child.range.start()),
+                                        ChunkKind::Text(Some(ReferenceSyntax::Xml), true),
+                                    ));
+                                }
+                                if let Some(literal) = self.child(child, |term| term == "CData") {
+                                    chunks.push(Chunk::new(
+                                        literal.range,
+                                        ChunkKind::Text(None, true),
+                                    ));
+                                }
+                                start = child.range.end();
+                            }
+                        }
+                        if start < close.range.start() {
+                            chunks.push(Chunk::new(
+                                ByteRange::new(start, close.range.start()),
+                                ChunkKind::Text(Some(ReferenceSyntax::Xml), true),
+                            ));
+                        }
                     }
                     continue;
                 }
@@ -635,6 +871,9 @@ impl<'options> Projection<'options> {
             && let Some(previous) = self.output.map.last_mut()
             && previous.kind == kind
             && previous.source.end() == source.start()
+            && previous.source.end() - previous.source.start()
+                == previous.text.end() - previous.text.start()
+            && text.len() == source.end() - source.start()
         {
             previous.text = ByteRange::new(previous.text.start(), end);
             previous.source = ByteRange::new(previous.source.start(), source.end());

@@ -1,0 +1,290 @@
+use meta_language::link_network::visible_document_text::VisibleDocumentTextOptions;
+use meta_language::{ByteRange, LinkNetwork, ParseConfiguration};
+use serde_json::Value;
+
+use super::issue_195_observations::{Observation, record};
+use super::project_data::read_project_data;
+
+const PDF_FIXTURE: &str = "parity/fixtures/pdf-document.lino";
+const WORD_FIXTURE: &str = "parity/fixtures/wordprocessing-package.lino";
+
+fn octets(value: &Value) -> Vec<u8> {
+    let source = value.as_str().expect("hexadecimal file");
+    (0..source.len())
+        .step_by(2)
+        .map(|index| u8::from_str_radix(&source[index..index + 2], 16).expect("fixture byte"))
+        .collect()
+}
+
+fn offset(value: &Value) -> usize {
+    usize::try_from(value.as_u64().expect("fixture coordinate")).expect("coordinate fits in usize")
+}
+
+fn binary_string(bytes: &[u8]) -> String {
+    bytes.iter().copied().map(char::from).collect()
+}
+
+fn check_reconstruction(network: &LinkNetwork, raw: bool, bytes: &[u8], text: &str) {
+    if raw {
+        assert_eq!(network.reconstruct_bytes(), bytes);
+    } else {
+        assert_eq!(network.reconstruct_text(), text);
+    }
+}
+
+#[test]
+fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
+    let fixture = read_project_data(include_str!("../../../parity/fixtures/pdf-document.lino"))
+        .expect("PDF document fixtures");
+    let bytes = octets(&fixture["encoded"]);
+    let binary = binary_string(&bytes);
+    let settings = ParseConfiguration::default();
+    let expected = fixture["text"].as_str().expect("projected text");
+    let start = offset(&fixture["start"]);
+    let end = offset(&fixture["end"]);
+    for (raw, original) in [
+        (true, LinkNetwork::parse_bytes(&bytes, "PDF")),
+        (false, LinkNetwork::parse(&binary, "PDF", settings)),
+    ] {
+        let network = LinkNetwork::from_lino(&original.to_lino()).expect("PDF round trip");
+        assert!(network.verify_full_match(None).is_clean());
+        check_reconstruction(&network, raw, &bytes, &binary);
+        let coordinate = |position| {
+            if raw {
+                position
+            } else {
+                binary_string(&bytes[..position]).len()
+            }
+        };
+        let range = ByteRange::new(coordinate(start), coordinate(end));
+        let attached = network.derived_documents();
+        assert_eq!(attached.len(), 1);
+        let content = &attached[0];
+        assert_eq!(content.name, "content_stream");
+        assert_eq!(content.compression, "FlateDecode");
+        assert_eq!(
+            content.encoding,
+            if raw { "bytes" } else { "binary-string" }
+        );
+        assert_eq!(content.source_range, range);
+        assert_eq!(
+            content.network.reconstruct_text(),
+            fixture["contents"].as_str().expect("decoded operators")
+        );
+        assert!(
+            content
+                .network
+                .links()
+                .any(|link| link.metadata().term() == Some("operation"))
+        );
+        let projection = network.visible_text(VisibleDocumentTextOptions::default());
+        assert_eq!(projection.text, expected);
+        assert_eq!(projection.source_range(0, "чай 🧪B".len()), Some(range));
+        let shown = r"(A\200\201)";
+        let literal = bytes
+            .windows(shown.len())
+            .position(|window| window == shown.as_bytes())
+            .expect("literal shown text");
+        let visible = projection.text.find('A').expect("visible page text");
+        assert_eq!(
+            projection.source_range(visible, projection.text.len()),
+            Some(ByteRange::new(
+                coordinate(literal),
+                coordinate(literal + shown.len())
+            ))
+        );
+        assert_eq!(
+            network
+                .visible_text(VisibleDocumentTextOptions {
+                    block_separator: "|",
+                    ..Default::default()
+                })
+                .text,
+            expected.replace('\n', "|")
+        );
+    }
+    for undecoded in [
+        LinkNetwork::parse(
+            &binary,
+            "PDF",
+            settings.with_document_stream_decoding(false),
+        ),
+        LinkNetwork::parse_bytes_with_configuration(
+            &bytes,
+            "PDF",
+            settings.with_document_stream_decoding(false),
+        ),
+    ] {
+        assert!(undecoded.verify_full_match(None).is_clean());
+        assert!(undecoded.derived_documents().is_empty());
+        assert_eq!(
+            undecoded
+                .visible_text(VisibleDocumentTextOptions::default())
+                .text,
+            "A€é"
+        );
+    }
+    let damaged = octets(&fixture["corrupt"]);
+    let network = LinkNetwork::parse_bytes(&damaged, "PDF");
+    assert!(!network.verify_full_match(None).is_clean());
+    assert_eq!(network.reconstruct_bytes(), damaged);
+    assert!(network.links().any(|link| {
+        link.metadata().flags().is_error()
+            && link
+                .metadata()
+                .span()
+                .is_some_and(|span| span.byte_range() == ByteRange::new(start, end))
+    }));
+    assert_eq!(
+        network
+            .visible_text(VisibleDocumentTextOptions::default())
+            .text,
+        "A€é"
+    );
+    for (requirement_id, assertions) in [
+        (
+            "I195-I239-PDF-CONTENT-STREAMS",
+            &[
+                "pdfDerivedOperatorsKeepEncodedRange",
+                "pdfFiltersCanBeDisabled",
+                "corruptPdfFilterKeepsLocatedError",
+            ][..],
+        ),
+        (
+            "I195-I239-PDF-FONT-UNICODE",
+            &[
+                "pdfTextUsesFontMappingsAndPageOrder",
+                "pdfVisibleTextKeepsEncodedAndLiteralRanges",
+            ][..],
+        ),
+    ] {
+        record(&Observation {
+            requirement_id,
+            suffix: "behavior",
+            fixture_id: &requirement_id.to_ascii_lowercase(),
+            fixture_file: PDF_FIXTURE,
+            assertions,
+            test_name: "pdf_streams_and_font_unicode_keep_the_original_ranges",
+        });
+    }
+}
+
+#[test]
+fn wordprocessing_packages_keep_parts_and_character_ranges() {
+    let fixture = read_project_data(include_str!(
+        "../../../parity/fixtures/wordprocessing-package.lino"
+    ))
+    .expect("WordprocessingML packages");
+    let cases = fixture["cases"].as_array().expect("ZIP cases");
+    let names = fixture["names"].as_array().expect("part names");
+    let parts = fixture["parts"].as_array().expect("part texts");
+    for case in cases {
+        let bytes = octets(&case["archive"]);
+        let text = binary_string(&bytes);
+        let ranges = case["ranges"].as_array().expect("encoded ranges");
+        let compression = case["compression"].as_str().expect("ZIP compression");
+        for (raw, original) in [
+            (true, LinkNetwork::parse_bytes(&bytes, "DOCX")),
+            (
+                false,
+                LinkNetwork::parse(&text, "DOCX", ParseConfiguration::default()),
+            ),
+        ] {
+            let network = LinkNetwork::from_lino(&original.to_lino()).expect("package round trip");
+            assert!(network.verify_full_match(None).is_clean());
+            check_reconstruction(&network, raw, &bytes, &text);
+            let documents = network.derived_documents();
+            assert_eq!(documents.len(), names.len());
+            let coordinate = |position| {
+                if raw {
+                    position
+                } else {
+                    binary_string(&bytes[..position]).len()
+                }
+            };
+            for (index, document) in documents.iter().enumerate() {
+                assert_eq!(document.name, names[index].as_str().expect("part name"));
+                assert_eq!(
+                    document.network.reconstruct_text(),
+                    parts[index].as_str().expect("part text")
+                );
+                assert_eq!(document.compression, compression);
+                assert_eq!(
+                    document.encoding,
+                    if raw { "bytes" } else { "binary-string" }
+                );
+                assert_eq!(
+                    document.source_range,
+                    ByteRange::new(
+                        coordinate(offset(&ranges[index][0])),
+                        coordinate(offset(&ranges[index][1]))
+                    )
+                );
+            }
+            let projection = network.visible_text(VisibleDocumentTextOptions::default());
+            assert_eq!(
+                projection.text,
+                fixture["expectedText"].as_str().expect("package text")
+            );
+            let part_start = offset(&ranges[0][0]);
+            let visible = "Кошка";
+            let (start, end) = if compression == "stored" {
+                let start = part_start
+                    + parts[0]
+                        .as_str()
+                        .expect("main part")
+                        .find(visible)
+                        .expect("word in part");
+                (start, start + visible.len())
+            } else {
+                (part_start, offset(&ranges[0][1]))
+            };
+            assert_eq!(
+                projection.source_range(0, visible.len()),
+                Some(ByteRange::new(coordinate(start), coordinate(end)))
+            );
+            let all = projection
+                .source_range(0, projection.text.len())
+                .expect("covering range");
+            assert!(
+                all.start() <= coordinate(offset(&ranges[1][0]) + 200)
+                    && all.end() >= coordinate(offset(&ranges[3][0]))
+            );
+        }
+    }
+    let damaged = octets(&fixture["corrupt"]);
+    let network = LinkNetwork::parse_bytes(&damaged, "DOCX");
+    assert!(!network.verify_full_match(None).is_clean());
+    assert_eq!(network.reconstruct_bytes(), damaged);
+    let range = &cases[0]["ranges"][0];
+    assert!(network.links().any(|link| {
+        link.metadata().flags().is_error()
+            && link
+                .metadata()
+                .definition()
+                .is_some_and(|text| text.contains("OPC part size or checksum mismatch"))
+            && link.metadata().span().is_some_and(|span| {
+                span.byte_range() == ByteRange::new(offset(&range[0]), offset(&range[1]))
+            })
+    }));
+    let surviving = network.derived_documents();
+    assert_eq!(surviving.len(), names.len() - 1);
+    assert!(
+        surviving
+            .iter()
+            .zip(&names[1..])
+            .all(|(part, name)| name.as_str() == Some(part.name.as_str()))
+    );
+    record(&Observation {
+        requirement_id: "I195-I239-WORDPROCESSING-PACKAGE",
+        suffix: "behavior",
+        fixture_id: "i195-i239-wordprocessing-package",
+        fixture_file: WORD_FIXTURE,
+        assertions: &[
+            "opcPackageKeepsStoredAndDeflatedParts",
+            "opcVisibleTextKeepsEncodedAndStoredRanges",
+            "corruptOpcPartKeepsLocatedError",
+        ],
+        test_name: "wordprocessing_packages_keep_parts_and_character_ranges",
+    });
+}

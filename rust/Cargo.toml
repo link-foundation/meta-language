@@ -26,6 +26,9 @@ include = [
     "src/data/pest-built-ins-license.txt",
     "src/data/document-character-references.lino",
     "src/data/document-projection-rules.lino",
+    "src/data/pdf-font-encodings.lino",
+    "src/data/pdf-glyph-map.lino",
+    "src/data/pdf-glyph-map-license.txt",
     "src/data/concept-records.lino",
     "src/data/foundation-models.lino",
     "src/data/native-text-metadata.lino",
@@ -126,6 +129,7 @@ harness = false
 
 [dependencies]
 clap = { version = "4.4", features = ["derive", "env"] }
+crc32fast = "1.5.2"
 doublets = { version = "0.5.0", optional = true }
 indexmap = "=2.14.2"
 lindera = { version = "6.2.0", default-features = false, features = ["embed-jieba"], optional = true }
@@ -142,6 +146,7 @@ lingua = { version = "1.8.0", default-features = false, features = [
     "urdu",
 ] }
 links-notation = { version = "0.22.0", default-features = false }
+miniz_oxide = "0.9.1"
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 platform-mem = { version = "0.3.0", optional = true }

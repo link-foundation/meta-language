@@ -88,7 +88,7 @@ export function readPdfUnicodeMap(source) {
   let remainingRangeWork = maximumCmapMappings;
   let token = next();
   while (token !== undefined && mapping.size < maximumCmapMappings) {
-    const kind = token;
+    const kind = token.toLowerCase();
     token = next();
     if (kind === 'begincodespacerange') {
       while (code(token)) {

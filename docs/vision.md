@@ -1772,11 +1772,22 @@ the full concrete representation.
 
 Visible text is a separate projection of document syntax. HTML, Markdown and
 WordprocessingML use shared projection rules for hidden syntax, block breaks,
-list markers and character references. Projected coordinates use the runtime's
-string indices (JavaScript UTF-16 and Rust UTF-8), and source coordinates are
-always UTF-8 byte ranges. Each projected interval maps to the bytes that
-produced it, including character references, collapsed whitespace and inserted
-separators. A selection can be resolved back to its covering source range.
+list markers and character references. PDF uses show-text operators and font
+maps in page-tree order. Projected coordinates use the runtime's string
+indices (JavaScript UTF-16 and Rust UTF-8). Source ranges index the original
+bytes of byte input or the UTF-8 encoding of string input. Each projected
+interval maps to the bytes that produced it, including character references,
+collapsed whitespace and inserted separators. A selection can resolve to a
+covering range even when page or part order differs from physical byte order.
+
+Decoded PDF page content and WordprocessingML package parts are independent
+lossless networks stored on derived document links. Each link records its
+original byte range, container input encoding and compression. Decoded
+coordinates belong to the child network. Uncompressed selections can resolve
+to individual physical spans. Compressed selections resolve to the covering
+encoded stream or ZIP entry. Optional PDF decoding uses bounded filters and
+keeps the original content bytes. Invalid streams and package entries carry
+diagnostics with a physical source span.
 
 An inspectable linked `any-grammar` or `all-grammar` selection rule invokes
 supported grammar definitions recursively through the same algorithms and

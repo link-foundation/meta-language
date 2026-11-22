@@ -350,7 +350,11 @@ impl LinkNetwork {
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
         let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
-        if text.contains('\0') && canonical_language_name(language) != Some("PDF") {
+        let canonical = canonical_language_name(language);
+        let binary_document = canonical == Some("PDF")
+            || (canonical == Some("DOCX")
+                && visible_document_text::document_package::has_zip_header(text.as_bytes()));
+        if text.contains('\0') && !binary_document {
             let retained = network.reconstruct_text();
             if text.starts_with(&retained) && retained.len() < text.len() {
                 let span = SourceSpan::new(

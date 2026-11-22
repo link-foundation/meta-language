@@ -1,18 +1,31 @@
 use std::fmt::Write as _;
 
-use crate::{ByteRange, LinkMetadata, LinkNetwork, LinkType, Point, SourceSpan};
+use crate::link_network::visible_document_text::{
+    byte_source_span, document_package, pdf_document,
+};
+use crate::{
+    ByteRange, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point, SourceSpan,
+};
 
 const BYTE_CHUNK_SIZE: usize = 4096;
 
 impl LinkNetwork {
     /// Stores an arbitrary file as a lossless byte-token network.
     ///
-    /// Unlike [`Self::parse`], this boundary does not require UTF-8 and does not
-    /// interpret the file. `format` is an opaque media type, extension, or other
-    /// caller-defined format identifier. Format-specific parsers can enrich the
-    /// returned network without changing its lossless byte layer.
+    /// Binary document formats can attach decoded parts to the lossless layer.
+    /// Other format identifiers are stored as opaque names.
     #[must_use]
     pub fn parse_bytes(bytes: &[u8], format: &str) -> Self {
+        Self::parse_bytes_with_configuration(bytes, format, ParseConfiguration::default())
+    }
+
+    /// Stores arbitrary bytes and applies the supplied document options.
+    #[must_use]
+    pub fn parse_bytes_with_configuration(
+        bytes: &[u8],
+        format: &str,
+        configuration: ParseConfiguration,
+    ) -> Self {
         let mut network = Self::self_describing();
         let format_link = network.insert_typed_point(format, LinkType::Language, None);
         let document_span = SourceSpan::new(
@@ -46,6 +59,29 @@ impl LinkNetwork {
                         Point::new(0, offset + chunk.len()),
                     )),
             );
+        }
+        match crate::language_catalog::canonical_language_name(format) {
+            Some("DOCX") if document_package::has_zip_header(bytes) => {
+                document_package::attach_wordprocessing_package(
+                    &mut network,
+                    document,
+                    bytes,
+                    format,
+                    byte_source_span,
+                    configuration,
+                    "bytes",
+                );
+            }
+            Some("PDF") if !bytes.is_empty() => {
+                pdf_document::attach_binary_pdf(
+                    &mut network,
+                    document,
+                    bytes,
+                    format,
+                    configuration,
+                );
+            }
+            _ => {}
         }
         network
     }

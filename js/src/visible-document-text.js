@@ -21,12 +21,21 @@ function syntaxLinks(network) {
     links.set(link.id().value, {
       start: range.start, end: range.end, term: metadata.term,
       language: canonicalLanguageName(metadata.language ?? ''),
-      references: link.references(),
+      references: link.references(), children: [],
     });
   }
+  const pointsToParent = [...links.values()].some(record => record.references.some(id =>
+    network.link(id)?.metadata().linkType === LinkType.Document));
   for (const record of links.values()) {
-    record.children = record.references.map(reference => links.get(reference.value)).filter(Boolean).sort(rangeOrder);
+    for (const reference of record.references) {
+      const target = links.get(reference.value);
+      if (!target || target === record || target.language !== record.language) continue;
+      if (contains(record, target) && !(pointsToParent && target.start === record.start && target.end === record.end)) {
+        record.children.push(target);
+      } else if (contains(target, record)) target.children.push(record);
+    }
   }
+  for (const record of links.values()) record.children.sort(rangeOrder);
   return [...links.values()].sort(rangeOrder);
 }
 

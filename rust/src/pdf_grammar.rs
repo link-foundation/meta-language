@@ -27,14 +27,19 @@ use crate::builtin_grammar::{GrammarNode, fill_extras, propagate_errors};
 
 /// Parses `text` as a PDF file into a lossless CST.
 pub fn parse_pdf_cst(text: &str) -> GrammarNode {
-    PdfGrammarParser {
-        text,
-        bytes: text.as_bytes(),
-        position: 0,
-        limit: text.len(),
-        content: false,
-    }
-    .file()
+    PdfGrammarParser::new(text, false).file()
+}
+
+pub(crate) fn parse_binary_pdf_cst(text: &str) -> GrammarNode {
+    PdfGrammarParser::new(text, true).file()
+}
+
+pub(crate) fn parse_pdf_content_cst(text: &str) -> Option<GrammarNode> {
+    let mut parser = PdfGrammarParser::new(text, false);
+    let tree = parser.content_stream(0, text.len())?;
+    Some(fill_extras(tree, &mut |start, end| {
+        parser.lex_gap(start, end)
+    }))
 }
 
 fn mark_invalid_source_characters(node: &mut GrammarNode, text: &str) {
@@ -117,9 +122,21 @@ struct PdfGrammarParser<'a> {
     position: usize,
     limit: usize,
     content: bool,
+    binary: bool,
 }
 
 impl<'a> PdfGrammarParser<'a> {
+    const fn new(text: &'a str, binary: bool) -> Self {
+        Self {
+            text,
+            bytes: text.as_bytes(),
+            position: 0,
+            limit: text.len(),
+            content: false,
+            binary,
+        }
+    }
+
     // pdf_file = header (item | end_of_file)*
     fn file(mut self) -> GrammarNode {
         let mut children = Vec::new();
@@ -258,16 +275,28 @@ impl<'a> PdfGrammarParser<'a> {
 
     // The end of the stream data and the start of `endstream`, if present.
     fn stream_extent(&self, dictionary: &GrammarNode, data_start: usize) -> (usize, Option<usize>) {
-        if let Some(end) = direct_length(dictionary, self.text)
-            .and_then(|length| data_start.checked_add(length))
-            .filter(|end| self.text.is_char_boundary(*end))
-        {
-            let mut keyword = end;
-            while is_white(self.byte(keyword)) {
-                keyword += 1;
-            }
-            if self.at_keyword_at(keyword, "endstream") {
+        if let Some(length) = direct_length(dictionary, self.text) {
+            if !self.binary
+                && let Some(end) = data_start
+                    .checked_add(length)
+                    .filter(|end| self.text.is_char_boundary(*end))
+                && let Some(keyword) = self.endstream_after(end)
+            {
                 return (end, Some(keyword));
+            }
+            let mut binary_end = data_start;
+            let mut remaining = length;
+            for character in self.text[data_start..].chars() {
+                if remaining == 0 || u32::from(character) > 255 {
+                    break;
+                }
+                binary_end += character.len_utf8();
+                remaining -= 1;
+            }
+            if remaining == 0
+                && let Some(keyword) = self.endstream_after(binary_end)
+            {
+                return (binary_end, Some(keyword));
             }
         }
         let mut keyword = find(self.bytes, b"endstream", data_start);
@@ -288,6 +317,14 @@ impl<'a> PdfGrammarParser<'a> {
             end -= 1;
         }
         (end.max(data_start), Some(keyword))
+    }
+
+    fn endstream_after(&self, end: usize) -> Option<usize> {
+        let mut keyword = end;
+        while is_white(self.byte(keyword)) {
+            keyword += 1;
+        }
+        self.at_keyword_at(keyword, "endstream").then_some(keyword)
     }
 
     fn stream_data(&mut self, dictionary: &GrammarNode, start: usize, end: usize) -> GrammarNode {

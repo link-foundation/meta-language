@@ -16,11 +16,25 @@
 //! concepts required by issue #85 for bold/italic/heading/paragraph/list.
 
 use crate::document_formatting::{BlockNode, InlineNode, parse_docx_document};
+use crate::link_network::visible_document_text::document_package::{
+    has_zip_header, parse_package_string,
+};
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, tree_sitter_adapter};
 
 /// Parses DOCX `word/document.xml` `text` into a lossless network enriched with
 /// concept-tagged document-structure links.
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
+    if has_zip_header(text.as_bytes()) {
+        return parse_package_string(text, language, configuration);
+    }
+    parse_xml(text, language, configuration)
+}
+
+pub(crate) fn parse_xml(
+    text: &str,
+    language: &str,
+    configuration: ParseConfiguration,
+) -> LinkNetwork {
     let mut network = tree_sitter_adapter::parse(text, language, configuration)
         .expect("the built-in DOCX OOXML grammar must initialize");
 

@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { LinkNetwork } from '../src/index.js';
 import { readProjectData } from '../scripts/project-data.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/wordprocessing-package.lino', import.meta.url));
 
-for (const { archive, compression, ranges } of fixture.cases) {
-  test(`WordprocessingML package retains ${compression} parts and original source bytes`, () => {
+function checkPackagedParts() {
+  for (const { archive, compression, ranges } of fixture.cases) {
     const bytes = Buffer.from(archive, 'hex');
     const binaryString = bytes.toString('latin1');
     const coordinate = offset => Buffer.byteLength(binaryString.slice(0, offset));
@@ -34,10 +35,10 @@ for (const { archive, compression, ranges } of fixture.cases) {
       const all = projection.sourceRange(0, projection.text.length);
       assert.ok(all.start <= convert(ranges[1][0] + 200) && all.end >= convert(ranges[3][0]));
     }
-  });
+  }
 }
 
-test('a damaged ZIP part reports a specific error without losing the package bytes', () => {
+function checkDamagedPart() {
   const bytes = Buffer.from(fixture.corrupt, 'hex');
   const network = LinkNetwork.parseBytes(bytes, 'DOCX');
   assert.equal(network.verifyFullMatch().isClean(), false);
@@ -47,4 +48,13 @@ test('a damaged ZIP part reports a specific error without losing the package byt
   assert.deepEqual([checksum.span.byteRange.start, checksum.span.byteRange.end], fixture.cases[0].ranges[0]);
   assert.deepEqual(Buffer.from(network.reconstructBytes()), bytes);
   assert.deepEqual(network.derivedDocuments().map(document => document.name), fixture.names.slice(1));
+}
+
+test('WordprocessingML packages keep parts and character ranges', () => {
+  checkPackagedParts();
+  checkDamagedPart();
+  recordIssue195Observations({ requirementId: 'I195-I239-WORDPROCESSING-PACKAGE', suffix: 'behavior',
+    fixtureId: 'i195-i239-wordprocessing-package', fixtureFile: 'parity/fixtures/wordprocessing-package.lino',
+    assertions: ['opcPackageKeepsStoredAndDeflatedParts', 'opcVisibleTextKeepsEncodedAndStoredRanges', 'corruptOpcPartKeepsLocatedError'],
+    testName: 'WordprocessingML packages keep parts and character ranges' });
 });

@@ -105,9 +105,16 @@ export function readWordprocessingPackage(bytes) {
       // Charge the announced output before decoding so corrupt parts also use the budget.
       textBytes += uncompressed;
       const data = bytes.subarray(start, end);
-      const decoded = method === 8 ? inflateRawSync(data, { maxOutputLength: uncompressed + 1 }) : data;
+      let decoded = data;
+      if (method === 8) {
+        try { decoded = inflateRawSync(data, { maxOutputLength: uncompressed + 1 }); }
+        catch { throw new Error('invalid or oversized deflated OPC part'); }
+      }
       if (decoded.length !== uncompressed || zipChecksum(decoded) !== checksum) throw new Error('OPC part size or checksum mismatch');
-      parts.push({ name, start, end, compression: method === 8 ? 'deflate' : 'stored', text: packageText.decode(decoded) });
+      let text;
+      try { text = packageText.decode(decoded); }
+      catch { throw new Error('invalid UTF-8 OPC part'); }
+      parts.push({ name, start, end, compression: method === 8 ? 'deflate' : 'stored', text });
     } catch (error) {
       errors.push({ error: `${entry.name}: ${error.message}`, offset: entry.start, end: entry.end });
     }

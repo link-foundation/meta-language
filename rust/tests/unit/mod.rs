@@ -13,6 +13,7 @@ mod cst_sexpression;
 mod decorators;
 mod default_cst_expectations;
 mod discovered_concept_links;
+mod document_containers;
 mod document_formatting;
 mod docx_document;
 mod doublets_storage;
