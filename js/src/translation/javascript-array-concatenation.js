@@ -58,6 +58,10 @@ export function readJavaScriptArrayConcatenationStateError(heap,directory,state)
   const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,constructor??{$:'undefined'}),actual=readJavaScriptKnownArrayConstructorFact(classification);
   if(constructor===undefined||constructor.$!=='object'||fact===undefined||!fact.constructable||actual===undefined||!testJavaScriptSemanticSameValue(constructor,state.species?.candidate??{$:'undefined'})||constructor.identity!==fact.identity||actual.constructable!==fact.constructable||actual.realm!==fact.realm||actual.intrinsicArray!==fact.intrinsicArray||actual.intrinsicKind!==fact.intrinsicKind)return 'concatenation construction retains the actual selected constructor fact';
  }
+ return readJavaScriptArrayConcatenationChildError(heap,state);
+}
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayConcatenationState} state @returns {string} */
+function readJavaScriptArrayConcatenationChildError(heap,state){
  if((state.phase==='finish')!==(state.assignment!==undefined))return 'concatenation final Set retains only its actual assignment child';
  if(state.phase==='finish'&&state.itemPosition!==state.arguments.length+1)return 'concatenation final Set follows every actual input item';
  if(state.assignment!==undefined){const child=state.assignment,error=readJavaScriptObjectSpreadStateError(heap,child);if(error!=='')return error;if(child.operation!=='assignment'||!testJavaScriptSemanticSameValue(child.target,state.target)||!testJavaScriptSemanticSameValue(child.input,state.receiver)||!testJavaScriptSemanticSameValue(child.exoticKey??{$:'undefined'},state.exoticKey)||child.keys.length!==1||!testJavaScriptSemanticSameValue(child.keys[0]??{$:'undefined'},{$:'text',units:[108,101,110,103,116,104]})||child.excluded.length!==0||!(child.position===0&&['write','setter','array definition'].includes(child.phase)||child.position===1&&child.phase==='read')||child.position===0&&!testJavaScriptSemanticSameValue(child.value,{$:'number',value:state.outputIndex})||child.assignment!==undefined&&!testJavaScriptSemanticSameValue(child.assignment.definition.descriptor.value,{$:'number',value:state.outputIndex}))return 'concatenation final Set retains its actual result, length key and output count';}
@@ -160,6 +164,10 @@ export function stepJavaScriptArrayConcatenation(heap,directory,state){
  if(state.phase==='conversion')return state.conversion===undefined?{$:'arrayConcatenationInvalid',heap,reason:'concatenation retains scalar continuation'}:continueJavaScriptArrayConcatenationLength(heap,state,stepJavaScriptScalarProtocol(heap,state.conversion,'coerce primitive number'));
  if(state.phase==='primitive')return continueJavaScriptArrayConcatenationLength(heap,state,finishJavaScriptScalarPrimitive('coerce primitive number',state.input));
  if(state.phase==='finish')return state.assignment===undefined?{$:'arrayConcatenationInvalid',heap,reason:'concatenation retains final Set'}:continueJavaScriptArrayConcatenationFinalSet(state,stepJavaScriptObjectSpread(heap,state.assignment));
+ return stepJavaScriptArrayConcatenationItems(heap,state);
+}
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayConcatenationState} state @returns {JavaScriptArrayConcatenationTransition} */
+function stepJavaScriptArrayConcatenationItems(heap,state){
  if(state.phase==='select'){
   if(state.itemPosition===state.arguments.length+1){const assignment={$:'objectSpreadState',target:state.target,input:state.receiver,excluded:[],keys:[{$:'text',units:[108,101,110,103,116,104]}],position:0,phase:'write',value:{$:'number',value:state.outputIndex},callee:{$:'undefined'},operation:'assignment',exoticKey:state.exoticKey};return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'finish',assignment}};}
   const item=state.itemPosition===0?state.receiver:state.arguments[state.itemPosition-1]??{$:'undefined'},selected={...state,item,itemStart:state.outputIndex,length:0,index:0,spread:false,value:{$:'undefined'},input:{$:'undefined'}};
@@ -182,6 +190,11 @@ export function stepJavaScriptArrayConcatenation(heap,directory,state){
   if(written.$==='indexedPropertyInvalid')return {$:'arrayConcatenationInvalid',heap:written.heap,reason:written.reason};
   return {$:'arrayConcatenationContinue',heap:written.heap,state:{...state,phase:state.spread?'ready':'select',index:state.spread?state.index+1:0,itemPosition:state.itemPosition+(state.spread?0:1),outputIndex:state.outputIndex+1,value:{$:'undefined'}}};
  }
+ return stepJavaScriptArrayConcatenationElement(heap,state);
+}
+
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayConcatenationState} state @returns {JavaScriptArrayConcatenationTransition} */
+function stepJavaScriptArrayConcatenationElement(heap,state){
  if(state.phase!=='ready'||state.item.$!=='object')return {$:'arrayConcatenationInvalid',heap,reason:'concatenation resumes only its actual selected child'};
  if(state.index===state.length)return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'select',itemPosition:state.itemPosition+1}};
  const name=String(state.index),units=[];for(let index=0;index<name.length;index++)units.push(name.charCodeAt(index));const key={$:'text',units},presence=readJavaScriptIndexedPropertyPresence(heap,state.item.identity,key);

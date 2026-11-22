@@ -3,7 +3,7 @@
 import {execFileSync} from 'node:child_process';
 import {lstatSync,readFileSync,realpathSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {readProjectData} from './project-data.mjs';
+import {readNativeSourceReceipt} from './source-library-native-receipt.mjs';
 const root=new URL('../../',import.meta.url);
 export function acceptSourceLibraryFilePath(stem,path){
  if(typeof stem!=='string'||!/^[a-z][a-z0-9_]*$/u.test(stem)||typeof path!=='string')return false;
@@ -17,8 +17,8 @@ export function stageSourceLibraryFiles(recipePath,{directory='translation'}={})
  if(!['translation',''].includes(directory))throw new TypeError('use an explicit supported generated source directory');
  if(typeof recipePath!=='string'||!/^parity\/self-translation\/[a-z][a-z0-9-]*-native\.lino$/u.test(recipePath))throw new TypeError('a complete task-owned native generation recipe is required');
  const actualRoot=realpathSync(fileURLToPath(root)),file=new URL(recipePath,root),stat=lstatSync(file);if(!stat.isFile()||stat.isSymbolicLink()||realpathSync(file)!==actualRoot+'/'+recipePath||stat.size>32*1024*1024)throw new RangeError('the source recipe must be a regular file within the 32 MiB author bound');
- const data=readProjectData(file),stem=recipePath.split('/').at(-1).slice(0,-12).replaceAll('-','_');
- if(data.schemaVersion!==1||!Array.isArray(data.files)||data.files.length===0||data.files.length>128)throw new TypeError('the complete native recipe file directory is required');
+ const data=readNativeSourceReceipt(file,['files']),stem=recipePath.split('/').at(-1).slice(0,-12).replaceAll('-','_');
+ if(data.schemaVersion!==1||!Array.isArray(data.files)||data.files.length===0||data.files.length>(data.decoratorAssets?333:128))throw new TypeError('the complete native recipe file directory is required');
  const paths=[],seen=new Set();
  for(const row of data.files){
   if(!acceptSourceLibraryFilePath(stem,row.path)||seen.has(row.path)||typeof row.source!=='string')throw new TypeError('only distinct actual generated module paths may be staged');

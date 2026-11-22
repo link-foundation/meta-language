@@ -43,7 +43,7 @@ fn metadata(term: &str) -> LinkMetadata {
         .with_language(language())
         .with_term(term)
 }
-fn qualified_field(point: &Link) -> bool {
+pub(super) fn qualified_field(point: &Link) -> bool {
     let value = point.metadata();
     value.link_type() == Some(LinkType::Field)
         && value.is_named()

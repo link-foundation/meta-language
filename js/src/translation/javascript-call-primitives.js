@@ -201,6 +201,10 @@ export function executeJavaScriptCallPrimitive(operation,values){
  if(operation==='compare relational values')return executeJavaScriptCallRelationalComparison(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
 
  if(operation==='add primitive values')return executeJavaScriptCallPrimitiveAddition(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
+ return executeJavaScriptCallPrimitiveObjectOrScalar(operation,values);
+}
+/** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
+function executeJavaScriptCallPrimitiveObjectOrScalar(operation,values){
  if(operation==='require array method object'||operation==='require ordinary property object'){
   const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert undefined or null to object'}:{$:'primitiveInvalid',reason:operation==='require array method object'?'Array method receiver requires its actual primitive boxing protocol':'ordinary property receiver requires its actual primitive boxing protocol'};
  }
@@ -211,6 +215,11 @@ export function executeJavaScriptCallPrimitive(operation,values){
  if(operation==='require Object reflection target'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'Reflect property operations require an Object target'};}
  if(operation==='require object for in'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'The right operand of in must be an Object'};}
  if(operation==='require nonnull Object input'){const value=values[0]??{$:'undefined'};return value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert undefined or null to object'}:{$:'primitiveValue',value};}
+ return executeJavaScriptCallPrimitiveScalar(operation,values);
+}
+
+/** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
+function executeJavaScriptCallPrimitiveScalar(operation,values){
  if(operation==='read integer index'){
   const value=values[0]??{$:'undefined'};if(value.$!=='number')return {$:'primitiveInvalid',reason:'ToIndex consumes its completed ToNumber value'};
   const index=Number.isNaN(value.value)||value.value===0?0:Math.trunc(value.value);

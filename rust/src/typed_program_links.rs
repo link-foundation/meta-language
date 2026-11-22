@@ -30,6 +30,13 @@ pub mod program_numeric_metadata;
 pub mod program_numeric_metadata_rules;
 mod projection;
 mod record_shapes;
+mod source_profiles;
+pub use source_profiles::{
+    create_typed_program_links_with_javascript_scalar_loop_model,
+    create_typed_program_links_with_rust_scalar_loop_model,
+    create_typed_program_links_with_rust_source_profiles,
+    create_typed_program_links_with_scalar_loop_profiles,
+};
 pub mod source_span_rules;
 pub mod source_spans;
 
@@ -239,7 +246,9 @@ pub(crate) fn expand_typed_program_record_shapes(
 /// Refuses cycles, dangling references, scope violations, invalid values,
 /// unsupported constructs and inconsistent checked semantics.
 pub fn decode_typed_program_links(network: &LinkNetwork, root: LinkId) -> Result<Program> {
-    decode_typed_program_links_with_limits(network, root, TypedProgramLinksLimits::default())
+    let program = codec::decode(network, root, None)?;
+    checked::validate(&program)?;
+    Ok(program)
 }
 /// Decode using caller-specified structural bounds.
 ///
@@ -250,7 +259,7 @@ pub fn decode_typed_program_links_with_limits(
     root: LinkId,
     limits: TypedProgramLinksLimits,
 ) -> Result<Program> {
-    let program = codec::decode(network, root, limits)?;
+    let program = codec::decode(network, root, Some(limits))?;
     checked::validate(&program)?;
     Ok(program)
 }
@@ -259,8 +268,7 @@ pub fn read_typed_program_binding_identities(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<Vec<LinkId>> {
-    let (program, identities) =
-        codec::decode_with_binding_identities(network, root, TypedProgramLinksLimits::default())?;
+    let (program, identities) = codec::decode_with_binding_identities(network, root, None)?;
     checked::validate(&program)?;
     Ok(identities)
 }
@@ -486,10 +494,9 @@ pub fn create_typed_program_links_with_rust_exclusive_source_model(
 ) -> Result<TypedProgramLinks> {
     let version = crate::translation::rust::source_versions::canonical(version)
         .map_err(|failure| error(failure.to_string()))?;
-    let surface = crate::translation::rust::parse_rust_with_exclusive_source_model(
-        source, model, &version,
-    )
-    .map_err(|failure| error(failure.to_string()))?;
+    let surface =
+        crate::translation::rust::parse_rust_with_exclusive_source_model(source, model, &version)
+            .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     let selected = serde_json::json!({
         "sourceProfile": {
@@ -549,13 +556,20 @@ pub fn create_typed_program_links_with_rust_standard_collection_source_model<Inv
 ) -> Result<TypedProgramLinks>
 where
     Invalid: Fn(crate::translation::surface::SExpr) -> crate::translation::surface::SExpr + 'static,
-    Resource: Fn(crate::translation::surface::SExpr, crate::translation::surface::SExpr)
-        -> crate::translation::surface::SExpr + 'static,
+    Resource: Fn(
+            crate::translation::surface::SExpr,
+            crate::translation::surface::SExpr,
+        ) -> crate::translation::surface::SExpr
+        + 'static,
 {
     let version = crate::translation::rust::source_versions::canonical(version)
         .map_err(|failure| error(failure.to_string()))?;
     let surface = crate::translation::rust::parse_rust_with_standard_collection_source_model(
-        source, model, &version, pointer_width, library,
+        source,
+        model,
+        &version,
+        pointer_width,
+        library,
     )
     .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
@@ -699,169 +713,6 @@ pub fn create_typed_program_links_with_rust_empty_option_source_model(
         "userProvenance":provenance,
     });
     encode_typed_program_links_with_provenance(&program, Some(&selected))
-}
-
-/// Select independent source profiles while keeping caller provenance separate.
-///
-/// # Errors
-/// Propagates source, model, checker and linked-adapter diagnostics.
-pub fn create_typed_program_links_with_rust_source_profiles(
-    source: &str,
-    language: &str,
-    array_result_model: Option<&str>,
-    completion_model: Option<&str>,
-    source_signature_model: Option<&str>,
-    provenance: Option<&Value>,
-) -> Result<TypedProgramLinks> {
-    create_typed_program_links_with_scalar_loop_profiles(
-        source,
-        language,
-        array_result_model,
-        completion_model,
-        source_signature_model,
-        (None, None),
-        provenance,
-    )
-}
-
-/// Import Rust under an explicit closed primitive scalar loop interpretation.
-///
-/// # Errors
-/// Refuses non-Rust sources, unknown models and unproved loop semantics.
-pub fn create_typed_program_links_with_rust_scalar_loop_model(
-    source: &str,
-    language: &str,
-    model: &str,
-    provenance: Option<&Value>,
-) -> Result<TypedProgramLinks> {
-    create_typed_program_links_with_scalar_loop_profiles(
-        source,
-        language,
-        None,
-        None,
-        None,
-        (Some(model), None),
-        provenance,
-    )
-}
-
-/// Import actual emitted JavaScript loops under the Number/Boolean interface.
-///
-/// # Errors
-/// Refuses other languages, unknown models and unproved snapshot semantics.
-pub fn create_typed_program_links_with_javascript_scalar_loop_model(
-    source: &str,
-    language: &str,
-    model: &str,
-    provenance: Option<&Value>,
-) -> Result<TypedProgramLinks> {
-    create_typed_program_links_with_scalar_loop_profiles(
-        source,
-        language,
-        None,
-        None,
-        None,
-        (None, Some(model)),
-        provenance,
-    )
-}
-
-/// Select independent existing source profiles and one scalar loop language model.
-///
-/// The loop selection pairs Rust and JavaScript models; a selected model must
-/// match the actual source language. Caller provenance stays separate.
-///
-/// # Errors
-/// Refuses conflicting domains, unknown models and unproved source semantics.
-pub fn create_typed_program_links_with_scalar_loop_profiles(
-    source: &str,
-    language: &str,
-    array_result_model: Option<&str>,
-    completion_model: Option<&str>,
-    source_signature_model: Option<&str>,
-    scalar_loop_models: (Option<&str>, Option<&str>),
-    provenance: Option<&Value>,
-) -> Result<TypedProgramLinks> {
-    let (rust_scalar_loop_model, javascript_scalar_loop_model) = scalar_loop_models;
-    let canonical = match language.to_ascii_lowercase().as_str() {
-        "rust" | "rs" => "Rust",
-        "javascript" | "js" | "mjs" => "JavaScript",
-        _ => {
-            return Err(error(
-                "typed linked source import currently reads JavaScript and Rust",
-            ));
-        }
-    };
-    if canonical != "Rust" {
-        if array_result_model.is_some() {
-            return Err(error("a Rust array result model requires Rust source"));
-        }
-        if completion_model.is_some() {
-            return Err(error("a Rust completion model requires Rust source"));
-        }
-        if source_signature_model.is_some() {
-            return Err(error("a Rust source signature model requires Rust source"));
-        }
-        if rust_scalar_loop_model.is_some() {
-            return Err(error("a Rust scalar loop model requires Rust source"));
-        }
-    }
-    if javascript_scalar_loop_model.is_some() && canonical != "JavaScript" {
-        return Err(error(
-            "a JavaScript scalar loop model requires JavaScript source",
-        ));
-    }
-    let surface = if canonical == "Rust" {
-        parse_rust_with_loop_profiles(
-            source,
-            array_result_model.unwrap_or(""),
-            completion_model.unwrap_or(""),
-            source_signature_model.unwrap_or(""),
-            rust_scalar_loop_model.unwrap_or(""),
-        )
-    } else if let Some(model) = javascript_scalar_loop_model {
-        parse_javascript_with_scalar_loop_model(source, model)
-    } else {
-        parse_javascript(source)
-    }
-    .map_err(|failure| error(failure.to_string()))?;
-    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
-    if array_result_model.is_none()
-        && completion_model.is_none()
-        && source_signature_model.is_none()
-        && rust_scalar_loop_model.is_none()
-        && javascript_scalar_loop_model.is_none()
-    {
-        return encode_typed_program_links_with_provenance(&program, provenance);
-    }
-    let mut profile = serde_json::Map::new();
-    profile.insert("language".into(), Value::String(canonical.into()));
-    if let Some(model) = array_result_model {
-        profile.insert("rustArrayResultModel".into(), Value::String(model.into()));
-    }
-    if let Some(model) = completion_model {
-        profile.insert("rustCompletionModel".into(), Value::String(model.into()));
-    }
-    if let Some(model) = source_signature_model {
-        profile.insert(
-            "rustSourceSignatureModel".into(),
-            Value::String(model.into()),
-        );
-    }
-    if let Some(model) = rust_scalar_loop_model {
-        profile.insert("rustScalarLoopModel".into(), Value::String(model.into()));
-    }
-    if let Some(model) = javascript_scalar_loop_model {
-        profile.insert(
-            "javaScriptScalarLoopModel".into(),
-            Value::String(model.into()),
-        );
-    }
-    let selected_provenance = serde_json::json!({
-        "sourceProfile": profile,
-        "userProvenance": provenance,
-    });
-    encode_typed_program_links_with_provenance(&program, Some(&selected_provenance))
 }
 
 /// Emit target-native code from a reloaded semantic graph.
@@ -1021,7 +872,9 @@ pub fn create_typed_program_links_with_rust_source_version(
     version: &str,
     provenance: Option<&Value>,
 ) -> Result<TypedProgramLinks> {
-    create_typed_program_links_with_rust_source_version_and_signature_model(source,version,None,provenance)
+    create_typed_program_links_with_rust_source_version_and_signature_model(
+        source, version, None, provenance,
+    )
 }
 
 /// Retain both source std version and independently selected signature witness.
@@ -1034,16 +887,22 @@ pub fn create_typed_program_links_with_rust_source_version_and_signature_model(
     model: Option<&str>,
     provenance: Option<&Value>,
 ) -> Result<TypedProgramLinks> {
-    let surface = crate::translation::rust::parse_rust_with_source_version_and_signature_model(source,version,model.unwrap_or(""))
-        .map_err(|error| TypedProgramLinksError {
-            message: error.to_string(),
-        })?;
+    let surface = crate::translation::rust::parse_rust_with_source_version_and_signature_model(
+        source,
+        version,
+        model.unwrap_or(""),
+    )
+    .map_err(|error| TypedProgramLinksError {
+        message: error.to_string(),
+    })?;
     let program = crate::translation::check::check_program(&surface).map_err(|error| {
         TypedProgramLinksError {
             message: error.to_string(),
         }
     })?;
     let mut selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSourceVersion":crate::translation::rust::source_versions::canonical(version).map_err(|error|TypedProgramLinksError{message:error.to_string()})?},"userProvenance":provenance});
-    if let Some(model)=model {selected["sourceProfile"]["rustSourceSignatureModel"]=Value::String(model.into());}
+    if let Some(model) = model {
+        selected["sourceProfile"]["rustSourceSignatureModel"] = Value::String(model.into());
+    }
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }

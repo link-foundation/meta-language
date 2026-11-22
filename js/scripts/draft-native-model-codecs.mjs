@@ -1,9 +1,8 @@
 // Generate test-wire transport from actual checked declarations and actual
 // target mappings. This never executes represented operations or fixtures.
-import {writeFileSync} from 'node:fs';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 import {writeProjectData} from './project-data.mjs';
-import {createHash} from 'node:crypto';
+import {publishNativeModelCodecFiles} from './native-model-codec-files.mjs';
 import {draftJavaScriptModelCodecs} from './draft-javascript-model-codecs.mjs';
 import {modelTextWirePolicy} from './model-text-wire.mjs';
 import {isJavaScriptOptionalConstructorFieldType,javaScriptConstructorFieldValueType} from '../src/translation/javascript-constructor-presence.js';
@@ -19,6 +18,7 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
  const names=new Map([...data].map(([name])=>[name,snake(mapping('data',name))]));
  const utf16=emitted.encodings?.some(row=>row.id==='utf16-strings')===true;
  const selected=new Map();
+ let orderedRecords=false;
  function collect(type,depth=0){
   if(depth>64)throw new RangeError('model codec type depth exceeds its explicit budget');
   if(type.kind==='data'){
@@ -27,7 +27,16 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   }
   if(type.reference&&(!referenceWire||!['array','record'].includes(type.kind)))throw new TypeError('mutable wire transport requires its actual container profile');
   if(type.kind==='array'||type.kind==='option'){collect(type.element,depth+1);return;}
-  if(type.kind==='record'){if(type.ordered||type.fields.length>128)throw new TypeError('noncanonical record wire layout needs a separate profile');for(const field of type.fields)collect(field.type,depth+1);return;}
+  if(type.kind==='tuple'){for(const element of type.elements)collect(element,depth+1);return;}
+  if(type.kind==='record'){
+   if(type.fields.length>128||type.ordered&&!referenceWire)throw new TypeError('noncanonical record wire layout needs a separate profile');
+   orderedRecords ||= Boolean(type.ordered);
+   for(const field of type.fields){
+    if(field.optional&&!isJavaScriptOptionalConstructorFieldType(field.type))throw new TypeError('a record optional field needs its actual checked presence carrier');
+    collect(javaScriptConstructorFieldValueType(field),depth+1);
+   }
+   return;
+  }
   if(!['bool','float','int','nat','string','unit'].includes(type.kind))throw new TypeError('unregistered model wire type '+type.kind);
  }
  for(const name of roots){if(!data.has(name))throw new TypeError('model root does not identify its actual declaration: '+name);collect({kind:'data',name});}
@@ -48,7 +57,15 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   case 'unit':return '()';
   case 'data':return 'decode_'+names.get(type.name)+'('+(borrowed?'':'&')+value+')';
   case 'array':return value+'.as_array().expect("model array").iter().map('+(type.element.kind==='data'?'decode_'+names.get(type.element.name):'|wire_value|'+decode(type.element,'wire_value',true))+').collect()';
-  case 'record':return '('+type.fields.map(field=>decode(field.type,value+'['+q(field.name)+']')).join(',')+',)';
+  case 'tuple':return '('+type.elements.map((element,index)=>decode(element,value+'['+index+']')+',').join('')+')';
+  case 'record':{
+   const payload='('+type.fields.map(field=>{
+    const key=q(field.name);
+    if(field.optional)return value+'.get('+key+').map(|wire_present|('+decode(javaScriptConstructorFieldValueType(field),'wire_present',true)+',)), ';
+    return decode(field.type,value+'['+key+']')+', ';
+   }).join('')+')';
+   return type.ordered?'('+payload+', decode_wire_record_order(&'+value+', &['+type.fields.map(field=>q(field.name)).join(',')+']))':payload;
+  }
   case 'option':{
    const present=decode(type.element,value,borrowed),undefinedValue='is_wire_undefined(&'+value+')';
    if(type.absence==='both')return 'if '+undefinedValue+' { native::MlOptional::Undefined } else if '+value+'.is_null() { native::MlOptional::Null } else { native::MlOptional::Value('+present+') }';
@@ -66,7 +83,18 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   case 'unit':return 'Data::Null';
   case 'data':return 'encode_'+names.get(type.name)+'('+(borrowed?'':'&')+value+')';
   case 'array':return 'Data::Array('+value+'.iter().map('+(type.element.kind==='data'?'encode_'+names.get(type.element.name):'|wire_value|'+encode(type.element,'wire_value'))+').collect())';
-  case 'record':return 'json!({'+type.fields.map((field,index)=>q(field.name)+':'+encode(field.type,value+'.'+index,false)).join(',')+'})';
+  case 'tuple':return 'Data::Array(vec!['+type.elements.map((element,index)=>encode(element,value+'.'+index,false)).join(',')+'])';
+  case 'record':{
+   const payload=type.ordered?value+'.0':value;
+   const entries=type.fields.map((field,index)=>{
+    const selected=payload+'.'+index;
+    const encoded=field.optional?'('+selected+').as_ref().map(|(wire_present,)|'+encode(javaScriptConstructorFieldValueType(field),'wire_present')+')':'Some('+encode(field.type,selected,false)+')';
+    return '('+q(field.name)+', '+encoded+')';
+   });
+   if(type.ordered)return 'encode_wire_ordered_record(['+entries.join(',')+'], &'+value+'.1)';
+   if(type.fields.some(field=>field.optional))return 'Data::Object(['+entries.join(',')+'].into_iter().filter_map(|(key, data)| data.map(|data| (key.into(),data))).collect())';
+   return 'json!({'+type.fields.map((field,index)=>q(field.name)+':'+encode(field.type,payload+'.'+index,false)).join(',')+'})';
+  }
   case 'option':{
    const payload=encode(type.element,'wire_present'),selected=borrowed?value:'&'+value;
    if(type.absence==='both')return 'match '+selected+' { native::MlOptional::Undefined => wire_undefined(), native::MlOptional::Null => Data::Null, native::MlOptional::Value(wire_present) => '+payload+' }';
@@ -88,6 +116,23 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
 fn wire_text(units:&[u16])->Data {
  assert!(units.len()<=${modelTextWirePolicy.maximumUnits},"model text unit budget");
  match String::from_utf16(units){Ok(text)=>Data::String(text),Err(_)=>json!({"textEncoding":${q(modelTextWirePolicy.tag)},"units":units})}
+}
+`;
+ if(orderedRecords)source+=`fn decode_wire_record_order(value:&Data, keys:&[&str])->Vec<f64> {
+  value.as_object().expect("ordered record wire object").keys().map(|key| {
+    let index=keys.iter().position(|candidate| *candidate==key).expect("declared ordered record key");
+    f64::from(u32::try_from(index).expect("bounded record key position"))
+  }).collect()
+}
+fn encode_wire_ordered_record<const N: usize>(mut fields: [(&str, Option<Data>); N], order: &[f64])->Data {
+  let mut object=serde_json::Map::new();
+  for position in order {
+    let (_, entry)=fields.iter_mut().enumerate().find(|(index, _)| f64::from(u32::try_from(*index).unwrap())==*position).expect("declared ordered record position");
+    let value=entry.1.take().expect("each present ordered record field appears once");
+    object.insert(entry.0.to_owned(), value);
+  }
+  assert!(fields.iter().all(|(_,value)|value.is_none()),"the record order contains every present field");
+  Data::Object(object)
 }
 `;
  writeProjectData(new URL('parity/translation/model-text-wire.lino',root),{schemaVersion:1,...modelTextWirePolicy});
@@ -122,8 +167,8 @@ fn wire_text(units:&[u16])->Data {
   layout.push({name,target:mapping('data',name),constructors:declaration.ctors.map(ctor=>({name:ctor.name,target:mapping('constructor',name+'.'+ctor.name),fields:ctor.fields}))});
  }
  if(optionalWire||source.includes('wire_undefined('))source+='fn wire_undefined()->Data { json!({"fieldPresence":"undefined"}) }\nfn is_wire_undefined(value:&Data)->bool { value.as_object().is_some_and(|fields|fields.len()==1&&fields.get("fieldPresence").and_then(Data::as_str)==Some("undefined")) }\n';
- source=formatProductRuleSource(source);writeFileSync(new URL(output,root),source);
+ const publication=publishNativeModelCodecFiles(root,output,formatProductRuleSource(source));
  const javascript=javascriptOutput===undefined?undefined:draftJavaScriptModelCodecs({selected,overrides,output:javascriptOutput});
- writeProjectData(new URL(receipt,root),{schemaVersion:1,model:'checked native nominal model wire transport 1',roots,wireRules,textWire:modelTextWirePolicy,layout,output,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),
+ writeProjectData(new URL(receipt,root),{schemaVersion:1,model:'checked native nominal model wire transport 1',roots,wireRules,textWire:modelTextWirePolicy,layout,output,...publication,
   ...(javascript?{javascript}:{}),...(referenceWire?{referenceWire}:{}),boundary:'Actual source type/constructor/target transport only, preserving explicit IEEE-bit overrides. No fixture decoding, modeled operation, behavior comparison, native compilation or execution observation.'});
 }

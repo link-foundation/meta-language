@@ -129,6 +129,15 @@ function readJavaScriptCallPendingObjectError(program,heap,frame,fn,suspended,pe
         if(instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.left]??{$:'undefined'},state.left)||!testJavaScriptSemanticSameValue(frame.registers[instruction.right]??{$:'undefined'},state.right)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||suspended&&state.call===undefined)return invalidInstruction;
         const invalid=readJavaScriptInstanceOfStateError(heap,state);if(invalid!=='')return invalid;return '';
       }
+      default:return readJavaScriptCallPendingObjectObservationError(program,heap,frame,fn,suspended,pending);
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingObjectObservationError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitObjectIntegrity':{
         const invalidInstruction='integrity changes retain actual source operation input and no invented child call';
         if(!(frame.position>0))return invalidInstruction;
@@ -204,6 +213,15 @@ function readJavaScriptCallPendingConstructionError(program,heap,frame,fn,suspen
         if(instruction===undefined||instruction.$!=='constructorCheck')return invalidInstruction;
         if(instruction.destination!==pending.destination||instruction.required!==pending.required||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||suspended)return invalidInstruction;return '';
       }
+      default:return readJavaScriptCallPendingCallableConstructionError(program,heap,frame,fn,suspended,pending);
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingCallableConstructionError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitConstruction':{
         const invalidInstruction='construction retains every actual held ordered argument';
         if(!(frame.position>0))return invalidInstruction;
@@ -288,6 +306,15 @@ function readJavaScriptCallPendingIntrinsicError(program,heap,frame,fn,suspended
         if(instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.prefix!==pending.prefix||pending.key.$!=='symbol'||pending.object.$!=='object'||!pending.object.callable||!testJavaScriptSemanticSameValue(frame.registers[instruction.object]??{$:'undefined'},pending.object)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},pending.key))return invalidInstruction;
         const invalid=readJavaScriptOrdinaryValueError(heap,pending.key)||readJavaScriptOrdinaryValueError(heap,pending.object);if(invalid!=='')return invalid;return '';
       }
+      default:return readJavaScriptCallPendingSourceIntrinsicError(program,heap,frame,fn,suspended,pending);
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingSourceIntrinsicError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitSourceError':{
         if(!program.realms.includes(pending.realm)||fn.realm!==pending.realm)return 'pending source Error allocation retains its actual source realm';
         if((pending.message.$!=='text'&&pending.message.$!=='sourceText')||readJavaScriptOrdinaryValueError(heap,pending.message)!==''||typeof pending.messagePresent!=='boolean')return 'pending source Error retains exact UTF16 message and Boolean presence';

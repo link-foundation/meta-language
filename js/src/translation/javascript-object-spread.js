@@ -87,6 +87,11 @@ export function stepJavaScriptObjectSpread(heap,state){
   if(!defined.success)return {$:'objectSpreadError',heap:defined.heap,reason:'object spread cannot create its selected own data property'};
   return {$:'objectSpreadContinue',heap:defined.heap,state:{...state,position:state.position+1,phase:'read',value:{$:'undefined'}}};
  }
+ return readJavaScriptObjectSpreadProperty(heap,state,key);
+}
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectSpreadState} state
+ * @param {JavaScriptSemanticValue} key @returns {JavaScriptObjectSpreadTransition} */
+function readJavaScriptObjectSpreadProperty(heap,state,key){
  if(state.excluded.some(excluded=>testJavaScriptSemanticSameValue(excluded,key)))return {$:'objectSpreadContinue',heap,state:{...state,position:state.position+1}};
  if(state.input.$==='object'){
   const input=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.input.identity)];if(input===undefined)return {$:'objectSpreadInvalid',heap,reason:'object spread source cannot disappear from its global context'};

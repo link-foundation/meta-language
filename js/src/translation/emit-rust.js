@@ -78,6 +78,8 @@ import {checkRustConstFunctionProof,renderRustConstFunctionHeader} from './rust-
 import {checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
 import { readOwnedArrayFinalUses } from './owned-array-moves.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
+import {withSourceOwnerContainers} from './owned-program-containers.js';
+import {readTypedSourceOwners} from './source-library-closure.js';
 import { typeError, unsupported } from './diagnostics.js';
 import { renderCollectionConstruction } from './collection-construction-rules.js';
 import { sameType, typeKey } from './types.js';
@@ -699,11 +701,16 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
+  const sourceOwners = options.sourceClosure && readTypedSourceOwners(program, options.sourceClosure);
   checkJavaScriptClassOwners(program);
+  const validateSource = input => {
+    validateRustTypeNamespace(input);
+    checkRustConstFunctionProof(input);
+    checkRustOwnedLocalStateProof(input);
+  };
+  if (sourceOwners) withSourceOwnerContainers(program, sourceOwners.directory, () => validateSource(program));
   program=prepareOrderedRecordValues(program);
-  validateRustTypeNamespace(program);
-  checkRustConstFunctionProof(program);
-  checkRustOwnedLocalStateProof(program);
+  if (!sourceOwners) validateSource(program);
   const runtimeShell=checkRustRuntimeShell(program);
   if(runtimeShell){if(options.sourceHeaderModel!==undefined)refuseRustRuntimeShellComposition('target header changes require an independent runtime composition proof');return emitRustRuntimeShell(program,runtimeShell);}
   const displayedInterface = acceptRustDisplayedStringInterfaceModel(options.sourceHeaderModel);

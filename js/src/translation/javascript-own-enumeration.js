@@ -74,6 +74,11 @@ export function stepJavaScriptObjectEnumeration(heap,state){
   const index=state.phase==='pair write'?state.pairIndex:state.outputIndex,target=state.phase==='pair write'?state.pair:state.target,value=state.phase==='pair write'?(index===0?state.keys[state.position]??{$:'undefined'}:state.value):state.values[index]??{$:'undefined'},written=createJavaScriptIndexedDataProperty(heap,target,index,value);
   if(written.$==='indexedPropertyResourceLimit')return {$:'objectEnumerationResourceLimit',heap:written.heap,state,reason:written.reason};if(written.$!=='indexedPropertyCreated')return {$:'objectEnumerationInvalid',heap:written.heap,reason:written.reason};return {$:'objectEnumerationContinue',heap:written.heap,state:state.phase==='pair write'?{...state,pairIndex:state.pairIndex+1}:{...state,outputIndex:state.outputIndex+1}};
  }
+ return stepJavaScriptObjectEnumerationRead(heap,state);
+}
+
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectEnumerationState} state @returns {JavaScriptObjectEnumerationTransition} */
+function stepJavaScriptObjectEnumerationRead(heap,state){
  if(state.position===state.keys.length)return {$:'objectEnumerationContinue',heap,state:{...state,phase:'allocate'}};
  const key=state.keys[state.position];if(key===undefined)return {$:'objectEnumerationInvalid',heap,reason:'Object enumeration retains its selected own key'};
  if(key.$==='symbol')return {$:'objectEnumerationContinue',heap,state:{...state,position:state.position+1}};

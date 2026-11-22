@@ -95,6 +95,11 @@ export function readJavaScriptConstructionStateError(program,heap,directory,stat
   const call=state.call,selected=operation.call;if((call===undefined)!==(selected===undefined)||call!==undefined&&selected!==undefined&&(call.$!==selected.$||call.constructing!==selected.constructing||!testJavaScriptSemanticSameValue(call.callee,selected.callee)||!testJavaScriptSemanticSameValue(call.receiver,selected.receiver)||!testJavaScriptSemanticSameValue(call.newTarget,selected.newTarget)||call.arguments.length!==selected.arguments.length||call.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,selected.arguments[index]??{$:'undefined'}))))return 'bound construction retains only its actual delegated child call';
   return readJavaScriptConstructionStateError(program,heap,directory,operation);
  }
+ return readJavaScriptConstructionCompletionStateError(program,heap,state);
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptConstructionState} state @returns {string} */
+function readJavaScriptConstructionCompletionStateError(program,heap,state){
  if(state.mode==='bound function'&&!['newTarget','initialize'].includes(state.phase))return 'bound construction enters only its actual classification or delegation phase';
  if(!['','ordinary','array','wrapper','collection','weak collection'].includes(state.allocationKind))return 'construction retains its actual selected allocation kind';
  if(['prototype','prototype getter','prototype fallback','Object root','allocate','array length','array elements','body'].includes(state.phase)){
@@ -219,6 +224,11 @@ export function stepJavaScriptConstruction(program,heap,directory,state){
   if(state.mode==='Boolean')return {$:'constructionContinue',heap,state:{...state,phase:'prototype',allocationKind:'wrapper',primitive:{$:'boolean',value:convertJavaScriptSemanticBoolean(input)}}};
   return {$:'constructionContinue',heap,state:{...state,phase:'prototype',allocationKind:testJavaScriptConstructedCollectionKind(state.mode)?readJavaScriptConstructedCollectionAllocationKind(state.mode):state.mode==='Array'?'array':'ordinary'}};
  }
+ return stepJavaScriptConstructionAllocation(heap,directory,state);
+}
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory
+ * @param {JavaScriptConstructionState} state @returns {JavaScriptConstructionTransition} */
+function stepJavaScriptConstructionAllocation(heap,directory,state){
  if(state.phase==='Object root')return selectJavaScriptConstructionRoot(heap,directory,state,true);
  if(state.phase==='prototype fallback')return selectJavaScriptConstructionRoot(heap,directory,state);
  if(state.phase==='converted primitive')return acceptJavaScriptConstructionConversion(heap,directory,state,finishJavaScriptScalarPrimitive(readJavaScriptConstructionConversionOperation(state),state.primitive));

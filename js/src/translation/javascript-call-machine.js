@@ -230,67 +230,83 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
       if((testJavaScriptCollectionConstructorMode(fn.receiverMode)||testJavaScriptCollectionIntrinsicMode(fn.receiverMode)||testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode))&&readJavaScriptCallCodeDestination(instruction)===0)return 'standard intrinsic frames retain their actual receiver register';
       if(instruction.$==='objectSpread'&&(instruction.excluded??[]).length>4096)return 'object copy exclusions retain their bounded actual register operands';
       for(const register of readJavaScriptCallRegisters(instruction))if(!testJavaScriptCallCoordinate(register,fn.registers))return 'call instructions require actual in-range register coordinates';
-      switch(instruction.$){
-        case 'functionBind':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'binding retains its actual protected intrinsic source owner';break;
-        case 'functionToString':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'function text retains its actual protected intrinsic source owner';break;
-        case 'boundFunctionCall':{const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,fn.identity)];if(actual?.$!=='boundFunctionObject'||fn.instructions.length!==2||fn.instructions[0]?.$!=='boundFunctionCall'||fn.instructions[1]?.$!=='return'||instruction.destination!==1||fn.instructions[1].source!==1||fn.registers!==2||fn.parameters!==0||fn.captures.length!==0)return 'bound Function forwarding retains its actual runtime slots and exact shared code';break;}
-        case 'arrayJoinEnter':case 'arrayJoinLeave':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'join recursion instructions retain their protected intrinsic owner';break;
-        case 'constructorCheck':if(typeof instruction.required!=='boolean')return 'constructor checks retain their actual required or predicate operation';break;
-        case 'completeJump':if(!Number.isSafeInteger(instruction.depth)||instruction.depth<0||instruction.depth>1024||Object.is(instruction.depth,-0)||!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'completion jumps retain their actual bounded handler depth and target';break;
-        case 'jump':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call jumps require actual instruction targets';break;
-        case 'branch':if(!testJavaScriptCallCoordinate(instruction.yes,fn.instructions.length)||!testJavaScriptCallCoordinate(instruction.no,fn.instructions.length))return 'call branches require both actual instruction targets';break;
-        case 'pushHandler':case 'pushFinally':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call handlers require actual instruction targets';break;
-        case 'argument':if(!testJavaScriptCallCoordinate(instruction.index,1048576))return 'call argument reads require exact bounded coordinates';break;
-        case 'constant':if(readJavaScriptOrdinaryValueError(heap,instruction.value)!=='')return 'call constants belong to the latest global context';break;
-        case 'primitive':{const error=readJavaScriptCallPrimitiveArityError(instruction.operation,instruction.arguments.length);if(error!=='')return error;break;}
-        case 'numberBinary':if(!['add','subtract','multiply','divide','remainder','power','lessThan','equal'].includes(instruction.operator))return 'call number instructions require an actual registered operation';break;
-        case 'propertyKey':if(!program.realms.includes(instruction.realm))return 'a property key operation retains its actual intrinsic realm';break;
-        case 'propertyDefinition':if(!program.realms.includes(instruction.realm)||instruction.operation!==undefined&&instruction.operation!=='Object.defineProperty'&&instruction.operation!=='Reflect.defineProperty')return 'a property definition retains its actual intrinsic realm and Object or Reflect policy';break;
-        case 'ordinaryDefine':if(!program.realms.includes(instruction.realm)||instruction.fields.length!==12)return 'internal property definitions retain their actual realm and twelve descriptor operands';break;
-        case 'arrayConcatenation':{if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||instruction.species.realm!==fn.realm)return 'Array concatenation retains actual protected realm species authority';const invalid=readJavaScriptArraySpeciesDirectoryError(heap,instruction.species);if(invalid!=='')return invalid;break;}
-        case 'arraySlice':{if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||instruction.species.realm!==fn.realm)return 'Array slice retains actual protected realm species authority';const invalid=readJavaScriptArraySpeciesDirectoryError(heap,instruction.species);if(invalid!=='')return invalid;break;}
-        case 'arrayTransform':{if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArrayTransformOperation(instruction.operation)||instruction.species.realm!==fn.realm)return 'Array transformations retain their actual standard owner, operation and species realm';const error=readJavaScriptArraySpeciesDirectoryError(heap,instruction.species);if(error!=='')return error;break;}
-        case 'arraySearch':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArraySearchOperation(instruction.operation))return 'Array search instructions retain their actual standard callable owner and operation';break;
-        case 'objectFromEntries':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'Object.fromEntries retains its actual protected intrinsic frame';break;
-        case 'collectionForEach':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptCollectionForEachOperation(instruction.operation))return 'collection callbacks retain their actual protected operation owner';break;
-        case 'arrayCreation':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArrayCreationOperation(instruction.operation))return 'Array creation retains its actual protected intrinsic operation';break;
-        case 'arrayCallback':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArrayCallbackOperation(instruction.operation))return 'Array callback instructions retain their actual standard owner and operation';break;
-        case 'arraySpread':if(instruction.realm!==fn.realm)return 'Array spread retains its actual active source realm';break;
-        case 'ordinaryDataProperty':if(!program.realms.includes(instruction.realm))return 'a data property definition retains its actual intrinsic realm';break;
-        case 'objectEnumeration':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptObjectEnumerationOperation(instruction.operation))return 'Object enumeration retains its actual protected operation owner';break;
-        case 'objectSpread':if(!program.realms.includes(instruction.realm)||instruction.operation!==undefined&&(instruction.operation!=='assignment'||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||(instruction.excluded??[]).length!==0))return 'Object.assign retains its protected Set body and complete source keys';break;
-        case 'propertyDefinitions':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPropertyDefinitionsOperation(instruction.operation))return 'bulk property definitions retain their actual protected operation owner';break;
-        case 'propertyReflection':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPropertyReflectionOperation(instruction.operation))return 'property reflection retains its actual protected operation owner';break;
-        case 'instanceOf':if(!['instanceof','ordinary has instance','prototype contains'].includes(instruction.operation)||instruction.operation!=='instanceof'&&!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'instanceof retains its actual operator or protected intrinsic body';break;
-        case 'objectObservation':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptObjectObservationOperation(instruction.operation))return 'Object observations retain their actual protected operation owner';break;
-        case 'literalAccessor':if(!program.realms.includes(instruction.realm)||!['get','set'].includes(instruction.kind))return 'literal accessors retain actual getter/setter kind and realm';break;
-        case 'functionName':if(instruction.realm!==fn.realm||!['','get','set'].includes(instruction.prefix))return 'function naming retains its actual source realm and prefix';break;
-        case 'constructErrorValue':{if(!program.realms.includes(instruction.realm))return 'Error value construction retains its actual intrinsic realm';const error=readJavaScriptErrorConstructionKindError(instruction.errorClass,instruction.bindReceiver,fn.receiverMode);if(error!=='')return error;break;}
-        case 'readDerivedReceiver':if(!testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived receiver reads retain their actual constructor source owner';break;
-        case 'invokeErrorIntrinsic':if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return 'host Error intrinsic calls require an externally registered intrinsic owner';break;
-        case 'invokeHostCapability':if(!testJavaScriptHostCapabilityMode(fn.receiverMode))return 'host capability calls require their explicitly qualified external source owner';break;
-        case 'collectionIteratorAllocate':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind)||!['keys','values','entries'].includes(instruction.iterationKind)||instruction.kind==='String'&&(instruction.iterationKind!=='values'||instruction.input===undefined)||instruction.kind!=='String'&&instruction.input!==undefined)return 'iterator allocation retains its actual standard operation kind and owner';break;
-        case 'argumentRest':if(instruction.realm!==fn.realm||!testJavaScriptCallCoordinate(instruction.from,1048577)||instruction.destination!==instruction.from+1||instruction.destination>fn.parameters)return 'argument rest retains its actual formal parameter coordinate and source realm';break;
-        case 'iteratorProtocol':if(!['acquire','step','close'].includes(instruction.operation)||instruction.realm!==fn.realm||!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.destination===0||instruction.done===0||instruction.destination===instruction.done||instruction.readValue!==undefined&&(instruction.operation!=='step'||typeof instruction.readValue!=='boolean'))return 'iterator protocols retain actual source regions, realms and distinct private result coordinates';break;
-        case 'argumentListOpen':case 'argumentListAppend':if(!testJavaScriptIteratorRegionSlot(instruction.slot))return 'Call argument Lists retain actual source slots and operation kinds';break;
-        case 'argumentListCall':if(!testJavaScriptIteratorRegionSlot(instruction.slot)||!['call','collection','error class','ordinary class','construct'].includes(instruction.mode))return 'Call argument Lists retain actual source slots and operation kinds';break;
-        case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
-        case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String','WeakMap','WeakSet'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
-        case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
-        case 'symbolRegistry':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!['for','keyFor'].includes(instruction.operation))return 'Symbol registry work retains its actual protected standard method owner';break;
-        case 'collectionOperation':if(!testJavaScriptCollectionIntrinsicMode(fn.receiverMode)||readJavaScriptCollectionOperationKind(instruction.operation)==='')return 'collection operations retain their actual registered intrinsic frame';break;
-        case 'primitiveMethod':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPrimitiveMethodOperation(instruction.operation)&&!testJavaScriptArrayIntrinsicOperation(instruction.operation))return 'primitive methods retain their actual registered intrinsic frame';break;
-        case 'closureAllocate':{
-          if(testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived this closures require their shared lexical initialization cell';
-          const template=(program.templates??[])[findJavaScriptCallTemplate(program,instruction.owner,instruction.ordinal)];
-          if(template===undefined||template.realm!==fn.realm||template.captureCount!==instruction.captures.length)return 'closure allocation retains its actual lexical template, realm and capture vector';
-          break;
-        }
-        case 'arrayAllocate':if(!testJavaScriptArrayLength(instruction.length))return 'Array literals retain their actual unsigned32 sparse length';break;
-        default:break;
-      }
+      const error=readJavaScriptCallInstructionError(program,heap,fn,instruction);if(error!=='')return error;
     }
   return '';
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFunction} fn @param {JavaScriptCallInstruction} instruction @returns {string} */
+function readJavaScriptCallInstructionError(program,heap,fn,instruction){
+ switch(instruction.$){
+  case 'functionBind':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'binding retains its actual protected intrinsic source owner';break;
+  case 'functionToString':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'function text retains its actual protected intrinsic source owner';break;
+  case 'boundFunctionCall':{const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,fn.identity)];if(actual?.$!=='boundFunctionObject'||fn.instructions.length!==2||fn.instructions[0]?.$!=='boundFunctionCall'||fn.instructions[1]?.$!=='return'||instruction.destination!==1||fn.instructions[1].source!==1||fn.registers!==2||fn.parameters!==0||fn.captures.length!==0)return 'bound Function forwarding retains its actual runtime slots and exact shared code';break;}
+  case 'arrayJoinEnter':case 'arrayJoinLeave':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'join recursion instructions retain their protected intrinsic owner';break;
+  case 'constructorCheck':if(typeof instruction.required!=='boolean')return 'constructor checks retain their actual required or predicate operation';break;
+  case 'completeJump':if(!Number.isSafeInteger(instruction.depth)||instruction.depth<0||instruction.depth>1024||Object.is(instruction.depth,-0)||!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'completion jumps retain their actual bounded handler depth and target';break;
+  case 'jump':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call jumps require actual instruction targets';break;
+  case 'branch':if(!testJavaScriptCallCoordinate(instruction.yes,fn.instructions.length)||!testJavaScriptCallCoordinate(instruction.no,fn.instructions.length))return 'call branches require both actual instruction targets';break;
+  case 'pushHandler':case 'pushFinally':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call handlers require actual instruction targets';break;
+  case 'argument':if(!testJavaScriptCallCoordinate(instruction.index,1048576))return 'call argument reads require exact bounded coordinates';break;
+  case 'constant':if(readJavaScriptOrdinaryValueError(heap,instruction.value)!=='')return 'call constants belong to the latest global context';break;
+  case 'primitive':{const error=readJavaScriptCallPrimitiveArityError(instruction.operation,instruction.arguments.length);if(error!=='')return error;break;}
+  case 'numberBinary':if(!['add','subtract','multiply','divide','remainder','power','lessThan','equal'].includes(instruction.operator))return 'call number instructions require an actual registered operation';break;
+  case 'propertyKey':if(!program.realms.includes(instruction.realm))return 'a property key operation retains its actual intrinsic realm';break;
+  case 'propertyDefinition':if(!program.realms.includes(instruction.realm)||instruction.operation!==undefined&&instruction.operation!=='Object.defineProperty'&&instruction.operation!=='Reflect.defineProperty')return 'a property definition retains its actual intrinsic realm and Object or Reflect policy';break;
+  case 'ordinaryDefine':if(!program.realms.includes(instruction.realm)||instruction.fields.length!==12)return 'internal property definitions retain their actual realm and twelve descriptor operands';break;
+  case 'arrayConcatenation':{if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||instruction.species.realm!==fn.realm)return 'Array concatenation retains actual protected realm species authority';const invalid=readJavaScriptArraySpeciesDirectoryError(heap,instruction.species);if(invalid!=='')return invalid;break;}
+  case 'arraySlice':{if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||instruction.species.realm!==fn.realm)return 'Array slice retains actual protected realm species authority';const invalid=readJavaScriptArraySpeciesDirectoryError(heap,instruction.species);if(invalid!=='')return invalid;break;}
+  case 'arrayTransform':{if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArrayTransformOperation(instruction.operation)||instruction.species.realm!==fn.realm)return 'Array transformations retain their actual standard owner, operation and species realm';const error=readJavaScriptArraySpeciesDirectoryError(heap,instruction.species);if(error!=='')return error;break;}
+  case 'arraySearch':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArraySearchOperation(instruction.operation))return 'Array search instructions retain their actual standard callable owner and operation';break;
+  default:return readJavaScriptCallOperationInstructionError(program,heap,fn,instruction);
+ }
+ return '';
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFunction} fn @param {JavaScriptCallInstruction} instruction @returns {string} */
+function readJavaScriptCallOperationInstructionError(program,heap,fn,instruction){
+ switch(instruction.$){
+  case 'objectFromEntries':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'Object.fromEntries retains its actual protected intrinsic frame';break;
+  case 'collectionForEach':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptCollectionForEachOperation(instruction.operation))return 'collection callbacks retain their actual protected operation owner';break;
+  case 'arrayCreation':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArrayCreationOperation(instruction.operation))return 'Array creation retains its actual protected intrinsic operation';break;
+  case 'arrayCallback':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArrayCallbackOperation(instruction.operation))return 'Array callback instructions retain their actual standard owner and operation';break;
+  case 'arraySpread':if(instruction.realm!==fn.realm)return 'Array spread retains its actual active source realm';break;
+  case 'ordinaryDataProperty':if(!program.realms.includes(instruction.realm))return 'a data property definition retains its actual intrinsic realm';break;
+  case 'objectEnumeration':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptObjectEnumerationOperation(instruction.operation))return 'Object enumeration retains its actual protected operation owner';break;
+  case 'objectSpread':if(!program.realms.includes(instruction.realm)||instruction.operation!==undefined&&(instruction.operation!=='assignment'||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||(instruction.excluded??[]).length!==0))return 'Object.assign retains its protected Set body and complete source keys';break;
+  case 'propertyDefinitions':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPropertyDefinitionsOperation(instruction.operation))return 'bulk property definitions retain their actual protected operation owner';break;
+  case 'propertyReflection':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPropertyReflectionOperation(instruction.operation))return 'property reflection retains its actual protected operation owner';break;
+  case 'instanceOf':if(!['instanceof','ordinary has instance','prototype contains'].includes(instruction.operation)||instruction.operation!=='instanceof'&&!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'instanceof retains its actual operator or protected intrinsic body';break;
+  case 'objectObservation':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptObjectObservationOperation(instruction.operation))return 'Object observations retain their actual protected operation owner';break;
+  case 'literalAccessor':if(!program.realms.includes(instruction.realm)||!['get','set'].includes(instruction.kind))return 'literal accessors retain actual getter/setter kind and realm';break;
+  case 'functionName':if(instruction.realm!==fn.realm||!['','get','set'].includes(instruction.prefix))return 'function naming retains its actual source realm and prefix';break;
+  case 'constructErrorValue':{if(!program.realms.includes(instruction.realm))return 'Error value construction retains its actual intrinsic realm';const error=readJavaScriptErrorConstructionKindError(instruction.errorClass,instruction.bindReceiver,fn.receiverMode);if(error!=='')return error;break;}
+  case 'readDerivedReceiver':if(!testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived receiver reads retain their actual constructor source owner';break;
+  case 'invokeErrorIntrinsic':if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return 'host Error intrinsic calls require an externally registered intrinsic owner';break;
+  case 'invokeHostCapability':if(!testJavaScriptHostCapabilityMode(fn.receiverMode))return 'host capability calls require their explicitly qualified external source owner';break;
+  case 'collectionIteratorAllocate':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind)||!['keys','values','entries'].includes(instruction.iterationKind)||instruction.kind==='String'&&(instruction.iterationKind!=='values'||instruction.input===undefined)||instruction.kind!=='String'&&instruction.input!==undefined)return 'iterator allocation retains its actual standard operation kind and owner';break;
+  case 'argumentRest':if(instruction.realm!==fn.realm||!testJavaScriptCallCoordinate(instruction.from,1048577)||instruction.destination!==instruction.from+1||instruction.destination>fn.parameters)return 'argument rest retains its actual formal parameter coordinate and source realm';break;
+  case 'iteratorProtocol':if(!['acquire','step','close'].includes(instruction.operation)||instruction.realm!==fn.realm||!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.destination===0||instruction.done===0||instruction.destination===instruction.done||instruction.readValue!==undefined&&(instruction.operation!=='step'||typeof instruction.readValue!=='boolean'))return 'iterator protocols retain actual source regions, realms and distinct private result coordinates';break;
+  case 'argumentListOpen':case 'argumentListAppend':if(!testJavaScriptIteratorRegionSlot(instruction.slot))return 'Call argument Lists retain actual source slots and operation kinds';break;
+  case 'argumentListCall':if(!testJavaScriptIteratorRegionSlot(instruction.slot)||!['call','collection','error class','ordinary class','construct'].includes(instruction.mode))return 'Call argument Lists retain actual source slots and operation kinds';break;
+  case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
+  case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String','WeakMap','WeakSet'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
+  case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
+  case 'symbolRegistry':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!['for','keyFor'].includes(instruction.operation))return 'Symbol registry work retains its actual protected standard method owner';break;
+  case 'collectionOperation':if(!testJavaScriptCollectionIntrinsicMode(fn.receiverMode)||readJavaScriptCollectionOperationKind(instruction.operation)==='')return 'collection operations retain their actual registered intrinsic frame';break;
+  case 'primitiveMethod':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPrimitiveMethodOperation(instruction.operation)&&!testJavaScriptArrayIntrinsicOperation(instruction.operation))return 'primitive methods retain their actual registered intrinsic frame';break;
+  case 'closureAllocate':{
+    if(testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived this closures require their shared lexical initialization cell';
+    const template=(program.templates??[])[findJavaScriptCallTemplate(program,instruction.owner,instruction.ordinal)];
+    if(template===undefined||template.realm!==fn.realm||template.captureCount!==instruction.captures.length)return 'closure allocation retains its actual lexical template, realm and capture vector';
+    break;
+  }
+  case 'arrayAllocate':if(!testJavaScriptArrayLength(instruction.length))return 'Array literals retain their actual unsigned32 sparse length';break;
+  default:break;
+ }
+ return '';
 }
 
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptCallFrame[]} frames @param {JavaScriptCallFrame} frame @returns {JavaScriptCallMachine} */
@@ -385,6 +401,15 @@ export function readJavaScriptCallMachineError(program,machine){
       const selectedError=readJavaScriptSelectedParentCallError(program,machine.heap,selectedParent,fn,frame);
       if(selectedError!=='')return selectedError;
     }
+    const constructionError=readJavaScriptActiveConstructionFrameError(program,machine,index,frame,fn);
+    if(constructionError!=='')return constructionError;
+  }
+  return '';
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {number} index @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn @returns {string} */
+function readJavaScriptActiveConstructionFrameError(program,machine,index,frame,fn){
     if(frame.newTarget!==undefined&&fn.receiverMode!=='lexical'){
       const parent=machine.frames[index-1],caller=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity),instruction=caller===undefined||parent===undefined||parent.position===0?undefined:caller.instructions[parent.position-1];
       const generic=parent===undefined?undefined:readJavaScriptPendingConstruction(parent.pending),species=parent===undefined?undefined:readJavaScriptPendingSpeciesConstruction(parent.pending);
@@ -404,7 +429,6 @@ export function readJavaScriptCallMachineError(program,machine){
         if(error!=='')return error;
       }
     }
-  }
   return '';
 }
 
@@ -434,6 +458,19 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const receiver=frame.registers[0]??{$:'undefined'},object=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;if(receiver.$!=='object'||receiver.callable||object?.$!=='ordinaryObject')return 'an active base constructor retains its actual allocated ordinary receiver';}
     const iteratorError=readJavaScriptIteratorRegionsError(heap,frame.iterators??[]);if(iteratorError!=='')return iteratorError;
     const argumentListError=readJavaScriptCallArgumentListsError(heap,frame.argumentLists??[],frame.handlers.length);if(argumentListError!=='')return argumentListError;
+    const controlError=readJavaScriptCallFrameControlError(program,heap,frame,fn);if(controlError!=='')return controlError;
+    const pending=frame.pending;
+    if(!testJavaScriptCallPendingDestination(pending,fn.registers))return 'pending calls retain their actual destination register';
+    const pendingError=readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending);
+    if(pendingError!=='')return pendingError;
+    if(suspended&&(pending.$==='waitConstructorCheck'||pending.$==='waitPrimitiveWrapper'||pending.$==='waitSymbolAllocation'||pending.$==='waitSymbolDescription'||pending.$==='waitFunctionNameSymbol'||pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'||pending.$==='waitErrorValue'||pending.$==='waitErrorIntrinsic'||pending.$==='waitHostCapability'))return 'a suspended parent frame retains its actual pending call';
+  return '';
+}
+
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn @returns {string} */
+function readJavaScriptCallFrameControlError(program,heap,frame,fn){
     for(const handler of frame.handlers){
       if(handler.$==='callHandler'){if(!testJavaScriptCallCoordinate(handler.destination,fn.registers)||!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'call handlers retain their complete register and instruction coordinates';}
       else if(handler.$==='callFinallyHandler'){if(!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'finalizers retain their actual source instruction entry';}
@@ -451,14 +488,8 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
     if(frame.newTarget!==undefined&&(frame.newTarget.$!=='object'||!frame.newTarget.callable||readJavaScriptOrdinaryValueError(heap,frame.newTarget)!==''))return 'new.target retains its actual constructor identity';
     if(frame.newTarget!==undefined&&program.constructorDirectory!==undefined){const actual=classifyJavaScriptArraySpeciesConstructor(heap,program.constructorDirectory,frame.newTarget);if(readJavaScriptKnownArrayConstructorFact(actual)?.constructable!==true)return 'new.target retains its independently registered constructor classification';}
     if(fn.receiverMode==='lexical'&&!testJavaScriptSemanticSameValue(frame.newTarget??{$:'undefined'},fn.lexicalNewTarget??{$:'undefined'}))return 'an arrow frame retains its captured lexical new.target';
-    const pending=frame.pending;
-    if(!testJavaScriptCallPendingDestination(pending,fn.registers))return 'pending calls retain their actual destination register';
-    const pendingError=readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending);
-    if(pendingError!=='')return pendingError;
-    if(suspended&&(pending.$==='waitConstructorCheck'||pending.$==='waitPrimitiveWrapper'||pending.$==='waitSymbolAllocation'||pending.$==='waitSymbolDescription'||pending.$==='waitFunctionNameSymbol'||pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'||pending.$==='waitErrorValue'||pending.$==='waitErrorIntrinsic'||pending.$==='waitHostCapability'))return 'a suspended parent frame retains its actual pending call';
   return '';
 }
-
 
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptNumberCallState} state @returns {string} */
 export function readJavaScriptNumberCallStateError(heap,state){
@@ -956,6 +987,15 @@ export function stepJavaScriptCallMachine(program,machine){
      if(key!==undefined)return resumeJavaScriptCallFunctionNameSymbolDescription(program,machine,key);
      return {$:'machineNeedFunctionNameSymbolDescription',machine,object:pending.object,key:symbol,prefix:pending.prefix};
     }
+    default:return stepJavaScriptCallPendingOperation(program,machine,frame);
+  }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {JavaScriptCallFrame} frame @returns {JavaScriptCallMachineTransition} */
+function stepJavaScriptCallPendingOperation(program,machine,frame){
+  const pending=frame.pending;
+  switch(pending.$){
     case 'waitArrayConcatenation':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array concatenation step retains actual species authority'};const construction=pending.construction;if(construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,construction));return acceptJavaScriptCallArrayConcatenation(program,machine,pending.destination,pending.realm,stepJavaScriptArrayConcatenation(machine.heap,directory,pending.state));}
     case 'waitArraySlice':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array slice step retains actual species authority'};const construction=pending.construction;if(construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,construction));return acceptJavaScriptCallArraySlice(program,machine,pending.destination,pending.realm,stepJavaScriptArraySlice(machine.heap,directory,pending.state));}
     case 'waitArrayTransform':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array transform step retains its actual source directory'};const construction=pending.construction;if(construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,construction));return acceptJavaScriptCallArrayTransform(program,machine,pending.destination,pending.realm,stepJavaScriptArrayTransform(machine.heap,directory,pending.state));}
@@ -1315,14 +1355,20 @@ function projectJavaScriptCallIteratorOperation(pending){
  * @param {JavaScriptCallIteratorOperation|undefined} pending @param {JavaScriptIteratorProtocolTransition} transition @returns {JavaScriptCallMachineTransition} */
 export function acceptJavaScriptCallIteratorProtocol(program,machine,pending,transition){
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined||pending===undefined||pending.$!=='iteratorOperation')return {$:'machineInvalid',heap:transition.heap,reason:'iterator protocol retains its actual suspended source operation'};
- const current={$:'callMachine',heap:transition.heap,frames:machine.frames},regions=frame.iterators??[];
+ const current={$:'callMachine',heap:transition.heap,frames:machine.frames};
  if(transition.$==='iteratorProtocolContinue'||transition.$==='iteratorProtocolCall'||transition.$==='iteratorProtocolPrimitiveGet'){
   const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitIteratorProtocol',destination:pending.destination,done:pending.done,slot:pending.slot,operation:pending.operation,realm:pending.realm,state:transition.state}));
   if(transition.$==='iteratorProtocolCall')return pushJavaScriptCall(program,next,transition.callee,transition.receiver,transition.arguments);
   return transition.$==='iteratorProtocolPrimitiveGet'?{$:'machineNeedPrimitiveIteratorGet',machine:next,receiver:transition.receiver,key:transition.key}:{$:'machineContinue',machine:next};
  }
+ return finishJavaScriptCallIteratorProtocol(current,frame,pending,transition);
+}
+/** @param {JavaScriptCallMachine} current @param {JavaScriptCallFrame} frame
+ * @param {JavaScriptCallIteratorOperation} pending @param {JavaScriptIteratorProtocolTransition} transition
+ * @returns {JavaScriptCallMachineTransition} */
+function finishJavaScriptCallIteratorProtocol(current,frame,pending,transition){
  if(transition.$==='iteratorProtocolInvalid')return {$:'machineInvalid',heap:transition.heap,reason:transition.reason};
- const update=updateJavaScriptCallIteratorProtocolRegions(regions,pending.slot,pending.operation,transition);
+ const update=updateJavaScriptCallIteratorProtocolRegions(frame.iterators??[],pending.slot,pending.operation,transition);
  if(update.$==='iteratorRegionsInvalid')return {$:'machineInvalid',heap:transition.heap,reason:update.reason};if(update.$==='iteratorRegionsResourceLimit')return {$:'machineResourceLimit',machine:current,reason:update.reason};
  const next=replaceJavaScriptCallFrame(transition.heap,current.frames,{...frame,iterators:update.regions,pending:{$:'callIdle'}});
  if(transition.$==='iteratorProtocolError')return requestJavaScriptCallError(next,pending.realm,transition.errorClass,transition.reason);

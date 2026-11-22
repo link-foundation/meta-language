@@ -175,7 +175,7 @@ pub(super) fn parse_ordinary_javascript_source_library(source: &str) -> Result<S
     parser.file()
 }
 
-pub(super) fn has_source_library_typedef(text: &str, span: Span, name: &str) -> bool {
+pub(crate) fn has_source_library_typedef(text: &str, span: Span, name: &str) -> bool {
     text.starts_with("/**")
         && jsdoc_tags(&Comment {
             text: text.to_owned(),

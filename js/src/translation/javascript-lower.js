@@ -84,6 +84,7 @@ function flat(statements) {
 export function lowerImperative(parser, name, params, statements, where, externalCells = new Set(), externalBindings = new Set()) {
   const cells = union(mutableClosureCells(statements), externalCells);
   if (cells.size) {
+    parser.reportReferenceSelection?.(name, [...cells], where);
     parser.referenceSemantics = true;
     parser.referenceSemanticsForced = true;
   }

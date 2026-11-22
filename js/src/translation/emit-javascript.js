@@ -60,6 +60,8 @@ import {checkRustConstFunctionProof} from './rust-const-functions.js';
 import {readRustDiagnosticAttributeNormalization} from './rust-diagnostic-attributes.js';
 import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
+import {withSourceOwnerContainers} from './owned-program-containers.js';
+import {readTypedSourceOwners} from './source-library-closure.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
 import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
@@ -157,14 +159,23 @@ function ident(name) {
 
 export function emitJavaScript(program, options = {}) {
   checkJavaScriptClassOwners(program);
+  const sourceOwners = options.sourceClosure && readTypedSourceOwners(program, options.sourceClosure);
+  const validateSource = input => {
+    validateRustTypeNamespace(input);
+    checkRustConstFunctionProof(input);
+    checkRustOwnedLocalStateProof(input);
+  };
+  if (sourceOwners) withSourceOwnerContainers(program, sourceOwners.directory, () => validateSource(program));
   program=prepareOrderedRecordValues(program);
   const targetIdentifier=readJavaScriptIdentifierModel(options.identifierModel,ident);
   if(options.identifierModel!==undefined&&options.scopedBindingModel!==undefined)throw unsupported('JavaScript identifier model composition','the original narrow scoped-binding model requires a separate composition proof');
-  validateRustTypeNamespace(program);
-  checkRustConstFunctionProof(program);
+  if (!sourceOwners) {
+    validateRustTypeNamespace(program);
+    checkRustConstFunctionProof(program);
+  }
   const runtimeShell=checkRustRuntimeShell(program);
   if(runtimeShell&&options.scopedBindingModel!==undefined)refuseRustRuntimeShellComposition('scoped target bindings require an independent runtime composition proof');
-  checkRustOwnedLocalStateProof(program);
+  if (!sourceOwners) checkRustOwnedLocalStateProof(program);
   const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
   const reserved = new Set(KEYWORDS);
   const externals = new Map((program.externals ?? []).filter(external => !program.declarations.has(external.name)).map(external => [external.name, external]));

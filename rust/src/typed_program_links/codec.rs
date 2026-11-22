@@ -26,6 +26,8 @@ mod owned_local_state;
 mod runtime_shell;
 #[path = "codec_scopes.rs"]
 mod scopes;
+#[path = "codec_source_archive.rs"]
+mod source_archive;
 pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
     encoding::encode(program, provenance)
 }
@@ -498,7 +500,7 @@ fn reject_unknown_fields(original: &Value, normalized: &Value) -> Result<()> {
 pub(super) fn decode(
     network: &LinkNetwork,
     root: LinkId,
-    limits: TypedProgramLinksLimits,
+    limits: Option<TypedProgramLinksLimits>,
 ) -> Result<Program> {
     Ok(decode_with_binding_identities(network, root, limits)?.0)
 }
@@ -506,7 +508,7 @@ pub(super) fn decode(
 pub(super) fn decode_with_binding_identities(
     network: &LinkNetwork,
     root: LinkId,
-    limits: TypedProgramLinksLimits,
+    explicit_limits: Option<TypedProgramLinksLimits>,
 ) -> Result<(Program, Vec<LinkId>)> {
     let link = network
         .link(root)
@@ -535,6 +537,7 @@ pub(super) fn decode_with_binding_identities(
         }
     }
     let record_shapes = super::record_shapes::selected(network, root, &fields)?;
+    let mut limits = explicit_limits.unwrap_or_default();
     let mut decoder = Decoder {
         network,
         fields,
@@ -545,6 +548,13 @@ pub(super) fn decode_with_binding_identities(
         visited: 0,
         record_shapes,
     };
+    let directory = decoder.read_source_archive(root)?;
+    let source_archive = directory.as_ref().map(source_archive::Directory::compose).transpose()?;
+    if source_archive.is_some() {
+        let aggregate = source_archive::node_limit(true);
+        limits.node_limit = explicit_limits.map_or(aggregate, |bounds| bounds.node_limit.min(aggregate));
+        decoder.limits = limits;
+    }
     let body = link.references()[0];
     decoder.read(body, 0)?;
     for references in decoder.references.values() {
@@ -570,13 +580,18 @@ pub(super) fn decode_with_binding_identities(
         }
         declarations.insert(name, *entry);
     }
-    const_functions::validate_order(network, &decoder.fields, mapping, body)?;
+    if let Some(archive) = &source_archive {
+        decoder.validate_source_archive(body, &declarations, archive)?;
+    }
+    let original_shape_limit = if source_archive.is_some() { limits.node_limit } else { 100_000 };
+    const_functions::validate_order(network, &decoder.fields, mapping, body, original_shape_limit)?;
     owned_local_state::validate_order(
         network,
         &decoder.fields,
         &declarations.values().copied().collect::<Vec<_>>(),
         body,
         mapping,
+        original_shape_limit,
     )?;
     let mut traversal = scopes::Traversal::new(limits.node_limit);
     let ownership = decoder.ownership(&declarations, &mut traversal.remaining)?;

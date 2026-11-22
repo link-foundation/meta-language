@@ -2,11 +2,11 @@
 // object, shadowed parameter, deferred closure or unmatched owner is hoisted.
 import {planSingleConstructorProjections} from '../src/translation/boolean-constructor-match-rules.js';
 import {sameType} from '../src/translation/types.js';
-export function shareSourceConstructorProjections(program,entry,body,proofs){
- return shareConstructorBindings(program,entry,body,proofs,entry.params.map((binding,index)=>({binding,origin:{kind:'parameter',index}})));
+export function shareSourceConstructorProjections(program,entry,body,proofs,immutableNominalReferences=false){
+ return shareConstructorBindings(program,entry,body,proofs,entry.params.map((binding,index)=>({binding,origin:{kind:'parameter',index}})),immutableNominalReferences);
 }
-function shareConstructorBindings(program,entry,body,proofs,candidates){
- if(program.sourceLanguage!=='JavaScript'||program.referenceSemantics===true)return body;
+function shareConstructorBindings(program,entry,body,proofs,candidates,immutableNominalReferences){
+ if(program.sourceLanguage!=='JavaScript'||program.referenceSemantics===true&&!immutableNominalReferences)return body;
  const used=new Set([...program.declarations.keys(),...program.declarations.values()].flatMap(value=>typeof value==='string'?[value]:[value.name]));
  const shadowed=new Set(),seen=new WeakSet(),pending=[body];let visits=0;
  while(pending.length){
@@ -24,13 +24,19 @@ function shareConstructorBindings(program,entry,body,proofs,candidates){
  function fresh(){let name;do{name='sharedConstructorField'+(++ordinal);}while(used.has(name));used.add(name);return name;}
  const excluded=new Set(['type','domain','from','to','span','pattern']);
  for(const {binding:parameter,origin}of candidates){
-  if(parameter.type.kind!=='data'||shadowed.has(parameter.name))continue;
+  if(parameter.type.kind!=='data'||parameter.type.reference===true||shadowed.has(parameter.name))continue;
   const datatype=program.declarations.get(parameter.type.name);if(datatype?.k!=='data'||datatype.ctors.length!==1)continue;
   const constructor=datatype.ctors[0],counts=constructor.fields.map(()=>0),occurrences=[];
   function position(node){
    if(node?.k!=='match'||node.scrutinee?.k!=='var'||node.scrutinee.name!==parameter.name||node.scrutinee.type?.name!==datatype.fullName||node.cases.length!==1)return -1;
    const arm=node.cases[0],pattern=arm.pattern;
    if(pattern?.k!=='ctor'||pattern.data!==datatype.fullName||pattern.ctor!==constructor.name||!Array.isArray(pattern.binds)||pattern.binds.length!==constructor.fields.length||arm.body?.k!=='var')return -1;
+   if(immutableNominalReferences&&(
+    !Object.keys(node).every(key=>['k','scrutinee','cases','type','span'].includes(key))||
+    !Object.keys(node.scrutinee).every(key=>['k','name','type','span'].includes(key))||
+    !Object.keys(arm).every(key=>['pattern','body','span'].includes(key))||
+    !Object.keys(pattern).every(key=>['k','data','ctor','binds','span'].includes(key))||
+    !Object.keys(arm.body).every(key=>['k','name','type','span'].includes(key))))return -1;
    const index=pattern.binds.indexOf(arm.body.name);
    if(index<0||pattern.binds.some((name,at)=>at!==index&&name!==null)||!sameType(node.type,constructor.fields[index].type)||!sameType(arm.body.type,node.type))return -1;
    return index;
@@ -61,8 +67,8 @@ function shareConstructorBindings(program,entry,body,proofs,candidates){
 
 // Candidates are actual let owners and actual constructor field binders in this
 // checked body. No synthetic parameter, signature or spelling selects a scope.
-export function shareSourceScopedConstructorProjections(program,entry,body,proofs){
- if(program.sourceLanguage!=='JavaScript'||program.referenceSemantics===true)return body;
+export function shareSourceScopedConstructorProjections(program,entry,body,proofs,immutableNominalReferences=false){
+ if(program.sourceLanguage!=='JavaScript'||program.referenceSemantics===true&&!immutableNominalReferences)return body;
  const excluded=new Set(['type','domain','from','to','span','pattern']);let visits=0;
  function eligible(type){return type?.kind==='data'&&program.declarations.get(type.name)?.ctors?.length===1;}
  function walk(node,path,depth=0){
@@ -70,7 +76,7 @@ export function shareSourceScopedConstructorProjections(program,entry,body,proof
   if(depth>256||++visits>1000000)throw new TypeError('scoped constructor projections exceed their work budget');
   if(node.k==='let'){
    const value=walk(node.value,[...path,'value'],depth+1),next=walk(node.body,[...path,'body'],depth+1);
-   const projected=eligible(value.type)?shareConstructorBindings(program,entry,next,proofs,[{binding:{name:node.name,type:value.type},origin:{kind:'lexical let',path,bodyPath:[...path,'body'],binding:node.name}}]):next;
+   const projected=eligible(value.type)?shareConstructorBindings(program,entry,next,proofs,[{binding:{name:node.name,type:value.type},origin:{kind:'lexical let',path,bodyPath:[...path,'body'],binding:node.name}}],immutableNominalReferences):next;
    return value===node.value&&projected===node.body?node:{...node,value,body:projected};
   }
   if(node.k==='match'){
@@ -81,7 +87,7 @@ export function shareSourceScopedConstructorProjections(program,entry,body,proof
     const pattern=arm.pattern,constructor=owner?.ctors.find(value=>value.name===pattern?.ctor);
     if(pattern?.k==='ctor'&&pattern.data===owner?.fullName&&constructor&&pattern.binds.length===constructor.fields.length){
      const candidates=constructor.fields.flatMap((field,slot)=>typeof pattern.binds[slot]==='string'&&eligible(field.type)?[{binding:{name:pattern.binds[slot],type:field.type},origin:{kind:'constructor field',path:[...path,'cases',index],bodyPath,datatype:owner.fullName,constructor:constructor.name,slot,binding:pattern.binds[slot]}}]:[]);
-     if(candidates.length)next=shareConstructorBindings(program,entry,next,proofs,candidates);
+     if(candidates.length)next=shareConstructorBindings(program,entry,next,proofs,candidates,immutableNominalReferences);
     }
     return next===arm.body?arm:{...arm,body:next};
    });

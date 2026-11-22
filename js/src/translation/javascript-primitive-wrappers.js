@@ -50,6 +50,16 @@ function constructJavaScriptWrapperIndexKey(index){
 function constructJavaScriptWrapperStringProperty(key,value,enumerable){
  const descriptor=createJavaScriptPropertyDescriptor('data',false,enumerable);descriptor.value=value;descriptor.writable=false;return {$:'ordinaryProperty',key,descriptor};
 }
+/** @param {JavaScriptSemanticValue} input @param {number} length
+ * @returns {JavaScriptOrdinaryProperty[]} */
+function constructJavaScriptWrapperOwnProperties(input,length){
+ const properties=[];
+ if(length>=0){
+  for(let index=0;index<length;index+=1)properties.push(constructJavaScriptWrapperStringProperty(constructJavaScriptWrapperIndexKey(index),{$:'text',units:[readJavaScriptSemanticTextUnit(input,index)]},true));
+  properties.push(constructJavaScriptWrapperStringProperty({$:'text',units:[108,101,110,103,116,104]},{$:'number',value:length},false));
+ }
+ return properties;
+}
 /** Allocation is atomic at this transition. The returned Object retains only
  * slots supplied by the actual primitive input, regardless of its prototype.
  * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPrimitiveWrapperState} state
@@ -58,11 +68,7 @@ export function resumeJavaScriptPrimitiveWrapper(heap,state,identity){
  const invalid=readJavaScriptPrimitiveWrapperStateError(heap,state);if(invalid!=='')return {$:'primitiveWrapperInvalid',heap,reason:invalid};
  const work=readJavaScriptPrimitiveWrapperWorkError(heap,state);if(work!=='')return {$:'primitiveWrapperResourceLimit',heap,state,reason:work};
  if(typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n||findJavaScriptOrdinaryObject(heap.objects,identity)>=0||testJavaScriptOrdinarySymbol(heap.symbols,identity))return {$:'primitiveWrapperInvalid',heap,reason:'primitive wrappers require a distinct externally allocated unsigned64 global identity'};
- const length=readJavaScriptSemanticTextLength(state.input),properties=[];
- if(length>=0){
-  for(let index=0;index<length;index+=1)properties.push(constructJavaScriptWrapperStringProperty(constructJavaScriptWrapperIndexKey(index),{$:'text',units:[readJavaScriptSemanticTextUnit(state.input,index)]},true));
-  properties.push(constructJavaScriptWrapperStringProperty({$:'text',units:[108,101,110,103,116,104]},{$:'number',value:length},false));
- }
+ const length=readJavaScriptSemanticTextLength(state.input),properties=constructJavaScriptWrapperOwnProperties(state.input,length);
  const allocated=insertJavaScriptOrdinaryObject(heap,identity,state.prototype);if(allocated.error!=='')return {$:'primitiveWrapperInvalid',heap,reason:allocated.error};
  const input=state.input,prototype=state.prototype;
  // The inserted object is fresh, so its wrapper data comes only from this input.

@@ -156,7 +156,7 @@ export function parseJavaScript(source, context = {}) {
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '', moduleBindingNames = [], moduleScopeKnown = true, closedClassMethods=[],closedClassOwners=undefined } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '', moduleBindingNames = [], moduleScopeKnown = true, closedClassMethods=[],closedClassOwners=undefined,reportReferenceSelection } = {}) {
     this.source = source;
     this.closedClassMethods=closedClassMethods;
     this.closedClassOwners=closedClassOwners;
@@ -176,6 +176,7 @@ class JavaScriptParser {
     this.referenceSemanticsEnabled = referenceSemantics !== false;
     this.referenceSemanticsOverride = referenceSemantics;
     this.referenceSemanticsForced = false;
+    this.reportReferenceSelection = reportReferenceSelection;
     this.eliminatedOwnedArrayAppendOperations = [];
     // Private source construction identities; never serialized into surface/IR.
     this.ownedArrayIterationBlocks = new WeakMap();

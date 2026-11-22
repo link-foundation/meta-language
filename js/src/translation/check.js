@@ -222,7 +222,12 @@ export function checkProgram(surface) { return checkSurfaceProgram(surface, fals
 /** Check actual source modules against one common declaration catalog. */
 export function checkSourceLibraryProgram(closure, {referenceSemantics, reportDeclarationErrors = false} = {}) {
   const directory = readCapturedSourceLibraryOwnerDirectory(closure);
-  const surface = parseJavaScript(directory.source, {referenceSemantics});
+  const reportReferenceSelection = reportDeclarationErrors ? (name, cells, span) => {
+    const owner = directory.inputs.find(input => input.closureRange.start <= span?.start
+      && span?.start < input.closureRange.end);
+    console.error('source reference cells', JSON.stringify({name, cells, span, path: owner?.path}));
+  } : undefined;
+  const surface = parseJavaScript(directory.source, {referenceSemantics, reportReferenceSelection});
   if (surface.main?.effects?.length || surface.imports?.length || surface.externals?.length) {
     throw typeError('source owner checking requires all declarations and no unresolved module inputs');
   }
@@ -234,7 +239,7 @@ export function checkSourceLibraryProgram(closure, {referenceSemantics, reportDe
 // Internal graph boundary: terms already carry normalized primitive operations.
 // All core type/arity/ownership/proof checks still run; source-call desugaring
 // must not run again and change the represented operation or fresh bindings.
-export function checkProjectedProgram(surface) { return checkSurfaceProgram(surface, true); }
+export function checkProjectedProgram(surface, directory) { return checkSurfaceProgram(surface, true, directory); }
 
 function checkSurfaceProgram(surface, checkedProjection, directory, reportDeclarationErrors = false) {
   const initialCheck = () => checkRustDataTypeFieldSignatureProgramContainers(surface);
@@ -253,6 +258,7 @@ function checkSurfaceProgram(surface, checkedProjection, directory, reportDeclar
   else checkContainers();
   const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics), checkedProjection);
   checker.orderedRecordSource=orderProfile.selected;
+  checker.retainConstructorFallback = Boolean(directory);
   return checker.program(surface, directory, reportDeclarationErrors);
 }
 
@@ -2133,7 +2139,24 @@ class Checker {
     const ctors = natural
       ? [{ name: 'zero', fields: [] }, { name: 'succ', fields: [{ type: column.type }] }]
       : this.items.get(column.type.name).ctors;
-    const cases = ctors.map((ctor) => {
+    // For a closed, flat constructor switch, keep the actual default row once.
+    // Earlier rows can only select their own constructors. Their specialized
+    // cases still keep the original default for any nested pattern failure.
+    let fallback, selected = ctors;
+    if (this.retainConstructorFallback && !natural && column.type.kind === 'data' && columns.length === 1) {
+      const index = normalised.findIndex(row => ['wild', 'bind'].includes(row.patterns[refutable].k));
+      if (index > 0) {
+        const explicit = normalised.slice(0, index).map(row => row.patterns[refutable]);
+        if (explicit.every(pattern => pattern.k === 'data')) {
+          const covered = new Set(explicit.map(pattern => pattern.ctor));
+          if (covered.size < ctors.length) {
+            selected = ctors.filter(ctor => covered.has(ctor.name));
+            fallback = normalised[index];
+          }
+        }
+      }
+    }
+    const cases = selected.map((ctor) => {
       const fieldNames = ctor.fields.map((_, fieldIndex) => {
         for (const row of normalised) {
           const pattern = row.patterns[refutable];
@@ -2168,6 +2191,10 @@ class Checker {
         : { k: 'ctor', path: [ctor.name], binds: fieldNames };
       return { pattern: casePattern, body };
     });
+    if (fallback) {
+      const body = this.compileRows([], [{ ...fallback, patterns: [], binds: bindColumn(fallback) }], span);
+      cases.push({pattern: {k: 'wild'}, body});
+    }
     return { k: 'match1', scrutinee: { k: 'name', path: [column.name] }, cases, span };
   }
 

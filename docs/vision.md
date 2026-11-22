@@ -1334,13 +1334,15 @@ constructor arity and match coverage before emission. The data, constructor and
 match projections reuse the existing surface checker and compare the complete
 rechecked semantic program. Shared decision data supplies reference roles,
 operand traversal, projection instructions and role-specific absent fields.
-During source-library authoring, an ordinary captured module closure can
-check each original owner's parsed declarations within the existing
-per-owner container and depth limits. Every declaration interval belongs
-to the original, bounded capture. The declarations still share one checker
-catalog and the source checker verifies that calls resolve through their
-actual module imports. A retained source interval directory supplies no
-authority to standalone programs or to decoded typed archives.
+During source-library authoring, the source checker, typed-program encoder
+and Rust emission checks can process original declarations within the
+existing per-owner container and depth limits and a bounded aggregate.
+Every declaration interval belongs to the original capture. All declarations
+share one checker catalog and the source checker verifies that calls resolve
+through actual module imports. The encoder can write ordered record layouts
+directly into the archive. It retains separate expression and binding links
+and resolves deferred semantic edges before completing each record's layout.
+Standalone programs and decoded typed archives use their own resource limits.
 Type records also distinguish serializer-owned neutral values from unknown
 fields. The actual native type declarations define five omitted false flags:
 array, record, map and set references, and record openness. A source-checked
@@ -11829,6 +11831,16 @@ or reads of the same outer lexical binding, with constructor-bound names
 excluded. The scrutinee and selected call each execute once. The receipt
 retains the original constructor inventory and each candidate call's target,
 arguments and coordinates for replay.
+
+An immutable nominal projection profile also admits JavaScript programs that
+allocate mutable references. A checked single-constructor nominal value fixes
+its field values, so projecting a field can reuse its original reference handle.
+Reads and writes through the handle remain at their original program positions.
+The same profile can retain a single fallback in a complete nominal match when
+the candidate bodies have identical checked structure, including types, binding
+names and source spans, and have no arm-local bindings. The selected body and
+scrutinee each execute once. The generation receipt records the original
+constructor cases, their equivalence classes and the retained indices.
 
 Ordinary Object-to-Number execution additionally composes the existing
 resumable ToPrimitive(number) protocol with exact primitive conversion. Getters

@@ -43,6 +43,11 @@ export function beginJavaScriptObjectObservation(heap,operation,input,other){
   const units=[];for(let index=0;index<tag.length;index++)units.push(tag.charCodeAt(index));return {$:'objectIntegrityCompleted',heap,value:{$:'text',units}};
  }
  if(operation==='Object.regularExpressionSlot'){const object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;if(object!==undefined&&!testJavaScriptOrdinaryIntegrityKind(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque IsRegExp requires its actual internal-slot protocol'};return {$:'objectIntegrityCompleted',heap,value:{$:'boolean',value:object?.$==='ordinaryObject'&&object.regularExpression===true}};}
+ return observeJavaScriptBoxedPrimitive(heap,operation,input,other);
+}
+
+/** @param {JavaScriptOrdinaryHeap} heap @param {string} operation @param {JavaScriptSemanticValue} input @param {JavaScriptSemanticValue} other @returns {JavaScriptObjectIntegrityTransition} */
+function observeJavaScriptBoxedPrimitive(heap,operation,input,other){
  if(['Symbol.valueOf','Number.valueOf','Boolean.valueOf','Boolean.toString','BigInt.valueOf'].includes(operation)){
   const kind=operation==='Symbol.valueOf'?'symbol':operation==='Number.valueOf'?'number':operation==='BigInt.valueOf'?'integer':'boolean';
   const object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;
@@ -53,6 +58,12 @@ export function beginJavaScriptObjectObservation(heap,operation,input,other){
  }
  if(operation==='String.toString'||operation==='String.valueOf'){if(input.$==='text'||input.$==='sourceText')return {$:'objectIntegrityCompleted',heap,value:input};const object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;const data=object?.$==='ordinaryObject'?object.stringData:undefined;return data!==undefined?{$:'objectIntegrityCompleted',heap,value:data}:{$:'objectIntegrityError',heap,errorClass:'TypeError',reason:'String.prototype.'+(operation==='String.toString'?'toString':'valueOf')+" requires that 'this' be a String"};}
  if(operation==='Object.is')return {$:'objectIntegrityCompleted',heap,value:{$:'boolean',value:testJavaScriptSemanticSameValue(input,other)}};
+ return observeJavaScriptObjectProperties(heap,operation,input,other);
+}
+/** @param {JavaScriptOrdinaryHeap} heap @param {string} operation
+ * @param {JavaScriptSemanticValue} input @param {JavaScriptSemanticValue} other
+ * @returns {JavaScriptObjectIntegrityTransition} */
+function observeJavaScriptObjectProperties(heap,operation,input,other){
  if(operation==='Object.getPrototypeOf'||operation==='Object.setPrototypeOf'){
   if(input.$==='null'||input.$==='undefined')return {$:'objectIntegrityError',heap,errorClass:'TypeError',reason:'Cannot convert undefined or null to object'};
   if(operation==='Object.setPrototypeOf'&&other.$!=='null'&&other.$!=='object')return {$:'objectIntegrityError',heap,errorClass:'TypeError',reason:'Object prototype must be an Object or null'};

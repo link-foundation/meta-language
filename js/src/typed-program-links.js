@@ -2,7 +2,7 @@ import {readRustSourceVersion} from './translation/rust-source-versions.js';
 // The checked semantic program, represented entirely by inspectable links.
 // No source text, source envelope, JSON AST payload or cached emission is stored.
 import { readRuntimeProjectData } from './project-data-loader.js';
-import {readTypedProgramRecordShapeProfile,selectTypedProgramRecordShapes,readTypedProgramRecordShapeFields,compactTypedProgramRecordShapes} from './typed-program-record-shapes.js';
+import {readTypedProgramRecordShapeProfile,selectTypedProgramRecordShapes,readTypedProgramRecordShapeFields,compactTypedProgramRecordShapes,createTypedProgramRecordShapeWriter} from './typed-program-record-shapes.js';
 import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { parseJavaScript } from './translation/javascript.js';
@@ -18,6 +18,9 @@ import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.
 import { readCallableOwnedParameters } from './translation/callable-source.js';
 import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields, readProgramExpressionEntryOperandField, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
+import {ordinarySourceArchiveField, ordinarySourceArchiveNodeLimit, readTypedProgramOwnerTraversal} from './typed-program-source-owners.js';
+import {readSuppliedSourceLibraryClosure, readTypedSourceOwners} from './translation/source-library-closure.js';
+
 export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-links-schema.json', import.meta.url)));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
 const sharingProfile=Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-value-sharing.lino',import.meta.url)));
@@ -27,12 +30,14 @@ const fieldOf = (label) => Object.entries(schema.fields).find(([, value]) => val
   ?? label.replace(/ ([a-z])/gu, (_, letter) => letter.toUpperCase());
 const metadata = (term, definition) => LinkMetadata.new().withLinkType(LinkType.Semantic)
   .withLanguage(schema.language).withNamed(true).withTerm(term).withDefinition(definition);
+const standaloneNodeLimit = 100_000;
 
-function bindingTargets(program) {
+function bindingTargets(program, sourceOwners) {
   const targets = new WeakMap();
   const patternOverrides = new WeakMap();
   const declarations = new Map(program.declarations);
-  let referenceVisits = 0;
+  const traversal = readTypedProgramOwnerTraversal(program, sourceOwners,
+    'the linked program exceeds its reference resource limit');
   for (const external of program.externals ?? []) declarations.set(external.name, external);
   function reference(node, field, label, target) {
     const references = targets.get(node) ?? [];
@@ -62,14 +67,14 @@ function bindingTargets(program) {
       const current=pending.pop();
       if(!current||typeof current!=='object'||seen.has(current))continue;
       seen.add(current);
-      if(++referenceVisits>100_000)throw new TypeError('the linked source positions exceed their reference resource limit');
+      traversal.visit();
       walkType(current.type);
       if(current.arrayElementPosition!==undefined)pending.push(current.arrayElementPosition);
     }
   }
   function walk(node, environment) {
     if (!node || typeof node !== 'object') return;
-    if (++referenceVisits > 100_000) throw new TypeError('the linked program exceeds its reference resource limit');
+    traversal.visit();
     for (const field of ['type', 'domain', 'from', 'to']) walkType(node[field]);
     // These facets also occur on let/lambda/match nodes whose lexical walk
     // returns early. Retain actual datatype edges before visiting their scope.
@@ -130,6 +135,7 @@ function bindingTargets(program) {
     }
   }
   for (const entry of program.declarations.values()) {
+    traversal.enter(traversal.ownerOf(entry));
     for (const parameter of entry.params ?? entry.binders ?? []) walkType(parameter.type);
     walkType(entry.ret ?? entry.type);
     if (entry.k === 'fn' && entry.sourceSignature !== undefined) {
@@ -147,18 +153,31 @@ function bindingTargets(program) {
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));
     walk(entry.body ?? entry.value, environment);
   }
+  traversal.enter(undefined);
   walk(program.main, new Map());
   return { targets, patternOverrides, typeNodes:seenTypes };
 }
 
-export function encodeTypedProgramLinks(program, { provenance, valueSharing='', recordShapes='' } = {}) {
+export function encodeTypedProgramLinks(program, { provenance, valueSharing='', recordShapes='', sourceClosure, sourceEntryPath, trace } = {}) {
   if(recordShapes!==''){if(recordShapes!==readTypedProgramRecordShapeProfile().model)throw new TypeError('unregistered typed program record shape profile');}
   if(valueSharing!==''&&(valueSharing!==sharingProfile.model||sharingProfile.schemaVersion!==1||sharingProfile.scalarValues!==true||sharingProfile.typeRecords!==true||sharingProfile.sourceSpans!==true||sharingProfile.occurrences!==false))throw new TypeError('unregistered typed program value sharing profile');
-  validateLinkedTypedProgram(program);
-  recheckLinkedTypedProgram(program);
+  const sourceOwners = sourceClosure && readTypedSourceOwners(program, sourceClosure);
+  if (sourceEntryPath !== undefined && (!sourceOwners || !recordShapes ||
+      sourceClosure.inputs.at(-1)?.path !== sourceEntryPath || !sourceClosure.sourceReExports)) {
+    throw new TypeError('an ordinary source archive needs its original named module closure and record layout');
+  }
+  trace?.('selected actual typed program owners');
+  validateLinkedTypedProgram(program, undefined, {sourceOwners});
+  trace?.('validated typed program structure and semantics');
+  recheckLinkedTypedProgram(program, {sourceOwners});
+  trace?.('rechecked typed program projection');
   const network = new LinkNetwork();
+  const shapeWriter = sourceOwners && recordShapes
+    ? createTypedProgramRecordShapeWriter(network, schema.language)
+    : undefined;
   const identities = new WeakMap();
-  const { targets, patternOverrides, typeNodes } = bindingTargets(program);
+  const { targets, patternOverrides, typeNodes } = bindingTargets(program, sourceOwners);
+  trace?.('collected typed program binding and declaration references');
   const scalars=new Map(),types=new Map(),shapes=new Map(),shapeIdentities=new WeakMap(),activeShapes=new WeakSet();let shapeVisits=0;
   // Exact shape keys use child identities, retaining ordered fields, complete
   // metadata and signed-zero spellings without expanding a shared type DAG.
@@ -175,6 +194,11 @@ export function encodeTypedProgramLinks(program, { provenance, valueSharing='', 
     if(object){activeShapes.delete(value);shapeIdentities.set(value,identity);}return identity;
   }
   const pending = [];
+  const pendingShapes = shapeWriter && new Map();
+  function setShapeField(fields, label, child) {
+    if (fields.has(label)) throw new TypeError('a program record contains a duplicate field');
+    fields.set(label, child);
+  }
   function encode(value,field='',source=true) {
     if (value && typeof value === 'object') {
       if (identities.has(value)) return identities.get(value);
@@ -190,11 +214,20 @@ export function encodeTypedProgramLinks(program, { provenance, valueSharing='', 
       else if (kind === 'map') network.link(id).setReferences([...value].map(([key, item]) => encode([key, item],'',source)));
       else {
         const references = targets.get(value) ?? [];
+        const shapeFields = shapeWriter && new Map();
         for (const [name, item] of Object.entries(patternOverrides.get(value) ?? value)) {
           const target = references.find(reference => reference.field === name);
-          if (target) pending.push({ parent: id, ...target });
-          else network.insertFieldRelation(id, labelOf(name), encode(item,name,source));
+          if (target) {
+            if (shapeFields) pendingShapes.set(id, shapeFields);
+            pending.push({ parent: id, ...target });
+          }
+          else {
+            const label = labelOf(name), child = encode(item,name,source);
+            if (shapeFields) setShapeField(shapeFields, label, child);
+            else network.insertFieldRelation(id, label, child);
+          }
         }
+        if (shapeFields && !pendingShapes.has(id)) shapeWriter.write(id, shapeFields);
       }
       return id;
     }
@@ -207,16 +240,29 @@ export function encodeTypedProgramLinks(program, { provenance, valueSharing='', 
     const id=network.insertLink([], metadata(schema.scalars[kind], definition));if(valueSharing)scalars.set(scalarKey,id);return id;
   }
   const body = encode(program);
-  for (const reference of pending) network.insertFieldRelation(reference.parent, reference.label, encode(reference.target));
+  for (const reference of pending) {
+    const child = encode(reference.target);
+    const shapeFields = pendingShapes?.get(reference.parent);
+    if (shapeFields) setShapeField(shapeFields, reference.label, child);
+    else network.insertFieldRelation(reference.parent, reference.label, child);
+  }
+  if (pendingShapes) for (const [id, fields] of pendingShapes) shapeWriter.write(id, fields);
   const root = network.insertLink([body], metadata(schema.root, String(schema.schemaVersion)));
+  trace?.('encoded ' + network.len() + ' core typed links before provenance');
   if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', encode(provenance,'',false));
-  return recordShapes?compactTypedProgramRecordShapes(network,root,schema.language,schema.containers.record):{network,root};
+  if (sourceEntryPath !== undefined) {
+    const directory = {entryPath:sourceEntryPath, reExports:sourceClosure.sourceReExports,
+      modules:sourceClosure.inputs.map(({path,source}) => ({path,source}))};
+    network.insertFieldRelation(root, ordinarySourceArchiveField, encode(directory,'',false));
+  }
+  if (shapeWriter) shapeWriter.finish(root);
+  return recordShapes&&!shapeWriter?compactTypedProgramRecordShapes(network,root,schema.language,schema.containers.record):{network,root};
 }
 
 export function encodeTypedProgramLinksWithValueSharing(program,provenance,profile){if(typeof profile!=='string'||profile==='')throw new TypeError('unregistered typed program value sharing profile');return encodeTypedProgramLinks(program,{provenance,valueSharing:profile});}
 export function encodeTypedProgramLinksWithRecordShapes(program,provenance,profile){if(typeof profile!=='string'||profile==='')throw new TypeError('unregistered typed program record shape profile');return encodeTypedProgramLinks(program,{provenance,recordShapes:profile});}
 
-function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {
+function decodeTypedProgramLinksContext(network, root, { nodeLimit, depthLimit = 256, wholeProgram = false } = {}) {
   const rootLink = network.link(root);
   if (!rootLink || !acceptProgramSchemaRoot(rootLink.metadata().term ?? '', rootLink.metadata().definition ?? '', String(rootLink.references().length))) throw new TypeError('the linked program root or schema is invalid');
   const fields = new Map();
@@ -230,11 +276,12 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
   const active = new Set();
   const pending = [];
   let visited = 0;
+  let structuralLimit = Math.min(nodeLimit ?? standaloneNodeLimit, standaloneNodeLimit);
   function decode(id, depth = 0) {
     const key = idOf(id);
     if (active.has(key)) throw new TypeError('a linked program contains a structural cycle');
     if (objects.has(key)) return objects.get(key);
-    if (++visited > nodeLimit || depth > depthLimit) throw new TypeError('the linked program exceeds its structural resource limit');
+    if (++visited > structuralLimit || depth > depthLimit) throw new TypeError('the linked program exceeds its structural resource limit');
     const link = network.link(id);
     if (!link || link.metadata().language !== schema.language) throw new TypeError('a linked program contains a dangling or foreign value');
     const { term, definition } = link.metadata();
@@ -288,6 +335,37 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
     objects.set(key, value);
     return value;
   }
+  let sourceClosure;
+  const archiveFields = (fields.get(idOf(root)) ?? []).filter(relation => relation.label === ordinarySourceArchiveField);
+  if (archiveFields.length) {
+    if (archiveFields.length !== 1 || !recordShapes || network.len() > ordinarySourceArchiveNodeLimit) {
+      throw new TypeError('the ordinary source archive needs one bounded source module directory');
+    }
+    const relation = archiveFields[0];
+    const edge = relation.link.metadata();
+    const label = network.link(relation.link.references()[1]);
+    const labelMetadata = label?.metadata();
+    if (edge.named !== false || edge.term !== undefined || edge.language !== undefined || edge.definition !== undefined ||
+        labelMetadata?.linkType !== LinkType.Field || labelMetadata.named !== true || labelMetadata.language !== undefined ||
+        labelMetadata.definition !== 'A field label names a relation between links.' || label.references().length !== 1 ||
+        !label.references()[0].equals(label.id()) || fields.has(idOf(label.id()))) {
+      throw new TypeError('the ordinary source archive has an invalid source module directory relation');
+    }
+    const directory = decode(relation.child);
+    if (!directory || Object.keys(directory).length !== 3 || typeof directory.entryPath !== 'string' ||
+        directory.reExports !== 'resolved named module providers 1' || !Array.isArray(directory.modules) || pending.length ||
+        directory.modules.some(module => !module || Object.keys(module).length !== 2 ||
+          typeof module.path !== 'string' || typeof module.source !== 'string')) {
+      throw new TypeError('the ordinary source archive has an invalid source module directory');
+    }
+    sourceClosure = readSuppliedSourceLibraryClosure(directory.entryPath, directory.modules,
+      {aliases:true, reExports:directory.reExports});
+    objects.clear();
+    visited = 0;
+    structuralLimit = Math.min(nodeLimit ?? ordinarySourceArchiveNodeLimit, ordinarySourceArchiveNodeLimit);
+  } else {
+    structuralLimit = nodeLimit ?? standaloneNodeLimit;
+  }
   const program = decode(rootLink.references()[0]);
   const references = new WeakMap();
   for (const reference of pending) {
@@ -305,9 +383,10 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
     references.set(reference.owner, owned);
   }
   const patternScopes = new WeakMap();
-  validateLinkedTypedProgram(program, references, { graphPatterns: true, patternScopes });
-  recheckLinkedTypedProgram(program);
-  return { program, objects, patternScopes };
+  const sourceOwners = sourceClosure && readTypedSourceOwners(program, sourceClosure);
+  validateLinkedTypedProgram(program, references, { graphPatterns: true, patternScopes, sourceOwners });
+  recheckLinkedTypedProgram(program, {wholeProgram, sourceOwners});
+  return { program, objects, patternScopes, sourceClosure, sourceOwners };
 }
 
 export function decodeTypedProgramLinks(network, root, options) {
@@ -316,14 +395,15 @@ export function decodeTypedProgramLinks(network, root, options) {
 
 /** Internal formal bridge: identify owned lexical binder records, including unused binders. */
 export function readTypedProgramBindingIdentities(network, root) {
-  const { program, objects, patternScopes } = decodeTypedProgramLinksContext(network, root);
+  const { program, objects, patternScopes, sourceOwners } = decodeTypedProgramLinksContext(network, root);
   const bindings = new WeakSet();
   const expressions = new WeakSet();
   const propositions = new WeakSet();
-  let visits = 0;
+  const traversal = readTypedProgramOwnerTraversal(program, sourceOwners,
+    'the linked program exceeds its binding resource limit');
   function admit(node, visited) {
     if (!node || typeof node !== 'object' || visited.has(node)) return false;
-    if (++visits > 100_000) throw new TypeError('the linked program exceeds its binding resource limit');
+    traversal.visit();
     visited.add(node);
     return true;
   }
@@ -363,6 +443,7 @@ export function readTypedProgramBindingIdentities(network, root) {
     }
   }
   for (const entry of program.declarations.values()) {
+    traversal.enter(traversal.ownerOf(entry));
     if (entry.k === 'fn') {
       for (const parameter of entry.params) bindings.add(parameter);
       expression(entry.body);
@@ -372,6 +453,7 @@ export function readTypedProgramBindingIdentities(network, root) {
       proposition(entry.prop);
     }
   }
+  traversal.enter(undefined);
   for (const effect of program.main?.effects ?? []) {
     if (effect.k === 'let') { bindings.add(effect); expression(effect.value); }
     else if (effect.k === 'print') expression(effect.expr);
@@ -432,14 +514,14 @@ export function createTypedProgramLinks(source, language, options = {}) {
 }
 
 export function emitTypedProgramLinks(network, root, target, options = {}) {
-  const program = decodeTypedProgramLinks(network, root);
+  const {program, sourceClosure} = decodeTypedProgramLinksContext(network, root);
   const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript
     : /^lean$/iu.test(target) ? emitLean : /^rocq$/iu.test(target) ? emitRocq : null;
   if (!emit) throw new TypeError('typed linked emission writes JavaScript, Rust, Lean and Rocq');
   if (options.rustSourceHeaderEmissionModel !== undefined && emit !== emitRust) throw new TypeError('a Rust source header emission model requires Rust target');
   if (options.javaScriptScopedBindingEmissionModel !== undefined && emit !== emitJavaScript) throw new TypeError('a JavaScript scoped binding emission model requires JavaScript target');
-  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel, arrayConsumption: true })
-    : emit === emitJavaScript ? emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel}) : emit(program);
+  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel, arrayConsumption: true, sourceClosure })
+    : emit === emitJavaScript ? emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel, sourceClosure}) : emit(program);
   return { code: emitted.text, language: emitted.language, mappings: emitted.mappings,
     assumptions: emitted.assumptions, encodings: emitted.encodings, theorems: emitted.theorems };
 }

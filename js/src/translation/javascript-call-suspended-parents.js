@@ -54,6 +54,16 @@ export function readJavaScriptSelectedParentCallError(program,heap,parent,fn,fra
    const call=pending.state.call;
    return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
   }
+  default:return readJavaScriptSelectedParentSpeciesCallError(program,heap,parent,fn,frame);
+ }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} parent @param {JavaScriptCallFunction} fn
+ * @param {JavaScriptCallFrame} frame @returns {string} */
+function readJavaScriptSelectedParentSpeciesCallError(program,heap,parent,fn,frame){
+ const pending=parent.pending;
+ switch(pending.$){
   case 'waitArrayTransform':{
    const construction=pending.construction;
    if(construction!==undefined){
@@ -81,6 +91,16 @@ export function readJavaScriptSelectedParentCallError(program,heap,parent,fn,fra
    const call=pending.state.call;
    return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
   }
+  default:return readJavaScriptSelectedParentSpecialCallError(program,heap,parent,fn,frame);
+ }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} parent @param {JavaScriptCallFunction} fn
+ * @param {JavaScriptCallFrame} frame @returns {string} */
+function readJavaScriptSelectedParentSpecialCallError(program,heap,parent,fn,frame){
+ const pending=parent.pending;
+ switch(pending.$){
   case 'waitObjectEnumeration':{
    const state=pending.state;
    if(state.phase!=='getter')return 'Object enumeration child retains its actual selected getter';

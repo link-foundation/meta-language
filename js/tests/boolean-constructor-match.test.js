@@ -60,6 +60,74 @@ test('lexical alias substitution preserves unchanged checked branches',()=>{
  assert.equal(rewritten.else,entry.body.body.else);
 });
 
+test('immutable nominal projections retain reference fields across mutations', () => {
+ const source = `
+ /** @typedef {{ current: number }} Counter */
+ /** @typedef {{ $: 'wrapped', counter: Counter }} Wrapper */
+ /** @param {Counter} counter @returns {number} */
+ function increment(counter) { counter.current += 1; return counter.current; }
+ /** @param {Wrapper} wrapper @returns {number} */
+ function inspect(wrapper) {
+  const before = wrapper.counter.current;
+  const after = increment(wrapper.counter);
+  return before * 100 + after * 10 + wrapper.counter.current;
+ }
+ /** @returns {number} */
+ function compute() { return inspect({ $: 'wrapped', counter: { current: 3 } }); }
+ `;
+ const original = checkProgram(parseJavaScript(source, { referenceSemantics: true }));
+ const shared = shareSourceClosedConstructorMatches(original, { shareImmutableNominalReferences: true });
+ assert.ok(shared.proof.proofs.some(proof =>
+  proof.owner === 'inspect' && proof.operation === 'share immutable single-constructor parameter projections'));
+ const packet = encodeTypedProgramLinks(shared.program);
+ for (const program of [original, shared.program, decodeTypedProgramLinks(
+  decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network)), packet.root)]) {
+  const emitted = emitJavaScript(program);
+  const entry = emitted.mappings.find(mapping => mapping.kind === 'function' && mapping.source === 'compute').target;
+  assert.equal(runInNewContext(emitted.text + '\n' + entry + '();'), 344);
+ }
+ assert.equal(runInNewContext(source + '\ncompute();'), 344);
+});
+
+test('identical unbound nominal arms retain exactly one state change per selection', () => {
+ const source = `
+ /** @typedef {{ $: 'first' } | { $: 'second' } | { $: 'third' }} Choice */
+ /** @typedef {{ value: number }} Counter */
+ /** @param {Counter} counter @param {number} increment @returns {number} */
+ function advance(counter, increment) { counter.value += increment; return counter.value; }
+ /** @param {Counter} counter @param {Choice} choice @returns {number} */
+ function inspect(counter, choice) {
+  switch (choice.$) {
+   case 'first': return advance(counter, 1);
+   case 'second':
+   case 'third': return advance(counter, 2);
+  }
+ }
+ /** @returns {number} */
+ function compute() {
+  const counter = { value: 0 };
+  const first = inspect(counter, { $: 'first' });
+  const second = inspect(counter, { $: 'second' });
+  const third = inspect(counter, { $: 'third' });
+  return first * 100 + second * 10 + third;
+ }
+ `;
+ const original = checkProgram(parseJavaScript(source, { referenceSemantics: true }));
+ const shared = shareSourceClosedConstructorMatches(original, { shareImmutableNominalReferences: true });
+ const proof = shared.proof.proofs.find(proof =>
+  proof.owner === 'inspect' && proof.fallback?.kind === 'identical unbound body');
+ assert.deepEqual(proof?.retainedIndices, [0]);
+ const { network, root } = encodeTypedProgramLinks(shared.program);
+ const text = LinkNetwork.fromLino(network.toLino());
+ const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(network));
+ for (const program of [original, shared.program, decodeTypedProgramLinks(text, root), decodeTypedProgramLinks(binary, root)]) {
+  const emitted = emitJavaScript(program);
+  const entry = emitted.mappings.find(mapping => mapping.kind === 'function' && mapping.source === 'compute').target;
+  assert.equal(runInNewContext(emitted.text + '\n' + entry + '();'), 135);
+ }
+ assert.equal(runInNewContext(source + '\ncompute();'), 135);
+});
+
 test('a repeated default call retains argument order and scrutinee effects',()=>{
  const source=`
  /** @typedef {{ $: 'first' } | { $: 'second' } | { $: 'third' }} Value */

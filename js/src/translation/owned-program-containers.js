@@ -25,6 +25,8 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
   const rootDeclarations = directory && Object.getOwnPropertyDescriptor(root, 'declarations')?.value;
   let selected = false;
   let defect;
+  let aggregateVisits = 0;
+  let aggregatePrototypes = 0;
   function createState() {
     return {
       visited: new WeakSet(),
@@ -53,7 +55,7 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
     const { inspectedPrototypes } = state;
     for (let prototype = Object.getPrototypeOf(value); prototype && !inspectedPrototypes.has(prototype);
       prototype = Object.getPrototypeOf(prototype)) {
-      if (++depth > 256 || ++state.prototypeVisits > 100_000) {
+      if (++depth > 256 || ++state.prototypeVisits > 100_000 || ++aggregatePrototypes > 1_000_000) {
         fail('the owned prototype graph exceeds its resource limit');
       }
       inspectedPrototypes.add(prototype);
@@ -66,7 +68,7 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
   function visit(value, depth, state) {
     const { visited } = state;
     if (!value || typeof value !== 'object' && typeof value !== 'function' || visited.has(value)) return;
-    if (depth > 256 || ++state.visits > 100_000) {
+    if (depth > 256 || ++state.visits > 100_000 || ++aggregateVisits > 1_000_000) {
       fail('the owned container graph exceeds its resource limit (depth ' + depth + ', visited ' + state.visits + (state.path ? ', source ' + state.path : '') + ')');
     }
     visited.add(value);

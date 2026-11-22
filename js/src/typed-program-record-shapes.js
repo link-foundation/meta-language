@@ -32,6 +32,33 @@ export function readTypedProgramRecordShapeFields(network,record,language,select
  if(error)fail(error);
  return roles.map((role,index)=>({parent:record.id(),label:points[index].metadata().term,child:references[index+1]}));
 }
+
+/** Write shapes into a private encoder network as each record is completed. */
+export function createTypedProgramRecordShapeWriter(network, language) {
+ readTypedProgramRecordShapeProfile();
+ const labels = new Map(), shapes = new Map();
+ function write(id, fields) {
+  const roles = [...fields.keys()];
+  const shapeKey = JSON.stringify(roles);
+  let shape = shapes.get(shapeKey);
+  if (shape === undefined) {
+   const points = roles.map(role => {
+    if (!labels.has(role)) {
+     labels.set(role, network.insertTypedPoint(LinkType.Field, role, 'A field label names a relation between links.'));
+    }
+    return labels.get(role);
+   });
+   shape = network.insertLink(points, metadata(language, profile.shapeTerm));
+   shapes.set(shapeKey, shape);
+  }
+  network.link(id).setReferences([shape, ...fields.values()]);
+ }
+ function finish(root) {
+  network.insertFieldRelation(root, profile.rootField, network.insertLink([], metadata(language, profile.profileTerm, profile.model)));
+ }
+ return {write, finish};
+}
+
 /** Only the fresh, private encoder graph is compacted. Any reference to an
  * owned field relation from elsewhere refuses compaction before mutation.
  * Original record/binder identities and all value edges remain unchanged. */

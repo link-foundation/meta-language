@@ -247,17 +247,36 @@ export function readSourceLibraryDeclarationOwnership(closure,program) {
     const sourceName=input.compiledDeclarations&&!entry.generated?input.declarations[input.compiledDeclarations.indexOf(name)]:undefined;
     rows.push({name,path:input.path,generated:entry.generated===true,...(declaredType?{declarationSource,span:entry.span}:{}),...(sourceName!==undefined?{sourceName}:{})});
   }
+  const moduleScans = new Map();
+  let inspected = 0;
   for (const [name,entry] of program.declarations) {
-    const input = owners.get(name), imports = new Set(input.compiledImportNames??input.removedImports.flatMap(imported=>imported.names));
-    const pending = [entry], seen = new Set();
+    const input = owners.get(name);
+    let scan = moduleScans.get(input);
+    if (!scan) {
+      scan = {imports: new Set(input.compiledImportNames??input.removedImports.flatMap(imported=>imported.names)),
+        seen: new WeakSet(), count: 0};
+      moduleScans.set(input, scan);
+    }
+    const pending = [entry];
     while (pending.length) {
       const value = pending.pop();
-      if (!value || typeof value !== 'object' || seen.has(value)) continue;
-      seen.add(value);
-      if ((value.k === 'call' || value.k === 'functionRef') && typeof value.fn === 'string' && owners.get(value.fn) !== input && !imports.has(value.fn))
+      if (!value || typeof value !== 'object' || scan.seen.has(value)) continue;
+      scan.seen.add(value);
+      if (++scan.count > 100_000 || ++inspected > 1_000_000)
+        throw new TypeError('source dependency ownership exceeds its structural resource limit in '+input.path);
+      if ((value.k === 'call' || value.k === 'functionRef') && typeof value.fn === 'string' && owners.get(value.fn) !== input && !scan.imports.has(value.fn))
         throw new TypeError('source dependency cannot capture '+value.fn+' from another module in '+input.path);
       for (const child of Array.isArray(value) ? value : Object.values(value)) pending.push(child);
     }
   }
   return rows;
+}
+
+export function readTypedSourceOwners(program, closure) {
+  const directory = readCapturedSourceLibraryOwnerDirectory(closure);
+  if (program.sourceLanguage !== 'JavaScript' || program.main?.effects?.length ||
+      program.imports?.length || program.externals?.length || !(program.declarations instanceof Map)) {
+    throw new TypeError('typed source archive ownership needs a closed ordinary source library');
+  }
+  return { directory, rows: readSourceLibraryDeclarationOwnership(directory, program) };
 }

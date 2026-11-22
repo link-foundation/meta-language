@@ -21,7 +21,18 @@ export function draftJavaScriptModelCodecs({selected,overrides,output}){
   case 'int':case 'nat':return decode?'scalar('+value+',"integer")':'String('+value+')';
   case 'data':return (decode?'decode':'encode')+name(type.name)+'('+value+')';
   case 'array':return value+'.map(value=>'+field(type.element,'value',decode)+')';
-  case 'record':return '({'+type.fields.map(entry=>JSON.stringify(entry.name)+':'+field(entry.type,value+'['+JSON.stringify(entry.name)+']',decode)).join(',')+'})';
+  case 'tuple':return '['+type.elements.map((entry,index)=>field(entry,value+'['+index+']',decode)).join(',')+']';
+  case 'record':{
+   const entries=type.fields.map(entry=>{
+    const key=JSON.stringify(entry.name),input=value+'['+key+']';
+    return {key,optional:entry.optional,converted:field(javaScriptConstructorFieldValueType(entry),input,decode)};
+   });
+   if(type.ordered){
+    orderedRecords=true;
+    return 'wireOrderedRecord('+value+', ['+entries.map(({key,converted,optional})=>'['+key+', ()=>'+converted+', '+Boolean(optional)+']').join(',')+'])';
+   }
+   return '({'+entries.map(({key,converted,optional})=>optional?'...(Object.hasOwn('+value+','+key+')?{['+key+']:'+converted+'}:{})':'['+key+']:'+converted).join(',')+'})';
+  }
   case 'option':{
    const present=field(type.element,value,decode);
    const withNull=type.absence==='null'||type.absence==='both'?'('+value+'===null?null:'+present+')':present;
@@ -30,7 +41,7 @@ export function draftJavaScriptModelCodecs({selected,overrides,output}){
   }
   default:throw new TypeError('unregistered JavaScript model field '+type.kind);
  }}
- let optionalWire=false;
+ let optionalWire=false,orderedRecords=false;
  for(const [owner,declaration]of selected){
   for(const decode of [true,false]){
    source+='export function '+(decode?'decode':'encode')+name(owner)+'(value){switch(value.$){\n';
@@ -48,6 +59,16 @@ export function draftJavaScriptModelCodecs({selected,overrides,output}){
   }
  }
  if(optionalWire||source.includes('isWireUndefined('))source+='function isWireUndefined(value){return value!==null&&typeof value==="object"&&Object.keys(value).length===1&&Object.hasOwn(value,"fieldPresence")&&value.fieldPresence==="undefined";}\n';
+ if(orderedRecords)source+=`function wireOrderedRecord(value, fields) {
+ const directory=new Map(fields.map(([key, convert, optional])=>[key,{convert,optional}]));
+ for(const [key, {optional}] of directory)if(!optional&&!Object.hasOwn(value,key))throw new TypeError('required ordered record field '+key);
+ return Object.fromEntries(Object.keys(value).map(key=>{
+  const entry=directory.get(key);
+  if(!entry)throw new TypeError('undeclared ordered record field '+key);
+  return [key,entry.convert()];
+ }));
+}
+`;
  writeFileSync(new URL('../../'+output,import.meta.url),source);
  return {output,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')};
 }

@@ -9,14 +9,20 @@ use super::source_library_binding_rules::{
     read_source_library_declaration_binding_kind, read_source_library_function_declaration_offset,
     test_java_script_source_function_expression_term,
 };
+use super::source_library_class_rules::{
+    accept_source_library_entry_export_owner, accept_source_library_re_export_name,
+    read_source_library_re_export_profile_error,
+};
 use super::{Language, Span};
 use crate::program_representation::{ProgramRepresentation, analyze_program, module_bindings};
 
 #[derive(Default)]
 struct ModuleFacts {
     imports: Vec<Import>,
+    re_exports: Vec<Import>,
     declarations: Vec<Declaration>,
     exports: HashSet<String>,
+    direct_exports: HashSet<String>,
     identifiers: HashSet<String>,
 }
 
@@ -32,14 +38,14 @@ struct Import {
     bindings: Vec<(String, String)>,
 }
 
-pub(super) struct Module<'a> {
+pub(crate) struct Module<'a> {
     pub path: &'a str,
     pub range: Span,
     pub declarations: HashMap<String, String>,
     pub imports: HashSet<String>,
 }
 
-pub(super) struct Closure<'a> {
+pub(crate) struct Closure<'a> {
     pub source: String,
     pub modules: Vec<Module<'a>>,
 }
@@ -155,7 +161,7 @@ fn read_import(tokens: &[Token], start: usize) -> Result<(Import, usize), String
     ))
 }
 
-fn read_module(source: &str) -> Result<ModuleFacts, String> {
+fn read_module(source: &str, re_exports: bool) -> Result<ModuleFacts, String> {
     let tokens = tokenize(source, Language::JavaScript)
         .map_err(|error| error.to_string())?
         .tokens;
@@ -193,9 +199,26 @@ fn read_module(source: &str) -> Result<ModuleFacts, String> {
                 continue;
             }
             if word(Some(token), "export") {
+                if re_exports && punct(tokens.get(at + 1), "{") {
+                    let (dependency, next) = read_import(&tokens, at)?;
+                    for (imported, exported) in &dependency.bindings {
+                        if !accept_source_library_re_export_name("identifier", imported)
+                            || !accept_source_library_re_export_name("identifier", exported)
+                            || !facts.exports.insert(exported.clone())
+                        {
+                            return Err("a named re-export needs unique actual provider and public identifiers".to_owned());
+                        }
+                    }
+                    facts.re_exports.push(dependency);
+                    at = next;
+                    continue;
+                }
                 let binding = declaration(&source, &tokens, at + 1, &mut expression_heads)
                     .ok_or("a source library export needs an actual named function declaration or constant binding")?;
-                facts.exports.insert(binding.name);
+                facts.direct_exports.insert(binding.name.clone());
+                if !facts.exports.insert(binding.name) && re_exports {
+                    return Err("named re-exports need unique actual public owners".to_owned());
+                }
             }
             if !expression_heads.contains(&at)
                 && (word(Some(token), "function") || word(Some(token), "const"))
@@ -257,7 +280,8 @@ fn visit<'a>(
     if !seen.insert(path) {
         return Ok(());
     }
-    for import in &modules[path].imports {
+    let current = &modules[path];
+    for import in current.imports.iter().chain(&current.re_exports) {
         let requested = dependency(path, &import.specifier)?;
         let (provider, facts) = modules
             .get_key_value(requested.as_str())
@@ -273,6 +297,36 @@ fn visit<'a>(
     }
     order.push(path);
     Ok(())
+}
+
+fn resolve_provider(
+    mut path: String,
+    mut name: String,
+    modules: &HashMap<&str, ModuleFacts>,
+) -> Result<(String, String), String> {
+    let mut seen = HashSet::new();
+    loop {
+        if seen.len() >= 128 || !seen.insert((path.clone(), name.clone())) {
+            return Err("a named re-export needs an acyclic complete actual provider chain".to_owned());
+        }
+        let actual = modules.get(path.as_str())
+            .ok_or("a named re-export lost its actual supplied provider module")?;
+        if actual.direct_exports.contains(&name) && actual.declarations.iter().any(|row| row.name == name) {
+            return Ok((path, name));
+        }
+        let mut matches = actual.re_exports.iter().flat_map(|row| {
+            row.bindings.iter().filter(|(_, exported)| exported == &name)
+                .map(|(imported, _)| (row, imported))
+        });
+        let (dependency_row, imported) = matches.next()
+            .ok_or_else(|| format!("a named re-export needs an actual declared provider for {name} in {path}"))?;
+        if matches.next().is_some() {
+            return Err(format!("a named re-export needs exactly one actual declared provider for {name} in {path}"));
+        }
+        let next = dependency(&path, &dependency_row.specifier)?;
+        name.clone_from(imported);
+        path = next;
+    }
 }
 
 fn model(source: &str) -> Result<ProgramRepresentation, String> {
@@ -408,6 +462,19 @@ pub(super) fn compose<'a>(
     entry: &'a str,
     inputs: &[(&'a str, &'a str)],
 ) -> Result<Closure<'a>, String> {
+    compose_with_re_exports(entry, inputs, "")
+}
+
+pub(crate) fn compose_with_re_exports<'a>(
+    entry: &'a str,
+    inputs: &[(&'a str, &'a str)],
+    re_export_profile: &str,
+) -> Result<Closure<'a>, String> {
+    let profile_error = read_source_library_re_export_profile_error(re_export_profile, true, true);
+    if !profile_error.is_empty() {
+        return Err(profile_error);
+    }
+    let re_exports = !re_export_profile.is_empty();
     if inputs.is_empty() || inputs.len() > 128 {
         return Err("a source library needs at most 128 supplied modules".to_owned());
     }
@@ -425,7 +492,7 @@ pub(super) fn compose<'a>(
                 "source library needs bounded unique normalized module paths and texts".to_owned(),
             );
         }
-        modules.insert(path, read_module(source)?);
+        modules.insert(path, read_module(source, re_exports)?);
     }
     let mut order = Vec::new();
     if !modules.contains_key(entry) {
@@ -438,16 +505,24 @@ pub(super) fn compose<'a>(
     let mut counts = HashMap::new();
     let mut names = HashSet::new();
     let mut aliased = HashSet::new();
+    let provider = |path: &str, import: &Import, name: &str| {
+        let path = dependency(path, &import.specifier)?;
+        if re_exports {
+            resolve_provider(path, name.to_owned(), &modules)
+        } else {
+            Ok((path, name.to_owned()))
+        }
+    };
     for &path in &order {
         for Declaration { name, .. } in &modules[path].declarations {
             *counts.entry(name.as_str()).or_insert(0) += 1;
         }
         names.extend(modules[path].identifiers.iter().cloned());
         for import in &modules[path].imports {
-            let provider = dependency(path, &import.specifier)?;
             for (original, local) in &import.bindings {
-                if original != local {
-                    aliased.insert((provider.clone(), original.clone()));
+                let actual = provider(path, import, original)?;
+                if actual.1 != *local {
+                    aliased.insert(actual);
                 }
             }
         }
@@ -506,10 +581,9 @@ pub(super) fn compose<'a>(
             }
         }
         for import in &modules[path].imports {
-            let provider = dependency(path, &import.specifier)?;
             for (original, local) in &import.bindings {
                 let replacement = selected
-                    .get(&(provider.clone(), original.clone()))
+                    .get(&provider(path, import, original)?)
                     .ok_or_else(|| format!("missing actual provider declaration {original}"))?;
                 imports.insert(replacement.clone());
                 if replacement != local {
@@ -521,12 +595,25 @@ pub(super) fn compose<'a>(
         if rewrites > 1024 {
             return Err("source alias composition exceeds 1024 actual binding rewrites".to_owned());
         }
+        if re_exports {
+            for exported in &modules[path].exports {
+                let actual = resolve_provider(path.to_owned(), exported.clone(), &modules)?;
+                let compiled = selected.get(&actual)
+                    .ok_or("a named public export lost its actual compiled declaration")?;
+                if path == entry && !accept_source_library_entry_export_owner(exported, compiled) {
+                    return Err(format!("a public re-export needs its actual callable or constructor export wrapper: {exported}"));
+                }
+            }
+        }
         substitute_imports(&mut body, &substitutions)?;
-        let transformed = read_module(&body)?;
+        let transformed = read_module(&body, re_exports)?;
         let units = Source::new(&body);
         let mut start = 0;
         let mut compiled = String::new();
-        for import in transformed.imports {
+        let mut removals = transformed.imports;
+        removals.extend(transformed.re_exports);
+        removals.sort_unstable_by_key(|row| row.span.start);
+        for import in removals {
             compiled.push_str(&units.slice(start, import.span.start));
             start = import.span.end;
         }

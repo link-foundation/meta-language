@@ -63,14 +63,14 @@ fn compare_order(
     Ok(())
 }
 
-fn selected(network: &LinkNetwork, fields: &Fields, body: LinkId) -> Result<bool> {
+fn selected(network: &LinkNetwork, fields: &Fields, body: LinkId, node_limit: usize) -> Result<bool> {
     let mut pending = vec![body];
     let mut visited = HashSet::new();
     while let Some(id) = pending.pop() {
         if !visited.insert(id) {
             continue;
         }
-        if visited.len() > 100_000 {
+        if visited.len() > node_limit {
             return Err(error(
                 "Rust const function proof: interpretation order exceeds its traversal limit",
             ));
@@ -95,8 +95,9 @@ pub(super) fn validate_order(
     fields: &Fields,
     mapping: LinkId,
     body: LinkId,
+    node_limit: usize,
 ) -> Result<()> {
-    if !selected(network, fields, body)? {
+    if !selected(network, fields, body, node_limit)? {
         return Ok(());
     }
     let mapping = network

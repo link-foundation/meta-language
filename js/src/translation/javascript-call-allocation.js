@@ -62,6 +62,13 @@ export function resumeJavaScriptCallAllocation(program,machine,identity){
   if(pending.fallback!==undefined){const made=allocateJavaScriptArray(machine.heap,identity,pending.fallback.prototype,pending.fallback.length);if(made.$==='arrayNormal')return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayCreationConstruction(made.heap,pending.state,{$:'normalCompletion',value:made.value}));if(made.$==='arrayResourceLimit')return {$:'machineResourceLimit',machine,reason:made.reason};if(made.$==='arrayInvalid')return {$:'machineInvalid',heap:made.heap,reason:made.reason};if(made.$==='arrayError')return {$:'machineInvalid',heap:made.heap,reason:made.reason};return {$:'machineInvalid',heap:made.heap,reason:'ArrayCreate retains its actual allocation result'};}
   return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayCreationAllocation(machine.heap,pending.state,identity));
  }
+ return resumeJavaScriptCallPendingAllocation(program,machine,frame,identity);
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {JavaScriptCallFrame} frame @param {bigint} identity @returns {JavaScriptCallMachineTransition} */
+function resumeJavaScriptCallPendingAllocation(program,machine,frame,identity){
+ const pending=frame.pending;
  if(pending.$==='waitConstruction'){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'construction allocation requires actual constructor authority'};const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return {$:'machineInvalid',heap:machine.heap,reason:'construction allocation retains its actual fresh Object request'};return acceptJavaScriptCallConstruction(program,machine,pending.destination,pending.realm,resumeJavaScriptConstructionAllocation(program,machine.heap,directory,pending.state,identity));}
  if(pending.$==='waitFunctionBind')return acceptJavaScriptCallFunctionBind(program,machine,pending.destination,pending.realm,resumeJavaScriptFunctionBindAllocation(machine.heap,pending.state,identity));
  if(pending.$==='waitObjectFromEntries'){const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return request.$==='machineResourceLimit'?request:{$:'machineInvalid',heap:machine.heap,reason:'Object.fromEntries Object response retains its actual allocation request'};return acceptJavaScriptCallObjectFromEntries(program,machine,pending.destination,pending.realm,resumeJavaScriptObjectFromEntriesAllocation(machine.heap,pending.state,identity));}

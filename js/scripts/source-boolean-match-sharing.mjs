@@ -1,4 +1,6 @@
 import {shareSourceLexicalAliases} from './source-lexical-aliases.mjs';
+import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 // Source construction only. The shared finite-inventory rule supplies the
 // proof; this adapter transports actual checked owners and occurrence paths.
 import {planBooleanConstructorMatchSharing,planClosedConstructorMatchSharing,planUnusedConstructorBindings,testUnusedConstructorAlias} from '../src/translation/boolean-constructor-match-rules.js';
@@ -7,11 +9,24 @@ import {readProjectData} from './project-data.mjs';
 import {shareSourceConstructorProjections,shareSourceScopedConstructorProjections} from './source-constructor-projections.mjs';
 const root=new URL('../../',import.meta.url);
 export const directCallMatchSharingModel='closed constructor match with direct calls sharing 1';
+export const nominalReferenceMatchSharingModel='closed constructor match with immutable nominal projections 1';
+
+export function readNominalReferenceMatchSharingInputs() {
+  return [
+    'js/scripts/source-boolean-match-sharing.mjs',
+    'js/scripts/source-constructor-projections.mjs',
+    'js/src/translation/boolean-constructor-match-rules.js',
+    'parity/self-translation/source-reference-constructor-projection-sharing.lino',
+  ].map(path => {
+    const bytes = readFileSync(new URL(path, root));
+    return { path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+  });
+}
 export function shareSourceBooleanConstructorMatches(program){
  return shareSourceConstructorMatches(program,false);
 }
-export function shareSourceClosedConstructorMatches(program,{shareDirectCalls=false}={}){
- return shareSourceConstructorMatches(program,true,shareDirectCalls);
+export function shareSourceClosedConstructorMatches(program,{shareDirectCalls=false,shareImmutableNominalReferences=false}={}){
+ return shareSourceConstructorMatches(program,true,shareDirectCalls,shareImmutableNominalReferences);
 }
 function readDirectCallOutcome(program,arm){
  const {body,pattern}=arm;
@@ -31,7 +46,7 @@ function readDirectCallOutcome(program,arm){
  }
  return {kind:'direct call',target:target.fullName,type:typeKey(body.type),span:body.span,args};
 }
-function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
+function shareSourceConstructorMatches(program,closed,shareDirectCalls=false,shareImmutableNominalReferences=false){
  if(closed&&program.sourceLanguage!=='JavaScript')throw new TypeError('closed constructor sharing requires the checked JavaScript value model; ownership-sensitive source models need their own proof');
  const rule=readProjectData(new URL('parity/self-translation/source-'+(closed?'closed':'boolean')+'-match-sharing.lino',root));
  if(rule.schemaVersion!==1||rule.model!==(closed?'closed constructor match sharing 1':'literal Boolean constructor match arms 1')||rule.preserveScrutinee!==true||rule.requireCompleteOwner!==true||closed&&(rule.pruneUnusedBindings!==true||rule.pruneUnusedAliases!==true||rule.shareSingleConstructorProjections!==true||rule.shareScopedConstructorProjections!==true||rule.shareImmutableLexicalAliases!==true||rule.shareLiteralText!==true||rule.shareLiteralScalar!==true||rule.foldLiteralConditions!==true||rule.reduceBooleanIdentities!==true||rule.propagateLiteralAliases!==true))throw new TypeError('actual qualified constructor match sharing rules are required');
@@ -39,8 +54,38 @@ function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
   const calls=readProjectData(new URL('parity/self-translation/source-direct-call-match-sharing.lino',root));
   if(calls.schemaVersion!==1||calls.model!==directCallMatchSharingModel||calls.requireActualTarget!==true||calls.preserveArgumentOrder!==true||calls.requireSameSourceSpan!==true||calls.excludeConstructorBindings!==true)throw new TypeError('actual qualified direct-call match sharing rules are required');
  }
+ if(shareImmutableNominalReferences){
+  const projections=readProjectData(new URL('parity/self-translation/source-reference-constructor-projection-sharing.lino',root));
+  if(projections.schemaVersion!==1||projections.model!==nominalReferenceMatchSharingModel||projections.requireImmutableNominalOwner!==true||projections.preserveReferenceHandles!==true||projections.excludeDeferredClosures!==true||projections.excludeShadowedBindings!==true||projections.shareIdenticalUnboundArms!==true)throw new TypeError('actual immutable nominal projection rules are required');
+ }
  const proofs=[];
  let memo,active,referenceCache,visits,referenceVisits;
+ let identities,identityCache,identityVisits;
+ // Intern complete checked values, including their spans and binding names.
+ // A child contributes an integer identity instead of an expanded serialization.
+ function exactIdentity(value,depth=0){
+  if(value===undefined)return 'undefined';
+  if(value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'){
+   return typeof value==='number'&&Object.is(value,-0)?'number:-0':typeof value+':'+String(value);
+  }
+  if(typeof value!=='object')throw new TypeError('checked source identity requires a structural value');
+  if(identityCache.has(value))return identityCache.get(value);
+  if(depth>256||++identityVisits>1000000)throw new TypeError('checked source identity exceeds its structural budget');
+  const array=Array.isArray(value);
+  const prototype=Object.getPrototypeOf(value);
+  if(prototype!==(array?Array.prototype:Object.prototype)&&prototype!==null)throw new TypeError('checked source identity requires ordinary structural records');
+  identityCache.set(value,null);
+  const entries=Object.entries(value).map(([key,child])=>{
+   const identity=exactIdentity(child,depth+1);
+   if(identity===null)throw new TypeError('checked source identity refuses structural cycles');
+   return [key,identity];
+  });
+  const shape=JSON.stringify([array?value.length:null,prototype===null,entries]);
+  if(!identities.has(shape))identities.set(shape,identities.size);
+  const identity=identities.get(shape);
+  identityCache.set(value,identity);
+  return identity;
+ }
  function references(body){
   if(body&&typeof body==='object'&&referenceCache.has(body))return referenceCache.get(body);
   const names=new Set(),seen=new WeakSet(),pending=[body];
@@ -133,6 +178,7 @@ function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
      if(closed&&body.k==='lit'&&body.type.kind==='string'&&typeof body.value==='string'&&Object.keys(body).every(key=>['k','type','value','span'].includes(key)))return {kind:'literal text',value:body.value};
      if(closed&&body.k==='lit'&&['float','int','nat'].includes(body.type.kind)&&typeof body.value==='string'&&Object.keys(body).every(key=>['k','type','value','span'].includes(key)))return {kind:'literal scalar',type:typeKey(body.type),value:body.value};
      if(closed&&body.k==='abort'&&typeof body.message==='string'&&Object.keys(body).every(key=>['k','type','message','span'].includes(key)))return {kind:'abort',message:body.message,type:typeKey(body.type)};
+     if(shareImmutableNominalReferences&&arm.pattern.binds.every(name=>name===null))return {kind:'identical unbound body',identity:exactIdentity(body)};
      if(shareDirectCalls)return readDirectCallOutcome(program,arm);
      return null;
     });
@@ -152,8 +198,9 @@ function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
  for(const [name,entry]of program.declarations){
   // Proof paths and their work budget belong to the declaration that owns them.
   memo=new WeakMap();active=new WeakSet();referenceCache=new WeakMap();visits=0;referenceVisits=0;
+  identities=new Map();identityCache=new WeakMap();identityVisits=0;
   let body=entry.k==='fn'?rewrite(entry.body,['body'],name):entry.body;
-  if(closed&&entry.k==='fn'){body=shareSourceLexicalAliases(program,entry,body,proofs);body=rewrite(body,['body'],name);body=shareSourceScopedConstructorProjections(program,entry,body,proofs);body=shareSourceConstructorProjections(program,entry,body,proofs);}
+  if(closed&&entry.k==='fn'){body=shareSourceLexicalAliases(program,entry,body,proofs);body=rewrite(body,['body'],name);body=shareSourceScopedConstructorProjections(program,entry,body,proofs,shareImmutableNominalReferences);body=shareSourceConstructorProjections(program,entry,body,proofs,shareImmutableNominalReferences);}
   declarations.set(name,body===entry.body?entry:{...entry,body});
  }
  function items(values){return values.map(item=>{
@@ -161,5 +208,5 @@ function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
   if(program.declarations.get(item.fullName)!==item)throw new TypeError('source match sharing needs actual declaration owners');
   return declarations.get(item.fullName);
  });}
- return {program:{...program,declarations,items:items(program.items)},proof:{model:shareDirectCalls?directCallMatchSharingModel:rule.model,proofs}};
+ return {program:{...program,declarations,items:items(program.items)},proof:{model:shareImmutableNominalReferences?nominalReferenceMatchSharingModel:shareDirectCalls?directCallMatchSharingModel:rule.model,proofs}};
 }

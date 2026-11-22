@@ -17,9 +17,25 @@ export function readJavaScriptCollectionConstructionReceiver(program,machine,fra
  if(state===undefined||state.phase!=='body'||state.mode!==instruction.kind||state.allocationKind!==readJavaScriptConstructedCollectionAllocationKind(instruction.kind)||state.target.$!=='object'||state.target.identity!==frame.identity||!testJavaScriptSemanticSameValue(state.receiver,receiver)||!testJavaScriptSemanticSameValue(state.newTarget,frame.newTarget??{$:'undefined'})||fn===undefined||readJavaScriptCollectionConstructorKind(fn)!==instruction.kind)return {receiver:undefined,error:'collection initializer reuse requires its actual generic Construct parent, target, receiver and newTarget'};
  const directory=program.constructorDirectory;if(directory===undefined)return {receiver:undefined,error:'collection initializer reuse retains its actual constructor authority'};
  const invalid=readJavaScriptConstructionStateError(program,machine.heap,directory,state);if(invalid!=='')return {receiver:undefined,error:invalid};
- const actual=fn.instructions[frame.position];if(actual?.$!=='collectionAllocate'||actual.kind!==instruction.kind||actual.destination!==instruction.destination||actual.prototype!==instruction.prototype||frame.arguments.length!==state.arguments.length||frame.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,state.arguments[index]??{$:'undefined'})))return {receiver:undefined,error:'collection initializer reuse retains its actual selected allocation instruction and complete ordered arguments'};
- const object=machine.heap.objects[findJavaScriptHeapDirectoryObject(machine.heap.objects,receiver.identity)],brand=instruction.kind==='Map'?'mapObject':instruction.kind==='Set'?'setObject':instruction.kind==='WeakMap'?'weakMapObject':'weakSetObject';
+ const argumentsError=readJavaScriptCollectionConstructionArgumentsError(frame,fn,instruction,state);
+ if(argumentsError!=='')return {receiver:undefined,error:argumentsError};
+ return readJavaScriptFreshCollectionConstructionReceiver(machine.heap,instruction.kind,receiver.identity,receiver,state.prototype);
+}
+
+/** @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {JavaScriptCallInstruction} instruction @param {JavaScriptConstructionState} state @returns {string} */
+function readJavaScriptCollectionConstructionArgumentsError(frame,fn,instruction,state){
+ if(instruction.$!=='collectionAllocate')return 'collection initializer reuse retains its actual selected allocation instruction and complete ordered arguments';
+ const actual=fn.instructions[frame.position];if(actual?.$!=='collectionAllocate'||actual.kind!==instruction.kind||actual.destination!==instruction.destination||actual.prototype!==instruction.prototype||frame.arguments.length!==state.arguments.length||frame.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,state.arguments[index]??{$:'undefined'})))return 'collection initializer reuse retains its actual selected allocation instruction and complete ordered arguments';
+ return '';
+}
+
+/** @param {JavaScriptOrdinaryHeap} heap @param {string} kind @param {bigint} identity
+ * @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue} prototype
+ * @returns {{receiver:JavaScriptSemanticValue|undefined,error:string}} */
+function readJavaScriptFreshCollectionConstructionReceiver(heap,kind,identity,receiver,prototype){
+ const object=heap.objects[findJavaScriptHeapDirectoryObject(heap.objects,identity)],brand=kind==='Map'?'mapObject':kind==='Set'?'setObject':kind==='WeakMap'?'weakMapObject':'weakSetObject';
  const empty=object!==undefined&&(object.$==='weakMapObject'||object.$==='weakSetObject')?object.weakEntries.length===0:object!==undefined&&(object.$==='mapObject'||object.$==='setObject')?object.entries.length===0:false;
- if(object===undefined||object.$!==brand||!empty||!testJavaScriptSemanticSameValue(object.prototype,state.prototype))return {receiver:undefined,error:'collection initializer reuse requires its actual fresh empty internal slots and selected newTarget prototype'};
+ if(object===undefined||object.$!==brand||!empty||!testJavaScriptSemanticSameValue(object.prototype,prototype))return {receiver:undefined,error:'collection initializer reuse requires its actual fresh empty internal slots and selected newTarget prototype'};
  return {receiver,error:''};
 }

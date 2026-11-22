@@ -192,7 +192,7 @@ fn source_offset(network: &LinkNetwork, id: Option<LinkId>) -> Option<f64> {
         .as_f64()
 }
 
-fn validate_original_shapes(network: &LinkNetwork, fields: &Fields, body: LinkId) -> Result<()> {
+fn validate_original_shapes(network: &LinkNetwork, fields: &Fields, body: LinkId, node_limit: usize) -> Result<()> {
     let policy = crate::translation::owned_local_state::policy();
     let main = field(fields, body, "main");
     let mut pending = vec![body];
@@ -201,7 +201,7 @@ fn validate_original_shapes(network: &LinkNetwork, fields: &Fields, body: LinkId
         if !visited.insert(id) {
             continue;
         }
-        if visited.len() > 100_000 {
+        if visited.len() > node_limit {
             return Err(error(
                 "owned state record shapes exceed their traversal limit",
             ));
@@ -281,6 +281,7 @@ pub(super) fn validate_order(
     declarations: &[LinkId],
     body: LinkId,
     mapping: LinkId,
+    node_limit: usize,
 ) -> Result<()> {
     if !declarations
         .iter()
@@ -288,7 +289,7 @@ pub(super) fn validate_order(
     {
         return Ok(());
     }
-    validate_original_shapes(network, fields, body)?;
+    validate_original_shapes(network, fields, body, node_limit)?;
     // The original graph keeps object identity before native maps and Item
     // references project declarations to names. Mapping order is independent
     // from ordered item traversal, as in the JavaScript declaration owner check.

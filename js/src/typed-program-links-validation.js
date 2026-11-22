@@ -60,7 +60,16 @@ import {checkRustSourceExpressionPosition} from './translation/rust-source-expre
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
-export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
+import {withSourceOwnerContainers} from './translation/owned-program-containers.js';
+import {readTypedProgramOwnerTraversal} from './typed-program-source-owners.js';
+
+export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap(), sourceOwners } = {}) {
+  if (sourceOwners) return withSourceOwnerContainers(program, sourceOwners.directory, () =>
+    validateProgram(program, references, graphPatterns, patternScopes, sourceOwners));
+  return validateProgram(program, references, graphPatterns, patternScopes);
+}
+
+function validateProgram(program, references, graphPatterns, patternScopes, sourceOwners) {
   checkRustDataTypeFieldSignatureProgramContainers(program);
   checkRustConstFunctionContainers(program);
   checkRustRuntimeShell(program);
@@ -69,7 +78,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   // graph. Check descriptors before reading even the initial role fields.
   if (program && typeof program === 'object' && Object.hasOwn(program, 'sourcePureUnitCalls')) checkRustPureUnitCalls(program);
   checkRustOwnedLocalStateRecordShapes(program);
-  validateSourceSpans(program);
+  validateSourceSpans(program, sourceOwners);
   if (!program || program.schemaVersion !== 1 || !['JavaScript', 'Rust', 'Lean', 'Rocq'].includes(program.sourceLanguage)
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');
   if (program.main != null && (typeof program.main !== 'object' || Array.isArray(program.main)
@@ -78,21 +87,24 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, Object.hasOwn(program, 'utf16Strings'))) throw new TypeError('a program string representation flag must be an explicit boolean');
   const active = new Set();
   const visited = new Set();
+  const structure = readTypedProgramOwnerTraversal(program, sourceOwners,
+    'the checked program exceeds its structural resource limit');
   function targetOf(node, role) {
     for (const [label, target] of references.get(node) ?? []) if (readProgramReferenceRole(label) === role) return target;
     return undefined;
   }
-  function bounded(value, depth = 0) {
+  function bounded(value, depth = 0, owner) {
     if (!value || typeof value !== 'object') {
       if (typeof value === 'function' || typeof value === 'symbol') throw new TypeError('typed programs contain data, not host callbacks');
       return;
     }
     if (active.has(value)) throw new TypeError('the checked program contains a structural cycle');
     if (visited.has(value)) return;
-    if (depth > 256 || visited.size >= 100_000) throw new TypeError('the checked program exceeds its structural resource limit');
+    if (depth > 256) throw new TypeError('the checked program exceeds its structural resource limit');
+    structure.visit(owner);
     visited.add(value); active.add(value);
     const values = value instanceof Map ? [...value].flat() : Object.values(value);
-    for (const child of values) bounded(child, depth + 1);
+    for (const child of values) bounded(child, depth + 1, structure.childOwner(value, child, owner));
     active.delete(value);
   }
   checkRustPureUnitCalls(program);
@@ -106,10 +118,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   // the semantic walk as well as the number of unique structural records.
   const semanticLimit = 100_000;
   const semanticLimitError = 'the linked program exceeds its semantic resource limit';
-  let semanticVisits = 0;
-  function visit() {
-    if (++semanticVisits > semanticLimit) throw new TypeError(semanticLimitError);
-  }
+  const semantic = readTypedProgramOwnerTraversal(program, sourceOwners, semanticLimitError);
+  const visit = () => semantic.visit();
   // Type validation depends only on the program's declaration and reference
   // tables. The structural walk already rejected cycles. The expression walk
   // charges each occurrence, and each distinct type is checked and charged once.
@@ -180,6 +190,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   }
   for (const external of program.externals ?? []) declarations.set(external.name, external);
   for (const [name, entry] of program.declarations) {
+    semantic.enter(semantic.ownerOf(entry));
     if(entry.sourceStandardCollectionLibraryOwner!==undefined){checkRustStandardCollectionLibraryOwner(entry,program.sourceLanguage);const target=targetOf(entry.sourceStandardCollectionLibraryOwner,'standardCollectionLibraryDeclaration');if(graphPatterns?target!==entry:target&&target!==entry)throw new TypeError('a collection library owner must reference its actual declaration');}
     if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if(entry.sourceExclusiveSignature!==undefined)checkRustExclusiveSourceSignature(entry.sourceExclusiveSignature,entry.params.map(parameter=>parameter.type),entry.ret,program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if(entry.sourceFnMutSpecialization!==undefined)checkRustFnMutSourceSpecialization(entry.sourceFnMutSpecialization,entry.params.map(parameter=>parameter.type),entry.ret,program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
     if(entry.k==='fn'&&entry.sourceStateTransform!==undefined){const facet=checkRustFiniteLoopStateTransform(entry.sourceStateTransform,entry,program.sourceLanguage,value=>value,value=>declarations.get(value.name));if(facet.control)type(facet.control);for(const root of [facet.result,...facet.slots.map(slot=>slot.position)]){let position=root;while(position){type(position.type);position=position.arrayElementPosition;}}}
@@ -581,10 +592,12 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
   }
   for (const entry of program.declarations.values()) {
+    semantic.enter(semantic.ownerOf(entry));
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));
     expression(entry.body ?? entry.value, environment);
     if (entry.k === 'fn') same(entry.body.type, entry.ret, 'function return type');
   }
+  semantic.enter(undefined);
   expression(program.main, new Map());
   validateRustTypeNamespace(program);
   checkRustBorrowedVectorSourceRegions(program);
