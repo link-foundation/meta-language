@@ -40,6 +40,7 @@ mod type_owners;
 pub(super) struct SourceOrigin {
     pub(super) array_element_position: Option<Box<crate::translation::source_signatures::SourceTypeSignature>>,
     pub(super) source_function_pointer_header: bool,
+    pub(super) source_fn_mut_parameter: bool,
     /// Actual concrete standard sum source children, retained independently of
     /// the generated datatype spelling and re-resolved against the catalog.
     pub(super) standard_sum_source: Option<Box<super::standard_sum_source::StandardSumSource>>,
@@ -146,6 +147,7 @@ impl SourceOrigin {
         Self {
             array_element_position: None,
             source_function_pointer_header: false,
+            source_fn_mut_parameter: false,
             standard_sum_source: None,
             ty: None,
             float_source_model: None,
@@ -212,6 +214,7 @@ impl SourceOrigin {
         let array_element_copy_evidence = matches!(&ty, Type::Array { element, .. } if accept_rust_scalar_array_index_element(element.kind()));
         Self {
             source_function_pointer_header: false,
+            source_fn_mut_parameter: false,
             standard_sum_source: None,
             float_source_model: (ty == super::FLOAT).then_some("binary64 scalar"),
             ty: Some(ty),

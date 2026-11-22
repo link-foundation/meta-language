@@ -39,6 +39,7 @@ pub(super) struct FnMutSourceDeclaration {
 
 pub(super) struct FnMutSourceDeclarations {
     source: Source,
+    pub(super) source_version: String,
     tokens: Arc<Vec<Token>>,
     kinds: Vec<String>,
     values: Vec<String>,
@@ -53,7 +54,11 @@ fn position(value: f64) -> Option<usize> {
 }
 
 impl FnMutSourceDeclarations {
-    pub(super) fn new(source: &str, tokens: Arc<Vec<Token>>) -> Result<Self> {
+    pub(super) fn new(
+        source: &str,
+        tokens: Arc<Vec<Token>>,
+        source_version: String,
+    ) -> Result<Self> {
         const SOURCE_LIMIT: usize = 16_777_216;
         if source.encode_utf16().take(SOURCE_LIMIT + 1).count() > SOURCE_LIMIT {
             return Err(refuse(
@@ -63,6 +68,7 @@ impl FnMutSourceDeclarations {
         }
         Ok(Self {
             source: Source::new(source),
+            source_version,
             kinds: tokens
                 .iter()
                 .map(|token| token_kind(token).to_owned())
@@ -285,7 +291,8 @@ mod tests {
     fn shared_header_plan_retains_real_generic_and_callback_source_ranges() {
         let source = "fn apply<T, E>(value: T, action: &mut impl FnMut(T, (u8, u8)) -> Result<T, Option<E>>) -> Result<T, Option<E>> { /* 🧪 */ action(value, (1, 2)) }";
         let tokens = Arc::new(tokenize(source, Language::Rust).unwrap().tokens);
-        let directory = FnMutSourceDeclarations::new(source, Arc::clone(&tokens)).unwrap();
+        let directory =
+            FnMutSourceDeclarations::new(source, Arc::clone(&tokens), "1.90.0".to_owned()).unwrap();
         let declaration = directory
             .capture(&["sample".to_owned()], &tokens[0])
             .unwrap()

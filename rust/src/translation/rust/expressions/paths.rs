@@ -144,6 +144,10 @@ impl RustParser {
         if let Some(shared) = self.shared_array_constructor(&segments, token, path)? {
             return Ok(shared);
         }
+        if let Some(declaration) = self.select_fn_mut_source_template(&segments, path) {
+            return self.read_fn_mut_source_invocation(&declaration, token, path);
+        }
+        let callback = self.is_fn_mut_source_callback(&segments);
         let c = &self.cursor;
         if c.is("::") && c.is_at("<", 1) {
             return Err(unsupported(
@@ -169,6 +173,13 @@ impl RustParser {
             }),
         )?;
         if !c.is("(") {
+            if callback {
+                return Err(unsupported(
+                    "Rust source FnMut callback",
+                    "a source FnMut formal cannot escape through a bare value",
+                    Some(token.span()),
+                ));
+            }
             let node = SExpr::new(SNode::Name {path:record_path.unwrap_or_else(||self.source_value_path(&segments,path))},span(token,token));
             let unit=match &node.node{SNode::Name{path:names}=>self.origins.lookup_value_owner(names,path).is_some_and(|entry|matches!(entry.declaration,super::super::SourceDeclaration::Constructor{fields,..}if fields.is_empty())),_=>false};
             if unit&&let Some(produced)=self.nominal_constructor_origin(&node,&[],path,node.span)?{self.origins.mark(&node,produced);return Ok(node);}
@@ -191,6 +202,9 @@ impl RustParser {
         let mut args = self.contextual_call_arguments(path, &callee)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if callback {
+            return self.read_fn_mut_source_callback_invocation(&callee, &args, path, range);
+        }
         if let Some(cloned) = self.standard_collection_clone_call(&segments, &args, path, range)? {
             return Ok(cloned);
         }

@@ -30,7 +30,9 @@ pub(super) struct ResolvedFnMutSourceHeader {
 
 pub(super) struct FnMutSourceHeaderRead {
     declaration: FnMutSourceDeclaration,
-    callback: CheckedCallbackHeader,
+    pub(super) callback: CheckedCallbackHeader,
+    pub(super) body_replay: bool,
+    pub(super) callback_binding: Option<String>,
     pub(super) resolved: Option<ResolvedFnMutSourceHeader>,
 }
 
@@ -144,6 +146,15 @@ impl RustParser {
         declaration: &FnMutSourceDeclaration,
         bindings: Vec<(String, SourceOrigin)>,
     ) -> Result<ReplayedFnMutSourceHeader> {
+        self.replay_fn_mut_source_declaration(declaration, bindings, false)
+    }
+
+    pub(super) fn replay_fn_mut_source_declaration(
+        &mut self,
+        declaration: &FnMutSourceDeclaration,
+        bindings: Vec<(String, SourceOrigin)>,
+        body_replay: bool,
+    ) -> Result<ReplayedFnMutSourceHeader> {
         let directory = Rc::clone(self.fn_mut_source_declarations.as_ref().ok_or_else(|| {
             unsupported(
                 "Rust source FnMut function",
@@ -174,6 +185,9 @@ impl RustParser {
         let old_inherent = std::mem::replace(&mut self.inherent_owner, inherent);
         let old_module = std::mem::replace(&mut self.module_path, module);
         let old_origin = self.origins.current_type.clone();
+        let old_scope = std::mem::take(&mut self.origins.scope);
+        let old_ownership = self.origins.snapshot_owned_bindings();
+        let old_temporaries = self.origins.owned_temporary_frame();
         let key = declaration
             .owner
             .iter()
@@ -196,6 +210,8 @@ impl RustParser {
                 .replace(FnMutSourceHeaderRead {
                     declaration: declaration.clone(),
                     callback,
+                    body_replay,
+                    callback_binding: None,
                     resolved: None,
                 });
             let parsed = self.function(&declaration.owner);
@@ -226,6 +242,9 @@ impl RustParser {
             })
         })();
         self.origins.current_type = old_origin;
+        self.origins.scope = old_scope;
+        self.origins.restore_owned_bindings(old_ownership);
+        self.origins.restore_owned_temporary_frame(old_temporaries);
         self.module_path = old_module;
         self.inherent_owner = old_inherent;
         if let Some(method) = old_method {
@@ -323,6 +342,17 @@ impl RustParser {
                 .as_ref()
                 .map(|ty| self.record_source_type(ty, &origin.path));
         }
+        let result = if read.body_replay {
+            super::fn_mut_source_invocations::fn_mut_result_packet(&result, path)?
+        } else {
+            result
+        };
+        if read.body_replay {
+            owner_arguments[parameters.len()] = result
+                .source_owner
+                .clone()
+                .expect("the expanded result retains its actual tuple owner");
+        }
         let ty = Type::Function {
             params: parameters
                 .iter()
@@ -347,6 +377,7 @@ impl RustParser {
             arguments: owner_arguments,
         });
         origin.copy_evidence = None;
+        origin.source_fn_mut_parameter = true;
         origin.callable_parameters = Some(parameters);
         origin.callable_result = Some(Box::new(result));
         while !self.cursor.at_end() && self.cursor.peek().end <= original.type_range.end {
@@ -636,7 +667,9 @@ mod tests {
     fn the_actual_callback_type_positions_resolve_concrete_binders() {
         let source = "fn apply<T>(value: &mut u8, mut map: impl FnMut(&T, bool) -> T) -> T { map(&*value, false) }";
         let tokens = Arc::new(tokenize(source, Language::Rust).unwrap().tokens);
-        let directory = Rc::new(FnMutSourceDeclarations::new(source, Arc::clone(&tokens)).unwrap());
+        let directory = Rc::new(
+            FnMutSourceDeclarations::new(source, Arc::clone(&tokens), "1.90.0".to_owned()).unwrap(),
+        );
         let declaration = directory.capture(&[], &tokens[0]).unwrap().unwrap();
         let value = tokens.iter().position(|token| token.value == "u8").unwrap();
         let mut parser = RustParser::new(
@@ -688,7 +721,9 @@ mod tests {
     fn a_template_is_selected_by_its_source_owner_and_explicit_type_arguments() {
         let source = "fn apply<T>(value: u8, mut map: impl FnMut(&T) -> T) -> T { map(&value) } fn main() { apply::<u8>(0, |x| *x); }";
         let tokens = Arc::new(tokenize(source, Language::Rust).unwrap().tokens);
-        let directory = Rc::new(FnMutSourceDeclarations::new(source, Arc::clone(&tokens)).unwrap());
+        let directory = Rc::new(
+            FnMutSourceDeclarations::new(source, Arc::clone(&tokens), "1.90.0".to_owned()).unwrap(),
+        );
         let mut parser = RustParser::new(
             (*tokens).clone(),
             SourceOrigins::new(None, ""),

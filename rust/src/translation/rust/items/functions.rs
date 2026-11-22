@@ -117,6 +117,7 @@ impl RustParser {
             self.cursor.expect(":", Some("parameter"))?;
             let type_token = self.peek();
             let callback_type = self.read_fn_mut_source_formal_type(path, &param_name, params.len())?;
+            let callback_formal = callback_type.is_some();
             let ty = match callback_type {
                 Some(ty) => ty,
                 None => match self.read_fn_mut_source_exclusive_type()? {
@@ -127,7 +128,7 @@ impl RustParser {
                     None => self.parse_type()?,
                 },
             };
-            if mutable && self.fn_mut_source_header_read.is_none() {
+            if mutable && !callback_formal {
                 mutable_params.push((
                     param_token.clone(),
                     type_token,
@@ -307,7 +308,11 @@ impl RustParser {
                 result: source_result.clone(),
             });
         }
-        if self.header_discovery || fn_mut_replay {
+        let fn_mut_body_replay = self
+            .fn_mut_source_header_read
+            .as_ref()
+            .is_some_and(|read| read.body_replay);
+        if self.header_discovery || fn_mut_replay && !fn_mut_body_replay {
             let close = self.declaration_body_boundary()?;
             return Ok(SFn {
                 source_state_transform: None,
@@ -354,6 +359,13 @@ impl RustParser {
         let function_ownership = self.origins.snapshot_owned_bindings();
         let function_temporaries = self.origins.owned_temporary_frame();
         let previous = self.origins.enter(Some(scope));
+        if let Some(read) = &mut self.fn_mut_source_header_read {
+            read.callback_binding = self
+                .origins
+                .scope
+                .get(&read.callback.owner.callback.name)
+                .and_then(|origin| origin.source_lexical_binding_identity.clone());
+        }
         let parameter_names=params.iter().map(|parameter|parameter.name.clone()).collect::<Vec<_>>();
         if !borrowed_vector_result_phase.is_empty(){self.seed_borrowed_vector_parameter_regions(&parameter_names);}
         let mut source_loop = None;

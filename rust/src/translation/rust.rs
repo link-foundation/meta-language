@@ -44,6 +44,7 @@ mod float_predicate_rules;
 mod float_predicates;
 mod fn_mut_source_declarations;
 mod fn_mut_source_headers;
+mod fn_mut_source_invocations;
 mod formatting;
 mod function_pointers;
 mod generic_type_aliases;
@@ -477,6 +478,7 @@ fn parse_rust_with_selected_profiles(
             fn_mut_source_declarations::FnMutSourceDeclarations::new(
                 source,
                 Arc::clone(&declarations.source_constant_tokens),
+                source_versions::canonical(profiles.source_version)?,
             )?,
         ));
     }
