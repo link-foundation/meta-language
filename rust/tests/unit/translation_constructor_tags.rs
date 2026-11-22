@@ -752,3 +752,42 @@ fn finite_conditional_tags_preserve_branch_and_property_evaluation_order() {
         "{error}"
     );
 }
+
+#[test]
+fn literal_constructor_spreads_preserve_nested_branch_effects_and_field_presence() {
+    use meta_language::translation::emit_rust::emit_rust;
+
+    let source =
+        include_str!("../../../parity/fixtures/translation-literal-constructor-spreads.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    let expected = "1\n0\n2\n4\n9\ntrue\nfalse\n1\n4\n4\n9\nfalse\ntrue\n";
+    for script in [source, emitted.text.as_str()] {
+        let output = run(Command::new("node").args(["--input-type=module", "-e", script]));
+        assert!(output.ok, "{}", output.stderr);
+        assert_eq!(output.stdout, expected);
+    }
+    let directory = TemporaryDirectory::new("literal-constructor-spreads");
+    let file = directory.0.join("program.rs");
+    let executable = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&file, emit_rust(&checked).unwrap().text).unwrap();
+    let compiled = run(Command::new("rustc")
+        .arg("--edition=2024")
+        .arg(&file)
+        .arg("-o")
+        .arg(&executable));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let output = run(&mut Command::new(&executable));
+    assert!(output.ok, "{}", output.stderr);
+    assert_eq!(output.stdout, expected);
+    for (replacement, diagnostic) in [
+        ("{ before: observeNumber(2) }", "duplicate field before"),
+        ("option", "projection from literal records"),
+    ] {
+        let error = parse_javascript(&source.replace("{ first: observeNumber(2) }", replacement))
+            .unwrap_err();
+        assert!(error.to_string().contains(diagnostic), "{error}");
+    }
+}

@@ -1381,6 +1381,14 @@ JavaScript undefined, null, or a value according to the field's type.
 Property reads project the value, and membership and spread consult the
 outer carrier. Both typed Links transports retain the field declaration and
 the complete carrier.
+Tagged constructors also accept recursively nested spreads of closed literal
+records and conditional choices between such records. The frontends capture
+fields already visited before evaluating each condition, then bind supplied
+fields in source order before arranging the selected constructor layout. Each
+branch preserves its own field presence. The finite alternative budget also
+applies to combinations of spread choices. Dynamic spreads, duplicate fields
+within a selected branch and indexed field names require additional source
+semantics. General object enumeration order remains outside this draft.
 Known record, tuple, Map and Set bindings have JavaScript `typeof` tag `object`.
 The evaluated-query extension captures calls, field reads, constructed values
 and other represented operands before yielding their statically known tag.

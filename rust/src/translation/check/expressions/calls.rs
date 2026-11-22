@@ -550,7 +550,9 @@ impl Checker {
                 span,
             ));
         }
-        if ctor.fields.iter().any(|field| field.optional) {
+        if ctor.fields.iter().any(|field| field.optional)
+            || fields.iter().zip(&expected_names).any(|((name, _), expected)| name.as_str() != *expected)
+        {
             let mut bindings = Vec::new();
             for (name, source) in fields {
                 let field = ctor.fields.iter().find(|field| field.name == name.as_str()).expect("checked field name");

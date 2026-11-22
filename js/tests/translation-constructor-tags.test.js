@@ -175,3 +175,17 @@ test('finite conditional constructor tags preserve branch choice and property ev
   assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(source))).text), expected);
   assert.throws(() => parseJavaScript(source.replace("'third' : 'second'", "'third' : option")), /finite conditional expression/u);
 });
+
+test('literal constructor spreads preserve nested branch effects and field presence', () => {
+  const source = readFileSync(new URL('../../parity/fixtures/translation-literal-constructor-spreads.js', import.meta.url), 'utf8');
+  const expected = [1, 0, 2, 4, 9, true, false, 1, 4, 4, 9, false, true];
+  const observe = text => {
+    const output = [];
+    runInNewContext(text, { console: { log: value => output.push(value) } }, { timeout: 1000 });
+    return output;
+  };
+  assert.deepEqual(observe(source), expected);
+  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(source))).text), expected);
+  assert.throws(() => parseJavaScript(source.replace('{ first: observeNumber(2) }', '{ before: observeNumber(2) }')), /duplicate field before/u);
+  assert.throws(() => parseJavaScript(source.replace('{ first: observeNumber(2) }', 'option')), /projection from literal records/u);
+});

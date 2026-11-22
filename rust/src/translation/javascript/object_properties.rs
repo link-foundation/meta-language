@@ -223,15 +223,29 @@ impl JavaScriptParser {
                 Some(span(&key, &key)),
             ));
         }
-        if form == "spread" {
-            return Err(unsupported(
-                "tagged object spread",
-                "constructor spreads require a complete tagged field projection",
-                Some(self.to_here(&start)),
-            ));
-        }
         let tag = tag.expect("shared tagged constructor selection");
         let place = self.to_here(&start);
+        if form == "spread" {
+            if let Some(prototype) = prototype_definition {
+                return Err(unsupported(
+                    "object prototype definition",
+                    "the portable core does not represent object prototypes",
+                    Some(prototype.span),
+                ));
+            }
+            return super::object_constructor_spreads::expand_constructor_spreads(
+                tag,
+                entries,
+                || {
+                    self.generated_count += 1;
+                    format!(
+                        "{}temporary_constructor_field{}",
+                        self.generated_prefix, self.generated_count
+                    )
+                },
+                place,
+            );
+        }
         if let SNode::Str { value } = tag.node {
             return Ok(node(
                 SNode::CtorObject {

@@ -151,9 +151,14 @@ groups and produced 1,199 declaration checks. Six groups refused optional
 JavaScript constructor fields at the last full authoring attempt. Since that
 attempt, the frontends gained tagged field presence, declared alternatives
 and finite conditional tags. The Error construction and ordinary class rule
-authors generated native source. The Error class compiler now reaches a
-tagged object spread in its composed call source, with its diagnostic at
-`239691..239877` in `ci-logs/javascript-error-kernels-conditional-tag-source.log`.
+authors generated native source. The Error class compiler passed its earlier
+tagged object spread after both frontends learned to preserve optional-field
+presence and evaluation order across finite literal choices. The JavaScript
+frontend emitted the shared regression fixture to JavaScript and Rust.
+The next Error class diagnostic concerns the `sourceLet` and `sourceLocalLet`
+switch case. The inner tag guard projects `body` as though `sourceConstant`
+could reach that case. The source author stopped at `242502..242927` with the
+diagnostic in `ci-logs/javascript-error-kernels-literal-spread-source.log`.
 Native compilation and the lint-policy assertions remain pending.
 
 The draft JSON holdout measures RPNI, EDSM or ALERGIA in a separate process

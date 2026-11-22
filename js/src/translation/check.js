@@ -1840,7 +1840,7 @@ class Checker {
       throw typeError(`${node.tag} expects fields ${expectedNames.join(', ')}`, node.span);
     }
     if (Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw typeError('constructor immutability must be Boolean', node.span);
-    if (!ctor.fields.some(field => field.optional)) {
+    if (!ctor.fields.some(field => field.optional) && names.every((name, index) => name === expectedNames[index])) {
       const value = this.construct(entry, ctor, expectedNames.map(name => node.fields[name]), env, path, node.span);
       return node.frozen ? { ...value, frozen: true } : value;
     }

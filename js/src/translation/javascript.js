@@ -42,6 +42,7 @@ import { readCallableReferenceConstruct, readCallableReferenceObligation, readCa
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { readJavaScriptConstructorFieldBoundary } from './javascript-constructor-field-type-rules.js';
+import { expandJavaScriptConstructorSpreads } from './javascript-constructor-spread.js';
 import { javaScriptOptionalConstructorFieldType, readJavaScriptOptionalConstructorField } from './javascript-constructor-presence.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array, typeKey } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
@@ -2519,8 +2520,12 @@ class JavaScriptParser {
     const form = readJavaScriptObjectValueForm(tag !== null, duplicate !== null, entries.some((entry) => entry.spread));
     if (form === 'record') return { k: 'record', entries, ...prototype, span: span(start, c.peek()) };
     if (form === 'duplicate') throw typeError(`duplicate field ${duplicate.value}`, span(duplicate, duplicate));
-    if (form === 'spread') throw unsupported('tagged object spread', 'constructor spreads require a complete tagged field projection', span(start, c.peek()));
     const where = span(start, c.peek());
+    if (form === 'spread') {
+      if (prototypeDefinition) throw unsupported('object prototype definition', 'the portable core does not represent object prototypes', prototypeDefinition.span);
+      return expandJavaScriptConstructorSpreads(tag, entries,
+        () => this.generatedPrefix+'temporary_constructor_field'+(++this.generatedCount), where);
+    }
     if (tag.k === 'str') return { k: 'ctorObject', tag: tag.value, fields, ...prototype, span: where };
     const bindings = entries.slice(0, tagFieldCount).map(({ name, value }) => {
       const binding = this.generatedPrefix+'temporary_constructor_field'+(++this.generatedCount);
