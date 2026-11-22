@@ -1,0 +1,1141 @@
+// Translated from JavaScript by meta-language: portable core, Rust target.
+#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]
+
+/// JavaScript's Number operations that Rust's f64 does not share.
+pub mod ml_number {
+    /// ECMAScript Number::toString: the shortest decimal that reads back as
+    /// the value, the even one on a tie, laid out as JavaScript prints it.
+    pub fn js_number(x: f64) -> String {
+        if x.is_nan() {
+            return String::from("NaN");
+        }
+        if x.is_infinite() {
+            return String::from(if x > 0.0 { "Infinity" } else { "-Infinity" });
+        }
+        if x == 0.0 {
+            return String::from("0");
+        }
+        let (mut digits, n) = decimal(&format!("{:e}", x.abs()));
+        // Rust's shortest digits round a tie away from zero; ECMAScript takes the even neighbour.
+        let (exact, _) = decimal(&format!("{:.800e}", x.abs()));
+        let rest = &exact[digits.len().min(exact.len())..];
+        if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
+            let last = digits.as_bytes()[digits.len() - 1] - b'0';
+            let down = exact[..digits.len()].to_string();
+            let other = if digits == down { increment(&down) } else { Some(down) };
+            if let Some(other) = other {
+                let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
+                if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
+                    digits = other.trim_end_matches('0').to_string();
+                }
+            }
+        }
+        let k = digits.len() as i32;
+        let body = if k <= n && n <= 21 {
+            format!("{digits}{}", "0".repeat((n - k) as usize))
+        } else if 0 < n && n <= 21 {
+            format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
+        } else if -6 < n && n <= 0 {
+            format!("0.{}{digits}", "0".repeat((-n) as usize))
+        } else {
+            let sign = if n - 1 < 0 { '-' } else { '+' };
+            let power = (n - 1).abs();
+            if k == 1 {
+                format!("{digits}e{sign}{power}")
+            } else {
+                format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
+            }
+        };
+        if x < 0.0 {
+            format!("-{body}")
+        } else {
+            body
+        }
+    }
+
+    /// What console.log prints: -0 as "-0", where String(-0) is "0".
+    pub fn js_console(x: f64) -> String {
+        if x == 0.0 && x.is_sign_negative() {
+            String::from("-0")
+        } else {
+            js_number(x)
+        }
+    }
+
+    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
+    /// NaN, and 0 differs from -0.
+    pub fn same_value(a: f64, b: f64) -> bool {
+        if a.is_nan() || b.is_nan() {
+            a.is_nan() && b.is_nan()
+        } else {
+            a.to_bits() == b.to_bits()
+        }
+    }
+
+    /// A decimal digit string plus one, or None when it gains a digit.
+    fn increment(digits: &str) -> Option<String> {
+        let mut bytes = digits.as_bytes().to_vec();
+        for index in (0..bytes.len()).rev() {
+            if bytes[index] == b'9' {
+                bytes[index] = b'0';
+            } else {
+                bytes[index] += 1;
+                return String::from_utf8(bytes).ok();
+            }
+        }
+        None
+    }
+
+    /// The significant digits without trailing zeros, and the exponent n with
+    /// value 0.digits × 10^n, of Rust's {:e} text.
+    fn decimal(text: &str) -> (String, i32) {
+        let (mantissa, exponent) = text.split_once('e').expect("exponent");
+        let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
+        let digits = digits.trim_end_matches('0').to_string();
+        let digits = if digits.is_empty() { String::from("0") } else { digits };
+        (digits, exponent.parse::<i32>().expect("exponent") + 1)
+    }
+}
+
+/// The Math functions that Rust's f64 methods do not share with JavaScript.
+pub mod ml_math {
+    /// Math.round: the nearest integer, the one towards +Infinity on a tie,
+    /// with the sign of a zero result from the argument.
+    pub fn round(x: f64) -> f64 {
+        if !x.is_finite() || x == 0.0 {
+            return x;
+        }
+        if x > 0.0 && x < 0.5 {
+            return 0.0;
+        }
+        if x < 0.0 && x >= -0.5 {
+            return -0.0;
+        }
+        let floor = x.floor();
+        if x - floor >= 0.5 {
+            floor + 1.0
+        } else {
+            floor
+        }
+    }
+
+    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    pub fn sign(x: f64) -> f64 {
+        if x > 0.0 {
+            1.0
+        } else if x < 0.0 {
+            -1.0
+        } else {
+            x
+        }
+    }
+
+    /// Math.max of two Numbers: NaN when either is, and 0 above -0.
+    pub fn max(a: f64, b: f64) -> f64 {
+        if a > b {
+            a
+        } else if b > a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() {
+                b
+            } else {
+                a
+            }
+        } else {
+            f64::NAN
+        }
+    }
+
+    /// Math.min of two Numbers: NaN when either is, and -0 below 0.
+    pub fn min(a: f64, b: f64) -> f64 {
+        if a < b {
+            a
+        } else if b < a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() {
+                a
+            } else {
+                b
+            }
+        } else {
+            f64::NAN
+        }
+    }
+
+    pub fn max_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))
+    }
+
+    pub fn min_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))
+    }
+
+    pub fn is_integer(x: f64) -> bool {
+        x.is_finite() && x.trunc() == x
+    }
+
+    pub fn is_safe_integer(x: f64) -> bool {
+        is_integer(x) && x.abs() <= 9007199254740991.0
+    }
+}
+
+/// Reads of JavaScript arrays, which the portable core never mutates.
+pub mod ml_array {
+    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
+        index.and_then(|index| values.get(index)).cloned()
+    }
+    /// The element at an index; a read outside the array, undefined in
+    /// JavaScript, aborts.
+    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
+        match index.and_then(|index| values.get(index)) {
+            Some(value) => value.clone(),
+            None => panic!("array index out of range"),
+        }
+    }
+
+    /// The index a Number names: a non-negative integer, -0 included.
+    pub fn number_index(index: f64) -> Option<usize> {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
+            Some(index as usize)
+        } else {
+            None
+        }
+    }
+
+    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
+        left.extend(right);
+        left
+    }
+    fn integer(value: f64) -> f64 { if value.is_nan() { 0.0 } else { value.trunc() } }
+    fn relative(value: f64, length: usize) -> usize {
+        let value = integer(value);
+        if value < 0.0 { (length as f64 + value).max(0.0) as usize } else { value.min(length as f64) as usize }
+    }
+    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
+        let start = relative(start, values.len()); let end = relative(end, values.len());
+        values[start..end.max(start)].to_vec()
+    }
+    pub fn index_of<T, F: Fn(&T, &T) -> bool>(values: &[T], search: &T, from: f64, reverse: bool, equal: F) -> f64 {
+        if values.is_empty() { return -1.0; }
+        let from = integer(from);
+        if reverse {
+            if from < -(values.len() as f64) { return -1.0; }
+            let start = if from < 0.0 { (values.len() as f64 + from) as usize } else { from.min((values.len() - 1) as f64) as usize };
+            (0..=start).rev().find(|&index| equal(&values[index], search)).map_or(-1.0, |index| index as f64)
+        } else {
+            let start = if from < 0.0 { (values.len() as f64 + from).max(0.0) as usize } else { from.min(values.len() as f64) as usize };
+            (start..values.len()).find(|&index| equal(&values[index], search)).map_or(-1.0, |index| index as f64)
+        }
+    }
+    pub fn includes<T, F: Fn(&T, &T) -> bool>(values: &[T], search: &T, from: f64, reverse: bool, equal: F) -> bool {
+        index_of(values, search, from, reverse, equal) >= 0.0
+    }
+    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
+        let mut out = Vec::new();
+        for value in values { if !out.iter().any(|previous| equal(previous, &value)) { out.push(value); } }
+        out
+    }
+    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
+        let mut out: Vec<(K, V)> = Vec::new();
+        for (key, value) in values {
+            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) { out[index].1 = value; }
+            else { out.push((key, value)); }
+        }
+        out
+    }
+}
+
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self { class_name: class_name.to_owned(), message_units: message.encode_utf16().collect(), message_present: true }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
+pub fn plan_formal_datatype_module_prefixes(paths: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<std::cell::RefCell<Vec<String>>>>>>, groups: std::rc::Rc<std::cell::RefCell<Vec<f64>>>) -> std::rc::Rc<std::cell::RefCell<Vec<f64>>> {
+    if ((({ let ml_reference_array1 = paths.clone(); let ml_reference_projection1 = ml_reference_array1.borrow().len() as f64; ml_reference_projection1 }) != ({ let ml_reference_array2 = groups.clone(); let ml_reference_projection2 = ml_reference_array2.borrow().len() as f64; ml_reference_projection2 })) || (({ let ml_reference_array3 = paths.clone(); let ml_reference_projection3 = ml_reference_array3.borrow().len() as f64; ml_reference_projection3 }) > (8192f64))) {
+        std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()))
+    } else {
+        {
+            let common = std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()));
+            {
+                let total = 0f64;
+                {
+                    let index = 0f64;
+                    {
+                        let source_ml_source1_s1 = self::source_ml_temporary_plan_formal_datatype_module_prefixes_loop1(paths.clone(), groups.clone(), common.clone(), total, index);
+                        match source_ml_source1_s1.clone() {
+                            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Done(common_2) => {
+                                {
+                                    let index_2 = 0f64;
+                                    {
+                                        let source_ml_source1_s2 = self::source_ml_temporary_plan_formal_datatype_module_prefixes_loop2(paths.clone(), groups.clone(), common_2.clone(), index_2);
+                                        match source_ml_source1_s2.clone() {
+                                            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Done => {
+                                                {
+                                                    let depths = std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()));
+                                                    {
+                                                        let index_3 = 0f64;
+                                                        {
+                                                            let source_ml_source1_s3 = self::source_ml_temporary_plan_formal_datatype_module_prefixes_loop3(groups.clone(), common_2.clone(), depths.clone(), index_3);
+                                                            match source_ml_source1_s3.clone() {
+                                                                self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Done(depths_2) => {
+                                                                    depths_2.clone()
+                                                                }
+                                                                self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Return(source_ml_temporary_result3) => {
+                                                                    source_ml_temporary_result3.clone()
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Return(source_ml_temporary_result3_2) => {
+                                                source_ml_temporary_result3_2.clone()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Return(source_ml_temporary_result5) => {
+                                source_ml_temporary_result5.clone()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn plan_formal_datatype_module_closure(paths: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<std::cell::RefCell<Vec<String>>>>>>, depths: std::rc::Rc<std::cell::RefCell<Vec<f64>>>) -> std::rc::Rc<std::cell::RefCell<Vec<f64>>> {
+    if ((({ let ml_reference_array4 = paths.clone(); let ml_reference_projection4 = ml_reference_array4.borrow().len() as f64; ml_reference_projection4 }) != ({ let ml_reference_array5 = depths.clone(); let ml_reference_projection5 = ml_reference_array5.borrow().len() as f64; ml_reference_projection5 })) || (({ let ml_reference_array6 = paths.clone(); let ml_reference_projection6 = ml_reference_array6.borrow().len() as f64; ml_reference_projection6 }) > (8192f64))) {
+        std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()))
+    } else {
+        {
+            let boundaries = std::rc::Rc::new(std::cell::RefCell::new(self::ml_array::map({ let ml_reference_value7 = (std::rc::Rc::new(std::cell::RefCell::new(Vec::<(String, Option<f64>)>::new()))).borrow().clone(); ml_reference_value7 }, |a, b| a == b)));
+            {
+                let budget = 0f64;
+                {
+                    let index = 0f64;
+                    {
+                        let source_ml_source1_s4 = self::source_ml_temporary_plan_formal_datatype_module_closure_loop7(paths.clone(), depths.clone(), boundaries.clone(), budget, index);
+                        match source_ml_source1_s4.clone() {
+                            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Done => {
+                                {
+                                    let result = std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()));
+                                    {
+                                        let index_2 = 0f64;
+                                        {
+                                            let source_ml_source1_s5 = self::source_ml_temporary_plan_formal_datatype_module_closure_loop8(paths.clone(), depths.clone(), boundaries.clone(), result.clone(), index_2);
+                                            match source_ml_source1_s5.clone() {
+                                                self::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Done(result_2) => {
+                                                    result_2.clone()
+                                                }
+                                                self::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Return(source_ml_temporary_result8) => {
+                                                    source_ml_temporary_result8.clone()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Return(source_ml_temporary_result9) => {
+                                source_ml_temporary_result9.clone()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Result {
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Done(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_prefixes_loop3(mut groups: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut common: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut depths: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut index: f64) -> self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Result {
+    loop {
+        return if (index < ({ let ml_reference_array8 = groups.clone(); let ml_reference_projection8 = ml_reference_array8.borrow().len() as f64; ml_reference_projection8 })) {
+            {
+                let group = {
+                    let source_ml_source1_array_read_value6 = groups.clone();
+                    {
+                        let source_ml_source1_array_read_index7 = index;
+                        { let ml_reference_array9 = source_ml_source1_array_read_value6.clone(); let ml_reference_position9 = source_ml_source1_array_read_index7; let ml_reference_projection9 = self::ml_array::optional_at(&*ml_reference_array9.borrow(), self::ml_array::number_index(ml_reference_position9)); ml_reference_projection9 }
+                    }
+                };
+                if {
+                    let source_ml_source1_comparison_operand8 = group.clone();
+                    {
+                        let source_ml_source1_comparison_operand9 = None::<()>;
+                        match (source_ml_source1_comparison_operand8.clone(), source_ml_source1_comparison_operand9.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                    }
+                } {
+                    self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                } else {
+                    {
+                        let depths_2 = std::rc::Rc::new(std::cell::RefCell::new(self::ml_array::append({ let ml_reference_value10 = depths.borrow().clone(); ml_reference_value10 }, vec![({
+                            let source_ml_source1_array_read_value10 = common.clone();
+                            {
+                                let source_ml_source1_array_read_index11 = group.clone().expect("a proven present value");
+                                { let ml_reference_array11 = source_ml_source1_array_read_value10.clone(); let ml_reference_position11 = source_ml_source1_array_read_index11; let ml_reference_projection11 = self::ml_array::optional_at(&*ml_reference_array11.borrow(), self::ml_array::number_index(ml_reference_position11)); ml_reference_projection11 }
+                            }
+                        }).clone().unwrap_or_else(|| (-1f64))])));
+                        {
+                            let index_2 = (index + 1f64);
+                            {
+                                (depths, index) = (depths_2.clone(), index_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop3Done(depths.clone())
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result {
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Done,
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_prefixes_loop4(mut path: Option<std::rc::Rc<std::cell::RefCell<Vec<String>>>>, mut representative: Option<std::rc::Rc<std::cell::RefCell<Vec<String>>>>, mut depth: f64) -> f64 {
+    loop {
+        return if (((depth < ({
+            let source_ml_source1_nullish_field_receiver14 = (path.clone(),);
+            if match (source_ml_source1_nullish_field_receiver14.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                {
+                    let source_ml_source1_nullish_field_present15 = ((source_ml_source1_nullish_field_receiver14.clone()).0).clone().expect("a proven present value");
+                    { let ml_reference_array12 = source_ml_source1_nullish_field_present15.clone(); let ml_reference_projection12 = ml_reference_array12.borrow().len() as f64; ml_reference_projection12 }
+                }
+            } else {
+                (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'length')")).encode_utf16().collect(), message_present: true }).raise()
+            }
+        })) && (depth < ({
+            let source_ml_source1_nullish_field_receiver18 = (representative.clone(),);
+            if match (source_ml_source1_nullish_field_receiver18.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                {
+                    let source_ml_source1_nullish_field_present19 = ((source_ml_source1_nullish_field_receiver18.clone()).0).clone().expect("a proven present value");
+                    { let ml_reference_array13 = source_ml_source1_nullish_field_present19.clone(); let ml_reference_projection13 = ml_reference_array13.borrow().len() as f64; ml_reference_projection13 }
+                }
+            } else {
+                (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'length')")).encode_utf16().collect(), message_present: true }).raise()
+            }
+        }))) && {
+            let source_ml_source1_comparison_operand30 = {
+                let source_ml_source1_nullish_field_receiver20 = (path.clone(), depth);
+                {
+                    let source_ml_source1_computed_property_key21 = (source_ml_source1_nullish_field_receiver20.clone()).1;
+                    if match (source_ml_source1_nullish_field_receiver20.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                        {
+                            let source_ml_source1_nullish_field_present22 = ((source_ml_source1_nullish_field_receiver20.clone()).0).clone().expect("a proven present value");
+                            {
+                                let source_ml_source1_array_read_value23 = source_ml_source1_nullish_field_present22.clone();
+                                {
+                                    let source_ml_source1_array_read_index24 = source_ml_source1_computed_property_key21;
+                                    { let ml_reference_array14 = source_ml_source1_array_read_value23.clone(); let ml_reference_position14 = source_ml_source1_array_read_index24; let ml_reference_projection14 = self::ml_array::optional_at(&*ml_reference_array14.borrow(), self::ml_array::number_index(ml_reference_position14)); ml_reference_projection14 }
+                                }
+                            }
+                        }
+                    } else {
+                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (format!("{}{}", (format!("{}{}", (String::from("Cannot read properties of undefined (reading '")), (self::ml_number::js_number((source_ml_source1_nullish_field_receiver20.clone()).1)))), (String::from("')")))).encode_utf16().collect(), message_present: true }).raise()
+                    }
+                }
+            };
+            {
+                let source_ml_source1_comparison_operand31 = {
+                    let source_ml_source1_nullish_field_receiver25 = (representative.clone(), depth);
+                    {
+                        let source_ml_source1_computed_property_key26 = (source_ml_source1_nullish_field_receiver25.clone()).1;
+                        if match (source_ml_source1_nullish_field_receiver25.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                            {
+                                let source_ml_source1_nullish_field_present27 = ((source_ml_source1_nullish_field_receiver25.clone()).0).clone().expect("a proven present value");
+                                {
+                                    let source_ml_source1_array_read_value28 = source_ml_source1_nullish_field_present27.clone();
+                                    {
+                                        let source_ml_source1_array_read_index29 = source_ml_source1_computed_property_key26;
+                                        { let ml_reference_array15 = source_ml_source1_array_read_value28.clone(); let ml_reference_position15 = source_ml_source1_array_read_index29; let ml_reference_projection15 = self::ml_array::optional_at(&*ml_reference_array15.borrow(), self::ml_array::number_index(ml_reference_position15)); ml_reference_projection15 }
+                                    }
+                                }
+                            }
+                        } else {
+                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (format!("{}{}", (format!("{}{}", (String::from("Cannot read properties of undefined (reading '")), (self::ml_number::js_number((source_ml_source1_nullish_field_receiver25.clone()).1)))), (String::from("')")))).encode_utf16().collect(), message_present: true }).raise()
+                        }
+                    }
+                };
+                match (source_ml_source1_comparison_operand30.clone(), source_ml_source1_comparison_operand31.clone()) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false }
+            }
+        }) {
+            {
+                let depth_2 = (depth + 1f64);
+                {
+                    depth = depth_2;
+                    continue;
+                }
+            }
+        } else {
+            depth
+        };
+    }
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_prefixes_loop2(mut paths: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<std::cell::RefCell<Vec<String>>>>>>, mut groups: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut common: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut index: f64) -> self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result {
+    loop {
+        return if (index < ({ let ml_reference_array16 = paths.clone(); let ml_reference_projection16 = ml_reference_array16.borrow().len() as f64; ml_reference_projection16 })) {
+            {
+                let group = {
+                    let source_ml_source1_array_read_value32 = groups.clone();
+                    {
+                        let source_ml_source1_array_read_index33 = index;
+                        { let ml_reference_array17 = source_ml_source1_array_read_value32.clone(); let ml_reference_position17 = source_ml_source1_array_read_index33; let ml_reference_projection17 = self::ml_array::optional_at(&*ml_reference_array17.borrow(), self::ml_array::number_index(ml_reference_position17)); ml_reference_projection17 }
+                    }
+                };
+                {
+                    let path = {
+                        let source_ml_source1_array_read_value34 = paths.clone();
+                        {
+                            let source_ml_source1_array_read_index35 = index;
+                            { let ml_reference_array18 = source_ml_source1_array_read_value34.clone(); let ml_reference_position18 = source_ml_source1_array_read_index35; let ml_reference_projection18 = self::ml_array::optional_at(&*ml_reference_array18.borrow(), self::ml_array::number_index(ml_reference_position18)); ml_reference_projection18 }
+                        }
+                    };
+                    if {
+                        let source_ml_source1_comparison_operand36 = group.clone();
+                        {
+                            let source_ml_source1_comparison_operand37 = None::<()>;
+                            match (source_ml_source1_comparison_operand36.clone(), source_ml_source1_comparison_operand37.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                        }
+                    } {
+                        self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                    } else {
+                        if match (path.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
+                            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                        } else {
+                            if ((group.clone().expect("a proven present value")) > index) {
+                                self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                            } else {
+                                {
+                                    let representative = {
+                                        let source_ml_source1_array_read_value38 = paths.clone();
+                                        {
+                                            let source_ml_source1_array_read_index39 = group.clone().expect("a proven present value");
+                                            { let ml_reference_array19 = source_ml_source1_array_read_value38.clone(); let ml_reference_position19 = source_ml_source1_array_read_index39; let ml_reference_projection19 = self::ml_array::optional_at(&*ml_reference_array19.borrow(), self::ml_array::number_index(ml_reference_position19)); ml_reference_projection19 }
+                                        }
+                                    };
+                                    if match (representative.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
+                                        self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                                    } else {
+                                        {
+                                            let depth = 0f64;
+                                            {
+                                                let depth_2 = self::source_ml_temporary_plan_formal_datatype_module_prefixes_loop4(Some(path.clone().expect("a proven present value")), Some(representative.clone().expect("a proven present value")), depth);
+                                                {
+                                                    let source_ml_temporary_plan_formal_datatype_module_prefixes_ignored5 = { let ml_array_owner21 = common.clone(); let ml_array_argument21_0: f64 = group.clone().expect("a proven present value"); let ml_array_argument21_1: f64 = 1f64; let ml_array_argument21_2: f64 = self::ml_math::min(({
+                                                        let source_ml_source1_array_read_value40 = common.clone();
+                                                        {
+                                                            let source_ml_source1_array_read_index41 = group.clone().expect("a proven present value");
+                                                            { let ml_reference_array21 = source_ml_source1_array_read_value40.clone(); let ml_reference_position21 = source_ml_source1_array_read_index41; let ml_reference_projection21 = self::ml_array::optional_at(&*ml_reference_array21.borrow(), self::ml_array::number_index(ml_reference_position21)); ml_reference_projection21 }
+                                                        }
+                                                    }).clone().unwrap_or_else(|| 0f64), depth_2); let ml_array_length = ml_array_owner21.borrow().len(); let ml_array_start = { let ml_relative_value: f64 = ml_array_argument21_0; let ml_relative = if ml_relative_value.is_nan() { 0f64 } else { ml_relative_value.trunc() }; let ml_bound = ml_array_length as f64; (if ml_relative < 0f64 { (ml_bound + ml_relative).clamp(0f64, ml_bound) } else { ml_relative.min(ml_bound) }) as usize }; let ml_array_count = { let ml_delete_value: f64 = ml_array_argument21_1; ml_delete_value.trunc().max(0f64).min((ml_array_length - ml_array_start) as f64) as usize }; let ml_array_inserted = vec![ml_array_argument21_2]; let _ = (ml_array_length - ml_array_count).checked_add(ml_array_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); let ml_removed: Vec<_> = ml_array_owner21.borrow_mut().splice(ml_array_start..ml_array_start + ml_array_count, ml_array_inserted).collect(); std::rc::Rc::new(std::cell::RefCell::new(ml_removed)) };
+                                                    {
+                                                        let index_2 = (index + 1f64);
+                                                        {
+                                                            index = index_2;
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop2Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result {
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Done(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Result {
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Done(f64),
+    MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_prefixes_loop6(mut total: f64, mut path: Option<std::rc::Rc<std::cell::RefCell<Vec<String>>>>, mut part: f64) -> self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Result {
+    loop {
+        return if (part < ({
+            let source_ml_source1_nullish_field_receiver44 = (path.clone(),);
+            if match (source_ml_source1_nullish_field_receiver44.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                {
+                    let source_ml_source1_nullish_field_present45 = ((source_ml_source1_nullish_field_receiver44.clone()).0).clone().expect("a proven present value");
+                    { let ml_reference_array22 = source_ml_source1_nullish_field_present45.clone(); let ml_reference_projection22 = ml_reference_array22.borrow().len() as f64; ml_reference_projection22 }
+                }
+            } else {
+                (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'length')")).encode_utf16().collect(), message_present: true }).raise()
+            }
+        })) {
+            {
+                let value = {
+                    let source_ml_source1_nullish_field_receiver46 = (path.clone(), part);
+                    {
+                        let source_ml_source1_computed_property_key47 = (source_ml_source1_nullish_field_receiver46.clone()).1;
+                        if match (source_ml_source1_nullish_field_receiver46.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                            {
+                                let source_ml_source1_nullish_field_present48 = ((source_ml_source1_nullish_field_receiver46.clone()).0).clone().expect("a proven present value");
+                                {
+                                    let source_ml_source1_array_read_value49 = source_ml_source1_nullish_field_present48.clone();
+                                    {
+                                        let source_ml_source1_array_read_index50 = source_ml_source1_computed_property_key47;
+                                        { let ml_reference_array23 = source_ml_source1_array_read_value49.clone(); let ml_reference_position23 = source_ml_source1_array_read_index50; let ml_reference_projection23 = self::ml_array::optional_at(&*ml_reference_array23.borrow(), self::ml_array::number_index(ml_reference_position23)); ml_reference_projection23 }
+                                    }
+                                }
+                            }
+                        } else {
+                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (format!("{}{}", (format!("{}{}", (String::from("Cannot read properties of undefined (reading '")), (self::ml_number::js_number((source_ml_source1_nullish_field_receiver46.clone()).1)))), (String::from("')")))).encode_utf16().collect(), message_present: true }).raise()
+                        }
+                    }
+                };
+                if (({
+                    let source_ml_source1_comparison_operand51 = value.clone();
+                    {
+                        let source_ml_source1_comparison_operand52 = None::<()>;
+                        match (source_ml_source1_comparison_operand51.clone(), source_ml_source1_comparison_operand52.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                    }
+                } || ((((value.clone().expect("a proven present value")).encode_utf16().count() as f64)) == (0f64))) || ((((value.clone().expect("a proven present value")).encode_utf16().count() as f64)) > (4096f64))) {
+                    self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                } else {
+                    {
+                        let total_2 = (total + ((value.clone().expect("a proven present value")).encode_utf16().count() as f64));
+                        if (total_2 > (8388608f64)) {
+                            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                        } else {
+                            {
+                                let part_2 = (part + 1f64);
+                                {
+                                    (total, part) = (total_2, part_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Done(total)
+        };
+    }
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_prefixes_loop1(mut paths: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<std::cell::RefCell<Vec<String>>>>>>, mut groups: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut common: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut total: f64, mut index: f64) -> self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result {
+    loop {
+        return if (index < ({ let ml_reference_array24 = paths.clone(); let ml_reference_projection24 = ml_reference_array24.borrow().len() as f64; ml_reference_projection24 })) {
+            {
+                let path = {
+                    let source_ml_source1_array_read_value53 = paths.clone();
+                    {
+                        let source_ml_source1_array_read_index54 = index;
+                        { let ml_reference_array25 = source_ml_source1_array_read_value53.clone(); let ml_reference_position25 = source_ml_source1_array_read_index54; let ml_reference_projection25 = self::ml_array::optional_at(&*ml_reference_array25.borrow(), self::ml_array::number_index(ml_reference_position25)); ml_reference_projection25 }
+                    }
+                };
+                {
+                    let group = {
+                        let source_ml_source1_array_read_value55 = groups.clone();
+                        {
+                            let source_ml_source1_array_read_index56 = index;
+                            { let ml_reference_array26 = source_ml_source1_array_read_value55.clone(); let ml_reference_position26 = source_ml_source1_array_read_index56; let ml_reference_projection26 = self::ml_array::optional_at(&*ml_reference_array26.borrow(), self::ml_array::number_index(ml_reference_position26)); ml_reference_projection26 }
+                        }
+                    };
+                    if match (path.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
+                        self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                    } else {
+                        if {
+                            let source_ml_source1_comparison_operand57 = group.clone();
+                            {
+                                let source_ml_source1_comparison_operand58 = None::<()>;
+                                match (source_ml_source1_comparison_operand57.clone(), source_ml_source1_comparison_operand58.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                            }
+                        } {
+                            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                        } else {
+                            if (((((({ let ml_reference_array27 = path.clone().expect("a proven present value"); let ml_reference_projection27 = ml_reference_array27.borrow().len() as f64; ml_reference_projection27 }) > (256f64)) || !(self::ml_math::is_safe_integer(group.clone().expect("a proven present value")))) || ((group.clone().expect("a proven present value")) < (0f64))) || ((group.clone().expect("a proven present value")) >= ({ let ml_reference_array28 = paths.clone(); let ml_reference_projection28 = ml_reference_array28.borrow().len() as f64; ml_reference_projection28 }))) || (((group.clone().expect("a proven present value")) == (0f64)) && (((1f64 / group.clone().expect("a proven present value"))) < (0f64)))) {
+                                self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                            } else {
+                                if {
+                                    let source_ml_source1_comparison_operand61 = {
+                                        let source_ml_source1_array_read_value59 = groups.clone();
+                                        {
+                                            let source_ml_source1_array_read_index60 = group.clone().expect("a proven present value");
+                                            { let ml_reference_array29 = source_ml_source1_array_read_value59.clone(); let ml_reference_position29 = source_ml_source1_array_read_index60; let ml_reference_projection29 = self::ml_array::optional_at(&*ml_reference_array29.borrow(), self::ml_array::number_index(ml_reference_position29)); ml_reference_projection29 }
+                                        }
+                                    };
+                                    {
+                                        let source_ml_source1_comparison_operand62 = group.clone().expect("a proven present value");
+                                        !(match (source_ml_source1_comparison_operand61.clone(), source_ml_source1_comparison_operand62) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })
+                                    }
+                                } {
+                                    self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                                } else {
+                                    {
+                                        let part = 0f64;
+                                        {
+                                            let source_ml_source1_s63 = self::source_ml_temporary_plan_formal_datatype_module_prefixes_loop6(total, Some(path.clone().expect("a proven present value")), part);
+                                            match source_ml_source1_s63.clone() {
+                                                self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Done(total_2) => {
+                                                    {
+                                                        let common_2 = std::rc::Rc::new(std::cell::RefCell::new(self::ml_array::append({ let ml_reference_value30 = common.borrow().clone(); ml_reference_value30 }, vec![{ let ml_reference_array31 = path.clone().expect("a proven present value"); let ml_reference_projection31 = ml_reference_array31.borrow().len() as f64; ml_reference_projection31 }])));
+                                                        {
+                                                            let index_2 = (index + 1f64);
+                                                            {
+                                                                (common, total, index) = (common_2.clone(), total_2, index_2);
+                                                                continue;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop6Return(source_ml_temporary_result6) => {
+                                                    self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Return(source_ml_temporary_result6.clone())
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Result::MlTemporaryPlanFormalDatatypeModulePrefixesLoop1Done(common.clone())
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModuleClosureLoop8Result {
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop8Done(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop8Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModuleClosureLoop9Result {
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop9Done(f64),
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop9Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_closure_loop9(mut boundaries: std::rc::Rc<std::cell::RefCell<Vec<(String, Option<f64>)>>>, mut selected: f64, mut key: String, mut path: Option<std::rc::Rc<std::cell::RefCell<Vec<String>>>>, mut part: f64) -> self::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Result {
+    loop {
+        return if (part < ({
+            let source_ml_source1_nullish_field_receiver66 = (path.clone(),);
+            if match (source_ml_source1_nullish_field_receiver66.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                {
+                    let source_ml_source1_nullish_field_present67 = ((source_ml_source1_nullish_field_receiver66.clone()).0).clone().expect("a proven present value");
+                    { let ml_reference_array32 = source_ml_source1_nullish_field_present67.clone(); let ml_reference_projection32 = ml_reference_array32.borrow().len() as f64; ml_reference_projection32 }
+                }
+            } else {
+                (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'length')")).encode_utf16().collect(), message_present: true }).raise()
+            }
+        })) {
+            {
+                let value = {
+                    let source_ml_source1_nullish_field_receiver68 = (path.clone(), part);
+                    {
+                        let source_ml_source1_computed_property_key69 = (source_ml_source1_nullish_field_receiver68.clone()).1;
+                        if match (source_ml_source1_nullish_field_receiver68.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                            {
+                                let source_ml_source1_nullish_field_present70 = ((source_ml_source1_nullish_field_receiver68.clone()).0).clone().expect("a proven present value");
+                                {
+                                    let source_ml_source1_array_read_value71 = source_ml_source1_nullish_field_present70.clone();
+                                    {
+                                        let source_ml_source1_array_read_index72 = source_ml_source1_computed_property_key69;
+                                        { let ml_reference_array33 = source_ml_source1_array_read_value71.clone(); let ml_reference_position33 = source_ml_source1_array_read_index72; let ml_reference_projection33 = self::ml_array::optional_at(&*ml_reference_array33.borrow(), self::ml_array::number_index(ml_reference_position33)); ml_reference_projection33 }
+                                    }
+                                }
+                            }
+                        } else {
+                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (format!("{}{}", (format!("{}{}", (String::from("Cannot read properties of undefined (reading '")), (self::ml_number::js_number((source_ml_source1_nullish_field_receiver68.clone()).1)))), (String::from("')")))).encode_utf16().collect(), message_present: true }).raise()
+                        }
+                    }
+                };
+                if {
+                    let source_ml_source1_comparison_operand73 = value.clone();
+                    {
+                        let source_ml_source1_comparison_operand74 = None::<()>;
+                        match (source_ml_source1_comparison_operand73.clone(), source_ml_source1_comparison_operand74.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                    }
+                } {
+                    self::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                } else {
+                    {
+                        let key_2 = format!("{}{}", key, (format!("{}{}", (format!("{}{}", ({
+                            let source_ml_source1_string_argument75 = ((value.clone().expect("a proven present value")).encode_utf16().count() as f64);
+                            self::ml_number::js_number(source_ml_source1_string_argument75)
+                        }), (String::from(":")))), (value.clone().expect("a proven present value")))));
+                        {
+                            let protected_depth = match { let ml_method_owner34 = boundaries.clone(); let ml_method_argument34_0 = key_2.clone(); let ml_method_key34 = ml_method_argument34_0; let ml_method_values34 = ml_method_owner34.borrow(); ml_method_values34.iter().position(|(ml_key, _)| ml_key == &ml_method_key34).map(|index| ml_method_values34[index].1.clone()) } { Some(ml_nested) => match ml_nested { Some(ml_present) => Some(ml_present), None => None }, None => None };
+                            if {
+                                let source_ml_source1_comparison_operand76 = protected_depth.clone();
+                                {
+                                    let source_ml_source1_comparison_operand77 = None::<()>;
+                                    !(match (source_ml_source1_comparison_operand76.clone(), source_ml_source1_comparison_operand77.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false })
+                                }
+                            } {
+                                {
+                                    let selected_2 = self::ml_math::min(selected, protected_depth.clone().expect("a proven present value"));
+                                    {
+                                        let part_2 = (part + 1f64);
+                                        {
+                                            (selected, key, part) = (selected_2, key_2.clone(), part_2);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            } else {
+                                {
+                                    let part_3 = (part + 1f64);
+                                    {
+                                        (key, part) = (key_2.clone(), part_3);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Done(selected)
+        };
+    }
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_closure_loop8(mut paths: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<std::cell::RefCell<Vec<String>>>>>>, mut depths: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut boundaries: std::rc::Rc<std::cell::RefCell<Vec<(String, Option<f64>)>>>, mut result: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut index: f64) -> self::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Result {
+    loop {
+        return if (index < ({ let ml_reference_array35 = paths.clone(); let ml_reference_projection35 = ml_reference_array35.borrow().len() as f64; ml_reference_projection35 })) {
+            {
+                let selected = ({
+                    let source_ml_source1_array_read_value78 = depths.clone();
+                    {
+                        let source_ml_source1_array_read_index79 = index;
+                        { let ml_reference_array36 = source_ml_source1_array_read_value78.clone(); let ml_reference_position36 = source_ml_source1_array_read_index79; let ml_reference_projection36 = self::ml_array::optional_at(&*ml_reference_array36.borrow(), self::ml_array::number_index(ml_reference_position36)); ml_reference_projection36 }
+                    }
+                }).clone().unwrap_or_else(|| (-1f64));
+                {
+                    let key = String::from("");
+                    {
+                        let path = {
+                            let source_ml_source1_array_read_value80 = paths.clone();
+                            {
+                                let source_ml_source1_array_read_index81 = index;
+                                { let ml_reference_array37 = source_ml_source1_array_read_value80.clone(); let ml_reference_position37 = source_ml_source1_array_read_index81; let ml_reference_projection37 = self::ml_array::optional_at(&*ml_reference_array37.borrow(), self::ml_array::number_index(ml_reference_position37)); ml_reference_projection37 }
+                            }
+                        };
+                        if match (path.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
+                            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                        } else {
+                            {
+                                let part = 0f64;
+                                {
+                                    let source_ml_source1_s82 = self::source_ml_temporary_plan_formal_datatype_module_closure_loop9(boundaries.clone(), selected, key.clone(), Some(path.clone().expect("a proven present value")), part);
+                                    match source_ml_source1_s82.clone() {
+                                        self::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Done(selected_2) => {
+                                            {
+                                                let result_2 = std::rc::Rc::new(std::cell::RefCell::new(self::ml_array::append({ let ml_reference_value38 = result.borrow().clone(); ml_reference_value38 }, vec![selected_2])));
+                                                {
+                                                    let index_2 = (index + 1f64);
+                                                    {
+                                                        (result, index) = (result_2.clone(), index_2);
+                                                        continue;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        self::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop9Return(source_ml_temporary_result9) => {
+                                            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Return(source_ml_temporary_result9.clone())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop8Done(result.clone())
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result {
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop7Done,
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop7Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanFormalDatatypeModuleClosureLoop10Result {
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop10Done(f64),
+    MlTemporaryPlanFormalDatatypeModuleClosureLoop10Return(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_closure_loop10(mut boundaries: std::rc::Rc<std::cell::RefCell<Vec<(String, Option<f64>)>>>, mut budget: f64, mut path: Option<std::rc::Rc<std::cell::RefCell<Vec<String>>>>, mut depth: Option<f64>, mut key: String, mut part: f64) -> self::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Result {
+    loop {
+        return if (part < ({
+            let source_ml_source1_nullish_field_receiver85 = (path.clone(),);
+            if match (source_ml_source1_nullish_field_receiver85.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                {
+                    let source_ml_source1_nullish_field_present86 = ((source_ml_source1_nullish_field_receiver85.clone()).0).clone().expect("a proven present value");
+                    { let ml_reference_array39 = source_ml_source1_nullish_field_present86.clone(); let ml_reference_projection39 = ml_reference_array39.borrow().len() as f64; ml_reference_projection39 }
+                }
+            } else {
+                (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'length')")).encode_utf16().collect(), message_present: true }).raise()
+            }
+        })) {
+            {
+                let value = {
+                    let source_ml_source1_nullish_field_receiver87 = (path.clone(), part);
+                    {
+                        let source_ml_source1_computed_property_key88 = (source_ml_source1_nullish_field_receiver87.clone()).1;
+                        if match (source_ml_source1_nullish_field_receiver87.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                            {
+                                let source_ml_source1_nullish_field_present89 = ((source_ml_source1_nullish_field_receiver87.clone()).0).clone().expect("a proven present value");
+                                {
+                                    let source_ml_source1_array_read_value90 = source_ml_source1_nullish_field_present89.clone();
+                                    {
+                                        let source_ml_source1_array_read_index91 = source_ml_source1_computed_property_key88;
+                                        { let ml_reference_array40 = source_ml_source1_array_read_value90.clone(); let ml_reference_position40 = source_ml_source1_array_read_index91; let ml_reference_projection40 = self::ml_array::optional_at(&*ml_reference_array40.borrow(), self::ml_array::number_index(ml_reference_position40)); ml_reference_projection40 }
+                                    }
+                                }
+                            }
+                        } else {
+                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (format!("{}{}", (format!("{}{}", (String::from("Cannot read properties of undefined (reading '")), (self::ml_number::js_number((source_ml_source1_nullish_field_receiver87.clone()).1)))), (String::from("')")))).encode_utf16().collect(), message_present: true }).raise()
+                        }
+                    }
+                };
+                if (({
+                    let source_ml_source1_comparison_operand92 = value.clone();
+                    {
+                        let source_ml_source1_comparison_operand93 = None::<()>;
+                        match (source_ml_source1_comparison_operand92.clone(), source_ml_source1_comparison_operand93.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                    }
+                } || ((((value.clone().expect("a proven present value")).encode_utf16().count() as f64)) == (0f64))) || ((((value.clone().expect("a proven present value")).encode_utf16().count() as f64)) > (4096f64))) {
+                    self::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                } else {
+                    {
+                        let budget_2 = (budget + (((value.clone().expect("a proven present value")).encode_utf16().count() as f64) + 1f64));
+                        if (budget_2 > (8388608f64)) {
+                            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                        } else {
+                            {
+                                let key_2 = format!("{}{}", key, (format!("{}{}", (format!("{}{}", ({
+                                    let source_ml_source1_string_argument94 = ((value.clone().expect("a proven present value")).encode_utf16().count() as f64);
+                                    self::ml_number::js_number(source_ml_source1_string_argument94)
+                                }), (String::from(":")))), (value.clone().expect("a proven present value")))));
+                                if {
+                                    let source_ml_source1_comparison_operand95 = part;
+                                    {
+                                        let source_ml_source1_comparison_operand96 = depth.clone();
+                                        match (source_ml_source1_comparison_operand95, source_ml_source1_comparison_operand96.clone()) { (ml_left, Some(ml_right)) => ml_left == ml_right, _ => false }
+                                    }
+                                } {
+                                    {
+                                        let previous = match { let ml_method_owner41 = boundaries.clone(); let ml_method_argument41_0 = key_2.clone(); let ml_method_key41 = ml_method_argument41_0; let ml_method_values41 = ml_method_owner41.borrow(); ml_method_values41.iter().position(|(ml_key, _)| ml_key == &ml_method_key41).map(|index| ml_method_values41[index].1.clone()) } { Some(ml_nested) => match ml_nested { Some(ml_present) => Some(ml_present), None => None }, None => None };
+                                        {
+                                            let source_ml_temporary_plan_formal_datatype_module_closure_ignored11 = { let ml_method_owner42 = boundaries.clone(); let ml_method_argument42_0 = key_2.clone(); let ml_method_argument42_1 = if {
+                                                let source_ml_source1_comparison_operand97 = previous.clone();
+                                                {
+                                                    let source_ml_source1_comparison_operand98 = None::<()>;
+                                                    match (source_ml_source1_comparison_operand97.clone(), source_ml_source1_comparison_operand98.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                                                }
+                                            } {
+                                                depth.clone()
+                                            } else {
+                                                Some({
+                                                    let source_ml_source1_mathematical_argument99 = previous.clone().expect("a proven present value");
+                                                    {
+                                                        let source_ml_source1_mathematical_argument100 = depth.clone();
+                                                        self::ml_math::min(source_ml_source1_mathematical_argument99, {
+                                                            let source_ml_source1_numeric_optional101 = source_ml_source1_mathematical_argument100.clone();
+                                                            if match (source_ml_source1_numeric_optional101.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
+                                                                f64::NAN
+                                                            } else {
+                                                                source_ml_source1_numeric_optional101.clone().expect("a proven present value")
+                                                            }
+                                                        })
+                                                    }
+                                                })
+                                            }; let ml_method_key42 = ml_method_argument42_0; { let mut ml_method_values42 = ml_method_owner42.borrow_mut(); match ml_method_values42.iter().position(|(ml_key, _)| ml_key == &ml_method_key42) { Some(index) => { ml_method_values42[index].1 = ml_method_argument42_1; }, None => { ml_method_values42.push((ml_method_key42, ml_method_argument42_1)); } } } ml_method_owner42 };
+                                            {
+                                                let part_2 = (part + 1f64);
+                                                {
+                                                    (budget, key, part) = (budget_2, key_2.clone(), part_2);
+                                                    continue;
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    {
+                                        let part_3 = (part + 1f64);
+                                        {
+                                            (budget, key, part) = (budget_2, key_2.clone(), part_3);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Done(budget)
+        };
+    }
+}
+
+pub fn source_ml_temporary_plan_formal_datatype_module_closure_loop7(mut paths: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<std::cell::RefCell<Vec<String>>>>>>, mut depths: std::rc::Rc<std::cell::RefCell<Vec<f64>>>, mut boundaries: std::rc::Rc<std::cell::RefCell<Vec<(String, Option<f64>)>>>, mut budget: f64, mut index: f64) -> self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result {
+    loop {
+        return if (index < ({ let ml_reference_array43 = paths.clone(); let ml_reference_projection43 = ml_reference_array43.borrow().len() as f64; ml_reference_projection43 })) {
+            {
+                let path = {
+                    let source_ml_source1_array_read_value102 = paths.clone();
+                    {
+                        let source_ml_source1_array_read_index103 = index;
+                        { let ml_reference_array44 = source_ml_source1_array_read_value102.clone(); let ml_reference_position44 = source_ml_source1_array_read_index103; let ml_reference_projection44 = self::ml_array::optional_at(&*ml_reference_array44.borrow(), self::ml_array::number_index(ml_reference_position44)); ml_reference_projection44 }
+                    }
+                };
+                {
+                    let depth = {
+                        let source_ml_source1_array_read_value104 = depths.clone();
+                        {
+                            let source_ml_source1_array_read_index105 = index;
+                            { let ml_reference_array45 = source_ml_source1_array_read_value104.clone(); let ml_reference_position45 = source_ml_source1_array_read_index105; let ml_reference_projection45 = self::ml_array::optional_at(&*ml_reference_array45.borrow(), self::ml_array::number_index(ml_reference_position45)); ml_reference_projection45 }
+                        }
+                    };
+                    if match (path.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
+                        self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                    } else {
+                        if {
+                            let source_ml_source1_comparison_operand106 = depth.clone();
+                            {
+                                let source_ml_source1_comparison_operand107 = None::<()>;
+                                match (source_ml_source1_comparison_operand106.clone(), source_ml_source1_comparison_operand107.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
+                            }
+                        } {
+                            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                        } else {
+                            if (((((({ let ml_reference_array46 = path.clone().expect("a proven present value"); let ml_reference_projection46 = ml_reference_array46.borrow().len() as f64; ml_reference_projection46 }) > (256f64)) || !(self::ml_math::is_safe_integer(depth.clone().expect("a proven present value")))) || ((depth.clone().expect("a proven present value")) < (0f64))) || ((depth.clone().expect("a proven present value")) > ({ let ml_reference_array47 = path.clone().expect("a proven present value"); let ml_reference_projection47 = ml_reference_array47.borrow().len() as f64; ml_reference_projection47 }))) || (((depth.clone().expect("a proven present value")) == (0f64)) && (((1f64 / depth.clone().expect("a proven present value"))) < (0f64)))) {
+                                self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Return(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))
+                            } else {
+                                {
+                                    let key = String::from("");
+                                    {
+                                        let part = 0f64;
+                                        {
+                                            let source_ml_source1_s108 = self::source_ml_temporary_plan_formal_datatype_module_closure_loop10(boundaries.clone(), budget, Some(path.clone().expect("a proven present value")), Some(depth.clone().expect("a proven present value")), key.clone(), part);
+                                            match source_ml_source1_s108.clone() {
+                                                self::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Done(budget_2) => {
+                                                    {
+                                                        let index_2 = (index + 1f64);
+                                                        {
+                                                            (budget, index) = (budget_2, index_2);
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                self::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop10Return(source_ml_temporary_result10) => {
+                                                    self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Return(source_ml_temporary_result10.clone())
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Result::MlTemporaryPlanFormalDatatypeModuleClosureLoop7Done
+        };
+    }
+}
+
+fn ml_main() {
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(Vec::<std::rc::Rc<std::cell::RefCell<Vec<String>>>>::new())), std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 1");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(Vec::<String>::new()))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![0f64])))), "assertion 2");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![1f64])))), "assertion 3");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("b")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 1f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64])))), "assertion 4");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("b")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64])))), "assertion 5");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a"), String::from("left")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a"), String::from("right")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64])))), "assertion 6");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a"), String::from("inner")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64])))), "assertion 7");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a"), String::from("left")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a"), String::from("right")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a"), String::from("left"), String::from("inner")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64, 0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64, 1f64])))), "assertion 8");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("b"), String::from("left")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("b"), String::from("right")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 1f64, 1f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64, 1f64])))), "assertion 9");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![1f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 10");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![(-1f64)])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 11");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![(-0f64)])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 12");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0.5f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 13");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("b")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 14");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("b")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 15");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 16");
+    assert!(((self::plan_formal_datatype_module_prefixes(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a")]))])), std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 17");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(Vec::<std::rc::Rc<std::cell::RefCell<Vec<String>>>>::new())), std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 18");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("y")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x"), String::from("inner")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("z")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64, 2f64, 1f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64, 0f64, 1f64])))), "assertion 19");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x"), String::from("inner")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x"), String::from("inner"), String::from("more")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x"), String::from("other")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64, 3f64, 2f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![1f64, 1f64, 1f64, 2f64])))), "assertion 20");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x"), String::from("inner")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x"), String::from("other")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 1f64, 2f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 0f64, 0f64])))), "assertion 21");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a:b"), String::from("c")])), std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("a"), String::from("b:c")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 2f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(vec![0f64, 2f64])))), "assertion 22");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![2f64])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 23");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x")]))])), std::rc::Rc::new(std::cell::RefCell::new(vec![(-0f64)])))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 24");
+    assert!(((self::plan_formal_datatype_module_closure(std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![String::from("x")]))])), std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))) == (std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())))), "assertion 25");
+}
+
+// Deep recursion in the source is not bounded by a small native stack.
+fn main() {
+    let check = std::env::args().any(|argument| argument == "--ml-check-theorems");
+    let worker = std::thread::Builder::new()
+        .stack_size(1 << 28)
+        .spawn(move || { ml_main() })
+        .expect("spawn the program thread");
+    if worker.join().is_err() {
+        std::process::exit(101);
+    }
+}
+
+#[test]
+fn all_literal_formal_datatype_module_controls() { main(); }

@@ -130,8 +130,25 @@ export function composeNativePolicyAssertionProgram(options){if('assignment' in 
  * written. Root authoring owns atomic registration/publication of the result. */
 function translate({sourcePath,closure,fixtures,moduleName,testName,referenceSemantics,operationOwners=[],assignment=null}){
  const program=compose({sourcePath,closure,fixtures,operationOwners,assignment,moduleName});
- const checked=checkProgram(parseJavaScript(program.source,referenceSemantics?{referenceSemantics:true}:undefined)),sourceDeclarationOwners=readSourceLibraryDeclarationOwnership(closure,{...checked,main:null});
- const emitted=emitRust(checked,{arrayConsumption:true});limit(Buffer.byteLength(emitted.text),8*1024*1024,'native assertion output exceeds 8 MiB');
+ let checked;
+ try {
+  checked=checkProgram(parseJavaScript(program.source,referenceSemantics?{referenceSemantics:true}:undefined));
+ } catch(error) {
+  const span=error?.span;
+  if(process.env.META_LANGUAGE_TRACE_SOURCE_AUTHOR==='1'&&Number.isSafeInteger(span?.start)&&Number.isSafeInteger(span?.end)
+    &&span.start>=0&&span.end>=span.start&&span.end<=program.source.length){
+   const start=Math.max(0,span.start-160),end=Math.min(program.source.length,span.end+160,span.start+320);
+   console.error(`source author ${moduleName} at ${span.start}..${span.end}: ${JSON.stringify(program.source.slice(start,end))}`);
+  }
+  throw error;
+ }
+ const sourceDeclarationOwners=readSourceLibraryDeclarationOwnership(closure,{...checked,main:null});
+ const emitted=emitRust(checked,{arrayConsumption:true});
+ if(process.env.META_LANGUAGE_TRACE_SOURCE_AUTHOR==='1'){
+  const largest=emitted.definitions.map(source=>({bytes:Buffer.byteLength(source),head:source.slice(0,150)})).sort((left,right)=>right.bytes-left.bytes).slice(0,5);
+  console.error('native source author output',moduleName,Buffer.byteLength(emitted.text),largest);
+ }
+ limit(Buffer.byteLength(emitted.text),8*1024*1024,'native assertion output exceeds 8 MiB');
  const relocation=readPortableLibraryRelocation(emitted.text),tokens=tokenize(relocation.source,'Rust').tokens;if(tokens.some((token,index)=>token.value==='fn'&&tokens[index+1]?.value===testName))throw new TypeError('native assertion wrapper collides with an actual generated function');
  const rust=relocation.source+'\n#[test]\nfn '+testName+'() { main(); }\n',output='rust/tests/generated/'+moduleName+'.rs';
  limit(Buffer.byteLength(rust),8*1024*1024,'native assertion output with test entry exceeds 8 MiB');

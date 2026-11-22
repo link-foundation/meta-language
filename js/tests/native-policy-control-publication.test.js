@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
-import {planNativePolicyControlPublication,rustBaselineNativePolicyRegistration,rustBaselineNativePolicyPublicationManifest,rustBaselineMixedPredicateControlGroups} from '../scripts/draft-rust-baseline-native-policy-controls.mjs';
+import {encodeNativePolicyPublicationReceipt,readNativePolicyPublicationReceipt,planNativePolicyControlPublication,rustBaselineNativePolicyRegistration,rustBaselineNativePolicyPublicationManifest,rustBaselineMixedPredicateControlGroups} from '../scripts/draft-rust-baseline-native-policy-controls.mjs';
+import {readStructuredDataLino,structuredDataToLino} from '../src/structured-data-links.js';
 const first={path:'rust/tests/generated/authored_test_controls.rs',source:'fn main() {}\n#[test]\nfn controls() { main(); }\n'},receipt={path:'parity/self-translation/rust-baseline-native-policy-controls/authored_test_controls.lino',source:'()\n'};
 const state=file=>({kind:'file',bytes:Buffer.byteLength(file.source),sha256:createHash('sha256').update(file.source).digest('hex')});
 test('first publication claims only absent task-owned files and retains an exact bounded manifest',()=>{
@@ -26,4 +27,16 @@ test('output namespace and manifest ownership cannot be widened by a prepared pl
  assert.equal(rustBaselineNativePolicyRegistration,'rust/tests/generated/rust_baseline_native_policy_assertions.rs');
  assert.equal(rustBaselineMixedPredicateControlGroups.length,2);assert.deepEqual(rustBaselineMixedPredicateControlGroups[0].fixtureSelections[0].operations,['readRustOwnedStandardSumPredicateResultError']);
  assert.equal(rustBaselineMixedPredicateControlGroups[0].fixtureSelections[0].path,rustBaselineMixedPredicateControlGroups[1].fixtureSelections[0].path);assert.equal(rustBaselineMixedPredicateControlGroups[0].fixtureSelections[0].exportName,rustBaselineMixedPredicateControlGroups[1].fixtureSelections[0].exportName);
+});
+test('publication retains and authenticates the complete canonical receipt within its byte budget',()=>{
+ const functionSource = 'pub fn exact_output() -> &' + "'static str { \"λ\" }\n";
+ const receipt = { source: functionSource.repeat(10_000), coordinates: [0, 1] };
+ const original = structuredDataToLino(receipt);
+ const encoded = encodeNativePolicyPublicationReceipt(original);
+ assert.ok(Buffer.byteLength(encoded) < Buffer.byteLength(original) / 10);
+ assert.deepEqual(readNativePolicyPublicationReceipt(encoded), receipt);
+ assert.deepEqual(readNativePolicyPublicationReceipt(original), receipt);
+ const envelope = readStructuredDataLino(encoded);
+ assert.throws(()=>readNativePolicyPublicationReceipt(structuredDataToLino({...envelope, sha256:'0'.repeat(64)})), /does not match its exact source/u);
+ assert.throws(()=>readNativePolicyPublicationReceipt(structuredDataToLino({...envelope, bytes:32*1024*1024+1})), /invalid compressed native policy receipt/u);
 });

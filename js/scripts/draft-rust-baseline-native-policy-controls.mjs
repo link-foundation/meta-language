@@ -4,6 +4,7 @@ import {constants,lstatSync,realpathSync,openSync,closeSync,fstatSync,readFileSy
 import {resolve,dirname,relative,sep,basename} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {gzipSync,gunzipSync} from 'node:zlib';
 import {structuredDataToLino,readStructuredDataLino} from '../src/structured-data-links.js';
 import {draftNativePolicyAssertionControls,draftNativePolicyAssertionBatch} from './draft-native-policy-assertion-controls.mjs';
 import {rustBaselineNativePolicyControlGroups} from './rust-baseline-native-policy-control-groups.mjs';
@@ -14,10 +15,34 @@ export const rustBaselineNativePolicyPublicationManifest=namespace+'publication.
 export const rustBaselineNativePolicyRegistration='rust/tests/generated/rust_baseline_native_policy_assertions.rs';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const model='owned complete native policy assertion publication 1';
+const receiptModel='gzip encoded native policy Links receipt 1';
+const receiptByteLimit=32*1024*1024;
 const cap=(value,bound,message)=>{if(value>bound)throw new RangeError(message);};
 const coordinate=row=>row.fixture+'\0'+row.exportName+'\0'+row.index;
 const artifactPath=path=>typeof path==='string'&&(/^rust\/tests\/generated\/[a-z][a-z_0-9]*\.rs$/u.test(path)||/^parity\/self-translation\/rust-baseline-native-policy-controls\/[a-z][a-z_0-9]*\.lino$/u.test(path));
 const pin=file=>({path:file.path,bytes:Buffer.byteLength(file.source),sha256:digest(file.source)});
+
+// Retain the exact canonical receipt, including the complete input, raw output,
+// relocation and installed output, within the existing publication budget.
+export function encodeNativePolicyPublicationReceipt(source){
+ const bytes=Buffer.byteLength(source);
+ cap(bytes,receiptByteLimit,'native policy Links receipt exceeds 32 MiB');
+ const compressed=gzipSync(source,{level:6});
+ return structuredDataToLino({schemaVersion:1,model:receiptModel,bytes,sha256:digest(source),data:compressed.toString('base64')});
+}
+
+export function readNativePolicyPublicationReceipt(source){
+ const envelope=readStructuredDataLino(source,{byteLimit:receiptByteLimit});
+ if(envelope?.model!==receiptModel)return envelope;
+ const {schemaVersion,bytes,sha256,data}=envelope;
+ if(schemaVersion!==1||Object.keys(envelope).length!==5||!Number.isSafeInteger(bytes)||bytes<1||bytes>receiptByteLimit||
+   typeof sha256!=='string'||!/^[a-f0-9]{64}$/u.test(sha256)||typeof data!=='string')throw new TypeError('invalid compressed native policy receipt');
+ const compressed=Buffer.from(data,'base64');
+ if(compressed.toString('base64')!==data)throw new TypeError('invalid compressed native policy receipt encoding');
+ const decoded=gunzipSync(compressed,{maxOutputLength:bytes});
+ if(decoded.length!==bytes||digest(decoded)!==sha256)throw new TypeError('compressed native policy receipt does not match its exact source');
+ return readStructuredDataLino(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(decoded),{byteLimit:receiptByteLimit});
+}
 
 // The original mixed fixture remains intact; neither owner invents imports.
 export const rustBaselineMixedPredicateControlGroups=[
@@ -29,11 +54,12 @@ export function prepareRustBaselineNativePolicyControls(){
  const products=[],files=[],expected=new Map(),assigned=new Map(),moduleNames=new Set(),inputs=new Map();let rustBytes=0,closureBytes=0,receiptBytes=0;
  function append(product){
   const moduleName=basename(product.output,'.rs');if(moduleNames.has(moduleName))throw new TypeError('duplicate baseline policy module registration');moduleNames.add(moduleName);
-  rustBytes+=Buffer.byteLength(product.rust);closureBytes+=product.receipt.sourceClosure.bytes;receiptBytes+=Buffer.byteLength(product.receiptLino);cap(rustBytes,16*1024*1024,'baseline native policy Rust outputs exceed 16 MiB');cap(closureBytes,16*1024*1024,'baseline native policy source closures exceed 16 MiB');cap(receiptBytes,32*1024*1024,'baseline native policy module receipts exceed 32 MiB');
+  const publicationReceipt=encodeNativePolicyPublicationReceipt(product.receiptLino);
+  rustBytes+=Buffer.byteLength(product.rust);closureBytes+=product.receipt.sourceClosure.bytes;receiptBytes+=Buffer.byteLength(publicationReceipt);cap(rustBytes,16*1024*1024,'baseline native policy Rust outputs exceed 16 MiB');cap(closureBytes,16*1024*1024,'baseline native policy source closures exceed 16 MiB');cap(receiptBytes,receiptByteLimit,'baseline native policy module receipts exceed 32 MiB');
   for(const input of [...product.receipt.sourceClosure.inputs,...product.receipt.fixtures]){const row={path:input.path,bytes:input.bytes,sha256:input.sourceSha256},previous=inputs.get(row.path);if(previous&&(previous.bytes!==row.bytes||previous.sha256!==row.sha256))throw new TypeError('baseline native policy source input changed between groups');inputs.set(row.path,row);cap(inputs.size,256,'baseline native policy publication exceeds 256 source inputs');}
   for(const fixture of product.receipt.fixtures)for(const row of fixture.controls){const key=coordinate(row),previous=expected.get(key);if(previous&&JSON.stringify(previous)!==JSON.stringify(row))throw new TypeError('original policy fixture coordinate has conflicting literal source');expected.set(key,row);}
   for(const row of product.receipt.controls){const key=coordinate(row);if(assigned.has(key))throw new TypeError('baseline native policy coordinate is assigned more than once');assigned.set(key,{row,owner:product.receipt.sourceRoot,moduleName,fixtureSha256:product.receipt.fixtures.find(fixture=>fixture.path===row.fixture&&fixture.exportName===row.exportName).sourceSha256});}
-  products.push(product);files.push({path:product.output,source:product.rust},{path:namespace+moduleName+'.lino',source:product.receiptLino});
+  products.push(product);files.push({path:product.output,source:product.rust},{path:namespace+moduleName+'.lino',source:publicationReceipt});
  }
  for(const group of rustBaselineNativePolicyControlGroups)append(draftNativePolicyAssertionControls(group));
  const mixed=draftNativePolicyAssertionBatch({groups:rustBaselineMixedPredicateControlGroups});for(const product of mixed.modules)append(product);receiptBytes+=Buffer.byteLength(mixed.receiptLino);cap(receiptBytes,32*1024*1024,'baseline native policy receipts exceed 32 MiB');files.push({path:namespace+'predicate_assignment.lino',source:mixed.receiptLino});
