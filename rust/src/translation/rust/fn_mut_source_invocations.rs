@@ -16,10 +16,16 @@ pub(super) fn fn_mut_result_packet(
     states: &[SourceOrigin],
     path: &[String],
 ) -> Result<SourceOrigin> {
-    let positions = std::iter::once(result).chain(states).map(source_type_position).collect::<Result<Vec<_>>>()?;
+    let positions = std::iter::once(result)
+        .chain(states)
+        .map(source_type_position)
+        .collect::<Result<Vec<_>>>()?;
     let mut packet = SourceOrigin::with_type(
         Type::Tuple {
-            elements: positions.iter().map(|position| position.ty.clone()).collect(),
+            elements: positions
+                .iter()
+                .map(|position| position.ty.clone())
+                .collect(),
         },
         path,
         Vec::new(),
@@ -27,7 +33,10 @@ pub(super) fn fn_mut_result_packet(
     packet.source_owner = Some(SourceOwner {
         kind: "tuple".to_owned(),
         path: Vec::new(),
-        arguments: positions.into_iter().map(|position| position.owner).collect(),
+        arguments: positions
+            .into_iter()
+            .map(|position| position.owner)
+            .collect(),
     });
     Ok(packet)
 }
@@ -106,12 +115,25 @@ impl RustParser {
             .read_copy_closure_call(callee, arguments, path, location)?
             .ok_or_else(|| type_error("the original source formal must be callable", location))?;
         let SNode::App { args: inputs, .. } = &mut call.node else {
-            return Err(type_error("the actual callback must retain its application", location));
+            return Err(type_error(
+                "the actual callback must retain its application",
+                location,
+            ));
         };
         let mut places = Vec::new();
         for slot in states {
-            let input = SExpr::new(SNode::Name { path: vec![slot.current_name.clone()] }, None);
-            places.push(CallablePlace { parameter: inputs.len(), slot: slot.clone(), layouts: Vec::new(), position: slot.origin.clone() });
+            let input = SExpr::new(
+                SNode::Name {
+                    path: vec![slot.current_name.clone()],
+                },
+                None,
+            );
+            places.push(CallablePlace {
+                parameter: inputs.len(),
+                slot: slot.clone(),
+                layouts: Vec::new(),
+                position: slot.origin.clone(),
+            });
             parameters.push(slot.origin);
             inputs.push(input);
         }
@@ -186,25 +208,43 @@ impl RustParser {
                         Some(&preview.callback.result),
                     )
                 };
-                let selected = self.fn_mut_source_capture_read.take().expect("the selected source callback retains its capture reader");
+                let selected = self
+                    .fn_mut_source_capture_read
+                    .take()
+                    .expect("the selected source callback retains its capture reader");
                 let mut closure = read?;
-                captures = selected.captures.ok_or_else(|| type_error("the selected callback must finish its original closure body", closure.span))?;
+                captures = selected.captures.ok_or_else(|| {
+                    type_error(
+                        "the selected callback must finish its original closure body",
+                        closure.span,
+                    )
+                })?;
                 self.origins.argument(
                     &self.origins.origin(&closure, path),
                     parameter,
                     closure.span,
                 )?;
-                let SNode::Lambda { params, ret, body, .. } = &mut closure.node else {
+                let SNode::Lambda {
+                    params, ret, body, ..
+                } = &mut closure.node
+                else {
                     return Err(type_error(
                         "the actual callback needs its checked body",
                         closure.span,
                     ));
                 };
-                let states = captures.iter().map(|capture| capture.alias.origin.clone()).collect::<Vec<_>>();
+                let states = captures
+                    .iter()
+                    .map(|capture| capture.alias.origin.clone())
+                    .collect::<Vec<_>>();
                 *ret = fn_mut_result_packet(&preview.callback.result, &states, path)?.ty;
                 for capture in &captures {
                     params.push(self.callback_state_parameter(&capture.alias, closure.span)?);
-                    self.retain_callable_state_parameter(capture.alias.current_name.clone(), capture.alias.clone(), true)?;
+                    self.retain_callable_state_parameter(
+                        capture.alias.current_name.clone(),
+                        capture.alias.clone(),
+                        true,
+                    )?;
                 }
                 if captures.is_empty() {
                     **body = pack((**body).clone());
@@ -226,7 +266,8 @@ impl RustParser {
         }
         self.cursor.eat(",");
         let close = self.cursor.expect(")", Some("source FnMut call"))?;
-        let actual = self.replay_fn_mut_source_declaration(declaration, Vec::new(), true, captures.clone())?;
+        let actual =
+            self.replay_fn_mut_source_declaration(declaration, Vec::new(), true, captures.clone())?;
         if captures.len() != actual.state_parameters.len() {
             return Err(type_error(
                 "source FnMut replay must retain every ordered callback state parameter",
@@ -268,13 +309,32 @@ impl RustParser {
             let parameter = parameters.len();
             let position = source_type_position(&slot.origin)?;
             if let Some(binder) = capture.binder {
-                captured_parameters.push(Capture { parameter, binder, position: position.clone() });
+                captured_parameters.push(Capture {
+                    parameter,
+                    binder,
+                    position: position.clone(),
+                });
             }
-            parameters.push(Parameter { mode: "exclusive".to_owned(), position });
+            parameters.push(Parameter {
+                mode: "exclusive".to_owned(),
+                position,
+            });
             parameter_origins.push(slot.origin.clone());
-            function.params.push(self.callback_state_parameter(slot, span(start, &close))?);
-            arguments.push(SExpr::new(SNode::Name { path: vec![capture.outer.current_name.clone()] }, span(start, &close)));
-            places.push(CallablePlace { parameter, slot: capture.outer, layouts: Vec::new(), position: slot.origin.clone() });
+            function
+                .params
+                .push(self.callback_state_parameter(slot, span(start, &close))?);
+            arguments.push(SExpr::new(
+                SNode::Name {
+                    path: vec![capture.outer.current_name.clone()],
+                },
+                span(start, &close),
+            ));
+            places.push(CallablePlace {
+                parameter,
+                slot: capture.outer,
+                layouts: Vec::new(),
+                position: slot.origin.clone(),
+            });
         }
         let callback = Callback {
             parameter: callback_formal.index,
@@ -288,7 +348,11 @@ impl RustParser {
             captures: captured_parameters,
         };
         function.name = name.clone();
-        let states = actual.state_parameters.iter().map(|slot| slot.origin.clone()).collect::<Vec<_>>();
+        let states = actual
+            .state_parameters
+            .iter()
+            .map(|slot| slot.origin.clone())
+            .collect::<Vec<_>>();
         function.ret = fn_mut_result_packet(&result, &states, &declaration.owner)?.ty;
         if places.is_empty() {
             function.body = pack(function.body);

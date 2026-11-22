@@ -73,10 +73,14 @@ fn repeated_callbacks_retain_the_original_mutable_capture() {
     let surface =
         parse_rust_with_fn_mut_source_model(source, FN_MUT_MODEL, EXCLUSIVE_MODEL, "1.93.2")
             .unwrap();
-    let facet = surface.items.iter().find_map(|item| match item {
-        SItem::Fn(function) => function.source_fn_mut_specialization.as_ref(),
-        _ => None,
-    }).expect("the original callback function has a checked specialization");
+    let facet = surface
+        .items
+        .iter()
+        .find_map(|item| match item {
+            SItem::Fn(function) => function.source_fn_mut_specialization.as_ref(),
+            _ => None,
+        })
+        .expect("the original callback function has a checked specialization");
     assert_eq!(facet.packet, [2]);
     let [capture] = facet.callback.captures.as_slice() else {
         panic!("the original closure captures one mutable root");

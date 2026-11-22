@@ -2,9 +2,9 @@
 use super::{
     Language, Result, RustParser, SFn, SItem, SourceDeclaration as CatalogDeclaration,
     SourceOrigin, Token, TokenCursor, Type,
+    fn_mut_source_captures::SourceCapture,
     fn_mut_source_declarations::{FnMutSourceDeclaration, FnMutSourceDeclarations},
     inherent::InherentOwner,
-    fn_mut_source_captures::SourceCapture,
     owned_record_state::Slot,
     unsupported,
 };
@@ -332,7 +332,11 @@ impl RustParser {
         }
         let mut parameters = callback.parameters.clone();
         let mut result = callback.result.clone();
-        let states = read.captures.iter().map(|state| state.alias.origin.clone()).collect::<Vec<_>>();
+        let states = read
+            .captures
+            .iter()
+            .map(|state| state.alias.origin.clone())
+            .collect::<Vec<_>>();
         let source_count = parameters.len();
         parameters.extend(states.iter().cloned());
         let mut owner_arguments = Vec::new();
@@ -355,7 +359,11 @@ impl RustParser {
                 .map(|ty| self.record_source_type(ty, &origin.path));
         }
         let result = if read.body_replay {
-            super::fn_mut_source_invocations::fn_mut_result_packet(&result, &parameters[source_count..], path)?
+            super::fn_mut_source_invocations::fn_mut_result_packet(
+                &result,
+                &parameters[source_count..],
+                path,
+            )?
         } else {
             result
         };
