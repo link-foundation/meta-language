@@ -94,7 +94,7 @@ function compute(tree) {
   assert.equal(translated(value),original(value));
  }
 });
-test('contextual nominal rest removes an optional field and keeps other own fields',()=>{
+test('nominal rest infers the declared owner and keeps other own fields',()=>{
  const source=readFileSync(new URL('../../experiments/javascript-program/nominal-object-rest.mjs',import.meta.url),'utf8');
  assert.equal(runInNewContext(source+'\ncompute();'),true);
  const program=checkProgram(parseJavaScript(source)),{network,root}=encodeTypedProgramLinks(program);

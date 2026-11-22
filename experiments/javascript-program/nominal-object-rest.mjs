@@ -2,7 +2,8 @@
 /** @param {State} source @returns {State} */
 function clear(source) {
  const {child,...rest}=source;
- return {...rest,value:source.value+1};
+ const updated={...rest,value:source.value+1};
+ return updated;
 }
 function compute() {
  const waiting=clear({$:'waiting',value:2,child:4,marker:6});

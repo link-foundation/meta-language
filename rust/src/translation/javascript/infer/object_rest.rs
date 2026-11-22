@@ -33,11 +33,6 @@ impl Inference {
         for constraint in std::mem::take(&mut self.object_rest_fields) {
             let mut owner = self.resolve(&constraint.object);
             if let Term::Known(Type::Data { name }) = &owner {
-                let target = self.resolve(&constraint.result);
-                if matches!(target, Term::Var(_)) {
-                    waiting.push(constraint);
-                    continue;
-                }
                 let constructors = self
                     .data
                     .iter()
@@ -50,18 +45,18 @@ impl Inference {
                             .map(|field| (field.name.as_deref(), field.optional))
                             .collect()
                     });
-                if !matches!(&target, Term::Known(Type::Data { name: target }) if target == name)
-                    || !crate::translation::object_rest::accept_nominal(
+                if !crate::translation::object_rest::accept_nominal(
                         constructors,
                         &constraint.excluded,
                     )
                 {
                     return Err(crate::translation::diagnostics::unsupported(
                         "nominal object rest receiver",
-                        "the actual tag and every required constructor field must be retained in the same declared owner",
+                        "the actual tag and every required constructor field must be retained",
                         constraint.place,
                     ));
                 }
+                self.unify(&constraint.result, &owner, constraint.place)?;
                 progress = true;
                 continue;
             }

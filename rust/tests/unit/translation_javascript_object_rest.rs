@@ -20,7 +20,7 @@ fn lexical_object_rest_keeps_actual_fields_order_and_fresh_shallow_identity() {
 }
 
 #[test]
-fn contextual_nominal_rest_keeps_variant_and_optional_field_presence() {
+fn nominal_rest_infers_the_owner_and_keeps_optional_field_presence() {
     use super::issue_195_translation_pairs::run;
     use meta_language::{
         BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,

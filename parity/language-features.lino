@@ -6181,7 +6181,7 @@
 (6181: 3002 6167 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (6182: 6183 6191 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (6183: 2985 2986 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(6184: 6185 6186 6139 6187 6188 6189 6092 3622 6190 6176 6177 3628 6084 6178 3100 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
+(6184: 6185 6186 6139 6187 6188 6189 6092 3622 6190 6176 6177 3628 6084 6178 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
 (6185: (meta: (t: semantic) (n: 1) (term: string%20value) (def: rust%2Fsrc%2Ftranslation%2Fobject_rest_rules.rs) (lang: meta-language%20structured%20data)))
 (6186: (meta: (t: semantic) (n: 1) (term: string%20value) (def: rust%2Fsrc%2Ftranslation%2Fobject_rest.rs) (lang: meta-language%20structured%20data)))
 (6187: (meta: (t: semantic) (n: 1) (term: string%20value) (def: rust%2Fsrc%2Ftranslation%2Fjavascript%2Finfer%2Fobject_rest.rs) (lang: meta-language%20structured%20data)))
