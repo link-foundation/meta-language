@@ -4,10 +4,12 @@ use crate::dynamic_language_command_rules as rules;
 use crate::grammar_inference::{
     STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER, regular_grammar_refinement_archive_limits,
 };
+use crate::translation::Language;
 use crate::{
-    DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, GlobalConceptSource,
-    GrammarAttributeInferenceRequest, GrammarAttributeObservation, LoadedMetaLanguageArchive,
-    MetaLanguageArchive, MetaLanguageArchiveLimits, OperationValue, RegularGrammarInferenceOptions,
+    DynamicAttributeSelection, DynamicMetaLanguage, DynamicMetaLanguageOptions,
+    DynamicParseOptions, GlobalConceptSource, GrammarAttributeInferenceRequest,
+    GrammarAttributeObservation, LoadedMetaLanguageArchive, MetaLanguageArchive,
+    MetaLanguageArchiveLimits, OperationValue, RegularGrammarInferenceOptions,
     StructuralGrammarInferenceOptions, create_dynamic_meta_language,
     infer_grammar_attribute_action, infer_regular_grammar, infer_structural_grammar,
     meta_language_archive_to_binary, meta_language_archive_to_link_cli_store,
@@ -29,7 +31,7 @@ use arguments::Arguments;
 pub struct DynamicLanguageCommandOutput {
     /// Zero for success, one for an actual parse rejection, two for invalid input.
     pub exit_code: i32,
-    /// Complete Links text, graph bytes, or a Links source inventory.
+    /// Complete Links text, graph bytes, source inventory, or translated source.
     pub stdout: Vec<u8>,
     /// Links rejection diagnostics, or an argument/library error and usage.
     pub stderr: String,
@@ -387,6 +389,31 @@ where
             .ok_or("grammar needs a known source-qualified identifier")?;
         return Ok(success(render_grammar_links(&source.grammar).into_bytes()));
     }
+    if args.command == "translate-attributes" {
+        let [
+            Some(source),
+            Some(input),
+            Some(target),
+            Some(selection_file),
+        ] = ["--source", "--input", "--target", "--selections"].map(|name| args.options.get(name))
+        else {
+            return Err("translate-attributes needs a source identity, input file, target and selections file".to_owned());
+        };
+        let target = Language::parse(target).ok_or(
+            "dynamic meta-language: attribute translation needs a JavaScript or Rust target",
+        )?;
+        let selections: Vec<DynamicAttributeSelection> =
+            serde_json::from_value(read_structured_data_lino(&read_text(selection_file)?)?)
+                .map_err(|_| "invalid attribute translation selection")?;
+        let translated = session.translate_attributes(
+            source,
+            &read_bytes(input)?,
+            target,
+            &selections,
+            configuration::parse_options(&args.options)?.parser,
+        )?;
+        return Ok(success(translated.output.code.into_bytes()));
+    }
     let mut archive = session.archive().clone();
     let mut exit_code = 0;
     let mut stderr = String::new();
@@ -433,7 +460,7 @@ fn success(stdout: Vec<u8>) -> DynamicLanguageCommandOutput {
     }
 }
 
-/// Run source-free dynamic preparation, extension, parsing and grammar export.
+/// Run dynamic preparation, extension, parsing, translation and grammar export.
 /// File callbacks only supply bytes; no process, parser oracle or source fetch runs.
 pub fn run_dynamic_language_command<T, B>(
     args: &[String],

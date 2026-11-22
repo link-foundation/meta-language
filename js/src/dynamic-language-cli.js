@@ -125,9 +125,12 @@ function configuration(path,readFile) {
   if(value.formalDefinitions!==undefined&&(!value.formalDefinitions||typeof value.formalDefinitions!=='object'||Array.isArray(value.formalDefinitions)))throw new TypeError('formal definitions must be a record');
   return value;
 }
-function parseOptions(options) {
-  const result={projection:readDynamicLanguageProjection(options.get('--projection')??'cst')};
-  if(!result.projection)throw new TypeError('unknown syntax projection');
+function parseOptions(options, includeProjection = true) {
+  const result = {};
+  if (includeProjection) {
+    result.projection = readDynamicLanguageProjection(options.get('--projection') ?? 'cst');
+    if (!result.projection) throw new TypeError('unknown syntax projection');
+  }
   for(const [option,value]of options) {
     const field=readDynamicLanguageResourceField(option);
     if(field) {
@@ -177,6 +180,21 @@ export function runDynamicLanguageCommand(args,{readFile,readBytes}) {
       const source=session.sources.find(source=>source.id===options.get('--source'));
       if(!source)throw new TypeError('grammar needs a known source-qualified identifier');
       return {exitCode:0,stdout:renderGrammarLinks(source.grammar),stderr:''};
+    }
+    if (command === 'translate-attributes') {
+      const source = options.get('--source'), input = options.get('--input');
+      const target = options.get('--target'), selectionFile = options.get('--selections');
+      if (source === undefined || input === undefined || target === undefined || selectionFile === undefined) {
+        throw new TypeError('translate-attributes needs a source identity, input file, target and selections file');
+      }
+      const selections = readStructuredDataLino(readFile(selectionFile));
+      if (!Array.isArray(selections) || !selections.every(selection => selection !== null
+        && typeof selection === 'object' && !Array.isArray(selection)
+        && Object.keys(selection).every(key => ['path', 'kind', 'attribute'].includes(key)))) {
+        throw new TypeError('invalid attribute translation selection');
+      }
+      const translation = session.translateAttributes(source, readBytes(input), target, selections, parseOptions(options, false));
+      return { exitCode: 0, stdout: translation.output.code, stderr: '' };
     }
     let archive=session.archive,exitCode=0,stderr='';
     if(command==='parse') {

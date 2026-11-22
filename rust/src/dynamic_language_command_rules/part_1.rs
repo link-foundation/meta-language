@@ -2,13 +2,14 @@
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_dynamic_language_command(command: &str) -> bool {
-    ((((((((command == "prepare") || (command == "extend")) || (command == "parse"))
+    (((((((((command == "prepare") || (command == "extend")) || (command == "parse"))
         || (command == "list"))
         || (command == "grammar"))
         || (command == "discover"))
         || (command == "refine"))
         || (command == "install"))
-        || (command == "infer-attribute")
+        || (command == "infer-attribute"))
+        || (command == "translate-attributes")
 }
 
 /// Execute the checked shared source algorithm.
@@ -17,6 +18,19 @@ pub fn read_dynamic_language_argument_arity(command: &str, option: &str) -> f64 
     if (self::accept_dynamic_language_command(command)) {
         if command == "infer-attribute" {
             if option == "--grammar" { 1f64 } else { -1f64 }
+        } else if command == "translate-attributes" {
+            if (option == "--input-binary") || (option == "--input-link-cli-store") {
+                0f64
+            } else if (((((option == "--source") || (option == "--input"))
+                || (option == "--target"))
+                || (option == "--selections"))
+                || (option == "--start-rule"))
+                || (!(self::read_dynamic_language_resource_field(option)).is_empty())
+            {
+                1f64
+            } else {
+                -1f64
+            }
         } else if (option == "--binary") || (option == "--link-cli-store") {
             if (command == "list") || (command == "grammar") {
                 -1f64
@@ -124,6 +138,6 @@ pub fn read_dynamic_language_resource_field(option: &str) -> String {
 #[must_use]
 pub fn read_dynamic_language_command_usage() -> String {
     String::from(
-        "usage: meta-language language prepare --source <id> <language> <edition> <grammar.lino> ... [--configuration <links-file>] [--binary]\n       meta-language language extend <archive> --source <id> <language> <edition> <grammar.lino> ... [--replace] [--configuration <links-file>] [--input-binary] [--binary]\n       meta-language language parse <archive> --source <id> --input <file> [--projection cst|ast] [--identifier <name>] [--replace-snapshot] [--start-rule <rule>]\n         [--step-limit <n>] [--memory-limit <n>] [--max-depth <n>] [--memo-limit <n>] [--max-repairs <n>]\n         [--error-recovery] [--accept-recovery] [--reject-ambiguity] [--input-binary] [--binary]\n       meta-language language list|grammar <archive> [--source <id>] [--input-binary]\n       meta-language language discover <examples.lino> [--identifier <id>] [--language <name>] [--edition <edition>] [--binary]\n       meta-language language refine <checkpoint> --examples <examples.lino> [--identifier <id>] [--input-binary] [--binary]\n       meta-language language install <checkpoint> [--input-binary] [--binary]\n       meta-language language infer-attribute <observations.lino> --grammar <grammar.lino>\nUse --link-cli-store or --input-link-cli-store in place of the corresponding binary option for native link-cli stores.\nParse writes the complete extended archive; CST is the default. AST retains its original CST. Configuration is structured Links data.\n",
+        "usage: meta-language language prepare --source <id> <language> <edition> <grammar.lino> ... [--configuration <links-file>] [--binary]\n       meta-language language extend <archive> --source <id> <language> <edition> <grammar.lino> ... [--replace] [--configuration <links-file>] [--input-binary] [--binary]\n       meta-language language parse <archive> --source <id> --input <file> [--projection cst|ast] [--identifier <name>] [--replace-snapshot] [--start-rule <rule>]\n         [--step-limit <n>] [--memory-limit <n>] [--max-depth <n>] [--memo-limit <n>] [--max-repairs <n>]\n         [--error-recovery] [--accept-recovery] [--reject-ambiguity] [--input-binary] [--binary]\n       meta-language language list|grammar <archive> [--source <id>] [--input-binary]\n       meta-language language discover <examples.lino> [--identifier <id>] [--language <name>] [--edition <edition>] [--binary]\n       meta-language language refine <checkpoint> --examples <examples.lino> [--identifier <id>] [--input-binary] [--binary]\n       meta-language language install <checkpoint> [--input-binary] [--binary]\n       meta-language language infer-attribute <observations.lino> --grammar <grammar.lino>\n       meta-language language translate-attributes <archive> --source <id> --input <file> --target JavaScript|Rust --selections <selections.lino> [--input-binary]\nUse --link-cli-store or --input-link-cli-store in place of the corresponding binary option for native link-cli stores.\nParse writes the complete extended archive; CST is the default. AST retains its original CST. Configuration is structured Links data.\n",
     )
 }

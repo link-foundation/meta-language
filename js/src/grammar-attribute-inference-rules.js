@@ -25,3 +25,13 @@ export function readGrammarAttributeCandidateValues(field, childAttribute) {
   if (childAttribute === '') return candidates.concat(projections);
   return candidates.concat(projections, ['(attribute ' + field + ' ' + childAttribute + ')', '(sumOf ' + field + ' ' + childAttribute + ')']);
 }
+
+/** @param {string} target @returns {boolean} */
+export function acceptGrammarAttributeTranslationTarget(target) {
+  return target === 'JavaScript' || target === 'Rust';
+}
+
+/** @param {string} kind @param {string} attribute @returns {boolean} */
+export function acceptGrammarAttributeSelectionNames(kind, attribute) {
+  return kind !== '' && attribute !== '';
+}

@@ -235,8 +235,8 @@ pub use document_formatting::{
 pub use dynamic_language_cli::{DynamicLanguageCommandOutput, run_dynamic_language_command};
 pub use dynamic_language_command_program::create_dynamic_language_command_program_links;
 pub use dynamic_meta_language::{
-    DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, DynamicParseResult,
-    create_dynamic_meta_language,
+    DynamicAttributeSelection, DynamicAttributeTranslation, DynamicMetaLanguage,
+    DynamicMetaLanguageOptions, DynamicParseOptions, DynamicParseResult, create_dynamic_meta_language,
 };
 pub use formal_concept_definition::{
     FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,

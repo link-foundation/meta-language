@@ -1,9 +1,16 @@
 use super::issue_195_observations::{Observation, record};
+use super::issue_195_translation_pairs::{TemporaryDirectory, execute};
+use meta_language::translation::Language;
 use meta_language::{
-    FeatureParseOptions, GrammarAttributeInferenceRequest, GrammarAttributeObservation,
-    OperationValue, SyntaxTree, compile_feature_grammar, infer_grammar_attribute_action,
-    parse_grammar_links, read_structured_data_lino, render_grammar_links,
-    run_dynamic_language_command, structured_data_to_lino,
+    DynamicAttributeSelection, DynamicMetaLanguage, DynamicMetaLanguageOptions,
+    DynamicParseOptions, FeatureParseOptions, FormalConceptDefinitionInput,
+    FormalConceptDefinitionOptions, GlobalConceptSource, GrammarAttributeInferenceRequest,
+    GrammarAttributeObservation, MetaLanguageArchiveLimits, OperationValue, SyntaxTree,
+    compile_feature_grammar, create_dynamic_meta_language, encode_formal_concept_definition,
+    infer_grammar_attribute_action, meta_language_archive_to_binary, parse_grammar_links,
+    prove_formal_concept_equivalence, read_meta_language_archive_binary, read_structured_data_lino,
+    render_grammar_links, run_dynamic_language_command, structured_data_to_lino,
+    verify_formal_concept_equivalence,
 };
 use serde_json::{Value, json};
 
@@ -98,6 +105,214 @@ fn assert_command_results(fixture: &Value, options: &FeatureParseOptions) {
             assert!(report["grammar"].is_null());
             assert!(text(&report["diagnostic"]).contains(text(&current["diagnostic"])));
         }
+    }
+}
+
+#[test]
+fn installed_inferred_actions_translate_after_reload_and_invalidate_old_semantic_certificates() {
+    super::regular_grammar_inference::versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/grammar-attribute-inference.lino"
+    ))
+    .unwrap();
+    let request = GrammarAttributeInferenceRequest {
+        rule: text(&fixture["request"]["rule"]),
+        attribute: text(&fixture["request"]["attribute"]),
+        field: None,
+        child_attribute: None,
+    };
+    let selection = DynamicAttributeSelection {
+        path: Vec::new(),
+        kind: request.rule.to_owned(),
+        attribute: request.attribute.to_owned(),
+    };
+    let selections = [selection.clone(), selection];
+    let settings = DynamicMetaLanguageOptions::default();
+    let session = create_dynamic_meta_language(&[], &settings).unwrap();
+    let source_id = "observed words";
+    let source = |grammar| GlobalConceptSource {
+        id: source_id.to_owned(),
+        language: "Observed words".to_owned(),
+        edition: "1".to_owned(),
+        grammar,
+    };
+    let restore = |language: &DynamicMetaLanguage| {
+        let limits = MetaLanguageArchiveLimits::default();
+        let bytes = meta_language_archive_to_binary(language.archive(), limits).unwrap();
+        let loaded = read_meta_language_archive_binary(&bytes, limits).unwrap();
+        DynamicMetaLanguage::new(&loaded.archive, &settings).unwrap()
+    };
+    let inferred = |grammar: &Value, case: &Value| {
+        infer_grammar_attribute_action(
+            &parse_grammar_links(text(grammar)).unwrap(),
+            request,
+            &observations(case),
+        )
+        .unwrap()
+        .grammar
+        .unwrap()
+    };
+    let directory = TemporaryDirectory::new("installed-attribute-translation");
+    let translated = |language: &DynamicMetaLanguage, input: &str, expected: &Value, name: &str| {
+        let parsed = language
+            .parse(source_id, input.as_bytes(), &DynamicParseOptions::default())
+            .unwrap();
+        assert!(parsed.outcome.ok);
+        let Some(SyntaxTree::Node {
+            attributes: Some(attributes),
+            ..
+        }) = parsed.outcome.tree
+        else {
+            panic!("expected attributes on the installed language's concrete tree");
+        };
+        assert_eq!(
+            attributes.get(request.attribute),
+            Some(&observed_value(expected))
+        );
+        let rendered = expected
+            .as_str()
+            .map_or_else(|| expected.to_string(), String::from);
+        let javascript = language
+            .translate_attributes(
+                source_id,
+                input.as_bytes(),
+                Language::JavaScript,
+                &selections,
+                FeatureParseOptions::default(),
+            )
+            .unwrap();
+        let rust = language
+            .translate_attributes(
+                source_id,
+                input.as_bytes(),
+                Language::Rust,
+                &selections,
+                FeatureParseOptions::default(),
+            )
+            .unwrap();
+        assert_eq!(javascript.output.language, Language::JavaScript);
+        assert_eq!(rust.output.language, Language::Rust);
+        let archive = meta_language_archive_to_binary(language.archive(), limits).unwrap();
+        let selection_file = structured_data_to_lino(&json!([
+            {"path": [], "kind": request.rule, "attribute": request.attribute},
+            {"path": [], "kind": request.rule, "attribute": request.attribute}
+        ]))
+        .unwrap();
+        for output in [javascript.output, rust.output] {
+            let arguments = [
+                "translate-attributes",
+                "installed.lino.bin",
+                "--input-binary",
+                "--source",
+                source_id,
+                "--input",
+                "input",
+                "--target",
+                output.language.as_str(),
+                "--selections",
+                "selections.lino",
+            ]
+            .map(str::to_owned);
+            let command = run_dynamic_language_command(
+                &arguments,
+                |name| match name {
+                    "selections.lino" => Ok(selection_file.clone()),
+                    _ => Err(format!("unexpected text file {name}")),
+                },
+                |name| match name {
+                    "installed.lino.bin" => Ok(archive.clone()),
+                    "input" => Ok(input.as_bytes().to_vec()),
+                    _ => Err(format!("unexpected byte file {name}")),
+                },
+            );
+            assert_eq!(command.exit_code, 0, "{}", command.stderr);
+            assert_eq!(command.stdout, output.code.as_bytes());
+            let result = execute(output.language.as_str(), &output.code, &directory.0, name);
+            assert!(result.accepted && result.ran, "{}", result.diagnostics);
+            assert_eq!(result.lines, [rendered.clone(), rendered.clone()]);
+        }
+        encode_formal_concept_definition(
+            FormalConceptDefinitionInput::LinkedProgram {
+                network: &javascript.links.network,
+                root: javascript.links.root,
+            },
+            FormalConceptDefinitionOptions::default(),
+        )
+        .unwrap()
+    };
+    let unique = &fixture["unique"];
+    let holdout = text(&unique["holdout"]);
+    let installed = restore(
+        &session
+            .extend(&[source(inferred(&fixture["grammar"], unique))], &settings)
+            .unwrap(),
+    );
+    let first = translated(&installed, holdout, &unique["value"], "original");
+    let certificate = prove_formal_concept_equivalence(&first, &first).unwrap();
+    assert!(verify_formal_concept_equivalence(
+        &first,
+        &first,
+        &certificate
+    ));
+
+    let listing = render_grammar_links(&installed.sources()[0].grammar);
+    let changed_listing = listing.replace(text(&unique["candidate"]), text(&unique["mutation"]));
+    assert_ne!(changed_listing, listing);
+    let replace = DynamicMetaLanguageOptions {
+        replace: true,
+        ..DynamicMetaLanguageOptions::default()
+    };
+    let changed = restore(
+        &installed
+            .extend(
+                &[source(parse_grammar_links(&changed_listing).unwrap())],
+                &replace,
+            )
+            .unwrap(),
+    );
+    let second = translated(&changed, holdout, &unique["mutatedValue"], "changed");
+    assert!(!verify_formal_concept_equivalence(
+        &first,
+        &second,
+        &certificate
+    ));
+    assert!(prove_formal_concept_equivalence(&first, &second).is_none());
+    translated(&installed, holdout, &unique["value"], "original_again");
+
+    let numeric = &fixture["numeric"];
+    let numbers = restore(
+        &changed
+            .extend(&[source(inferred(&numeric["grammar"], numeric))], &replace)
+            .unwrap(),
+    );
+    translated(
+        &numbers,
+        text(&numeric["holdout"]),
+        &numeric["value"],
+        "numeric",
+    );
+    let wrong_path = DynamicAttributeSelection {
+        path: vec![99],
+        ..selections[0].clone()
+    };
+    for (input, selection, reason) in [
+        (
+            text(&unique["negative"]),
+            &selections[0],
+            "accepted unambiguous",
+        ),
+        (holdout, &wrong_path, "concrete attributed"),
+    ] {
+        let error = installed
+            .translate_attributes(
+                source_id,
+                input.as_bytes(),
+                Language::JavaScript,
+                std::slice::from_ref(selection),
+                FeatureParseOptions::default(),
+            )
+            .unwrap_err();
+        assert!(error.contains(reason), "{error}");
     }
 }
 

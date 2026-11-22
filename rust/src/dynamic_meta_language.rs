@@ -20,10 +20,12 @@ use std::collections::BTreeMap;
 use std::rc::Rc;
 use std::sync::Arc;
 
+mod attribute_translation;
 mod contexts;
 mod extension;
 mod public_tree;
 mod settings;
+pub use attribute_translation::{DynamicAttributeSelection, DynamicAttributeTranslation};
 
 /// Creation and persistent extension settings; absent budgets inherit defaults.
 #[derive(Clone, Debug, Default)]

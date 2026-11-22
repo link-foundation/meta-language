@@ -16,6 +16,10 @@ import { readDynamicMetaLanguageIdentifier, acceptDynamicSyntaxProjection,
 import { decoratorSet } from './decorators.js';
 import { createAbstractSyntaxLinks, readAbstractSyntaxLinks } from './syntax-projection.js';
 import { readDynamicAbstractIdentifier } from './dynamic-meta-language-rules.js';
+import { checkProgram } from './translation/check.js';
+import { FLOAT } from './translation/types.js';
+import { emitTypedProgramLinks, encodeTypedProgramLinks } from './typed-program-links.js';
+import { acceptGrammarAttributeSelectionNames, acceptGrammarAttributeTranslationTarget } from './grammar-attribute-inference-rules.js';
 
 const discoveryIdentifier = readDynamicMetaLanguageIdentifier('definitions');
 const configurationIdentifier = readDynamicMetaLanguageIdentifier('configuration');
@@ -294,6 +298,42 @@ export class DynamicMetaLanguage {
     ], { ...this.#limits, replace: replaceSnapshot });
     return { ...outcome, tree: readAbstractSyntaxLinks(abstract.network, abstract.root, this.#limits).tree,
       concreteTree: outcome.tree, projection, archive, concrete, abstract };
+  }
+
+  /**
+   * Compile an installed attributed grammar's selected outputs to an executable
+   * target. Each selection identifies a concrete child path, kind and attribute.
+   */
+  translateAttributes(sourceIdentifier, input, target, selections, options = {}) {
+    if (!acceptGrammarAttributeTranslationTarget(target)) fail('attribute translation needs a JavaScript or Rust target');
+    parserOptions(options);
+    if (!Array.isArray(selections) || selections.length === 0 || selections.length > this.#limits.nodeLimit) {
+      fail('attribute translation needs a bounded nonempty list of selections');
+    }
+    for (const selection of selections) {
+      if (!selection || !Array.isArray(selection.path) || selection.path.length > this.#limits.depthLimit
+        || [...selection.path].some(index => !Number.isSafeInteger(index) || index < 0)
+        || typeof selection.kind !== 'string' || typeof selection.attribute !== 'string'
+        || !acceptGrammarAttributeSelectionNames(selection.kind, selection.attribute)) fail('invalid attribute translation selection');
+    }
+    const parsed = this.parse(sourceIdentifier, input, { ...options, ambiguity: 'reject', recovery: 'reject' });
+    if (!parsed.ok || !parsed.tree) fail('attribute translation needs an accepted unambiguous concrete tree');
+    const effects = selections.map(({ path, kind, attribute }) => {
+      let node = parsed.tree;
+      for (const index of path) node = node?.children?.[index];
+      if (!node || node.kind !== kind || node.trivia || !node.attributes || !Object.hasOwn(node.attributes, attribute)) {
+        fail('attribute translation selection does not identify a concrete attributed occurrence');
+      }
+      const value = node.attributes[attribute];
+      let expr;
+      if (typeof value === 'string') expr = { k: 'str', value };
+      else if (Number.isSafeInteger(value) && !Object.is(value, -0)) expr = { k: 'num', type: FLOAT, value: String(value) };
+      else fail('attribute translation needs a text or safe integer result');
+      return { k: 'print', style: 'js-console', expr };
+    });
+    const program = checkProgram({ language: 'JavaScript', items: [], main: { effects } });
+    const links = encodeTypedProgramLinks(program);
+    return { parsed, links, output: emitTypedProgramLinks(links.network, links.root, target) };
   }
 
   /** A new session retains prior source identities, complete old roots and

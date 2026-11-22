@@ -3,13 +3,21 @@
 export function acceptDynamicLanguageCommand(command) {
   return command === 'prepare' || command === 'extend' || command === 'parse'
     || command === 'list' || command === 'grammar' || command === 'discover'
-    || command === 'refine' || command === 'install' || command === 'infer-attribute';
+    || command === 'refine' || command === 'install' || command === 'infer-attribute'
+    || command === 'translate-attributes';
 }
 /** A negative arity refuses an option in that operation.
  * @param {string} command @param {string} option @returns {number} */
 export function readDynamicLanguageArgumentArity(command, option) {
   if (!acceptDynamicLanguageCommand(command)) return -1;
   if (command === 'infer-attribute') return option === '--grammar' ? 1 : -1;
+  if (command === 'translate-attributes') {
+    if (option === '--input-binary' || option === '--input-link-cli-store') return 0;
+    if (option === '--source' || option === '--input' || option === '--target'
+      || option === '--selections' || option === '--start-rule'
+      || readDynamicLanguageResourceField(option) !== '') return 1;
+    return -1;
+  }
   if (option === '--binary' || option === '--link-cli-store') return command === 'list' || command === 'grammar' ? -1 : 0;
   if (option === '--input-binary' || option === '--input-link-cli-store') return command === 'prepare' || command === 'discover' ? -1 : 0;
   if (command === 'discover') return option === '--identifier' || option === '--language' || option === '--edition' ? 1 : -1;
@@ -57,6 +65,7 @@ export function readDynamicLanguageCommandUsage() {
     + '       meta-language language refine <checkpoint> --examples <examples.lino> [--identifier <id>] [--input-binary] [--binary]\n'
     + '       meta-language language install <checkpoint> [--input-binary] [--binary]\n'
     + '       meta-language language infer-attribute <observations.lino> --grammar <grammar.lino>\n'
+    + '       meta-language language translate-attributes <archive> --source <id> --input <file> --target JavaScript|Rust --selections <selections.lino> [--input-binary]\n'
     + 'Use --link-cli-store or --input-link-cli-store in place of the corresponding binary option for native link-cli stores.\n'
     + 'Parse writes the complete extended archive; CST is the default. AST retains its original CST. Configuration is structured Links data.\n';
 }

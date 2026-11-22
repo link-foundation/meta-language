@@ -3664,6 +3664,22 @@ reload. The `language infer-attribute` operation reads an existing grammar and
 structured Links observations and reports the same candidates and optional
 grammar listing. Observations alone cannot certify semantic equivalence.
 
+An installed grammar can produce an executable translation of selected
+operational attributes through the dynamic session. Each selection addresses
+an occurrence in the concrete child tree by path, kind and attribute name.
+The ordinary parser evaluates the linked action and retains the complete
+concrete product under its definition snapshot. Attribute projection requires
+an accepted parse without ambiguities or recovery. Ordered text and safe
+integer results become checked program effects, and the typed program is encoded
+to Links and rechecked by the ordinary JavaScript or Rust emitter. The translation
+returns both the typed Links and the concrete product, preserving the meaning
+and the input context needed to verify them. The `language translate-attributes`
+command reads the session snapshot, source bytes and an ordered structured Links
+selection list and writes the emitted JavaScript or Rust source. An explicit grammar
+replacement reruns the same pipeline on the new action. A certificate for an older result
+must still verify against the new formal premises before it can establish
+equivalence. Whole-program semantic discovery remains a separate obligation.
+
 A new shared source draft supplies labelled prefix-tree construction, red/blue
 RPNI selection, evidence-driven selection and an ALERGIA-style compatibility
 worklist in both runtimes. First-observed symbol and state order explicitly

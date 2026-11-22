@@ -115,3 +115,15 @@ pub fn read_grammar_attribute_candidate_values(field: &str, child_attribute: &st
         }
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_grammar_attribute_translation_target(target: &str) -> bool {
+    (target == "JavaScript") || (target == "Rust")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_grammar_attribute_selection_names(kind: &str, attribute: &str) -> bool {
+    (!(kind).is_empty()) && (!(attribute).is_empty())
+}

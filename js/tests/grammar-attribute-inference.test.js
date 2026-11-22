@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { compileGrammar, inferGrammarAttributeAction, runDynamicLanguageCommand } from '../src/index.js';
+import { compileGrammar, createDynamicMetaLanguage, DynamicMetaLanguage, inferGrammarAttributeAction,
+  metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary, runDynamicLanguageCommand } from '../src/index.js';
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { encodeFormalConceptDefinition, proveFormalConceptEquivalence,
+  verifyFormalConceptEquivalence } from '../src/formal-concept-definition.js';
+import { javaScriptTranslationOutput, rustTranslationOutput } from './support/translation-behavior.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const fixtureFile = 'parity/fixtures/grammar-attribute-inference.lino';
 const fixture = readProjectData(new URL('../../' + fixtureFile, import.meta.url));
@@ -77,3 +82,58 @@ function assertCommandResults() {
     }
   }
 }
+
+test('installed inferred actions translate after archive reload and invalidate old semantic certificates', () => {
+  const { grammar, numeric, request, unique } = fixture;
+  const selection = { path: [], kind: request.rule, attribute: request.attribute };
+  const source = { id: 'observed words', language: 'Observed words', edition: '1' };
+  const session = createDynamicMetaLanguage([]);
+  const restored = (language) => new DynamicMetaLanguage(readMetaLanguageArchiveBinary(metaLanguageArchiveToBinary(language.archive)));
+  const translated = (language, input, expected) => {
+    const parsed = language.parse(source.id, input);
+    assert.ok(parsed.ok);
+    assert.equal(parsed.tree.attributes[request.attribute], expected);
+    const javascript = language.translateAttributes(source.id, input, 'JavaScript', [selection, selection]);
+    const rust = language.translateAttributes(source.id, input, 'Rust', [selection, selection]);
+    assert.equal(javascript.parsed.tree.attributes[request.attribute], expected);
+    assert.equal(javascript.output.language, 'JavaScript');
+    assert.equal(rust.output.language, 'Rust');
+    const lines = String(expected) + '\n' + String(expected) + '\n';
+    const archive = metaLanguageArchiveToBinary(language.archive);
+    const selected = structuredDataToLino([selection, selection]);
+    const bytes = new Map([['installed.lino.bin', archive], ['input', new TextEncoder().encode(input)]]);
+    for (const { code, language: target } of [javascript.output, rust.output]) {
+      const command = runDynamicLanguageCommand(
+        ['translate-attributes', 'installed.lino.bin', '--input-binary', '--source', source.id,
+          '--input', 'input', '--target', target, '--selections', 'selections.lino'],
+        { readFile: name => { assert.equal(name, 'selections.lino'); return selected; },
+          readBytes: name => { assert.ok(bytes.has(name)); return bytes.get(name); } },
+      );
+      assert.deepEqual(command, { exitCode: 0, stdout: code, stderr: '' });
+    }
+    assert.equal(javaScriptTranslationOutput(javascript.output.code), lines);
+    if (nativeRustChecksEnabled()) assert.equal(rustTranslationOutput(rust.output.code).replaceAll('\r\n', '\n'), lines);
+    return encodeFormalConceptDefinition(javascript.links);
+  };
+  const inferred = inferGrammarAttributeAction(parseGrammarLinks(grammar), request, unique.observations);
+  const installed = restored(session.extend([{ ...source, grammar: inferred.grammar }]));
+  const first = translated(installed, unique.holdout, unique.value);
+  const certificate = proveFormalConceptEquivalence(first, first);
+  assert.ok(certificate);
+  assert.equal(verifyFormalConceptEquivalence(first, first, certificate), true);
+
+  const listing = renderGrammarLinks(installed.sources[0].grammar);
+  const changedListing = listing.replace(unique.candidate, unique.mutation);
+  assert.notEqual(changedListing, listing);
+  const changed = restored(installed.extend([{ ...source, grammar: parseGrammarLinks(changedListing) }], { replace: true }));
+  const second = translated(changed, unique.holdout, unique.mutatedValue);
+  assert.equal(verifyFormalConceptEquivalence(first, second, certificate), false);
+  assert.equal(proveFormalConceptEquivalence(first, second), null);
+  translated(installed, unique.holdout, unique.value);
+
+  const inferredNumeric = inferGrammarAttributeAction(parseGrammarLinks(numeric.grammar), request, numeric.observations);
+  const numbers = restored(changed.extend([{ ...source, grammar: inferredNumeric.grammar }], { replace: true }));
+  translated(numbers, numeric.holdout, numeric.value);
+  assert.throws(() => installed.translateAttributes(source.id, unique.negative, 'JavaScript', [selection]), /accepted unambiguous/u);
+  assert.throws(() => installed.translateAttributes(source.id, unique.holdout, 'Rust', [{ ...selection, path: [99] }]), /concrete attributed/u);
+});
