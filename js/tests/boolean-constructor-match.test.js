@@ -12,6 +12,7 @@ import {encodeTypedProgramLinks,decodeTypedProgramLinks} from '../src/typed-prog
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import {shareSourceBooleanConstructorMatches,shareSourceClosedConstructorMatches} from '../scripts/source-boolean-match-sharing.mjs';
+import {shareSourceLexicalAliases} from '../scripts/source-lexical-aliases.mjs';
 import {runInNewContext} from 'node:vm';
 assertVersions();
 const fixture=readProjectData(new URL('../../parity/fixtures/boolean-constructor-match.lino',import.meta.url));
@@ -40,6 +41,23 @@ for(const row of fixture.projectionPrograms)test(row.name,()=>{
   const javascript=emitJavaScript(program),entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
   assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),row.expected);
  }
+});
+
+test('lexical alias substitution preserves unchanged checked branches',()=>{
+ const source=`/** @param {boolean} flag @param {number} input @returns {number} */
+ function compute(flag, input) {
+  const alias = input;
+  if (flag) return alias + 1;
+  return input - 1;
+ }`;
+ const program=checkProgram(parseJavaScript(source));
+ const entry=program.declarations.get('compute');
+ const proofs=[];
+ const rewritten=shareSourceLexicalAliases(program,entry,entry.body,proofs);
+ assert.equal(proofs.length,1);
+ assert.equal(rewritten.then.left.name,'input');
+ assert.equal(rewritten.cond,entry.body.body.cond);
+ assert.equal(rewritten.else,entry.body.body.else);
 });
 
 for(const row of fixture.lexicalAliasPrograms)test(row.name,()=>{

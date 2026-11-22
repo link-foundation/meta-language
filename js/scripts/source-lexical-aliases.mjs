@@ -3,6 +3,21 @@
 export function shareSourceLexicalAliases(program,entry,body,proofs){
  if(program.sourceLanguage!=='JavaScript')return body;
  let visits=0;const excluded=new Set(['type','domain','from','to','span','pattern']);
+ function mapChanged(value, transform) {
+  let changed = false;
+  const output = Array.isArray(value)
+   ? value.map((child, index) => {
+    const replacement = transform(child, index);
+    changed ||= replacement !== child;
+    return replacement;
+   })
+   : Object.fromEntries(Object.entries(value).map(([key, child]) => {
+    const replacement = excluded.has(key) ? child : transform(child, key);
+    changed ||= replacement !== child;
+    return [key, replacement];
+   }));
+  return changed ? output : value;
+ }
  function bound(pattern){return pattern?.k==='ctor'?(pattern.binds??[]).filter(name=>name!==null):['bind','natSucc'].includes(pattern?.k)?[pattern.name]:[];}
  function captureRisk(value,first,second){
   const pending=[value],seen=new WeakSet();
@@ -19,7 +34,7 @@ export function shareSourceLexicalAliases(program,entry,body,proofs){
   if(!node||typeof node!=='object')return node;
   if(depth>256||++visits>1000000)throw new TypeError('lexical alias substitution exceeds its work budget');
   if(node.k==='var'&&node.name===name)return literal?{k:'lit',type:node.type,value:literal.value,...(node.span?{span:node.span}:{})}:{...node,name:target};
-  return Array.isArray(node)?node.map(child=>replace(child,name,target,depth+1,literal)):Object.fromEntries(Object.entries(node).map(([key,child])=>[key,excluded.has(key)?child:replace(child,name,target,depth+1,literal)]));
+  return mapChanged(node,child=>replace(child,name,target,depth+1,literal));
  }
  function rewrite(node,scope,path,depth=0){
   if(!node||typeof node!=='object')return node;
@@ -43,9 +58,16 @@ export function shareSourceLexicalAliases(program,entry,body,proofs){
   }
   if(node.k==='match'){
    if(node.cases.some(arm=>!['ctor','wild','bind','natSucc','natZero','bool','lit'].includes(arm.pattern?.k)))return node;
-   return {...node,scrutinee:rewrite(node.scrutinee,scope,[...path,'scrutinee'],depth+1),cases:node.cases.map((arm,index)=>{const inner=new Set(scope);for(const name of bound(arm.pattern))inner.add(name);return {...arm,body:rewrite(arm.body,inner,[...path,'cases',index,'body'],depth+1)};})};
+   const scrutinee=rewrite(node.scrutinee,scope,[...path,'scrutinee'],depth+1);
+   const cases=mapChanged(node.cases,(arm,index)=>{
+    const inner=new Set(scope);
+    for(const name of bound(arm.pattern))inner.add(name);
+    const body=rewrite(arm.body,inner,[...path,'cases',index,'body'],depth+1);
+    return body===arm.body?arm:{...arm,body};
+   });
+   return scrutinee===node.scrutinee&&cases===node.cases?node:{...node,scrutinee,cases};
   }
-  return Array.isArray(node)?node.map((child,index)=>rewrite(child,scope,[...path,index],depth+1)):Object.fromEntries(Object.entries(node).map(([key,child])=>[key,excluded.has(key)?child:rewrite(child,scope,[...path,key],depth+1)]));
+  return mapChanged(node,(child,key)=>rewrite(child,scope,[...path,key],depth+1));
  }
  return rewrite(body,new Set(entry.params.map(parameter=>parameter.name)),['body']);
 }
