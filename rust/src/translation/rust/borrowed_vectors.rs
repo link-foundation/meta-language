@@ -1,4 +1,5 @@
 //! TYPE-only element source positions; value loans are transported separately.
+use crate::translation::source_signatures::source_policy_column;
 use super::{Result,SourceOrigin,SourceOrigins,RustParser,Span,SExpr,SNode,SArrayItem,Type,type_error,unsupported};
 use crate::translation::source_signatures::{SourceTypeSignature,SourceOwner};
 use crate::translation::rust_borrowed_vector_rules as rules;
@@ -21,7 +22,7 @@ fn result_parameters(result:&SourceOrigin,parameters:&[&SourceOrigin])->Vec<f64>
 pub(super) fn position_origin(position:&SourceTypeSignature,path:&[String])->SourceOrigin{
  let mut origin=SourceOrigin::value();origin.ty=Some(position.ty.clone());origin.path=path.to_vec();origin.wrappers=position.wrappers.clone();origin.source_lifetimes=position.lifetimes.clone();origin.source_owner=Some(position.owner.clone());origin.array_element_position=position.array_element_position.clone();origin.copy_evidence=position.wrappers.first().is_some_and(|wrapper|wrapper=="reference").then_some(());origin
 }
-fn project_box_owner(mut owner:&SourceOwner,count:usize)->Option<&SourceOwner>{for _ in 0..count{if !crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(&["box".into()],&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64){return None;}owner=&owner.arguments[0];}Some(owner)}
+fn project_box_owner(mut owner:&SourceOwner,count:usize)->Option<&SourceOwner>{for _ in 0..count{if !crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(source_policy_column(&["box".into()]),&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64){return None;}owner=&owner.arguments[0];}Some(owner)}
 impl RustParser{
  pub(super) fn project_borrowed_iterator_element(&mut self,node:&mut SExpr,path:&[String],expected:Option<&SourceOrigin>)->Result<SourceOrigin>{self.project_borrowed_vector_element(node,path,expected)}
  pub(super) fn read_borrowed_vector_empty_source_constructor(&mut self,segments:&[String],args:&[SExpr],path:&[String],span:Option<Span>)->Result<Option<SExpr>>{if segments.is_empty(){return Ok(None);}let resolved=self.resolve(&segments[..segments.len()-1],path);let selected=self.standard_sum_source.expected_origin.as_ref().is_some_and(|o|self.origins.borrowed_vector_source_origin(o));let disposition=rules::read_rust_borrowed_vector_empty_constructor(selected,&resolved.join("::"),segments.last().map(String::as_str).unwrap_or(""),args.len() as f64);if disposition.is_empty(){return Ok(None);}self.origins.vector(&segments[..segments.len()-1],&resolved,path,span)?;if disposition=="arity"{return Err(type_error("Vec::new expects 0 arguments",span));}Ok(Some(self.create_borrowed_vector_literal(Vec::new(),path,span)?))}

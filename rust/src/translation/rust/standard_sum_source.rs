@@ -1,5 +1,6 @@
 //! Actual token/catalog/origin transport into source-generated standard sum rules.
 //! No independent native Option/Result evaluation or matching policy lives here.
+use crate::translation::source_signatures::source_policy_column;
 use std::collections::{HashMap, HashSet};
 
 use super::{Alias, Options, Result, RustParser, SCtor, SData, SExpr, SField, SItem,
@@ -332,7 +333,7 @@ impl RustParser {
     }
 
     fn refresh_standard_sum_header_argument(&mut self,origin:&SourceOrigin,rows:&[(String,SourceOrigin)],resolved:&mut HashMap<String,SourceOrigin>,active:&mut HashSet<String>)->Result<SourceOrigin>{
-        if let Some(outer)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|outer|crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(&origin.wrappers,&outer.kind,&outer.path.join("::"),outer.arguments.len() as f64)){
+        if let Some(outer)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|outer|crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(source_policy_column(&origin.wrappers),&outer.kind,&outer.path.join("::"),outer.arguments.len() as f64)){
             let mut child=origin.clone();child.wrappers.remove(0);child.source_owner=Some(outer.arguments[0].clone());child.expanded_source_owner=None;
             let mut result=self.refresh_standard_sum_header_argument(&child,rows,resolved,active)?;let inner=result.expanded_source_owner.as_ref().or(result.source_owner.as_ref()).cloned().ok_or_else(||failure("the refreshed Box child must retain its actual source owner",None))?;
             result.wrappers.insert(0,"box".into());result.source_owner=Some(SourceOwner{kind:outer.kind.clone(),path:outer.path.clone(),arguments:vec![inner]});result.expanded_source_owner=None;result.copy_evidence=None;return Ok(result);
@@ -407,7 +408,7 @@ impl RustParser {
     }
 
     fn rewrite_standard_sum_header_origin(&self,origin:&SourceOrigin,resolved:&HashMap<String,SourceOrigin>)->SourceOrigin{
-        if let Some(outer)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|outer|crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(&origin.wrappers,&outer.kind,&outer.path.join("::"),outer.arguments.len() as f64)){
+        if let Some(outer)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|outer|crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(source_policy_column(&origin.wrappers),&outer.kind,&outer.path.join("::"),outer.arguments.len() as f64)){
             let mut child=origin.clone();child.wrappers.remove(0);child.source_owner=Some(outer.arguments[0].clone());child.expanded_source_owner=None;let mut actual=self.rewrite_standard_sum_header_origin(&child,resolved);let inner=actual.expanded_source_owner.as_ref().or(actual.source_owner.as_ref()).cloned();actual.wrappers.insert(0,"box".into());actual.source_owner=inner.map(|inner|SourceOwner{kind:outer.kind.clone(),path:outer.path.clone(),arguments:vec![inner]});actual.expanded_source_owner=None;actual.copy_evidence=None;return actual;
         }
         if let Some(Type::Named {path,..})=origin.ty.as_ref(){

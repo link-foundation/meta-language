@@ -1,11 +1,12 @@
 //! Attach actual source positions to owned expression objects, never span maps.
+use crate::translation::source_signatures::source_policy_column;
 use super::{Result,RustParser,SExpr,SourceOrigin,Span,unsupported};
 use crate::translation::source_signatures::{RustSourceExpressionPosition,SourceOwner};
 use crate::translation::rust_borrowed_vector_rules as rules;
 impl RustParser{
  pub(super) fn prepare_borrowed_inherent_receiver_position(&self,mut origin:SourceOrigin,wrappers:Vec<String>,span:Option<Span>)->Result<SourceOrigin>{
   if !self.origins.borrowed_vector_source_enabled{origin.wrappers=wrappers;return Ok(origin);}let plan=rules::plan_rust_borrowed_inherent_position(&origin.wrappers,&wrappers);if plan.len()!=3{return Err(unsupported("Rust borrowed expression source position","the selected receiver needs its complete source layer projection",span));}
-  let project=|mut owner:Option<SourceOwner>|->Result<Option<SourceOwner>>{for _ in 0..plan[0] as usize{let current=owner.take().ok_or_else(||unsupported("Rust borrowed expression source position","receiver dereference needs its actual canonical Box owner",span))?;if !crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(&["box".into()],&current.kind,&current.path.join("::"),current.arguments.len() as f64){return Err(unsupported("Rust borrowed expression source position","receiver dereference needs its actual canonical Box owner",span));}owner=current.arguments.into_iter().next();}Ok(owner)};
+  let project=|mut owner:Option<SourceOwner>|->Result<Option<SourceOwner>>{for _ in 0..plan[0] as usize{let current=owner.take().ok_or_else(||unsupported("Rust borrowed expression source position","receiver dereference needs its actual canonical Box owner",span))?;if !crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(source_policy_column(&["box".into()]),&current.kind,&current.path.join("::"),current.arguments.len() as f64){return Err(unsupported("Rust borrowed expression source position","receiver dereference needs its actual canonical Box owner",span));}owner=current.arguments.into_iter().next();}Ok(owner)};
   origin.source_owner=project(origin.source_owner.take())?;if origin.expanded_source_owner.is_some(){origin.expanded_source_owner=project(origin.expanded_source_owner.take())?;}let mut lifetimes=vec![None;plan[2] as usize];lifetimes.extend(origin.source_lifetimes.into_iter().skip(plan[1] as usize));origin.source_lifetimes=lifetimes;origin.wrappers=wrappers;Ok(origin)
  }
  pub(super) fn note_borrowed_expression_source_position(&mut self,node:&mut SExpr,path:&[String])->Result<()>{

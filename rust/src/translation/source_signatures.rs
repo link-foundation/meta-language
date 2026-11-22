@@ -10,6 +10,11 @@ use super::rust_standard_sum_signature_rules::read_rust_standard_sum_signature_a
 use super::types::Type;
 use super::rust_borrowed_vector_rules as borrowed;
 use serde::{Deserialize, Serialize};
+use std::{cell::RefCell, rc::Rc};
+
+pub(super) fn source_policy_column<T: Clone>(column: &[T]) -> Rc<RefCell<Vec<T>>> {
+    Rc::new(RefCell::new(column.to_vec()))
+}
 
 /// A resolved owner of a source type, including owned generic children.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -182,8 +187,8 @@ impl SignatureValidation<'_,'_> {
                     if !retained.wrappers.is_empty() || !retained.lifetimes.is_empty() {
                         use super::rust_owned_recursive_datatype_rules as containers;
                         let mut child=&retained.owner;let mut boxes=0;
-                        while boxes<256&&containers::accept_rust_owned_box_type_node(&["box".to_owned()],&child.kind,&child.path.join("::"),child.arguments.len() as f64){boxes+=1;child=&child.arguments[0];}
-                        if !containers::accept_rust_owned_standard_sum_box_payload(&retained.wrappers,retained.lifetimes.len() as f64,&retained.owner.kind,&retained.owner.path.join("::"),retained.owner.arguments.len() as f64,boxes as f64){return Err(fail("an owned Rust standard sum payload requires a direct source origin or an actual closed standard Box chain"));}
+                        while boxes<256&&containers::accept_rust_owned_box_type_node(source_policy_column(&["box".to_owned()]),&child.kind,&child.path.join("::"),child.arguments.len() as f64){boxes+=1;child=&child.arguments[0];}
+                        if !containers::accept_rust_owned_standard_sum_box_payload(source_policy_column(&retained.wrappers),retained.lifetimes.len() as f64,&retained.owner.kind,&retained.owner.path.join("::"),retained.owner.arguments.len() as f64,boxes as f64){return Err(fail("an owned Rust standard sum payload requires a direct source origin or an actual closed standard Box chain"));}
                     }
                     self.owner(argument,actual,depth+1)?;
                     self.owner_equal(argument,&retained.owner)?;

@@ -1,5 +1,6 @@
 //! Actual standard-sum type/constructor/loan transport into shared ownership rules.
 //! Existing String/Vec state transitions remain the only owned leaf model.
+use crate::translation::source_signatures::source_policy_column;
 use std::collections::{HashMap,HashSet};
 use super::{Result,RustParser,SExpr,SNode,SourceDeclaration,SourceOrigin,SourceOrigins,Span,Type,unsupported};
 use crate::translation::rust_owned_binding_rules as owned_rules;
@@ -23,8 +24,8 @@ impl SourceOrigins{
         if !origin.wrappers.is_empty(){
             use crate::translation::rust_owned_recursive_datatype_rules as containers;
             let Some(owner)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref())else{return StandardSumOwnershipFacts::default();};let mut child=owner;let mut boxes=0;
-            while boxes<256&&containers::accept_rust_owned_box_type_node(&["box".to_owned()],&child.kind,&child.path.join("::"),child.arguments.len() as f64){boxes+=1;child=&child.arguments[0];}
-            if !containers::accept_rust_owned_standard_sum_box_payload(&origin.wrappers,origin.source_lifetimes.len() as f64,&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64,boxes as f64){return StandardSumOwnershipFacts::default();}
+            while boxes<256&&containers::accept_rust_owned_box_type_node(source_policy_column(&["box".to_owned()]),&child.kind,&child.path.join("::"),child.arguments.len() as f64){boxes+=1;child=&child.arguments[0];}
+            if !containers::accept_rust_owned_standard_sum_box_payload(source_policy_column(&origin.wrappers),origin.source_lifetimes.len() as f64,&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64,boxes as f64){return StandardSumOwnershipFacts::default();}
             let facts=self.owned_container_facts(origin);return if facts.node=="box"&&facts.profile=="owned"&&facts.closed{StandardSumOwnershipFacts{profile:"owned".into(),owner:owner.path.join("::"),..StandardSumOwnershipFacts::default()}}else{StandardSumOwnershipFacts::default()};
         }
         let declared=match origin.ty.as_ref(){Some(Type::Named {path,..})=>self.lookup_type_owner(path,&origin.path),_=>None};
