@@ -17,7 +17,7 @@ import { readSourceLibraryClosure, readSourceLibraryDeclarationOwnership } from 
 import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {projectSourceLibraryEntryPoints} from './source-library-entry-points.mjs';
 import {shareSourceConditionalConstructors} from './source-conditional-constructors.mjs';
-import {shareSourceBooleanConstructorMatches,shareSourceClosedConstructorMatches} from './source-boolean-match-sharing.mjs';
+import {directCallMatchSharingModel,shareSourceBooleanConstructorMatches,shareSourceClosedConstructorMatches} from './source-boolean-match-sharing.mjs';
 import {readSourceLibraryClassProfileError,readSourceLibraryReExportProfileError} from '../src/translation/source-library-class-rules.js';
 import {draftJavaScriptErrorSourceClosure} from './draft-javascript-error-source-closure.mjs';
 
@@ -61,8 +61,9 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,originalProgram) : null;
   trace('checked declarations');
   if(booleanMatchSharing!==''&&booleanMatchSharing!=='literal Boolean constructor match arms 1')throw new TypeError('unknown source Boolean match sharing selection');
-  if(constructorMatchSharing!==''&&constructorMatchSharing!=='closed constructor match sharing 1'||constructorMatchSharing&&booleanMatchSharing)throw new TypeError('unknown or conflicting constructor match sharing selection');
-  const sharedMatches=constructorMatchSharing?shareSourceClosedConstructorMatches(originalProgram):booleanMatchSharing?shareSourceBooleanConstructorMatches(originalProgram):undefined;
+  if(constructorMatchSharing!==''&&!['closed constructor match sharing 1',directCallMatchSharingModel].includes(constructorMatchSharing)||constructorMatchSharing&&booleanMatchSharing)throw new TypeError('unknown or conflicting constructor match sharing selection');
+  const shareDirectCalls=constructorMatchSharing===directCallMatchSharingModel;
+  const sharedMatches=constructorMatchSharing?shareSourceClosedConstructorMatches(originalProgram,{shareDirectCalls}):booleanMatchSharing?shareSourceBooleanConstructorMatches(originalProgram):undefined;
   if(conditionalConstructorSharing!==''&&conditionalConstructorSharing!=='closed value constructor selection 1')throw new TypeError('unknown conditional constructor selection profile');
   const sharedConstructors=conditionalConstructorSharing?shareSourceConditionalConstructors(sharedMatches?.program??originalProgram):undefined;
   const program=sharedConstructors?.program??sharedMatches?.program??originalProgram;

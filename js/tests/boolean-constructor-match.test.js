@@ -60,6 +60,45 @@ test('lexical alias substitution preserves unchanged checked branches',()=>{
  assert.equal(rewritten.else,entry.body.body.else);
 });
 
+test('a repeated default call retains argument order and scrutinee effects',()=>{
+ const source=`
+ /** @typedef {{ $: 'first' } | { $: 'second' } | { $: 'third' }} Value */
+ /** @param {{value:number}} holder @param {Value} value @returns {Value} */
+ function observe(holder,value){holder.value+=1;return value;}
+ /** @param {number} first @param {number} second @returns {number} */
+ function combine(first,second){return first*10+second;}
+ /** @param {{value:number}} holder @param {Value} value @param {number} input @returns {number} */
+ function inspect(holder,value,input){
+  const observed=observe(holder,value);
+  switch(observed.$){
+   case 'first': return combine(5,input);
+   default: return combine(input,5);
+  }
+ }
+ /** @returns {number} */ function compute(){
+  const holder={value:0};
+  const first=inspect(holder,{$:'first'},7);
+  const second=inspect(holder,{$:'second'},7);
+  const third=inspect(holder,{$:'third'},7);
+  return first+second+third+holder.value;
+ }`;
+ const expected=210;
+ assert.equal(runInNewContext(source+'\ncompute();'),expected);
+ const original=checkProgram(parseJavaScript(source,{referenceSemantics:true}));
+ const ordinary=shareSourceClosedConstructorMatches(original);
+ const shared=shareSourceClosedConstructorMatches(original,{shareDirectCalls:true});
+ assert.equal(ordinary.proof.proofs.some(proof=>proof.fallback?.kind==='direct call'),false);
+ const proof=shared.proof.proofs.find(proof=>proof.owner==='inspect'&&proof.fallback?.kind==='direct call');
+ assert.deepEqual(proof.retainedIndices,[0]);
+ assert.equal(proof.fallback.target,'combine');
+ assert.deepEqual(proof.fallback.args.map(argument=>argument.name??argument.value),['input','5']);
+ const packet=encodeTypedProgramLinks(shared.program);
+ for(const program of [original,shared.program,...[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))].map(network=>decodeTypedProgramLinks(network,packet.root))]){
+  const javascript=emitJavaScript(program),entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
+  assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),expected);
+ }
+});
+
 for(const row of fixture.lexicalAliasPrograms)test(row.name,()=>{
  assert.equal(runInNewContext(row.source+'\ncompute();'),row.expected);
  const original=checkProgram(parseJavaScript(row.source,{referenceSemantics:row.referenceSemantics})),shared=shareSourceClosedConstructorMatches(original);

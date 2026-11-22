@@ -6,14 +6,39 @@ import {sameType,typeKey} from '../src/translation/types.js';
 import {readProjectData} from './project-data.mjs';
 import {shareSourceConstructorProjections,shareSourceScopedConstructorProjections} from './source-constructor-projections.mjs';
 const root=new URL('../../',import.meta.url);
+export const directCallMatchSharingModel='closed constructor match with direct calls sharing 1';
 export function shareSourceBooleanConstructorMatches(program){
  return shareSourceConstructorMatches(program,false);
 }
-export function shareSourceClosedConstructorMatches(program){return shareSourceConstructorMatches(program,true);}
-function shareSourceConstructorMatches(program,closed){
+export function shareSourceClosedConstructorMatches(program,{shareDirectCalls=false}={}){
+ return shareSourceConstructorMatches(program,true,shareDirectCalls);
+}
+function readDirectCallOutcome(program,arm){
+ const {body,pattern}=arm;
+ if(body.k!=='call'||!Array.isArray(body.args)||!Object.keys(body).every(key=>['k','fn','args','type','span'].includes(key)))return null;
+ const target=program.declarations.get(body.fn);
+ if(target?.k!=='fn'||!sameType(target.ret,body.type)||target.params.length!==body.args.length)return null;
+ const args=[];
+ for(const [index,arg] of body.args.entries()){
+  const parameter=target.params[index];
+  if(!arg?.type||!sameType(arg.type,parameter.type))return null;
+  const type=typeKey(arg.type);
+  if(arg.k==='var'&&typeof arg.name==='string'&&!pattern.binds.includes(arg.name)&&Object.keys(arg).every(key=>['k','name','type','span'].includes(key))){
+   args.push({name:arg.name,type,span:arg.span});
+  }else if(arg.k==='lit'&&['bool','string','float','int','nat'].includes(arg.type.kind)&&typeof arg.value===(arg.type.kind==='bool'?'boolean':'string')&&Object.keys(arg).every(key=>['k','value','type','span'].includes(key))){
+   args.push({value:arg.value,type,span:arg.span});
+  }else return null;
+ }
+ return {kind:'direct call',target:target.fullName,type:typeKey(body.type),span:body.span,args};
+}
+function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
  if(closed&&program.sourceLanguage!=='JavaScript')throw new TypeError('closed constructor sharing requires the checked JavaScript value model; ownership-sensitive source models need their own proof');
  const rule=readProjectData(new URL('parity/self-translation/source-'+(closed?'closed':'boolean')+'-match-sharing.lino',root));
  if(rule.schemaVersion!==1||rule.model!==(closed?'closed constructor match sharing 1':'literal Boolean constructor match arms 1')||rule.preserveScrutinee!==true||rule.requireCompleteOwner!==true||closed&&(rule.pruneUnusedBindings!==true||rule.pruneUnusedAliases!==true||rule.shareSingleConstructorProjections!==true||rule.shareScopedConstructorProjections!==true||rule.shareImmutableLexicalAliases!==true||rule.shareLiteralText!==true||rule.shareLiteralScalar!==true||rule.foldLiteralConditions!==true||rule.reduceBooleanIdentities!==true||rule.propagateLiteralAliases!==true))throw new TypeError('actual qualified constructor match sharing rules are required');
+ if(shareDirectCalls){
+  const calls=readProjectData(new URL('parity/self-translation/source-direct-call-match-sharing.lino',root));
+  if(calls.schemaVersion!==1||calls.model!==directCallMatchSharingModel||calls.requireActualTarget!==true||calls.preserveArgumentOrder!==true||calls.requireSameSourceSpan!==true||calls.excludeConstructorBindings!==true)throw new TypeError('actual qualified direct-call match sharing rules are required');
+ }
  const memo=new WeakMap(),active=new WeakSet(),referenceCache=new WeakMap(),proofs=[];let visits=0,referenceVisits=0;
  function references(body){
   if(body&&typeof body==='object'&&referenceCache.has(body))return referenceCache.get(body);
@@ -107,6 +132,7 @@ function shareSourceConstructorMatches(program,closed){
      if(closed&&body.k==='lit'&&body.type.kind==='string'&&typeof body.value==='string'&&Object.keys(body).every(key=>['k','type','value','span'].includes(key)))return {kind:'literal text',value:body.value};
      if(closed&&body.k==='lit'&&['float','int','nat'].includes(body.type.kind)&&typeof body.value==='string'&&Object.keys(body).every(key=>['k','type','value','span'].includes(key)))return {kind:'literal scalar',type:typeKey(body.type),value:body.value};
      if(closed&&body.k==='abort'&&typeof body.message==='string'&&Object.keys(body).every(key=>['k','type','message','span'].includes(key)))return {kind:'abort',message:body.message,type:typeKey(body.type)};
+     if(shareDirectCalls)return readDirectCallOutcome(program,arm);
      return null;
     });
     const classes=outcomes.map(outcome=>{if(outcome===null)return -1;const shape=JSON.stringify(outcome);let index=shapes.indexOf(shape);if(index<0){index=shapes.length;shapes.push(shape);}return index;});
@@ -132,5 +158,5 @@ function shareSourceConstructorMatches(program,closed){
   if(program.declarations.get(item.fullName)!==item)throw new TypeError('source match sharing needs actual declaration owners');
   return declarations.get(item.fullName);
  });}
- return {program:{...program,declarations,items:items(program.items)},proof:{model:rule.model,proofs}};
+ return {program:{...program,declarations,items:items(program.items)},proof:{model:shareDirectCalls?directCallMatchSharingModel:rule.model,proofs}};
 }

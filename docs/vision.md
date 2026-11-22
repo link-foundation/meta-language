@@ -11641,6 +11641,14 @@ These are representation optimizations under the explicit value model, not
 permission to deduplicate concepts by labels or change ownership-sensitive
 source behavior. All existing resource, type, ownership and coverage gates stay.
 
+A separate qualified profile extends the closed match rule to a direct call
+of the same checked function declaration. The call and its ordered arguments
+retain their exact source spans and types. Arguments may be scalar literals
+or reads of the same outer lexical binding, with constructor-bound names
+excluded. The scrutinee and selected call each execute once. The receipt
+retains the original constructor inventory and each candidate call's target,
+arguments and coordinates for replay.
+
 Ordinary Object-to-Number execution additionally composes the existing
 resumable ToPrimitive(number) protocol with exact primitive conversion. Getters
 and methods run as registered source bodies against the latest heap; inherited
