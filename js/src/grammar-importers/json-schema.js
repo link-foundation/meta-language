@@ -4,6 +4,7 @@ import { parseGrammarLinks } from '../grammar-links.js';
 import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-document.js';
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { lowerLarkRegex } from './lark-regex.js';
+import { additionalPropertyName } from './json-schema-property-names.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
 const space = ref('json_space');
@@ -71,8 +72,12 @@ function quoted(value) {
   return seq(literal('"'), ...characters, literal('"'));
 }
 
+function member(key, expression) {
+  return seq(key, space, literal(':'), space, expression);
+}
+
 function property(key, expression) {
-  return seq(quoted(key), space, literal(':'), space, expression);
+  return member(quoted(key), expression);
 }
 
 function boundedTail(expression, min, max, hasPrefix) {
@@ -271,7 +276,18 @@ export function importJsonSchema(schema) {
       const other = named(rules.additionalProperties, pointerChild(pointer, 'additionalProperties'));
       return other ? collection('{', '}', unboundedList(seq(ref('string'), space, literal(':'), space, other))) : collection('{', '}', empty());
     }
-    if (rules.additionalProperties !== false) report(pointer, 'additionalProperties', 'The decoder generates declared fields and required fields with schemas. Validation accepts permitted additional names.');
+    let additional;
+    if (rules.additionalProperties !== false) {
+      const child = named(rules.additionalProperties ?? true, pointerChild(pointer, 'additionalProperties'));
+      const keyUnits = keys.reduce((size, key) => size + key.length, 0);
+      if (child && (keyUnits > 1024 || keys.some(key => key.length > 128 || !key.isWellFormed()))) {
+        report(pointer, 'additionalProperties', 'The decoder bounds declared key spellings for additional properties. Validation checks all permitted names.');
+      } else if (child) {
+        const name = `additional_property_${next++}`;
+        builder.rule(name, member(additionalPropertyName(keys), child));
+        additional = ref(name);
+      }
+    }
     const members = [];
     for (const key of keys) {
       const child = Object.hasOwn(fields, key) ? fields[key] : rules.additionalProperties ?? true;
@@ -284,33 +300,39 @@ export function importJsonSchema(schema) {
     if (members.length > 12) {
       report(pointer, 'properties', 'The decoder emits large objects in schema field order. Validation accepts all field orders.');
       function ordered(index, started) {
-        if (index === members.length) return empty();
         const key = `${index}_${Number(started)}`;
         if (states.has(key)) return ref(states.get(key));
         const name = `object_${group}_${key}`;
         states.set(key, name);
-        const member = members[index];
-        const entry = seq(started ? separated(member.expression) : member.expression, ordered(index + 1, true));
-        builder.rule(name, required.has(member.key) ? entry : choice(entry, ordered(index + 1, started)));
+        const field = members[index];
+        const alternatives = [];
+        if (additional) alternatives.push(seq(started ? separated(additional) : additional, ordered(index, true)));
+        if (field) {
+          alternatives.push(seq(started ? separated(field.expression) : field.expression, ordered(index + 1, true)));
+          if (!required.has(field.key)) alternatives.push(ordered(index + 1, started));
+        } else alternatives.push(empty());
+        builder.rule(name, choice(...alternatives));
         return ref(name);
       }
       return collection('{', '}', ordered(0, false));
     }
     let requiredMask = 0;
     members.forEach((member, index) => { if (required.has(member.key)) requiredMask |= 1 << index; });
-    function unordered(seen) {
-      if (states.has(seen)) return ref(states.get(seen));
-      const name = `object_${group}_${seen}`;
-      states.set(seen, name);
+    function unordered(seen, started) {
+      const state = `${seen}_${Number(started)}`;
+      if (states.has(state)) return ref(states.get(state));
+      const name = `object_${group}_${state}`;
+      states.set(state, name);
       const alternatives = (seen & requiredMask) === requiredMask ? [empty()] : [];
+      if (additional) alternatives.push(seq(started ? separated(additional) : additional, unordered(seen, true)));
       members.forEach((member, index) => {
         const bit = 1 << index;
-        if ((seen & bit) === 0) alternatives.push(seq(seen === 0 ? member.expression : separated(member.expression), unordered(seen | bit)));
+        if ((seen & bit) === 0) alternatives.push(seq(started ? separated(member.expression) : member.expression, unordered(seen | bit, true)));
       });
       builder.rule(name, choice(...alternatives));
       return ref(name);
     }
-    return collection('{', '}', unordered(0));
+    return collection('{', '}', unordered(0, false));
   }
   function arrayExpression(rules, pointer) {
     const prefix = (rules.prefixItems ?? []).map((item, index) => named(item, pointerChild(pointerChild(pointer, 'prefixItems'), index)));

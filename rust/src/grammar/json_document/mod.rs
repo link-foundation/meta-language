@@ -3,6 +3,7 @@
 mod document;
 mod emit;
 mod import;
+mod property_names;
 mod recovery;
 mod schema;
 mod validation;

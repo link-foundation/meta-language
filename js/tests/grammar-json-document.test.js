@@ -138,6 +138,7 @@ test('JSON validation checks local references, alternatives, tuple bounds, forma
   assert.equal(validateJson('"2024-02-29T13:50:00+03:00"', { format: 'date-time' }).valid, true);
   assert.equal(validateJson('"123e4567-e89b-12d3-a456-426614174000"', { format: 'uuid' }).valid, true);
   assert.equal(validateJson('"first.last@example.org"', { format: 'email' }).valid, true);
+  assert.equal(validateJson('"K@example.org"', { format: 'email' }).valid, false);
 });
 
 test('JSON recovery only edits explicitly enabled locations and preserves truncated status', () => {

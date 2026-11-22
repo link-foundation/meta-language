@@ -8,6 +8,7 @@ use super::super::{
     CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule, import::lower_lark_regex,
     parse_grammar_links,
 };
+use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
 use super::{JsonSchemaIssue, pointer_child};
 
@@ -359,6 +360,20 @@ struct Member {
     expression: Expression,
 }
 
+struct ObjectMembers<'members> {
+    fields: &'members [Member],
+    additional: Option<Expression>,
+    group: usize,
+}
+
+fn append_member(item: &Expression, started: bool) -> Expression {
+    if started {
+        separated(item.clone())
+    } else {
+        item.clone()
+    }
+}
+
 struct Importer<'schema> {
     root: &'schema Value,
     grammar: Grammar,
@@ -527,9 +542,21 @@ impl<'schema> Importer<'schema> {
             };
             return Some(collection("{", "}", body));
         }
-        if *additional != Value::Bool(false) {
-            self.report(pointer, "additionalProperties", "The decoder generates declared fields and required fields with schemas. Validation accepts permitted additional names.");
-        }
+        let additional_member = self
+            .named(additional, &pointer_child(pointer, "additionalProperties"))
+            .and_then(|child| {
+                let lengths: Vec<_> = keys.iter().map(|key| key.encode_utf16().count()).collect();
+                if lengths.iter().sum::<usize>() > 1024
+                    || lengths.iter().any(|length| *length > 128)
+                {
+                    self.report(pointer, "additionalProperties", "The decoder bounds declared key spellings for additional properties. Validation checks all permitted names.");
+                    return None;
+                }
+                let name = format!("additional_property_{}", self.next());
+                let expression = member(additional_property_name(&keys), child);
+                self.grammar.add_rule(GrammarRule::new(&name, expression));
+                Some(reference_expression(&name))
+            });
         let mut members = Vec::new();
         for key in keys {
             let child = fields
@@ -548,88 +575,95 @@ impl<'schema> Importer<'schema> {
                 return None;
             }
         }
-        let group = self.next();
+        let members = ObjectMembers {
+            fields: &members,
+            additional: additional_member,
+            group: self.next(),
+        };
         let mut states = HashMap::new();
-        let body = if members.len() > 12 {
+        let body = if members.fields.len() > 12 {
             self.report(pointer, "properties", "The decoder emits large objects in schema field order. Validation accepts all field orders.");
-            self.ordered_members(&members, group, 0, false, &mut states)
+            self.ordered_members(&members, 0, false, &mut states)
         } else {
             let required = members
+                .fields
                 .iter()
                 .enumerate()
                 .filter(|(_, member)| member.required)
                 .fold(0, |bits, (index, _)| bits | ((1_usize) << index));
-            self.unordered_members(&members, group, 0, required, &mut states)
+            self.unordered_members(&members, 0, false, required, &mut states)
         };
         Some(collection("{", "}", body))
     }
 
     fn ordered_members(
         &mut self,
-        members: &[Member],
-        group: usize,
+        members: &ObjectMembers<'_>,
         index: usize,
         started: bool,
         states: &mut HashMap<usize, String>,
     ) -> Expression {
-        let Some(member) = members.get(index) else {
-            return EXPRESSION.empty();
-        };
         let state = index * 2 + usize::from(started);
         if let Some(name) = states.get(&state) {
             return reference_expression(name);
         }
-        let name = format!("object_{group}_{index}_{}", usize::from(started));
-        let item = if started {
-            separated(member.expression.clone())
-        } else {
-            member.expression.clone()
-        };
-        let entry = EXPRESSION.seq([
-            item,
-            self.ordered_members(members, group, index + 1, true, states),
-        ]);
-        let rule = if member.required {
-            entry
-        } else {
-            EXPRESSION.choice_unordered([
-                entry,
-                self.ordered_members(members, group, index + 1, started, states),
-            ])
-        };
-        self.grammar.add_rule(GrammarRule::new(&name, rule));
+        let name = format!("object_{}_{index}_{}", members.group, usize::from(started));
         states.insert(state, name.clone());
+        let mut alternatives = Vec::new();
+        if let Some(additional) = &members.additional {
+            alternatives.push(EXPRESSION.seq([
+                append_member(additional, started),
+                self.ordered_members(members, index, true, states),
+            ]));
+        }
+        if let Some(member) = members.fields.get(index) {
+            alternatives.push(EXPRESSION.seq([
+                append_member(&member.expression, started),
+                self.ordered_members(members, index + 1, true, states),
+            ]));
+            if !member.required {
+                alternatives.push(self.ordered_members(members, index + 1, started, states));
+            }
+        } else {
+            alternatives.push(EXPRESSION.empty());
+        }
+        self.grammar.add_rule(GrammarRule::new(
+            &name,
+            EXPRESSION.choice_unordered(alternatives),
+        ));
         reference_expression(&name)
     }
 
     fn unordered_members(
         &mut self,
-        members: &[Member],
-        group: usize,
+        members: &ObjectMembers<'_>,
         seen: usize,
+        started: bool,
         required: usize,
         states: &mut HashMap<usize, String>,
     ) -> Expression {
-        if let Some(name) = states.get(&seen) {
+        let state = seen * 2 + usize::from(started);
+        if let Some(name) = states.get(&state) {
             return reference_expression(name);
         }
-        let name = format!("object_{group}_{seen}");
-        states.insert(seen, name.clone());
+        let name = format!("object_{}_{seen}_{}", members.group, usize::from(started));
+        states.insert(state, name.clone());
         let mut alternatives = Vec::new();
         if seen & required == required {
             alternatives.push(EXPRESSION.empty());
         }
-        for (index, member) in members.iter().enumerate() {
+        if let Some(additional) = &members.additional {
+            alternatives.push(EXPRESSION.seq([
+                append_member(additional, started),
+                self.unordered_members(members, seen, true, required, states),
+            ]));
+        }
+        for (index, member) in members.fields.iter().enumerate() {
             let bit = 1_usize << index;
             if seen & bit == 0 {
-                let item = if seen == 0 {
-                    member.expression.clone()
-                } else {
-                    separated(member.expression.clone())
-                };
                 alternatives.push(EXPRESSION.seq([
-                    item,
-                    self.unordered_members(members, group, seen | bit, required, states),
+                    append_member(&member.expression, started),
+                    self.unordered_members(members, seen | bit, true, required, states),
                 ]));
             }
         }

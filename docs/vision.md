@@ -4610,12 +4610,14 @@ documents. Instance errors carry a JSON Pointer, source span, expected values
 or tokens, and a link that can be inspected in the returned network.
 
 The schema importer builds the shared grammar representation for existing
-emitters. The imported grammar carries diagnostics for assertions that
-require validation, including overlapping alternatives, general numeric
-bounds, unsupported patterns, and combinations of declared and arbitrary
-properties. Decoder and validation rules share the JSON grammar and keyword
-policy. The reverse API preserves an imported schema and can infer constants
-from bounded finite JSON productions.
+emitters. Object rules can interleave declared fields and additional fields.
+The additional-field rule excludes every decoded spelling of each declared
+key. Grammar diagnostics identify assertions that require validation, including
+overlapping alternatives, general numeric bounds, unsupported patterns, and
+objects that exceed the decoder's field-order or key-spelling bounds. Decoder
+and validation rules share the JSON grammar and keyword policy. The reverse API
+preserves an imported schema and can infer constants from bounded finite JSON
+productions.
 
 JSON recovery starts from the unmodified syntax and applies explicitly
 selected actions. Edits identify the original recovery link, byte range,
