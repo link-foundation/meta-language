@@ -4,15 +4,14 @@ use crate::translation::rust_source_render_interfaces::{
     render_rust_constructor_fields, render_rust_data_field_encoding,
 };
 use crate::translation::structured_type_rules::{
-    read_rust_optional_prelude, render_rust_compound_type, render_rust_reference_type,
+    render_rust_compound_type, render_rust_reference_type,
 };
 use std::collections::BTreeSet;
 
 use super::{
-    Binder, Decl, Emitted, Expr, External, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE, Node, PRELUDE,
-    Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block, comparison_operator,
-    format_escape, indent, own, read_array_prelude, rename_function, rename_theorem, rust_string,
-    snake, tail_loop,
+    Binder, Decl, Emitted, Expr, External, ModuleTree, Node, Prelude, Prop, Result, RustEmitter,
+    TheoremCheck, Type, block, comparison_operator, format_escape, indent, own, rename_function,
+    rename_theorem, rust_string, snake, tail_loop,
 };
 
 impl<'p> RustEmitter<'p> {
@@ -61,30 +60,7 @@ impl<'p> RustEmitter<'p> {
         let mut preludes: Vec<String> = self
             .preludes
             .iter()
-            .map(|prelude| match prelude {
-                Prelude::Big => PRELUDE.to_owned(),
-                Prelude::Number => NUMBER_PRELUDE.to_owned(),
-                Prelude::Math => MATH_PRELUDE.to_owned(),
-                Prelude::Array => read_array_prelude(self.standard_array).to_owned(),
-                Prelude::String => crate::self_translation::representation::string_prelude(),
-                Prelude::Optional => read_rust_optional_prelude(),
-                Prelude::NumberBitwise => include_str!("../runtime/number-bitwise.rs").to_owned(),
-                Prelude::BigIntegerBitwise => {
-                    include_str!("../runtime/big-integer-bitwise.rs").to_owned()
-                }
-                Prelude::StringNumber => include!("../runtime/string-number.rs").to_owned(),
-                Prelude::Utf16Text => include!("../runtime/utf16-text.rs").to_owned(),
-                Prelude::UnicodeCase => include!("../runtime/unicode-case.rs").to_owned(),
-                Prelude::RecordPropertyOrder => {
-                    include!("../runtime/record-property-order.rs").to_owned()
-                }
-                Prelude::SourceException => {
-                    include_str!("../runtime/source-exception.rs").to_owned()
-                }
-                Prelude::BigIntegerConversion => {
-                    include!("../runtime/big-integer-conversion.rs").to_owned()
-                }
-            })
+            .map(|prelude| prelude.source(self.standard_array))
             .collect();
         if self.scalar_source_interface {
             preludes.insert(0, crate::translation::rust_scalar_source_interface_rules::read_rust_scalar_source_target_guard());
@@ -266,8 +242,26 @@ impl<'p> RustEmitter<'p> {
         let Decl::Data(data) = entry else {
             unreachable!("a data declaration")
         };
-        let facts=crate::translation::callable_data::read_callable_data_facts(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
-        if facts.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;}
+        let facts = crate::translation::callable_data::read_callable_data_facts(
+            &Type::Data {
+                name: data.full_name.clone(),
+            },
+            &|name| match self.program.declaration(name) {
+                Some(Decl::Data(data)) => Some(data),
+                _ => None,
+            },
+        )?;
+        if facts.callable {
+            crate::translation::callable_data::read_callable_data_recursive_profile(
+                &Type::Data {
+                    name: data.full_name.clone(),
+                },
+                &|name| match self.program.declaration(name) {
+                    Some(Decl::Data(data)) => Some(data),
+                    _ => None,
+                },
+            )?;
+        }
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         self.state.encode(
@@ -275,7 +269,14 @@ impl<'p> RustEmitter<'p> {
             &render_rust_data_field_encoding(self.named_constructor_fields),
         );
         // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
-        let derives = crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Rust",facts.callable,self.holds_float(&data.full_name,&mut BTreeSet::new()),false,false);
+        let derives =
+            crate::translation::callable_data_derivation_rules::read_callable_data_derivation(
+                "Rust",
+                facts.callable,
+                self.holds_float(&data.full_name, &mut BTreeSet::new()),
+                false,
+                false,
+            );
         let mut lines = vec![
             format!("#[derive({derives})]"),
             format!("pub enum {name} {{"),
