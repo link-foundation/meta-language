@@ -20,9 +20,11 @@ def reject_constant(value):
     raise ValueError(value)
 try:
     json.loads(sys.stdin.buffer.read().decode('utf-8'), parse_constant=reject_constant)
-except (UnicodeError, ValueError):
+except (UnicodeError, ValueError) as error:
+    print(error, file=sys.stderr)
     sys.exit(1)
-except RecursionError:
+except RecursionError as error:
+    print(error, file=sys.stderr)
     sys.exit(2)
 `;
 
@@ -37,7 +39,7 @@ function readHoldout(checkout) {
   return directory.split('\0').filter(Boolean).map(record => {
     const [, oid, size, path] = /^100644 blob ([0-9a-f]{40})\s+(\d+)\t(test_parsing\/[iny]_[^\t\/]+\.json)$/u.exec(record) ?? [];
     if (!path) throw new Error('uncovered corpus entry ' + JSON.stringify(record));
-    const label = path.split('/')[1][0];
+    const label = { y: 'accept', n: 'reject', i: 'implementation-defined' }[path.split('/')[1][0]];
     if (Number(size) > inputLimit) return { path, oid, label, size: Number(size), limit: 'input bytes' };
     const input = git(checkout, 'cat-file', 'blob', oid);
     if (input.length !== Number(size)) throw new Error('corpus length mismatch ' + path);
@@ -47,15 +49,18 @@ function readHoldout(checkout) {
 
 function compareOracles(input) {
   let node = 'accept';
+  let nodeDiagnostic;
   try {
     JSON.parse(decoder.decode(input));
   } catch (error) {
     if (!(error instanceof SyntaxError || error instanceof TypeError)) throw error;
     node = 'reject';
+    nodeDiagnostic = error.message;
   }
   const python = spawnSync('python3', ['-I', '-c', oracleSource], { input, maxBuffer: 16384, timeout: 3000 });
   const status = { 0: 'accept', 1: 'reject', 2: 'nesting limit' }[python.status];
-  return { node, python: status ?? 'oracle failure', ...(status ? {} : { oracleDiagnostic: python.error?.message ?? python.stderr.toString() }) };
+  return { node, nodeDiagnostic, python: status ?? 'oracle failure',
+    pythonDiagnostic: python.error?.message ?? (python.stderr.toString() || undefined) };
 }
 
 function inspectTree(tree, input) {
@@ -120,12 +125,15 @@ const rows = corpus.map(({ input, ...record }) => {
   learnerQueries += 1;
   const reason = result.rejection?.reason;
   const learned = result.ok ? 'accept' : limitedReasons.has(reason) ? 'resource limit' : 'reject';
-  const label = { y: 'accept', n: 'reject' }[record.label] ?? 'implementation-defined';
-  return { ...record, ...oracle, label, learned, ...(reason ? { reason } : {}),
-    ...(result.tree ? { concrete: inspectTree(result.tree, input), treeSha256: digest(JSON.stringify(result.tree)) } : {}) };
+  const expected = [record.label, oracle.node, oracle.python];
+  const disagreement = expected.some(value => (value === 'accept' || value === 'reject') && value !== learned);
+  const concrete = result.tree ? inspectTree(result.tree, input) : undefined;
+  return { ...record, ...oracle, learned, disagreement, rejection: result.rejection, ambiguities: result.ambiguities,
+    concrete, treeSha256: result.tree ? digest(JSON.stringify(result.tree)) : undefined,
+    tree: disagreement || (concrete && (!concrete.exactBytes || !concrete.exactSpans)) ? result.tree : undefined };
 });
 process.stdout.write(JSON.stringify({ schemaVersion: 1, corpusRevision, strategy, inputLimit, learnerLimits, parserLimits,
   oracles: { node: process.versions.node, v8: process.versions.v8, python: pythonVersion },
-  training: { positives, negatives }, archive, deterministic, grammarRules: model.grammar.rules.size, grammarBytes: Buffer.byteLength(grammar),
+  training: { positives, negatives }, archive, deterministic, grammar, grammarRules: model.grammar.rules.size, grammarBytes: Buffer.byteLength(grammar),
   learnerQueries, oracleQueries, trainMilliseconds: trained - started, parseMilliseconds, peakLearnerProcessRssKiB: process.resourceUsage().maxRSS,
   acceptance: Object.fromEntries(['label', 'node', 'python'].map(oracle => [oracle, measure(rows, 'learned', oracle)])), rows }, null, 2) + '\n');

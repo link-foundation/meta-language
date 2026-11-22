@@ -302,6 +302,59 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
+  grammar-inference-holdout:
+    name: Grammar Inference Holdout (${{ matrix.strategy }})
+    if: ${{ github.event_name != 'release' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        strategy: [rpni, edsm, alergia]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.14.0
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Fetch the pinned JSONTestSuite history
+        env:
+          CORPUS_REVISION: 1ef36fa01286573e846ac449e8683f8833c5b26a
+        run: |
+          git init "$RUNNER_TEMP/JSONTestSuite"
+          git -C "$RUNNER_TEMP/JSONTestSuite" fetch --depth=1 --no-tags \
+            https://github.com/nst/JSONTestSuite.git "$CORPUS_REVISION"
+
+      - name: Measure the learner and independent oracles
+        env:
+          LEARNER_STRATEGY: ${{ matrix.strategy }}
+        run: |
+          mkdir -p grammar-inference-results
+          node --max-old-space-size=512 experiments/grammar-inference/json-holdout.mjs \
+            "$RUNNER_TEMP/JSONTestSuite" "$LEARNER_STRATEGY" \
+            > grammar-inference-results/holdout.json.partial \
+            2> grammar-inference-results/holdout.log
+          mv grammar-inference-results/holdout.json.partial grammar-inference-results/holdout.json
+
+      - name: Retain all scores, disagreements, and diagnostics
+        if: ${{ !cancelled() && hashFiles('grammar-inference-results/*') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-inference-holdout-${{ matrix.strategy }}-${{ github.sha }}
+          path: grammar-inference-results/
+          if-no-files-found: error
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   # The issue 195 acceptance stages (I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT).
   candidates:
     name: Delivery Candidates
