@@ -30,7 +30,22 @@ export function composeSourceLibraryAliases(inputs,entryPath,readImports,{classe
     {const actual=provider(imported.dependency,binding.imported);if(binding.local!==actual.name)aliased.add(key(actual.path,actual.name));}
   let ordinal=0;
   function fresh(){let name;do{name='dependencyFunction'+(++ordinal);}while(names.has(name));names.add(name);return name;}
-  function renameEdits(program,binding,target){const roles=readModuleBindingFields(program.network,program.sourceMappings,'JavaScript');return [binding.declaration,...binding.references].map(range=>{const shorthand=program.sourceMappings.some(node=>node.start===range.start&&node.end===range.end&&['shorthand_property_identifier','shorthand_property_identifier_pattern'].includes(node.term));const[prefix,suffix]=readSourceBindingRenameAffixes(readSourceModuleBindingRangeRole(roles,range.start,range.end),shorthand,binding.name);return {...range,text:prefix+target+suffix};});}
+  function rangeKey({start,end}){return start+':'+end;}
+  function bindingOccurrences(program){
+    const roles=readModuleBindingFields(program.network,program.sourceMappings,'JavaScript');
+    const shorthandRanges=new Set();
+    for(const node of program.sourceMappings){
+      if(node.term==='shorthand_property_identifier'||node.term==='shorthand_property_identifier_pattern')shorthandRanges.add(rangeKey(node));
+    }
+    return (range,name,target)=>{
+      const [prefix,suffix]=readSourceBindingRenameAffixes(readSourceModuleBindingRangeRole(roles,range.start,range.end),shorthandRanges.has(rangeKey(range)),name);
+      return prefix+target+suffix;
+    };
+  }
+  function renameEdits(program,binding,target){
+    const rename=bindingOccurrences(program);
+    return [binding.declaration,...binding.references].map(range=>({...range,text:rename(range,binding.name,target)}));
+  }
   for(const input of inputs)for(const name of input.declarations){
     const identity=key(input.path,name);
     const foreignReference=classes&&inputs.some(other=>other.path!==input.path&&other.classUnresolvedNames.includes(name));
@@ -82,7 +97,7 @@ export function composeSourceLibraryAliases(inputs,entryPath,readImports,{classe
     const sourceEdits=[];
     if(imports.length){
       program??=analyzeProgram(source,'JavaScript');
-      const roles=readModuleBindingFields(program.network,program.sourceMappings,'JavaScript');
+      const rename=bindingOccurrences(program);
       const before=digest(source),prior=source;
       for(const request of imports){
         const binding=program.bindings.find(binding=>binding.scope==='scope:0'&&binding.kind==='import'&&binding.name===request.name);
@@ -90,9 +105,7 @@ export function composeSourceLibraryAliases(inputs,entryPath,readImports,{classe
         if(program.bindings.some(other=>other.id!==binding.id&&other.name===request.target)||program.unresolvedReferences.some(reference=>reference.name===request.target))
           throw new TypeError('source alias substitution would capture '+request.target+' in '+input.path);
         for(const reference of binding.references){
-          const shorthand=program.sourceMappings.some(node=>node.start===reference.start&&node.end===reference.end&&['shorthand_property_identifier','shorthand_property_identifier_pattern'].includes(node.term));
-          const [prefix,suffix]=readSourceBindingRenameAffixes(readSourceModuleBindingRangeRole(roles,reference.start,reference.end),shorthand,binding.name);
-          sourceEdits.push({start:reference.start,end:reference.end,text:prefix+request.target+suffix,binding:binding.id,coordinateUnit:'UTF-16 code units'});
+          sourceEdits.push({start:reference.start,end:reference.end,text:rename(reference,binding.name,request.target),binding:binding.id,coordinateUnit:'UTF-16 code units'});
         }
         transformations.push({operation:'resolved import binding substitution',binding:binding.id,original:request.name,replacement:request.target,beforeSourceSha256:before});
       }
