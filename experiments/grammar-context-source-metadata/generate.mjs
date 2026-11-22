@@ -8,6 +8,7 @@ import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certific
 import {readProjectData,serializeProjectData,writeProjectData,checkProjectData} from '../../js/scripts/project-data.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {restoreGlobalGrammarContextSource} from '../global-grammar-context-reuse/current-source.mjs';
+import {javascriptRuntimeSource,restoreIssue245Source} from '../issue-245/source-history.mjs';
 
 const root=new URL('../../',import.meta.url),revision='abde6ee604b914a895f23525946fab2234109e86';
 const output='parity/self-translation/grammar-context-source-metadata.lino';
@@ -52,6 +53,13 @@ export function checkGrammarContextMetadataPredecessor(file,current,previous) {
     assert.equal(current.cases.length,14);
     for(const [index,row]of inverse.inputs.entries()){
       assert.equal(row.path,previous.inputs[index].path);
+      if(row.path===javascriptRuntimeSource){
+        const source=readFileSync(new URL(row.path,root),'utf8');
+        assert.deepEqual(pin(source),{bytes:row.bytes,sha256:row.sha256});
+        assert.deepEqual(pin(restoreIssue245Source(row.path,source)),{bytes:previous.inputs[index].bytes,sha256:previous.inputs[index].sha256});
+        Object.assign(row,previous.inputs[index]);
+        continue;
+      }
       if(row.path!=='js/src/grammar-runtime/grammar-selection.js')continue;
       const source=readFileSync(new URL(row.path,root),'utf8');assert.deepEqual(pin(source),{bytes:row.bytes,sha256:row.sha256});
       const restored=restoreGlobalGrammarContextSource(row.path,source);assert.equal(restored.changed,true);

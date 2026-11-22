@@ -7,6 +7,11 @@ import {checkOutcomeInventory} from '../grammar-outcome-network/native-transport
 export function projectHistoricalOutcomeInventory(inventory) {
   checkOutcomeInventory(inventory);
   const historical=structuredClone(inventory);
+  if(historical.sourceViews.schemaVersion===4){
+    assert.equal(historical.sourceViews.profile,'current grammar search source views 1');
+    assert.ok([1,2,3].includes(historical.sourceViews.predecessorView.schemaVersion));
+    historical.sourceViews=historical.sourceViews.predecessorView;
+  }
   if(historical.sourceViews.schemaVersion===3){
     assert.equal(historical.sourceViews.profile,'complete current grammar transport crate root source views 1');
     assert.ok([1,2].includes(historical.sourceViews.predecessorView.schemaVersion));

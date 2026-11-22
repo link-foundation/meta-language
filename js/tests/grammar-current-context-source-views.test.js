@@ -16,6 +16,7 @@ import {LinkNetwork} from '../src/network.js';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {outcomeWirePolicy} from '../../experiments/grammar-outcome-network/native-transport/wire/wire-policy.mjs';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import {runtimeSourceFiles,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 let candidate;
 
@@ -27,7 +28,8 @@ function currentContextInventory() {
     for(const file of Object.keys(diagnosticOrderDecorator.baselinePins)){
       // This fixture retains the complete original two-successor source profile.
       const bytes=file===outcomeCrateRootPath?Buffer.from(readOutcomeCrateRootSourcePair().predecessor.source):
-        [javascriptPath,nativePath].includes(file)?Buffer.from(readGlobalGrammarContextSourcePair(file).successor.source):readFileSync(join(root,file));
+        [javascriptPath,nativePath].includes(file)?Buffer.from(readGlobalGrammarContextSourcePair(file).successor.source):
+        runtimeSourceFiles.includes(file)?Buffer.from(readIssue245SourcePair(file).predecessor):readFileSync(join(root,file));
       size+=bytes.length;assert.ok(size<=2*1024*1024);
       mkdirSync(dirname(join(scratch,file)),{recursive:true});writeFileSync(join(scratch,file),bytes);
     }
@@ -35,6 +37,12 @@ function currentContextInventory() {
     candidate={...inventory,sourceViews:finalizeOutcomeSourceViews(capture,inventory.inputs,inventory.declarations)};
     return structuredClone(candidate);
   }finally{rmSync(scratch,{recursive:true,force:true});}
+}
+
+function currentCrateRootInventory(){
+  const inventory=readOutcomeInventory(root);
+  assert.equal(inventory.sourceViews.schemaVersion,4);
+  return {...inventory,sourceViews:inventory.sourceViews.predecessorView};
 }
 
 test('all exact context successor sources retain independent original membership and unchanged complete predecessors',()=>{
@@ -105,7 +113,7 @@ test('current crate root retains complete certified predecessors actual export o
   const current=restoreOutcomeCrateRootSource(outcomeCrateRootPath,readFileSync(join(root,outcomeCrateRootPath),'utf8'));
   assert.equal(current.changed,true);assert.equal(current.predecessor,pair.predecessor.source);assert.equal(current.current,pair.successor.source);
   assert.deepEqual(checkOutcomeCrateRootSourceReceipt(outcomeCrateRootPath,current.current,current.receipt),current.receipt);
-  const inventory=readOutcomeInventory(root),view=inventory.sourceViews;
+  const inventory=currentCrateRootInventory(),view=inventory.sourceViews;
   assert.equal(view.schemaVersion,3);assert.equal(view.predecessorView.schemaVersion,2);
   assert.equal(view.predecessorView.successors.length,2);assert.equal(view.predecessorView.predecessorView.schemaVersion,1);
   assert.equal(view.historicalPins.length,13);assert.equal(view.currentPins.length,13);assert.deepEqual(view.historicalPins,inventory.pins);
@@ -141,7 +149,7 @@ test('crate-root source succession refuses arbitrary files edits forged whole pi
   assert.throws(()=>restoreOutcomeCrateRootSource(outcomeCrateRootPath,pair.successor.source+'\n'));
   assert.throws(()=>restoreOutcomeCrateRootSource(outcomeCrateRootPath,'x'.repeat(131073)));
   pair.predecessor.source+=' changed';assert.notDeepEqual(readOutcomeCrateRootSourcePair(),pair);
-  const inventory=readOutcomeInventory(root);
+  const inventory=currentCrateRootInventory();
   for(const mutate of [
     value=>{value.sourceViews.currentPins.find(row=>row.file===outcomeCrateRootPath).sha256='0'.repeat(64);},
     value=>{value.sourceViews.historicalPins[0].sha256='0'.repeat(64);},
@@ -163,7 +171,7 @@ test('crate-root source succession refuses arbitrary files edits forged whole pi
 
 
 test('complete crate-root proof reuse remains detached and authenticates every consumed policy owner',()=>{
-  const inventory=readOutcomeInventory(root),view=inventory.sourceViews;
+  const inventory=currentCrateRootInventory(),view=inventory.sourceViews;
   const derive=()=>finalizeOutcomeCrateRootSourceView(view.predecessorView,view.crateRootSuccessor);
   assert.deepEqual(derive(),view);
   const changed=derive();changed.crateRootSuccessor.currentSourceProof.current.reexports=[];
@@ -181,4 +189,33 @@ test('complete crate-root proof reuse remains detached and authenticates every c
     assert.throws(derive,'complete unchanged source cannot reuse a proof with an additional consumed policy owner');
   }finally{outcomeWirePolicy.sources=originalSources;}
   assert.deepEqual(derive(),view);assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),view);
+});
+
+test('grammar search retains the original transport source and authenticates the current runtime sources',()=>{
+  const inventory=readOutcomeInventory(root),view=inventory.sourceViews;
+  assert.equal(view.schemaVersion,4);
+  assert.equal(view.predecessorView.schemaVersion,3);
+  assert.deepEqual(view.historicalPins,inventory.pins);
+  assert.deepEqual(view.searchSuccessors.map(row=>row.file),runtimeSourceFiles);
+  for(const proof of view.searchSuccessors){
+    const current=readFileSync(join(root,proof.file),'utf8'),pair=readIssue245SourcePair(proof.file);
+    assert.equal(current,proof.currentSource);
+    assert.deepEqual(pair,{current,predecessor:proof.predecessorSource});
+    const declarations=inventory.declarations.filter(row=>row.file===proof.file);
+    assert.deepEqual(proof.selectedDeclarations.map(row=>row.name),declarations.map(row=>row.name));
+    for(const [index,row]of proof.selectedDeclarations.entries()){
+      assert.equal(Buffer.from(current).subarray(row.span.start,row.span.end).toString('utf8'),declarations[index].source);
+    }
+  }
+  assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),view);
+  for(const mutate of [
+    value=>{value.searchSuccessors[0].currentSource+='\n';},
+    value=>{value.searchSuccessors[0].selectedDeclarations.pop();},
+    value=>{value.searchSuccessors[1].predecessorSource+='\n';},
+    value=>{value.searchSuccessors.push(value.searchSuccessors[0]);},
+    value=>{value.currentPins[0].bytes++;},
+  ]){
+    const changed=structuredClone(view);mutate(changed);
+    assert.throws(()=>checkOutcomeSourceViews({...inventory,sourceViews:changed},diagnosticOrderDecorator));
+  }
 });
