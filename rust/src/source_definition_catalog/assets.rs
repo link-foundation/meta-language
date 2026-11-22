@@ -98,6 +98,12 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-literal-property-program.lino" => Some(include_str!(
             "../data/javascript-literal-property-program.lino"
         )),
+        "javascript-module-initialization-program.lino" => Some(include_str!(
+            "../data/javascript-module-initialization-program.lino"
+        )),
+        "javascript-module-initialization-rules-program.lino" => Some(include_str!(
+            "../data/javascript-module-initialization-rules-program.lino"
+        )),
         "javascript-nominal-spread-program.lino" => Some(include_str!(
             "../data/javascript-nominal-spread-program.lino"
         )),

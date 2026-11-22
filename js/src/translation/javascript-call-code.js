@@ -1,4 +1,5 @@
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
+import {testJavaScriptSourceCoordinate} from './javascript-source-coordinate-rules.js';
 
 /** Registers are coordinates in checked executable Links data, not language
  * property keys. Coercions belong to explicit operations before typed opcodes.
@@ -86,7 +87,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue,templates?:JavaScriptCallTemplate[],constructorDirectory?:JavaScriptArraySpeciesDirectory,sources?:JavaScriptCallSourceUnit[]}} JavaScriptCallProgram
  */
 /** @param {number} value @param {number} limit @returns {boolean} */
-export function testJavaScriptCallCodeCoordinate(value,limit){return Number.isSafeInteger(value)&&value>=0&&value<limit&&(value!==0||1/value>0);}
+export function testJavaScriptCallCodeCoordinate(value,limit){return testJavaScriptSourceCoordinate(value,limit);}
 /** @param {JavaScriptCallProgram} program @param {bigint} identity @returns {number} */
 export function findJavaScriptCallCodeFunction(program,identity){
   let low=0,high=program.functions.length;

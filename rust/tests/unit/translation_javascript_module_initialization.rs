@@ -13,8 +13,9 @@ use std::process::Command;
 
 fn required<'a,T>(value:&'a Option<T>,name:&str)->&'a T{value.as_ref().unwrap_or_else(||panic!("required measured product unavailable: {name}"))}
 fn initial(plan:&native::JavaScriptModuleInitializationPlan,row:&Value)->native::JavaScriptModuleInitializationState{
- assert!(native::read_java_script_module_initialization_plan_error(plan.clone()).is_empty());
- native::create_java_script_module_initialization(plan.clone(),row["moduleURL"].as_str().unwrap().to_owned(),native::ml::Big::parse(row["realm"].as_str().unwrap()))
+ assert_eq!(native::read_java_script_module_initialization_plan_error(plan.clone()).length(), 0.0);
+ let module_url = native::ml_string::Text::from_text(row["moduleURL"].as_str().unwrap());
+ native::create_java_script_module_initialization(plan.clone(),&module_url,native::ml::Big::parse(row["realm"].as_str().unwrap()))
 }
 fn event(operation:&str,transition:Value,value:Value,abrupt:bool)->Value{json!({"operation":operation,"transition":transition,"value":value,"abrupt":abrupt})}
 
@@ -70,8 +71,8 @@ fn drive_literal_model(row:&Value)->Value{
 }
 
 pub(super) fn replay_peer(diagnostic:&mut Diagnostics,label:&str,row:&Value){
- let plan=diagnostic.attempt(format!("{label}/complete plan transport"),||{let plan=decode_java_script_module_initialization_plan(&row["plan"]);assert_eq!(encode_java_script_module_initialization_plan(&plan),row["plan"]);assert!(native::read_java_script_module_initialization_plan_error(plan.clone()).is_empty());plan});
- let mut state=diagnostic.attempt(format!("{label}/complete initial state transport"),||{let state=decode_java_script_module_initialization_state(&row["initialState"]);assert_eq!(encode_java_script_module_initialization_state(&state),row["initialState"]);assert!(native::read_java_script_module_initialization_state_error(required(&plan,"plan").clone(),state.clone()).is_empty());state});
+ let plan=diagnostic.attempt(format!("{label}/complete plan transport"),||{let plan=decode_java_script_module_initialization_plan(&row["plan"]);assert_eq!(encode_java_script_module_initialization_plan(&plan),row["plan"]);assert_eq!(native::read_java_script_module_initialization_plan_error(plan.clone()).length(),0.0);plan});
+ let mut state=diagnostic.attempt(format!("{label}/complete initial state transport"),||{let state=decode_java_script_module_initialization_state(&row["initialState"]);assert_eq!(encode_java_script_module_initialization_state(&state),row["initialState"]);assert_eq!(native::read_java_script_module_initialization_state_error(required(&plan,"plan").clone(),state.clone()).length(),0.0);state});
  let events=diagnostic.attempt(format!("{label}/complete nonempty event inventory"),||{let events=row["events"].as_array().unwrap();assert!(!events.is_empty()&&events.len()<=8192);events});
  for(index,expected)in events.into_iter().flatten().enumerate(){
   state=diagnostic.attempt(format!("{label}/event {index}"),||{

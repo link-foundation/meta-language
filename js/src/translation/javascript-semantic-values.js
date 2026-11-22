@@ -42,8 +42,9 @@ export function readJavaScriptSemanticValueError(value) {
 export function testJavaScriptSemanticSameValue(left, right) {
   if (readJavaScriptSemanticValueError(left) !== '' || readJavaScriptSemanticValueError(right) !== '')
     throw new TypeError('SameValue requires two complete values in the declared semantic model');
-  if(left.$==='text'||left.$==='sourceText')return testJavaScriptSemanticTextEqual(left,right);
   switch (left.$) {
+    case 'text':
+    case 'sourceText': return testJavaScriptSemanticTextEqual(left,right);
     case 'undefined': return right.$ === 'undefined';
     case 'null': return right.$ === 'null';
     case 'boolean': {
