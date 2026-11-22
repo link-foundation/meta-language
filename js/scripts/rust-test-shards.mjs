@@ -116,6 +116,22 @@ export function matchesLogicalFilters(name, arguments_) {
   return (!positive.length || positive.some(filter => name.includes(filter))) && !skipped.some(filter => name.includes(filter));
 }
 
+// The ordinary and fresh-merge profiles share these libtest exclusions. The
+// strict evidence profile always inventories and executes its original scope.
+export function nativeTestArguments(arguments_, profile, automatedTranslation) {
+  if (automatedTranslation !== 'false' || !['test', 'fresh-merge'].includes(profile)) return arguments_;
+  const translationTests = [
+    '::translation::', '::translation_', '::self_translation::', '::self_translation_',
+    '::semantic_translation::', '::issue_195_translation_', '::issue_195_faithful_behavior::',
+    '::issue_195_semantics_proof_preservation::', '::typescript_erasure::',
+    'four_language_conformance::all_twelve_translation_hooks_emit_reversible_target_native_source_envelopes',
+    'foundation_models::distinct_models_stay_distinct_and_translation_encodings_are_justified',
+    'grammar_outcome_preorder_rules::complete_owned_preorder_source_translates_without_carried_items_and_restores_exactly',
+    'grammar_outcome_source_type_rules::complete_source_type_algorithm_translates_without_carried_items_and_restores_exactly',
+  ];
+  return [...arguments_, ...translationTests.flatMap(filter => ['--skip', filter])];
+}
+
 export function verifyHarnessExecution(receipt) {
   requireValue(receipt.allInventoryDigest === digest(JSON.stringify(receipt.allInventory)), 'changed unfiltered inventory');
   requireValue(JSON.stringify(receipt.allInventory.filter(row => matchesLogicalFilters(row.name, receipt.arguments))) === JSON.stringify(receipt.inventory), 'logical inventory differs from the complete native inventory');
@@ -279,7 +295,8 @@ async function runHarness(binary, arguments_) {
       exitCode: actual.exitCode, signal: actual.signal, stdoutDigest: digest(actual.stdout), stderrDigest: digest(actual.stderr)});
     return actual.exitCode ?? 1;
   }
-  const receipt = await executePhysicalHarness({binary, arguments: arguments_, identity: current.identity,
+  const filters = nativeTestArguments(arguments_, current.identity.profile, process.env.META_LANGUAGE_AUTOMATED_TRANSLATION);
+  const receipt = await executePhysicalHarness({binary, arguments: filters, identity: current.identity,
     shard: current.shard, count: current.count,
     invoke: (binary, arguments_, listing) => invokeNative(binary, arguments_, listing, logPrefix)});
   writeReceipt(current.directory, name, receipt);

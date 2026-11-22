@@ -1,5 +1,11 @@
 # Self-translation
 
+Automated translation is currently opt-in in CI. Contributors may write manual
+ports for supported languages and verify behavior with shared fixtures and
+native checks. The [vision](vision.md#javascript-first-and-self-translation)
+defines the policy. The [issue #248 case study](case-studies/issue-248/README.md)
+describes the workflow switch and verification.
+
 Self-translation ports meta-language's own modules between JavaScript,
 TypeScript and Rust with meta-language itself. Both packages have the same
 library API and the same CLI command, and their results are the same byte for

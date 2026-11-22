@@ -2,10 +2,11 @@
 // Actual current names are extracted separately by the unchanged naming policy.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import { restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -174,6 +175,24 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
         kind:'complete certified historical source',revision:view.revision,path:view.file,
         bytes:source.predecessor.bytes,sha256:source.predecessor.sha256,
         archive:'parity/naming/array-identity-historical-inventories.lino',boundary:additional.boundary}});
+    }
+  }
+  for (const file of ['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs']) {
+    const inventory = 'B70 physical field source view names for ' + file;
+    const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));
+    const input = resolve(root, file);
+    if (!entry || !existsSync(input)) continue;
+    const current = readFileSync(input, 'utf8');
+    const previous = restoreAutomatedTranslationPauseSource(current, file);
+    if (previous === current) continue;
+    const currentNames = new Set(entry.extract(current, file));
+    for (const name of new Set(entry.extract(previous, file))) {
+      if (currentNames.has(name)) continue;
+      names.push({ inventory, file, name, record: entry.recordOf(name), sourceView: {
+        kind: 'complete certified historical source', revision: 'ec9f4efb0e9ef936114e09823981352f6db13700', path: file,
+        ...pin(previous), archive: 'parity/self-translation/automated-translation-pause-source-history.lino',
+        boundary: 'The pre-pause definition retains its own identity and the current inventory is checked separately.',
+      } });
     }
   }
   return names;

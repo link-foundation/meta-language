@@ -11,6 +11,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deliveryAssertions } from './issue-195-delivery.mjs';
 import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
 import { consumeWorkloadWireData } from './workload-wire-data.mjs';
 
@@ -21,6 +22,7 @@ const crate = path.resolve(required('--crate'));
 const workDirectory = path.resolve(required('--work-dir'));
 const output = path.resolve(required('--out'));
 const corpus = readProjectData(corpusPath);
+const translationPaused = process.env.META_LANGUAGE_AUTOMATED_TRANSLATION === 'false';
 const platform = `${process.platform}-${process.arch}`;
 const corpusWirePath = path.join(workDirectory, 'consumer-inputs.wire.json');
 
@@ -39,7 +41,10 @@ async function main() {
   await mkdir(workDirectory, { recursive: true });
   // The installed probe programs retain their JSON wire contract; their input
   // is a temporary projection of the authenticated linked fixture.
-  await writeFile(corpusWirePath, `${JSON.stringify(corpus)}\n`);
+  const activeCorpus = translationPaused
+    ? { ...corpus, delivery: { ...corpus.delivery, translations: [] } }
+    : corpus;
+  await writeFile(corpusWirePath, `${JSON.stringify(activeCorpus)}\n`);
   const report = {
     schemaVersion: 1,
     platform,
@@ -50,9 +55,18 @@ async function main() {
     logs,
   };
   report.agreement = agreement(report.npm.observations, report.crate.observations);
+  if (translationPaused) report.translationChecks = 'paused';
   await mkdir(path.dirname(output), { recursive: true });
   writeProjectData(output, report);
   console.log(`issue-195 consumer: wrote ${platform} report to ${output}`);
+  if (translationPaused) {
+    const assertions = deliveryAssertions(report, ['npm', 'crate'], {
+      npm: report.npm.checksum.expectedSha256,
+      crate: report.crate.checksum.expectedSha256,
+    }, { corpus: activeCorpus, corpusSha256: report.corpusSha256, version: report.npm.version });
+    const failed = Object.entries(assertions).filter(([, passed]) => !passed).map(([name]) => name);
+    if (failed.length > 0) throw new Error(`clean consumer checks failed: ${failed.join(', ')}`);
+  }
 }
 
 async function npmConsumer() {
@@ -195,7 +209,7 @@ async function crateConsumer() {
 }
 
 function agreement(left, right) {
-  const sections = ['parses', 'programs', 'translations'];
+  const sections = translationPaused ? ['parses', 'programs'] : ['parses', 'programs', 'translations'];
   const mismatches = sections.filter((section) =>
     canonical(left?.[section]) !== canonical(right?.[section]));
   return { sections, mismatches };
