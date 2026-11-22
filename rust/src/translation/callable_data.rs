@@ -39,16 +39,110 @@ pub(crate) fn read_formal_datatype_constructive_profiles<'a,F>(ty:&Type,lookup:&
 fn node(kind:&str,children:Vec<CallableDataFacts>,acyclic:bool)->CallableDataFacts{
     CallableDataFacts {callable:rules::accept_callable_data_node(kind,&children.iter().map(|child|child.callable).collect::<Vec<_>>()),constructive:rules::accept_callable_data_constructive_node(kind,&children.iter().map(|child|child.constructive).collect::<Vec<_>>()),acyclic:acyclic&&children.iter().all(|child|child.acyclic)}
 }
-pub(crate) fn read_callable_data_facts<'a,F>(ty:&Type,lookup:&F)->Result<CallableDataFacts> where F:Fn(&str)->Option<&'a DataDecl>{
-    fn walk<'a,F>(ty:&Type,lookup:&F,active:&mut HashSet<String>,visits:&mut usize,depth:usize)->Result<CallableDataFacts> where F:Fn(&str)->Option<&'a DataDecl>{
-        *visits+=1;let reason=rules::read_callable_data_traversal_error(depth as f64,*visits as f64);if !reason.is_empty(){return Err(unsupported("callable data source profile",&reason,None));}
-        let Type::Data{name}=ty else{return Ok(node(ty.kind(),ty.children().iter().map(|child|walk(child,lookup,active,visits,depth+1)).collect::<Result<Vec<_>>>()?,true));};
-        if active.contains(name){return Ok(node("cycle",Vec::new(),false));}
-        let Some(data)=lookup(name) else{return Ok(node("missing",Vec::new(),false));};active.insert(name.clone());
-        let children=data.ctors.iter().map(|ctor|Ok(node("constructor",ctor.fields.iter().map(|field|walk(&field.ty,lookup,active,visits,depth+1)).collect::<Result<Vec<_>>>()?,true))).collect::<Result<Vec<_>>>();active.remove(name);
-        Ok(node("data",children?,true))
+#[derive(Clone, Copy)]
+struct CallableDataSubtree {
+    facts: CallableDataFacts,
+    height: usize,
+}
+
+fn node(
+    kind: &str,
+    children: Vec<CallableDataSubtree>,
+    child_offset: usize,
+    acyclic: bool,
+) -> CallableDataSubtree {
+    CallableDataSubtree {
+        facts: CallableDataFacts {
+            callable: rules::accept_callable_data_node(
+                kind,
+                &children
+                    .iter()
+                    .map(|child| child.facts.callable)
+                    .collect::<Vec<_>>(),
+            ),
+            constructive: rules::accept_callable_data_constructive_node(
+                kind,
+                &children
+                    .iter()
+                    .map(|child| child.facts.constructive)
+                    .collect::<Vec<_>>(),
+            ),
+            acyclic: acyclic && children.iter().all(|child| child.facts.acyclic),
+        },
+        height: children
+            .iter()
+            .map(|child| child.height + child_offset)
+            .max()
+            .unwrap_or(0),
     }
-    let mut visits=0;walk(ty,lookup,&mut HashSet::new(),&mut visits,0)
+}
+
+pub(crate) fn read_callable_data_facts<'a, F>(ty: &Type, lookup: &F) -> Result<CallableDataFacts>
+where
+    F: Fn(&str) -> Option<&'a DataDecl>,
+{
+    struct Traversal<'lookup, F> {
+        lookup: &'lookup F,
+        active: HashSet<String>,
+        completed: HashMap<String, CallableDataSubtree>,
+        visits: usize,
+    }
+    impl<'a, F: Fn(&str) -> Option<&'a DataDecl>> Traversal<'_, F> {
+        fn check_bound(&self, depth: usize) -> Result<()> {
+            let reason =
+                rules::read_callable_data_traversal_error(depth as f64, self.visits as f64);
+            if !reason.is_empty() {
+                return Err(unsupported("callable data source profile", &reason, None));
+            }
+            Ok(())
+        }
+
+        fn walk(&mut self, ty: &Type, depth: usize) -> Result<CallableDataSubtree> {
+            self.visits += 1;
+            self.check_bound(depth)?;
+            let Type::Data { name } = ty else {
+                let children = ty
+                    .children()
+                    .iter()
+                    .map(|child| self.walk(child, depth + 1))
+                    .collect::<Result<Vec<_>>>()?;
+                return Ok(node(ty.kind(), children, 1, true));
+            };
+            if self.active.contains(name) {
+                return Ok(node("cycle", Vec::new(), 0, false));
+            }
+            if let Some(cached) = self.completed.get(name) {
+                self.check_bound(depth + cached.height)?;
+                return Ok(*cached);
+            }
+            let Some(data) = (self.lookup)(name) else {
+                return Ok(node("missing", Vec::new(), 0, false));
+            };
+            self.active.insert(name.clone());
+            let mut children = Vec::new();
+            for ctor in &data.ctors {
+                let fields = ctor
+                    .fields
+                    .iter()
+                    .map(|field| self.walk(&field.ty, depth + 1))
+                    .collect::<Result<Vec<_>>>()?;
+                children.push(node("constructor", fields, 1, true));
+            }
+            self.active.remove(name);
+            let subtree = node("data", children, 0, true);
+            if subtree.facts.acyclic {
+                self.completed.insert(name.clone(), subtree);
+            }
+            Ok(subtree)
+        }
+    }
+    let mut traversal = Traversal {
+        lookup,
+        active: HashSet::new(),
+        completed: HashMap::new(),
+        visits: 0,
+    };
+    Ok(traversal.walk(ty, 0)?.facts)
 }
 #[cfg(test)]
 mod deferred_controls{

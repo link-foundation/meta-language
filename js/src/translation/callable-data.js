@@ -7,17 +7,40 @@ import {acceptJavaScriptClassOwnerTypeObservation} from './javascript-class-owne
 export function readCallableDataFacts(type,declarations){
  let visits=0;
  const active=new Set();
- function node(kind,children,acyclic=true){return {callable:acceptCallableDataNode(kind,children.map(child=>child.callable)),constructive:acceptCallableDataConstructiveNode(kind,children.map(child=>child.constructive)),acyclic:acyclic&&children.every(child=>child.acyclic)};}
+ const completed=new Map();
+ function checkTraversal(depth){
+  const error=readCallableDataTraversalError(depth,visits);
+  if(error)throw unsupported('callable data source profile',error);
+ }
+ function node(kind,children,childOffset,acyclic=true){
+  return {
+   callable:acceptCallableDataNode(kind,children.map(child=>child.callable)),
+   constructive:acceptCallableDataConstructiveNode(kind,children.map(child=>child.constructive)),
+   acyclic:acyclic&&children.every(child=>child.acyclic),
+   height:children.reduce((height,child)=>Math.max(height,childOffset+child.height),0),
+  };
+ }
  function walk(value,depth){
-  const error=readCallableDataTraversalError(depth,++visits);if(error)throw unsupported('callable data source profile',error);
-  if(value.kind!=='data')return node(value.kind,(value.kind==='union'?value.alternatives:typeChildren(value)).map(child=>walk(child,depth+1)));
-  if(active.has(value.name))return node('cycle',[],false);
-  const entry=declarations.get(value.name);if(entry?.k!=='data')return node('missing',[],false);
+  visits+=1;
+  checkTraversal(depth);
+  if(value.kind!=='data')return node(value.kind,(value.kind==='union'?value.alternatives:typeChildren(value)).map(child=>walk(child,depth+1)),1);
+  if(active.has(value.name))return node('cycle',[],0,false);
+  const cached=completed.get(value.name);
+  if(cached!==undefined){
+   checkTraversal(depth+cached.height);
+   return cached;
+  }
+  const entry=declarations.get(value.name);if(entry?.k!=='data')return node('missing',[],0,false);
   active.add(value.name);
-  try{return node('data',entry.ctors.map(ctor=>node('constructor',ctor.fields.map(field=>walk(field.type,depth+1)))));}
+  try{
+   const facts=node('data',entry.ctors.map(ctor=>node('constructor',ctor.fields.map(field=>walk(field.type,depth+1)),1)),0);
+   if(facts.acyclic)completed.set(value.name,facts);
+   return facts;
+  }
   finally{active.delete(value.name);}
  }
- return walk(type,0);
+ const {callable,constructive,acyclic}=walk(type,0);
+ return {callable,constructive,acyclic};
 }
 export function refuseCallableDataObservation(type,declarations,operation,span,witness=undefined){if(acceptJavaScriptClassOwnerTypeObservation(type,witness,operation))return;const reason=readCallableDataObservationError(operation,readCallableDataFacts(type,declarations).callable);if(reason)throw unsupported('callable aggregate observation',reason,span);}
 function projectDatatypeConstructiveGraph(type,declarations){

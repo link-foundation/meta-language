@@ -56,6 +56,18 @@ test('derivation keeps old traits while callable data gets no debug or equality 
  declarations.set('Empty',{k:'data',ctors:[]});declarations.set('Callback',{k:'data',ctors:[{fields:[{type:{kind:'function',params:[],ret:{kind:'data',name:'Empty'}}}]}]});const empty=readCallableDataFacts(data,declarations);assert.equal(empty.constructive,false);assert.notEqual(readCallableDataProfileError(empty.callable,empty.acyclic,empty.constructive),'');
  declarations.set('Callback',{k:'data',ctors:[{fields:[{type:{kind:'function',params:[{kind:'data',name:'Empty'}],ret:scalar}}]}]});assert.equal(readCallableDataFacts(data,declarations).constructive,false);
 });
+test('nominal callable facts visit shared declarations once and still check depth on reuse',()=>{
+ const nominal=index=>({kind:'data',name:`Shared${index}`});
+ const declarations=new Map();
+ for(let index=0;index<=18;index+=1){
+  const children=index===0?[pointer]:[nominal(index-1),nominal(index-1)];
+  declarations.set(nominal(index).name,{k:'data',ctors:[{fields:children.map(type=>({type}))}]});
+ }
+ assert.deepEqual(readCallableDataFacts(nominal(18),declarations),{callable:true,constructive:true,acyclic:true});
+ let deep=nominal(18);
+ for(let index=0;index<250;index+=1)deep={kind:'tuple',elements:[deep]};
+ assert.throws(()=>readCallableDataFacts({kind:'tuple',elements:[nominal(18),deep]},declarations),/finite source profile/u);
+});
 test('each target independently refuses actual checked negative recursive defaultless and mutual callable layouts',()=>{
  const scalar={kind:'bool'},data=name=>({kind:'data',name}),callback={kind:'function',params:[scalar],ret:scalar};
  const cases=[
