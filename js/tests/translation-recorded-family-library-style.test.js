@@ -261,9 +261,10 @@ test('family whole inequality inversion preserves unordered Numbers and both ori
 
 test('family whole unary conjunction style retains short circuit order and unordered comparisons', () => {
   const helpers = 'fn observe_first(value:bool)->bool{value}fn observe_second(value:bool)->bool{value}';
-  const before = 'pub fn decide(first:bool,second:bool)->bool{if !observe_first(first)&&!observe_second(second){true}else{false}}';
+  const before = 'pub fn decide(first:bool,second:bool)->bool{if !observe_first(first) && !observe_second(second){true}else{false}}';
   const after = simplifyFamilyLibraryNegatedConjunctions(before);
   assert.notEqual(after, before);
+  assert.doesNotMatch(after, /[ \t]+$/mu);
   const read = source => {
     const context = {events: []};
     let emitted = emitJavaScript(checkProgram(parseRust(helpers + source + 'fn main(){}'))).text;

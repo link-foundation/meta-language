@@ -390,7 +390,7 @@ export function simplifyFamilyLibraryNegatedConjunctions(source) {
     if (tokens[start]?.value !== '!' || tokens[middle + 1]?.value !== '!') continue;
     if (tokens.slice(start, end + 1).some(token => token.kind === 'macro' && token.value !== 'vec'
       || token.kind !== 'string' && ['let', 'unsafe', '{', '}'].includes(token.value))) continue;
-    const first = source.slice(tokens[start].start, tokens[middle].start);
+    const first = source.slice(tokens[start].start, tokens[middle].start).trimEnd();
     const second = source.slice(tokens[middle + 1].start, tokens[end].end);
     if (!acceptRustWholeConditionNegation(first.trim()) || !acceptRustWholeConditionNegation(second.trim())) continue;
     edits.push([tokens[start].start, tokens[end].end,
