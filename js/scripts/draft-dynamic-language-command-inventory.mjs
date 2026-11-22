@@ -1,8 +1,8 @@
 // Update source inventory only. This records no executed requirement observation.
 import assert from 'node:assert/strict';
 import {readProjectData,writeProjectData} from './project-data.mjs';
-import {readFileSync,writeFileSync} from 'node:fs';
-import {renderRustTest,renderRustItemImports,resolveExports,rustPublicSurface} from './generate-export-parity.mjs';
+import {readFileSync} from 'node:fs';
+import {writeRustExportParity,resolveExports,rustPublicSurface} from './generate-export-parity.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const file=new URL('../../parity/language-features.lino',import.meta.url),value=readProjectData(file);
 const id='dynamic-language-command-archives';
@@ -76,5 +76,4 @@ value.javascriptExports=Object.fromEntries(Object.entries(value.javascriptExport
 writeProjectData(file,value);
 // Render declarations from the recorded source mapping only. Do not import the
 // product index, resolve/execute runtimes or run the generated compiler test.
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity.rs',import.meta.url),renderRustTest(value.javascriptExports));
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity/items.rs',import.meta.url),renderRustItemImports(value.javascriptExports));
+writeRustExportParity(value.javascriptExports);

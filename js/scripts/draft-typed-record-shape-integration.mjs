@@ -2,7 +2,7 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {readProjectData,writeProjectData} from './project-data.mjs';
-import {resolveExports,renderRustTest,renderRustItemImports} from './generate-export-parity.mjs';
+import {resolveExports,writeRustExportParity} from './generate-export-parity.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const root=new URL('../../',import.meta.url);
 for(const path of ['js/src/translation/typed-record-shape-rules.js','js/src/typed-program-record-shapes.js','js/src/typed-program-links.js','js/src/index.js',
@@ -28,8 +28,7 @@ const sourceFunctions=new Set([...definitions.matchAll(/^pub fn (\w+)\(/gmu)].ma
 for(const [index,name]of nativeNames.entries())if(!sourceFunctions.has(name)||!nativeExports?.split(/[^A-Za-z0-9_]+/u).includes(name)||!javascriptExports?.split(/[^A-Za-z0-9_]+/u).includes(names[index]))throw new TypeError('the actual paired source export is required: '+name);
 const mapped=resolveExports(names,nativeNames.map(name=>({name,path:name,kind:'function'})));if(mapped.missing.length)throw new TypeError('new source exports require actual Rust declarations: '+mapped.missing.join(', '));
 inventory.javascriptExports=Object.fromEntries(Object.entries({...inventory.javascriptExports,...mapped.entries}).sort(([first],[second])=>first<second?-1:first>second?1:0));writeProjectData(file,inventory);
-writeFileSync(new URL('rust/tests/unit/javascript_export_parity.rs',root),renderRustTest(inventory.javascriptExports));
-writeFileSync(new URL('rust/tests/unit/javascript_export_parity/items.rs',root),renderRustItemImports(inventory.javascriptExports));globalThis.gc?.();
+writeRustExportParity(inventory.javascriptExports);globalThis.gc?.();
 process.argv.splice(2,process.argv.length-2,'--draft','--reuse-roots');await import('./draft-source-definition-catalog.mjs');globalThis.gc?.();
 const {draftRustPackageSourceAssets}=await import('./rust-package-source-assets.mjs');draftRustPackageSourceAssets();globalThis.gc?.();
 process.argv.splice(2,process.argv.length-2,'--refresh-manifest');await import('./check-issue-195-acceptance.mjs');

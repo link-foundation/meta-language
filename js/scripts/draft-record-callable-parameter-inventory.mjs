@@ -1,7 +1,7 @@
 // Source declaration author only. No product index, oracle or fixture executes.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {readProjectData,writeProjectData} from './project-data.mjs';
-import {renderRustTest,renderRustItemImports} from './generate-export-parity.mjs';
+import {writeRustExportParity} from './generate-export-parity.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const file=new URL('../../parity/language-features.lino',import.meta.url),value=readProjectData(file),id='javascript-ordinary-record-callable-parameters';
 const common=['parity/fixtures/record-callable-parameters.lino','parity/fixtures/record-callable-parameter-assertion-history.lino','parity/self-translation/record-callable-parameter-rules-native.lino'];
@@ -10,8 +10,7 @@ const index=value.features.findIndex(row=>row.id===id);if(index<0)value.features
 value.javascriptExports.createJavaScriptRecordCallableParameterProgramLinks={rust:'create_java_script_record_callable_parameter_program_links',kind:'function'};
 value.javascriptExports=Object.fromEntries(Object.entries(value.javascriptExports).sort(([a],[b])=>a<b?-1:a>b?1:0));
 writeProjectData(file,value);
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity.rs',import.meta.url),renderRustTest(value.javascriptExports));
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity/items.rs',import.meta.url),renderRustItemImports(value.javascriptExports));
+writeRustExportParity(value.javascriptExports);
 const matrixFile=new URL('../tests/translation-source-exceptions.test.js',import.meta.url);let matrix=readFileSync(matrixFile,'utf8');
 if(!matrix.includes("['record-callable-parameters',createJavaScriptRecordCallableParameterProgramLinks]")){
  const anchor="['record-closure-parameters',createJavaScriptRecordClosureParameterProgramLinks],";

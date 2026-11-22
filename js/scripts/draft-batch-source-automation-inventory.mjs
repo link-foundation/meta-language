@@ -1,7 +1,7 @@
 // Source/export inventory construction only; these are not observations.
 import {writeFileSync,readFileSync} from 'node:fs';
 import {readProjectData,writeProjectData} from './project-data.mjs';
-import {renderRustTest,renderRustItemImports} from './generate-export-parity.mjs';
+import {writeRustExportParity} from './generate-export-parity.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const root=new URL('../../',import.meta.url),file=new URL('parity/language-features.lino',root),inventory=readProjectData(file);
 for(const [id,fixture,shared,javascript,rust]of [
@@ -14,6 +14,5 @@ for(const [id,fixture,shared,javascript,rust]of [
 for(const [name,rust]of [['createGrammarCompositionBatchLinks','create_grammar_composition_batch_links'],['readGrammarCompositionBatchLinks','read_grammar_composition_batch_links']])inventory.javascriptExports[name]={rust,kind:'function'};
 inventory.javascriptExports=Object.fromEntries(Object.entries(inventory.javascriptExports).sort(([first],[second])=>first<second?-1:first>second?1:0));
 writeProjectData(file,inventory);
-writeFileSync(new URL('rust/tests/unit/javascript_export_parity.rs',root),renderRustTest(inventory.javascriptExports));
-writeFileSync(new URL('rust/tests/unit/javascript_export_parity/items.rs',root),renderRustItemImports(inventory.javascriptExports));
+writeRustExportParity(inventory.javascriptExports);
 const modulesFile=new URL('rust/tests/unit/mod.rs',root);let modules=readFileSync(modulesFile,'utf8');for(const name of ['grammar_composition_batch','translation_string_array_copy_sort'])if(!modules.includes('mod '+name+';'))modules+='\nmod '+name+';\n';writeFileSync(modulesFile,modules);

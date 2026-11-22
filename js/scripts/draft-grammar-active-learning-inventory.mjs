@@ -1,6 +1,5 @@
-import { writeFileSync } from 'node:fs';
 import { readProjectData, writeProjectData } from './project-data.mjs';
-import { renderRustItemImports, renderRustTest } from './generate-export-parity.mjs';
+import { writeRustExportParity } from './generate-export-parity.mjs';
 
 if (process.argv.slice(2).join(' ') !== '--draft') throw new TypeError('use --draft');
 
@@ -39,7 +38,4 @@ for (const [javascript, suffix, kind] of [
 inventory.javascriptExports = Object.fromEntries(Object.entries(inventory.javascriptExports)
   .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0));
 writeProjectData(file, inventory);
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity.rs', import.meta.url),
-  renderRustTest(inventory.javascriptExports));
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity/items.rs', import.meta.url),
-  renderRustItemImports(inventory.javascriptExports));
+writeRustExportParity(inventory.javascriptExports);

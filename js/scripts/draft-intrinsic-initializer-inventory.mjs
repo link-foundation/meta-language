@@ -1,7 +1,6 @@
 // Source declarations only, with no execution observations or product imports.
-import {writeFileSync} from 'node:fs';
 import {readProjectData,writeProjectData} from './project-data.mjs';
-import {renderRustTest,renderRustItemImports} from './generate-export-parity.mjs';
+import {writeRustExportParity} from './generate-export-parity.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const file=new URL('../../parity/language-features.lino',import.meta.url),value=readProjectData(file),id='intrinsic-module-initializer-source-scope';
 const common=['parity/fixtures/intrinsic-module-initializers.lino','parity/self-translation/intrinsic-initializer-rules-native.lino'];
@@ -12,5 +11,4 @@ value.javascriptExports.readIntrinsicModuleInitializerBinding={rust:'read_intrin
 value.javascriptExports.acceptIntrinsicModuleInitializerScope={rust:'accept_intrinsic_module_initializer_scope',kind:'function'};
 value.javascriptExports=Object.fromEntries(Object.entries(value.javascriptExports).sort(([first],[second])=>first<second?-1:first>second?1:0));
 writeProjectData(file,value);
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity.rs',import.meta.url),renderRustTest(value.javascriptExports));
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity/items.rs',import.meta.url),renderRustItemImports(value.javascriptExports));
+writeRustExportParity(value.javascriptExports);

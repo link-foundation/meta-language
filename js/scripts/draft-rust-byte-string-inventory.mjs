@@ -1,7 +1,7 @@
 // Source declarations only; no execution observation is recorded.
 import {writeFileSync} from 'node:fs';
 import {readProjectData,writeProjectData} from './project-data.mjs';
-import {renderRustTest,renderRustItemImports} from './generate-export-parity.mjs';
+import {writeRustExportParity} from './generate-export-parity.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const file=new URL('../../parity/language-features.lino',import.meta.url),value=readProjectData(file),id='rust-byte-string-source-tokens';
 const common=['parity/fixtures/rust-byte-string-literals.lino','parity/fixtures/rust-byte-string-assertion-history.lino','parity/self-translation/rust-byte-string-rules-native.lino'];
@@ -11,8 +11,7 @@ const position=value.features.findIndex(row=>row.id===id);if(position<0)value.fe
 value.javascriptExports.createRustByteStringProgramLinks={rust:'create_rust_byte_string_program_links',kind:'function'};
 value.javascriptExports=Object.fromEntries(Object.entries(value.javascriptExports).sort(([first],[second])=>first<second?-1:first>second?1:0));
 writeProjectData(file,value);
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity.rs',import.meta.url),renderRustTest(value.javascriptExports));
-writeFileSync(new URL('../../rust/tests/unit/javascript_export_parity/items.rs',import.meta.url),renderRustItemImports(value.javascriptExports));
+writeRustExportParity(value.javascriptExports);
 const packageFile=new URL('../package.json',import.meta.url),manifest=JSON.parse((await import('node:fs')).readFileSync(packageFile,'utf8'));
 manifest.scripts['draft:rust-package-assets']='node scripts/rust-package-source-assets.mjs --draft';
 manifest.scripts['check:rust-package-assets']='node scripts/rust-package-source-assets.mjs --check';
