@@ -208,6 +208,10 @@ impl Transport<'_>{
      let selected=self.parser.project_record_state(&layouts,decode(name(&previous))?,Some(span));
      json!({"k":"binary","op":"concat","left":encode(&selected)?,"right":name(&rhs)})
     }
+    SourcePlaceOperation::AppendVectorElement=>{
+     let selected=self.parser.project_record_state(&layouts,decode(name(&previous))?,Some(span));
+     json!({"k":"array","items":[{"value":encode(&selected)?,"spread":true},{"value":name(&rhs),"spread":false}]})
+    }
    };
    let facet=RustSourcePlaceTransform::Replacement{
     operation,
@@ -341,6 +345,13 @@ impl RustParser{
   };
   let CollectionPlace{slot,layouts,target}=place;
   self.record_owned_write(Write{slot,layouts,field,target,intrinsic:Some(intrinsic)},value,path,span)
+ }
+ pub(super) fn owned_record_effect_vector_append(
+  &mut self,place:CollectionPlace,field:SourceOrigin,value:SExpr,element:SourceOrigin,path:&[String],span:Option<Span>,
+ )->Result<SExpr>{
+  let CollectionPlace{slot,layouts,target}=place;
+  let intrinsic=Some((SourcePlaceOperation::AppendVectorElement,Some(element)));
+  self.record_owned_write(Write{slot,layouts,field,target,intrinsic},value,path,span)
  }
  pub(super) fn is_collection_mutation_statement(&self,node:&SExpr)->bool{
   let super::SNode::Math{op,name,args}=&node.node else{return false;};

@@ -334,6 +334,41 @@ mod tests {
     }
 
     #[test]
+    fn projected_vector_append_keeps_the_actual_selected_field_and_element() {
+        let source = r#"struct Buffer { values: Vec<u8>, tag: u8 }
+            fn main() {
+                let mut buffer = Buffer { values: vec![1u8], tag: 3u8 };
+                let value = 7u8;
+                buffer.values.push(value);
+                println!("{}", buffer.values.len() == 2 && buffer.tag == 3u8);
+            }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        assert_eq!(
+            wire.matches("\"operation\":\"append vector element\"")
+                .count(),
+            1
+        );
+        let edited = wire.replacen(
+            "\"operation\":\"append vector element\"",
+            "\"operation\":\"append string text\"",
+            1,
+        );
+        crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(
+            &serde_json::from_str(&edited).unwrap(),
+        )
+        .expect_err("the actual array and element cannot be interpreted as String operands");
+    }
+
+    #[test]
     fn selected_record_field_moves_leave_its_actual_sibling_available() {
         let source = r#"struct Pair { first: String, second: String }
             fn main() {

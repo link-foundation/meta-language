@@ -95,10 +95,25 @@ impl Regions<'_> {
             ));
         };
         let shared_operand = match (operation, &value.node, operands.as_slice()) {
-            (SourcePlaceOperation::AssignField, _, [operand]) => {
+            (
+                SourcePlaceOperation::AssignField | SourcePlaceOperation::AppendVectorElement,
+                _,
+                [operand],
+            ) => {
+                let input = if operation == SourcePlaceOperation::AppendVectorElement {
+                    match &value.node {
+                        Node::Append { right, .. } => match &right.node {
+                            Node::Array { items } => &items[0],
+                            _ => return Err(fail("a Vec replacement retains its checked element")),
+                        },
+                        _ => return Err(fail("a Vec replacement retains its checked append")),
+                    }
+                } else {
+                    value.as_ref()
+                };
                 self.scope(&operand.position, bindings)?;
                 let actual =
-                    self.expression(value, env, bindings, Some(&operand.position), depth + 1)?;
+                    self.expression(input, env, bindings, Some(&operand.position), depth + 1)?;
                 let actual = self.read(actual, "move")?;
                 if !actual.regions.is_empty() {
                     return Err(fail(

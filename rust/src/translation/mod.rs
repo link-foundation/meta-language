@@ -89,6 +89,7 @@ pub(crate) mod rust_borrowed_vector_rules;
 pub(crate) mod rust_exclusive_source_loan_rules;
 pub(crate) mod rust_exclusive_source_compound_rules;
 pub(crate) mod rust_exclusive_source_string_rules;
+pub(crate) mod rust_exclusive_source_vector_rules;
 pub(crate) mod rust_owned_record_loop_rules;
 pub(crate) mod javascript_host_capability_rules;
 pub(crate) mod javascript_source_text_rules;

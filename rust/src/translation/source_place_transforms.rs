@@ -36,6 +36,8 @@ pub enum SourcePlaceOperation {
     ClearString,
     #[serde(rename = "append string text")]
     AppendStringText,
+    #[serde(rename = "append vector element")]
+    AppendVectorElement,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -277,9 +279,12 @@ pub(super) fn check_place_transform<'data>(
     };
     let operand = match (operation, operands.as_slice()) {
         (SourcePlaceOperation::ClearString, []) => None,
-        (SourcePlaceOperation::AssignField | SourcePlaceOperation::AppendStringText, [operand]) => {
-            Some(operand)
-        }
+        (
+            SourcePlaceOperation::AssignField
+            | SourcePlaceOperation::AppendStringText
+            | SourcePlaceOperation::AppendVectorElement,
+            [operand],
+        ) => Some(operand),
         _ => return Err(fail()),
     };
     let Node::Let { name, value, body } = &node.node else {
@@ -363,6 +368,17 @@ pub(super) fn check_place_transform<'data>(
                 by_zero: None,
             },
         ) if plain(value) => (Some(right.as_ref()), Some(left.as_ref())),
+        (SourcePlaceOperation::AppendVectorElement, Node::Append { left, right })
+            if plain(value) && plain(right) && right.ty == value.ty =>
+        {
+            let Node::Array { items } = &right.node else {
+                return Err(fail());
+            };
+            let [item] = items.as_slice() else {
+                return Err(fail());
+            };
+            (Some(item), Some(left.as_ref()))
+        }
         _ => return Err(fail()),
     };
     let checked_operand = match (operand, argument) {
@@ -391,23 +407,24 @@ pub(super) fn check_place_transform<'data>(
                     return Err(fail());
                 }
             } else if !plain(argument)
-                || !string_rules::accept_rust_exclusive_source_string_suffix(
-                    position.ty.kind(),
-                    if position.owner.kind == "primitive" {
-                        "string slice"
-                    } else {
-                        "owned string"
-                    },
-                    position.wrappers.len() as f64,
-                    true,
-                    position
-                        .wrappers
-                        .iter()
-                        .all(|wrapper| wrapper == "reference"),
-                    &position.owner.kind,
-                    &position.owner.path.join("::"),
-                    position.owner.arguments.len() as f64,
-                )
+                || (*operation == SourcePlaceOperation::AppendStringText
+                    && !string_rules::accept_rust_exclusive_source_string_suffix(
+                        position.ty.kind(),
+                        if position.owner.kind == "primitive" {
+                            "string slice"
+                        } else {
+                            "owned string"
+                        },
+                        position.wrappers.len() as f64,
+                        true,
+                        position
+                            .wrappers
+                            .iter()
+                            .all(|wrapper| wrapper == "reference"),
+                        &position.owner.kind,
+                        &position.owner.path.join("::"),
+                        position.owner.arguments.len() as f64,
+                    ))
             {
                 return Err(fail());
             }
@@ -439,6 +456,33 @@ pub(super) fn check_place_transform<'data>(
             .as_ref()
             .is_none_or(|operand| box_projection_depth(&operand.position, &target) != Some(0))
         {
+            return Err(fail());
+        }
+    } else if *operation == SourcePlaceOperation::AppendVectorElement {
+        let Type::Array {
+            element,
+            reference: false,
+        } = &target.ty
+        else {
+            return Err(fail());
+        };
+        let [element_owner] = target.owner.arguments.as_slice() else {
+            return Err(fail());
+        };
+        if !super::rust_exclusive_source_vector_rules::accept_rust_exclusive_source_vector_receiver(
+            target.ty.kind(),
+            "owned vector",
+            target.wrappers.len() as f64,
+            true,
+            &target.owner.kind,
+            &target.owner.path.join("::"),
+            1.0,
+        ) || checked_operand.as_ref().is_none_or(|operand| {
+            &operand.position.ty != element.as_ref()
+                || &operand.position.owner != element_owner
+                || !operand.position.wrappers.is_empty()
+                || !operand.position.lifetimes.is_empty()
+        }) {
             return Err(fail());
         }
     } else if !string_rules::accept_rust_exclusive_source_string_receiver(

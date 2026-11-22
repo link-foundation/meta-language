@@ -18,7 +18,7 @@ fn is_vector_owner(owner: &SourceOwner) -> bool {
         && owner.arguments.len() == 1
 }
 
-fn item_origin(
+pub(super) fn item_origin(
     ty: Type,
     owner: &SourceOwner,
     path: &[String],

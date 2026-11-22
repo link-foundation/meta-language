@@ -5248,10 +5248,12 @@ a genuine Box payload; direct unboxed root intrinsics keep their preceding path.
 Owning push arguments retain their actual earlier transfer without a second read
 from the consumed source binding. The facet shape and ordinary target operations
 remain unchanged.
-The native record checker recognizes the empty String construction and ordered
-String concatenation inside checked field writeback. It checks the actual nested
-selected-field extraction before replacing that field's revision and retains
-the sibling field revisions and their loans.
+The native record checker recognizes the empty String construction, ordered
+String concatenation and one-element Vec append inside checked field writeback.
+It checks the actual nested selected-field extraction before replacing that
+field's revision and retains the sibling field revisions and their loans. Vec
+append checks the actual standard vector element owner and moves its operand
+through the replacement packet.
 An implicit mutable method autoref first reserves the actual receiver place.
 Readonly argument observations may finish before activation; overlapping mutable
 acquisition and writes remain excluded. Activation checks initialized selected
