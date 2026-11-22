@@ -1,5 +1,4 @@
 // Generated from complete js/src/translation/javascript-record-order-rules.js. Do not edit by hand.
-use super::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3;
 use super::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result;
 use super::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result;
 use super::accept_java_script_whitespace_unit;
@@ -9,6 +8,12 @@ use super::ml_array;
 use super::ml_math;
 use super::slice_utf16_text;
 use super::source_ml_temporary_read_java_script_utf8_string_units_loop4;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadJavaScriptUtf8StringUnitsJoin3 {
+    MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(f64, f64, f64),
+    MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Return(Vec<f64>),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

@@ -113,12 +113,22 @@ impl Checker {
         if span.is_some() && result.span.is_none() {
             result.span = span;
         }
-        if let Some(position)=node.source_position.as_deref(){
-            result.source_position=Some(Box::new(super::super::source_expression_positions::check_rust_source_expression_position(
-                position,&result.ty,self.language.as_str(),
-                |ty|self.resolve_type(Some(ty),path,node.span),
-                |ty|match ty{Type::Data{name}=>match self.decls.get(name){Some(super::Decl::Data(data))=>Some(data),_=>None},_=>None},
-            )?));
+        if let Some(position) = node.source_position.as_deref() {
+            result.source_position = Some(Box::new(
+                super::super::source_expression_positions::check_rust_source_expression_position(
+                    position,
+                    &result.ty,
+                    self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, node.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(super::Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                )?,
+            ));
         }
         Ok(result)
     }
@@ -165,7 +175,7 @@ impl Checker {
                 let value = self.expr(arg, env, path, None, false)?;
                 self.boolean_value(value, span)
             }
-            SNode::PropositionValue { prop } => self.proposition_value(prop,env,path,span),
+            SNode::PropositionValue { prop } => self.proposition_value(prop, env, path, span),
             SNode::NumberValue { arg } => {
                 let value = self.expr(arg, env, path, None, false)?;
                 let value = self.number_value(value, span)?;
@@ -427,12 +437,12 @@ impl Checker {
                 self.check_binding_expression(node, env, path, context, allow_literal)
             }
             SNode::Match { scrutinees, rows } => {
-                let checked_tag_receiver =
-                    if self.language == Language::JavaScript && node.tag_test.is_some()
-                        && let [source] = scrutinees.as_slice()
-                    {
-                        let receiver = self.expr(source, env, path, None, false)?;
-                        if matches!(receiver.ty, Type::Option { .. })
+                let checked_tag_receiver = if self.language == Language::JavaScript
+                    && node.tag_test.is_some()
+                    && let [source] = scrutinees.as_slice()
+                {
+                    let receiver = self.expr(source, env, path, None, false)?;
+                    if matches!(receiver.ty, Type::Option { .. })
                             && let Some(guarded) = self.javascript_nullish_access(
                                 (&receiver, source),
                                 super::javascript_nullish_fields::JavaScriptPropertyAccess::TagComparison(rows),
@@ -444,11 +454,12 @@ impl Checker {
                         {
                             return Ok(guarded);
                         }
-                        Some(receiver)
-                    } else {
-                        None
-                    };
-                let compiled = self.compile_match(scrutinees, rows, span, env, path, checked_tag_receiver)?;
+                    Some(receiver)
+                } else {
+                    None
+                };
+                let compiled =
+                    self.compile_match(scrutinees, rows, span, env, path, checked_tag_receiver)?;
                 self.expr_with_context(&compiled, env, path, context, allow_literal)
             }
             SNode::Match1 { scrutinee, cases } => {
@@ -490,7 +501,7 @@ impl Checker {
             SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
-                self.refuse_callable_data_observation(&arg.ty,"display",span)?;
+                self.refuse_callable_data_observation(&arg.ty, "display", span)?;
                 let refusal =
                     crate::translation::primitive_value_rules::read_number_display_refusal(
                         self.language.as_str(),
@@ -702,8 +713,8 @@ impl Checker {
                 ) {
                     return self.conditional_chain_value(op, args, span, env, path, expected);
                 }
-                if op == "reorderJavaScriptRecordPropertyValues" {
-                    return self.record_value_order_operation(args, env, path, span, expected);
+                if crate::translation::javascript_enumeration_rules::accept_java_script_record_value_reordering(op) {
+                    return self.record_value_order_operation(op, args, env, path, span, expected);
                 }
                 if !crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op).is_empty(){return self.javascript_object_enumeration(op,args,span,env,path,expected);}
                 if op == "exponentiateJavaScriptNumericValue" {
@@ -778,7 +789,11 @@ impl Checker {
             BinaryOp::And | BinaryOp::Or => {
                 let (mut then_env, mut else_env) = self.own_property_branch_environments(left, env);
                 let outcome = op == BinaryOp::And;
-                let right_env = if outcome { &mut then_env } else { &mut else_env };
+                let right_env = if outcome {
+                    &mut then_env
+                } else {
+                    &mut else_env
+                };
                 self.apply_javascript_optional_guard(left, right_env, outcome, 0);
                 let left = self.expr(left, env, path, None, false)?;
                 let right = self.expr(right, right_env, path, None, false)?;
@@ -803,8 +818,8 @@ impl Checker {
                         checked_right =
                             self.expr(right, env, path, Some(&self.default_number()), false)?;
                     }
-                    self.refuse_callable_data_observation(&checked_left.ty,"comparison",span)?;
-                    self.refuse_callable_data_observation(&checked_right.ty,"comparison",span)?;
+                    self.refuse_callable_data_observation(&checked_left.ty, "comparison", span)?;
+                    self.refuse_callable_data_observation(&checked_right.ty, "comparison", span)?;
                     if let Some(value) =
                         self.primitive_comparison(op, &checked_left, &checked_right)?
                     {
@@ -817,7 +832,7 @@ impl Checker {
                     }
                 }
                 let (left, right) = self.operands(left, right, env, path, span)?;
-                self.refuse_callable_data_observation(&left.ty,"comparison",span)?;
+                self.refuse_callable_data_observation(&left.ty, "comparison", span)?;
                 if self.language == Language::JavaScript && crate::translation::reference_identity_rules::accept_reference_identity_comparison(
                     op_name(op), left.ty.kind(), right.ty.kind(),
                     left.ty.is_reference(), right.ty.is_reference(), left.ty == right.ty,

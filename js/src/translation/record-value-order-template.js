@@ -17,6 +17,10 @@ function readEntryKey(keys,index){return keys[index]??refuseEntryKey();}
 /** @param {OpaqueValue[]} values @param {number[]} order @returns {OpaqueValue[]} */
 export function reorderWrappedRecordPropertyValues(values,order){
  if(values.length!==order.length)throw new TypeError('invalid ordered record property order');
+ return reorderPresentWrappedRecordPropertyValues(values,order);
+}
+/** @param {OpaqueValue[]} values @param {number[]} order @returns {OpaqueValue[]} */
+export function reorderPresentWrappedRecordPropertyValues(values,order){
  let result=[];let seen=[];
  for(let index=0;index<order.length;index+=1){
   const position=readOrderPosition(order,index);

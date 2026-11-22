@@ -569,40 +569,44 @@ partial def source_ml_temporary_replaceUtf16Text_loop26 (text : (Array Float)) (
     (let at_2 := («at» + (1 : Float));
       (source_ml_temporary_replaceUtf16Text_loop26 text result_2 found at_2))) else result)
 
-partial def source_ml_temporary_replaceUtf16Text_loop28 (text : (Array Float)) (replacement : (Array Float)) (result : (Array Float)) (kind : Float) (last : Float) («at» : Float) : (Array Float) :=
-  (if (decide («at» < last)) then (let result_2 := (result ++ (#[(if (kind == (0 : Float)) then (match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then replacement[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)) else (match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)))] : (Array Float)));
+partial def source_ml_temporary_replaceUtf16Text_loop28 (result : (Array Float)) (last : Float) (source : (Array Float)) («at» : Float) : (Array Float) :=
+  (if (decide («at» < last)) then (let result_2 := (result ++ (#[(match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then source[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float))] : (Array Float)));
     (let at_2 := («at» + (1 : Float));
-      (source_ml_temporary_replaceUtf16Text_loop28 text replacement result_2 kind last at_2))) else result)
+      (source_ml_temporary_replaceUtf16Text_loop28 result_2 last source at_2))) else result)
 
 partial def source_ml_temporary_replaceUtf16Text_loop27 (text : (Array Float)) (search : (Array Float)) (replacement : (Array Float)) (result : (Array Float)) (plan : (Array Float)) (found : Float) (instruction : Float) : (Array Float) :=
   (if (decide (instruction < (Float.ofNat plan.size))) then (let kind := (match (let ml_index := instruction; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then plan[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float));
     (let first := (if (kind == (0 : Float)) then (match (let ml_index := (instruction + (1 : Float)); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then plan[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)) else (if (kind == (2 : Float)) then (0 : Float) else (if (kind == (1 : Float)) then found else (found + (Float.ofNat search.size)))));
       (let last := (if (kind == (0 : Float)) then (match (let ml_index := (instruction + (2 : Float)); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then plan[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)) else (if (kind == (2 : Float)) then found else (if (kind == (1 : Float)) then (found + (Float.ofNat search.size)) else (Float.ofNat text.size))));
-        (let «at» := first;
-          (let result_2 := (source_ml_temporary_replaceUtf16Text_loop28 text replacement result kind last «at»);
-            (let instruction_2 := (instruction + (3 : Float));
-              (source_ml_temporary_replaceUtf16Text_loop27 text search replacement result_2 plan found instruction_2))))))) else result)
+        (let source := (if (kind == (0 : Float)) then replacement else text);
+          (let «at» := first;
+            (let result_2 := (source_ml_temporary_replaceUtf16Text_loop28 result last source «at»);
+              (let instruction_2 := (instruction + (3 : Float));
+                (source_ml_temporary_replaceUtf16Text_loop27 text search replacement result_2 plan found instruction_2)))))))) else result)
 
-partial def source_ml_temporary_replaceUtf16Text_loop24 (text : (Array Float)) (search : (Array Float)) (replacement : (Array Float)) (all : Bool) (result : (Array Float)) (plan : (Array Float)) (start : Float) («from» : Float) : source_ml_temporary_replaceUtf16Text_loop24_result :=
-  (let found := (indexUtf16Text text search «from»);
-    (if (decide (found < (0 : Float))) then (source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result start) else (let «at» := start;
+partial def source_ml_temporary_replaceUtf16Text_loop24 (text : (Array Float)) (search : (Array Float)) (replacement : (Array Float)) (all : Bool) (result : (Array Float)) (plan : (Array Float)) (start : Float) («from» : Float) (searching : Bool) : source_ml_temporary_replaceUtf16Text_loop24_result :=
+  (if searching then (let found := (indexUtf16Text text search «from»);
+    (if (decide (found < (0 : Float))) then (let searching_2 := false;
+      (source_ml_temporary_replaceUtf16Text_loop24 text search replacement all result plan start «from» searching_2)) else (let «at» := start;
       (let result_2 := (source_ml_temporary_replaceUtf16Text_loop26 text result found «at»);
         (let instruction := (0 : Float);
           (let result_3 := (source_ml_temporary_replaceUtf16Text_loop27 text search replacement result_2 plan found instruction);
             (let start_2 := (found + (Float.ofNat search.size));
-              (if ((!all) || (((Float.ofNat search.size) == (0 : Float)) && (found == (Float.ofNat text.size)))) then (source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result_3 start_2) else (let from_2 := (start_2 + (if ((Float.ofNat search.size) == (0 : Float)) then (1 : Float) else (0 : Float)));
-                (source_ml_temporary_replaceUtf16Text_loop24 text search replacement all result_3 plan start_2 from_2))))))))))
+              (let searching_3 := (all && (!(((Float.ofNat search.size) == (0 : Float)) && (found == (Float.ofNat text.size)))));
+                (let from_2 := (start_2 + (if ((Float.ofNat search.size) == (0 : Float)) then (1 : Float) else (0 : Float)));
+                  (source_ml_temporary_replaceUtf16Text_loop24 text search replacement all result_3 plan start_2 from_2 searching_3)))))))))) else (source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result start))
 
 def replaceUtf16Text (text : (Array Float)) (search : (Array Float)) (replacement : (Array Float)) (all : Bool) : (Array Float) :=
   (let result := (#[] : (Array Float));
     (let plan := (planUtf16TextSubstitution replacement);
       (let start := (0 : Float);
         (let «from» := (0 : Float);
-          (let source_ml_source1_s10 := (source_ml_temporary_replaceUtf16Text_loop24 text search replacement all result plan start «from»);
-            (match source_ml_source1_s10 with
-              | source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result_2 start_2 => (let «at» := start_2;
-                  (let result_3 := (source_ml_temporary_replaceUtf16Text_loop25 text result_2 «at»);
-                    result_3))))))))
+          (let searching := true;
+            (let source_ml_source1_s10 := (source_ml_temporary_replaceUtf16Text_loop24 text search replacement all result plan start «from» searching);
+              (match source_ml_source1_s10 with
+                | source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result_2 start_2 => (let «at» := start_2;
+                    (let result_3 := (source_ml_temporary_replaceUtf16Text_loop25 text result_2 «at»);
+                      result_3)))))))))
 
 def main : IO Unit := do
   pure ()
@@ -710,11 +714,11 @@ inductive source_ml_temporary_acceptRecordFieldName_loop3_result where
 
 partial def source_ml_temporary_acceptRecordFieldName_loop3 (name : (Array Float)) (index : Float) : source_ml_temporary_acceptRecordFieldName_loop3_result :=
   (if (decide (index < (Float.ofNat name.size))) then (let unit := (let ml_index := index; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then name[ml_index.toUInt64.toNat]? else none);
-    (if (((!(match unit with | some ml_present => (ml_is_integer ml_present) | none => false)) || (let source_ml_source1_comparison_operand19 := unit;
-      (let source_ml_source1_comparison_operand20 := (0 : Float);
-        (if (match (source_ml_source1_comparison_operand19, none) with | (some ml_left, some ml_right) => (ml_left == ml_right) | (none, none) => true | _ => false) then (decide ((0.0 / 0.0 : Float) < source_ml_source1_comparison_operand20)) else (decide ((source_ml_source1_comparison_operand19.get!) < source_ml_source1_comparison_operand20)))))) || (let source_ml_source1_comparison_operand21 := unit;
-      (let source_ml_source1_comparison_operand22 := (65535 : Float);
-        (if (match (source_ml_source1_comparison_operand21, none) with | (some ml_left, some ml_right) => (ml_left == ml_right) | (none, none) => true | _ => false) then (decide ((0.0 / 0.0 : Float) > source_ml_source1_comparison_operand22)) else (decide ((source_ml_source1_comparison_operand21.get!) > source_ml_source1_comparison_operand22)))))) then (source_ml_temporary_acceptRecordFieldName_loop3_result.source_ml_temporary_acceptRecordFieldName_loop3_return false) else (let index_2 := (index + (1 : Float));
+    (if (((!(match unit with | some ml_present => (ml_is_integer ml_present) | none => false)) || (let source_ml_source1_comparison_operand23 := unit;
+      (let source_ml_source1_comparison_operand24 := (0 : Float);
+        (if (match (source_ml_source1_comparison_operand23, none) with | (some ml_left, some ml_right) => (ml_left == ml_right) | (none, none) => true | _ => false) then (decide ((0.0 / 0.0 : Float) < source_ml_source1_comparison_operand24)) else (decide ((source_ml_source1_comparison_operand23.get!) < source_ml_source1_comparison_operand24)))))) || (let source_ml_source1_comparison_operand25 := unit;
+      (let source_ml_source1_comparison_operand26 := (65535 : Float);
+        (if (match (source_ml_source1_comparison_operand25, none) with | (some ml_left, some ml_right) => (ml_left == ml_right) | (none, none) => true | _ => false) then (decide ((0.0 / 0.0 : Float) > source_ml_source1_comparison_operand26)) else (decide ((source_ml_source1_comparison_operand25.get!) > source_ml_source1_comparison_operand26)))))) then (source_ml_temporary_acceptRecordFieldName_loop3_result.source_ml_temporary_acceptRecordFieldName_loop3_return false) else (let index_2 := (index + (1 : Float));
       (source_ml_temporary_acceptRecordFieldName_loop3 name index_2)))) else source_ml_temporary_acceptRecordFieldName_loop3_result.source_ml_temporary_acceptRecordFieldName_loop3_done)
 
 def acceptRecordFieldName (name : (Array Float)) : Bool :=
@@ -961,8 +965,8 @@ partial def source_ml_temporary_readRecordTypeOwnerPresence_loop18 (texts : (Arr
 partial def source_ml_temporary_readRecordTypeOwnerPresence_loop17 (texts : (Array (Array Nat))) (numbers : (Array Float)) (starts : (Array Float)) (counts : (Array Float)) (labels : (Array (Array Nat))) (targets : (Array Float)) (bindings : (Array Float)) (owner : Float) (pending : (Array Float)) (seen : (Array Float)) (position : Float) : source_ml_temporary_readRecordTypeOwnerPresence_loop17_result :=
   (if (decide (position < (Float.ofNat pending.size))) then (let node := (readRequiredNumberFact pending position);
     (let kind := (recordTypeFactKind texts starts counts labels targets node);
-      (let source_ml_source1_s23 := (source_ml_temporary_readRecordTypeOwnerPresence_loop18 texts numbers starts counts labels targets bindings node kind);
-        (match source_ml_source1_s23 with
+      (let source_ml_source1_s27 := (source_ml_temporary_readRecordTypeOwnerPresence_loop18 texts numbers starts counts labels targets bindings node kind);
+        (match source_ml_source1_s27 with
           | source_ml_temporary_readRecordTypeOwnerPresence_loop18_result.source_ml_temporary_readRecordTypeOwnerPresence_loop18_done node_2 kind_2 => (if (node_2 == owner) then (source_ml_temporary_readRecordTypeOwnerPresence_loop17_result.source_ml_temporary_readRecordTypeOwnerPresence_loop17_return true) else (let visited := false;
               (let index := (0 : Float);
                 (let visited_2 := (source_ml_temporary_readRecordTypeOwnerPresence_loop19 seen node_2 visited index);
@@ -1036,305 +1040,402 @@ def acceptJavaScriptRecordOrderNames (names : (Array (Array Float))) : Bool :=
         | source_ml_temporary_acceptJavaScriptRecordOrderNames_loop23_result.source_ml_temporary_acceptJavaScriptRecordOrderNames_loop23_done => true
         | source_ml_temporary_acceptJavaScriptRecordOrderNames_loop23_result.source_ml_temporary_acceptJavaScriptRecordOrderNames_loop23_return source_ml_temporary_result23 => source_ml_temporary_result23)))
 
-inductive source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result where
-  | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_done : source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result
-  | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_return (ml_temporary_result24 : Bool) : source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result
+inductive source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result where
+  | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_done : source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result
+  | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_return (ml_temporary_result24 : Bool) : source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result
   deriving Repr, DecidableEq, Inhabited
 
-inductive source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result where
-  | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_done : source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result
-  | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_return (ml_temporary_result25 : Bool) : source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result
+inductive source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result where
+  | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_done : source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result
+  | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_return (ml_temporary_result25 : Bool) : source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result
   deriving Repr, DecidableEq, Inhabited
 
-partial def source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25 (order : (Array Float)) (index : Float) (value : Float) (previous : Float) : source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result :=
-  (if (decide (previous < index)) then (if ((readJavaScriptRecordOrderPosition order previous) == value) then (source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_return false) else (let previous_2 := (previous + (1 : Float));
-    (source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25 order index value previous_2))) else source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_done)
+partial def source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25 (order : (Array Float)) (index : Float) (value : Float) (previous : Float) : source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result :=
+  (if (decide (previous < index)) then (if ((readJavaScriptRecordOrderPosition order previous) == value) then (source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_return false) else (let previous_2 := (previous + (1 : Float));
+    (source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25 order index value previous_2))) else source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_done)
 
-partial def source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24 (count : Float) (order : (Array Float)) (index : Float) : source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result :=
+partial def source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24 (count : Float) (order : (Array Float)) (index : Float) : source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result :=
   (if (decide (index < (Float.ofNat order.size))) then (let value := (readJavaScriptRecordOrderPosition order index);
-    (if ((((!(ml_is_integer value)) || (decide (value < (0 : Float)))) || (decide (value ≥ count))) || ((value == (0 : Float)) && (decide (((1 : Float) / value) < (0 : Float))))) then (source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_return false) else (let previous := (0 : Float);
-      (let source_ml_source1_s24 := (source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25 order index value previous);
-        (match source_ml_source1_s24 with
-          | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_done => (let index_2 := (index + (1 : Float));
-              (source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24 count order index_2))
-          | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_return source_ml_temporary_result25 => (source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_return source_ml_temporary_result25)))))) else source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_done)
+    (if ((((!(ml_is_integer value)) || (decide (value < (0 : Float)))) || (decide (value ≥ count))) || ((value == (0 : Float)) && (decide (((1 : Float) / value) < (0 : Float))))) then (source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_return false) else (let previous := (0 : Float);
+      (let source_ml_source1_s28 := (source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25 order index value previous);
+        (match source_ml_source1_s28 with
+          | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_done => (let index_2 := (index + (1 : Float));
+              (source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24 count order index_2))
+          | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop25_return source_ml_temporary_result25 => (source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_return source_ml_temporary_result25)))))) else source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_done)
+
+def acceptJavaScriptRecordOrderPositions (count : Float) (order : (Array Float)) : Bool :=
+  (if ((((!(ml_is_safe_integer count)) || (decide (count < (0 : Float)))) || ((count == (0 : Float)) && (decide (((1 : Float) / count) < (0 : Float))))) || (decide ((Float.ofNat order.size) > count))) then false else (let index := (0 : Float);
+    (let source_ml_source1_s14 := (source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24 count order index);
+      (match source_ml_source1_s14 with
+        | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_done => true
+        | source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPositions_loop24_return source_ml_temporary_result24 => source_ml_temporary_result24))))
 
 def acceptJavaScriptRecordOrderPermutation (count : Float) (order : (Array Float)) : Bool :=
-  (if ((((!(ml_is_safe_integer count)) || (decide (count < (0 : Float)))) || ((count == (0 : Float)) && (decide (((1 : Float) / count) < (0 : Float))))) || ((Float.ofNat order.size) != count)) then false else (let index := (0 : Float);
-    (let source_ml_source1_s14 := (source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24 count order index);
-      (match source_ml_source1_s14 with
-        | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_done => true
-        | source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_result.source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_return source_ml_temporary_result24 => source_ml_temporary_result24))))
+  (((Float.ofNat order.size) == count) && (acceptJavaScriptRecordOrderPositions count order))
 
 def readJavaScriptRecordOrderCreationError (names : (Array (Array Float))) (insertion : (Array Float)) : (Array Nat) :=
   (if ((!(acceptJavaScriptRecordOrderNames names)) || (!(acceptJavaScriptRecordOrderPermutation (Float.ofNat names.size) insertion))) then (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 102, 105, 101, 108, 100, 32, 115, 101, 113, 117, 101, 110, 99, 101] : Array Nat) else (#[] : Array Nat))
 
-partial def source_ml_temporary_createJavaScriptRecordPropertyOrder_loop27 (names : (Array (Array Float))) (numeric : (Array Float)) (key : Float) (position : Float) : Float :=
+partial def source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop27 (names : (Array (Array Float))) (numeric : (Array Float)) (key : Float) (position : Float) : Float :=
   (if ((decide (position < (Float.ofNat numeric.size))) && (decide ((readJavaScriptLiteralPropertyIndex (readJavaScriptRecordOrderName names (readJavaScriptRecordOrderPosition numeric position))) < key))) then (let position_2 := (position + (1 : Float));
-    (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop27 names numeric key position_2)) else position)
+    (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop27 names numeric key position_2)) else position)
 
-partial def source_ml_temporary_createJavaScriptRecordPropertyOrder_loop26 (names : (Array (Array Float))) (numeric : (Array Float)) (field : Float) : (Array Float) :=
-  (if (decide (field < (Float.ofNat names.size))) then (let key := (readJavaScriptLiteralPropertyIndex (readJavaScriptRecordOrderName names field));
-    (if (decide (key < (0 : Float))) then (let field_2 := (field + (1 : Float));
-      (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop26 names numeric field_2)) else (let position := (0 : Float);
-      (let position_2 := (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop27 names numeric key position);
-        (let numeric_2 := (let source_ml_source1_concat_value25 := (let ml_values := numeric; let ml_begin := (0 : Float); let ml_end := position_2; let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_begin ml_length).toUInt64.toNat; let ml_last := (MLUtf16Text.slicePosition ml_end ml_length).toUInt64.toNat; ml_values.extract ml_first ml_last);
-          (let source_ml_source1_concat_value26 := (#[field] : (Array Float));
-            (let source_ml_source1_concat_value27 := (let ml_values := numeric; let ml_begin := position_2; let ml_end := (1.0 / 0.0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_begin ml_length).toUInt64.toNat; let ml_last := (MLUtf16Text.slicePosition ml_end ml_length).toUInt64.toNat; ml_values.extract ml_first ml_last);
-              ((((#[] : (Array Float)) ++ source_ml_source1_concat_value25) ++ source_ml_source1_concat_value26) ++ source_ml_source1_concat_value27))));
-          (let field_3 := (field + (1 : Float));
-            (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop26 names numeric_2 field_3))))))) else numeric)
-
-partial def source_ml_temporary_createJavaScriptRecordPropertyOrder_loop28 (names : (Array (Array Float))) (insertion : (Array Float)) (result : (Array Float)) (index : Float) : (Array Float) :=
+partial def source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop26 (names : (Array (Array Float))) (insertion : (Array Float)) (numeric : (Array Float)) (index : Float) : (Array Float) :=
   (if (decide (index < (Float.ofNat insertion.size))) then (let field := (readJavaScriptRecordOrderPosition insertion index);
-    (if (decide ((readJavaScriptLiteralPropertyIndex (readJavaScriptRecordOrderName names field)) < (0 : Float))) then (let result_2 := (let source_ml_source1_concat_value28 := result;
-      (let source_ml_source1_concat_value29 := (#[field] : (Array Float));
-        (((#[] : (Array Float)) ++ source_ml_source1_concat_value28) ++ source_ml_source1_concat_value29)));
+    (let key := (readJavaScriptLiteralPropertyIndex (readJavaScriptRecordOrderName names field));
+      (if (decide (key < (0 : Float))) then (let index_2 := (index + (1 : Float));
+        (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop26 names insertion numeric index_2)) else (let position := (0 : Float);
+        (let position_2 := (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop27 names numeric key position);
+          (let numeric_2 := (let source_ml_source1_concat_value29 := (let ml_values := numeric; let ml_begin := (0 : Float); let ml_end := position_2; let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_begin ml_length).toUInt64.toNat; let ml_last := (MLUtf16Text.slicePosition ml_end ml_length).toUInt64.toNat; ml_values.extract ml_first ml_last);
+            (let source_ml_source1_concat_value30 := (#[field] : (Array Float));
+              (let source_ml_source1_concat_value31 := (let ml_values := numeric; let ml_begin := position_2; let ml_end := (1.0 / 0.0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_begin ml_length).toUInt64.toNat; let ml_last := (MLUtf16Text.slicePosition ml_end ml_length).toUInt64.toNat; ml_values.extract ml_first ml_last);
+                ((((#[] : (Array Float)) ++ source_ml_source1_concat_value29) ++ source_ml_source1_concat_value30) ++ source_ml_source1_concat_value31))));
+            (let index_3 := (index + (1 : Float));
+              (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop26 names insertion numeric_2 index_3)))))))) else numeric)
+
+partial def source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop28 (names : (Array (Array Float))) (insertion : (Array Float)) (result : (Array Float)) (index : Float) : (Array Float) :=
+  (if (decide (index < (Float.ofNat insertion.size))) then (let field := (readJavaScriptRecordOrderPosition insertion index);
+    (if (decide ((readJavaScriptLiteralPropertyIndex (readJavaScriptRecordOrderName names field)) < (0 : Float))) then (let result_2 := (let source_ml_source1_concat_value32 := result;
+      (let source_ml_source1_concat_value33 := (#[field] : (Array Float));
+        (((#[] : (Array Float)) ++ source_ml_source1_concat_value32) ++ source_ml_source1_concat_value33)));
       (let index_2 := (index + (1 : Float));
-        (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop28 names insertion result_2 index_2))) else (let index_3 := (index + (1 : Float));
-      (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop28 names insertion result index_3)))) else result)
+        (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop28 names insertion result_2 index_2))) else (let index_3 := (index + (1 : Float));
+      (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop28 names insertion result index_3)))) else result)
+
+def sortJavaScriptRecordPropertyPositions (names : (Array (Array Float))) (insertion : (Array Float)) : (Array Float) :=
+  (let numeric := (#[] : (Array Float));
+    (let index := (0 : Float);
+      (let numeric_2 := (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop26 names insertion numeric index);
+        (let result := numeric_2;
+          (let index_2 := (0 : Float);
+            (let result_2 := (source_ml_temporary_sortJavaScriptRecordPropertyPositions_loop28 names insertion result index_2);
+              result_2))))))
 
 def createJavaScriptRecordPropertyOrder (names : (Array (Array Float))) (insertion : (Array Float)) : (Array Float) :=
   (let error := (readJavaScriptRecordOrderCreationError names insertion);
-    (if (!(error).isEmpty) then (ml_raiseJavaScriptTypeError error) else (let numeric := (#[] : (Array Float));
-      (let field := (0 : Float);
-        (let numeric_2 := (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop26 names numeric field);
-          (let result := numeric_2;
-            (let index := (0 : Float);
-              (let result_2 := (source_ml_temporary_createJavaScriptRecordPropertyOrder_loop28 names insertion result index);
-                result_2))))))))
+    (if (!(error).isEmpty) then (ml_raiseJavaScriptTypeError error) else (sortJavaScriptRecordPropertyPositions names insertion)))
 
-inductive source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result where
-  | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_done : source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result
-  | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_return (ml_temporary_result29 : Bool) : source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result
+inductive source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_result where
+  | source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_done : source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_result
   deriving Repr, DecidableEq, Inhabited
 
-partial def source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29 (order : (Array Float)) (expected : (Array Float)) (index : Float) : source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result :=
-  (if (decide (index < (Float.ofNat order.size))) then (if ((readJavaScriptRecordOrderPosition order index) != (readJavaScriptRecordOrderPosition expected index)) then (source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_return false) else (let index_2 := (index + (1 : Float));
-    (source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29 order expected index_2))) else source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_done)
+partial def source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29 (insertion : (Array Float)) (present : (Array Bool)) (index : Float) : source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_result :=
+  (if (decide (index < (Float.ofNat present.size))) then (if (let source_ml_source1_comparison_operand34 := (let ml_index := index; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then present[ml_index.toUInt64.toNat]? else none);
+    (let source_ml_source1_comparison_operand35 := (let ml_values := insertion; let ml_search := index; let ml_start := (0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => ((ml_candidate == ml_search) || ((ml_candidate).isNaN && (ml_search).isNaN))));
+      (!(match (source_ml_source1_comparison_operand34, source_ml_source1_comparison_operand35) with | (some ml_left, ml_right) => (ml_left == ml_right) | _ => false)))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 102, 105, 101, 108, 100, 32, 115, 101, 113, 117, 101, 110, 99, 101] : Array Nat)) else (let index_2 := (index + (1 : Float));
+    (source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29 insertion present index_2))) else source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_result.source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_done)
+
+def createJavaScriptPresentRecordPropertyOrder (names : (Array (Array Float))) (insertion : (Array Float)) (present : (Array Bool)) : (Array Float) :=
+  (if (((!(acceptJavaScriptRecordOrderNames names)) || ((Float.ofNat present.size) != (Float.ofNat names.size))) || (!(acceptJavaScriptRecordOrderPositions (Float.ofNat names.size) insertion))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 102, 105, 101, 108, 100, 32, 115, 101, 113, 117, 101, 110, 99, 101] : Array Nat)) else (let index := (0 : Float);
+    (let source_ml_source1_s15 := (source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29 insertion present index);
+      (match source_ml_source1_s15 with
+        | source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_result.source_ml_temporary_createJavaScriptPresentRecordPropertyOrder_loop29_done => (sortJavaScriptRecordPropertyPositions names insertion)))))
+
+inductive source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result where
+  | source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_done : source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result
+  | source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_return (ml_temporary_result30 : Bool) : source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result
+  deriving Repr, DecidableEq, Inhabited
+
+partial def source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30 (order : (Array Float)) (expected : (Array Float)) (index : Float) : source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result :=
+  (if (decide (index < (Float.ofNat order.size))) then (if ((readJavaScriptRecordOrderPosition order index) != (readJavaScriptRecordOrderPosition expected index)) then (source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result.source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_return false) else (let index_2 := (index + (1 : Float));
+    (source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30 order expected index_2))) else source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result.source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_done)
+
+def acceptJavaScriptPresentRecordPropertyOrder (names : (Array (Array Float))) (order : (Array Float)) : Bool :=
+  (if ((!(acceptJavaScriptRecordOrderNames names)) || (!(acceptJavaScriptRecordOrderPositions (Float.ofNat names.size) order))) then false else (let expected := (sortJavaScriptRecordPropertyPositions names order);
+    (let index := (0 : Float);
+      (let source_ml_source1_s16 := (source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30 order expected index);
+        (match source_ml_source1_s16 with
+          | source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result.source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_done => true
+          | source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_result.source_ml_temporary_acceptJavaScriptPresentRecordPropertyOrder_loop30_return source_ml_temporary_result30 => source_ml_temporary_result30)))))
+
+inductive source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result where
+  | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_done : source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result
+  | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_return (ml_temporary_result31 : Bool) : source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result
+  deriving Repr, DecidableEq, Inhabited
+
+partial def source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31 (order : (Array Float)) (expected : (Array Float)) (index : Float) : source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result :=
+  (if (decide (index < (Float.ofNat order.size))) then (if ((readJavaScriptRecordOrderPosition order index) != (readJavaScriptRecordOrderPosition expected index)) then (source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_return false) else (let index_2 := (index + (1 : Float));
+    (source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31 order expected index_2))) else source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_done)
 
 def acceptJavaScriptRecordPropertyOrder (names : (Array (Array Float))) (order : (Array Float)) : Bool :=
   (if ((!(acceptJavaScriptRecordOrderNames names)) || (!(acceptJavaScriptRecordOrderPermutation (Float.ofNat names.size) order))) then false else (let expected := (createJavaScriptRecordPropertyOrder names order);
     (let index := (0 : Float);
-      (let source_ml_source1_s15 := (source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29 order expected index);
-        (match source_ml_source1_s15 with
-          | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_done => true
-          | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop29_return source_ml_temporary_result29 => source_ml_temporary_result29)))))
+      (let source_ml_source1_s17 := (source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31 order expected index);
+        (match source_ml_source1_s17 with
+          | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_done => true
+          | source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_result.source_ml_temporary_acceptJavaScriptRecordPropertyOrder_loop31_return source_ml_temporary_result31 => source_ml_temporary_result31)))))
 
 def readJavaScriptRecordOrderKeyError (names : (Array (Array Float))) (order : (Array Float)) : (Array Nat) :=
   (if (acceptJavaScriptRecordPropertyOrder names order) then (#[] : Array Nat) else (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 112, 114, 111, 112, 101, 114, 116, 121, 32, 111, 114, 100, 101, 114] : Array Nat))
 
-inductive source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result where
-  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_done (insertion : (Array Float)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result
-  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_return (ml_temporary_result30 : (Array Nat)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result
+inductive source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result where
+  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_done (insertion : (Array Float)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result
+  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_return (ml_temporary_result32 : (Array Nat)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result
   deriving Repr, Inhabited
 
-inductive source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result where
-  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_done (insertion : (Array Float)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result
-  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_return (ml_temporary_result31 : (Array Nat)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result
+inductive source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result where
+  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_done (insertion : (Array Float)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result
+  | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_return (ml_temporary_result33 : (Array Nat)) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result
   deriving Repr, Inhabited
 
-partial def source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31 (names : (Array (Array Float))) (insertion : (Array Float)) (values : (Array Float)) (index : Float) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result :=
+partial def source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33 (names : (Array (Array Float))) (insertion : (Array Float)) (values : (Array Float)) (index : Float) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result :=
   (if (decide (index < (Float.ofNat values.size))) then (let field := (readJavaScriptRecordOrderPosition values index);
-    (if ((((!(ml_is_integer field)) || (decide (field < (0 : Float)))) || (decide (field ≥ (Float.ofNat names.size)))) || ((field == (0 : Float)) && (decide (((1 : Float) / field) < (0 : Float))))) then (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_return (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 111, 117, 114, 99, 101, 32, 102, 105, 101, 108, 100] : Array Nat)) else (if (!(let ml_values := insertion; let ml_search := field; let ml_start := (0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => ((ml_candidate == ml_search) || ((ml_candidate).isNaN && (ml_search).isNaN))))) then (let insertion_2 := (let source_ml_source1_concat_value30 := insertion;
-      (let source_ml_source1_concat_value31 := (#[field] : (Array Float));
-        (((#[] : (Array Float)) ++ source_ml_source1_concat_value30) ++ source_ml_source1_concat_value31)));
+    (if ((((!(ml_is_integer field)) || (decide (field < (0 : Float)))) || (decide (field ≥ (Float.ofNat names.size)))) || ((field == (0 : Float)) && (decide (((1 : Float) / field) < (0 : Float))))) then (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_return (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 111, 117, 114, 99, 101, 32, 102, 105, 101, 108, 100] : Array Nat)) else (if (!(let ml_values := insertion; let ml_search := field; let ml_start := (0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => ((ml_candidate == ml_search) || ((ml_candidate).isNaN && (ml_search).isNaN))))) then (let insertion_2 := (let source_ml_source1_concat_value36 := insertion;
+      (let source_ml_source1_concat_value37 := (#[field] : (Array Float));
+        (((#[] : (Array Float)) ++ source_ml_source1_concat_value36) ++ source_ml_source1_concat_value37)));
       (let index_2 := (index + (1 : Float));
-        (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31 names insertion_2 values index_2))) else (let index_3 := (index + (1 : Float));
-      (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31 names insertion values index_3))))) else (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_done insertion))
+        (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33 names insertion_2 values index_2))) else (let index_3 := (index + (1 : Float));
+      (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33 names insertion values index_3))))) else (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_done insertion))
 
-partial def source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30 (names : (Array (Array Float))) (chunks : (Array (Array Float))) (insertion : (Array Float)) (chunk : Float) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result :=
+partial def source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32 (names : (Array (Array Float))) (chunks : (Array (Array Float))) (insertion : (Array Float)) (chunk : Float) : source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result :=
   (if (decide (chunk < (Float.ofNat chunks.size))) then (let values := (readJavaScriptRecordOrderName chunks chunk);
     (let index := (0 : Float);
-      (let source_ml_source1_s32 := (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31 names insertion values index);
-        (match source_ml_source1_s32 with
-          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_done insertion_2 => (let chunk_2 := (chunk + (1 : Float));
-              (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30 names chunks insertion_2 chunk_2))
-          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31_return source_ml_temporary_result31 => (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_return source_ml_temporary_result31))))) else (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_done insertion))
+      (let source_ml_source1_s38 := (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33 names insertion values index);
+        (match source_ml_source1_s38 with
+          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_done insertion_2 => (let chunk_2 := (chunk + (1 : Float));
+              (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32 names chunks insertion_2 chunk_2))
+          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop33_return source_ml_temporary_result33 => (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_return source_ml_temporary_result33))))) else (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_done insertion))
 
 def readJavaScriptRecordOrderMergeError (names : (Array (Array Float))) (chunks : (Array (Array Float))) : (Array Nat) :=
   (if (!(acceptJavaScriptRecordOrderNames names)) then (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 102, 105, 101, 108, 100, 32, 110, 97, 109, 101, 115] : Array Nat) else (let insertion := (#[] : (Array Float));
     (let chunk := (0 : Float);
-      (let source_ml_source1_s16 := (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30 names chunks insertion chunk);
-        (match source_ml_source1_s16 with
-          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_done insertion_2 => (readJavaScriptRecordOrderCreationError names insertion_2)
-          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30_return source_ml_temporary_result30 => source_ml_temporary_result30)))))
+      (let source_ml_source1_s18 := (source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32 names chunks insertion chunk);
+        (match source_ml_source1_s18 with
+          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_done insertion_2 => (readJavaScriptRecordOrderCreationError names insertion_2)
+          | source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_result.source_ml_temporary_readJavaScriptRecordOrderMergeError_loop32_return source_ml_temporary_result32 => source_ml_temporary_result32)))))
 
-partial def source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop33 (insertion : (Array Float)) (values : (Array Float)) (index : Float) : (Array Float) :=
+partial def source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop35 (insertion : (Array Float)) (values : (Array Float)) (index : Float) : (Array Float) :=
   (if (decide (index < (Float.ofNat values.size))) then (let field := (readJavaScriptRecordOrderPosition values index);
-    (if (!(let ml_values := insertion; let ml_search := field; let ml_start := (0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => ((ml_candidate == ml_search) || ((ml_candidate).isNaN && (ml_search).isNaN))))) then (let insertion_2 := (let source_ml_source1_concat_value33 := insertion;
-      (let source_ml_source1_concat_value34 := (#[field] : (Array Float));
-        (((#[] : (Array Float)) ++ source_ml_source1_concat_value33) ++ source_ml_source1_concat_value34)));
+    (if (!(let ml_values := insertion; let ml_search := field; let ml_start := (0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => ((ml_candidate == ml_search) || ((ml_candidate).isNaN && (ml_search).isNaN))))) then (let insertion_2 := (let source_ml_source1_concat_value39 := insertion;
+      (let source_ml_source1_concat_value40 := (#[field] : (Array Float));
+        (((#[] : (Array Float)) ++ source_ml_source1_concat_value39) ++ source_ml_source1_concat_value40)));
       (let index_2 := (index + (1 : Float));
-        (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop33 insertion_2 values index_2))) else (let index_3 := (index + (1 : Float));
-      (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop33 insertion values index_3)))) else insertion)
+        (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop35 insertion_2 values index_2))) else (let index_3 := (index + (1 : Float));
+      (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop35 insertion values index_3)))) else insertion)
 
-partial def source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop32 (chunks : (Array (Array Float))) (insertion : (Array Float)) (chunk : Float) : (Array Float) :=
+partial def source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop34 (chunks : (Array (Array Float))) (insertion : (Array Float)) (chunk : Float) : (Array Float) :=
   (if (decide (chunk < (Float.ofNat chunks.size))) then (let values := (readJavaScriptRecordOrderName chunks chunk);
     (let index := (0 : Float);
-      (let insertion_2 := (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop33 insertion values index);
+      (let insertion_2 := (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop35 insertion values index);
         (let chunk_2 := (chunk + (1 : Float));
-          (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop32 chunks insertion_2 chunk_2))))) else insertion)
+          (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop34 chunks insertion_2 chunk_2))))) else insertion)
 
 def mergeJavaScriptRecordPropertyOrder (names : (Array (Array Float))) (chunks : (Array (Array Float))) : (Array Float) :=
   (let error := (readJavaScriptRecordOrderMergeError names chunks);
     (if (!(error).isEmpty) then (ml_raiseJavaScriptTypeError error) else (let insertion := (#[] : (Array Float));
       (let chunk := (0 : Float);
-        (let insertion_2 := (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop32 chunks insertion chunk);
+        (let insertion_2 := (source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop34 chunks insertion chunk);
           (createJavaScriptRecordPropertyOrder names insertion_2))))))
 
-inductive source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result where
-  | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_done : source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result
-  | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_return (ml_temporary_result34 : (Array Nat)) : source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result
+partial def source_ml_temporary_mergeJavaScriptPresentRecordPropertyOrder_loop37 (insertion : (Array Float)) (positions : (Array Float)) (index : Float) : (Array Float) :=
+  (if (decide (index < (Float.ofNat positions.size))) then (let field := (readJavaScriptRecordOrderPosition positions index);
+    (if (!(let ml_values := insertion; let ml_search := field; let ml_start := (0 : Float); let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => ((ml_candidate == ml_search) || ((ml_candidate).isNaN && (ml_search).isNaN))))) then (let insertion_2 := (let source_ml_source1_concat_value41 := insertion;
+      (let source_ml_source1_concat_value42 := (#[field] : (Array Float));
+        (((#[] : (Array Float)) ++ source_ml_source1_concat_value41) ++ source_ml_source1_concat_value42)));
+      (let index_2 := (index + (1 : Float));
+        (source_ml_temporary_mergeJavaScriptPresentRecordPropertyOrder_loop37 insertion_2 positions index_2))) else (let index_3 := (index + (1 : Float));
+      (source_ml_temporary_mergeJavaScriptPresentRecordPropertyOrder_loop37 insertion positions index_3)))) else insertion)
+
+partial def source_ml_temporary_mergeJavaScriptPresentRecordPropertyOrder_loop36 (names : (Array (Array Float))) (chunks : (Array (Array Float))) (insertion : (Array Float)) (chunk : Float) : (Array Float) :=
+  (if (decide (chunk < (Float.ofNat chunks.size))) then (let positions := (readJavaScriptRecordOrderName chunks chunk);
+    (if (!(acceptJavaScriptRecordOrderPositions (Float.ofNat names.size) positions)) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 111, 117, 114, 99, 101, 32, 102, 105, 101, 108, 100] : Array Nat)) else (let index := (0 : Float);
+      (let insertion_2 := (source_ml_temporary_mergeJavaScriptPresentRecordPropertyOrder_loop37 insertion positions index);
+        (let chunk_2 := (chunk + (1 : Float));
+          (source_ml_temporary_mergeJavaScriptPresentRecordPropertyOrder_loop36 names chunks insertion_2 chunk_2)))))) else insertion)
+
+def mergeJavaScriptPresentRecordPropertyOrder (names : (Array (Array Float))) (chunks : (Array (Array Float))) : (Array Float) :=
+  (if (!(acceptJavaScriptRecordOrderNames names)) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 102, 105, 101, 108, 100, 32, 110, 97, 109, 101, 115] : Array Nat)) else (let insertion := (#[] : (Array Float));
+    (let chunk := (0 : Float);
+      (let insertion_2 := (source_ml_temporary_mergeJavaScriptPresentRecordPropertyOrder_loop36 names chunks insertion chunk);
+        (sortJavaScriptRecordPropertyPositions names insertion_2)))))
+
+inductive source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result where
+  | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_done : source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result
+  | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_return (ml_temporary_result38 : (Array Nat)) : source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result
   deriving Repr, DecidableEq, Inhabited
 
-partial def source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34 (target : (Array (Array Float))) (source : (Array (Array Float))) (index : Float) : source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result :=
-  (if (decide (index < (Float.ofNat source.size))) then (if (decide ((readRecordFieldPosition target (readJavaScriptRecordOrderName source index)) < (0 : Float))) then (source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_return (#[97, 110, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 112, 114, 101, 97, 100, 32, 102, 105, 101, 108, 100, 32, 105, 115, 32, 109, 105, 115, 115, 105, 110, 103, 32, 102, 114, 111, 109, 32, 105, 116, 115, 32, 116, 97, 114, 103, 101, 116] : Array Nat)) else (let index_2 := (index + (1 : Float));
-    (source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34 target source index_2))) else source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_done)
+partial def source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38 (target : (Array (Array Float))) (source : (Array (Array Float))) (index : Float) : source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result :=
+  (if (decide (index < (Float.ofNat source.size))) then (if (decide ((readRecordFieldPosition target (readJavaScriptRecordOrderName source index)) < (0 : Float))) then (source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_return (#[97, 110, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 112, 114, 101, 97, 100, 32, 102, 105, 101, 108, 100, 32, 105, 115, 32, 109, 105, 115, 115, 105, 110, 103, 32, 102, 114, 111, 109, 32, 105, 116, 115, 32, 116, 97, 114, 103, 101, 116] : Array Nat)) else (let index_2 := (index + (1 : Float));
+    (source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38 target source index_2))) else source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_done)
 
 def readJavaScriptRecordOrderRebaseError (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) : (Array Nat) :=
   (if ((!(acceptJavaScriptRecordOrderNames target)) || (!(acceptJavaScriptRecordPropertyOrder source order))) then (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 112, 114, 101, 97, 100, 32, 115, 111, 117, 114, 99, 101] : Array Nat) else (let index := (0 : Float);
-    (let source_ml_source1_s17 := (source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34 target source index);
-      (match source_ml_source1_s17 with
-        | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_done => (#[] : Array Nat)
-        | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop34_return source_ml_temporary_result34 => source_ml_temporary_result34))))
+    (let source_ml_source1_s19 := (source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38 target source index);
+      (match source_ml_source1_s19 with
+        | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_done => (#[] : Array Nat)
+        | source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_result.source_ml_temporary_readJavaScriptRecordOrderRebaseError_loop38_return source_ml_temporary_result38 => source_ml_temporary_result38))))
 
-partial def source_ml_temporary_rebaseJavaScriptRecordPropertyOrder_loop35 (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) (result : (Array Float)) (index : Float) : (Array Float) :=
-  (if (decide (index < (Float.ofNat order.size))) then (let name := (readJavaScriptRecordOrderName source (readJavaScriptRecordOrderPosition order index));
-    (let field := (readRecordFieldPosition target name);
-      (let result_2 := (let source_ml_source1_concat_value35 := result;
-        (let source_ml_source1_concat_value36 := (#[field] : (Array Float));
-          (((#[] : (Array Float)) ++ source_ml_source1_concat_value35) ++ source_ml_source1_concat_value36)));
-        (let index_2 := (index + (1 : Float));
-          (source_ml_temporary_rebaseJavaScriptRecordPropertyOrder_loop35 target source order result_2 index_2))))) else result)
+inductive source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_result where
+  | source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_done : source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_result
+  deriving Repr, DecidableEq, Inhabited
+
+partial def source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39 (target : (Array (Array Float))) (source : (Array (Array Float))) (index : Float) : source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_result :=
+  (if (decide (index < (Float.ofNat source.size))) then (if (decide ((readRecordFieldPosition target (readJavaScriptRecordOrderName source index)) < (0 : Float))) then (ml_raiseJavaScriptTypeError (#[97, 110, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 112, 114, 101, 97, 100, 32, 102, 105, 101, 108, 100, 32, 105, 115, 32, 109, 105, 115, 115, 105, 110, 103, 32, 102, 114, 111, 109, 32, 105, 116, 115, 32, 116, 97, 114, 103, 101, 116] : Array Nat)) else (let index_2 := (index + (1 : Float));
+    (source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39 target source index_2))) else source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_result.source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_done)
+
+inductive source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_result where
+  | source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_done : source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_result
+  deriving Repr, DecidableEq, Inhabited
+
+partial def source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40 (target : (Array (Array Float))) (source : (Array (Array Float))) (index : Float) : source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_result :=
+  (if (decide (index < (Float.ofNat target.size))) then (if (decide ((readRecordFieldPosition source (readJavaScriptRecordOrderName target index)) < (0 : Float))) then (ml_raiseJavaScriptTypeError (#[97, 110, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 115, 116, 32, 116, 97, 114, 103, 101, 116, 32, 109, 117, 115, 116, 32, 98, 101, 32, 97, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 115, 111, 117, 114, 99, 101, 32, 115, 117, 98, 115, 101, 116] : Array Nat)) else (let index_2 := (index + (1 : Float));
+    (source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40 target source index_2))) else source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_result.source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_done)
+
+inductive source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_result where
+  | source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_done : source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_result
+  deriving Repr, DecidableEq, Inhabited
+
+partial def source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41 (target : (Array (Array Float))) (source : (Array (Array Float))) (index : Float) : source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_result :=
+  (if (decide (index < (Float.ofNat target.size))) then (if (decide ((readRecordFieldPosition source (readJavaScriptRecordOrderName target index)) < (0 : Float))) then (ml_raiseJavaScriptTypeError (#[97, 110, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 115, 116, 32, 116, 97, 114, 103, 101, 116, 32, 109, 117, 115, 116, 32, 98, 101, 32, 97, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 115, 111, 117, 114, 99, 101, 32, 115, 117, 98, 115, 101, 116] : Array Nat)) else (let index_2 := (index + (1 : Float));
+    (source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41 target source index_2))) else source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_result.source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_done)
+
+partial def source_ml_temporary_projectJavaScriptRecordPropertyOrder_loop42 (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) (result : (Array Float)) (index : Float) : (Array Float) :=
+  (if (decide (index < (Float.ofNat order.size))) then (let field := (readRecordFieldPosition target (readJavaScriptRecordOrderName source (readJavaScriptRecordOrderPosition order index)));
+    (if (decide (field ≥ (0 : Float))) then (let result_2 := (let source_ml_source1_concat_value43 := result;
+      (let source_ml_source1_concat_value44 := (#[field] : (Array Float));
+        (((#[] : (Array Float)) ++ source_ml_source1_concat_value43) ++ source_ml_source1_concat_value44)));
+      (let index_2 := (index + (1 : Float));
+        (source_ml_temporary_projectJavaScriptRecordPropertyOrder_loop42 target source order result_2 index_2))) else (let index_3 := (index + (1 : Float));
+      (source_ml_temporary_projectJavaScriptRecordPropertyOrder_loop42 target source order result index_3)))) else result)
+
+def projectJavaScriptRecordPropertyOrder (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) : (Array Float) :=
+  (let result := (#[] : (Array Float));
+    (let index := (0 : Float);
+      (let result_2 := (source_ml_temporary_projectJavaScriptRecordPropertyOrder_loop42 target source order result index);
+        result_2)))
 
 def rebaseJavaScriptRecordPropertyOrder (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) : (Array Float) :=
   (let error := (readJavaScriptRecordOrderRebaseError target source order);
-    (if (!(error).isEmpty) then (ml_raiseJavaScriptTypeError error) else (let result := (#[] : (Array Float));
-      (let index := (0 : Float);
-        (let result_2 := (source_ml_temporary_rebaseJavaScriptRecordPropertyOrder_loop35 target source order result index);
-          result_2)))))
+    (if (!(error).isEmpty) then (ml_raiseJavaScriptTypeError error) else (projectJavaScriptRecordPropertyOrder target source order)))
 
-partial def source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop37 (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) (result : (Array Float)) (index : Float) : (Array Float) :=
-  (if (decide (index < (Float.ofNat order.size))) then (let field := (readRecordFieldPosition target (readJavaScriptRecordOrderName source (readJavaScriptRecordOrderPosition order index)));
-    (if (decide (field ≥ (0 : Float))) then (let result_2 := (let source_ml_source1_concat_value37 := result;
-      (let source_ml_source1_concat_value38 := (#[field] : (Array Float));
-        (((#[] : (Array Float)) ++ source_ml_source1_concat_value37) ++ source_ml_source1_concat_value38)));
-      (let index_2 := (index + (1 : Float));
-        (source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop37 target source order result_2 index_2))) else (let index_3 := (index + (1 : Float));
-      (source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop37 target source order result index_3)))) else result)
-
-inductive source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_result where
-  | source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_done : source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_result
-  deriving Repr, DecidableEq, Inhabited
-
-partial def source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36 (target : (Array (Array Float))) (source : (Array (Array Float))) (index : Float) : source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_result :=
-  (if (decide (index < (Float.ofNat target.size))) then (if (decide ((readRecordFieldPosition source (readJavaScriptRecordOrderName target index)) < (0 : Float))) then (ml_raiseJavaScriptTypeError (#[97, 110, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 115, 116, 32, 116, 97, 114, 103, 101, 116, 32, 109, 117, 115, 116, 32, 98, 101, 32, 97, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 115, 111, 117, 114, 99, 101, 32, 115, 117, 98, 115, 101, 116] : Array Nat)) else (let index_2 := (index + (1 : Float));
-    (source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36 target source index_2))) else source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_result.source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_done)
+def rebaseJavaScriptPresentRecordPropertyOrder (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) : (Array Float) :=
+  (if ((!(acceptJavaScriptRecordOrderNames target)) || (!(acceptJavaScriptPresentRecordPropertyOrder source order))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 115, 112, 114, 101, 97, 100, 32, 115, 111, 117, 114, 99, 101] : Array Nat)) else (let index := (0 : Float);
+    (let source_ml_source1_s20 := (source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39 target source index);
+      (match source_ml_source1_s20 with
+        | source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_result.source_ml_temporary_rebaseJavaScriptPresentRecordPropertyOrder_loop39_done => (projectJavaScriptRecordPropertyOrder target source order)))))
 
 def copyJavaScriptRecordPropertyOrder (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) : (Array Float) :=
   (if ((!(acceptJavaScriptRecordOrderNames target)) || (!(acceptJavaScriptRecordPropertyOrder source order))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 115, 116, 32, 115, 111, 117, 114, 99, 101, 32, 102, 105, 101, 108, 100, 32, 111, 114, 100, 101, 114] : Array Nat)) else (let index := (0 : Float);
-    (let source_ml_source1_s18 := (source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36 target source index);
-      (match source_ml_source1_s18 with
-        | source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_result.source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_done => (let result := (#[] : (Array Float));
-            (let index_2 := (0 : Float);
-              (let result_2 := (source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop37 target source order result index_2);
-                result_2)))))))
+    (let source_ml_source1_s21 := (source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40 target source index);
+      (match source_ml_source1_s21 with
+        | source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_result.source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop40_done => (projectJavaScriptRecordPropertyOrder target source order)))))
 
-partial def source_ml_temporary_readJavaScriptRecordPropertyKeys_loop38 (names : (Array (Array Float))) (order : (Array Float)) (result : (Array (Array Float))) (index : Float) : (Array (Array Float)) :=
-  (if (decide (index < (Float.ofNat order.size))) then (let result_2 := (let source_ml_source1_concat_value39 := result;
-    (let source_ml_source1_concat_value40 := (#[(readJavaScriptRecordOrderName names (readJavaScriptRecordOrderPosition order index))] : (Array (Array Float)));
-      (((#[] : (Array (Array Float))) ++ source_ml_source1_concat_value39) ++ source_ml_source1_concat_value40)));
+def copyJavaScriptPresentRecordPropertyOrder (target : (Array (Array Float))) (source : (Array (Array Float))) (order : (Array Float)) : (Array Float) :=
+  (if ((!(acceptJavaScriptRecordOrderNames target)) || (!(acceptJavaScriptPresentRecordPropertyOrder source order))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 115, 116, 32, 115, 111, 117, 114, 99, 101, 32, 102, 105, 101, 108, 100, 32, 111, 114, 100, 101, 114] : Array Nat)) else (let index := (0 : Float);
+    (let source_ml_source1_s22 := (source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41 target source index);
+      (match source_ml_source1_s22 with
+        | source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_result.source_ml_temporary_copyJavaScriptPresentRecordPropertyOrder_loop41_done => (projectJavaScriptRecordPropertyOrder target source order)))))
+
+partial def source_ml_temporary_readJavaScriptRecordPropertyKeys_loop43 (names : (Array (Array Float))) (order : (Array Float)) (result : (Array (Array Float))) (index : Float) : (Array (Array Float)) :=
+  (if (decide (index < (Float.ofNat order.size))) then (let result_2 := (let source_ml_source1_concat_value45 := result;
+    (let source_ml_source1_concat_value46 := (#[(readJavaScriptRecordOrderName names (readJavaScriptRecordOrderPosition order index))] : (Array (Array Float)));
+      (((#[] : (Array (Array Float))) ++ source_ml_source1_concat_value45) ++ source_ml_source1_concat_value46)));
     (let index_2 := (index + (1 : Float));
-      (source_ml_temporary_readJavaScriptRecordPropertyKeys_loop38 names order result_2 index_2))) else result)
+      (source_ml_temporary_readJavaScriptRecordPropertyKeys_loop43 names order result_2 index_2))) else result)
 
 def readJavaScriptRecordPropertyKeys (names : (Array (Array Float))) (order : (Array Float)) : (Array (Array Float)) :=
   (let error := (readJavaScriptRecordOrderKeyError names order);
     (if (!(error).isEmpty) then (ml_raiseJavaScriptTypeError error) else (let result := (#[] : (Array (Array Float)));
       (let index := (0 : Float);
-        (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeys_loop38 names order result index);
+        (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeys_loop43 names order result index);
           result_2)))))
 
-partial def source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop40 (units : (Array Float)) (key : (Array Nat)) («at» : Float) : (Array Nat) :=
-  (if (decide («at» < (Float.ofNat units.size))) then (let key_2 := (key ++ (let source_ml_source1_character_argument41 := (readJavaScriptRecordOrderPosition units «at»);
-    (((MLUtf16Text.characterUnits (#[source_ml_source1_character_argument41] : (Array Float)))).map (fun ml_unit => ml_unit.toUInt64.toNat))));
-    (let at_2 := («at» + (1 : Float));
-      (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop40 units key_2 at_2))) else key)
+partial def source_ml_temporary_readJavaScriptPresentRecordPropertyKeyTexts_loop44 (names : (Array (Array Float))) (order : (Array Float)) (rows : (Array (Array Float))) (index : Float) : (Array (Array Float)) :=
+  (if (decide (index < (Float.ofNat order.size))) then (let rows_2 := (let source_ml_source1_concat_value47 := rows;
+    (let source_ml_source1_concat_value48 := (#[(readJavaScriptRecordOrderName names (readJavaScriptRecordOrderPosition order index))] : (Array (Array Float)));
+      (((#[] : (Array (Array Float))) ++ source_ml_source1_concat_value47) ++ source_ml_source1_concat_value48)));
+    (let index_2 := (index + (1 : Float));
+      (source_ml_temporary_readJavaScriptPresentRecordPropertyKeyTexts_loop44 names order rows_2 index_2))) else rows)
 
-partial def source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop39 (rows : (Array (Array Float))) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+partial def source_ml_temporary_readJavaScriptRecordPropertyNameTexts_loop46 (units : (Array Float)) (key : (Array Nat)) («at» : Float) : (Array Nat) :=
+  (if (decide («at» < (Float.ofNat units.size))) then (let key_2 := (key ++ (let source_ml_source1_character_argument49 := (readJavaScriptRecordOrderPosition units «at»);
+    (((MLUtf16Text.characterUnits (#[source_ml_source1_character_argument49] : (Array Float)))).map (fun ml_unit => ml_unit.toUInt64.toNat))));
+    (let at_2 := («at» + (1 : Float));
+      (source_ml_temporary_readJavaScriptRecordPropertyNameTexts_loop46 units key_2 at_2))) else key)
+
+partial def source_ml_temporary_readJavaScriptRecordPropertyNameTexts_loop45 (rows : (Array (Array Float))) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
   (if (decide (index < (Float.ofNat rows.size))) then (let units := (readJavaScriptRecordOrderName rows index);
     (let key := (#[] : Array Nat);
       (let «at» := (0 : Float);
-        (let key_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop40 units key «at»);
-          (let result_2 := (let source_ml_source1_concat_value42 := result;
-            (let source_ml_source1_concat_value43 := (#[key_2] : (Array (Array Nat)));
-              (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value42) ++ source_ml_source1_concat_value43)));
+        (let key_2 := (source_ml_temporary_readJavaScriptRecordPropertyNameTexts_loop46 units key «at»);
+          (let result_2 := (let source_ml_source1_concat_value50 := result;
+            (let source_ml_source1_concat_value51 := (#[key_2] : (Array (Array Nat)));
+              (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value50) ++ source_ml_source1_concat_value51)));
             (let index_2 := (index + (1 : Float));
-              (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop39 rows result_2 index_2))))))) else result)
+              (source_ml_temporary_readJavaScriptRecordPropertyNameTexts_loop45 rows result_2 index_2))))))) else result)
+
+def readJavaScriptRecordPropertyNameTexts (rows : (Array (Array Float))) : (Array (Array Nat)) :=
+  (let result := (#[] : (Array (Array Nat)));
+    (let index := (0 : Float);
+      (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyNameTexts_loop45 rows result index);
+        result_2)))
 
 def readJavaScriptRecordPropertyKeyTexts (names : (Array (Array Float))) (order : (Array Float)) : (Array (Array Nat)) :=
   (let rows := (readJavaScriptRecordPropertyKeys names order);
-    (let result := (#[] : (Array (Array Nat)));
-      (let index := (0 : Float);
-        (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop39 rows result index);
-          result_2))))
+    (readJavaScriptRecordPropertyNameTexts rows))
 
-partial def source_ml_temporary_readJavaScriptRecordPropertyIndex_loop41 (key : (Array Nat)) (units : (Array Float)) (index : Float) : (Array Float) :=
-  (if (decide (index < (Float.ofNat (key).size))) then (let units_2 := (let source_ml_source1_concat_value53 := units;
-    (let source_ml_source1_concat_value54 := (#[(let source_ml_source1_string_unit_operand44 := key;
-      (let source_ml_source1_string_unit_operand45 := index;
+def readJavaScriptPresentRecordPropertyKeyTexts (names : (Array (Array Float))) (order : (Array Float)) : (Array (Array Nat)) :=
+  (if (!(acceptJavaScriptPresentRecordPropertyOrder names order)) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101, 99, 111, 114, 100, 32, 112, 114, 111, 112, 101, 114, 116, 121, 32, 111, 114, 100, 101, 114] : Array Nat)) else (let rows := (#[] : (Array (Array Float)));
+    (let index := (0 : Float);
+      (let rows_2 := (source_ml_temporary_readJavaScriptPresentRecordPropertyKeyTexts_loop44 names order rows index);
+        (readJavaScriptRecordPropertyNameTexts rows_2)))))
+
+partial def source_ml_temporary_readJavaScriptRecordPropertyIndex_loop47 (key : (Array Nat)) (units : (Array Float)) (index : Float) : (Array Float) :=
+  (if (decide (index < (Float.ofNat (key).size))) then (let units_2 := (let source_ml_source1_concat_value61 := units;
+    (let source_ml_source1_concat_value62 := (#[(let source_ml_source1_string_unit_operand52 := key;
+      (let source_ml_source1_string_unit_operand53 := index;
         ((fun (text : (Array Nat)) (position : Float) => (let index_2 := (if (Float.isNaN position) then (0 : Float) else (ml_trunc position));
-          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text).size)))) then (0.0 / 0.0 : Float) else (match (let source_ml_source1_string_unit_operand51 := (let source_ml_source1_string_range_operand46 := text;
-            (let source_ml_source1_string_range_operand47 := index_2;
-              (let source_ml_source1_string_range_operand48 := (index_2 + (1 : Float));
-                (let source_ml_source1_string_range_position49 := source_ml_source1_string_range_operand47;
-                  (let source_ml_source1_string_range_position50 := source_ml_source1_string_range_operand48;
-                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand46).map Float.ofNat) source_ml_source1_string_range_position49 source_ml_source1_string_range_position50)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))));
-            (let source_ml_source1_string_unit_operand52 := (0 : Float);
-              ((MLUtf16Text.codePoint ((source_ml_source1_string_unit_operand51).map Float.ofNat) source_ml_source1_string_unit_operand52))[0]?)) with | some ml_value => ml_value | _ => (0.0 / 0.0 : Float))))) source_ml_source1_string_unit_operand44 source_ml_source1_string_unit_operand45)))] : (Array Float));
-      (((#[] : (Array Float)) ++ source_ml_source1_concat_value53) ++ source_ml_source1_concat_value54)));
+          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text).size)))) then (0.0 / 0.0 : Float) else (match (let source_ml_source1_string_unit_operand59 := (let source_ml_source1_string_range_operand54 := text;
+            (let source_ml_source1_string_range_operand55 := index_2;
+              (let source_ml_source1_string_range_operand56 := (index_2 + (1 : Float));
+                (let source_ml_source1_string_range_position57 := source_ml_source1_string_range_operand55;
+                  (let source_ml_source1_string_range_position58 := source_ml_source1_string_range_operand56;
+                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand54).map Float.ofNat) source_ml_source1_string_range_position57 source_ml_source1_string_range_position58)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))));
+            (let source_ml_source1_string_unit_operand60 := (0 : Float);
+              ((MLUtf16Text.codePoint ((source_ml_source1_string_unit_operand59).map Float.ofNat) source_ml_source1_string_unit_operand60))[0]?)) with | some ml_value => ml_value | _ => (0.0 / 0.0 : Float))))) source_ml_source1_string_unit_operand52 source_ml_source1_string_unit_operand53)))] : (Array Float));
+      (((#[] : (Array Float)) ++ source_ml_source1_concat_value61) ++ source_ml_source1_concat_value62)));
     (let index_2 := (index + (1 : Float));
-      (source_ml_temporary_readJavaScriptRecordPropertyIndex_loop41 key units_2 index_2))) else units)
+      (source_ml_temporary_readJavaScriptRecordPropertyIndex_loop47 key units_2 index_2))) else units)
 
 def readJavaScriptRecordPropertyIndex (names : (Array (Array Float))) (key : (Array Nat)) : Float :=
   (let units := (#[] : (Array Float));
     (let index := (0 : Float);
-      (let units_2 := (source_ml_temporary_readJavaScriptRecordPropertyIndex_loop41 key units index);
+      (let units_2 := (source_ml_temporary_readJavaScriptRecordPropertyIndex_loop47 key units index);
         (readRecordFieldPosition names units_2))))
 
-partial def source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop42 (length : Float) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
-  (if (decide (index < length)) then (let result_2 := (let source_ml_source1_concat_value56 := result;
-    (let source_ml_source1_concat_value57 := (#[(let source_ml_source1_string_argument55 := index;
-      (String.foldl (fun (ml_units : Array Nat) ml_character => if ml_character.toNat < 65536 then ml_units.push ml_character.toNat else (ml_units.push (55296 + (ml_character.toNat - 65536) / 1024)).push (56320 + (ml_character.toNat - 65536) % 1024)) #[] (ml_js_number source_ml_source1_string_argument55)))] : (Array (Array Nat)));
-      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value56) ++ source_ml_source1_concat_value57)));
+partial def source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop48 (length : Float) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+  (if (decide (index < length)) then (let result_2 := (let source_ml_source1_concat_value64 := result;
+    (let source_ml_source1_concat_value65 := (#[(let source_ml_source1_string_argument63 := index;
+      (String.foldl (fun (ml_units : Array Nat) ml_character => if ml_character.toNat < 65536 then ml_units.push ml_character.toNat else (ml_units.push (55296 + (ml_character.toNat - 65536) / 1024)).push (56320 + (ml_character.toNat - 65536) % 1024)) #[] (ml_js_number source_ml_source1_string_argument63)))] : (Array (Array Nat)));
+      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value64) ++ source_ml_source1_concat_value65)));
     (let index_2 := (index + (1 : Float));
-      (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop42 length result_2 index_2))) else result)
+      (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop48 length result_2 index_2))) else result)
 
 def createJavaScriptDensePropertyKeyTexts (length : Float) : (Array (Array Nat)) :=
   (if (((!(ml_is_safe_integer length)) || (decide (length < (0 : Float)))) || ((length == (0 : Float)) && (decide (((1 : Float) / length) < (0 : Float))))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 100, 101, 110, 115, 101, 32, 111, 119, 110, 45, 102, 105, 101, 108, 100, 32, 108, 101, 110, 103, 116, 104] : Array Nat)) else (let result := (#[] : (Array (Array Nat)));
     (let index := (0 : Float);
-      (let result_2 := (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop42 length result index);
+      (let result_2 := (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop48 length result index);
         result_2))))
 
-partial def source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop43 (text : (Array Nat)) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
-  (if (decide (index < (Float.ofNat (text).size))) then (let result_2 := (let source_ml_source1_concat_value65 := result;
-    (let source_ml_source1_concat_value66 := (#[(let source_ml_source1_string_unit_operand58 := text;
-      (let source_ml_source1_string_unit_operand59 := index;
+partial def source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop49 (text : (Array Nat)) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+  (if (decide (index < (Float.ofNat (text).size))) then (let result_2 := (let source_ml_source1_concat_value73 := result;
+    (let source_ml_source1_concat_value74 := (#[(let source_ml_source1_string_unit_operand66 := text;
+      (let source_ml_source1_string_unit_operand67 := index;
         ((fun (text_2 : (Array Nat)) (position : Float) => (let index_2 := (if (Float.isNaN position) then (0 : Float) else (ml_trunc position));
-          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text_2).size)))) then (#[] : Array Nat) else (let source_ml_source1_string_range_operand60 := text_2;
-            (let source_ml_source1_string_range_operand61 := index_2;
-              (let source_ml_source1_string_range_operand62 := (index_2 + (1 : Float));
-                (let source_ml_source1_string_range_position63 := source_ml_source1_string_range_operand61;
-                  (let source_ml_source1_string_range_position64 := source_ml_source1_string_range_operand62;
-                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand60).map Float.ofNat) source_ml_source1_string_range_position63 source_ml_source1_string_range_position64)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))))))) source_ml_source1_string_unit_operand58 source_ml_source1_string_unit_operand59)))] : (Array (Array Nat)));
-      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value65) ++ source_ml_source1_concat_value66)));
+          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text_2).size)))) then (#[] : Array Nat) else (let source_ml_source1_string_range_operand68 := text_2;
+            (let source_ml_source1_string_range_operand69 := index_2;
+              (let source_ml_source1_string_range_operand70 := (index_2 + (1 : Float));
+                (let source_ml_source1_string_range_position71 := source_ml_source1_string_range_operand69;
+                  (let source_ml_source1_string_range_position72 := source_ml_source1_string_range_operand70;
+                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand68).map Float.ofNat) source_ml_source1_string_range_position71 source_ml_source1_string_range_position72)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))))))) source_ml_source1_string_unit_operand66 source_ml_source1_string_unit_operand67)))] : (Array (Array Nat)));
+      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value73) ++ source_ml_source1_concat_value74)));
     (let index_2 := (index + (1 : Float));
-      (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop43 text result_2 index_2))) else result)
+      (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop49 text result_2 index_2))) else result)
 
 def createJavaScriptStringOwnPropertyValues (text : (Array Nat)) : (Array (Array Nat)) :=
   (let result := (#[] : (Array (Array Nat)));
     (let index := (0 : Float);
-      (let result_2 := (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop43 text result index);
+      (let result_2 := (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop49 text result index);
         result_2)))
 
 def main : IO Unit := do

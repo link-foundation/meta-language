@@ -18,9 +18,12 @@ use serde_json::{Map, Value, json};
 mod number_projection;
 
 fn expression(value: &Value, program: &Program) -> Result<Value> {
-    let mut projected=expression_value(value,program)?;
-    if let Some(position)=value.get("sourcePosition"){
-        projected.as_object_mut().ok_or_else(||error("a source position needs its actual projected expression"))?.insert("sourcePosition".to_owned(),position.clone());
+    let mut projected = expression_value(value, program)?;
+    if let Some(position) = value.get("sourcePosition") {
+        projected
+            .as_object_mut()
+            .ok_or_else(|| error("a source position needs its actual projected expression"))?
+            .insert("sourcePosition".to_owned(), position.clone());
     }
     Ok(projected)
 }
@@ -108,6 +111,18 @@ fn expression_value(value: &Value, program: &Program) -> Result<Value> {
             value["k"].as_str().unwrap_or_default()
         )));
     }
+    if value["k"] == "strictEqual" {
+        let mut result = json!({
+            "k": "math", "op": key, "name": "", "args": [
+                { "value": expression(&value["left"], program)?, "spread": false },
+                { "value": expression(&value["right"], program)?, "spread": false },
+            ]
+        });
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
     let plan = &plans[&key];
     let reference_form = read_surface_reference_projection_form(
         value["k"].as_str().unwrap_or_default(),
@@ -153,7 +168,13 @@ fn expression_value(value: &Value, program: &Program) -> Result<Value> {
         let source = rule[2].as_str();
         let child = source.map_or(&Value::Null, |source| &value[source]);
         let projected = match mode {
-            "proposition-comparison"=>{let mut prop=json!({"p":value["op"],"left":expression(&value["left"],program)?,"right":expression(&value["right"],program)?});if value["sameValue"]==true{prop["sameValue"]=json!(true);}prop},
+            "proposition-comparison" => {
+                let mut prop = json!({"p":value["op"],"left":expression(&value["left"],program)?,"right":expression(&value["right"],program)?});
+                if value["sameValue"] == true {
+                    prop["sameValue"] = json!(true);
+                }
+                prop
+            }
             "copy" => {
                 if source.and_then(|source| value.get(source)).is_none() {
                     continue;

@@ -953,9 +953,13 @@ class Checker {
           throw typeError(`array index of type ${typeKey(index.type)}; an index is a Number or a BigInt`, node.index.span ?? node.span);
         }
         const captured = captureArraySourceOperands(this, object, index, env);
-        const result = selectOptionalArrayRead(this.language, node.optional === true, node.provenInBounds === true, expected?.kind === 'option' && sameType(expected.element, object.type.element))
-          ? flattenOption({ k: 'optionalIndex', array: captured.array, index: captured.index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } })
+        const optional = this.checkedProjection ? node.optional === true : selectOptionalArrayRead(
+          this.language, node.optional === true, node.provenInBounds === true,
+          expected?.kind === 'option' && sameType(expected.element, object.type.element));
+        const access = optional
+          ? { k: 'optionalIndex', array: captured.array, index: captured.index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } }
           : { k: 'index', array: captured.array, index: captured.index, type: object.type.element, ...(node.provenInBounds && { provenInBounds: true }) };
+        const result = optional && !this.checkedProjection ? flattenOption(access) : access;
         return wrapArraySourceOperands(result, captured.bindings);
       }
       case 'typeOf': {
@@ -1231,7 +1235,7 @@ class Checker {
     }
     const ordered=node.propertyOrder!==undefined||expected?.ordered===true||this.orderedRecordSource===true;
     let order;
-    if (ordered && selected.some(entry => entry.optional)) throw unsupported('ordered optional record fields','the actual dynamic own-field permutation must be represented',node.span);
+    const optionalOrder = selected.some(entry => entry.optional);
     if(node.propertyOrder!==undefined)order=coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span);
     else if(ordered){
       if(node.entries.some(entry=>entry.spread)){
@@ -1241,13 +1245,16 @@ class Checker {
             if(chunk.object.type.open||chunk.object.type.ordered!==true)throw unsupported('ordered record spread','the actual source own-field order must be retained and rebased',node.span);
             const source=constructRecordPropertyNameRows(chunk.object.type.fields);
             const actual={k:'method',op:'readJavaScriptRecordPropertyOrder',object:chunk.object,args:[],type:array(FLOAT)};
-            return {k:'math',op:'rebaseJavaScriptRecordPropertyOrder',args:[target,source,actual],type:array(FLOAT)};
+            const operation=chunk.object.type.fields.some(field=>field.optional)
+              ? 'rebaseJavaScriptPresentRecordPropertyOrder' : 'rebaseJavaScriptRecordPropertyOrder';
+            return {k:'math',op:operation,args:[target,source,actual],type:array(FLOAT)};
           }
           const index=selected.findIndex(field=>field.name===chunk.name);
           if(index<0)throw typeError('an ordered record needs every actual own field',node.span);
           return {k:'array',items:[{k:'lit',value:String(index),type:FLOAT}],type:array(FLOAT)};
         });
-        order={k:'math',op:'mergeJavaScriptRecordPropertyOrder',args:[target,{k:'array',items:chunks,type:array(array(FLOAT))}],type:array(FLOAT)};
+        const operation=optionalOrder?'mergeJavaScriptPresentRecordPropertyOrder':'mergeJavaScriptRecordPropertyOrder';
+        order={k:'math',op:operation,args:[target,{k:'array',items:chunks,type:array(array(FLOAT))}],type:array(FLOAT)};
       }else{
         const insertion=readRecordFieldInsertionOrder(entries.map(entry=>units(entry.name)));
         const positions=insertion.map(index=>selected.findIndex(field=>field.name===entries[index].name));
@@ -1478,6 +1485,17 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if (this.checkedProjection && ['strictEqual:false', 'strictEqual:true'].includes(node.op)) {
+      if (node.args.length !== 2 || node.args.some(argument => argument.spread)) throw typeError('checked strict equality requires two actual operands', node.span);
+      const [left, right] = node.args.map(argument => this.expr(argument.value, env, path, undefined));
+      const a = left.type.kind === 'option' ? left.type.element : left.type;
+      const b = right.type.kind === 'option' ? right.type.element : right.type;
+      const mode = readOptionalComparisonOperation(this.language, left.type.kind, right.type.kind, 'eq', sameType(a, b), primitiveKey(a));
+      if (!(primitiveKey(a) && primitiveKey(b)) && mode !== 'strict' && left.k !== 'none' && right.k !== 'none') {
+        throw typeError('checked strict equality requires portable primitive operands or an actual absence', node.span);
+      }
+      return { k: 'strictEqual', left, right, negate: node.op === 'strictEqual:true', type: BOOL };
+    }
     const sourceVectorSort=checkRustSourceVectorSort(this,node,env,path,expected);if(sourceVectorSort)return sourceVectorSort;
     const sourceVectorPrimitiveSort=checkRustSourceVectorPrimitiveSort(this,node,env,path,expected);if(sourceVectorPrimitiveSort)return sourceVectorPrimitiveSort;
     if(node.op===readDisjointCollectionIterationSourceOperation()||node.op===readDisjointCollectionSpreadSourceOperation())return checkClosedCollectionIteration(this,node,env,path,expected);
@@ -2438,7 +2456,7 @@ export function coerce(value, type, language, span, flavor = undefined) {
 
 function widenJavaScriptRecordPresence(value, type, span) {
   const source = value.type;
-  if (source.reference || type.reference || source.open || type.open || source.ordered || type.ordered
+  if (source.reference || type.reference || source.open || type.open || Boolean(source.ordered) !== Boolean(type.ordered)
     || source.sourceClassOwner !== undefined || type.sourceClassOwner !== undefined
     || !type.fields.some(field => field.optional)) return null;
   const from = new Map(source.fields.map(field => [field.name, field]));
@@ -2462,7 +2480,15 @@ function widenJavaScriptRecordPresence(value, type, span) {
       entries.push({ name: field.name, value: constructJavaScriptOwnedConstructorField(payload, field.type) });
     } else return null;
   }
-  return { k: 'let', name, value, body: { k: 'record', entries, type }, type };
+  const body = { k: 'record', entries, type };
+  if (type.ordered) {
+    const positions = array(FLOAT);
+    const op = source.fields.some(field => field.optional)
+      ? 'rebaseJavaScriptPresentRecordPropertyOrder' : 'rebaseJavaScriptRecordPropertyOrder';
+    const actual = { k:'method', op:'readJavaScriptRecordPropertyOrder', object:owner, args:[], type:positions };
+    body.order = { k:'math', op, args:[constructRecordPropertyNameRows(type.fields),constructRecordPropertyNameRows(source.fields),actual], type:positions };
+  }
+  return { k: 'let', name, value, body, type };
 }
 
 function castTo(arg, to, flavor, span, language = '') {

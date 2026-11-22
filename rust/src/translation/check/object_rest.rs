@@ -84,7 +84,12 @@ impl Checker {
         );
         let order = Expr::new(
             Node::Math {
-                op: "copyJavaScriptRecordPropertyOrder".to_owned(),
+                op: if fields.iter().any(|field| field.optional) {
+                    "copyJavaScriptPresentRecordPropertyOrder"
+                } else {
+                    "copyJavaScriptRecordPropertyOrder"
+                }
+                .to_owned(),
                 args: vec![
                     target_names,
                     source_names,

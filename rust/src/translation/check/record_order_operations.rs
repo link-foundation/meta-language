@@ -7,6 +7,7 @@ pub(in super::super) fn role_type(role: &str) -> Result<Type> {
         "number" => Ok(Type::Float),
         "text" => Ok(Type::String),
         "boolean" => Ok(Type::Bool),
+        "presence" => Ok(array(Type::Bool)),
         "positions" => Ok(array(Type::Float)),
         "name rows" => Ok(array(array(Type::Float))),
         "key texts" => Ok(array(Type::String)),
@@ -19,6 +20,7 @@ pub(in super::super) fn role_type(role: &str) -> Result<Type> {
 impl Checker {
     pub(super) fn record_value_order_operation(
         &mut self,
+        operation: &str,
         args: &[SArrayItem],
         env: &Env,
         path: &[String],
@@ -55,7 +57,7 @@ impl Checker {
         let ty = values.ty.clone();
         Ok(Expr::new(
             Node::Math {
-                op: "reorderJavaScriptRecordPropertyValues".to_owned(),
+                op: operation.to_owned(),
                 args: vec![values, order],
             },
             ty,

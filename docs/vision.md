@@ -10986,6 +10986,13 @@ order. Field projections, optional projections and existing-field writes use
 the payload while retaining the order. Existing structural products keep their
 previous representation.
 
+For a closed record with optional fields, the order vector is a permutation
+of the present field positions in the canonical layout. Constructor admission
+checks the vector against the presence of each captured field carrier before
+sorting numeric keys. Spread and rest rebase the source's actual positions.
+Key and value enumeration use those positions, so an absent field contributes
+no entry and an own field containing undefined contributes one.
+
 Before target effect analysis, ordered constructors capture every actual field
 value once and call the complete source-defined order constructor through
 ordinary checked declarations. The source closure and its actual parsed syntax

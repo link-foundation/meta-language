@@ -32,6 +32,11 @@ export function renderOrderedRecordValue(target,labels,values,order){
  if(target!=='JavaScript')return '';
  return '((ml_fields, ml_order) => { const ml_object = {}; const ml_names = ['+labels.join(', ')+']; for (const ml_field of ml_order) { Object.defineProperty(ml_object, ml_names[ml_field], { value: ml_fields[ml_field], writable: true, enumerable: true, configurable: true }); } return ml_object; })(['+values.join(', ')+'], '+order+')';
 }
+/** @param {string[]} labels @param {string[]} values @param {string} order
+ * @param {string} optional @returns {string} */
+export function renderJavaScriptOrderedOptionalRecord(labels,values,order,optional){
+ return '((ml_fields, ml_order) => { const ml_object = {}; const ml_names = ['+labels.join(', ')+']; const ml_optional = '+optional+'; for (const ml_field of ml_order) { const ml_value = ml_fields[ml_field]; Object.defineProperty(ml_object, ml_names[ml_field], { value: ml_optional[ml_field] ? ml_value[0] : ml_value, writable: true, enumerable: true, configurable: true }); } return ml_object; })(['+values.join(', ')+'], '+order+')';
+}
 /** @param {string} target @param {string} object @param {string[]} labels @returns {string} */
 export function renderOrderedRecordObservedOrder(target,object,labels){
  if(target==='JavaScript')return '((ml_object) => { const ml_names = ['+labels.join(', ')+']; return Object.keys(ml_object).map(ml_name => ml_names.indexOf(ml_name)); })('+object+')';

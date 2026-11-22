@@ -85,6 +85,10 @@ function projectLinkedProgramExpressionValue(value, declarations, {rootedNamespa
   }
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
+  if (sourceLanguage && value.k === 'strictEqual') {
+    return { k: 'math', op: key, name: '', args: [value.left, value.right].map(value => ({ value: project(value), spread: false })),
+      ...(value.span !== undefined ? { span: value.span } : {}) };
+  }
   // This domain already states identity semantics in checked IR. Reconstruct
   // its explicit operation, never ordinary Rust value-equality syntax.
   const identity = value.k === 'binary' ? readRustSharedArrayHandleComparisonProjection(sourceLanguage,

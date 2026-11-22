@@ -12,6 +12,7 @@ const owner=surface.items.find(item=>item.k==='data'&&item.name==='OpaqueValue')
 if(!owner||owner.ctors.length!==1||owner.ctors[0].fields.length!==1||owner.ctors[0].fields[0].name!=='value')throw new TypeError('source specialization needs its one actual opaque payload owner');
 const value={version:1,model:'ordinary record value ordering with one opaque payload type parameter 1',sourceClosure,sourceSyntax,surface,
  parameter:{data:owner.name,constructor:owner.ctors[0].name,field:owner.ctors[0].fields[0].name},entry:'reorderWrappedRecordPropertyValues',
+ presentEntry:'reorderPresentWrappedRecordPropertyValues',
  pair:{data:'WrappedEntry',constructor:'wrappedEntry',entry:'pairWrappedOwnPropertyValues'},
  scope:'Only the actual opaque payload field type is specialized. Its wrapper remains present, so null/undefined payloads remain distinct from absent array entries. Every source declaration and body remains intact.',
 };

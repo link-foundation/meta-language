@@ -157,3 +157,15 @@ fn own_property_membership_keeps_coercion_order_closed_fields_and_live_indices()
         meta_language::create_java_script_own_property_program_links,
     );
 }
+
+#[test]
+fn ordered_optional_fields_keep_their_actual_own_membership() {
+    let source = concat!(
+        include_str!("../../../experiments/record-property-order/optional-fields.js"),
+        "\nconsole.log(compute(false));\nconsole.log(compute(true));\n",
+    );
+    super::translation_javascript_frontend::preserves_javascript_translation_behavior(
+        source,
+        "true\ntrue\n",
+    );
+}

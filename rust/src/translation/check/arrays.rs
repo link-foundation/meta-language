@@ -525,13 +525,18 @@ impl Checker {
     ) -> Expr {
         let (optional, proven_in_bounds) = flags;
         let expected_optional = matches!(expected, Some(Type::Option { element: expected, .. }) if expected.as_ref() == &element);
-        if select_optional_array_read(
-            self.language.as_str(),
-            optional,
-            proven_in_bounds,
-            expected_optional,
-        ) {
-            return super::optional_values::flatten_option(Expr::new(
+        let optional = if self.checked_projection {
+            optional
+        } else {
+            select_optional_array_read(
+                self.language.as_str(),
+                optional,
+                proven_in_bounds,
+                expected_optional,
+            )
+        };
+        if optional {
+            let access = Expr::new(
                 Node::OptionalIndex {
                     array: Box::new(array),
                     index: Box::new(index),
@@ -540,7 +545,12 @@ impl Checker {
                     element: Box::new(element),
                     absence: "undefined".to_owned(),
                 },
-            ));
+            );
+            return if self.checked_projection {
+                access
+            } else {
+                super::optional_values::flatten_option(access)
+            };
         }
         Expr::new(
             Node::Index {

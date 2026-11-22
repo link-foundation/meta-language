@@ -311,6 +311,36 @@ pub fn render_record_field(target: &str, object: &str, field: &str, index: &str)
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn render_java_script_optional_record_value(
+    labels: &[String],
+    items: &[String],
+    optional: &[bool],
+) -> String {
+    {
+        let entries = Vec::<String>::new();
+        {
+            let index = 0f64;
+            {
+                let entries_2 = self::source_ml_source1_temporary_render_java_script_optional_record_value_loop3(labels, items, optional, entries, index);
+                format!("({{{}}})", self::join_record_items(&(entries_2), ", "))
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_optional_record_field(object: &str, field: &str) -> String {
+    format!(
+        "((object) => Object.hasOwn(object, {}) ? [object[{}]] : undefined)({})",
+        field.to_owned(),
+        field.to_owned(),
+        object.to_owned()
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn render_record_product_field(target: &str, object: &str, index: f64, count: f64) -> String {
     if target == "Lean" {
         if count == 1f64 {
@@ -322,7 +352,7 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
                     let position = 0f64;
                     {
                         let suffix_2 =
-                            self::source_ml_source1_temporary_render_record_product_field_loop3(
+                            self::source_ml_source1_temporary_render_record_product_field_loop4(
                                 index, suffix, position,
                             );
                         format!(
@@ -345,7 +375,7 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
                 let position_2 = count - 1f64;
                 {
                     let value_2 =
-                        self::source_ml_source1_temporary_render_record_product_field_loop4(
+                        self::source_ml_source1_temporary_render_record_product_field_loop5(
                             index, value, position_2,
                         );
                     if index == 0f64 {
@@ -454,6 +484,23 @@ pub fn render_ordered_record_value(
             String::new()
         }
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_ordered_optional_record(
+    labels: &[String],
+    values: &[String],
+    order: &str,
+    optional: &str,
+) -> String {
+    format!(
+        "((ml_fields, ml_order) => {{ const ml_object = {{}}; const ml_names = [{}]; const ml_optional = {}; for (const ml_field of ml_order) {{ const ml_value = ml_fields[ml_field]; Object.defineProperty(ml_object, ml_names[ml_field], {{ value: ml_optional[ml_field] ? ml_value[0] : ml_value, writable: true, enumerable: true, configurable: true }}); }} return ml_object; }})([{}], {})",
+        labels.join((String::from(", ")).as_str()),
+        optional.to_owned(),
+        values.join((String::from(", ")).as_str()),
+        order.to_owned()
+    )
 }
 
 /// Execute the checked shared source algorithm.
@@ -633,7 +680,59 @@ pub fn source_ml_source1_temporary_render_record_value_loop2(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_source1_temporary_render_record_product_field_loop3(
+pub fn source_ml_source1_temporary_render_java_script_optional_record_value_loop3(
+    labels: &[String],
+    items: &[String],
+    optional: &[bool],
+    mut entries: Vec<String>,
+    mut index: f64,
+) -> Vec<String> {
+    loop {
+        if index < (items.len() as f64) {
+            {
+                let label = self::read_required_text_fact(labels, index);
+                {
+                    let item = self::read_required_text_fact(items, index);
+                    {
+                        let entries_4 = if self::read_required_boolean_fact(optional, index) {
+                            {
+                                {
+                                    let (ml_append_right, ml_append_left) = (
+                                        vec![format!(
+                                            "...((field) => field === undefined ? {{}} : {{[{label}]: field[0]}})({item})"
+                                        )],
+                                        entries,
+                                    );
+                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                }
+                            }
+                        } else {
+                            {
+                                {
+                                    let (ml_append_right, ml_append_left) =
+                                        (vec![format!("[{label}]: {item}")], entries);
+                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                }
+                            }
+                        };
+                        {
+                            let index_2 = index + 1f64;
+                            {
+                                (entries, index) = (entries_4, index_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return { entries };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_render_record_product_field_loop4(
     mut index: f64,
     mut suffix: String,
     mut position: f64,
@@ -657,7 +756,7 @@ pub fn source_ml_source1_temporary_render_record_product_field_loop3(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_source1_temporary_render_record_product_field_loop4(
+pub fn source_ml_source1_temporary_render_record_product_field_loop5(
     mut index: f64,
     mut value: String,
     mut position: f64,

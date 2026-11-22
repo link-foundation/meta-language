@@ -545,6 +545,8 @@ pub fn read_java_script_own_property_receiver_form(kind: &str, element: &str) ->
         String::from("guarded")
     } else if kind == "record" {
         String::from("record")
+    } else if kind == "data" {
+        String::from("nominal")
     } else if ((kind == "array") || (kind == "tuple")) || (kind == "string") {
         String::from("indexed")
     } else if (((((kind == "bool") || (kind == "float")) || (kind == "int")) || (kind == "nat"))
@@ -765,19 +767,31 @@ pub fn read_java_script_object_entry_pairing_operation() -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_java_script_record_value_reordering(operation: &str) -> bool {
+    (operation == "reorderJavaScriptRecordPropertyValues")
+        || (operation == "reorderJavaScriptPresentRecordPropertyValues")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_record_order_kernel_arity(operation: &str) -> f64 {
-    if (((operation == "readJavaScriptRecordPropertyIndex")
+    if ((((operation == "readJavaScriptRecordPropertyIndex")
         || (operation == (self::read_java_script_object_entry_pairing_operation())))
-        || (operation == "reorderJavaScriptRecordPropertyValues"))
+        || (self::accept_java_script_record_value_reordering(operation)))
         || (((((operation == "createJavaScriptRecordPropertyOrder")
             || (operation == "mergeJavaScriptRecordPropertyOrder"))
             || (operation == "readJavaScriptRecordPropertyKeys"))
             || (operation == "acceptJavaScriptRecordPropertyOrder"))
-            || (operation == "readJavaScriptRecordPropertyKeyTexts"))
+            || (operation == "readJavaScriptRecordPropertyKeyTexts")))
+        || ((operation == "mergeJavaScriptPresentRecordPropertyOrder")
+            || (operation == "readJavaScriptPresentRecordPropertyKeyTexts"))
     {
         2f64
-    } else if (operation == "rebaseJavaScriptRecordPropertyOrder")
-        || (operation == "copyJavaScriptRecordPropertyOrder")
+    } else if ((((operation == "rebaseJavaScriptRecordPropertyOrder")
+        || (operation == "copyJavaScriptRecordPropertyOrder"))
+        || (operation == "createJavaScriptPresentRecordPropertyOrder"))
+        || (operation == "rebaseJavaScriptPresentRecordPropertyOrder"))
+        || (operation == "copyJavaScriptPresentRecordPropertyOrder")
     {
         3f64
     } else if (operation == "createJavaScriptDensePropertyKeyTexts")
@@ -808,7 +822,7 @@ pub fn read_java_script_record_order_kernel_parameter(operation: &str, index: f6
             } else {
                 String::from("values")
             }
-        } else if operation == "reorderJavaScriptRecordPropertyValues" {
+        } else if self::accept_java_script_record_value_reordering(operation) {
             if index == 0f64 {
                 String::from("values")
             } else {
@@ -818,9 +832,14 @@ pub fn read_java_script_record_order_kernel_parameter(operation: &str, index: f6
             String::from("number")
         } else if operation == "createJavaScriptStringOwnPropertyValues" {
             String::from("text")
-        } else if ((index == 0f64) || (operation == "mergeJavaScriptRecordPropertyOrder"))
-            || (((operation == "rebaseJavaScriptRecordPropertyOrder")
+        } else if (operation == "createJavaScriptPresentRecordPropertyOrder") && (index == 2f64) {
+            String::from("presence")
+        } else if (((index == 0f64) || (operation == "mergeJavaScriptRecordPropertyOrder"))
+            || (operation == "mergeJavaScriptPresentRecordPropertyOrder"))
+            || (((((operation == "rebaseJavaScriptRecordPropertyOrder")
                 || (operation == "copyJavaScriptRecordPropertyOrder"))
+                || (operation == "rebaseJavaScriptPresentRecordPropertyOrder"))
+                || (operation == "copyJavaScriptPresentRecordPropertyOrder"))
                 && (index == 1f64))
         {
             String::from("name rows")
@@ -843,13 +862,14 @@ pub fn read_java_script_record_order_kernel_result(operation: &str) -> String {
                 String::from("number")
             } else if operation == (self::read_java_script_object_entry_pairing_operation()) {
                 String::from("entries")
-            } else if operation == "reorderJavaScriptRecordPropertyValues" {
+            } else if self::accept_java_script_record_value_reordering(operation) {
                 String::from("values")
             } else if operation == "readJavaScriptRecordPropertyKeys" {
                 String::from("name rows")
             } else if operation == "acceptJavaScriptRecordPropertyOrder" {
                 String::from("boolean")
-            } else if ((operation == "readJavaScriptRecordPropertyKeyTexts")
+            } else if (((operation == "readJavaScriptRecordPropertyKeyTexts")
+                || (operation == "readJavaScriptPresentRecordPropertyKeyTexts"))
                 || (operation == "createJavaScriptDensePropertyKeyTexts"))
                 || (operation == "createJavaScriptStringOwnPropertyValues")
             {

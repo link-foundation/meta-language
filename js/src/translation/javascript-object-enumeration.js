@@ -1,5 +1,8 @@
 // Source operands are captured before ToObject; ordinary kernel calls own keys.
-import {BOOL,FLOAT,STRING,UNIT,array,tuple,sameType} from './types.js';
+import {BOOL,FLOAT,STRING,UNIT,array,option,tuple,sameType} from './types.js';
+import {coerce} from './check.js';
+import {javaScriptConstructorFieldValueType,readJavaScriptOwnedRecordField} from './javascript-constructor-presence.js';
+import {mergeOptionalAbsence} from './structured-type-rules.js';
 import {typeError,unsupported} from './diagnostics.js';
 import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
 import {readJavaScriptSourceExceptionOperation} from './source-exception-rules.js';
@@ -11,18 +14,28 @@ function valueElement(type,fallback,span){
  if(type.kind==='option')return valueElement(type.element,fallback,span);
  if(type.kind==='array')return type.element;
  if(type.kind==='string')return STRING;
- const fields=type.kind==='record'?type.fields.map(field=>field.type):type.kind==='tuple'?type.elements:[];
+ const fields=type.kind==='record'?type.fields.map(javaScriptConstructorFieldValueType):type.kind==='tuple'?type.elements:[];
  if(!fields.length)return fallback??FLOAT;
+ if(type.kind==='record'&&type.fields.some(field=>field.optional)){
+  const base=fields[0].kind==='option'?fields[0].element:fields[0];
+  let absence='undefined';
+  for(const field of fields){
+   if(!sameType(field.kind==='option'?field.element:field,base))throw unsupported('heterogeneous object values','every actual field needs its shared dynamic value union',span);
+   if(field.kind==='option')absence=mergeOptionalAbsence(absence,field.absence);
+  }
+  return option(base,absence);
+ }
  if(fields.some(field=>!sameType(field,fields[0])))throw unsupported('heterogeneous object values','every actual field needs its shared dynamic value union',span);
  return fields[0];
 }
 function recordValues(checker,object,result,span){
  const name=checker.freshName('ml_enumeration_record');
  const value=checker.referenceValue(object),owned=variable(name,value.type);
- const items=value.type.fields.map((field,index)=>({k:'recordField',object:owned,field:field.name,index,type:field.type}));
+ const items=value.type.fields.map(field=>coerce(readJavaScriptOwnedRecordField(owned,field),result.element,'JavaScript',span));
  const values={k:'array',items,type:result};
  const query={k:'method',op:'readJavaScriptRecordPropertyOrder',object:owned,args:[],type:array(FLOAT)};
- return {k:'let',name,value,body:{k:'math',op:'reorderJavaScriptRecordPropertyValues',args:[values,query],type:result},type:result,...(span?{span}:{})};
+ const op=value.type.fields.some(field=>field.optional)?'reorderJavaScriptPresentRecordPropertyValues':'reorderJavaScriptRecordPropertyValues';
+ return {k:'let',name,value,body:{k:'math',op,args:[values,query],type:result},type:result,...(span?{span}:{})};
 }
 function enumerate(checker,object,form,result,span){
  const kind=object.type.kind;
@@ -43,7 +56,8 @@ function enumerate(checker,object,form,result,span){
   const owned=checker.referenceValue(object);
   if(form==='values')return recordValues(checker,object,result,span);
   const order={k:'method',op:'readJavaScriptRecordPropertyOrder',object:owned,args:[],type:array(FLOAT)};
-  return {k:'math',op:'readJavaScriptRecordPropertyKeyTexts',args:[constructRecordPropertyNameRows(object.type.fields),order],type:result};
+  const op=object.type.fields.some(field=>field.optional)?'readJavaScriptPresentRecordPropertyKeyTexts':'readJavaScriptRecordPropertyKeyTexts';
+  return {k:'math',op,args:[constructRecordPropertyNameRows(object.type.fields),order],type:result};
  }
  if(receiver==='indexed'){
   if(form==='values'){

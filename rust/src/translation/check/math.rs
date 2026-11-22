@@ -21,6 +21,58 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if self.checked_projection && matches!(op, "strictEqual:false" | "strictEqual:true") {
+            let [left, right] = args else {
+                return Err(type_error(
+                    "checked strict equality requires two actual operands",
+                    span,
+                ));
+            };
+            if left.spread || right.spread {
+                return Err(type_error(
+                    "checked strict equality requires two actual operands",
+                    span,
+                ));
+            }
+            let left = self.expr(&left.value, env, path, None, false)?;
+            let right = self.expr(&right.value, env, path, None, false)?;
+            use crate::translation::optional_value_rules::{
+                accept_optional_primitive_kind, read_optional_comparison_operation,
+            };
+            let element = |ty: &Type| match ty {
+                Type::Option { element, .. } => element.as_ref().clone(),
+                _ => ty.clone(),
+            };
+            let a = element(&left.ty);
+            let b = element(&right.ty);
+            let primitive = accept_optional_primitive_kind(a.kind());
+            let mode = read_optional_comparison_operation(
+                self.language.as_str(),
+                left.ty.kind(),
+                right.ty.kind(),
+                "eq",
+                a.same(&b),
+                primitive,
+            );
+            if !(primitive && accept_optional_primitive_kind(b.kind()))
+                && mode != "strict"
+                && !matches!(left.node, Node::None { .. })
+                && !matches!(right.node, Node::None { .. })
+            {
+                return Err(type_error(
+                    "checked strict equality requires portable primitive operands or an actual absence",
+                    span,
+                ));
+            }
+            return Ok(Expr::new(
+                Node::StrictEqual {
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    negate: op == "strictEqual:true",
+                },
+                BOOL,
+            ));
+        }
         if crate::translation::rust_string_byte_length_rules::accept_rust_string_byte_length_operation("math",op) {
             let value = if args.len()==1 && !args[0].spread {Some(self.expr(&args[0].value,env,path,Some(&super::STRING),false)?)} else {None};
             let error = crate::translation::rust_string_byte_length_rules::read_rust_string_byte_length_argument_error(self.language.as_str(),false,serde_json::Number::from(args.len()).as_f64().expect("actual arity"),args.iter().any(|arg|arg.spread),value.as_ref().map_or("",|value|value.ty.kind()));

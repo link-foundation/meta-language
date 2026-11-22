@@ -12,8 +12,14 @@ impl JavaScriptEmitter<'_> {
         order: Option<&Expr>,
         ty: &Type,
     ) -> Result<String> {
-        let Type::Record { ordered, fields, .. } = ty else {
-            return Err(crate::translation::diagnostics::type_error("a record value needs its actual layout", None));
+        let Type::Record {
+            ordered, fields, ..
+        } = ty
+        else {
+            return Err(crate::translation::diagnostics::type_error(
+                "a record value needs its actual layout",
+                None,
+            ));
         };
         if *ordered != order.is_some() {
             return Err(crate::translation::diagnostics::type_error(
@@ -31,12 +37,30 @@ impl JavaScriptEmitter<'_> {
             .collect::<Result<Vec<_>>>()?;
         let Some(order) = order else {
             if fields.iter().any(|field| field.optional) {
-                let optional = fields.iter().map(|field| field.optional).collect::<Vec<_>>();
-                return Ok(rules::render_java_script_optional_record_value(&labels, &values, &optional));
+                let optional = fields
+                    .iter()
+                    .map(|field| field.optional)
+                    .collect::<Vec<_>>();
+                return Ok(rules::render_java_script_optional_record_value(
+                    &labels, &values, &optional,
+                ));
             }
             return Ok(rules::render_record_value("JavaScript", &labels, &values));
         };
         let order = self.expr(order)?;
+        if fields.iter().any(|field| field.optional) {
+            let optional = format!(
+                "[{}]",
+                fields
+                    .iter()
+                    .map(|field| field.optional.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            );
+            return Ok(crate::translation::ordered_record_layout_rules::render_java_script_ordered_optional_record(
+                &labels, &values, &order, &optional,
+            ));
+        }
         Ok(
             crate::translation::ordered_record_layout_rules::render_ordered_record_value(
                 "JavaScript",
@@ -53,7 +77,9 @@ impl JavaScriptEmitter<'_> {
         let object = self.expr(object)?;
         let label = json_string(field);
         if optional {
-            return Ok(rules::render_java_script_optional_record_field(&object, &label));
+            return Ok(rules::render_java_script_optional_record_field(
+                &object, &label,
+            ));
         }
         Ok(rules::render_record_field(
             "JavaScript",

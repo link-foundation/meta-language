@@ -34,11 +34,16 @@ impl Inference {
             if let Term::Known(ty @ crate::translation::types::Type::Record { .. }) = &owner {
                 owner = self.declared(Some(ty));
             }
-            let (kind, fields, open, mut optional_fields) = match &owner {
+            let (kind, mut fields, open, mut optional_fields) = match &owner {
                 Term::Var(_) => ("var", Vec::new(), false, Default::default()),
                 Term::Record(owner) => {
                     let owner = owner.borrow();
-                    ("record", owner.fields.clone(), owner.open, owner.optional_fields.clone())
+                    (
+                        "record",
+                        owner.fields.clone(),
+                        owner.open,
+                        owner.optional_fields.clone(),
+                    )
                 }
                 _ => ("other", Vec::new(), false, Default::default()),
             };
@@ -58,6 +63,7 @@ impl Inference {
                     constraint.place,
                 ));
             }
+            fields.sort_by(|left, right| left.0.encode_utf16().cmp(right.0.encode_utf16()));
             let names = fields
                 .iter()
                 .map(|field| field.0.clone())

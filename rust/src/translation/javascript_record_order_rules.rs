@@ -28,3 +28,6 @@ pub use part_4::*;
 #[path = "javascript_record_order_rules/part_5.rs"]
 mod part_5;
 pub use part_5::*;
+#[path = "javascript_record_order_rules/part_6.rs"]
+mod part_6;
+pub use part_6::*;

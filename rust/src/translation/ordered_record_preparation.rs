@@ -73,7 +73,7 @@ impl Lowerer {
             ),
             _ => value.clone(),
         };
-        if value["k"] == "math" && (value["op"] == "reorderJavaScriptRecordPropertyValues"||value["op"]==super::javascript_enumeration_rules::read_java_script_object_entry_pairing_operation()) {
+        if value["k"] == "math" && (super::javascript_enumeration_rules::accept_java_script_record_value_reordering(value["op"].as_str().unwrap_or_default())||value["op"]==super::javascript_enumeration_rules::read_java_script_object_entry_pairing_operation()) {
             let pairing=value["op"]==super::javascript_enumeration_rules::read_java_script_object_entry_pairing_operation();
             let element: Type =
                 serde_json::from_value(result["args"][usize::from(pairing)]["type"]["element"].clone())
@@ -158,8 +158,35 @@ impl Lowerer {
             current["value"] = json!({"k":"var","name":name,"type":entry["value"]["type"]});
             fields.push(current);
         }
+        let layout = value["type"]["fields"]
+            .as_array()
+            .filter(|layout| layout.len() == fields.len())
+            .ok_or_else(|| {
+                type_error(
+                    "an ordered record needs matching payload and layout fields",
+                    None,
+                )
+            })?;
+        let mut args = vec![names, result["order"].clone()];
+        let operation = if layout.iter().any(|field| field["optional"] == true) {
+            let items = layout
+                .iter()
+                .zip(&fields)
+                .map(|(field, entry)| {
+                    if field["optional"] == true {
+                        json!({"k":"truthy","arg":entry["value"],"type":{"kind":"bool"}})
+                    } else {
+                        json!({"k":"lit","value":true,"type":{"kind":"bool"}})
+                    }
+                })
+                .collect::<Vec<_>>();
+            args.push(json!({"k":"array","items":items,"type":{"kind":"array","element":{"kind":"bool"}}}));
+            "createJavaScriptPresentRecordPropertyOrder"
+        } else {
+            "createJavaScriptRecordPropertyOrder"
+        };
         result["entries"] = Value::Array(fields);
-        result["order"] = json!({"k":"call","fn":format!("{}.createJavaScriptRecordPropertyOrder",self.namespace),"args":[names,result["order"]],"type":{"kind":"array","element":{"kind":"float"}}});
+        result["order"] = json!({"k":"call","fn":format!("{}.{operation}",self.namespace),"args":args,"type":{"kind":"array","element":{"kind":"float"}}});
         for (name, binding) in bindings.into_iter().rev() {
             result =
                 json!({"k":"let","name":name,"value":binding,"body":result,"type":value["type"]});
@@ -168,6 +195,28 @@ impl Lowerer {
             }
         }
         Ok(result)
+    }
+}
+
+// The closed author's generated helpers root their paths at their own module.
+pub(super) fn scope_source_paths(value: &mut Value, namespace: &str) {
+    match value {
+        Value::Array(items) => {
+            for item in items {
+                scope_source_paths(item, namespace);
+            }
+        }
+        Value::Object(fields) => {
+            if let Some(path) = fields.get_mut("path").and_then(Value::as_array_mut)
+                && path.first().is_some_and(|segment| segment == "crate")
+            {
+                path.insert(1, Value::String(namespace.to_owned()));
+            }
+            for item in fields.values_mut() {
+                scope_source_paths(item, namespace);
+            }
+        }
+        _ => {}
     }
 }
 
@@ -206,8 +255,13 @@ pub(super) fn prepare(program: &Program) -> Result<Cow<'_, Program>> {
             None,
         ));
     }
-    let mut surface: SProgram =
-        serde_json::from_value(source["surface"].clone()).map_err(transport)?;
+    let prefix = super::source_identifiers::read_source_identifier_supply(
+        super::source_identifiers::collect_source_identifier_texts(&value),
+    );
+    let namespace = format!("{prefix}recordOrder");
+    let mut source_surface = source["surface"].clone();
+    scope_source_paths(&mut source_surface["items"], &namespace);
+    let mut surface: SProgram = serde_json::from_value(source_surface).map_err(transport)?;
     if surface.language != Language::JavaScript
         || !surface.externals.is_empty()
         || surface
@@ -220,10 +274,6 @@ pub(super) fn prepare(program: &Program) -> Result<Cow<'_, Program>> {
             None,
         ));
     }
-    let prefix = super::source_identifiers::read_source_identifier_supply(
-        super::source_identifiers::collect_source_identifier_texts(&value),
-    );
-    let namespace = format!("{prefix}recordOrder");
     surface.items = vec![SItem::Module(SModule {
         name: namespace.clone(),
         items: surface.items,

@@ -6,9 +6,9 @@ import {checkProgram} from './check.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {collectSourceIdentifierTexts,readSourceIdentifierSupply} from './source-identifiers.js';
 import {typeError,unsupported} from './diagnostics.js';
-import {FLOAT,array,sameType,typeKey} from './types.js';
+import {BOOL,FLOAT,array,sameType,typeKey} from './types.js';
 import {specializeRecordValueOrder,lowerRecordValueOrder,lowerObjectEntryValues} from './record-value-order-specialization.js';
-import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,readJavaScriptObjectEntryPairingOperation} from './javascript-enumeration-rules.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,readJavaScriptObjectEntryPairingOperation,acceptJavaScriptRecordValueReordering} from './javascript-enumeration-rules.js';
 import {readRecordOrderRoleType} from './record-order-operations.js';
 const excluded=new Set(['type','from','to','domain','span']);
 function containsOrderedRecord(value,seen=new Set()){
@@ -18,6 +18,17 @@ function containsOrderedRecord(value,seen=new Set()){
  if(value.k==='math'&&readJavaScriptRecordOrderKernelArity(value.op??''))return true;
  return (Array.isArray(value)?value:Object.entries(value).filter(([key])=>!excluded.has(key)&&!key.startsWith('source')).map(([,child])=>child)).some(child=>containsOrderedRecord(child,seen));
 }
+// The authored helper loops use paths rooted at their own source module.
+export function scopeRecordOrderSourceItems(items,namespace){
+ function relocate(value){
+  if(!value||typeof value!=='object')return value;
+  if(Array.isArray(value))return value.map(relocate);
+  const projected=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,relocate(child)]));
+  if(Array.isArray(projected.path)&&projected.path[0]==='crate')projected.path.splice(1,0,namespace);
+  return projected;
+ }
+ return [{k:'module',name:namespace,items:relocate(items)}];
+}
 export function prepareOrderedRecordValues(program){
  const roots=[...program.declarations.values()].flatMap(entry=>entry.k==='fn'?[entry.body]:entry.k==='theorem'?[entry.prop]:[]).concat(program.main?.effects??[]);
  if(!roots.some(value=>containsOrderedRecord(value)))return program;
@@ -26,7 +37,7 @@ export function prepareOrderedRecordValues(program){
  const source=readStructuredDataLino(readFileSync(new URL('../data/record-order-surface-library.lino',import.meta.url),'utf8'));
  if(source.version!==1||source.model!=='complete ordinary record order source library 1'||source.surface.language!=='JavaScript'||source.surface.externals?.length||source.surface.main?.effects?.length)throw typeError('an ordered record needs its complete closed source library');
  const prefix=readSourceIdentifierSupply(collectSourceIdentifierTexts(program)),namespace=prefix+'recordOrder';
- const library=checkProgram({...source.surface,items:[{k:'module',name:namespace,items:source.surface.items}],main:null});
+ const library=checkProgram({...source.surface,items:scopeRecordOrderSourceItems(source.surface.items,namespace),main:null});
  for(const name of library.declarations.keys())if(program.declarations.has(name)||(program.externals??[]).some(entry=>entry.name===name))throw typeError('an ordered record library namespace collides with an actual declaration');
  const constructor=library.declarations.get(namespace+'.createJavaScriptRecordPropertyOrder');
  if(constructor?.k!=='fn'||constructor.params.length!==2||!sameType(constructor.params[0].type,array(array(FLOAT)))||!sameType(constructor.params[1].type,array(FLOAT))||!sameType(constructor.ret,array(FLOAT)))throw typeError('an ordered record constructor needs its complete owned signature');
@@ -43,7 +54,7 @@ export function prepareOrderedRecordValues(program){
   if(!value||typeof value!=='object')return value;
   if(Array.isArray(value))return value.map(lower);
   let result=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,excluded.has(key)||key.startsWith('source')?child:lower(child)]));
-  if(value.k==='math'&&(value.op==='reorderJavaScriptRecordPropertyValues'||value.op===readJavaScriptObjectEntryPairingOperation())){
+  if(value.k==='math'&&(acceptJavaScriptRecordValueReordering(value.op)||value.op===readJavaScriptObjectEntryPairingOperation())){
    const pairing=value.op===readJavaScriptObjectEntryPairingOperation(),element=value.args[pairing?1:0].type.element,key=typeKey(element);
    let specialization=specializations.get(key);
    if(!specialization){specialization=specializeRecordValueOrder(element,prefix+'recordValues'+String(specializations.size+1));specializations.set(key,specialization);}
@@ -56,7 +67,17 @@ export function prepareOrderedRecordValues(program){
   if(value.k==='record'&&value.order){
    if(value.type.kind!=='record'||value.type.ordered!==true)throw typeError('an ordered record needs matching payload and order types',value.span);
    const bindings=result.entries.map(entry=>({name:fresh('recordField'),value:entry.value}));
-   result={...result,entries:result.entries.map((entry,index)=>({...entry,value:{k:'var',name:bindings[index].name,type:entry.value.type}})),order:{k:'call',fn:namespace+'.createJavaScriptRecordPropertyOrder',args:[constructRecordPropertyNameRows(result.entries),result.order],type:array(FLOAT)}};
+   const entries=result.entries.map((entry,index)=>({...entry,value:{k:'var',name:bindings[index].name,type:entry.value.type}}));
+   const args=[constructRecordPropertyNameRows(entries),result.order];
+   let operation='createJavaScriptRecordPropertyOrder';
+   if(value.type.fields.some(field=>field.optional)){
+    operation='createJavaScriptPresentRecordPropertyOrder';
+    const items=value.type.fields.map((field,index)=>field.optional
+     ? {k:'truthy',arg:entries[index].value,type:BOOL}
+     : {k:'lit',value:true,type:BOOL});
+    args.push({k:'array',items,type:array(BOOL)});
+   }
+   result={...result,entries,order:{k:'call',fn:namespace+'.'+operation,args,type:array(FLOAT)}};
    for(let index=bindings.length-1;index>=0;index-=1)result={k:'let',name:bindings[index].name,value:bindings[index].value,body:result,type:value.type,...(value.span?{span:value.span}:{})};
   }
   return result;

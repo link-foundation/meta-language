@@ -1,7 +1,7 @@
 // Actual checked field/order operands into the shared source runtime/layout.
 import {FLOAT,array} from './types.js';
 import {typeError} from './diagnostics.js';
-import {renderOrderedRecordValue,renderOrderedRecordObservedOrder} from './ordered-record-layout-rules.js';
+import {renderJavaScriptOrderedOptionalRecord,renderOrderedRecordValue,renderOrderedRecordObservedOrder} from './ordered-record-layout-rules.js';
 import {acceptLinkedOrderedRecordOrderRead} from './javascript-enumeration-rules.js';
 export function constructRecordPropertyNameRows(entries){
  return {k:'array',items:entries.map(entry=>({k:'array',items:Array.from({length:entry.name.length},(_,index)=>({k:'lit',value:String(entry.name.charCodeAt(index)),type:FLOAT})),type:array(FLOAT)})),type:array(array(FLOAT))};
@@ -11,7 +11,12 @@ export function emitOrderedRecordValue(emitter,node,target,depth){
  if(!node.order)return null;
  const emit=value=>target==='Lean'?emitter.expr(value,depth):emitter.expr(value);
  const values=node.entries.map(entry=>emit(entry.value));
- return renderOrderedRecordValue(target,node.entries.map(entry=>JSON.stringify(entry.name)),values,emit(node.order));
+ const labels=node.entries.map(entry=>JSON.stringify(entry.name));
+ const order=emit(node.order);
+ if(target==='JavaScript'&&node.type.fields.some(field=>field.optional)){
+  return renderJavaScriptOrderedOptionalRecord(labels,values,order,JSON.stringify(node.type.fields.map(field=>field.optional===true)));
+ }
+ return renderOrderedRecordValue(target,labels,values,order);
 }
 export function emitOrderedRecordOrderRead(emitter,node,target,depth){
  if(node.op!=='readJavaScriptRecordPropertyOrder')return null;

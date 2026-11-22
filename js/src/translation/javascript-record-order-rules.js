@@ -23,7 +23,11 @@ export function acceptJavaScriptRecordOrderNames(names){
 }
 /** @param {number} count @param {number[]} order @returns {boolean} */
 export function acceptJavaScriptRecordOrderPermutation(count,order){
- if(!Number.isSafeInteger(count)||count<0||count===0&&1/count<0||order.length!==count)return false;
+ return order.length===count&&acceptJavaScriptRecordOrderPositions(count,order);
+}
+/** @param {number} count @param {number[]} order @returns {boolean} */
+function acceptJavaScriptRecordOrderPositions(count,order){
+ if(!Number.isSafeInteger(count)||count<0||count===0&&1/count<0||order.length>count)return false;
  for(let index=0;index<order.length;index+=1){
   const value=readJavaScriptRecordOrderPosition(order,index);
   if(!Number.isInteger(value)||value<0||value>=count||value===0&&1/value<0)return false;
@@ -41,8 +45,13 @@ export function readJavaScriptRecordOrderCreationError(names,insertion){
 export function createJavaScriptRecordPropertyOrder(names,insertion){
  const error=readJavaScriptRecordOrderCreationError(names,insertion);
  if(error)throw new TypeError(error);
+ return sortJavaScriptRecordPropertyPositions(names,insertion);
+}
+/** @param {number[][]} names @param {number[]} insertion @returns {number[]} */
+function sortJavaScriptRecordPropertyPositions(names,insertion){
  let numeric=[];
- for(let field=0;field<names.length;field+=1){
+ for(let index=0;index<insertion.length;index+=1){
+  const field=readJavaScriptRecordOrderPosition(insertion,index);
   const key=readJavaScriptLiteralPropertyIndex(readJavaScriptRecordOrderName(names,field));
   if(key<0)continue;
   let position=0;
@@ -55,6 +64,24 @@ export function createJavaScriptRecordPropertyOrder(names,insertion){
   if(readJavaScriptLiteralPropertyIndex(readJavaScriptRecordOrderName(names,field))<0)result=result.concat([field]);
  }
  return result;
+}
+/** The witness contains exactly the present payload fields, including those
+ * whose value is undefined. The supplied order must cover that same set.
+ * @param {number[][]} names @param {number[]} insertion @param {boolean[]} present
+ * @returns {number[]} */
+export function createJavaScriptPresentRecordPropertyOrder(names,insertion,present){
+ if(!acceptJavaScriptRecordOrderNames(names)||present.length!==names.length||!acceptJavaScriptRecordOrderPositions(names.length,insertion))throw new TypeError('invalid ordered record field sequence');
+ for(let index=0;index<present.length;index+=1){
+  if(present[index]!==insertion.includes(index))throw new TypeError('invalid ordered record field sequence');
+ }
+ return sortJavaScriptRecordPropertyPositions(names,insertion);
+}
+/** @param {number[][]} names @param {number[]} order @returns {boolean} */
+function acceptJavaScriptPresentRecordPropertyOrder(names,order){
+ if(!acceptJavaScriptRecordOrderNames(names)||!acceptJavaScriptRecordOrderPositions(names.length,order))return false;
+ const expected=sortJavaScriptRecordPropertyPositions(names,order);
+ for(let index=0;index<order.length;index+=1)if(readJavaScriptRecordOrderPosition(order,index)!==readJavaScriptRecordOrderPosition(expected,index))return false;
+ return true;
 }
 /** @param {number[][]} names @param {number[]} order @returns {boolean} */
 export function acceptJavaScriptRecordPropertyOrder(names,order){
@@ -94,6 +121,20 @@ export function mergeJavaScriptRecordPropertyOrder(names,chunks){
  }
  return createJavaScriptRecordPropertyOrder(names,insertion);
 }
+/** @param {number[][]} names @param {number[][]} chunks @returns {number[]} */
+export function mergeJavaScriptPresentRecordPropertyOrder(names,chunks){
+ if(!acceptJavaScriptRecordOrderNames(names))throw new TypeError('invalid ordered record field names');
+ let insertion=[];
+ for(let chunk=0;chunk<chunks.length;chunk+=1){
+  const positions=readJavaScriptRecordOrderName(chunks,chunk);
+  if(!acceptJavaScriptRecordOrderPositions(names.length,positions))throw new TypeError('invalid ordered record source field');
+  for(let index=0;index<positions.length;index+=1){
+   const field=readJavaScriptRecordOrderPosition(positions,index);
+   if(!insertion.includes(field))insertion=insertion.concat([field]);
+  }
+ }
+ return sortJavaScriptRecordPropertyPositions(names,insertion);
+}
 /** @param {number[][]} target @param {number[][]} source @param {number[]} order @returns {string} */
 export function readJavaScriptRecordOrderRebaseError(target,source,order){
  if(!acceptJavaScriptRecordOrderNames(target)||!acceptJavaScriptRecordPropertyOrder(source,order))return 'invalid ordered record spread source';
@@ -105,13 +146,14 @@ export function readJavaScriptRecordOrderRebaseError(target,source,order){
 export function rebaseJavaScriptRecordPropertyOrder(target,source,order){
  const error=readJavaScriptRecordOrderRebaseError(target,source,order);
  if(error)throw new TypeError(error);
- let result=[];
- for(let index=0;index<order.length;index+=1){
-  const name=readJavaScriptRecordOrderName(source,readJavaScriptRecordOrderPosition(order,index));
-  const field=readRecordFieldPosition(target,name);
-  result=result.concat([field]);
- }
- return result;
+ return projectJavaScriptRecordPropertyOrder(target,source,order);
+}
+/** @param {number[][]} target @param {number[][]} source @param {number[]} order
+ * @returns {number[]} */
+export function rebaseJavaScriptPresentRecordPropertyOrder(target,source,order){
+ if(!acceptJavaScriptRecordOrderNames(target)||!acceptJavaScriptPresentRecordPropertyOrder(source,order))throw new TypeError('invalid ordered record spread source');
+ for(let index=0;index<source.length;index+=1)if(readRecordFieldPosition(target,readJavaScriptRecordOrderName(source,index))<0)throw new TypeError('an ordered record spread field is missing from its target');
+ return projectJavaScriptRecordPropertyOrder(target,source,order);
 }
 /** A rest copy retains the original source order after excluding fields.
  * Target is the complete canonical subset, never an invented field layout.
@@ -120,6 +162,18 @@ export function rebaseJavaScriptRecordPropertyOrder(target,source,order){
 export function copyJavaScriptRecordPropertyOrder(target,source,order){
  if(!acceptJavaScriptRecordOrderNames(target)||!acceptJavaScriptRecordPropertyOrder(source,order))throw new TypeError('invalid object rest source field order');
  for(let index=0;index<target.length;index+=1)if(readRecordFieldPosition(source,readJavaScriptRecordOrderName(target,index))<0)throw new TypeError('an object rest target must be a complete source subset');
+ return projectJavaScriptRecordPropertyOrder(target,source,order);
+}
+/** @param {number[][]} target @param {number[][]} source @param {number[]} order
+ * @returns {number[]} */
+export function copyJavaScriptPresentRecordPropertyOrder(target,source,order){
+ if(!acceptJavaScriptRecordOrderNames(target)||!acceptJavaScriptPresentRecordPropertyOrder(source,order))throw new TypeError('invalid object rest source field order');
+ for(let index=0;index<target.length;index+=1)if(readRecordFieldPosition(source,readJavaScriptRecordOrderName(target,index))<0)throw new TypeError('an object rest target must be a complete source subset');
+ return projectJavaScriptRecordPropertyOrder(target,source,order);
+}
+/** @param {number[][]} target @param {number[][]} source @param {number[]} order
+ * @returns {number[]} */
+function projectJavaScriptRecordPropertyOrder(target,source,order){
  let result=[];
  for(let index=0;index<order.length;index+=1){const field=readRecordFieldPosition(target,readJavaScriptRecordOrderName(source,readJavaScriptRecordOrderPosition(order,index)));if(field>=0)result=result.concat([field]);}
  return result;
@@ -139,6 +193,17 @@ export function readJavaScriptRecordPropertyKeys(names,order){
  * @param {number[][]} names @param {number[]} order @returns {string[]} */
 export function readJavaScriptRecordPropertyKeyTexts(names,order){
  const rows=readJavaScriptRecordPropertyKeys(names,order);
+ return readJavaScriptRecordPropertyNameTexts(rows);
+}
+/** @param {number[][]} names @param {number[]} order @returns {string[]} */
+export function readJavaScriptPresentRecordPropertyKeyTexts(names,order){
+ if(!acceptJavaScriptPresentRecordPropertyOrder(names,order))throw new TypeError('invalid ordered record property order');
+ let rows=[];
+ for(let index=0;index<order.length;index+=1)rows=rows.concat([readJavaScriptRecordOrderName(names,readJavaScriptRecordOrderPosition(order,index))]);
+ return readJavaScriptRecordPropertyNameTexts(rows);
+}
+/** @param {number[][]} rows @returns {string[]} */
+function readJavaScriptRecordPropertyNameTexts(rows){
  let result=[];
  for(let index=0;index<rows.length;index+=1){
   const units=readJavaScriptRecordOrderName(rows,index);let key='';

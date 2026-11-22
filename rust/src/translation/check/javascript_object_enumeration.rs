@@ -3,7 +3,9 @@ use super::{
     Checker, Env, Expr, LitValue, Node, Result, SArrayItem, Span, Type, array, unsupported,
 };
 use crate::translation::ir::RecordEntry;
-use crate::translation::types::TypeField;
+use crate::translation::javascript_constructor_presence as presence;
+use crate::translation::structured_type_rules::merge_optional_absence;
+use crate::translation::types::{TypeField, option};
 
 fn failure(result: &Type) -> Expr {
     Expr::new(Node::Math{op:crate::translation::source_exception_rules::read_java_script_source_exception_operation("TypeError"),args:vec![super::text_lit(Type::String,crate::translation::javascript_own_property_rules::read_java_script_object_coercion_error()),Expr::lit(Type::Bool,LitValue::Bool(true))]},result.clone())
@@ -19,13 +21,49 @@ fn value_element(ty: &Type, fallback: Option<&Type>, span: Option<Span>) -> Resu
         return Ok(Type::String);
     }
     let fields: Vec<&Type> = match ty {
-        Type::Record { fields, .. } => fields.iter().map(|field| &field.ty).collect(),
+        Type::Record { fields, .. } => fields
+            .iter()
+            .map(|field| {
+                if field.optional {
+                    presence::field_value_type(&field.ty).expect("checked optional field presence")
+                } else {
+                    &field.ty
+                }
+            })
+            .collect(),
         Type::Tuple { elements } => elements.iter().collect(),
         _ => Vec::new(),
     };
-    let Some(first) = fields.first() else {
+    let Some(&first) = fields.first() else {
         return Ok(fallback.cloned().unwrap_or(Type::Float));
     };
+    if matches!(ty, Type::Record { fields, .. } if fields.iter().any(|field| field.optional)) {
+        let base = match first {
+            Type::Option { element, .. } => element.as_ref(),
+            other => other,
+        };
+        let mut absence = "undefined".to_owned();
+        for member in fields {
+            let member_type = match member {
+                Type::Option {
+                    element,
+                    absence: suffix,
+                } => {
+                    absence = merge_optional_absence(&absence, suffix);
+                    element.as_ref()
+                }
+                other => other,
+            };
+            if !member_type.same(base) {
+                return Err(unsupported(
+                    "heterogeneous object values",
+                    "every actual field needs its shared dynamic value union",
+                    span,
+                ));
+            }
+        }
+        return Ok(option(base.clone(), absence));
+    }
     if fields.iter().any(|field| !field.same(first)) {
         return Err(unsupported(
             "heterogeneous object values",
@@ -33,7 +71,7 @@ fn value_element(ty: &Type, fallback: Option<&Type>, span: Option<Span>) -> Resu
             span,
         ));
     }
-    Ok((*first).clone())
+    Ok(first.clone())
 }
 impl Checker {
     fn record_enumeration_values(
@@ -48,20 +86,37 @@ impl Checker {
         let Type::Record { fields, .. } = &value.ty else {
             unreachable!("actual record enumeration owner")
         };
+        let Type::Array { element, .. } = result else {
+            unreachable!("actual record enumeration result")
+        };
+        let operation = if fields.iter().any(|field| field.optional) {
+            "reorderJavaScriptPresentRecordPropertyValues"
+        } else {
+            "reorderJavaScriptRecordPropertyValues"
+        };
         let items = fields
             .iter()
             .enumerate()
             .map(|(index, field)| {
-                Expr::new(
+                let read = Expr::new(
                     Node::RecordField {
                         object: Box::new(owned.clone()),
                         field: field.name.clone(),
                         index,
                     },
                     field.ty.clone(),
+                );
+                self.coerce(
+                    if field.optional {
+                        presence::read_value(read)
+                    } else {
+                        read
+                    },
+                    element,
+                    span,
                 )
             })
-            .collect();
+            .collect::<Result<_>>()?;
         let values = Expr::new(Node::Array { items }, result.clone());
         let query = Expr::new(
             Node::Method {
@@ -73,7 +128,7 @@ impl Checker {
         );
         let body = Expr::new(
             Node::Math {
-                op: "reorderJavaScriptRecordPropertyValues".to_owned(),
+                op: operation.to_owned(),
                 args: vec![values, query],
             },
             result.clone(),
@@ -271,6 +326,11 @@ impl Checker {
                 let names = crate::translation::ordered_record_values::property_names(
                     fields.iter().map(|field| field.name.as_str()),
                 );
+                let operation = if fields.iter().any(|field| field.optional) {
+                    "readJavaScriptPresentRecordPropertyKeyTexts"
+                } else {
+                    "readJavaScriptRecordPropertyKeyTexts"
+                };
                 let order = Expr::new(
                     Node::Method {
                         object: Box::new(Self::reference_value(object)),
@@ -281,7 +341,7 @@ impl Checker {
                 );
                 Ok(Expr::new(
                     Node::Math {
-                        op: "readJavaScriptRecordPropertyKeyTexts".to_owned(),
+                        op: operation.to_owned(),
                         args: vec![names, order],
                     },
                     result,

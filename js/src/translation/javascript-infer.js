@@ -439,7 +439,8 @@ class Inference {
         const owner=this.resolve(constraint.object),form=readJavaScriptObjectRestOwnerForm(owner.kind,owner.open===true);
         if(form==='wait')continue;
         if(form!=='copy')throw unsupported('object rest receiver','every actual enumerable own field and its source order must be represented',constraint.where);
-        this.unify(constraint.result,{kind:'record',fields:selectJavaScriptObjectRestActualFields(owner.fields,constraint.excluded),open:false},constraint.where);
+        const fields=[...owner.fields].sort((left,right)=>left.name<right.name?-1:left.name>right.name?1:0);
+        this.unify(constraint.result,{kind:'record',fields:selectJavaScriptObjectRestActualFields(fields,constraint.excluded),open:false},constraint.where);
         this.objectRestFields.splice(this.objectRestFields.indexOf(constraint),1);progress=true;
       }
       for (const constraint of [...this.fields]) {
@@ -635,8 +636,11 @@ class Inference {
         let object=this.resolve(constraint.object);
         while(object.kind==='option')object=this.resolve(object.element);
         if(object.kind==='var'||object.kind==='record'&&object.open)continue;
-        const members=object.kind==='record'?object.fields.map(field=>field.type):object.kind==='tuple'?object.elements:object.kind==='array'?[object.element]:object.kind==='string'?[STRING]:[];
-        for(const member of members)this.unify(constraint.element,member,constraint.where);
+        const members=object.kind==='record'?object.fields.map(field=>field.optional?this.declared(javaScriptConstructorFieldValueType(field)):field.type):object.kind==='tuple'?object.elements:object.kind==='array'?[object.element]:object.kind==='string'?[STRING]:[];
+        if(object.kind==='record'&&object.fields.some(field=>field.optional)){
+          const joined=members.reduce((left,right)=>this.join(left,right,constraint.where));
+          this.unify(constraint.element,joined,constraint.where);
+        }else for(const member of members)this.unify(constraint.element,member,constraint.where);
         this.enumerations.splice(this.enumerations.indexOf(constraint),1);progress=true;
       }
       // Preserve the original string default only after actual call arguments,

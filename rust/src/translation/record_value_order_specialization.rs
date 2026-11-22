@@ -10,6 +10,7 @@ pub(super) struct Specialization {
     pub(super) library: Program,
     pub(super) ty: Type,
     pub(super) entry: String,
+    pub(super) present_entry: String,
     pub(super) constructor: String,
     pub(super) pair_ty: Type,
     pub(super) pair_entry: String,
@@ -30,8 +31,10 @@ pub(super) fn specialize(element: &Type, namespace: &str) -> Result<Specializati
             "record value ordering needs its complete closed source template",
         ));
     }
-    let mut surface: SProgram = serde_json::from_value(template["surface"].clone())
-        .map_err(|error| failure(&error.to_string()))?;
+    let mut source_surface = template["surface"].clone();
+    super::ordered_record_preparation::scope_source_paths(&mut source_surface["items"], namespace);
+    let mut surface: SProgram =
+        serde_json::from_value(source_surface).map_err(|error| failure(&error.to_string()))?;
     if surface.language != super::Language::JavaScript
         || !surface.externals.is_empty()
         || surface
@@ -90,11 +93,16 @@ pub(super) fn specialize(element: &Type, namespace: &str) -> Result<Specializati
             .as_str()
             .ok_or_else(|| failure("record value ordering has no actual source entry"))?
     );
+    let present_entry = format!(
+        "{namespace}.{}",
+        template["presentEntry"]
+            .as_str()
+            .ok_or_else(|| failure("present record value ordering has no actual source entry"))?
+    );
     let shape = library.declaration(&format!("{namespace}.{owner_name}"));
-    let function = library.declaration(&entry);
     let shape_valid = matches!(shape,Some(Decl::Data(shape))if shape.ctors.len()==1&&shape.ctors[0].name==constructor&&shape.ctors[0].fields.len()==1&&shape.ctors[0].fields[0].ty.same(element));
-    let function_valid = matches!(function,Some(Decl::Fn(function))if function.params.len()==2&&function.params[0].ty.same(&array(ty.clone()))&&function.params[1].ty.same(&array(Type::Float))&&function.ret.same(&array(ty.clone())));
-    if !shape_valid || !function_valid {
+    let valid_entry = |name| matches!(library.declaration(name),Some(Decl::Fn(function))if function.params.len()==2&&function.params[0].ty.same(&array(ty.clone()))&&function.params[1].ty.same(&array(Type::Float))&&function.ret.same(&array(ty.clone())));
+    if !shape_valid || !valid_entry(entry.as_str()) || !valid_entry(present_entry.as_str()) {
         return Err(failure(
             "record value specialization changed its owned source signature",
         ));
@@ -124,6 +132,7 @@ pub(super) fn specialize(element: &Type, namespace: &str) -> Result<Specializati
         library,
         ty,
         entry,
+        present_entry,
         constructor: constructor.to_owned(),
         pair_ty,
         pair_entry,
@@ -163,8 +172,12 @@ pub(super) fn lower(
     let wrapper = json!({"k":"ctor","data":match &specialization.ty{Type::Data{name}=>name,_=>unreachable!("actual opaque wrapper owner")},"ctor":specialization.constructor,"args":[parameter],"type":specialization.ty});
     let wrap = json!({"k":"lambda","params":[{"name":parameter_name,"type":element}],"body":wrapper,"type":{"kind":"function","params":[element],"ret":specialization.ty}});
     let values = json!({"k":"method","op":"map","object":fields,"args":[wrap],"type":wrapped});
-    let ordered =
-        json!({"k":"call","fn":specialization.entry,"args":[values,order],"type":wrapped});
+    let entry = if node["op"] == "reorderJavaScriptPresentRecordPropertyValues" {
+        &specialization.present_entry
+    } else {
+        &specialization.entry
+    };
+    let ordered = json!({"k":"call","fn":entry,"args":[values,order],"type":wrapped});
     let wrapper_name = fresh("recordValueWrapper");
     let payload_name = fresh("recordValuePayload");
     let payload = json!({"k":"var","name":payload_name,"type":element});

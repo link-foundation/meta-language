@@ -16,7 +16,7 @@ import { isJavaScriptOptionalConstructorFieldType } from './translation/javascri
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
-import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead,readJavaScriptObjectEntryPairingOperation} from './translation/javascript-enumeration-rules.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead,readJavaScriptObjectEntryPairingOperation,acceptJavaScriptRecordValueReordering} from './translation/javascript-enumeration-rules.js';
 import {readRecordOrderRoleType} from './translation/record-order-operations.js';
 import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
@@ -405,7 +405,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         if(!Array.isArray(node.args))throw new TypeError('a byte count needs one actual String operand');
         const reason=readRustStringByteLengthArgumentError(program.sourceLanguage,program.utf16Strings===true,node.args.length,false,node.args[0]?.type?.kind??'');if(reason)throw new TypeError(reason);
         same(node.args[0].type,{kind:'string'},'Rust byte count operand type');same(node.type,{kind:'fixed',bits:64,signed:false},'Rust byte count result type');
-      }else if(node.op==='reorderJavaScriptRecordPropertyValues'){
+      }else if(acceptJavaScriptRecordValueReordering(node.op)){
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2||node.args[0].type.kind!=='array'||node.args[0].type.reference===true)throw new TypeError('record value ordering needs its actual owned value array');
         same(node.args[1].type,{kind:'array',element:{kind:'float'}},'record value ordering positions');
         same(node.type,node.args[0].type,'record value ordering result');

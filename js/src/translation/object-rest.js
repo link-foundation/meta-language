@@ -20,6 +20,7 @@ export function checkJavaScriptObjectRest(checker,node,env,path){
  if(readJavaScriptObjectRestOwnerForm(value.type.kind,value.type.open===true)!=='copy'||value.type.ordered!==true)throw unsupported('object rest receiver','every actual enumerable own field and its source order must be represented',node.span);
  const fields=selectJavaScriptObjectRestActualFields(value.type.fields,operands.excluded),name=checker.freshName('ml_object_rest_receiver'),object={k:'var',name,type:value.type},type={kind:'record',fields,ordered:true};
  const entries=fields.map(field=>({name:field.name,value:{k:'recordField',object,field:field.name,index:value.type.fields.indexOf(field),type:field.type}}));
- const order={k:'math',op:'copyJavaScriptRecordPropertyOrder',args:[constructRecordPropertyNameRows(fields),constructRecordPropertyNameRows(value.type.fields),{k:'method',op:'readJavaScriptRecordPropertyOrder',object,args:[],type:array(FLOAT)}],type:array(FLOAT)};
+ const operation=value.type.fields.some(field=>field.optional)?'copyJavaScriptPresentRecordPropertyOrder':'copyJavaScriptRecordPropertyOrder';
+ const order={k:'math',op:operation,args:[constructRecordPropertyNameRows(fields),constructRecordPropertyNameRows(value.type.fields),{k:'method',op:'readJavaScriptRecordPropertyOrder',object,args:[],type:array(FLOAT)}],type:array(FLOAT)};
  return {k:'let',name,value,body:{k:'record',entries,order,type},type,...(node.span?{span:node.span}:{})};
 }

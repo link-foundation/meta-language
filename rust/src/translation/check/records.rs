@@ -33,14 +33,32 @@ pub(super) fn widen_javascript_record_presence(
     span: Option<Span>,
 ) -> Result<Option<Expr>> {
     let (
-        Type::Record { fields: source, source_class_owner: None, ordered: false, open: false, reference: false },
-        Type::Record { fields: target, source_class_owner: None, ordered: false, open: false, reference: false },
-    ) = (&value.ty, ty) else {
+        Type::Record {
+            fields: source,
+            source_class_owner: None,
+            ordered: source_ordered,
+            open: false,
+            reference: false,
+        },
+        Type::Record {
+            fields: target,
+            source_class_owner: None,
+            ordered: target_ordered,
+            open: false,
+            reference: false,
+        },
+    ) = (&value.ty, ty)
+    else {
         return Ok(None);
     };
-    if !target.iter().any(|field| field.optional)
-        || source.iter().any(|field| !target.iter().any(|wanted| wanted.name == field.name))
-        || target.iter().any(|field| !field.optional && !source.iter().any(|actual| actual.name == field.name))
+    if source_ordered != target_ordered
+        || !target.iter().any(|field| field.optional)
+        || source
+            .iter()
+            .any(|field| !target.iter().any(|wanted| wanted.name == field.name))
+        || target
+            .iter()
+            .any(|field| !field.optional && !source.iter().any(|actual| actual.name == field.name))
     {
         return Ok(None);
     }
@@ -48,24 +66,80 @@ pub(super) fn widen_javascript_record_presence(
     let owner = Expr::var(name.clone(), value.ty.clone());
     let mut entries = Vec::with_capacity(target.len());
     for field in target {
-        let contents = if let Some((index, actual)) = source.iter().enumerate().find(|(_, actual)| actual.name == field.name) {
-            let read = Expr::new(Node::RecordField { object: Box::new(owner.clone()), field: actual.name.clone(), index }, actual.ty.clone());
+        let contents = if let Some((index, actual)) = source
+            .iter()
+            .enumerate()
+            .find(|(_, actual)| actual.name == field.name)
+        {
+            let read = Expr::new(
+                Node::RecordField {
+                    object: Box::new(owner.clone()),
+                    field: actual.name.clone(),
+                    index,
+                },
+                actual.ty.clone(),
+            );
             if field.optional == actual.optional && field.ty.same(&actual.ty) {
                 read
             } else if field.optional && !actual.optional {
-                let payload_type = presence::field_value_type(&field.ty).expect("checked optional field presence");
-                let payload = super::coerce(read, payload_type, super::Language::JavaScript, span, None)?;
+                let payload_type =
+                    presence::field_value_type(&field.ty).expect("checked optional field presence");
+                let payload =
+                    super::coerce(read, payload_type, super::Language::JavaScript, span, None)?;
                 presence::own_value(payload, &field.ty)
             } else {
                 return Ok(None);
             }
         } else {
-            Expr::new(Node::None { absence: "undefined".to_owned() }, field.ty.clone())
+            Expr::new(
+                Node::None {
+                    absence: "undefined".to_owned(),
+                },
+                field.ty.clone(),
+            )
         };
-        entries.push(RecordEntry { name: field.name.clone(), value: contents });
+        entries.push(RecordEntry {
+            name: field.name.clone(),
+            value: contents,
+        });
     }
-    let body = Expr::new(Node::Record { entries, order: None }, ty.clone());
-    Ok(Some(Expr::new(Node::Let { name, value: Box::new(value.clone()), body: Box::new(body) }, ty.clone())))
+    let order = if *target_ordered {
+        let positions = crate::translation::types::array(Type::Float);
+        let operation = if source.iter().any(|field| field.optional) {
+            "rebaseJavaScriptPresentRecordPropertyOrder"
+        } else {
+            "rebaseJavaScriptRecordPropertyOrder"
+        };
+        let actual = Expr::new(
+            Node::Method {
+                object: Box::new(owner),
+                op: "readJavaScriptRecordPropertyOrder".to_owned(),
+                args: Vec::new(),
+            },
+            positions.clone(),
+        );
+        use crate::translation::ordered_record_values::property_names;
+        let target_names = property_names(target.iter().map(|field| field.name.as_str()));
+        let source_names = property_names(source.iter().map(|field| field.name.as_str()));
+        Some(Box::new(Expr::new(
+            Node::Math {
+                op: operation.to_owned(),
+                args: vec![target_names, source_names, actual],
+            },
+            positions,
+        )))
+    } else {
+        None
+    };
+    let body = Expr::new(Node::Record { entries, order }, ty.clone());
+    Ok(Some(Expr::new(
+        Node::Let {
+            name,
+            value: Box::new(value.clone()),
+            body: Box::new(body),
+        },
+        ty.clone(),
+    )))
 }
 
 enum OrderChunk {
@@ -75,6 +149,7 @@ enum OrderChunk {
 fn merge_source_order(
     selected: &[RecordEntry],
     chunks: Vec<OrderChunk>,
+    optional_order: bool,
     span: Option<Span>,
 ) -> Result<Expr> {
     let positions = crate::translation::types::array(Type::Float);
@@ -113,6 +188,11 @@ fn merge_source_order(
                 let source = crate::translation::ordered_record_values::property_names(
                     fields.iter().map(|field| field.name.as_str()),
                 );
+                let operation = if fields.iter().any(|field| field.optional) {
+                    "rebaseJavaScriptPresentRecordPropertyOrder"
+                } else {
+                    "rebaseJavaScriptRecordPropertyOrder"
+                };
                 let actual = Expr::new(
                     Node::Method {
                         object: Box::new(object),
@@ -123,7 +203,7 @@ fn merge_source_order(
                 );
                 Expr::new(
                     Node::Math {
-                        op: "rebaseJavaScriptRecordPropertyOrder".to_owned(),
+                        op: operation.to_owned(),
                         args: vec![target.clone(), source, actual],
                     },
                     positions.clone(),
@@ -137,7 +217,12 @@ fn merge_source_order(
     );
     Ok(Expr::new(
         Node::Math {
-            op: "mergeJavaScriptRecordPropertyOrder".to_owned(),
+            op: if optional_order {
+                "mergeJavaScriptPresentRecordPropertyOrder"
+            } else {
+                "mergeJavaScriptRecordPropertyOrder"
+            }
+            .to_owned(),
             args: vec![target, chunks],
         },
         positions,
@@ -268,11 +353,18 @@ impl Checker {
                 })
                 .transpose()?;
             let ty = Type::Record {
-                source_class_owner: match expected{Some(Type::Record{source_class_owner,..})=>source_class_owner.clone(),_=>None},
+                source_class_owner: match expected {
+                    Some(Type::Record {
+                        source_class_owner, ..
+                    }) => source_class_owner.clone(),
+                    _ => None,
+                },
                 fields: values
                     .iter()
                     .map(|entry| TypeField {
-                        optional: expected_fields.iter().any(|field| field.name == entry.name && field.optional),
+                        optional: expected_fields
+                            .iter()
+                            .any(|field| field.name == entry.name && field.optional),
                         name: entry.name.clone(),
                         ty: entry.value.ty.clone(),
                     })
@@ -375,8 +467,13 @@ impl Checker {
             if possibly_absent[index] {
                 let ty = entry.value.ty.clone();
                 let read = presence::field_value_type(&ty).expect("checked field presence");
-                let Type::Option { element, .. } = &ty else { unreachable!("checked field presence") };
-                for earlier in (0..index).rev().filter(|earlier| values[*earlier].name == entry.name) {
+                let Type::Option { element, .. } = &ty else {
+                    unreachable!("checked field presence")
+                };
+                for earlier in (0..index)
+                    .rev()
+                    .filter(|earlier| values[*earlier].name == entry.name)
+                {
                     let right = if optional[earlier] {
                         self.coerce(values[earlier].value.clone(), &ty, span)?
                     } else {
@@ -385,14 +482,27 @@ impl Checker {
                     };
                     let name = self.fresh_name("ml_optional_spread_field");
                     let chosen = Expr::var(&name, ty.clone());
-                    let condition = Self::javascript_optional_presence(chosen.clone(), element, span)?;
-                    let body = Expr::new(Node::If {
-                        cond: Box::new(condition), then: Box::new(chosen), otherwise: Box::new(right),
-                    }, ty.clone());
-                    entry.value = Expr::new(Node::Let {
-                        name, value: Box::new(entry.value), body: Box::new(body),
-                    }, ty.clone());
-                    if !possibly_absent[earlier] { break; }
+                    let condition =
+                        Self::javascript_optional_presence(chosen.clone(), element, span)?;
+                    let body = Expr::new(
+                        Node::If {
+                            cond: Box::new(condition),
+                            then: Box::new(chosen),
+                            otherwise: Box::new(right),
+                        },
+                        ty.clone(),
+                    );
+                    entry.value = Expr::new(
+                        Node::Let {
+                            name,
+                            value: Box::new(entry.value),
+                            body: Box::new(body),
+                        },
+                        ty.clone(),
+                    );
+                    if !possibly_absent[earlier] {
+                        break;
+                    }
                 }
             }
             selected.push(entry);
@@ -400,7 +510,8 @@ impl Checker {
         for field in expected_fields.iter().filter(|field| field.optional) {
             if let Some(entry) = selected.iter_mut().find(|entry| entry.name == field.name) {
                 if optional_names.insert(field.name.clone()) {
-                    let wanted = presence::field_value_type(&field.ty).expect("checked field presence");
+                    let wanted =
+                        presence::field_value_type(&field.ty).expect("checked field presence");
                     let value = self.coerce(entry.value.clone(), wanted, span)?;
                     entry.value = presence::own_value(value, &field.ty);
                 }
@@ -408,7 +519,12 @@ impl Checker {
                 optional_names.insert(field.name.clone());
                 selected.push(RecordEntry {
                     name: field.name.clone(),
-                    value: Expr::new(Node::None { absence: "undefined".to_owned() }, field.ty.clone()),
+                    value: Expr::new(
+                        Node::None {
+                            absence: "undefined".to_owned(),
+                        },
+                        field.ty.clone(),
+                    ),
                 });
             }
         }
@@ -418,10 +534,6 @@ impl Checker {
         let ordered = self.ordered_record_source
             || property_order.is_some()
             || matches!(expected, Some(Type::Record { ordered: true, .. }));
-        if ordered && !optional_names.is_empty() {
-            return Err(unsupported("ordered optional record fields",
-                "the actual dynamic own-field permutation must be represented", span));
-        }
         let order = if let Some(source) = property_order {
             let ty = crate::translation::types::array(Type::Float);
             let value = self.expr(source, env, path, Some(&ty), false)?;
@@ -432,7 +544,12 @@ impl Checker {
             )?))
         } else if ordered {
             if entries.iter().any(|entry| entry.spread) {
-                Some(Box::new(merge_source_order(&selected, order_chunks, span)?))
+                Some(Box::new(merge_source_order(
+                    &selected,
+                    order_chunks,
+                    !optional_names.is_empty(),
+                    span,
+                )?))
             } else {
                 let insertion = rules::read_record_field_insertion_order(&field_names);
                 let items = insertion
@@ -457,7 +574,12 @@ impl Checker {
             None
         };
         let ty = Type::Record {
-            source_class_owner: match expected{Some(Type::Record{source_class_owner,..})=>source_class_owner.clone(),_=>None},
+            source_class_owner: match expected {
+                Some(Type::Record {
+                    source_class_owner, ..
+                }) => source_class_owner.clone(),
+                _ => None,
+            },
             fields: selected
                 .iter()
                 .map(|entry| TypeField {
@@ -556,7 +678,11 @@ impl Checker {
         if let Some(record) = Self::record_field(value.clone(), field, span)? {
             let optional = matches!(&value.ty, Type::Record { fields, .. }
                 if fields.iter().any(|entry| entry.name == field && entry.optional));
-            return Ok(if optional { presence::read_value(record) } else { record });
+            return Ok(if optional {
+                presence::read_value(record)
+            } else {
+                record
+            });
         }
         if field == "size" && matches!(value.ty, Type::Map { .. } | Type::Set { .. }) {
             return Ok(Expr::new(

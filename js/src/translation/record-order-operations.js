@@ -2,12 +2,13 @@
 import {FLOAT,BOOL,STRING,array,tuple} from './types.js';
 import {coerce} from './check.js';
 import {typeError} from './diagnostics.js';
-import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead,readJavaScriptObjectEntryPairingOperation} from './javascript-enumeration-rules.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead,readJavaScriptObjectEntryPairingOperation,acceptJavaScriptRecordValueReordering} from './javascript-enumeration-rules.js';
 export function readRecordOrderRoleType(role){
  if(role==='number')return FLOAT;
  if(role==='text')return STRING;
  if(role==='boolean')return BOOL;
  if(role==='positions')return array(FLOAT);
+ if(role==='presence')return array(BOOL);
  if(role==='name rows')return array(array(FLOAT));
  if(role==='key texts')return array(STRING);
  throw typeError('an ordinary record order library operand has an unknown role');
@@ -22,7 +23,7 @@ export function checkRecordOrderOperation(checker,node,env,path,expected){
   if(values.type.kind!=='array'||values.type.reference===true)throw typeError('own entry pairing needs its actual owned value array',node.span);
   return {k:'math',op:node.op,args:[keys,values],type:array(tuple([STRING,values.type.element])),...(node.span?{span:node.span}:{})};
  }
- if(node.op==='reorderJavaScriptRecordPropertyValues'){
+ if(acceptJavaScriptRecordValueReordering(node.op)){
   const values=checker.referenceValue(checker.expr(node.args[0].value,env,path,expected?.kind==='array'?expected:undefined));
   if(values.type.kind!=='array'||values.type.reference===true)throw typeError('record value ordering needs its actual owned value array',node.span);
   const positions=array(FLOAT),order=coerce(checker.referenceValue(checker.expr(node.args[1].value,env,path,positions)),positions,checker.language,node.span);

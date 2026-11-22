@@ -44,7 +44,8 @@ impl Inference {
                 waiting.push(constraint);
                 continue;
             }
-            let members = match object {
+            let has_optional_fields = matches!(&object, Term::Record(record) if !record.borrow().optional_fields.is_empty());
+            let members: Vec<Term> = match object {
                 Term::Record(record) => record
                     .borrow()
                     .fields
@@ -56,8 +57,17 @@ impl Inference {
                 Term::Known(Type::String) => vec![Term::Known(Type::String)],
                 _ => Vec::new(),
             };
-            for member in members {
-                self.unify(&constraint.element, &member, constraint.place)?;
+            if has_optional_fields {
+                let joined = members
+                    .into_iter()
+                    .reduce(|left, right| self.join(left, right, constraint.place));
+                if let Some(joined) = joined {
+                    self.unify(&constraint.element, &joined, constraint.place)?;
+                }
+            } else {
+                for member in members {
+                    self.unify(&constraint.element, &member, constraint.place)?;
+                }
             }
             progress = true;
         }
