@@ -21,6 +21,9 @@ const hostSuccessorPath='parity/self-translation/tooling-frozen-host-successors.
 const hostSuccessorRevision='8f2f6c483ec32a3ffc17afec694463965dc7551d';
 const hostSuccessorFiles=['js/tests/ci-workflow-structure.test.js','js/tests/test-groups.test.js','rust/Cargo.toml'];
 const hostPredecessorRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
+export const dependencyRefreshHistoryPath='parity/self-translation/dependency-refresh-publication-history.lino';
+export const dependencyRefreshHistoryFiles=['.github/workflows/dependency-refresh.yml','js/tests/ci-workflow-structure.test.js'];
+const dependencyRefreshHistorySha256='c438d13fda3b095dbe6899cae323dc5a46a9c0dc857cde1df1b8067f12ffdd07';
 let hostSuccessorSnapshot;
 export const toolingFrozenSourcePin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());};
@@ -200,6 +203,7 @@ export function restoreToolingFrozenHostSource(source,file,{hostSuccessorsOnly=f
 
 function restoreToolingHostSuccessor(source,file,preserveUnknownSource=false){
   if(!hostSuccessorFiles.includes(file))return source;
+  source=restoreDependencyRefreshPublication(source,file);
   const row=readToolingHostSuccessorSnapshot().views.find(candidate=>candidate.path===file);
   if(source===row.previous)return source;
   // Earlier guards still authenticate their own complete older epochs. An
@@ -207,6 +211,31 @@ function restoreToolingHostSuccessor(source,file,preserveUnknownSource=false){
   if(preserveUnknownSource&&source!==row.current)return source;
   assert.equal(source,row.current,'an unknown complete tooling host has no historical source authority');
   return row.previous;
+}
+
+export function restoreDependencyRefreshPublication(source,file) {
+  if(!dependencyRefreshHistoryFiles.includes(file))return source;
+  const bytes=readFileSync(new URL(dependencyRefreshHistoryPath,root));
+  assert.equal(toolingFrozenSourcePin(bytes).sha256,dependencyRefreshHistorySha256);
+  const history=readBootstrapStructuredDataLino(bytes.toString('utf8'));
+  assert.equal(history.schemaVersion,1);
+  assert.equal(history.revision,hostSuccessorRevision);
+  assert.deepEqual(history.sources.map(row=>row.file),dependencyRefreshHistoryFiles);
+  const row=history.sources.find(row=>row.file===file);
+  const current=toolingFrozenSourcePin(source);
+  if(current.sha256!==row.current.sha256)return source;
+  assert.deepEqual(current,row.current);
+  const {start,removed,inserted}=row.edit;
+  assert.equal(source.slice(start,start+inserted.length),inserted);
+  const original=source.slice(0,start)+removed+source.slice(start+inserted.length);
+  assert.deepEqual(toolingFrozenSourcePin(original),row.previous);
+  if(hostSuccessorFiles.includes(file)) {
+    const certified=readToolingHostSuccessorSnapshot().views.find(view=>view.path===file);
+    assert.equal(original,certified.current);
+  } else {
+    verifyGitArtifactCertificate(row.certificate,Buffer.from(original),{revision:hostSuccessorRevision,path:file});
+  }
+  return original;
 }
 
 function readToolingHostSuccessorSnapshot(){

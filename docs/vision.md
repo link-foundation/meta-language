@@ -6470,6 +6470,13 @@ retain those findings; required offline PR and delivery gates still fail until
 the applicable dependency problems are repaired. An unavailable registry cannot
 be presented as a current audit.
 
+The dependency refresh branch advances through a normal push. Each refresh
+uses the audited main tree plus its tracked changes, with main as the first
+parent and the previous automation tip as a second parent when distinct.
+This retains previous refreshes and refreshes the same pull request under
+branch rules that prohibit force pushes. A concurrently changed remote tip
+still causes a normal non-fast-forward rejection.
+
 ## Acceptance and evidence
 
 The source-project snapshot draft reuses the existing complete graph archive

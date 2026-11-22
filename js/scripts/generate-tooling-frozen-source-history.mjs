@@ -8,18 +8,51 @@ import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {restoreCrateFixturePackageSource} from './crate-fixture-package-source-history.mjs';
 import {TOOLING_FROZEN_SOURCE_REVISION,TOOLING_FROZEN_HOSTS,CURRENT_CONVERSATION_SOURCE,CRITICAL_DELIVERY_SOURCE_HISTORY,
   toolingFrozenSourcePin,replayToolingFrozenHostChanges,readCriticalDeliveryFrozenSource,readCriticalDeliveryAppend,
-  verifyToolingFrozenSourceHistory,restoreToolingFrozenHostSource} from './tooling-frozen-source-history.mjs';
+  verifyToolingFrozenSourceHistory,restoreToolingFrozenHostSource,dependencyRefreshHistoryPath,
+  dependencyRefreshHistoryFiles,readToolingFrozenSourceHistory,restoreDependencyRefreshPublication} from './tooling-frozen-source-history.mjs';
 const root=new URL('../../',import.meta.url),output='parity/self-translation/tooling-frozen-source-history.lino';
 const helper='js/scripts/tooling-frozen-source-history.mjs';
 
-export function generateToolingFrozenSourceHistory({check=false,apply=false,hostSuccessors=false}={}){
+export function generateToolingFrozenSourceHistory({check=false,apply=false,hostSuccessors=false,dependencyRefresh=false}={}){
   assert.equal(check&&apply,false);
+  if(dependencyRefresh){
+    assert.ok(!apply&&!hostSuccessors);
+    const revision='8f2f6c483ec32a3ffc17afec694463965dc7551d';
+    const certifiedHosts=readToolingFrozenSourceHistory({hostSuccessors:true}).sources;
+    const sources=dependencyRefreshHistoryFiles.map(file=>{
+      const {blob,certificate}=captureGitArtifactCertificate(revision,file);
+      const previous=blob.toString('utf8'), current=readFileSync(new URL(file,root),'utf8');
+      assert.deepEqual(Buffer.from(previous),blob);
+      let start=0;
+      while(start<previous.length&&start<current.length&&previous[start]===current[start])start++;
+      let end=previous.length, currentEnd=current.length;
+      while(end>start&&currentEnd>start&&previous[end-1]===current[currentEnd-1]){end--;currentEnd--;}
+      const edit={start,removed:previous.slice(start,end),inserted:current.slice(start,currentEnd)};
+      assert.equal(previous.slice(0,start)+edit.inserted+previous.slice(end),current);
+      assert.equal(current.slice(0,start)+edit.removed+current.slice(currentEnd),previous);
+      const host=certifiedHosts.find(row=>row.path===file);
+      if(host)assert.equal(previous,host.source);
+      return{file,previous:toolingFrozenSourcePin(previous),current:toolingFrozenSourcePin(current),
+        ...(host?{}:{certificate}),edit};
+    });
+    const packet={schemaVersion:1,revision,sources};
+    const target=new URL(dependencyRefreshHistoryPath,root);
+    if(check)checkProjectData(target,packet);else writeProjectData(target,packet);
+    const path=new URL(helper,root),source=readFileSync(path,'utf8');
+    const pattern=/const dependencyRefreshHistorySha256='(?:PENDING|[a-f0-9]{64})';/u;
+    assert.equal(source.split(pattern).length,2);
+    const expected=source.replace(pattern,"const dependencyRefreshHistorySha256='"+toolingFrozenSourcePin(readFileSync(target)).sha256+"';");
+    if(check)assert.equal(source,expected);else writeFileSync(path,expected);
+    return packet;
+  }
   if(hostSuccessors){
     assert.equal(apply,false,'host successors never overwrite source hosts');
     const revision='8f2f6c483ec32a3ffc17afec694463965dc7551d',predecessor='8bc0ef9725388c7927acf1854870bf46f5e365be';
     const sources=['js/tests/ci-workflow-structure.test.js','js/tests/test-groups.test.js','rust/Cargo.toml'].map(path=>{
       const captured=captureGitArtifactCertificate(revision,path),source=captured.blob.toString('utf8');
-      assert.deepEqual(Buffer.from(source),captured.blob);assert.equal(restoreCrateFixturePackageSource(readFileSync(new URL(path,root),'utf8'),path),source);
+      assert.deepEqual(Buffer.from(source),captured.blob);
+      const current=restoreCrateFixturePackageSource(readFileSync(new URL(path,root),'utf8'),path);
+      assert.equal(restoreDependencyRefreshPublication(current,path),source);
       const old=captureGitArtifactCertificate(predecessor,path),prior=old.blob.toString('utf8');assert.deepEqual(Buffer.from(prior),old.blob);
       let start=0;while(start<prior.length&&start<source.length&&prior[start]===source[start])start++;
       let suffix=0;while(suffix<prior.length-start&&suffix<source.length-start&&prior.at(-1-suffix)===source.at(-1-suffix))suffix++;
@@ -65,7 +98,7 @@ export function generateToolingFrozenSourceHistory({check=false,apply=false,host
   return packet;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
-  const args=process.argv.slice(2);assert.equal(new Set(args).size,args.length);assert.ok(args.every(value=>['--check','--apply','--host-successors'].includes(value)));
-  const packet=generateToolingFrozenSourceHistory({check:args.includes('--check'),apply:args.includes('--apply'),hostSuccessors:args.includes('--host-successors')});
-  console.log(JSON.stringify({sourceHosts:(packet.hosts??packet.sources).map(row=>row.path),appendedRequirementIds:packet.conversation?.append.ids??[],nativeExecution:false}));
+  const args=process.argv.slice(2);assert.equal(new Set(args).size,args.length);assert.ok(args.every(value=>['--check','--apply','--host-successors','--dependency-refresh'].includes(value)));
+  const packet=generateToolingFrozenSourceHistory({check:args.includes('--check'),apply:args.includes('--apply'),hostSuccessors:args.includes('--host-successors'),dependencyRefresh:args.includes('--dependency-refresh')});
+  console.log(JSON.stringify({sourceHosts:(packet.hosts??packet.sources).map(row=>row.path??row.file),appendedRequirementIds:packet.conversation?.append.ids??[],nativeExecution:false}));
 }
