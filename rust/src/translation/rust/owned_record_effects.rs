@@ -5,6 +5,8 @@ use serde::Serialize;
 use serde_json::{Value,json};
 use super::{Result,RustParser,SExpr,SProgram,SourceOrigin,Span,Type,unsupported};
 use super::owned_record_state::{CollectionPlace,Layout,Slot};
+use super::owned_record_loops::loop_operation;
+mod ordered_collection_loop;
 use crate::translation::rust_owned_record_effect_rules as rules;
 use crate::translation::rust_expression_completion_rules as completion;
 use crate::translation::proposition_value_rules as proposition;
@@ -21,7 +23,7 @@ fn decode(value:Value)->Result<SExpr>{serde_json::from_value(value).map_err(|_|f
 fn name(value:&str)->Value{json!({"k":"name","path":[value]})}
 fn loop_control(owner:&[String],variant:&str,args:Vec<Value>)->Value{let mut path=owner.to_vec();path.push(variant.to_owned());json!({"k":"app","fn":{"k":"name","path":path},"args":args})}
 fn text<'a>(value:&'a Value,key:&str)->&'a str{value.get(key).and_then(Value::as_str).unwrap_or("")}
-fn marker(value:&Value)->bool{text(value,"k")=="math"&&(["read","write","packet"].iter().any(|role|rules::read_rust_owned_record_effect_operation(role)==text(value,"op"))||loops::read_rust_owned_record_loop_operation()==text(value,"op"))}
+fn marker(value:&Value)->bool{text(value,"k")=="math"&&(["read","write","packet"].iter().any(|role|rules::read_rust_owned_record_effect_operation(role)==text(value,"op"))||loop_operation(text(value,"op")))}
 fn has_write(value:&Value)->Result<bool>{let mut pending=vec![value];let mut count=0;while let Some(value)=pending.pop(){if !value.is_object()&&!value.is_array(){continue;}count+=1;if count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("the assertion exceeds its source inspection budget"));}if marker(value)&&["write","packet"].iter().any(|role|rules::read_rust_owned_record_effect_operation(role)==text(value,"op")){return Ok(true);}match value{Value::Array(values)=>pending.extend(values),Value::Object(values)=>pending.extend(values.values()),_=>{}}}Ok(false)}
 fn contains(value:&Value,callables:bool,count:&mut usize)->Result<bool>{let mut pending=vec![value];while let Some(value)=pending.pop(){if !value.is_object()&&!value.is_array(){continue;}*count+=1;if *count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("the actual state expression exceeds its inspection budget"));}if marker(value){return Ok(true);}if !callables&&text(value,"k")=="lambda"{continue;}match value{Value::Array(values)=>pending.extend(values),Value::Object(values)=>pending.extend(values.values()),_=>{}}}Ok(false)}
 fn wrap(bindings:Vec<Value>,mut value:Value)->Value{for mut binding in bindings.into_iter().rev(){binding["body"]=value;value=binding;}value}
@@ -125,6 +127,7 @@ impl Transport<'_>{
  fn visit(&mut self,mut node:Value,environment:Environment,depth:usize,want:Option<&Value>)->Result<Lowered>{
   self.charge(depth)?;let kind=text(&node,"k").to_owned();if kind=="lambda"{let ret=node.get("ret").cloned();let result=self.visit(node["body"].take(),Environment::new(),depth+1,ret.as_ref())?;node["body"]=wrap(result.bindings,result.value);return Ok(Lowered::plain(node,environment));}if !contains(&node,true,&mut self.inspection)?{return Ok(Lowered::plain(node,environment));}
   if kind=="math"&&text(&node,"op")==loops::read_rust_owned_record_loop_operation(){return self.finite_loop(node,environment);}
+  if kind=="math"&&text(&node,"op")==loops::read_rust_ordered_collection_loop_operation(){return self.ordered_collection_loop(node,environment,depth);}
   let form=rules::read_rust_owned_record_effect_form(&kind,text(&node,"op"));
   if form=="proposition comparison"{let tuple=json!({"k":"tuple","items":[node["prop"]["left"].take(),node["prop"]["right"].take()]});let mut result=self.ordered(tuple,&["items".to_owned()],environment,depth+1)?;node["prop"]["left"]=result.value["items"][0].take();node["prop"]["right"]=result.value["items"][1].take();result.value=node;return Ok(result);}
   if form=="read state"{let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state read"))?;let slot=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.reads.get(index)).ok_or_else(||fail("unknown actual state read"))?;let (_,current)=environment.get(&slot.lexical).ok_or_else(||fail("a mutable read needs its actual initialized lexical state in this callable"))?;return Ok(Lowered::plain(name(current),environment));}
@@ -232,7 +235,7 @@ impl RustParser{
  pub(super) fn owned_record_effect_source(&self,node:&SExpr)->Option<EffectSource<'_>>{let super::SNode::Math{op,name,args}=&node.node else{return None;};self.owned_record_effect_source_parts(op,name,args.len())}
  pub(super) fn owned_record_effect_source_parts(&self,op:&str,name:&str,arity:usize)->Option<EffectSource<'_>>{let index=name.parse::<usize>().ok()?;if index.to_string()!=name{return None;}let effects=self.owned_record_state.effects.as_ref()?;if op==rules::read_rust_owned_record_effect_operation("read")&&arity==0{return effects.reads.get(index).map(EffectSource::Read);}if op==rules::read_rust_owned_record_effect_operation("write")&&arity==1{return effects.writes.get(index).map(|write|EffectSource::Write{slot:&write.slot,target:&write.target});}if op==rules::read_rust_owned_record_effect_operation("packet")&&arity==1{return effects.packets.get(index).map(|(place,_)|EffectSource::Write{slot:&place.slot,target:&place.target});}None}
  pub(super) fn finish_owned_record_effects(&mut self,program:&mut SProgram)->Result<()>{
-  if self.owned_record_state.effects.is_none(){return Ok(());}if self.origins.collecting&&self.owned_record_state.effects.as_ref().is_some_and(|effects|effects.loops.entries.iter().any(|entry|entry.admission.is_none())){return Ok(());}
+  if self.owned_record_state.effects.is_none(){return Ok(());}if self.origins.collecting&&self.owned_record_state.effects.as_ref().is_some_and(|effects|effects.loops.entries.iter().any(|entry|entry.admission.is_none()&&entry.ordered.is_none())){return Ok(());}
   let mut value=encode(program)?;if !contains(&value,true,&mut 0)?{return Ok(());}let mut data=Vec::new();data_inventory(&value["items"],&[],&mut data);let mut transport=Transport{parser:self,path:Vec::new(),declarations:HashMap::new(),data,work:0,inspection:0,loop_helpers:Vec::new(),loop_names:HashMap::new()};transport.items(&mut value["items"],&[])?;transport.path.clear();if value["main"].is_object(){value["main"]=transport.main(value["main"].take())?;}if contains(&value,true,&mut 0)?{return Err(fail("a private record state operation escaped its ordered consumer"));}
   let helpers=std::mem::take(&mut transport.loop_helpers);drop(transport);*program=serde_json::from_value(value).map_err(|_|fail("ordered program reconstruction failed"))?;
   // Seal only the final pure helper, after all JSON structural transport. The

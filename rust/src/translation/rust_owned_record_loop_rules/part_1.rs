@@ -227,6 +227,12 @@ pub fn read_rust_owned_record_loop_operation() -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_ordered_collection_loop_operation() -> String {
+    String::from("rustStandardCollectionOrderedLoop")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_owned_record_loop_chunk_size() -> f64 {
     8f64
 }

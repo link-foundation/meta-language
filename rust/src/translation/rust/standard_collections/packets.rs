@@ -177,9 +177,7 @@ fn encode_metadata(
             element: Some(source_type(element)),
             items: values
                 .iter()
-                .map(|value| {
-                    Ok(SArrayItem::new(child(Some(value), element)?, false))
-                })
+                .map(|value| Ok(SArrayItem::new(child(Some(value), element)?, false)))
                 .collect::<Result<_>>()?,
         },
         (Type::Tuple { elements }, Some(Value::Array(values)))
@@ -867,7 +865,7 @@ impl RustParser {
                 location,
             ));
         }
-        self.lower_standard_collection_method(receiver, "clone", module, location, false)
+        self.lower_standard_collection_method(receiver, "clone", module, location, false, None)
     }
 
     pub(in super::super) fn standard_collection_method(
@@ -879,6 +877,35 @@ impl RustParser {
         let actual = self.origins.origin(receiver, module);
         if self.standard_collection_origin(&actual).is_none() {
             return Ok(None);
+        }
+        if method.value == "into_iter"
+            && self
+                .standard_collections
+                .as_ref()
+                .is_some_and(|source| source.ordered_iteration_head.is_some())
+        {
+            self.cursor
+                .expect("(", Some("ordered collection IntoIterator"))?;
+            let end = self
+                .cursor
+                .expect(")", Some("ordered collection IntoIterator"))?;
+            let (mut node, item) = self
+                .standard_collection_owned_iteration(receiver, module)?
+                .ok_or_else(|| {
+                    fail(
+                        "IntoIterator requires its actual standard BTree owner",
+                        Some(method.span()),
+                    )
+                })?;
+            let origin = self.origins.origin(&node, module);
+            node.span = receiver.span.map(|start| Span::new(start.start, end.end));
+            self.origins.mark(&node, origin);
+            self.standard_collections
+                .as_mut()
+                .and_then(|source| source.ordered_iteration_head.as_mut())
+                .expect("actual ordered iteration head reader")
+                .push((node.clone(), item));
+            return Ok(Some(node));
         }
         if matches!(method.value.as_str(), "eq" | "ne") {
             self.cursor
@@ -907,7 +934,84 @@ impl RustParser {
             module,
             Some(method.span()),
             true,
+            None,
         )
+    }
+
+    pub(in super::super) fn standard_collection_owned_iteration(
+        &mut self,
+        receiver: &SExpr,
+        module: &[String],
+    ) -> Result<Option<(SExpr, SourceOrigin)>> {
+        let actual = self.origins.origin(receiver, module);
+        let Some(carrier) = self.standard_collection_origin(&actual) else {
+            return Ok(None);
+        };
+        let location = receiver.span;
+        if !test_rust_standard_collection_ordered(&Text::from_text(&carrier.owner.path.join("::")))
+        {
+            return Err(fail(
+                "ordered IntoIterator requires its actual standard BTree owner",
+                location,
+            ));
+        }
+        let (collection_module, item) = match carrier.arguments.as_slice() {
+            [key] => ("btree_set", key.clone()),
+            [key, value] => {
+                let (Some(key_type), Some(value_type)) = (&key.ty, &value.ty) else {
+                    return Err(fail(
+                        "the ordered map needs its actual key and value types",
+                        location,
+                    ));
+                };
+                let mut pair = SourceOrigin::with_type(
+                    Type::Tuple {
+                        elements: vec![key_type.clone(), value_type.clone()],
+                    },
+                    module,
+                    Vec::new(),
+                );
+                pair.fields = Some(vec![key.clone(), value.clone()]);
+                pair.copy_evidence = key.copy_evidence.and(value.copy_evidence);
+                ("btree_map", pair)
+            }
+            _ => {
+                return Err(fail(
+                    "the ordered receiver lost its actual scalar domains",
+                    location,
+                ));
+            }
+        };
+        let element = item
+            .ty
+            .clone()
+            .ok_or_else(|| fail("the ordered receiver lost its actual item type", location))?;
+        let mut iteration = SourceOrigin::with_type(
+            Type::Array {
+                element: Box::new(element),
+                reference: false,
+            },
+            module,
+            Vec::new(),
+        );
+        iteration.source_owner = Some(SourceOwner {
+            kind: "library".to_owned(),
+            path: ["std", "collections", collection_module, "IntoIter"]
+                .map(str::to_owned)
+                .to_vec(),
+            arguments: carrier.owner.arguments.clone(),
+        });
+        iteration.array_source_model = None;
+        iteration.copy_evidence = None;
+        let lowered = self.lower_standard_collection_method(
+            receiver,
+            "into_iter",
+            module,
+            location,
+            false,
+            Some(iteration),
+        )?;
+        Ok(lowered.map(|expression| (expression, item)))
     }
 
     fn lower_standard_collection_method(
@@ -917,6 +1021,7 @@ impl RustParser {
         module: &[String],
         location: Option<Span>,
         read_arguments: bool,
+        iteration: Option<SourceOrigin>,
     ) -> Result<Option<SExpr>> {
         let actual = self.origins.origin(receiver, module);
         let Some(carrier) = self.standard_collection_origin(&actual).cloned() else {
@@ -1078,6 +1183,28 @@ impl RustParser {
             self.cursor
                 .expect(")", Some("standard collection method"))?;
         }
+        let owned_iteration = result_kind == "owned ordered entries" && iteration.is_some();
+        if owned_iteration {
+            if !actual.wrappers.is_empty() || actual.source_borrowed_place {
+                return Err(fail(
+                    "ordered IntoIterator requires a direct owned BTree receiver",
+                    location,
+                ));
+            }
+            self.origins.check_owned_origin(&actual, location)?;
+            if !self.origins.collecting {
+                let transferred = self.origins.transfer_owned_result(receiver, module)?;
+                if !self.origins.available_owned_binding(&transferred)
+                    || !transferred.source_owned_result_proof
+                    || !self.origins.consume_owned_binding(&transferred, location)?
+                {
+                    return Err(fail(
+                        "ordered IntoIterator requires one actual available owned collection transfer",
+                        location,
+                    ));
+                }
+            }
+        }
         let place = if mutation {
             Some(self.collection_mutable_state_place(receiver, location)?)
         } else {
@@ -1096,7 +1223,9 @@ impl RustParser {
         } else {
             payload_index
         };
-        let projection = if method == "get" || ordered_values {
+        let projection = if owned_iteration {
+            "owned".to_owned()
+        } else if method == "get" || ordered_values {
             self.cursor
                 .expect(".", Some("collection reference projection"))?;
             let selection = self
@@ -1147,6 +1276,9 @@ impl RustParser {
             "owned ordered values" => {
                 self.read_ordered_collection_target(&carrier.arguments[selected_index], location)?
             }
+            "owned ordered entries" if owned_iteration => {
+                iteration.expect("admitted ordered consumer")
+            }
             _ => {
                 return Err(fail(
                     "the method requires its actual distinct result interpretation",
@@ -1154,7 +1286,7 @@ impl RustParser {
                 ));
             }
         };
-        result.source_owned_result_proof = true;
+        result.source_owned_result_proof = !owned_iteration;
         let library = Rc::clone(
             &self
                 .standard_collections
@@ -1175,7 +1307,10 @@ impl RustParser {
                     .into_iter()
                     .zip(&carrier.domains)
                     .map(|(argument, domain)| {
-                        Ok(SArrayItem::new(packet_leaf(program, element, domain, argument, location)?, false))
+                        Ok(SArrayItem::new(
+                            packet_leaf(program, element, domain, argument, location)?,
+                            false,
+                        ))
                     })
                     .collect::<Result<_>>()?,
             },
@@ -1191,16 +1326,21 @@ impl RustParser {
         let clone_method = method == "clone";
         let dispatch = if clone_method {
             "core::clone::Clone"
+        } else if owned_iteration {
+            "core::iter::IntoIterator"
         } else {
             &owner
         };
         let suffix = format!("/{}", self.fresh_product_binding());
-        let metadata = json!({
+        let mut metadata = json!({
             "$": "rustStandardCollectionCallOrigin", "owner": owner,
             "typeIdentity": facet.concrete_identity, "receiverRoot": "", "method": method,
             "dispatchOwner": dispatch, "proven": true, "shadowed": false,
             "mutable": mutation, "available": true, "overlappingLoan": false, "arguments": argument_facts,
         });
+        if owned_iteration {
+            metadata["ownedReceiverTransfer"] = json!(true);
+        }
         let held = self.fresh_product_binding();
         let state = name(vec![held.clone()], location);
         let state_match =
@@ -1478,6 +1618,102 @@ impl RustParser {
         Ok(origin)
     }
 
+    fn decode_ordered_collection_entry(
+        &mut self,
+        library: &dyn CollectionSourceDeclarations,
+        carrier: &SourceCarrier,
+        input: SExpr,
+        packet_element: &Type,
+        output: &Type,
+        location: Option<Span>,
+    ) -> Result<SExpr> {
+        let Type::Record { fields, .. } = packet_element else {
+            return Err(fail(
+                "ordered entries need their actual checked record layout",
+                location,
+            ));
+        };
+        let fields = fields
+            .iter()
+            .map(|field| {
+                let ty = if field.optional {
+                    crate::translation::javascript_constructor_presence::field_value_type(&field.ty)
+                        .ok_or_else(|| {
+                            fail(
+                                "an optional entry field lost its actual presence carrier",
+                                location,
+                            )
+                        })?
+                } else {
+                    &field.ty
+                };
+                let expression = SExpr::new(
+                    SNode::Field {
+                        object: Box::new(input.clone()),
+                        field: field.name.clone(),
+                    },
+                    location,
+                );
+                Ok((field.name.clone(), (expression, ty.clone())))
+            })
+            .collect::<Result<Fields>>()?;
+        let mut decode_field = |field: &str, index: usize, output: &Type| {
+            let (expression, ty) = required_field(&fields, field, location)?;
+            let (selected, scalar_type) = if let Type::Option { element, .. } = ty {
+                (
+                    SExpr::new(
+                        SNode::Coalesce {
+                            left: Box::new(expression.clone()),
+                            right: Box::new(invalid(
+                                library,
+                                "the ordered collection entry lost its selected scalar",
+                                location,
+                            )),
+                        },
+                        location,
+                    ),
+                    element.as_ref(),
+                )
+            } else {
+                (expression.clone(), ty)
+            };
+            self.decode_collection_scalar(
+                library,
+                selected,
+                scalar_type,
+                &carrier.domains[index],
+                output,
+                location,
+            )
+        };
+        match (carrier.domains.as_slice(), output) {
+            ([_], _) => decode_field("key", 0, output),
+            ([_, _], Type::Tuple { elements }) => {
+                let [key, value] = elements.as_slice() else {
+                    return Err(fail(
+                        "an ordered map needs its actual key/value pair",
+                        location,
+                    ));
+                };
+                Ok(SExpr::new(
+                    SNode::Tuple {
+                        items: vec![
+                            decode_field("key", 0, key)?,
+                            decode_field("value", 1, value)?,
+                        ],
+                        frozen: false,
+                        product_model: None,
+                    },
+                    location,
+                ))
+            }
+            _ => Err(fail(
+                "the ordered entry lost its actual collection item type",
+                location,
+            )),
+        }
+    }
+
     fn decode_collection_result(
         &mut self,
         library: &dyn CollectionSourceDeclarations,
@@ -1512,26 +1748,32 @@ impl RustParser {
                     })
                 })
             }
-            "owned ordered values" => self.match_collection_packet(
+            "owned ordered values" | "owned ordered entries" => self.match_collection_packet(
                 library.program(),
                 ty,
                 value,
                 location,
                 |parser, tag, fields| {
-                    if tag != "rustCollectionOrderedValues" {
+                    let field = match (kind, tag) {
+                        ("owned ordered values", "rustCollectionOrderedValues") => "values",
+                        ("owned ordered entries", "rustCollectionOrderedEntries") => "entries",
+                        _ => "",
+                    };
+                    if field.is_empty() {
                         return Ok(invalid(
                             library,
-                            "the ordered collection needs its actual complete scalar sequence",
+                            "the ordered collection needs its actual complete sequence",
                             location,
                         ));
                     }
-                    let (values, values_type) = required_field(&fields, "values", location)?;
+                    let (values, values_type) = required_field(&fields, field, location)?;
                     let Type::Array {
-                        element: scalar, ..
+                        element: packet_element,
+                        ..
                     } = values_type
                     else {
                         return Err(fail(
-                            "the ordered collection lost its actual scalar sequence type",
+                            "the ordered collection lost its actual sequence type",
                             location,
                         ));
                     };
@@ -1543,14 +1785,26 @@ impl RustParser {
                     };
                     let accumulator = parser.fresh_product_binding();
                     let item = parser.fresh_product_binding();
-                    let decoded = parser.decode_collection_scalar(
-                        library,
-                        name(vec![item.clone()], location),
-                        scalar,
-                        &carrier.domains[selected_index],
-                        element,
-                        location,
-                    )?;
+                    let input = name(vec![item.clone()], location);
+                    let decoded = if field == "values" {
+                        parser.decode_collection_scalar(
+                            library,
+                            input,
+                            packet_element,
+                            &carrier.domains[selected_index],
+                            element,
+                            location,
+                        )?
+                    } else {
+                        parser.decode_ordered_collection_entry(
+                            library,
+                            carrier,
+                            input,
+                            packet_element,
+                            element,
+                            location,
+                        )?
+                    };
                     let body = SExpr::new(
                         SNode::Array {
                             element: Some(element.as_ref().clone()),
@@ -1565,7 +1819,7 @@ impl RustParser {
                         SNode::Lambda {
                             params: vec![
                                 parameter(accumulator, result_type.clone(), location),
-                                parameter(item, source_type(scalar), location),
+                                parameter(item, source_type(packet_element), location),
                             ],
                             ret: Some(result_type.clone()),
                             captures: Vec::new(),

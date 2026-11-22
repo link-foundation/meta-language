@@ -108,6 +108,49 @@ fn actual_standard_collection_source_survives_both_links_transports() {
             original
         );
     }
+    let consuming = include_str!("../../../examples/rust-consuming-ordered-collections.rs");
+    let packet = create_typed_program_links_with_rust_standard_collection_source_model(
+        consuming,
+        MODEL,
+        version,
+        64,
+        Rc::clone(&library),
+        None,
+    )
+    .unwrap_or_else(|error| {
+        panic!("actual consuming BTree source under Rust {version}: {error:?}")
+    });
+    let checked =
+        decode_typed_program_links_with_limits(&packet.network, packet.root, limits).unwrap();
+    let original = compile_and_observe(consuming);
+    assert_eq!(original, "a first\nz last\n1\ndone\n");
+    assert_eq!(
+        compile_and_observe(&emit_rust(&checked).unwrap().text),
+        original,
+    );
+    let directory = TemporaryDirectory::new("javascript-consuming-ordered-collections");
+    let output = directory.0.join("consuming-ordered.mjs");
+    fs::write(&output, emit_javascript(&checked).unwrap().text).unwrap();
+    let execution = run(Command::new("node").arg(output));
+    assert!(execution.ok, "{}", execution.stderr);
+    assert_eq!(execution.stdout, original);
+    for rejected in [
+        "use std::collections::BTreeSet; fn main() { let set:BTreeSet<u8> = BTreeSet::new(); for _value in set {} println!(\"{}\", set.len()); }",
+        "use std::collections::BTreeSet; fn main() { let mut set:BTreeSet<u8> = BTreeSet::new(); set.insert(1u8); for _value in set.into_iter() { break; } println!(\"{}\", set.len()); }",
+        "use std::collections::BTreeSet; fn main() { let set:BTreeSet<u8> = BTreeSet::new(); for item in (*(&set)).into_iter() { println!(\"{}\", item); } }",
+    ] {
+        assert!(
+            parse_rust_with_standard_collection_source_model(
+                rejected,
+                MODEL,
+                version,
+                64,
+                Rc::clone(&library)
+            )
+            .is_err(),
+            "{rejected}"
+        );
+    }
     for (input, input_version, width) in [
         (source, "1.89.0", 64),
         (source, version, 32),

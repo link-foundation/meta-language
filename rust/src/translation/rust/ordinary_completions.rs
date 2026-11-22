@@ -342,8 +342,8 @@ impl RustParser {
         self.origins.mark(&expression, origin);
         Ok(expression)
     }
-    pub(super) fn ordinary_loop_completion(&mut self,path:&[String],guard:&SExpr)->Result<super::owned_record_loops::LoopCompletion>{
-        let source_result=self.standard_sum_source.return_origin.clone().filter(|origin|origin.ty.is_some()).ok_or_else(||unsupported("Rust finite record loop","completed loop exits need their actual enclosing callable result type",guard.span))?;
+    pub(super) fn ordinary_loop_completion(&mut self,path:&[String],guard:Option<&SExpr>,span:Option<super::Span>)->Result<super::owned_record_loops::LoopCompletion>{
+        let source_result=self.standard_sum_source.return_origin.clone().filter(|origin|origin.ty.is_some()).ok_or_else(||unsupported("Rust finite record loop","completed loop exits need their actual enclosing callable result type",span))?;
         let callable=self.owned_record_state_callable();let previous=self.owned_record_state.effects.get_or_insert_with(Default::default).loop_scope.replace(callable);
         let tree=self.ordinary_completion_block(path);self.owned_record_state.effects.as_mut().expect("actual loop state transport").loop_scope=previous;let tree=tree?;
         let mut pending=vec![(&tree,0_usize)];let mut work=0_usize;while let Some((tree,depth))=pending.pop(){work+=1;if work>crate::translation::rust_expression_completion_rules::read_rust_expression_completion_limit("work") as usize||depth>crate::translation::rust_expression_completion_rules::read_rust_expression_completion_limit("depth") as usize{return Err(unsupported("Rust finite record loop","the complete loop completion tree exceeds its source budget",None));}match &tree.node{CompletionNode::Binding(_,body)=>pending.push((body,depth+1)),CompletionNode::Conditional{first,second,..}|CompletionNode::Sequence{first,rest:second,..}=>{pending.push((first,depth+1));pending.push((second,depth+1));},CompletionNode::Match{arms,..}=>pending.extend(arms.iter().map(|arm|(arm.body.as_ref(),depth+1))),CompletionNode::Loop{continuation,..}=>pending.push((continuation,depth+1)),_=>{}}}

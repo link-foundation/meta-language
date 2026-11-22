@@ -14,11 +14,11 @@ import {readRustRecordSourceType} from './rust-records.js';
 import {readRustStandardSumTrySourceBranches} from './rust-standard-sum-completions.js';
 import {rustOwnedRecordFieldState} from './rust-owned-record-updates.js';
 import {testRustOwnedRecordFieldDescendant} from './rust-owned-record-update-rules.js';
-import {readRustOwnedRecordLoopInvariantError,readRustOwnedRecordNestedLoopDepthError} from './rust-owned-record-loop-rules.js';
+import {readRustOrderedCollectionLoopOperation,readRustOwnedRecordLoopInvariantError,readRustOwnedRecordNestedLoopDepthError} from './rust-owned-record-loop-rules.js';
 import {UNIT} from './types.js';
 import {selectRustOwnedRecordLoopStateSlots} from './rust-owned-record-effects.js';
 import {attachRustOwnedVectorSourceFold} from './rust-source-loop-folds.js';
-const operation='rustStandardCollectionOrderedLoop',admissions=new WeakSet();
+const operation=readRustOrderedCollectionLoopOperation(),admissions=new WeakSet();
 const fail=(reason,span)=>{throw unsupported('Rust shared ordered collection loop',reason,span);};
 const name=value=>({k:'name',path:[value]}),project=(value,index)=>({k:'tupleIndex',object:name(value),index});
 export function testRustStandardCollectionSourceLoopNode(node){return node?.k==='math'&&node.op===operation;}

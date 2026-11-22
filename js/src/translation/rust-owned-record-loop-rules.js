@@ -2,6 +2,8 @@
 // domain AND one authentic decrement on every continuing path, never fuel.
 /** @returns {string} */
 export function readRustOwnedRecordLoopOperation(){return 'rustOwnedRecordFiniteLoop';}
+/** @returns {string} */
+export function readRustOrderedCollectionLoopOperation(){return 'rustStandardCollectionOrderedLoop';}
 /** @returns {number} */
 export function readRustOwnedRecordLoopChunkSize(){return 8;}
 /** @param {number} loop @param {number} chunk @param {number} collision @returns {string} */
