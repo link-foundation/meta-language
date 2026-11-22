@@ -24,6 +24,15 @@ test('a generated function borrows its own parameters when a helper shares its n
   assert.deepEqual(styled.actions.map(action => action.from), [declaration]);
 });
 
+test('borrowed call arguments keep their positions after a generic shared tuple', () => {
+  const receiver = 'std::rc::Rc<std::cell::RefCell<(std::rc::Rc<dyn Fn(String) -> String>, (), std::rc::Rc<std::cell::RefCell<Vec<String>>>)>>';
+  const source = `pub fn lookup(receiver: ${receiver}, name: String) -> String { name }
+pub fn relay(receiver: ${receiver}, name: String) -> String { self::lookup(receiver.clone(), name.clone()) }`;
+  const styled = readPortableSourceParameterStyles(source);
+  assert.equal(styled.source, `pub fn lookup(receiver: ${receiver}, name: &str) -> String { name.to_owned() }
+pub fn relay(receiver: ${receiver}, name: &str) -> String { self::lookup(receiver.clone(), name) }`);
+});
+
 test('actual multi-line lint attributes remain attached to complete partitioned declarations', () => {
   const source = Array.from({length: 18}, (_, index) =>
     '/** @param {number} a @param {number} b @param {number} c @param {number} d @param {number} e @param {number} f @param {number} g @param {number} h @param {number} i @returns {number} */ function column' + index + '(a,b,c,d,e,f,g,h,i){return a+b+c+d+e+f+g+h+i;}').join('\n');

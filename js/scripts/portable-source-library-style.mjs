@@ -47,8 +47,25 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         assert.equal(depth, 0, 'an emitted tuple assignment has its complete left-hand side');
       }
     }
-    const parameterSource = source.slice(sourceTokens[parameterStart].end, sourceTokens[parameterEnd].start);
-    const params = parameterSource.split(',').map(value => /^\s*(?:mut )?(\w+):\s*(.+?)\s*$/u.exec(value)).filter(Boolean)
+    const parameterSources = [];
+    let parameterFrom = sourceTokens[parameterStart].end;
+    let genericDepth = 0;
+    for (let index = parameterStart + 1; index < parameterEnd; index += 1) {
+      if (delimiters.has(index)) {
+        index = delimiters.get(index);
+        continue;
+      }
+      const token = sourceTokens[index];
+      if (token.kind !== 'punct') continue;
+      if (token.value === '<' || token.value === '<<') genericDepth += token.value.length;
+      if (token.value === '>' || token.value === '>>') genericDepth -= token.value.length;
+      if (token.value === ',' && genericDepth === 0) {
+        parameterSources.push(source.slice(parameterFrom, token.start));
+        parameterFrom = token.end;
+      }
+    }
+    parameterSources.push(source.slice(parameterFrom, sourceTokens[parameterEnd].start));
+    const params = parameterSources.map(value => /^\s*(?:mut )?(\w+):\s*([\s\S]+?)\s*$/u.exec(value)).filter(Boolean)
       .map(([, parameter, type]) => ({name: parameter, type}));
     for (const param of params) {
       let element = param.type;
