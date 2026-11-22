@@ -8,18 +8,18 @@ use crate::translation::Language;
 use crate::{
     DynamicAttributeSelection, DynamicMetaLanguage, DynamicMetaLanguageOptions,
     DynamicParseOptions, GlobalConceptSource, GrammarAttributeInferenceRequest,
-    GrammarAttributeObservation, LoadedMetaLanguageArchive, MetaLanguageArchive,
-    MetaLanguageArchiveLimits, OperationValue, RegularGrammarInferenceOptions,
+    GrammarAttributeObservation, GrammarDiscoveryOracleSources, LoadedMetaLanguageArchive,
+    MetaLanguageArchive, MetaLanguageArchiveLimits, OperationValue, RegularGrammarInferenceOptions,
     StructuralGrammarInferenceOptions, create_dynamic_meta_language,
     infer_grammar_attribute_action, infer_regular_grammar,
-    infer_regular_grammar_with_parser_oracle, infer_structural_grammar,
-    infer_structural_grammar_with_parser_oracle, meta_language_archive_to_binary,
-    meta_language_archive_to_link_cli_store, meta_language_archive_to_text, parse_grammar_links,
-    read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
-    read_meta_language_archive_text, read_refined_regular_grammar_inference_links,
-    read_structural_grammar_inference_links, read_structured_data_lino,
-    refine_regular_grammar_inference, refine_structural_grammar_inference, render_grammar_links,
-    structured_data_to_lino,
+    infer_regular_grammar_with_parser_oracle, infer_regular_grammar_with_scanner_parser_oracle,
+    infer_structural_grammar, infer_structural_grammar_with_parser_oracle,
+    meta_language_archive_to_binary, meta_language_archive_to_link_cli_store,
+    meta_language_archive_to_text, parse_grammar_links, read_meta_language_archive_binary,
+    read_meta_language_archive_link_cli_store, read_meta_language_archive_text,
+    read_refined_regular_grammar_inference_links, read_structural_grammar_inference_links,
+    read_structured_data_lino, refine_regular_grammar_inference,
+    refine_structural_grammar_inference, render_grammar_links, structured_data_to_lino,
 };
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -51,8 +51,7 @@ struct LabelledExamples {
     scanner_character_classes: bool,
     scanner_mode_stack_observations: Option<Vec<crate::GrammarScannerModeStackObservation>>,
     oracle_candidates: Option<Vec<Vec<String>>>,
-    #[serde(skip)]
-    has_scanner_fields: bool,
+    oracle_sources: Option<GrammarDiscoveryOracleSources>,
 }
 
 fn labelled_examples(
@@ -72,6 +71,7 @@ fn labelled_examples(
         "scannerObservations",
         "scannerModeStackObservations",
         "oracleCandidates",
+        "oracleSources",
     ]
     .into_iter()
     .any(|field| {
@@ -92,12 +92,7 @@ fn labelled_examples(
                 .to_owned(),
         );
     }
-    let has_scanner_fields = scanner_fields
-        .iter()
-        .any(|field| value.get(*field).is_some());
-    let mut examples: LabelledExamples = serde_json::from_value(value).map_err(|_| message())?;
-    examples.has_scanner_fields = has_scanner_fields;
-    Ok(examples)
+    serde_json::from_value(value).map_err(|_| message())
 }
 
 #[derive(serde::Deserialize)]
@@ -291,18 +286,19 @@ where
             .ok_or("a labelled examples input is required")?;
         let examples = labelled_examples(&read_text(file)?, true)?;
         let oracle_path = args.options.get("--oracle-grammar");
-        if oracle_path.is_some() && examples.has_scanner_fields {
-            return Err(
-                "native parser oracle discovery needs source symbols for each candidate".into(),
-            );
-        }
         if oracle_path.is_none() && examples.oracle_candidates.is_some() {
             return Err("oracle candidates require --oracle-grammar".into());
+        }
+        if oracle_path.is_none() && examples.oracle_sources.is_some() {
+            return Err("oracle source spellings require --oracle-grammar".into());
         }
         let oracle = oracle_path
             .map(|path| parse_grammar_links(&read_text(path)?).map_err(|error| error.to_string()))
             .transpose()?;
         if let Some(delimiters) = examples.delimiters {
+            if examples.oracle_sources.is_some() {
+                return Err("native parser oracle discovery requires source spellings exactly for scanner input".into());
+            }
             let defaults = StructuralGrammarInferenceOptions::default();
             let options = StructuralGrammarInferenceOptions {
                 delimiters,
@@ -351,13 +347,25 @@ where
         options.scanner_character_classes = examples.scanner_character_classes;
         options.scanner_mode_stack_observations = examples.scanner_mode_stack_observations;
         if let Some(grammar) = &oracle {
-            infer_regular_grammar_with_parser_oracle(
-                grammar,
-                &examples.positives,
-                &examples.negatives,
-                examples.oracle_candidates.as_deref().unwrap_or_default(),
-                &options,
-            )?
+            let candidates = examples.oracle_candidates.as_deref().unwrap_or_default();
+            if let Some(sources) = &examples.oracle_sources {
+                infer_regular_grammar_with_scanner_parser_oracle(
+                    grammar,
+                    &examples.positives,
+                    &examples.negatives,
+                    candidates,
+                    &options,
+                    sources,
+                )?
+            } else {
+                infer_regular_grammar_with_parser_oracle(
+                    grammar,
+                    &examples.positives,
+                    &examples.negatives,
+                    candidates,
+                    &options,
+                )?
+            }
         } else {
             infer_regular_grammar(&examples.positives, &examples.negatives, &options)?
         }

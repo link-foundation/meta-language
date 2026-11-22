@@ -1106,10 +1106,11 @@ export interface RegularGrammarInference extends TypedProgramLinks {
   grammar: Grammar; source: GlobalConceptSource; alphabet: string[]; table: number[];
   oracleObservations?: GrammarDiscoveryOracleObservation[];
 }
-export interface GrammarDiscoveryOracleObservation { word: string[]; accepted: boolean }
-export function observeGrammarDiscoveryParserOracle(grammar: Grammar, positives: readonly (readonly string[])[], negatives: readonly (readonly string[])[], candidates?: readonly (readonly string[])[]): { positives: string[][]; negatives: string[][]; observations: GrammarDiscoveryOracleObservation[] };
+export interface GrammarDiscoveryOracleObservation { word: string[]; accepted: boolean; source?: string }
+export interface GrammarDiscoveryOracleSources { positives: readonly string[]; negatives: readonly string[]; candidates: readonly string[] }
+export function observeGrammarDiscoveryParserOracle(grammar: Grammar, positives: readonly (readonly string[])[], negatives: readonly (readonly string[])[], candidates?: readonly (readonly string[])[], sources?: GrammarDiscoveryOracleSources): { positives: string[][]; negatives: string[][]; observations: GrammarDiscoveryOracleObservation[] };
 export function inferRegularGrammar(positives: readonly (readonly string[])[], negatives?: readonly (readonly string[])[], options?: RegularGrammarInferenceOptions): RegularGrammarInference;
-export function inferRegularGrammarWithParserOracle(grammar: Grammar, positives: readonly (readonly string[])[], negatives: readonly (readonly string[])[], candidates?: readonly (readonly string[])[], options?: RegularGrammarInferenceOptions): RegularGrammarInference;
+export function inferRegularGrammarWithParserOracle(grammar: Grammar, positives: readonly (readonly string[])[], negatives: readonly (readonly string[])[], candidates?: readonly (readonly string[])[], options?: RegularGrammarInferenceOptions & { oracleSources?: GrammarDiscoveryOracleSources }): RegularGrammarInference;
 export function readRegularGrammarInferenceLinks(network: LinkNetwork, root: LinkId | number): RegularGrammarInference;
 export function refineRegularGrammarInference(network:LinkNetwork,root:LinkIdValue,positives?:readonly (readonly string[])[],negatives?:readonly (readonly string[])[],options?:{identifier?:string}):RegularGrammarInference;
 export function readRefinedRegularGrammarInferenceLinks(network:LinkNetwork,root:LinkIdValue):RegularGrammarInference;

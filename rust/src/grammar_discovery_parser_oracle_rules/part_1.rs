@@ -8,7 +8,7 @@ pub fn read_grammar_discovery_parser_oracle_limit(resource: &str) -> f64 {
         128f64
     } else if resource == "steps" {
         50_000f64
-    } else if resource == "memo" {
+    } else if (resource == "memo") || (resource == "source bytes") {
         4096f64
     } else if resource == "memory" {
         8192f64

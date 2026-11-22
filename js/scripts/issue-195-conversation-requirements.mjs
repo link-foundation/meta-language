@@ -30,6 +30,7 @@ const concreteAttributeRequirement = 'I195-GRAMMAR-INFERENCE-CONCRETE-ATTRIBUTES
 const concreteAttributeFixture = 'parity/fixtures/grammar-attribute-inference.lino';
 const parserOracleRequirement = 'I195-GRAMMAR-INFERENCE-NATIVE-PARSER-ORACLE';
 const recursiveOracleRequirement = 'I195-GRAMMAR-INFERENCE-RECURSIVE-PARSER-ORACLE';
+const scannerOracleRequirement = 'I195-GRAMMAR-INFERENCE-SCANNER-PARSER-ORACLE';
 const parserOracleFixture = 'parity/fixtures/dynamic-language-command.lino';
 
 const sourceTooling = {
@@ -223,6 +224,10 @@ const runtimeEntryPoints = {
     javascript: ['js/src/grammar-discovery-parser-oracle.js', 'js/src/grammar-structural-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/dynamic-language-command.test.js'],
     rust: ['rust/src/grammar_discovery_parser_oracle.rs', 'rust/src/grammar_inference/structural.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/dynamic_language_command.rs'],
   },
+  [scannerOracleRequirement]: {
+    javascript: ['js/src/grammar-discovery-parser-oracle.js', 'js/src/grammar-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/dynamic-language-command.test.js'],
+    rust: ['rust/src/grammar_discovery_parser_oracle.rs', 'rust/src/grammar_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/dynamic_language_command.rs'],
+  },
   [concreteAttributeRequirement]: {
     javascript: ['js/src/grammar-attribute-inference-rules.js', 'js/src/grammar-attribute-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/grammar-attribute-inference.test.js'],
     rust: ['rust/src/grammar_attribute_inference_rules.rs', 'rust/src/grammar/attribute_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/unit/grammar_attribute_inference.rs'],
@@ -290,6 +295,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     ...(id === concreteAttributeRequirement ? { fixture: concreteAttributeFixture, fixtureId: 'grammar-attribute-inference' } : {}),
     ...(id === parserOracleRequirement ? { fixture: parserOracleFixture, fixtureId: 'grammar-discovery-parser-oracle' } : {}),
     ...(id === recursiveOracleRequirement ? { fixture: parserOracleFixture, fixtureId: 'grammar-discovery-recursive-parser-oracle' } : {}),
+    ...(id === scannerOracleRequirement ? { fixture: parserOracleFixture, fixtureId: 'grammar-discovery-scanner-parser-oracle' } : {}),
     ...(area === 'formal-concept-definitions' ? {
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
@@ -411,6 +417,8 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Both library and command interfaces check declared labels against a bounded native Links grammar, refuse contradictions and ungrounded candidate words, retain distinct ordered observations through source-free link-cli and binary refinement, and parse an independently classified positive and reject a negative after installation.', ['nativeOracleChecksDeclaredAndIndependentWords', 'oracleObservationsReplaySourceFreeAfterRefinement', 'installedCandidateExecutesIndependentOracleCases']],
     [recursiveOracleRequirement, 'bounded native parser oracle for recursive delimiter grammar discovery',
       'Both library and command interfaces classify distinct nested inputs with the independent native oracle, replay the exact transcript against the original training prefix after binary and link-cli refinement, and install a grammar that parses a deeper recursive control and rejects an independently classified negative.', ['recursiveOracleLabelsAndAnswersReplayed', 'recursiveOracleCheckpointSurvivesSourceFreeRefinement', 'installedRecursiveGrammarParsesDeeperAndRejectsNegative']],
+    [scannerOracleRequirement, 'bounded native parser oracle for source spellings and scanner tokens',
+      'Both runtime interfaces query concrete source spellings, check accepted named token leaves, refuse inconsistent spellings and replay the complete transcript through source-free refinement and installation. The installed native scanner accepts a held-out Unicode source with exact bytes and rejects an independently classified negative.', ['scannerOracleChecksNativeTokenKindsAndConflictingSpellings', 'scannerOracleReplaysExactSourceSpellings', 'installedScannerParsesHeldOutSourceAndRejectsNegative']],
     ['I195-GRAMMAR-INFERENCE-NATIVE-OUTPUT', 'fully native executable discovered grammars and attributed behavior',
       'Discovery emits executable Links grammars with lossless CST structure, lexer and scanner state, precedence, ambiguity, recovery and attributed semantic actions. Foreign parser blobs, opaque sources and host callbacks cannot stand in for native operational definitions.', ['discoveredGrammarNativeAndExecutable', 'discoveredCstAndScannerSemanticsPreserved', 'attributedActionsAndRecoveryExplicit']],
     [scannerModeStackRequirement, 'finite scanner mode stack operations from bounded pre-token and post-token observations',

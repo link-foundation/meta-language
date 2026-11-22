@@ -52,17 +52,18 @@ mod grammar_scanner_mode_stack_rules;
 mod grammar_structural_inference_rules;
 pub use grammar_discovery_parser_oracle::{
     GrammarDiscoveryOracleObservation, GrammarDiscoveryOracleObservations,
-    observe_grammar_discovery_parser_oracle,
+    GrammarDiscoveryOracleSources, observe_grammar_discovery_parser_oracle,
 };
 pub use grammar_inference::{
     RegularGrammarInference, RegularGrammarInferenceOptions, RegularGrammarInferenceParameters,
     StructuralGrammarInference, StructuralGrammarInferenceLimits,
     StructuralGrammarInferenceOptions, accept_inferred_grammar_symbols,
     create_regular_grammar_inference_program_links, infer_regular_grammar,
-    infer_regular_grammar_with_parser_oracle, infer_structural_grammar,
-    infer_structural_grammar_with_parser_oracle, read_refined_regular_grammar_inference_links,
-    read_regular_grammar_inference_links, read_structural_grammar_inference_links,
-    refine_regular_grammar_inference, refine_structural_grammar_inference,
+    infer_regular_grammar_with_parser_oracle, infer_regular_grammar_with_scanner_parser_oracle,
+    infer_structural_grammar, infer_structural_grammar_with_parser_oracle,
+    read_refined_regular_grammar_inference_links, read_regular_grammar_inference_links,
+    read_structural_grammar_inference_links, refine_regular_grammar_inference,
+    refine_structural_grammar_inference,
 };
 pub use grammar_scanner_inference::{
     GrammarScannerModeStackObservation, GrammarScannerObservation, InferredGrammarScanner,

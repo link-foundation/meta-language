@@ -8,7 +8,7 @@ use crate::grammar::{
     Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarRule, serialize_grammar,
 };
 use crate::grammar_discovery_parser_oracle::{
-    GRAMMAR_DISCOVERY_PARSER_ORACLE, create_oracle_entry, read_oracle_entry,
+    GRAMMAR_DISCOVERY_PARSER_ORACLE, create_oracle_entry, observe_parser_oracle, read_oracle_entry,
 };
 use crate::grammar_inference_rules as rules;
 use crate::grammar_scanner_inference::{
@@ -20,12 +20,11 @@ use crate::grammar_scanner_inference::{
     infer_grammar_scanner_classes, infer_grammar_scanner_mode_stack,
 };
 use crate::{
-    GlobalConceptSource, GrammarDiscoveryOracleObservation, LinkId, LinkNetwork,
-    MetaLanguageArchive, MetaLanguageArchiveEntry, MetaLanguageArchiveLimits, TypedProgramLinks,
-    create_discovered_concept_links, create_meta_language_archive, decode_structured_data_links,
-    decode_typed_program_links, encode_structured_data_links, extend_meta_language_archive,
-    observe_grammar_discovery_parser_oracle, read_discovered_concept_links,
-    read_meta_language_archive,
+    GlobalConceptSource, GrammarDiscoveryOracleObservation, GrammarDiscoveryOracleSources, LinkId,
+    LinkNetwork, MetaLanguageArchive, MetaLanguageArchiveEntry, MetaLanguageArchiveLimits,
+    TypedProgramLinks, create_discovered_concept_links, create_meta_language_archive,
+    decode_structured_data_links, decode_typed_program_links, encode_structured_data_links,
+    extend_meta_language_archive, read_discovered_concept_links, read_meta_language_archive,
 };
 
 const ALGORITHM: &str = "labelled regular grammar discovery 1";
@@ -528,16 +527,47 @@ pub fn infer_regular_grammar_with_parser_oracle(
     candidates: &[Vec<String>],
     options: &RegularGrammarInferenceOptions,
 ) -> Result<RegularGrammarInference, String> {
-    if options.scanner_observations.is_some()
-        || options.scanner_character_classes
-        || options.scanner_mode_stack_observations.is_some()
-    {
+    infer_regular_from_oracle(grammar, positives, negatives, candidates, options, None)
+}
+
+/// Discover a regular token grammar using a scanner-aware native parser oracle.
+/// # Errors
+/// Refuses invalid spellings, incompatible scanner inputs and inconclusive or
+/// contradictory parser answers.
+pub fn infer_regular_grammar_with_scanner_parser_oracle(
+    grammar: &Grammar,
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    candidates: &[Vec<String>],
+    options: &RegularGrammarInferenceOptions,
+    sources: &GrammarDiscoveryOracleSources,
+) -> Result<RegularGrammarInference, String> {
+    infer_regular_from_oracle(
+        grammar,
+        positives,
+        negatives,
+        candidates,
+        options,
+        Some(sources),
+    )
+}
+
+fn infer_regular_from_oracle(
+    grammar: &Grammar,
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    candidates: &[Vec<String>],
+    options: &RegularGrammarInferenceOptions,
+    sources: Option<&GrammarDiscoveryOracleSources>,
+) -> Result<RegularGrammarInference, String> {
+    let scanner =
+        options.scanner_observations.is_some() || options.scanner_mode_stack_observations.is_some();
+    if scanner != sources.is_some() {
         return Err(fail(
-            "native parser oracle discovery requires a scalar regular language input",
+            "native parser oracle discovery requires source spellings exactly for scanner input",
         ));
     }
-    let observed =
-        observe_grammar_discovery_parser_oracle(grammar, positives, negatives, candidates)?;
+    let observed = observe_parser_oracle(grammar, positives, negatives, candidates, sources)?;
     let result = infer_regular_grammar(&observed.positives, &observed.negatives, options)?;
     let entry = create_oracle_entry(
         grammar,
@@ -545,6 +575,7 @@ pub fn infer_regular_grammar_with_parser_oracle(
         negatives,
         candidates,
         &observed.observations,
+        sources,
     )?;
     let archive = extend_meta_language_archive(
         &MetaLanguageArchive {
@@ -715,7 +746,15 @@ pub fn read_regular_grammar_inference_links(
         .entries
         .iter()
         .find(|entry| entry.identifier == GRAMMAR_DISCOVERY_PARSER_ORACLE)
-        .map(|entry| read_oracle_entry(entry, &model.positives, &model.negatives, false))
+        .map(|entry| {
+            read_oracle_entry(
+                entry,
+                &model.positives,
+                &model.negatives,
+                false,
+                model.schema_version > 1,
+            )
+        })
         .transpose()?;
     Ok(RegularGrammarInference {
         grammar: source.grammar.clone(),

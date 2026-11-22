@@ -6,6 +6,14 @@ if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft'
 const recursive=grammarSelectionFixture();
 const {scanner,structural}=readProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino',import.meta.url));
 const scannerSequences=[['short','begin','content','end','suffix'],['long','begin','content','end','suffix']];
+const scannerOracleObservations=[['é','word'],['ß','word'],['!','bang']]
+  .map(([spelling,token])=>({mode:'default',spelling,token,nextMode:'default'}));
+const scannerOracleExamples={
+  positives:[['word']],negatives:[['bang']],
+  oracleCandidates:[['word','bang'],['bang','word'],['word'],['word','bang']],
+  scannerObservations:scannerOracleObservations,
+  oracleSources:{positives:['é'],negatives:['!'],candidates:['é!','!é','ß','é!']},
+};
 const files=[{path:'configuration.lino',text:structuredDataToLino({records:[]})},
   {path:'first.lino',text:'(grammar (start document))\n(rule document normal (literal first))\n'},
   {path:'second.lino',text:'(grammar (start document))\n(rule document normal (literal second))\n'},
@@ -28,6 +36,22 @@ const files=[{path:'configuration.lino',text:structuredDataToLino({records:[]})}
   {path:'recursive-oracle-refinement.lino',text:structuredDataToLino({positives:[['(','b',')']],negatives:[]})},
   {path:'recursive-oracle-positive.txt',text:'(((b)))'},
   {path:'recursive-oracle-negative.txt',text:'b'},
+  {path:'scanner-oracle.lino',text:`(grammar (start document))
+(scanner authored (tokens word bang) (operations
+ (if (all (valid word) (next (literal %C3%A9))) (then (consume (literal %C3%A9)) (emit word)))
+ (if (all (valid word) (next (literal %C3%9F))) (then (consume (literal %C3%9F)) (emit word)))
+ (if (all (valid bang) (next (literal %21))) (then (consume (literal %21)) (emit bang)))
+ fail))
+(rule document normal (seq (ref word) (optional (ref bang))))
+`},
+  {path:'scanner-oracle-examples.lino',text:structuredDataToLino(scannerOracleExamples)},
+  {path:'scanner-oracle-wrong-token.lino',text:structuredDataToLino({positives:[['bang']],negatives:[],
+    scannerObservations:scannerOracleObservations,oracleSources:{positives:['é'],negatives:[],candidates:[]}})},
+  {path:'scanner-oracle-inconsistent.lino',text:structuredDataToLino({positives:[['word']],negatives:[],
+    scannerObservations:scannerOracleObservations,oracleCandidates:[['word']],oracleSources:{positives:['é'],negatives:[],candidates:['!']}})},
+  {path:'scanner-oracle-refine.lino',text:structuredDataToLino({positives:[],negatives:[['bang','bang']]})},
+  {path:'scanner-oracle-holdout.txt',text:'ß!'},
+  {path:'scanner-oracle-rejected.txt',text:'!é'},
   {path:'discovered.txt',text:'c'}, {path:'rejected.txt',text:'x'},
   {path:'scanner-examples.lino',text:structuredDataToLino({positives:[scannerSequences[0]],negatives:[[],['long']],scannerObservations:scanner.observations})},
   {path:'scanner-counterexamples.lino',text:structuredDataToLino({positives:[scannerSequences[1]],negatives:[['begin']]})},
@@ -86,6 +110,18 @@ const steps=[
  ]},
  {name:'parse deeper recursive syntax with the reloaded grammar',args:['parse','recursive-oracle-installed.lino','--source','recursive-oracle-refined','--input','recursive-oracle-positive.txt','--identifier','recursive oracle document'],exit:0,archive:true,concrete:'recursive oracle document',text:'(((b)))'},
  {name:'reject the independent negative under the installed recursive grammar',args:['parse','recursive-oracle-installed.lino','--source','recursive-oracle-refined','--input','recursive-oracle-negative.txt'],exit:1,rejection:true},
+ {name:'require the native oracle for spelled scanner queries',args:['discover','scanner-oracle-wrong-token.lino'],exit:2,error:'oracle source spellings require --oracle-grammar'},
+ {name:'refuse an accepted source paired with the wrong token',args:['discover','scanner-oracle-wrong-token.lino','--oracle-grammar','scanner-oracle.lino'],exit:2,error:'scanner oracle token sequence differs'},
+ {name:'refuse contradictory spellings for one scanner word',args:['discover','scanner-oracle-inconsistent.lino','--oracle-grammar','scanner-oracle.lino'],exit:2,error:'scanner oracle spellings for one token sequence disagree'},
+ {name:'ask the independently authored scanner grammar about explicit source bytes',args:['discover','scanner-oracle-examples.lino','--oracle-grammar','scanner-oracle.lino','--link-cli-store'],exit:0,save:'scanner-oracle.store',remove:['scanner-oracle.lino','scanner-oracle-examples.lino']},
+ {name:'refine scanner oracle model without the native oracle source',args:['refine','scanner-oracle.store','--input-link-cli-store','--examples','scanner-oracle-refine.lino','--identifier','scanner-oracle-refined','--binary'],exit:0,save:'scanner-oracle-refined.bin',remove:['scanner-oracle.store','scanner-oracle-refine.lino']},
+ {name:'install the scanner oracle checkpoint with its complete source spellings',args:['install','scanner-oracle-refined.bin','--input-binary'],exit:0,save:'scanner-oracle-installed.lino',archive:true,scannerOracle:[
+  {word:['word'],accepted:true,source:'é'},{word:['bang'],accepted:false,source:'!'},
+  {word:['word','bang'],accepted:true,source:'é!'},{word:['bang','word'],accepted:false,source:'!é'},
+  {word:['word'],accepted:true,source:'ß'},
+ ]},
+ {name:'parse a held-out Unicode combination with the installed scanner',args:['parse','scanner-oracle-installed.lino','--source','scanner-oracle-refined','--input','scanner-oracle-holdout.txt','--identifier','scanner oracle document'],exit:0,archive:true,concrete:'scanner oracle document',text:'ß!'},
+ {name:'reject the scanner oracle negative after source-free installation',args:['parse','scanner-oracle-installed.lino','--source','scanner-oracle-refined','--input','scanner-oracle-rejected.txt'],exit:1,rejection:true},
  {name:'discover a compatible edition with a distinct production',args:['discover','merge-examples.lino','--identifier','learned-source','--language','Example language','--edition','authored-1','--link-cli-store'],exit:0,save:'learned.store',remove:['merge-examples.lino']},
  {name:'preserve the full inference checkpoint through standalone link-cli installation',args:['install','learned.store','--input-link-cli-store','--link-cli-store'],exit:0,archive:true},
  {name:'a merge installation needs every source argument',args:['install','learned.store','--input-link-cli-store','--base','parsed.bin'],exit:2,error:'merged grammar installation needs a base archive'},

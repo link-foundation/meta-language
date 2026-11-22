@@ -319,6 +319,7 @@ pub fn infer_structural_grammar_with_parser_oracle(
             negatives,
             candidates,
             &observed.observations,
+            None,
         )?,
         observations: observed.observations,
     };
@@ -577,7 +578,7 @@ fn read_structural_checkpoint(
                 )
             },
         );
-        let observations = read_oracle_entry(entry, positives, negatives, true)?;
+        let observations = read_oracle_entry(entry, positives, negatives, true, false)?;
         result.oracle_observations = Some(observations.clone());
         Some(StructuralOracle {
             entry: entry.clone(),

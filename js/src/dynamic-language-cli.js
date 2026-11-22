@@ -52,11 +52,12 @@ function labelledExamples(path,readFile,allowDiscoveryOptions) {
   const examples=readStructuredDataLino(readFile(path));
   const sequences=value=>Array.isArray(value)&&value.every(sequence=>Array.isArray(sequence)&&sequence.every(symbol=>typeof symbol==='string'));
   if(!examples||typeof examples!=='object'||Array.isArray(examples)
-    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowDiscoveryOptions&&(key==='delimiters'||key==='oracleCandidates'||scannerObservationFields.includes(key))))
+    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowDiscoveryOptions&&(key==='delimiters'||key==='oracleCandidates'||key==='oracleSources'||scannerObservationFields.includes(key))))
     ||(Object.hasOwn(examples,'delimiters')&&(!Array.isArray(examples.delimiters)
       ||!examples.delimiters.every(pair=>Array.isArray(pair)&&pair.length===2&&pair.every(token=>typeof token==='string'))))
     ||!sequences(examples.positives)||!sequences(examples.negatives)
-    ||(Object.hasOwn(examples,'oracleCandidates')&&!sequences(examples.oracleCandidates))) {
+    ||(Object.hasOwn(examples,'oracleCandidates')&&!sequences(examples.oracleCandidates))
+    ||(Object.hasOwn(examples,'oracleSources')&&examples.oracleSources===null)) {
     throw new TypeError('labelled examples must contain positive and negative symbol sequences');
   }
   if(Object.hasOwn(examples,'delimiters')&&scannerObservationFields.some(key=>Object.hasOwn(examples,key))) {
@@ -127,20 +128,22 @@ function discoveryArchive(command,file,options,readFile,readBytes) {
   const identifier=options.get('--identifier');
   if(command==='discover') {
     const examples=labelledExamples(file,readFile,true);
-    const {positives,negatives,delimiters,scannerObservations,scannerCharacterClasses,scannerModeStackObservations,oracleCandidates}=examples;
+    const {positives,negatives,delimiters,scannerObservations,scannerCharacterClasses,scannerModeStackObservations,oracleCandidates,oracleSources}=examples;
     const source={identifier,language:options.get('--language'),edition:options.get('--edition')};
+    const regular={...source,scannerObservations,scannerCharacterClasses,scannerModeStackObservations};
     const oraclePath=options.get('--oracle-grammar');
     if(oraclePath!==undefined) {
-      if(scannerObservationFields.some(field=>Object.hasOwn(examples,field))) {
-        throw new TypeError('native parser oracle discovery needs source symbols for each candidate');
-      }
       const grammar=parseGrammarLinks(readFile(oraclePath));
-      if(delimiters!==undefined)return inferStructuralGrammarWithParserOracle(grammar,positives,negatives,oracleCandidates,{...source,delimiters});
-      return inferRegularGrammarWithParserOracle(grammar,positives,negatives,oracleCandidates,source);
+      if(delimiters!==undefined) {
+        if(oracleSources!==undefined)throw new TypeError('native parser oracle discovery requires source spellings exactly for scanner input');
+        return inferStructuralGrammarWithParserOracle(grammar,positives,negatives,oracleCandidates,{...source,delimiters});
+      }
+      return inferRegularGrammarWithParserOracle(grammar,positives,negatives,oracleCandidates,{...regular,oracleSources});
     }
     if(oracleCandidates!==undefined)throw new TypeError('oracle candidates require --oracle-grammar');
+    if(oracleSources!==undefined)throw new TypeError('oracle source spellings require --oracle-grammar');
     if(delimiters!==undefined)return inferStructuralGrammar(positives,negatives,{...source,delimiters});
-    return inferRegularGrammar(positives,negatives,{...source,scannerObservations,scannerCharacterClasses,scannerModeStackObservations});
+    return inferRegularGrammar(positives,negatives,regular);
   }
   const {network,root,entries}=archiveInput(file,options,readFile,readBytes,regularGrammarRefinementArchiveLimits);
   const structural=entries.some(entry=>entry.identifier===structuralGrammarInferenceModelIdentifier);

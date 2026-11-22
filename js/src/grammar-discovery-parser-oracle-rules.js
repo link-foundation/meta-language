@@ -4,6 +4,7 @@ export function readGrammarDiscoveryParserOracleLimit(resource) {
   if (resource === 'symbols' || resource === 'nesting') return 128;
   if (resource === 'steps') return 50000;
   if (resource === 'memo') return 4096;
+  if (resource === 'source bytes') return 4096;
   if (resource === 'memory') return 8192;
   return 0;
 }

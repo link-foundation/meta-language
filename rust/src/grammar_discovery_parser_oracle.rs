@@ -2,7 +2,7 @@
 use crate::grammar_discovery_parser_oracle_rules as rules;
 use crate::{
     FeatureParseOptions, GlobalConceptSource, Grammar, LinkNetwork, MetaLanguageArchiveEntry,
-    MetaLanguageArchiveLimits, TypedProgramLinks, compile_feature_grammar,
+    MetaLanguageArchiveLimits, SyntaxTree, TypedProgramLinks, compile_feature_grammar,
     create_discovered_concept_links, create_meta_language_archive, decode_structured_data_links,
     decode_typed_program_links, encode_structured_data_links, read_discovered_concept_links,
     read_meta_language_archive,
@@ -46,10 +46,25 @@ fn create_policy_links() -> Result<TypedProgramLinks, String> {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GrammarDiscoveryOracleObservation {
-    /// Exact Unicode scalar sequence passed to the parser.
+    /// Unicode scalars or named scanner tokens for the query.
     pub word: Vec<String>,
     /// Acceptance returned by the oracle within its explicit resource limits.
     pub accepted: bool,
+    /// The exact source spelling for a scanner query.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+}
+
+/// Native source spellings aligned with the three lists of scanner words.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GrammarDiscoveryOracleSources {
+    /// Source spellings for declared positive words.
+    pub positives: Vec<String>,
+    /// Source spellings for declared negative words.
+    pub negatives: Vec<String>,
+    /// Source spellings for unlabelled candidate words.
+    pub candidates: Vec<String>,
 }
 
 /// Checked training inputs and the oracle calls that produced them.
@@ -75,7 +90,35 @@ pub fn observe_grammar_discovery_parser_oracle(
     negatives: &[Vec<String>],
     candidates: &[Vec<String>],
 ) -> Result<GrammarDiscoveryOracleObservations, String> {
+    observe_parser_oracle(grammar, positives, negatives, candidates, None)
+}
+
+fn accepted_token_sequence(tree: Option<&SyntaxTree>) -> Result<Vec<&str>, String> {
+    let mut pending: Vec<_> = tree.into_iter().collect();
+    let mut sequence = Vec::new();
+    while let Some(node) = pending.pop() {
+        match node {
+            SyntaxTree::Node { trivia: true, .. } | SyntaxTree::Token { trivia: true, .. } => {}
+            SyntaxTree::Node { children, .. } => pending.extend(children.iter().rev()),
+            SyntaxTree::Token {
+                kind: Some(kind), ..
+            } => sequence.push(kind.as_str()),
+            _ => return Err("scanner oracle requires a complete named token sequence".into()),
+        }
+    }
+    Ok(sequence)
+}
+
+pub(crate) fn observe_parser_oracle(
+    grammar: &Grammar,
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    candidates: &[Vec<String>],
+    sources: Option<&GrammarDiscoveryOracleSources>,
+) -> Result<GrammarDiscoveryOracleObservations, String> {
     let groups = [positives, negatives, candidates];
+    let spellings =
+        sources.map(|source| [&source.positives, &source.negatives, &source.candidates]);
     if groups
         .iter()
         .fold(0usize, |sum, group| sum.saturating_add(group.len()))
@@ -83,11 +126,35 @@ pub fn observe_grammar_discovery_parser_oracle(
     {
         return Err("grammar discovery oracle requires at most 256 input words".into());
     }
+    if let Some(spellings) = spellings
+        && spellings.iter().zip(groups).any(|(sources, words)| {
+            sources.len() != words.len()
+                || sources
+                    .iter()
+                    .any(|source| source.len() > limit("source bytes"))
+        })
+    {
+        return Err("scanner oracle needs one bounded source spelling per word".into());
+    }
     for word in groups.into_iter().flatten() {
-        if word.len() > limit("symbols") || word.iter().any(|symbol| symbol.chars().count() != 1) {
-            return Err(
-                "grammar discovery oracle words require at most 128 Unicode scalar symbols".into(),
-            );
+        let scanner = spellings.is_some();
+        if word.len() > limit("symbols")
+            || if scanner {
+                word.iter().any(String::is_empty)
+                    || word
+                        .iter()
+                        .fold(0usize, |sum, symbol| sum.saturating_add(symbol.len()))
+                        > limit("source bytes")
+            } else {
+                word.iter().any(|symbol| symbol.chars().count() != 1)
+            }
+        {
+            return Err(if scanner {
+                "scanner oracle words require bounded nonempty token names"
+            } else {
+                "grammar discovery oracle words require at most 128 Unicode scalar symbols"
+            }
+            .into());
         }
     }
     let defaults = FeatureParseOptions {
@@ -99,13 +166,23 @@ pub fn observe_grammar_discovery_parser_oracle(
     };
     let parser =
         compile_feature_grammar(grammar, None, defaults).map_err(|error| error.to_string())?;
-    let options = FeatureParseOptions::default();
+    let options = FeatureParseOptions {
+        reject_ambiguity: spellings.is_some().then_some(true),
+        ..FeatureParseOptions::default()
+    };
     let mut queried = HashMap::new();
+    let mut answers = HashMap::new();
     let mut observations = Vec::new();
-    for (words, expected) in [(positives, 1.0), (negatives, 0.0), (candidates, -1.0)] {
-        for word in words {
-            let source = word.concat();
-            let accepted = match queried.entry(source) {
+    let declared: HashSet<_> = positives.iter().chain(negatives).collect();
+    let mut training_positives = positives.to_vec();
+    let mut training_negatives = negatives.to_vec();
+    for (group, (words, expected)) in groups.into_iter().zip([1.0, 0.0, -1.0]).enumerate() {
+        for (index, word) in words.iter().enumerate() {
+            let source = spellings.map_or_else(
+                || word.concat(),
+                |spellings| spellings[group][index].clone(),
+            );
+            let (previous_word, accepted) = match queried.entry(source) {
                 std::collections::hash_map::Entry::Occupied(entry) => *entry.get(),
                 std::collections::hash_map::Entry::Vacant(entry) => {
                     let outcome = parser
@@ -120,36 +197,52 @@ pub fn observe_grammar_discovery_parser_oracle(
                             "grammar discovery oracle could not classify input: {reason}"
                         ));
                     }
+                    if spellings.is_some()
+                        && outcome.ok
+                        && !accepted_token_sequence(outcome.tree.as_ref())?
+                            .into_iter()
+                            .eq(word.iter().map(String::as_str))
+                    {
+                        return Err(
+                            "scanner oracle token sequence differs from the accepted source".into(),
+                        );
+                    }
                     observations.push(GrammarDiscoveryOracleObservation {
                         word: word.clone(),
                         accepted: outcome.ok,
+                        source: spellings.is_some().then(|| entry.key().clone()),
                     });
-                    *entry.insert(outcome.ok)
+                    *entry.insert((word, outcome.ok))
                 }
             };
+            if previous_word != word {
+                return Err("scanner oracle source has conflicting token sequences".into());
+            }
             if !rules::accept_grammar_discovery_parser_oracle_label(expected, accepted) {
                 return Err("grammar discovery oracle disagrees with a supplied label".into());
             }
+            if let Some(previous) = answers.insert(word, accepted) {
+                if previous != accepted {
+                    return Err("scanner oracle spellings for one token sequence disagree".into());
+                }
+                continue;
+            }
+            let selection = rules::read_grammar_discovery_parser_oracle_training_class(
+                declared.contains(word),
+                accepted,
+            );
+            if selection > 0.0 {
+                training_positives.push(word.clone());
+            } else if selection < 0.0 {
+                training_negatives.push(word.clone());
+            }
         }
     }
-    let declared: HashSet<_> = positives.iter().chain(negatives).collect();
-    let mut result = GrammarDiscoveryOracleObservations {
-        positives: positives.to_vec(),
-        negatives: negatives.to_vec(),
+    Ok(GrammarDiscoveryOracleObservations {
+        positives: training_positives,
+        negatives: training_negatives,
         observations,
-    };
-    for observation in &result.observations {
-        let selection = rules::read_grammar_discovery_parser_oracle_training_class(
-            declared.contains(&observation.word),
-            observation.accepted,
-        );
-        if selection > 0.0 {
-            result.positives.push(observation.word.clone());
-        } else if selection < 0.0 {
-            result.negatives.push(observation.word.clone());
-        }
-    }
-    Ok(result)
+    })
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -159,6 +252,8 @@ struct OraclePremises {
     negatives: Vec<Vec<String>>,
     candidates: Vec<Vec<String>>,
     observations: Vec<GrammarDiscoveryOracleObservation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sources: Option<GrammarDiscoveryOracleSources>,
 }
 
 pub(crate) fn create_oracle_entry(
@@ -167,6 +262,7 @@ pub(crate) fn create_oracle_entry(
     negatives: &[Vec<String>],
     candidates: &[Vec<String>],
     observations: &[GrammarDiscoveryOracleObservation],
+    sources: Option<&GrammarDiscoveryOracleSources>,
 ) -> Result<MetaLanguageArchiveEntry, String> {
     let definition = create_discovered_concept_links(
         &[GlobalConceptSource {
@@ -182,6 +278,7 @@ pub(crate) fn create_oracle_entry(
         negatives: negatives.to_vec(),
         candidates: candidates.to_vec(),
         observations: observations.to_vec(),
+        sources: sources.cloned(),
     })
     .map_err(|error| error.to_string())?;
     let premises = encode_structured_data_links(&premises)?;
@@ -222,6 +319,7 @@ pub(crate) fn read_oracle_entry(
     positives: &[Vec<String>],
     negatives: &[Vec<String>],
     exact_training: bool,
+    scanner: bool,
 ) -> Result<Vec<GrammarDiscoveryOracleObservation>, String> {
     let invalid = || "invalid grammar discovery oracle checkpoint".to_owned();
     if entry.kind != "grammar inference" {
@@ -258,16 +356,20 @@ pub(crate) fn read_oracle_entry(
     {
         return Err(invalid());
     }
-    let data: OraclePremises = serde_json::from_value(decode_structured_data_links(
-        &premises.network,
-        premises.root,
-    )?)
-    .map_err(|_| invalid())?;
-    let replayed = observe_grammar_discovery_parser_oracle(
+    let value = decode_structured_data_links(&premises.network, premises.root)?;
+    if value.get("sources").is_some() != scanner {
+        return Err(invalid());
+    }
+    let data: OraclePremises = serde_json::from_value(value.clone()).map_err(|_| invalid())?;
+    if serde_json::to_value(&data).map_err(|_| invalid())? != value {
+        return Err(invalid());
+    }
+    let replayed = observe_parser_oracle(
         &source.grammar,
         &data.positives,
         &data.negatives,
         &data.candidates,
+        data.sources.as_ref(),
     )?;
     if replayed.observations != data.observations
         || (exact_training

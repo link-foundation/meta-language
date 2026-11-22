@@ -323,11 +323,17 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
                     Some("grammar inference")
                 );
             }
-            if let Some(observations) = step.get("oracle") {
+            for (field, identifier) in [
+                ("oracle", "grammar inference:oracle-refined"),
+                ("scannerOracle", "grammar inference:scanner-oracle-refined"),
+            ] {
+                let Some(observations) = step.get(field) else {
+                    continue;
+                };
                 let checkpoint = session
                     .entries()
                     .iter()
-                    .find(|entry| entry.identifier == "grammar inference:oracle-refined")
+                    .find(|entry| entry.identifier == identifier)
                     .unwrap();
                 let result = read_refined_regular_grammar_inference_links(
                     &checkpoint.network,
@@ -440,6 +446,18 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
             "recursiveOracleLabelsAndAnswersReplayed",
             "recursiveOracleCheckpointSurvivesSourceFreeRefinement",
             "installedRecursiveGrammarParsesDeeperAndRejectsNegative",
+        ],
+        test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
+    });
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-SCANNER-PARSER-ORACLE",
+        suffix: "behavior",
+        fixture_id: "grammar-discovery-scanner-parser-oracle",
+        fixture_file: "parity/fixtures/dynamic-language-command.lino",
+        assertions: &[
+            "scannerOracleChecksNativeTokenKindsAndConflictingSpellings",
+            "scannerOracleReplaysExactSourceSpellings",
+            "installedScannerParsesHeldOutSourceAndRejectsNegative",
         ],
         test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
     });

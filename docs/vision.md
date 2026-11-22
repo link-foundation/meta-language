@@ -3737,6 +3737,15 @@ entries. Reload replays the scanner and syntax learner before comparing the
 complete grammar. Refinement adds labelled token sequences under the stored
 scanner, preserving its observations and definition across the journal. The
 installed source uses the native scanner during ordinary CST parsing.
+Native parser oracles for scanner discovery take explicit `oracleSources`
+lists aligned with the positive, negative and candidate token sequences.
+Queries use the original UTF-8 spelling and are limited to 4096 bytes each.
+An accepted spelling must produce the supplied named nontrivia token leaves.
+A syntax rejection classifies the supplied spelling and preserves it with the
+declared token sequence. Conflicting token sequences for one spelling and
+conflicting answers for different spellings of one token sequence refuse
+discovery. Replay rechecks those spellings using the archived native grammar
+and verifies the transcript against the retained token training inputs.
 
 `inferGrammarScanner` and `infer_grammar_scanner` compile bounded trace
 observations into native scanner operations. Each observation supplies the

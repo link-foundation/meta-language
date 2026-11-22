@@ -60,9 +60,10 @@ test('one shared command sequence retains concrete trees, recursive definitions 
     assert.deepEqual(report.sourceProductions.map(production => production.alias).sort(), aliases.sort(), step.name);
     assert.equal(session.entries.find(entry => entry.identifier === step.merge.checkpoint)?.kind, 'grammar inference', step.name);
    }
-   if (step.oracle) {
-    const checkpoint = session.entries.find(entry => entry.identifier === 'grammar inference:oracle-refined');
-    assert.deepEqual(readRefinedRegularGrammarInferenceLinks(checkpoint.network, checkpoint.root).oracleObservations, step.oracle, step.name);
+   for (const [observations, identifier] of [[step.oracle,'oracle-refined'],[step.scannerOracle,'scanner-oracle-refined']]) {
+    if (!observations) continue;
+    const checkpoint = session.entries.find(entry => entry.identifier === 'grammar inference:'+identifier);
+    assert.deepEqual(readRefinedRegularGrammarInferenceLinks(checkpoint.network, checkpoint.root).oracleObservations, observations, step.name);
    }
    if (step.structuralOracle) {
     const checkpoint = session.entries.find(entry => entry.identifier === 'grammar inference:recursive-oracle-refined');
@@ -85,6 +86,10 @@ test('one shared command sequence retains concrete trees, recursive definitions 
  recordIssue195Observations({requirementId:'I195-GRAMMAR-INFERENCE-RECURSIVE-PARSER-ORACLE',suffix:'behavior',
   fixtureId:'grammar-discovery-recursive-parser-oracle',fixtureFile:'parity/fixtures/dynamic-language-command.lino',
   assertions:['recursiveOracleLabelsAndAnswersReplayed','recursiveOracleCheckpointSurvivesSourceFreeRefinement','installedRecursiveGrammarParsesDeeperAndRejectsNegative'],
+  testName:context.name});
+ recordIssue195Observations({requirementId:'I195-GRAMMAR-INFERENCE-SCANNER-PARSER-ORACLE',suffix:'behavior',
+  fixtureId:'grammar-discovery-scanner-parser-oracle',fixtureFile:'parity/fixtures/dynamic-language-command.lino',
+  assertions:['scannerOracleChecksNativeTokenKindsAndConflictingSpellings','scannerOracleReplaysExactSourceSpellings','installedScannerParsesHeldOutSourceAndRejectsNegative'],
   testName:context.name});
 });
 test('source-free reload needs no grammar source callback',()=>{

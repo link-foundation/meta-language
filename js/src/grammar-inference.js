@@ -134,14 +134,14 @@ export function inferRegularGrammar(positives, negatives = [], options = {}) {
   return { grammar, source, alphabet: [...input.alphabet], table: [...table], ...archive };
 }
 
-/** Discover a scalar regular grammar with a native parser as a finite oracle. */
+/** Discover a regular grammar with a native parser as a finite oracle. */
 export function inferRegularGrammarWithParserOracle(grammar, positives, negatives, candidates = [], options = {}) {
-  if (options.scannerObservations !== undefined || options.scannerCharacterClasses === true || options.scannerModeStackObservations !== undefined) {
-    fail('native parser oracle discovery requires a scalar regular language input');
-  }
-  const observed = observeGrammarDiscoveryParserOracle(grammar, positives, negatives, candidates);
+  const { oracleSources } = options;
+  const scanner = options.scannerObservations !== undefined || options.scannerModeStackObservations !== undefined;
+  if (scanner !== (oracleSources !== undefined)) fail('native parser oracle discovery requires source spellings exactly for scanner input');
+  const observed = observeGrammarDiscoveryParserOracle(grammar, positives, negatives, candidates, oracleSources);
   const result = inferRegularGrammar(observed.positives, observed.negatives, options);
-  const entry = createGrammarDiscoveryParserOracleEntry(grammar, positives, negatives, candidates, observed.observations);
+  const entry = createGrammarDiscoveryParserOracleEntry(grammar, positives, negatives, candidates, observed.observations, oracleSources);
   return { ...result, ...extendMetaLanguageArchive(result, [entry]), oracleObservations: observed.observations };
 }
 
@@ -200,7 +200,7 @@ export function readRegularGrammarInferenceLinks(network, root) {
   if (decoded.sources.length !== 1 || source.id !== model.identifier || source.language !== model.language || source.edition !== model.edition
     || !isDeepStrictEqual(source.grammar.normalized(), grammar.normalized())) fail('candidate grammar differs from its actual model');
   const oracle = entries.find(entry => entry.identifier === grammarDiscoveryParserOracleIdentifier);
-  const oracleObservations = oracle ? readGrammarDiscoveryParserOracleEntry(oracle, model.positives, model.negatives) : undefined;
+  const oracleObservations = oracle ? readGrammarDiscoveryParserOracleEntry(oracle, model.positives, model.negatives, false, model.schemaVersion > 1) : undefined;
   return { grammar: source.grammar, source, alphabet: [...input.alphabet], table: [...table], network, root: LinkId.from(root),
     ...(oracleObservations ? { oracleObservations } : {}) };
 }
