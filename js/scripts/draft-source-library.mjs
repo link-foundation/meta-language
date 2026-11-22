@@ -45,7 +45,19 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const sourceSyntax=parseAuthoredJavaScriptModule(source,sourcePath);
   trace('read declarations');
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
-  const originalProgram = checkProgram(parseJavaScript(source, { referenceSemantics }));
+  let originalProgram;
+  try {
+    originalProgram = checkProgram(parseJavaScript(source, { referenceSemantics }));
+  } catch (error) {
+    const span = error?.span;
+    if (traceEnabled && Number.isSafeInteger(span?.start) && Number.isSafeInteger(span?.end)
+      && span.start >= 0 && span.end >= span.start && span.end <= source.length) {
+      console.error('Source before:', JSON.stringify(source.slice(Math.max(0, span.start - 160), span.start)));
+      console.error('Failing source:', JSON.stringify(source.slice(span.start, Math.min(span.end, span.start + 160))));
+      console.error('Source after:', JSON.stringify(source.slice(span.end, span.end + 160)));
+    }
+    throw error;
+  }
   const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,originalProgram) : null;
   trace('checked declarations');
   if(booleanMatchSharing!==''&&booleanMatchSharing!=='literal Boolean constructor match arms 1')throw new TypeError('unknown source Boolean match sharing selection');
