@@ -1,8 +1,9 @@
 // Explicit successor composition. Historical source signature3 and exclusive
 // profiles keep their original independent gates unless all three are selected.
 import {unsupported} from './diagnostics.js';
+import {acceptRustSourceRegionComposition} from './rust-owned-record-loop-rules.js';
+export {acceptRustSourceRegionComposition};
 const contexts=new WeakMap();
-export function acceptRustSourceRegionComposition(signature,exclusive,callback){return signature==='Rust source function signature 3'&&exclusive==='Rust exclusive source loans 1'&&callback==='Rust closed source FnMut specializations 1';}
 export function initializeRustSourceRegionComposition(parser){if(acceptRustSourceRegionComposition(parser.sourceSignatureModel,parser.exclusiveSourceModel,parser.fnMutSourceModel))contexts.set(parser,{frames:[]});}
 export function hasRustSourceRegionComposition(parser){return contexts.has(parser);}
 export function retainRustSourceRegionState(parser){const context=contexts.get(parser);return Boolean(context&&context.frames.at(-1)?.mode!=='closed');}

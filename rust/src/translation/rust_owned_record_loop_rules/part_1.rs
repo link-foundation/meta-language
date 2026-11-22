@@ -584,6 +584,18 @@ pub fn accept_rust_source_state_binder(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_source_region_composition(
+    signature: &str,
+    exclusive: &str,
+    callback: &str,
+) -> bool {
+    ((signature == "Rust source function signature 3")
+        && (exclusive == "Rust exclusive source loans 1"))
+        && (callback == "Rust closed source FnMut specializations 1")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_rust_source_state_transition_model(
     language: &str,
     model: &str,

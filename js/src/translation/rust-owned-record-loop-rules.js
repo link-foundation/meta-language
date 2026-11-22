@@ -82,6 +82,11 @@ export function acceptRustSourceStateBinder(nameLength,identityLength,start,end)
  return nameLength>0&&nameLength<=4096&&identityLength>0&&identityLength<=4096&&acceptRustSourceRegionSpan(start,end);
 }
 
+/** @param {string} signature @param {string} exclusive @param {string} callback @returns {boolean} */
+export function acceptRustSourceRegionComposition(signature,exclusive,callback){
+ return signature==='Rust source function signature 3'&&exclusive==='Rust exclusive source loans 1'&&callback==='Rust closed source FnMut specializations 1';
+}
+
 /** @param {string} language @param {string} model @param {string} operation @returns {boolean} */
 export function acceptRustSourceStateTransitionModel(language,model,operation){
  return language==='Rust'&&model==='Rust source state transition 1'&&(operation==='initialize'||operation==='write');
