@@ -24,6 +24,14 @@ import {beginJavaScriptDescriptorConversion,stepJavaScriptDescriptorConversion,r
  * {$:'definitionResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptPropertyDefinitionState,reason:string}} JavaScriptPropertyDefinitionTransition
  */
 
+/** @param {JavaScriptPropertyDefinitionTransition} transition @param {JavaScriptOrdinaryHeap} heap @returns {JavaScriptOrdinaryHeap} */
+export function readJavaScriptPropertyDefinitionHeap(transition,heap){
+ switch(transition.$){
+  case 'definitionCompleted':case 'definitionResourceLimit':return transition.heap;
+  default:return transition.heap??heap;
+ }
+}
+
 /** Transport between the two qualified completion algebras, preserving every
  * constructor and exact value. Their names alone never establish equivalence.
  * @param {JavaScriptSemanticCompletion} completion @returns {JavaScriptPrimitiveConversionCompletion} */
@@ -143,7 +151,7 @@ function readJavaScriptPropertyDefinitionContinuationError(heap, state, identity
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPropertyDefinitionCall} call @param {JavaScriptSemanticValue} key @returns {string} */
 export function readJavaScriptDefinitionGetterArguments(heap,call,key){
  const owner=call.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,call.receiver.identity)]:undefined;
- if(owner!==undefined&&['hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(owner.$))return call.arguments.length===2&&testJavaScriptSemanticSameValue(call.callee,owner.hostGet)&&testJavaScriptSemanticSameValue(call.arguments[0]??{$:'undefined'},key)&&testJavaScriptSemanticSameValue(call.arguments[1]??{$:'undefined'},call.receiver)?'':'definition opaque Get retains its actual registered key and receiver operands';
+ if(owner!==undefined&&(owner.$==='hostErrorObject'||owner.$==='hostURLObject'||owner.$==='hostArrayObject'||owner.$==='hostByteBufferObject'))return call.arguments.length===2&&testJavaScriptSemanticSameValue(call.callee,owner.hostGet)&&testJavaScriptSemanticSameValue(call.arguments[0]??{$:'undefined'},key)&&testJavaScriptSemanticSameValue(call.arguments[1]??{$:'undefined'},call.receiver)?'':'definition opaque Get retains its actual registered key and receiver operands';
  return call.arguments.length===0?'':'definition ordinary getters retain their empty argument List';
 }
 

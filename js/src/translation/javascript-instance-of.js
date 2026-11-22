@@ -19,7 +19,7 @@ export function readJavaScriptInstanceOfStateError(heap,state){
  for(const value of [state.left,state.right,state.key,state.prototype,state.cursor]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
  if(state.candidate!==undefined||state.boundPath!==undefined){
   if(state.operation==='prototype contains'||state.candidate===undefined||state.boundPath===undefined||state.boundPath.length===0||state.boundPath.length>4096||readJavaScriptOrdinaryValueError(heap,state.candidate)!=='')return 'bound instanceof retains its original operands and bounded actual delegated target path';
-  let target=state.right;for(const identity of state.boundPath){const bound=target.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)]:undefined;if(bound?.$!=='boundFunctionObject'||bound.identity!==identity)return 'bound instanceof delegation follows only actual immutable target links';target=bound.boundTarget;}
+  let target=state.right;for(const identity of state.boundPath){const bound=target.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)]:undefined;if(bound===undefined||bound.$!=='boundFunctionObject'||bound.identity!==identity)return 'bound instanceof delegation follows only actual immutable target links';target=bound.boundTarget;}
   if(!testJavaScriptSemanticSameValue(target,state.candidate))return 'bound instanceof retains its exact selected delegated target';
  }
  if(state.key.$!=='symbol')return 'instanceof retains the actual realm well-known Symbol';
@@ -29,10 +29,11 @@ export function readJavaScriptInstanceOfStateError(heap,state){
  if(selected!==(state.call!==undefined))return 'instanceof calls retain their selected callback only while suspended';
  if(state.call!==undefined){const call=state.call;for(const value of [call.callee,call.receiver,...call.arguments]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
   const right=state.candidate??state.right;if(call.callee.$!=='object'||!call.callee.callable||!testJavaScriptSemanticSameValue(call.receiver,right))return 'instanceof retains the actual selected getter or method receiver';
-  if(state.phase==='method value'){if(call.arguments.length!==1||!testJavaScriptSemanticSameValue(call.arguments[0],state.left))return 'instanceof method retains its actual left operand';}
+  if(state.phase==='method value'){const argument=call.arguments[0];if(call.arguments.length!==1||argument===undefined||!testJavaScriptSemanticSameValue(argument,state.left))return 'instanceof method retains its actual left operand';}
   else if(call.arguments.length!==0){
    const owner=right.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,right.identity)]:undefined,expected=state.phase==='method getter'?state.key:{$:'text',units:[112,114,111,116,111,116,121,112,101]};
-   if(owner===undefined||!['hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(owner.$)||!testJavaScriptSemanticSameValue(call.callee,owner.hostGet)||call.arguments.length!==2||!testJavaScriptSemanticSameValue(call.arguments[0],expected)||!testJavaScriptSemanticSameValue(call.arguments[1],right))return 'opaque instanceof Get retains its actual registered host Get callback';
+   const key=call.arguments[0],receiver=call.arguments[1];
+   if(owner===undefined||owner.$!=='hostErrorObject'&&owner.$!=='hostURLObject'&&owner.$!=='hostArrayObject'&&owner.$!=='hostByteBufferObject'||!testJavaScriptSemanticSameValue(call.callee,owner.hostGet)||call.arguments.length!==2||key===undefined||receiver===undefined||!testJavaScriptSemanticSameValue(key,expected)||!testJavaScriptSemanticSameValue(receiver,right))return 'opaque instanceof Get retains its actual registered host Get callback';
   }}
  return '';
 }
@@ -73,7 +74,7 @@ export function stepJavaScriptInstanceOf(heap,state){
  }
  if(state.phase==='prototype'){
   if(right.$!=='object'||!right.callable)return finishJavaScriptInstanceOf(heap,state,false);
-  const bound=heap.objects[findJavaScriptOrdinaryObject(heap.objects,right.identity)];if(bound?.$==='boundFunctionObject'){
+  const bound=heap.objects[findJavaScriptOrdinaryObject(heap.objects,right.identity)];if(bound!==undefined&&bound.$==='boundFunctionObject'){
    if((state.boundPath??[]).length>=4096)return {$:'instanceOfResourceLimit',heap,state,reason:'bound instanceof delegation exceeds its explicit target path budget'};
    return {$:'instanceOfContinue',heap,state:{...state,phase:'method',candidate:bound.boundTarget,boundPath:(state.boundPath??[]).concat([right.identity]),prototype:{$:'undefined'},cursor:{$:'undefined'},visited:[]}};
   }

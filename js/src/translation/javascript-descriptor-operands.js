@@ -15,7 +15,7 @@ export function readJavaScriptDescriptorOperands(operands){
  const descriptor=createJavaScriptEmptyDescriptor();if(operands.length!==12)return {descriptor,error:'an internal property descriptor retains six actual presence and payload pairs'};
  for(let index=0;index<6;index++){
   const presence=operands[index*2],value=operands[index*2+1];
-  if(presence?.$!=='boolean'||value===undefined)return {descriptor,error:'descriptor operand presence retains its actual Boolean and complete semantic payload'};
+  if(presence===undefined||presence.$!=='boolean'||value===undefined)return {descriptor,error:'descriptor operand presence retains its actual Boolean and complete semantic payload'};
   const present=presence.value;
   switch(index){
    case 0:

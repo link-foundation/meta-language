@@ -70,7 +70,14 @@ export function adaptJavaScriptBoundConstruction(state,transition){
  * fact separately proves that an actual strict function/base class is a
  * constructor; receiverMode alone never grants that classification.
  * @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayConstructorFact} fact @returns {string} */
-export function readJavaScriptConstructionMode(program,heap,fact){const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,fact.identity)];return actual?.$==='boundFunctionObject'?'bound function':fact.intrinsicKind!==undefined?fact.intrinsicKind:fact.intrinsicArray?'Array':readJavaScriptExecutableCallFunction(program,heap,fact.identity)?.receiverMode??'';}
+export function readJavaScriptConstructionMode(program,heap,fact){
+ const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,fact.identity)];
+ if(actual?.$==='boundFunctionObject')return 'bound function';
+ const intrinsicKind=fact.intrinsicKind;
+ if(intrinsicKind!==undefined)return intrinsicKind;
+ if(fact.intrinsicArray)return 'Array';
+ return readJavaScriptExecutableCallFunction(program,heap,fact.identity)?.receiverMode??'';
+}
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @returns {string} */
 export function readJavaScriptConstructionStateError(program,heap,directory,state){
  const invalid=readJavaScriptArraySpeciesDirectoryError(heap,directory);if(invalid!=='')return invalid;
@@ -108,9 +115,13 @@ export function readJavaScriptConstructionStateError(program,heap,directory,stat
   const call=state.call;if(call.$!=='constructionCallRecord'||call.callee.$!=='object'||!call.callee.callable||call.arguments.length>1048576||!['prototype getter','convert','body'].includes(state.phase)||typeof call.constructing!=='boolean')return 'construction retains its actual selected getter conversion or body call';
   for(const value of [call.callee,call.receiver,call.newTarget,...call.arguments]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
   if(state.phase==='body'){
+   if(state.target.$!=='object')return 'base construction calls retain actual target newTarget receiver and all arguments';
    const fn=readJavaScriptExecutableCallFunction(program,heap,state.target.identity),collection=testJavaScriptConstructedCollectionKind(state.mode);if(collection&&(fn===undefined||readJavaScriptCollectionConstructorKind(fn)!==state.mode))return 'collection construction retains its actual protected constructor code kind';
    if(!['strict','ordinary class','Map','Set','WeakMap','WeakSet'].includes(state.mode)||!call.constructing||!testJavaScriptSemanticSameValue(call.callee,state.target)||!testJavaScriptSemanticSameValue(call.receiver,state.receiver)||!testJavaScriptSemanticSameValue(call.newTarget,state.newTarget)||call.arguments.length!==state.arguments.length)return 'base construction calls retain actual target newTarget receiver and all arguments';
-   for(let index=0;index<state.arguments.length;index+=1)if(!testJavaScriptSemanticSameValue(call.arguments[index],state.arguments[index]))return 'constructor body arguments retain their original ordered values';
+   for(let index=0;index<state.arguments.length;index+=1){
+    const selected=call.arguments[index],actual=state.arguments[index];
+    if(selected===undefined||actual===undefined||!testJavaScriptSemanticSameValue(selected,actual))return 'constructor body arguments retain their original ordered values';
+   }
   }else if(call.constructing||call.newTarget.$!=='undefined'||state.phase==='prototype getter'&&(!testJavaScriptSemanticSameValue(call.receiver,state.newTarget)||call.arguments.length!==0))return 'constructor setup calls retain their actual ordinary Call receiver and operands';
  }else if(state.phase==='prototype getter'||state.phase==='body')return 'constructor getter and body states retain their actual selected child call';
  return '';
@@ -144,11 +155,34 @@ export function acceptJavaScriptConstructionConversion(heap,directory,state,tran
 export function selectJavaScriptConstructionRoot(heap,directory,state,objectSelf=false){
  const candidate=objectSelf?state.target:state.newTarget,fact=readJavaScriptConstructionFact(directory,candidate,heap),root=fact===undefined?undefined:(directory.constructorRealms??[]).find(row=>row.realm===fact.realm),authority=readJavaScriptConstructorAuthorityTarget(heap,candidate)??candidate;
  if(root===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:authority};
- let prototype=root.objectPrototype;
- if(objectSelf){const input=state.arguments[0]??{$:'undefined'};prototype=input.$==='text'||input.$==='sourceText'?root.stringPrototype:input.$==='number'?root.numberPrototype:input.$==='boolean'?root.booleanPrototype:input.$==='integer'?root.integerPrototype:input.$==='symbol'?root.symbolPrototype:root.objectPrototype;}
- else prototype=state.mode==='Array'?root.arrayPrototype:state.mode==='Number'?root.numberPrototype:state.mode==='Boolean'?root.booleanPrototype:state.mode==='String'?root.stringPrototype:state.mode==='Map'?root.mapPrototype:state.mode==='Set'?root.setPrototype:state.mode==='WeakMap'?root.weakMapPrototype:state.mode==='WeakSet'?root.weakSetPrototype:root.objectPrototype;
+ const prototype=readJavaScriptConstructionPrototypeRoot(root,state,objectSelf);
  if(prototype===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:authority};
  return {$:'constructionContinue',heap,state:{...state,phase:'allocate',prototype}};
+}
+/** @param {JavaScriptConstructorRealm} root @param {JavaScriptConstructionState} state @param {boolean} objectSelf @returns {JavaScriptSemanticValue|undefined} */
+function readJavaScriptConstructionPrototypeRoot(root,state,objectSelf){
+ if(objectSelf){
+  const input=state.arguments[0]??{$:'undefined'};
+  switch(input.$){
+   case 'text':case 'sourceText':return root.stringPrototype;
+   case 'number':return root.numberPrototype;
+   case 'boolean':return root.booleanPrototype;
+   case 'integer':return root.integerPrototype;
+   case 'symbol':return root.symbolPrototype;
+   default:return root.objectPrototype;
+  }
+ }
+ switch(state.mode){
+  case 'Array':return root.arrayPrototype;
+  case 'Number':return root.numberPrototype;
+  case 'Boolean':return root.booleanPrototype;
+  case 'String':return root.stringPrototype;
+  case 'Map':return root.mapPrototype;
+  case 'Set':return root.setPrototype;
+  case 'WeakMap':return root.weakMapPrototype;
+  case 'WeakSet':return root.weakSetPrototype;
+  default:return root.objectPrototype;
+ }
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptConstructionState} state @param {JavaScriptSemanticValue} value @returns {JavaScriptConstructionTransition} */
 export function continueJavaScriptConstructionPrototype(heap,directory,state,value){if(state.operation!==undefined)return adaptJavaScriptBoundConstruction(state,continueJavaScriptConstructionPrototype(heap,directory,state.operation,value));const base={...clearJavaScriptConstructionChild(state),prototype:value,phase:value.$==='object'?'allocate':'prototype fallback'};return value.$==='object'?{$:'constructionContinue',heap,state:base}:selectJavaScriptConstructionRoot(heap,directory,base);}

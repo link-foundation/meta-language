@@ -30,7 +30,7 @@ export function readJavaScriptFunctionBindStateError(heap,state){
  if(state.phase!=='prototype'&&state.prototype.$!=='object'&&state.prototype.$!=='null')return 'binding retains its actual selected target prototype';
  if(!['prototype','allocate'].includes(state.phase)){
   const object=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;
-  if(object?.$!=='boundFunctionObject'||!testJavaScriptSemanticSameValue(object.boundTarget,state.target)||!testJavaScriptSemanticSameValue(object.boundThis,state.boundThis)||!testJavaScriptSemanticSameValue(object.prototype,state.prototype)||object.boundArguments.length!==state.arguments.length||object.boundArguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,state.arguments[index]??{$:'undefined'})))return 'binding metadata retains its actual fresh receiver and immutable internal slots';
+  if(object===undefined||object.$!=='boundFunctionObject'||!testJavaScriptSemanticSameValue(object.boundTarget,state.target)||!testJavaScriptSemanticSameValue(object.boundThis,state.boundThis)||!testJavaScriptSemanticSameValue(object.prototype,state.prototype)||object.boundArguments.length!==state.arguments.length||object.boundArguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,state.arguments[index]??{$:'undefined'})))return 'binding metadata retains its actual fresh receiver and immutable internal slots';
  }
  if(state.call!==undefined){if(!['length getter','name getter'].includes(state.phase)||!testJavaScriptFunctionBindMetadataCall(state.call,state.target))return 'binding retains its actual selected metadata getter and receiver';}
  else if(['length getter','name getter'].includes(state.phase))return 'binding getter phases retain their actual suspended call';
@@ -56,6 +56,7 @@ export function stepJavaScriptFunctionBind(heap,state){
  const error=readJavaScriptFunctionBindStateError(heap,state);if(error!=='')return {$:'functionBindInvalid',heap,reason:error};
  if(state.call!==undefined)return {$:'functionBindCall',heap,state,callee:state.call.callee,receiver:state.call.receiver,arguments:state.call.arguments};
  if(state.phase==='name value')return retainJavaScriptFunctionBindMetadata(heap,state,state.name);
+ if(state.target.$!=='object')return {$:'functionBindInvalid',heap,reason:'binding retains its actual callable target'};
  if(state.phase==='prototype'){const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];if(target===undefined)return {$:'functionBindInvalid',heap,reason:'binding prototype selection retains its actual callable Object'};return {$:'functionBindContinue',heap,state:{...state,phase:'allocate',prototype:target.prototype}};}
  if(state.phase==='allocate')return heap.objects.length>=4096?{$:'functionBindResourceLimit',heap,state,reason:'bound Function allocation exceeds the shared heap identity budget'}:{$:'functionBindAllocate',heap,state,prototype:state.prototype};
  if(state.phase==='length own'){const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];return target===undefined?{$:'functionBindInvalid',heap,reason:'binding retains its actual target own-property inventory'}:{$:'functionBindContinue',heap,state:{...state,phase:findJavaScriptOrdinaryProperty(target.properties,readJavaScriptBoundFunctionMetadataKey(true))<0?'define length':'length'}};}
@@ -69,13 +70,16 @@ export function stepJavaScriptFunctionBind(heap,state){
  const length=state.phase==='define length',descriptor=createJavaScriptBoundFunctionMetadataDescriptor(length?{$:'number',value:state.length}:state.name),defined=defineJavaScriptOrdinaryProperty(heap,state.receiver.identity,readJavaScriptBoundFunctionMetadataKey(length),descriptor);if(defined.error!==''||!defined.success)return {$:'functionBindInvalid',heap,reason:defined.error||'fresh bound Function metadata definition succeeds'};
  return length?{$:'functionBindContinue',heap:defined.heap,state:{...state,phase:'name'}}:{$:'functionBindCompleted',heap:defined.heap,value:state.receiver};
 }
+/** @param {JavaScriptFunctionBindState} state @param {bigint} identity @returns {JavaScriptOrdinaryObject} */
+function createJavaScriptBoundFunctionObject(state,identity){
+ return {$:'boundFunctionObject',identity,prototype:state.prototype,extensible:true,callable:true,properties:[],boundTarget:state.target,boundThis:state.boundThis,boundArguments:state.arguments.slice()};
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptFunctionBindState} state @param {bigint} identity @returns {JavaScriptFunctionBindTransition} */
 export function resumeJavaScriptFunctionBindAllocation(heap,state,identity){
  const error=readJavaScriptFunctionBindStateError(heap,state);if(error!==''||state.phase!=='allocate')return {$:'functionBindInvalid',heap,reason:error||'bound Function identity resumes only its actual allocation'};
  const request=stepJavaScriptFunctionBind(heap,state);if(request.$!=='functionBindAllocate')return request;
  if(typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n||findJavaScriptOrdinaryObject(heap.objects,identity)>=0||heap.symbols.includes(identity))return {$:'functionBindInvalid',heap,reason:'bound Function allocation requires a fresh external global identity'};
- /** @type {JavaScriptBoundFunctionObject} */
- const object={$:'boundFunctionObject',identity,prototype:state.prototype,extensible:true,callable:true,properties:[],boundTarget:state.target,boundThis:state.boundThis,boundArguments:state.arguments.slice()};
+ const object=createJavaScriptBoundFunctionObject(state,identity);
  let at=0;while(at<heap.objects.length&&(heap.objects[at]?.identity??identity)<identity)at++;const next={...heap,objects:heap.objects.slice(0,at).concat([object],heap.objects.slice(at))},invalid=readJavaScriptOrdinaryHeapError(next);
  return invalid!==''?{$:'functionBindInvalid',heap,reason:invalid}:{$:'functionBindContinue',heap:next,state:{...state,phase:'length own',receiver:{$:'object',identity,callable:true}}};
 }

@@ -72,6 +72,7 @@ export function stepJavaScriptSpeciesConstruction(program,heap,directory,state){
   return {$:'speciesConstructionAllocate',heap,state,prototype:state.prototype};
  }
  if(state.phase!=='prototype')return {$:'speciesConstructionInvalid',heap,reason:'species construction needs its actual getter or constructor completion'};
+ if(state.constructor.$!=='object')return {$:'speciesConstructionInvalid',heap,reason:'species construction retains its actual constructor Object'};
  const get=planJavaScriptOrdinaryGet(heap,state.constructor.identity,{$:'text',units:[112,114,111,116,111,116,121,112,101]},state.constructor);if(get.error!=='')return {$:'speciesConstructionInvalid',heap,reason:get.error};
  if(get.action==='call'){const call={$:'speciesConstructionCall',callee:get.callee,receiver:get.receiver,arguments:get.arguments};return {$:'speciesConstructionCall',heap,state:{...state,phase:'prototype getter',call},callee:get.callee,receiver:get.receiver,arguments:get.arguments,constructing:false};}
  if(get.action!=='value')return {$:'speciesConstructionInvalid',heap,reason:'constructor prototype acquisition retains its actual Get result'};

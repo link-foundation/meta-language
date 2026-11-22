@@ -13,7 +13,7 @@ export function readJavaScriptFunctionSourceSpanError(sources,span){
 /** @param {JavaScriptCallProgram} program @returns {string} */
 export function readJavaScriptFunctionSourceDirectoryError(program){
  /** @type {JavaScriptCallSourceUnit[]} */const emptySources=[];
- const sources=program.sources===undefined?emptySources:program.sources;if(!Array.isArray(sources)||sources.length>4096)return 'function source units exceed their shared static directory budget';let total=0;
+ const retainedSources=program.sources,sources=retainedSources===undefined?emptySources:retainedSources;if(!Array.isArray(sources)||sources.length>4096)return 'function source units exceed their shared static directory budget';let total=0;
  for(let index=0;index<sources.length;index++){const row=sources[index];if(row===null||typeof row!=='object'||row.$!=='callSourceUnit'||typeof row.identifier!=='string'||row.identifier.length===0||row.identifier.length>8192||sources.slice(0,index).some(prior=>prior.identifier===row.identifier)||row.text===null||typeof row.text!=='object'||row.text.$!=='text'&&row.text.$!=='sourceText'||readJavaScriptSemanticValueError(row.text)!=='')return 'function source units retain unique complete supplied source identifiers and text';total+=readJavaScriptSemanticTextLength(row.text);if(total>16777216)return 'function source units exceed their shared UTF16 storage profile';}
  for(const fn of program.functions)if(fn.source!==undefined){const error=readJavaScriptFunctionSourceSpanError(sources,fn.source);if(error!=='')return error;if(!['strict','ordinary class','derived Error'].includes(fn.receiverMode))return 'portable intrinsic bodies do not establish original function source text';}
  for(const template of program.templates??[])if(template.source!==undefined){const error=readJavaScriptFunctionSourceSpanError(sources,template.source);if(error!=='')return error;const owner=program.functions[findJavaScriptCallCodeFunction(program,template.owner)];if(owner?.source===undefined||owner.source.unit!==template.source.unit||template.source.start<owner.source.start||template.source.end>owner.source.end)return 'lexical source sites remain inside their actual original source owner';}
@@ -30,6 +30,12 @@ export function readJavaScriptFunctionText(program,heap,input){
  const error=readJavaScriptHeapDirectoryValueError(heap,input)||readJavaScriptFunctionSourceDirectoryError(program);if(error!=='')return {$:'functionTextInvalid',reason:error};
  if(input.$!=='object'||!input.callable)return {$:'functionTextError',errorClass:'TypeError',reason:'Function.prototype.toString requires a callable receiver'};
  const object=heap.objects[findJavaScriptHeapDirectoryObject(heap.objects,input.identity)];if(object?.$==='boundFunctionObject')return {$:'functionTextNeedAuthority',kind:'bound'};
- if(object?.$==='closureObject'){const template=(program.templates??[])[findJavaScriptCallTemplate(program,object.owner,object.ordinal)];return template?.source===undefined?{$:'functionTextNeedAuthority',kind:'source'}:{$:'functionTextValue',value:projectJavaScriptFunctionSourceText(program.sources??[],template.source)};}
- const fn=program.functions[findJavaScriptCallCodeFunction(program,input.identity)];return fn?.source!==undefined?{$:'functionTextValue',value:projectJavaScriptFunctionSourceText(program.sources??[],fn.source)}:{$:'functionTextNeedAuthority',kind:fn!==undefined&&['strict','ordinary class','derived Error'].includes(fn.receiverMode)?'source':'external'};
+ if(object!==undefined&&object.$==='closureObject'){
+  const template=(program.templates??[])[findJavaScriptCallTemplate(program,object.owner,object.ordinal)],source=template?.source;
+  if(source===undefined)return {$:'functionTextNeedAuthority',kind:'source'};
+  return {$:'functionTextValue',value:projectJavaScriptFunctionSourceText(program.sources??[],source)};
+ }
+ const fn=program.functions[findJavaScriptCallCodeFunction(program,input.identity)],source=fn?.source;
+ if(source!==undefined)return {$:'functionTextValue',value:projectJavaScriptFunctionSourceText(program.sources??[],source)};
+ return {$:'functionTextNeedAuthority',kind:fn!==undefined&&['strict','ordinary class','derived Error'].includes(fn.receiverMode)?'source':'external'};
 }

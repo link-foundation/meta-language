@@ -21,6 +21,21 @@ import {findJavaScriptCallConstructorFact} from './javascript-call-code.js';
 export function findJavaScriptArrayConstructorFact(facts,identity){return findJavaScriptCallConstructorFact(facts,identity);}
 /** @param {JavaScriptArrayConstructorFact} fact @returns {JavaScriptArrayConstructorFact} */
 export function copyJavaScriptArrayConstructorFact(fact){return {...fact};}
+/** @param {JavaScriptConstructorRealm} root @param {number} index @returns {JavaScriptSemanticValue|undefined} */
+export function readJavaScriptConstructorRealmFallback(root,index){
+ switch(index){
+  case 0:return root.numberPrototype;
+  case 1:return root.booleanPrototype;
+  case 2:return root.stringPrototype;
+  case 3:return root.integerPrototype;
+  case 4:return root.symbolPrototype;
+  case 5:return root.mapPrototype;
+  case 6:return root.setPrototype;
+  case 7:return root.weakMapPrototype;
+  case 8:return root.weakSetPrototype;
+  default:return undefined;
+ }
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @returns {string} */
 export function readJavaScriptArraySpeciesDirectoryError(heap,directory){
  const heapError=readJavaScriptOrdinaryHeapError(heap);if(heapError!=='')return heapError;
@@ -46,7 +61,10 @@ export function readJavaScriptArraySpeciesDirectoryError(heap,directory){
   if(typeof root.realm!=='bigint'||root.realm<=previousRealm||root.realm>18446744073709551615n)return 'constructor realm roots retain ordered unique unsigned64 identities';previousRealm=root.realm;
   for(const value of [root.objectPrototype,root.arrayPrototype,root.arrayConstructor])if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'constructor realm roots belong to the actual shared heap';
   if(root.objectPrototype.$!=='object'||root.arrayPrototype.$!=='object'||root.arrayConstructor.$!=='object'||!root.arrayConstructor.callable)return 'constructor realm roots retain actual prototype and Array constructor Objects';
-  for(const value of [root.numberPrototype,root.booleanPrototype,root.stringPrototype,root.integerPrototype,root.symbolPrototype,root.mapPrototype,root.setPrototype,root.weakMapPrototype,root.weakSetPrototype])if(value!==undefined&&(value.$!=='object'||value.callable||readJavaScriptOrdinaryValueError(heap,value)!==''))return 'constructor fallback roots retain their actual registered realm prototype Objects';
+  for(let index=0;index<9;index++){
+   const value=readJavaScriptConstructorRealmFallback(root,index);
+   if(value!==undefined&&(value.$!=='object'||value.callable||readJavaScriptOrdinaryValueError(heap,value)!==''))return 'constructor fallback roots retain their actual registered realm prototype Objects';
+  }
   const fact=directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,root.arrayConstructor.identity)];if(fact===undefined||fact.realm!==root.realm||!fact.intrinsicArray||!fact.constructable)return 'constructor realm Array roots retain their actual intrinsic owner fact';
   if(root.realm===directory.realm&&(!testJavaScriptSemanticSameValue(root.arrayConstructor,directory.arrayConstructor)||!testJavaScriptSemanticSameValue(root.arrayPrototype,directory.arrayPrototype)))return 'current constructor realm roots agree with the actual species roots';
  }

@@ -51,6 +51,12 @@ export function findJavaScriptSymbolRegistryKey(heap,key){
 }
 /** @param {JavaScriptSymbolRegistrationFact[]} facts @param {bigint} identity @returns {number} */
 function findJavaScriptSymbolRegistrationPosition(facts,identity){let low=0,high=facts.length;while(low<high){const middle=Math.floor((low+high)/2),fact=facts[middle];if(fact!==undefined&&fact.identity<identity)low=middle+1;else high=middle;}return low;}
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSymbolRegistrationFact} fact @returns {JavaScriptOrdinaryHeap} */
+export function retainJavaScriptSymbolRegistration(heap,fact){
+ const priorFacts=heap.symbolRegistrations??[],position=findJavaScriptSymbolRegistrationPosition(priorFacts,fact.identity);
+ const after=priorFacts[position]?.identity===fact.identity?position+1:position;
+ return {...heap,symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:priorFacts.slice(0,position).concat([fact],priorFacts.slice(after))};
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @returns {JavaScriptSymbolRegistrationFact|undefined} */
 export function readJavaScriptSymbolRegistrationFact(heap,identity){const facts=heap.symbolRegistrations??[],fact=facts[findJavaScriptSymbolRegistrationPosition(facts,identity)];return fact?.identity===identity?fact:undefined;}
 /** Input for `for` is already its actual implicit ToString result. `keyFor`
@@ -88,11 +94,9 @@ export function importJavaScriptSymbolRegistryWitness(heap,identity,key){
  if(prior!==undefined&&prior.registered===registered&&(!registered||prior.key!==undefined&&testJavaScriptSemanticSameValue(prior.key,key)&&entry?.identity===identity))return {$:'symbolRegistryValue',heap,value:{$:'symbol',identity}};
  let next=heap;if(!heap.symbols.includes(identity)){const added=registerJavaScriptOrdinarySymbol(heap,identity);if(!added.success)return {$:'symbolRegistryInvalid',heap,reason:added.error};next=added.heap;}
  const fact=registered?{$:'symbolRegistrationFact',identity,registered,key}:{$:'symbolRegistrationFact',identity,registered};
- const priorFacts=next.symbolRegistrations??[],position=findJavaScriptSymbolRegistrationPosition(priorFacts,identity);
- const after=priorFacts[position]?.identity===identity?position+1:position;
- const facts=priorFacts.slice(0,position).concat([fact],priorFacts.slice(after));
+ const classified=retainJavaScriptSymbolRegistration(next,fact);
  const entries=next.symbolRegistry??[],insert=-at-1,registry=registered&&entry===undefined?entries.slice(0,insert).concat([{$:'symbolRegistryEntry',identity,key}],entries.slice(insert)):entries;
- const updated={...next,symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:facts,symbolRegistryModel:readJavaScriptSymbolRegistryModel(),symbolRegistry:registry},failure=readJavaScriptOrdinaryHeapError(updated);return failure===''?{$:'symbolRegistryValue',heap:updated,value:{$:'symbol',identity}}:{$:'symbolRegistryInvalid',heap,reason:failure};
+ const updated={...classified,symbolRegistryModel:readJavaScriptSymbolRegistryModel(),symbolRegistry:registry},failure=readJavaScriptOrdinaryHeapError(updated);return failure===''?{$:'symbolRegistryValue',heap:updated,value:{$:'symbol',identity}}:{$:'symbolRegistryInvalid',heap,reason:failure};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @param {JavaScriptSemanticValue} key @returns {JavaScriptSymbolRegistryTransition} */
 export function allocateJavaScriptRegisteredSymbol(heap,identity,key){

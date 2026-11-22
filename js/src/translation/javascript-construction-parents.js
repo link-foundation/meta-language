@@ -5,7 +5,10 @@ import {readJavaScriptActiveConstruction} from './javascript-construction.js';
 export function readJavaScriptPendingConstruction(pending){
  switch(pending.$){
   case 'waitConstruction':return readJavaScriptActiveConstruction(pending.state);
-  case 'waitArrayCreation':return pending.construction===undefined?undefined:readJavaScriptActiveConstruction(pending.construction);
+  case 'waitArrayCreation':{
+   const construction=pending.construction;
+   return construction===undefined?undefined:readJavaScriptActiveConstruction(construction);
+  }
   case 'waitArrayTransform':
   case 'waitArraySlice':
   case 'waitArrayConcatenation':{

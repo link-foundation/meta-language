@@ -20,7 +20,7 @@ export function readJavaScriptObjectSpreadStateError(heap,state){
  if(state.target.$!=='object')return 'object spread retains its actual ordinary literal target';
  const assignment=state.operation==='assignment';if(state.operation!==undefined&&!assignment)return 'object copy retains its actual CreateDataProperty or Set operation';
  const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];if(target===undefined||(assignment?!['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(target.$):target.$!=='ordinaryObject'||target.callable))return 'object copy target retains its actual supported ordinary heap kind';
- if(assignment&&(state.exoticKey?.$!=='symbol'||readJavaScriptOrdinaryValueError(heap,state.exoticKey)!==''))return 'Object.assign retains its actual primitive conversion Symbol';
+ if(assignment&&(state.exoticKey===undefined||state.exoticKey.$!=='symbol'||readJavaScriptOrdinaryValueError(heap,state.exoticKey)!==''))return 'Object.assign retains its actual primitive conversion Symbol';
  if(!['keys','read','getter','write','setter','array definition'].includes(state.phase)||!Number.isSafeInteger(state.position)||state.position<0||Object.is(state.position,-0)||state.position>state.keys.length||state.keys.length>4096)return 'object spread retains its bounded key snapshot and exact cursor';
  if(state.phase==='keys'&&(state.keys.length!==0||state.position!==0)||['getter','write','setter','array definition'].includes(state.phase)&&state.position>=state.keys.length)return 'object spread phases retain their actual selected property';
  if(!['write','setter','array definition'].includes(state.phase)&&state.value.$!=='undefined'||!['getter','setter','array definition'].includes(state.phase)&&state.callee.$!=='undefined')return 'object spread retains a completed value or getter only in its actual phase';
@@ -129,7 +129,8 @@ export function acceptJavaScriptObjectAssignmentArray(heap,state,transition){
 export function writeJavaScriptObjectAssignmentProperty(heap,state,key){
  if(state.target.$!=='object'||state.exoticKey===undefined)return {$:'objectSpreadInvalid',heap,reason:'Object.assign retains actual target and primitive conversion authority'};
  const plan=planJavaScriptOrdinarySetWithArrayDefinition(heap,state.target.identity,key,state.value,state.target);if(plan.error!=='')return {$:'objectSpreadInvalid',heap:plan.heap,reason:plan.error};
- if(plan.action==='array definition'&&plan.definition!==undefined)return acceptJavaScriptObjectAssignmentArray(plan.heap,state,beginJavaScriptArrayAssignment(plan.heap,state.target.identity,key,plan.definition,state.exoticKey));
+ const definition=plan.definition;
+ if(plan.action==='array definition'&&definition!==undefined)return acceptJavaScriptObjectAssignmentArray(plan.heap,state,beginJavaScriptArrayAssignment(plan.heap,state.target.identity,key,definition,state.exoticKey));
  if(plan.action==='call'){const call={$:'objectCopyCall',callee:plan.callee,receiver:plan.receiver,arguments:plan.arguments};return {$:'objectSpreadCall',heap:plan.heap,state:{...state,phase:'setter',callee:call.callee,call},callee:call.callee,receiver:call.receiver,arguments:call.arguments};}
  if(plan.action!=='complete')return {$:'objectSpreadInvalid',heap:plan.heap,reason:'Object.assign Set retains its actual ordinary result or selected setter'};
  if(!plan.success)return {$:'objectSpreadError',heap:plan.heap,reason:'Object.assign cannot set its selected property'};

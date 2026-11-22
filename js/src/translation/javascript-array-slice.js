@@ -26,8 +26,12 @@ export function readJavaScriptArraySliceRelativeIndex(value,length){
  const integer=Number.isNaN(value)||value===0?0:Math.trunc(value);
  return integer<0?Math.max(length+integer,0):Math.min(integer,length);
 }
-/** @param {JavaScriptArraySliceCall} actual @param {{callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}|undefined} expected @returns {boolean} */
-function sameCall(actual,expected){return expected!==undefined&&testJavaScriptSemanticSameValue(actual.callee,expected.callee)&&testJavaScriptSemanticSameValue(actual.receiver,expected.receiver)&&actual.arguments.length===expected.arguments.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,expected.arguments[index]??{$:'undefined'}));}
+/** @param {JavaScriptArraySliceCall} actual @param {JavaScriptSemanticValue} callee
+ * @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue[]} arguments_ @returns {boolean} */
+function sameCall(actual,callee,receiver,arguments_){
+ return testJavaScriptSemanticSameValue(actual.callee,callee)&&testJavaScriptSemanticSameValue(actual.receiver,receiver)
+  &&actual.arguments.length===arguments_.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,arguments_[index]??{$:'undefined'}));
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptArraySliceState} state @returns {string} */
 export function readJavaScriptArraySliceStateError(heap,directory,state){
  const directoryError=readJavaScriptArraySpeciesDirectoryError(heap,directory);if(directoryError!=='')return directoryError;
@@ -62,8 +66,14 @@ export function readJavaScriptArraySliceStateError(heap,directory,state){
   for(const value of [state.call.callee,state.call.receiver,...state.call.arguments]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
   if(state.call.callee.$!=='object'||!state.call.callee.callable)return 'slice child calls retain an actual callable';
   if(['length getter','element getter'].includes(state.phase)){if(!testJavaScriptSemanticSameValue(state.call.receiver,state.receiver)||state.call.arguments.length!==0)return 'slice getters retain the original boxed receiver and no arguments';}
-  else if(state.phase==='species'){if(!sameCall(state.call,state.species?.call))return 'slice species retains its selected nested getter';}
-  else if(state.phase==='finish'){if(!sameCall(state.call,state.assignment?.call))return 'slice final Set retains its selected nested setter';}
+  else if(state.phase==='species'){
+   const call=state.species?.call;
+   if(call===undefined||!sameCall(state.call,call.callee,call.receiver,call.arguments))return 'slice species retains its selected nested getter';
+  }
+  else if(state.phase==='finish'){
+   const call=state.assignment?.call;
+   if(call===undefined||!sameCall(state.call,call.callee,call.receiver,call.arguments))return 'slice final Set retains its selected nested setter';
+  }
   else if(state.phase==='conversion'&&state.conversion!==undefined){const child=state.conversion,exotic=child.phase==='exoticCall';if(!['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(child.phase)||!testJavaScriptSemanticSameValue(state.call.receiver,child.receiver)||state.call.arguments.length!==(exotic?1:0)||exotic&&!testJavaScriptSemanticSameValue(state.call.arguments[0]??{$:'undefined'},{$:'text',units:[110,117,109,98,101,114]}))return 'slice scalar calls retain the selected conversion operands';}
   else return 'slice retains child calls only in their actual suspended phase';
  }else if(['length getter','element getter'].includes(state.phase)||state.phase==='conversion'&&state.conversion!==undefined&&['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(state.conversion.phase)||state.phase==='species'&&state.species?.call!==undefined||state.phase==='finish'&&state.assignment?.call!==undefined)return 'slice retains its actual selected child';

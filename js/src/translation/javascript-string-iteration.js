@@ -12,12 +12,20 @@ import {readJavaScriptCollectionIteratorResultPrototypesError,readJavaScriptColl
 export function allocateJavaScriptStringIterator(heap,identity,prototype,value){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'stringIteratorInvalid',heap,reason:error};const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!==''||readJavaScriptSemanticTextLength(value)<0)return {$:'stringIteratorInvalid',heap,reason:invalid||'String iterator allocation retains its actual completed ToString value'};
  if(heap.objects.length>=4096)return {$:'stringIteratorResourceLimit',heap,reason:'String iterator allocation exceeds its actual shared Object budget'};
- let units=readJavaScriptSemanticTextLength(value);for(const row of heap.objects){if(row.$==='collectionIteratorObject'&&row.collectionKind==='String'&&row.iteratedText!==undefined)units+=Math.max(0,readJavaScriptSemanticTextLength(row.iteratedText));if(row.$==='mapObject'||row.$==='setObject')for(const entry of row.entries)units+=Math.max(0,readJavaScriptSemanticTextLength(entry.key))+Math.max(0,readJavaScriptSemanticTextLength(entry.value));}if(units>67108864)return {$:'stringIteratorResourceLimit',heap,reason:'String iterator text exceeds its actual shared UTF16 storage budget'};
+ let units=readJavaScriptSemanticTextLength(value);for(const row of heap.objects){if(row.$==='collectionIteratorObject'&&row.collectionKind==='String'&&row.iteratedText!==undefined)units+=Math.max(0,readJavaScriptSemanticTextLength(row.iteratedText));if(row.$==='mapObject'||row.$==='setObject')units+=readJavaScriptStringIteratorEntryUnits(row.entries);}if(units>67108864)return {$:'stringIteratorResourceLimit',heap,reason:'String iterator text exceeds its actual shared UTF16 storage budget'};
  const allocated=insertJavaScriptOrdinaryObject(heap,identity,prototype);if(!allocated.success)return {$:'stringIteratorInvalid',heap,reason:allocated.error};
  const row=allocated.heap.objects[findJavaScriptOrdinaryObject(allocated.heap.objects,identity)];if(row===undefined||row.$!=='ordinaryObject')return {$:'stringIteratorInvalid',heap,reason:'String iteration retains its actual fresh Object'};
  const iterator={$:'collectionIteratorObject',identity:row.identity,prototype:row.prototype,extensible:row.extensible,callable:row.callable,
   properties:row.properties,collection:0n,cursor:0,kind:'values',collectionKind:'String',iteratedText:value},updated=replaceJavaScriptOrdinaryObject(allocated.heap,iterator),validation=readJavaScriptOrdinaryHeapError(updated);
  return validation===''?{$:'stringIteratorAllocated',heap:updated,value:{$:'object',identity,callable:false}}:{$:'stringIteratorInvalid',heap,reason:validation};
+}
+/** @param {JavaScriptCollectionEntry[]} entries @returns {number} */
+function readJavaScriptStringIteratorEntryUnits(entries){
+ let units=0;
+ for(const entry of entries){
+  units+=Math.max(0,readJavaScriptSemanticTextLength(entry.key))+Math.max(0,readJavaScriptSemanticTextLength(entry.value));
+ }
+ return units;
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} receiver @returns {JavaScriptStringIterationTransition} */
 export function advanceJavaScriptStringIterator(heap,receiver){

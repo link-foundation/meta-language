@@ -22,8 +22,12 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
  * {$:'arrayConcatenationError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'arrayConcatenationInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'arrayConcatenationResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptArrayConcatenationState,reason:string}} JavaScriptArrayConcatenationTransition */
-/** @param {JavaScriptArrayConcatenationCall} actual @param {{callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}|undefined} expected @returns {boolean} */
-function testJavaScriptArrayConcatenationCall(actual,expected){return expected!==undefined&&testJavaScriptSemanticSameValue(actual.callee,expected.callee)&&testJavaScriptSemanticSameValue(actual.receiver,expected.receiver)&&actual.arguments.length===expected.arguments.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,expected.arguments[index]??{$:'undefined'}));}
+/** @param {JavaScriptArrayConcatenationCall} actual @param {JavaScriptSemanticValue} callee
+ * @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue[]} arguments_ @returns {boolean} */
+function testJavaScriptArrayConcatenationCall(actual,callee,receiver,arguments_){
+ return testJavaScriptSemanticSameValue(actual.callee,callee)&&testJavaScriptSemanticSameValue(actual.receiver,receiver)
+  &&actual.arguments.length===arguments_.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,arguments_[index]??{$:'undefined'}));
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptArrayConcatenationState} state @returns {string} */
 export function readJavaScriptArrayConcatenationStateError(heap,directory,state){
  const directoryError=readJavaScriptArraySpeciesDirectoryError(heap,directory);if(directoryError!=='')return directoryError;
@@ -61,8 +65,14 @@ export function readJavaScriptArrayConcatenationStateError(heap,directory,state)
   for(const value of [state.call.callee,state.call.receiver,...state.call.arguments]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
   if(state.call.callee.$!=='object'||!state.call.callee.callable)return 'concatenation child calls retain actual callable identities';
   if(['spreadability getter','length getter','element getter'].includes(state.phase)){if(!testJavaScriptSemanticSameValue(state.call.receiver,state.item)||state.call.arguments.length!==0)return 'concatenation getters retain the actual selected item receiver';}
-  else if(state.phase==='species'){if(!testJavaScriptArrayConcatenationCall(state.call,state.species?.call))return 'concatenation species retains its selected nested getter';}
-  else if(state.phase==='finish'){if(!testJavaScriptArrayConcatenationCall(state.call,state.assignment?.call))return 'concatenation final Set retains its selected nested setter';}
+  else if(state.phase==='species'){
+   const call=state.species?.call;
+   if(call===undefined||!testJavaScriptArrayConcatenationCall(state.call,call.callee,call.receiver,call.arguments))return 'concatenation species retains its selected nested getter';
+  }
+  else if(state.phase==='finish'){
+   const call=state.assignment?.call;
+   if(call===undefined||!testJavaScriptArrayConcatenationCall(state.call,call.callee,call.receiver,call.arguments))return 'concatenation final Set retains its selected nested setter';
+  }
   else if(state.phase==='conversion'&&state.conversion!==undefined){const child=state.conversion,exotic=child.phase==='exoticCall';if(!['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(child.phase)||!testJavaScriptSemanticSameValue(state.call.receiver,child.receiver)||state.call.arguments.length!==(exotic?1:0)||exotic&&!testJavaScriptSemanticSameValue(state.call.arguments[0]??{$:'undefined'},{$:'text',units:[110,117,109,98,101,114]}))return 'concatenation scalar calls retain their selected conversion operands';}
   else return 'concatenation retains child calls only in the actual suspended phase';
  }else if(['spreadability getter','length getter','element getter'].includes(state.phase)||state.phase==='conversion'&&state.conversion!==undefined&&['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(state.conversion.phase)||state.phase==='species'&&state.species?.call!==undefined||state.phase==='finish'&&state.assignment?.call!==undefined)return 'concatenation retains its actual selected child';

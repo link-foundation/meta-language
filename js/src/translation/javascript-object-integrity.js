@@ -14,6 +14,12 @@ import {createJavaScriptPropertyDescriptor,readJavaScriptPropertyDescriptorKind}
  * {$:'objectIntegrityResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectIntegrityState,reason:string}} JavaScriptObjectIntegrityTransition */
 /** @param {string} operation @returns {boolean} */
 export function testJavaScriptObjectObservationOperation(operation){return testJavaScriptStandardObjectObservationOperation(operation);}
+/** @param {JavaScriptSemanticValue} input @param {JavaScriptSemanticValue|undefined} primitive @param {string} kind @returns {JavaScriptSemanticValue|undefined} */
+function selectJavaScriptObjectObservationPrimitive(input,primitive,kind){
+ if(input.$===kind)return input;
+ if(primitive!==undefined&&primitive.$===kind)return primitive;
+ return undefined;
+}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptObjectObservationFunction(identity,realm,operation){return compileJavaScriptStandardObjectObservationFunction(identity,realm,operation);}
 /** @param {string} kind @returns {boolean} */
@@ -38,7 +44,10 @@ export function beginJavaScriptObjectObservation(heap,operation,input,other){
  }
  if(operation==='Object.regularExpressionSlot'){const object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;if(object!==undefined&&!testJavaScriptOrdinaryIntegrityKind(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque IsRegExp requires its actual internal-slot protocol'};return {$:'objectIntegrityCompleted',heap,value:{$:'boolean',value:object?.$==='ordinaryObject'&&object.regularExpression===true}};}
  if(['Symbol.valueOf','Number.valueOf','Boolean.valueOf','Boolean.toString','BigInt.valueOf'].includes(operation)){
-  const kind=operation==='Symbol.valueOf'?'symbol':operation==='Number.valueOf'?'number':operation==='BigInt.valueOf'?'integer':'boolean',object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined,value=input.$===kind?input:object?.$==='ordinaryObject'&&object.primitiveData?.$===kind?object.primitiveData:undefined;
+  const kind=operation==='Symbol.valueOf'?'symbol':operation==='Number.valueOf'?'number':operation==='BigInt.valueOf'?'integer':'boolean';
+  const object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;
+  const primitive=object!==undefined&&object.$==='ordinaryObject'?object.primitiveData:undefined;
+  const value=selectJavaScriptObjectObservationPrimitive(input,primitive,kind);
   if(value===undefined)return {$:'objectIntegrityError',heap,errorClass:'TypeError',reason:operation+' requires its actual primitive value or internal data slot'};
   return {$:'objectIntegrityCompleted',heap,value:operation==='Boolean.toString'?{$:'text',units:value.$==='boolean'&&value.value?[116,114,117,101]:[102,97,108,115,101]}:value};
  }

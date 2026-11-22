@@ -5,7 +5,7 @@ import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJav
 import {readJavaScriptPropertyDescriptorError,testJavaScriptPropertyDescriptorsSameValue} from './javascript-property-descriptors.js';
 import {readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {beginJavaScriptDescriptorConversion,stepJavaScriptDescriptorConversion,resumeJavaScriptDescriptorConversion,readJavaScriptDescriptorConversionStateError} from './javascript-descriptor-conversion.js';
-import {completeJavaScriptPropertyDefinitionWithSymbol,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition,readJavaScriptPropertyDefinitionStateError} from './javascript-property-definition.js';
+import {readJavaScriptPropertyDefinitionHeap,completeJavaScriptPropertyDefinitionWithSymbol,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition,readJavaScriptPropertyDefinitionStateError} from './javascript-property-definition.js';
 import {readJavaScriptReflectedOwnProperty,constructJavaScriptReflectionText,testJavaScriptReflectionOrdinaryKind} from './javascript-property-reflection.js';
 /** @typedef {{$:'propertyDefinitionsCallRecord',callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}} JavaScriptPropertyDefinitionsCall */
 /** @typedef {{$:'propertyDefinitions',operation:string,target:JavaScriptSemanticValue,input:JavaScriptSemanticValue,prototype:JavaScriptSemanticValue,exoticKey:JavaScriptSemanticValue,phase:string,keys:JavaScriptSemanticValue[],position:number,descriptors:JavaScriptOrdinaryProperty[],definitionIndex:number,conversion?:JavaScriptDescriptorConversionState,definition?:JavaScriptPropertyDefinitionState,call?:JavaScriptPropertyDefinitionsCall}} JavaScriptPropertyDefinitionsState */
@@ -53,7 +53,7 @@ export function acceptJavaScriptBulkDescriptorConversion(heap,state,transition){
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPropertyDefinitionsState} state @param {JavaScriptPropertyDefinitionTransition} transition @returns {JavaScriptPropertyDefinitionsTransition} */
 export function acceptJavaScriptBulkPropertyDefinition(heap,state,transition){
- const current=transition.heap??heap;
+ const current=readJavaScriptPropertyDefinitionHeap(transition,heap);
  switch(transition.$){
   case 'definitionContinuation':return {$:'propertyDefinitionsContinue',heap:current,state:{...state,phase:'definition',definition:transition.state,call:undefined}};
   case 'definitionCall':{const call={$:'propertyDefinitionsCallRecord',callee:transition.callee,receiver:transition.receiver,arguments:transition.arguments};return {$:'propertyDefinitionsCall',heap:current,state:{...state,phase:'definition',definition:transition.state,call},callee:call.callee,receiver:call.receiver,arguments:call.arguments};}

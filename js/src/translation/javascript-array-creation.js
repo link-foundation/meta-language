@@ -183,7 +183,8 @@ export function stepJavaScriptArrayCreation(heap,state){
   if(state.target.$!=='object')return {$:'arrayCreationInvalid',heap,reason:'Array creation final Set needs its actual result Object'};
   const key={$:'text',units:[108,101,110,103,116,104]},value={$:'number',value:state.iterable?state.index:state.length},plan=planJavaScriptOrdinarySetWithArrayDefinition(heap,state.target.identity,key,value,state.target);
   if(plan.error!=='')return plan.error==='ordinary properties exceed their explicit ordered storage budget'?{$:'arrayCreationResourceLimit',heap:plan.heap,state,reason:plan.error}:{$:'arrayCreationInvalid',heap:plan.heap,reason:plan.error};
-  if(plan.action==='array definition'&&plan.definition!==undefined)return acceptJavaScriptArrayCreationLengthSet(state,beginJavaScriptArrayAssignment(plan.heap,state.target.identity,key,plan.definition,state.exoticKey));
+  const definition=plan.definition;
+  if(plan.action==='array definition'&&definition!==undefined)return acceptJavaScriptArrayCreationLengthSet(state,beginJavaScriptArrayAssignment(plan.heap,state.target.identity,key,definition,state.exoticKey));
   if(plan.action==='call')return requestJavaScriptArrayCreationCall(plan.heap,{...state,phase:'length setter'},plan.callee,plan.receiver,plan.arguments);
   return plan.action!=='complete'?{$:'arrayCreationInvalid',heap:plan.heap,reason:'Array creation final length Set requires its actual ordinary/Array or selected setter protocol'}:plan.success?{$:'arrayCreationCompleted',heap:plan.heap,value:state.target}:failJavaScriptArrayCreation(plan.heap,state,'TypeError','Array creation could not set result length');
  }
