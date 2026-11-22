@@ -89,21 +89,6 @@ function boundedTail(expression, min, max, hasPrefix) {
   return min === 0 ? optional(body) : body;
 }
 
-function constantExpression(instance) {
-  if (typeof instance === 'string') return quoted(instance);
-  if (Array.isArray(instance)) return collection('[', ']', seq(...instance.map((item, i) => {
-    const expression = constantExpression(item);
-    return i ? separated(expression) : expression;
-  })));
-  if (instance !== null && typeof instance === 'object') {
-    return collection('{', '}', seq(...Object.entries(instance).map(([key, item], i) => {
-      const expression = property(key, constantExpression(item));
-      return i ? separated(expression) : expression;
-    })));
-  }
-  return literal(JSON.stringify(instance));
-}
-
 function uuidExpression() {
   const hex = charClass([{ kind: 'range', start: '0', end: '9' }, { kind: 'range', start: 'a', end: 'f' }, { kind: 'range', start: 'A', end: 'F' }]);
   return seq(repeat(hex, 8, 8), ...[4, 4, 4, 12].map(length => seq(literal('-'), repeat(hex, length, length))));
@@ -271,6 +256,21 @@ export function importJsonSchema(schema) {
     builder.rule(name, expression);
     return ref(name);
   }
+  function constantExpression(instance, pointer, keyword) {
+    if (typeof instance === 'string') return quoted(instance);
+    if (Array.isArray(instance)) return collection('[', ']', seq(...instance.map((item, index) => {
+      const expression = constantExpression(item, pointer, keyword);
+      return index ? separated(expression) : expression;
+    })));
+    if (instance !== null && typeof instance === 'object') {
+      const members = Object.entries(instance).map(([key, item]) => ({
+        required: true,
+        expression: property(key, constantExpression(item, pointer, keyword)),
+      }));
+      return objectMembers(members, undefined, pointer, keyword);
+    }
+    return literal(JSON.stringify(instance));
+  }
   function objectExpression(rules, pointer) {
     const fields = rules.properties ?? {};
     const required = new Set(rules.required ?? []);
@@ -298,13 +298,16 @@ export function importJsonSchema(schema) {
     for (const key of keys) {
       const child = Object.hasOwn(fields, key) ? fields[key] : rules.additionalProperties ?? true;
       const expression = named(child, pointerChild(pointerChild(pointer, 'properties'), key));
-      if (expression) members.push({ key, expression: property(key, expression) });
+      if (expression) members.push({ required: required.has(key), expression: property(key, expression) });
       else if (required.has(key)) return null;
     }
+    return objectMembers(members, additional, pointer, 'properties');
+  }
+  function objectMembers(members, additional, pointer, keyword) {
     const group = next++;
     const states = new Map();
     if (members.length > 12) {
-      report(pointer, 'properties', 'The decoder emits large objects in schema field order. Validation accepts all field orders.');
+      report(pointer, keyword, 'The decoder emits large objects in schema field order. Validation accepts all field orders.');
       function ordered(index, started) {
         const key = `${index}_${Number(started)}`;
         if (states.has(key)) return ref(states.get(key));
@@ -315,7 +318,7 @@ export function importJsonSchema(schema) {
         if (additional) alternatives.push(seq(started ? separated(additional) : additional, ordered(index, true)));
         if (field) {
           alternatives.push(seq(started ? separated(field.expression) : field.expression, ordered(index + 1, true)));
-          if (!required.has(field.key)) alternatives.push(ordered(index + 1, started));
+          if (!field.required) alternatives.push(ordered(index + 1, started));
         } else alternatives.push(empty());
         builder.rule(name, choice(...alternatives));
         return ref(name);
@@ -323,7 +326,7 @@ export function importJsonSchema(schema) {
       return collection('{', '}', ordered(0, false));
     }
     let requiredMask = 0;
-    members.forEach((member, index) => { if (required.has(member.key)) requiredMask |= 1 << index; });
+    members.forEach((member, index) => { if (member.required) requiredMask |= 1 << index; });
     function unordered(seen, started) {
       const state = `${seen}_${Number(started)}`;
       if (states.has(state)) return ref(states.get(state));
@@ -397,7 +400,8 @@ export function importJsonSchema(schema) {
         ? (rules.anyOf ?? rules.oneOf).flatMap(finiteConstants) : undefined);
     if (constants) {
       const entries = constants.filter(item => validateJsonDocument(readJsonDocument(JSON.stringify(item)), rules, analysis).errors.length === 0);
-      return entries.length ? choice(...entries.map(constantExpression)) : null;
+      const keyword = ['const', 'enum', 'anyOf', 'oneOf'].find(key => Object.hasOwn(rules, key));
+      return entries.length ? choice(...entries.map(item => constantExpression(item, pointer, keyword))) : null;
     }
     if (rules.$ref !== undefined) {
       const target = analysis.target(rules.$ref);

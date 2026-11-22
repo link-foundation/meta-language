@@ -107,29 +107,6 @@ fn bounded_tail(item: Expression, min: usize, max: Option<usize>, has_prefix: bo
     if min == 0 { EXPRESSION.opt(body) } else { body }
 }
 
-fn constant(value: &Value) -> Expression {
-    match value {
-        Value::String(value) => quoted(value),
-        Value::Array(items) => collection(
-            "[",
-            "]",
-            EXPRESSION.seq(items.iter().enumerate().map(|(index, item)| {
-                let entry = constant(item);
-                if index == 0 { entry } else { separated(entry) }
-            })),
-        ),
-        Value::Object(members) => collection(
-            "{",
-            "}",
-            EXPRESSION.seq(members.iter().enumerate().map(|(index, (name, item))| {
-                let entry = property(name, constant(item));
-                if index == 0 { entry } else { separated(entry) }
-            })),
-        ),
-        _ => EXPRESSION.term(value.to_string()),
-    }
-}
-
 /// A constrained grammar with explicit residual schema constraints.
 #[derive(Clone, Debug)]
 pub struct JsonSchemaGrammar {
@@ -302,10 +279,15 @@ impl<'schema> Importer<'schema> {
             })
         });
         if let Some(constants) = constants {
+            let keyword = ["const", "enum", "anyOf", "oneOf"]
+                .into_iter()
+                .find(|key| schema.get(*key).is_some())
+                .expect("each finite schema belongs to an assertion");
+            let root = self.root;
             let entries: Vec<_> = constants
                 .into_iter()
-                .filter(|value| super::validation::accepts_constant(self.root, schema, value))
-                .map(constant)
+                .filter(|value| super::validation::accepts_constant(root, schema, value))
+                .map(|value| self.constant(value, pointer, keyword))
                 .collect();
             return (!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries));
         }
@@ -370,6 +352,31 @@ impl<'schema> Importer<'schema> {
             })
             .collect();
         (!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions))
+    }
+
+    fn constant(&mut self, value: &Value, pointer: &str, keyword: &str) -> Expression {
+        match value {
+            Value::String(value) => quoted(value),
+            Value::Array(items) => collection(
+                "[",
+                "]",
+                EXPRESSION.seq(items.iter().enumerate().map(|(index, item)| {
+                    let entry = self.constant(item, pointer, keyword);
+                    if index == 0 { entry } else { separated(entry) }
+                })),
+            ),
+            Value::Object(fields) => {
+                let members: Vec<_> = fields
+                    .iter()
+                    .map(|(name, item)| Member {
+                        required: true,
+                        expression: property(name, self.constant(item, pointer, keyword)),
+                    })
+                    .collect();
+                self.object_members(&members, None, pointer, keyword)
+            }
+            _ => EXPRESSION.term(value.to_string()),
+        }
     }
 
     fn object(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
@@ -448,14 +455,24 @@ impl<'schema> Importer<'schema> {
                 return None;
             }
         }
+        Some(self.object_members(&members, additional_member, pointer, "properties"))
+    }
+
+    fn object_members(
+        &mut self,
+        fields: &[Member],
+        additional: Option<Expression>,
+        pointer: &str,
+        keyword: &str,
+    ) -> Expression {
         let members = ObjectMembers {
-            fields: &members,
-            additional: additional_member,
+            fields,
+            additional,
             group: self.next(),
         };
         let mut states = HashMap::new();
         let body = if members.fields.len() > 12 {
-            self.report(pointer, "properties", "The decoder emits large objects in schema field order. Validation accepts all field orders.");
+            self.report(pointer, keyword, "The decoder emits large objects in schema field order. Validation accepts all field orders.");
             self.ordered_members(&members, 0, false, &mut states)
         } else {
             let required = members
@@ -466,7 +483,7 @@ impl<'schema> Importer<'schema> {
                 .fold(0, |bits, (index, _)| bits | ((1_usize) << index));
             self.unordered_members(&members, 0, false, required, &mut states)
         };
-        Some(collection("{", "}", body))
+        collection("{", "}", body)
     }
 
     fn ordered_members(
