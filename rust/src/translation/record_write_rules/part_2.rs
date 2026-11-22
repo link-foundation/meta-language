@@ -297,10 +297,11 @@ pub fn read_optional_record_compound_binary_operation(
 ) -> self::ml_string::Text {
     if ((*language)
         != (self::ml_string::Text::from_units(vec![74, 97, 118, 97, 83, 99, 114, 105, 112, 116])))
-        || ((*absence)
+        || (((*absence)
             != (self::ml_string::Text::from_units(vec![
                 117, 110, 100, 101, 102, 105, 110, 101, 100,
             ])))
+            && ((*absence) != (self::ml_string::Text::from_units(vec![98, 111, 116, 104]))))
     {
         self::ml_string::Text::from_units(vec![])
     } else if (*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116])) {

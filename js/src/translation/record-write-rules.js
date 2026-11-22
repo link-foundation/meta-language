@@ -74,8 +74,7 @@ function readRecordNumericCompoundBinaryOperation(operator) {
 /** @param {string} language @param {string} operator @param {string} kind
  * @param {string} absence @returns {string} */
 export function readOptionalRecordCompoundBinaryOperation(language, operator, kind, absence) {
-  if (language !== 'JavaScript' || absence !== 'undefined') return '';
-  // An absent Number converts to NaN. An absent String in += is joined as "undefined".
+  if (language !== 'JavaScript' || absence !== 'undefined' && absence !== 'both') return '';
   if (kind === 'float') return readRecordNumericCompoundBinaryOperation(operator);
   if (kind === 'string') return readRecordCompoundBinaryOperation(language, operator, kind);
   return '';

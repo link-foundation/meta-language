@@ -69,14 +69,15 @@ test('ordered optional fields survive spread, rest, enumeration and both graph c
 });
 test('writes create and retain ordered optional own fields on every alias',()=>{
  const source=readFileSync(new URL('../../experiments/record-property-order/optional-field-writes.js',import.meta.url),'utf8');
- assert.equal(runInNewContext(source+'\ncompute() && compound()',{}, {timeout:2000}),true);
+ const functions=['compute','compound','nullableCompound'];
+ assert.equal(runInNewContext(source+'\n'+functions.map(name=>name+'()').join(' && '),{}, {timeout:2000}),true);
  const {network,root}=encodeTypedProgramLinks(checkProgram(parseJavaScript(source)));
  const codecs=[LinkNetwork.fromLino(network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(network))];
  for(const target of ['JavaScript','Rust']){
   const emission=emitTypedProgramLinks(network,root,target);
   for(const decoded of codecs)assert.deepEqual(emitTypedProgramLinks(decoded,root,target),emission);
   if(target==='JavaScript'){
-   const entries=['compute','compound'].map(name=>emission.mappings.find(({kind,source})=>kind==='function'&&source===name).target);
+   const entries=functions.map(name=>emission.mappings.find(({kind,source})=>kind==='function'&&source===name).target);
    assert.equal(runInNewContext(emission.code.replace(/^export /gmu,'')+'\n'+entries.map(entry=>entry+'()').join(' && '),{}, {timeout:2000}),true);
   }
  }

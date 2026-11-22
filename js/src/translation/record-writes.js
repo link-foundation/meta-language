@@ -35,12 +35,13 @@ export function checkRecordFieldWrite(checker, node, object, env, path) {
     const owner = capture('ml_field_owner', object);
     const previous = capture('ml_field_previous', readJavaScriptOwnedRecordField(checker.referenceValue(owner), field));
     const operandType = optionalBinary ? type.element : type;
-    const right = node.args[0] ?? { k: 'num', value: '1', type: operandType };
-    let left = { k: 'name', path: [previous.name] };
-    if (optionalBinary) {
-      const fallback = operandType.kind === 'float' ? { k: 'num', value: 'NaN', type: operandType }
-        : { k: 'str', value: 'undefined' };
-      left = { k: 'coalesce', left, right: fallback, span: node.span };
+    let right = node.args[0] ?? { k: 'num', value: '1', type: operandType };
+    const left = { k: 'name', path: [previous.name] };
+    if (optionalBinary && operandType.kind === 'string') {
+      const operand = checker.expr(right, inner, path, undefined);
+      if (operand.type.kind !== 'string') throw unsupported('optional String field addition',
+        'an absent left operand needs an actual String right operand to produce a String field value', node.span);
+      right = { k: 'name', path: [capture('ml_field_right', operand).name] };
     }
     const operation = binary === 'exponentiation'
       ? { k: 'math', op: 'exponentiateJavaScriptNumericValue', name: '**',

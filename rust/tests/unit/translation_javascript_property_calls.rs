@@ -174,9 +174,9 @@ fn ordered_optional_fields_keep_their_actual_own_membership() {
 fn ordered_optional_field_writes_create_membership_on_shared_aliases() {
     let source = concat!(
         include_str!("../../../experiments/record-property-order/optional-field-writes.js"),
-        "\nconsole.log(compute());\nconsole.log(compound());\n",
+        "\nconsole.log(compute());\nconsole.log(compound());\nconsole.log(nullableCompound());\n",
     );
     super::translation_javascript_frontend::preserves_javascript_translation_behavior(
-        source, "true\ntrue\n",
+        source, "true\ntrue\ntrue\n",
     );
 }

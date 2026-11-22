@@ -39,3 +39,13 @@ function compound() {
     keys.length===5 && keys[0]==='head' && keys[1]==='count' && keys[2]==='power' &&
     keys[3]==='increment' && keys[4]==='label';
 }
+/** @typedef {{numberValue?:(number|null),stringValue?:(string|null)}} NullableCompoundShape */
+/** @returns {NullableCompoundShape} */
+function makeNullableCompound() { return {numberValue:null,stringValue:null}; }
+/** @returns {boolean} */
+function nullableCompound() {
+  const record = makeNullableCompound();
+  record.numberValue += 5;
+  record.stringValue += '!';
+  return (record.numberValue ?? 0)===5 && (record.stringValue ?? '')==='null!';
+}

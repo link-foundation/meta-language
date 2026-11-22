@@ -146,29 +146,8 @@ impl Checker {
             };
             inner.bind_local(&previous_name, previous.ty.clone());
             bindings.push((previous_name.clone(), previous));
-            let mut left = SExpr::name(&previous_name);
-            if optional {
-                let fallback = if operand_type.kind() == "float" {
-                    SNode::Num {
-                        value: "NaN".to_owned(),
-                        ty: Some(operand_type.clone()),
-                        negative: false,
-                        unit: false,
-                    }
-                } else {
-                    SNode::Str {
-                        value: "undefined".to_owned(),
-                    }
-                };
-                left = SExpr::new(
-                    SNode::Coalesce {
-                        left: Box::new(left),
-                        right: Box::new(SExpr::new(fallback, span)),
-                    },
-                    span,
-                );
-            }
-            let right = args
+            let left = SExpr::name(&previous_name);
+            let mut right = args
                 .first()
                 .and_then(Option::as_ref)
                 .cloned()
@@ -183,6 +162,25 @@ impl Checker {
                         span,
                     )
                 });
+            if optional && operand_type.kind() == "string" {
+                let operand = self.expr(&right, &inner, path, None, false)?;
+                if operand.ty != Type::String {
+                    return Err(unsupported(
+                        "optional String field addition",
+                        "an absent left operand needs an actual String right operand to produce a String field value",
+                        span,
+                    ));
+                }
+                let right_name = loop {
+                    let name = self.fresh_name("ml_field_right");
+                    if !inner.has(&name) {
+                        break name;
+                    }
+                };
+                inner.bind_local(&right_name, operand.ty.clone());
+                right = SExpr::name(&right_name);
+                bindings.push((right_name, operand));
+            }
             let calculated = if binary == "exponentiation" {
                 self.javascript_exponentiation(
                     &[SArrayItem::new(left, false), SArrayItem::new(right, false)],
