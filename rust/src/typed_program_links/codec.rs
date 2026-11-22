@@ -12,6 +12,7 @@ use crate::translation::typed_program_link_rules::{
     read_program_type_neutral_field_default,
 };
 use crate::{LinkId, LinkNetwork, LinkType};
+use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
@@ -255,19 +256,20 @@ impl Decoder<'_> {
             } else if self.tag(*id, "k") == "module" {
                 // Preserve the whole owned record: serde and the checked scope
                 // adapter must see every supplied module field and flag.
-                let mut module = self.render(*id, remaining, bytes)?;
                 let children = self
                     .field(*id, "items")
                     .ok_or_else(|| error("an owned module has no ordered items"))?;
-                module["items"] = Value::Array(self.ordered_items(
+                let mut module = self.render_owned_record(*id, &["items"], remaining, bytes)?;
+                let children = self.ordered_items(
                     children,
                     declarations,
                     seen_items,
                     seen_declarations,
                     remaining,
                     bytes,
-                )?);
-                items.push(module);
+                )?;
+                module.insert("items".to_owned(), Value::Array(children));
+                items.push(Value::Object(module));
             } else {
                 return Err(error(
                     "a program item is not an owned declaration or module",
@@ -295,6 +297,29 @@ impl Decoder<'_> {
         }
     }
     fn render(&self, id: LinkId, remaining: &mut usize, bytes: &mut usize) -> Result<Value> {
+        self.render_value(id, &[], remaining, bytes)
+    }
+
+    fn render_owned_record(
+        &self,
+        id: LinkId,
+        replaced_fields: &[&str],
+        remaining: &mut usize,
+        bytes: &mut usize,
+    ) -> Result<Map<String, Value>> {
+        match self.render_value(id, replaced_fields, remaining, bytes)? {
+            Value::Object(record) => Ok(record),
+            _ => Err(error("a program owner is not a record")),
+        }
+    }
+
+    fn render_value(
+        &self,
+        id: LinkId,
+        replaced_fields: &[&str],
+        remaining: &mut usize,
+        bytes: &mut usize,
+    ) -> Result<Value> {
         *remaining = remaining.checked_sub(1).ok_or_else(|| {
             error("the linked program exceeds its Rust materialization resource limit")
         })?;
@@ -331,7 +356,9 @@ impl Decoder<'_> {
             Data::Record(fields) => {
                 let mut record = Map::new();
                 for (field, child) in fields {
-                    record.insert(field.clone(), self.render(*child, remaining, bytes)?);
+                    if !replaced_fields.contains(&field.as_str()) {
+                        record.insert(field.clone(), self.render(*child, remaining, bytes)?);
+                    }
                 }
                 // Only the schema's fixed-width metadata role is integral.
                 // Floating literals and every other scalar retain their values.
@@ -354,7 +381,9 @@ impl Decoder<'_> {
                         *bytes = bytes.checked_sub(name.len()).ok_or_else(|| {
                             error("the linked program exceeds its Rust materialization byte limit")
                         })?;
-                        if record.insert(field, Value::String(name)).is_some() {
+                        if replaced_fields.contains(&field.as_str())
+                            || record.insert(field, Value::String(name)).is_some()
+                        {
                             return Err(error(
                                 "a program reference conflicts with a raw name field",
                             ));
@@ -573,11 +602,16 @@ pub(super) fn decode_with_binding_identities(
     }
     let mut remaining = limits.node_limit;
     let mut bytes = 64 * 1024 * 1024;
-    let mut value = decoder.render(body, &mut remaining, &mut bytes)?;
-    let pairs = value["declarations"]
-        .as_array()
-        .ok_or_else(|| error("the linked declaration mapping is invalid"))?;
-    let ordered_declarations = pairs.iter().map(|pair| pair[1].clone()).collect::<Vec<_>>();
+    let mut program = decoder.render_owned_record(
+        body,
+        &["declarations", "items"],
+        &mut remaining,
+        &mut bytes,
+    )?;
+    let ordered_declarations = entries
+        .iter()
+        .map(|(_, entry)| decoder.render(*entry, &mut remaining, &mut bytes))
+        .collect::<Result<Vec<_>>>()?;
     let items_id = decoder
         .field(body, "items")
         .ok_or_else(|| error("the linked program has no ordered items"))?;
@@ -597,8 +631,12 @@ pub(super) fn decode_with_binding_identities(
             "the linked declaration mapping and ordered items disagree",
         ));
     }
-    value["items"] = Value::Array(items);
-    value["declarations"] = Value::Array(ordered_declarations);
+    program.insert("items".to_owned(), Value::Array(items));
+    program.insert(
+        "declarations".to_owned(),
+        Value::Array(ordered_declarations),
+    );
+    let mut value = Value::Object(program);
     const_functions::prepare_order(&mut value)?;
     crate::translation::source_const_functions::validate_const_function_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
@@ -626,7 +664,7 @@ pub(super) fn decode_with_binding_identities(
     crate::translation::source_type_namespaces::validate_type_namespace_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
     owned_local_state::prepare_decoded_order(&mut value)?;
-    let program: Program = serde_json::from_value(value.clone()).map_err(|failure| {
+    let program = Program::deserialize(&value).map_err(|failure| {
         error(format!(
             "the Rust typed links adapter cannot decode this construct: {failure}"
         ))
