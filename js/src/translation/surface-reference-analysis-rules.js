@@ -258,13 +258,23 @@ function inspectSurfaceReferenceExpression(columns, rows, size, signatures, node
     return [-2, readRequiredNumberFact(body, 1)];
   }
   let observed = false;
+  let objectType = -1;
+  let thenType = -1;
+  let elseType = -1;
+  const objectNode = kind === 'field' || kind === 'index' ? readSurfaceReferenceField(columns, rows, size, node, 'object') : -1;
+  const thenNode = kind === 'if' ? readSurfaceReferenceField(columns, rows, size, node, 'then') : -1;
+  const elseNode = kind === 'if' ? readSurfaceReferenceField(columns, rows, size, node, 'else') : -1;
   let offset = readRequiredNumberFact(rows, node);
   const end = offset + readRequiredNumberFact(rows, size + (node));
   while (offset < end) {
     const field = readRequiredTextFact(columns, size * 2 + (offset));
     if (field !== 'type' && field !== 'span' && field !== 'data') {
-      const child = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readRequiredNumberFact(rows, size * 2 + (offset)), names, types);
+      const childNode = readRequiredNumberFact(rows, size * 2 + offset);
+      const child = inspectSurfaceReferenceExpression(columns, rows, size, signatures, childNode, names, types);
       if (readRequiredNumberFact(child, 1) === 1) observed = true;
+      if (childNode === objectNode) objectType = readRequiredNumberFact(child, 0);
+      if (childNode === thenNode) thenType = readRequiredNumberFact(child, 0);
+      if (childNode === elseNode) elseType = readRequiredNumberFact(child, 0);
     }
     offset += 1;
   }
@@ -279,13 +289,11 @@ function inspectSurfaceReferenceExpression(columns, rows, size, signatures, node
     }
   }
   if (kind === 'field' || kind === 'index') {
-    const object = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'object'), names, types);
-    if (readRequiredNumberFact(object, 1) === 1) observed = true;
-    if (kind === 'index') return [readSurfaceReferenceType(columns, readSurfaceReferenceField(columns, rows, size, readRequiredNumberFact(object, 0), 'element')), observed ? 1 : 0];
-    const typeKind = readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, readRequiredNumberFact(object, 0), 'kind'));
+    if (kind === 'index') return [readSurfaceReferenceType(columns, readSurfaceReferenceField(columns, rows, size, objectType, 'element')), observed ? 1 : 0];
+    const typeKind = readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, objectType, 'kind'));
     if (typeKind === 'record') {
       const wanted = readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, node, 'field'));
-      const fields = readSurfaceReferenceField(columns, rows, size, readRequiredNumberFact(object, 0), 'fields');
+      const fields = readSurfaceReferenceField(columns, rows, size, objectType, 'fields');
       if (fields >= 0) {
         let position = readRequiredNumberFact(rows, fields);
         const finish = position + readRequiredNumberFact(rows, size + (fields));
@@ -299,11 +307,7 @@ function inspectSurfaceReferenceExpression(columns, rows, size, signatures, node
     return [-1, observed ? 1 : 0];
   }
   if (kind === 'if') {
-    const yes = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'then'), names, types);
-    if (readRequiredNumberFact(yes, 1) === 1) observed = true;
-    if (readRequiredNumberFact(yes, 0) !== -1) return [readRequiredNumberFact(yes, 0), observed ? 1 : 0];
-    const no = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'else'), names, types);
-    return [readRequiredNumberFact(no, 0), observed || readRequiredNumberFact(no, 1) === 1 ? 1 : 0];
+    return [thenType !== -1 ? thenType : elseType, observed ? 1 : 0];
   }
   if (kind === 'num' || kind === 'str' || kind === 'bool') return [-2, observed ? 1 : 0];
   if (kind === 'array' || kind === 'record' || kind === 'set' || kind === 'map') return [-3, observed ? 1 : 0];

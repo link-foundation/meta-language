@@ -102,6 +102,20 @@ test('flat recursive scope and type flow preserve original structural identity d
   }
 });
 
+test('nested conditional projections preserve resolved container identity at bounded depth', () => {
+  function nestedProbe(depth) {
+    let selected = name('value');
+    for (let position = 0; position < depth; position += 1) {
+      selected = { k: 'if', cond: { k: 'bool', value: true }, then: selected, else: name('unknown') };
+    }
+    return program(equality(selected, name('value')), [parameter('value', array)]);
+  }
+  const shallow = nestedProbe(8);
+  assert.equal(original.hasStructuralIdentity(shallow), true);
+  assert.equal(hasStructuralIdentity(shallow), true);
+  assert.equal(hasStructuralIdentity(nestedProbe(36)), true);
+});
+
 test('module signatures external overrides and main binding order keep their original priority', () => {
   const call = { k: 'app', fn: { k: 'name', path: ['crate', 'nested', 'make'] }, args: [] };
   const probe = program(equality(call, call));

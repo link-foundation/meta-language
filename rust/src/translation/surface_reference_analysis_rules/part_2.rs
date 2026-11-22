@@ -173,7 +173,7 @@ pub fn collect_surface_reference_item_signatures(
                 {
                     let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + items));
                     {
-                        crate::translation::surface_reference_analysis_rules::source_ml_temporary_collect_surface_reference_item_signatures_loop17(columns, rows, size, prefix, external, result, offset, end)
+                        crate::translation::surface_reference_analysis_rules::source_ml_temporary_collect_surface_reference_item_signatures_loop18(columns, rows, size, prefix, external, result, offset, end)
                     }
                 }
             }
@@ -360,29 +360,29 @@ pub fn source_ml_temporary_inspect_surface_reference_expression_loop7(columns: &
                     );
                 {
                     let inner_names_2 = {
-                        let source_ml_source1_concat_value17 = inner_names;
+                        let source_ml_source1_concat_value18 = inner_names;
                         {
-                            let source_ml_source1_concat_value18 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))];
+                            let source_ml_source1_concat_value19 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))];
                             crate::translation::frontend_rules::ml_array::append(
                                 crate::translation::frontend_rules::ml_array::append(
                                     Vec::<String>::new(),
-                                    source_ml_source1_concat_value17,
+                                    source_ml_source1_concat_value18,
                                 ),
-                                source_ml_source1_concat_value18,
+                                source_ml_source1_concat_value19,
                             )
                         }
                     };
                     {
                         let inner_types_2 = {
-                            let source_ml_source1_concat_value19 = inner_types;
+                            let source_ml_source1_concat_value20 = inner_types;
                             {
-                                let source_ml_source1_concat_value20 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")];
+                                let source_ml_source1_concat_value21 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")];
                                 crate::translation::frontend_rules::ml_array::append(
                                     crate::translation::frontend_rules::ml_array::append(
                                         Vec::<f64>::new(),
-                                        source_ml_source1_concat_value19,
+                                        source_ml_source1_concat_value20,
                                     ),
-                                    source_ml_source1_concat_value20,
+                                    source_ml_source1_concat_value21,
                                 )
                             }
                         };
@@ -401,58 +401,6 @@ pub fn source_ml_temporary_inspect_surface_reference_expression_loop7(columns: &
         return {
             crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionLoop7Result::MlTemporaryInspectSurfaceReferenceExpressionLoop7Done(inner_names, inner_types)
         };
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn source_ml_temporary_inspect_surface_reference_expression_loop8(
-    columns: &[String],
-    rows: &[f64],
-    mut size: f64,
-    mut signatures: (Vec<f64>, Vec<String>),
-    names: &[String],
-    types: &[f64],
-    mut observed: bool,
-    mut offset: f64,
-    mut end: f64,
-) -> bool {
-    loop {
-        if offset < end {
-            {
-                let field =
-                    crate::translation::surface_reference_analysis_rules::read_required_text_fact(
-                        columns,
-                        ((size * 2f64) + offset),
-                    );
-                {
-                    let observed_3 = if ((field != "type") && (field != "span"))
-                        && (field != "data")
-                    {
-                        {
-                            let child = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, ((size * 2f64) + offset)), names, types);
-                            if (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(child), 1f64)) == 1f64 {
-                                {
-                                    true
-                                }
-                            } else {
-                                observed
-                            }
-                        }
-                    } else {
-                        observed
-                    };
-                    {
-                        let offset_2 = offset + 1f64;
-                        {
-                            (observed, offset) = (observed_3, offset_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return { observed };
     }
 }
 
@@ -508,18 +456,106 @@ pub enum MlTemporaryInspectSurfaceReferenceExpressionJoin9 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryInspectSurfaceReferenceItemsJoin13 {
-    MlTemporaryInspectSurfaceReferenceItemsJoin13Next(Vec<String>, Vec<f64>),
+pub enum MlTemporaryInspectSurfaceReferenceExpressionLoop8Result {
+    MlTemporaryInspectSurfaceReferenceExpressionLoop8Done(bool, f64, f64, f64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryInspectSurfaceReferenceItemsLoop14Result {
-    MlTemporaryInspectSurfaceReferenceItemsLoop14Done(Vec<String>, Vec<f64>),
+pub enum MlTemporaryInspectSurfaceReferenceExpressionJoin12 {
+    MlTemporaryInspectSurfaceReferenceExpressionJoin12Next(bool, f64, f64, f64),
 }
 
 /// Execute the complete checked source algorithm.
 #[must_use]
-pub fn source_ml_temporary_inspect_surface_reference_items_loop14(columns: &[String], rows: &[f64], mut size: f64, mut names: Vec<String>, mut types: Vec<f64>, mut position: f64, mut finish: f64) -> crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsLoop14Result{
+pub fn source_ml_temporary_inspect_surface_reference_expression_loop8(columns: &[String], rows: &[f64], mut size: f64, mut signatures: (Vec<f64>, Vec<String>), names: &[String], types: &[f64], mut observed: bool, mut object_type: f64, mut then_type: f64, mut else_type: f64, mut object_node: f64, mut then_node: f64, mut else_node: f64, mut offset: f64, mut end: f64) -> crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionLoop8Result{
+    loop {
+        return if offset < end {
+            {
+                let field =
+                    crate::translation::surface_reference_analysis_rules::read_required_text_fact(
+                        columns,
+                        ((size * 2f64) + offset),
+                    );
+                {
+                    let source_ml_source1_s22 = if ((field != "type") && (field != "span"))
+                        && (field != "data")
+                    {
+                        {
+                            let child_node = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, ((size * 2f64) + offset));
+                            {
+                                let child = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), child_node, names, types);
+                                {
+                                    let observed_3 = if (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(child), 1f64)) == 1f64 {
+                                        {
+                                            true
+                                        }
+                                    } else {
+                                        observed
+                                    };
+                                    {
+                                        let object_type_3 = if child_node == object_node {
+                                            {
+                                                crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(child), 0f64)
+                                            }
+                                        } else {
+                                            object_type
+                                        };
+                                        {
+                                            let then_type_3 = if child_node == then_node {
+                                                {
+                                                    crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(child), 0f64)
+                                                }
+                                            } else {
+                                                then_type
+                                            };
+                                            if child_node == else_node {
+                                                {
+                                                    let else_type_2 = crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(child), 0f64);
+                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin12::MlTemporaryInspectSurfaceReferenceExpressionJoin12Next(observed_3, object_type_3, then_type_3, else_type_2)
+                                                }
+                                            } else {
+                                                crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin12::MlTemporaryInspectSurfaceReferenceExpressionJoin12Next(observed_3, object_type_3, then_type_3, else_type)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin12::MlTemporaryInspectSurfaceReferenceExpressionJoin12Next(observed, object_type, then_type, else_type)
+                    };
+                    match source_ml_source1_s22 {
+                        crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionJoin12::MlTemporaryInspectSurfaceReferenceExpressionJoin12Next(observed_4, object_type_4, then_type_4, else_type_3) => {
+                            {
+                                let offset_2 = offset + 1f64;
+                                {
+                                    (observed, object_type, then_type, else_type, offset) = (observed_4, object_type_4, then_type_4, else_type_3, offset_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceExpressionLoop8Result::MlTemporaryInspectSurfaceReferenceExpressionLoop8Done(observed, object_type, then_type, else_type)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryInspectSurfaceReferenceItemsJoin14 {
+    MlTemporaryInspectSurfaceReferenceItemsJoin14Next(Vec<String>, Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryInspectSurfaceReferenceItemsLoop15Result {
+    MlTemporaryInspectSurfaceReferenceItemsLoop15Done(Vec<String>, Vec<f64>),
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn source_ml_temporary_inspect_surface_reference_items_loop15(columns: &[String], rows: &[f64], mut size: f64, mut names: Vec<String>, mut types: Vec<f64>, mut position: f64, mut finish: f64) -> crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsLoop15Result{
     loop {
         if position < finish {
             {
@@ -530,29 +566,29 @@ pub fn source_ml_temporary_inspect_surface_reference_items_loop14(columns: &[Str
                     );
                 {
                     let names_2 = {
-                        let source_ml_source1_concat_value21 = names;
+                        let source_ml_source1_concat_value23 = names;
                         {
-                            let source_ml_source1_concat_value22 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))];
+                            let source_ml_source1_concat_value24 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))];
                             crate::translation::frontend_rules::ml_array::append(
                                 crate::translation::frontend_rules::ml_array::append(
                                     Vec::<String>::new(),
-                                    source_ml_source1_concat_value21,
+                                    source_ml_source1_concat_value23,
                                 ),
-                                source_ml_source1_concat_value22,
+                                source_ml_source1_concat_value24,
                             )
                         }
                     };
                     {
                         let types_2 = {
-                            let source_ml_source1_concat_value23 = types;
+                            let source_ml_source1_concat_value25 = types;
                             {
-                                let source_ml_source1_concat_value24 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")];
+                                let source_ml_source1_concat_value26 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")];
                                 crate::translation::frontend_rules::ml_array::append(
                                     crate::translation::frontend_rules::ml_array::append(
                                         Vec::<f64>::new(),
-                                        source_ml_source1_concat_value23,
+                                        source_ml_source1_concat_value25,
                                     ),
-                                    source_ml_source1_concat_value24,
+                                    source_ml_source1_concat_value26,
                                 )
                             }
                         };
@@ -568,14 +604,14 @@ pub fn source_ml_temporary_inspect_surface_reference_items_loop14(columns: &[Str
             }
         }
         return {
-            crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsLoop14Result::MlTemporaryInspectSurfaceReferenceItemsLoop14Done(names, types)
+            crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsLoop15Result::MlTemporaryInspectSurfaceReferenceItemsLoop15Done(names, types)
         };
     }
 }
 
 /// Execute the complete checked source algorithm.
 #[must_use]
-pub fn source_ml_temporary_inspect_surface_reference_items_loop12(
+pub fn source_ml_temporary_inspect_surface_reference_items_loop13(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -611,26 +647,26 @@ pub fn source_ml_temporary_inspect_surface_reference_items_loop12(
                                         {
                                             let params = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, item, "params");
                                             {
-                                                let source_ml_source1_s26 = if params >= 0f64 {
+                                                let source_ml_source1_s28 = if params >= 0f64 {
                                                     {
                                                         let position = crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, params);
                                                         {
                                                             let finish = position + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + params));
                                                             {
-                                                                let source_ml_source1_s27 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_inspect_surface_reference_items_loop14(columns, rows, size, names, types, position, finish);
-                                                                match source_ml_source1_s27 {
-                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsLoop14Result::MlTemporaryInspectSurfaceReferenceItemsLoop14Done(names_2, types_2) => {
-                                                                        crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsJoin13::MlTemporaryInspectSurfaceReferenceItemsJoin13Next(names_2, types_2)
+                                                                let source_ml_source1_s29 = crate::translation::surface_reference_analysis_rules::source_ml_temporary_inspect_surface_reference_items_loop15(columns, rows, size, names, types, position, finish);
+                                                                match source_ml_source1_s29 {
+                                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsLoop15Result::MlTemporaryInspectSurfaceReferenceItemsLoop15Done(names_2, types_2) => {
+                                                                        crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsJoin14::MlTemporaryInspectSurfaceReferenceItemsJoin14Next(names_2, types_2)
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 } else {
-                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsJoin13::MlTemporaryInspectSurfaceReferenceItemsJoin13Next(names, types)
+                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsJoin14::MlTemporaryInspectSurfaceReferenceItemsJoin14Next(names, types)
                                                 };
-                                                match source_ml_source1_s26 {
-                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsJoin13::MlTemporaryInspectSurfaceReferenceItemsJoin13Next(names_3, types_3) => {
+                                                match source_ml_source1_s28 {
+                                                    crate::translation::surface_reference_analysis_rules::MlTemporaryInspectSurfaceReferenceItemsJoin14::MlTemporaryInspectSurfaceReferenceItemsJoin14Next(names_3, types_3) => {
                                                         {
                                                             let result = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, signatures.clone(), crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, item, "body"), &(names_3), &(types_3));
                                                             if (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(result), 1f64)) == 1f64 {
@@ -667,13 +703,13 @@ pub fn source_ml_temporary_inspect_surface_reference_items_loop12(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryHasSurfaceStructuralIdentityJoin16 {
-    MlTemporaryHasSurfaceStructuralIdentityJoin16Next(Vec<String>, Vec<f64>),
+pub enum MlTemporaryHasSurfaceStructuralIdentityJoin17 {
+    MlTemporaryHasSurfaceStructuralIdentityJoin17Next(Vec<String>, Vec<f64>),
 }
 
 /// Execute the complete checked source algorithm.
 #[must_use]
-pub fn source_ml_temporary_has_surface_structural_identity_loop15(
+pub fn source_ml_temporary_has_surface_structural_identity_loop16(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -711,31 +747,31 @@ pub fn source_ml_temporary_has_surface_structural_identity_loop15(
                                     observed
                                 };
                                 {
-                                    let source_ml_source1_s32 = if binding {
+                                    let source_ml_source1_s34 = if binding {
                                         {
                                             let names_2 = {
-                                                let source_ml_source1_concat_value33 = names;
+                                                let source_ml_source1_concat_value35 = names;
                                                 {
-                                                    let source_ml_source1_concat_value34 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, effect, "name"))];
-                                                    crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value33), source_ml_source1_concat_value34)
+                                                    let source_ml_source1_concat_value36 = vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, effect, "name"))];
+                                                    crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value35), source_ml_source1_concat_value36)
                                                 }
                                             };
                                             {
                                                 let types_2 = {
-                                                    let source_ml_source1_concat_value35 = types;
+                                                    let source_ml_source1_concat_value37 = types;
                                                     {
-                                                        let source_ml_source1_concat_value36 = vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(result), 0f64)];
-                                                        crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value35), source_ml_source1_concat_value36)
+                                                        let source_ml_source1_concat_value38 = vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(result), 0f64)];
+                                                        crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value37), source_ml_source1_concat_value38)
                                                     }
                                                 };
-                                                crate::translation::surface_reference_analysis_rules::MlTemporaryHasSurfaceStructuralIdentityJoin16::MlTemporaryHasSurfaceStructuralIdentityJoin16Next(names_2, types_2)
+                                                crate::translation::surface_reference_analysis_rules::MlTemporaryHasSurfaceStructuralIdentityJoin17::MlTemporaryHasSurfaceStructuralIdentityJoin17Next(names_2, types_2)
                                             }
                                         }
                                     } else {
-                                        crate::translation::surface_reference_analysis_rules::MlTemporaryHasSurfaceStructuralIdentityJoin16::MlTemporaryHasSurfaceStructuralIdentityJoin16Next(names, types)
+                                        crate::translation::surface_reference_analysis_rules::MlTemporaryHasSurfaceStructuralIdentityJoin17::MlTemporaryHasSurfaceStructuralIdentityJoin17Next(names, types)
                                     };
-                                    match source_ml_source1_s32 {
-                                        crate::translation::surface_reference_analysis_rules::MlTemporaryHasSurfaceStructuralIdentityJoin16::MlTemporaryHasSurfaceStructuralIdentityJoin16Next(names_3, types_3) => {
+                                    match source_ml_source1_s34 {
+                                        crate::translation::surface_reference_analysis_rules::MlTemporaryHasSurfaceStructuralIdentityJoin17::MlTemporaryHasSurfaceStructuralIdentityJoin17Next(names_3, types_3) => {
                                             {
                                                 let offset_2 = offset + 1f64;
                                                 {
@@ -759,7 +795,7 @@ pub fn source_ml_temporary_has_surface_structural_identity_loop15(
 
 /// Execute the complete checked source algorithm.
 #[must_use]
-pub fn source_ml_temporary_collect_surface_reference_item_signatures_loop17(
+pub fn source_ml_temporary_collect_surface_reference_item_signatures_loop18(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -785,26 +821,26 @@ pub fn source_ml_temporary_collect_surface_reference_item_signatures_loop17(
                             let result_4 = if external || (kind == "fn") {
                                 {
                                     {
-                                        let source_ml_source1_field39 = {
-                                            let source_ml_source1_concat_value37 =
+                                        let source_ml_source1_field41 = {
+                                            let source_ml_source1_concat_value39 =
                                                 (result.clone()).1;
                                             {
-                                                let source_ml_source1_concat_value38 =
+                                                let source_ml_source1_concat_value40 =
                                                     vec![name.clone()];
-                                                crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value37), source_ml_source1_concat_value38)
+                                                crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value39), source_ml_source1_concat_value40)
                                             }
                                         };
                                         {
-                                            let source_ml_source1_field42 = {
-                                                let source_ml_source1_concat_value40 =
+                                            let source_ml_source1_field44 = {
+                                                let source_ml_source1_concat_value42 =
                                                     (result.clone()).0;
                                                 {
-                                                    let source_ml_source1_concat_value41 =
+                                                    let source_ml_source1_concat_value43 =
                                                         vec![item];
-                                                    crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value40), source_ml_source1_concat_value41)
+                                                    crate::translation::frontend_rules::ml_array::append(crate::translation::frontend_rules::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value42), source_ml_source1_concat_value43)
                                                 }
                                             };
-                                            (source_ml_source1_field42, source_ml_source1_field39)
+                                            (source_ml_source1_field44, source_ml_source1_field41)
                                         }
                                     }
                                 }
