@@ -8,6 +8,94 @@ use super::{
 use crate::translation::surface::BinaryOp;
 
 impl JavaScriptParser {
+    pub(super) fn starts_record_field_assignment(&self) -> bool {
+        let prefix = self.cursor.is("++") || self.cursor.is("--");
+        let mut offset = usize::from(prefix);
+        if !self.cursor.is_kind_at(TokenKind::Identifier, offset) {
+            return false;
+        }
+        offset += 1;
+        let mut field = false;
+        loop {
+            if self.cursor.is_at(".", offset)
+                && self.cursor.is_kind_at(TokenKind::Identifier, offset + 1)
+            {
+                field = true;
+                offset += 2;
+            } else if self.cursor.is_at("[", offset) {
+                let end = self.matching(self.cursor.index + offset) - self.cursor.index;
+                field = end == offset + 2 && self.cursor.is_kind_at(TokenKind::String, offset + 1);
+                offset = end + 1;
+            } else {
+                break;
+            }
+        }
+        let operator = self.cursor.peek_at(offset);
+        field
+            && (prefix
+                || operator.kind == TokenKind::Punct
+                    && (ASSIGNMENTS.contains(&operator.value.as_str())
+                        || matches!(operator.value.as_str(), "++" | "--")))
+    }
+
+    pub(super) fn record_field_assignment(&mut self) -> Result<Stmt> {
+        let start = self.peek();
+        let prefix = (self.cursor.is("++") || self.cursor.is("--")).then(|| self.cursor.advance());
+        let name = self.cursor.identifier(Some("reference assignment"))?;
+        let mut object = self.reference(&name)?;
+        let (field, index) = loop {
+            let (field, index) = if self.cursor.eat(".").is_some() {
+                (
+                    Some(self.cursor.identifier(Some("reference field"))?.value),
+                    None,
+                )
+            } else {
+                self.cursor.expect("[", Some("reference index"))?;
+                let index = self.sequence()?;
+                self.cursor.expect("]", Some("reference index"))?;
+                (None, Some(Box::new(index)))
+            };
+            if !self.cursor.is(".") && !self.cursor.is("[") {
+                break (field, index);
+            }
+            let member = if let Some(field) = field {
+                SNode::Field {
+                    object: Box::new(object),
+                    field,
+                }
+            } else {
+                SNode::Index {
+                    object: Box::new(object),
+                    index: index.expect("a computed member retains its index"),
+                    optional: None,
+                    proven_in_bounds: None,
+                }
+            };
+            object = node(member, self.to_here(&start));
+        };
+        if index.is_some() {
+            self.indexed_reference_writes += 1;
+        }
+        let op = prefix.unwrap_or_else(|| self.cursor.advance()).value;
+        let value = if matches!(op.as_str(), "++" | "--") {
+            None
+        } else {
+            Some(Box::new(self.expr()?))
+        };
+        let span = self.to_here(&start);
+        let expr = node(
+            SNode::ReferenceWrite {
+                object: Box::new(object),
+                index,
+                field,
+                value,
+                op,
+            },
+            span,
+        );
+        Ok(Stmt::Expr { expr, span })
+    }
+
     /// `let a = 1n, b = a;` declares assignable locals; omission starts with undefined.
     pub(super) fn let_declarations(&mut self) -> Result<Vec<Stmt>> {
         let start = self.cursor.advance();

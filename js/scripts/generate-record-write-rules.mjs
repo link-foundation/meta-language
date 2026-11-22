@@ -12,7 +12,7 @@ const definition = { schemaVersion: 1, model: 'native Rust source Unicode scalar
   module: 'record_write_rules', functions: [
     'readRecordFieldWriteIdentity','readRecordFieldWriteOperator','readRecordFieldWriteName',
     'readRecordFieldWriteArgumentCount','readRecordFieldWriteSuffix','acceptLinkedRecordFieldWrite',
-    'readRecordCompoundBinaryOperation','readRecordFieldSourceWriteRefusal','readLinkedOrderedRecordSnapshotOperation',
+    'readRecordCompoundBinaryOperation','readOptionalRecordCompoundBinaryOperation','readRecordFieldSourceWriteRefusal','readLinkedOrderedRecordSnapshotOperation',
     'renderRecordFieldWrite','readOptionalRecordFieldOrderFollowers','renderOptionalRustRecordFieldWrite','readRecordFieldWriteStatement'
   ].map(source => ({ source })) };
 // The implementation retains every complete exported rule. Source/schema

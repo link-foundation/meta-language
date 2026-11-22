@@ -254,7 +254,17 @@ pub fn read_record_compound_binary_operation(
         } else {
             self::ml_string::Text::from_units(vec![])
         }
-    } else if ((*operator) == (self::ml_string::Text::from_units(vec![43, 61])))
+    } else {
+        self::read_record_numeric_compound_binary_operation(operator)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_record_numeric_compound_binary_operation(
+    operator: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*operator) == (self::ml_string::Text::from_units(vec![43, 61])))
         || ((*operator) == (self::ml_string::Text::from_units(vec![43, 43])))
     {
         self::ml_string::Text::from_units(vec![112, 108, 117, 115])
@@ -272,6 +282,31 @@ pub fn read_record_compound_binary_operation(
         self::ml_string::Text::from_units(vec![
             101, 120, 112, 111, 110, 101, 110, 116, 105, 97, 116, 105, 111, 110,
         ])
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_optional_record_compound_binary_operation(
+    language: &self::ml_string::Text,
+    operator: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    absence: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*language)
+        != (self::ml_string::Text::from_units(vec![74, 97, 118, 97, 83, 99, 114, 105, 112, 116])))
+        || ((*absence)
+            != (self::ml_string::Text::from_units(vec![
+                117, 110, 100, 101, 102, 105, 110, 101, 100,
+            ])))
+    {
+        self::ml_string::Text::from_units(vec![])
+    } else if (*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116])) {
+        self::read_record_numeric_compound_binary_operation(operator)
+    } else if (*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])) {
+        self::read_record_compound_binary_operation(language, operator, kind)
     } else {
         self::ml_string::Text::from_units(vec![])
     }

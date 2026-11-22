@@ -59,12 +59,25 @@ export function readRecordFieldWriteRefusal(operator, kind, reference, open, fie
 export function readRecordCompoundBinaryOperation(language, operator, kind) {
   if (language !== 'JavaScript' || (kind !== 'int' && kind !== 'string')) return '';
   if (kind === 'string') return operator === '+=' ? 'plus' : '';
+  return readRecordNumericCompoundBinaryOperation(operator);
+}
+/** @param {string} operator @returns {string} */
+function readRecordNumericCompoundBinaryOperation(operator) {
   if (operator === '+=' || operator === '++') return 'plus';
   if (operator === '-=' || operator === '--') return 'sub';
   if (operator === '*=') return 'mul';
   if (operator === '/=') return 'div';
   if (operator === '%=') return 'rem';
   if (operator === '**=') return 'exponentiation';
+  return '';
+}
+/** @param {string} language @param {string} operator @param {string} kind
+ * @param {string} absence @returns {string} */
+export function readOptionalRecordCompoundBinaryOperation(language, operator, kind, absence) {
+  if (language !== 'JavaScript' || absence !== 'undefined') return '';
+  // An absent Number converts to NaN. An absent String in += is joined as "undefined".
+  if (kind === 'float') return readRecordNumericCompoundBinaryOperation(operator);
+  if (kind === 'string') return readRecordCompoundBinaryOperation(language, operator, kind);
   return '';
 }
 /** @param {string} language @param {string} operator @param {string} kind

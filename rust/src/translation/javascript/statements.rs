@@ -144,6 +144,8 @@ impl JavaScriptParser {
                     style: ShowStyle::JsConsole,
                     span: place,
                 }
+            } else if self.starts_record_field_assignment() {
+                self.record_field_assignment()?
             } else if self.starts_assignment() {
                 self.assignment()?
             } else {

@@ -2,9 +2,9 @@
 import { coerce, bindLocal } from './check.js';
 import { unsupported, typeError } from './diagnostics.js';
 import { UNIT } from './types.js';
-import {javaScriptConstructorFieldValueType} from './javascript-constructor-presence.js';
+import {javaScriptConstructorFieldValueType, readJavaScriptOwnedRecordField} from './javascript-constructor-presence.js';
 import { readRecordFieldWriteOperator, readRecordFieldWriteName, readRecordFieldSourceWriteRefusal, readRecordCompoundBinaryOperation,
-  readRecordFieldWriteArgumentCount, readRecordFieldWriteIdentity } from './record-write-rules.js';
+  readOptionalRecordCompoundBinaryOperation, readRecordFieldWriteArgumentCount, readRecordFieldWriteIdentity } from './record-write-rules.js';
 
 export function checkRecordFieldWrite(checker, node, object, env, path) {
   const operator = readRecordFieldWriteOperator(node.op);
@@ -12,15 +12,17 @@ export function checkRecordFieldWrite(checker, node, object, env, path) {
   const name = readRecordFieldWriteName(node.op);
   const field = object.type.kind === 'record' ? object.type.fields.find(field => field.name === name) : undefined;
   const type=field ? javaScriptConstructorFieldValueType(field) : undefined;
+  const optionalBinary = field?.optional && type.kind === 'option'
+    ? readOptionalRecordCompoundBinaryOperation(checker.language, operator, type.element.kind, type.absence) : '';
   if(field?.optional&&name==='__proto__')throw unsupported('shared record field assignment',
     'a potentially inherited prototype setter requires the actual prototype operation',node.span);
   const refusal = readRecordFieldSourceWriteRefusal(checker.language, operator, object.type.kind, object.type.reference === true,
-    object.type.open === true, Boolean(field), type?.kind ?? '');
+    object.type.open === true, Boolean(field), optionalBinary ? type.element.kind : type?.kind ?? '');
   if (refusal) throw unsupported('shared record field assignment', refusal, node.span);
   if (node.args.length !== readRecordFieldWriteArgumentCount(operator) || node.args.some(value => !value)) {
     throw typeError('a field assignment must retain every actual operand', node.span);
   }
-  const binary = readRecordCompoundBinaryOperation(checker.language, operator, field.type.kind);
+  const binary = optionalBinary || readRecordCompoundBinaryOperation(checker.language, operator, type.kind);
   if (binary) {
     const inner = new Map(env), bindings = [];
     const capture = (prefix, value) => {
@@ -31,16 +33,20 @@ export function checkRecordFieldWrite(checker, node, object, env, path) {
       return { k: 'var', name, type: value.type };
     };
     const owner = capture('ml_field_owner', object);
-    const previous = capture('ml_field_previous', { k: 'recordField', object: owner, field: name,
-      index: object.type.fields.indexOf(field), type: field.type });
-    const right = node.args[0] ?? { k: 'num', value: '1', type: field.type };
-    const left = { k: 'name', path: [previous.name] };
+    const previous = capture('ml_field_previous', readJavaScriptOwnedRecordField(checker.referenceValue(owner), field));
+    const operandType = optionalBinary ? type.element : type;
+    const right = node.args[0] ?? { k: 'num', value: '1', type: operandType };
+    let left = { k: 'name', path: [previous.name] };
+    if (optionalBinary) {
+      const fallback = operandType.kind === 'float' ? { k: 'num', value: 'NaN', type: operandType }
+        : { k: 'str', value: 'undefined' };
+      left = { k: 'coalesce', left, right: fallback, span: node.span };
+    }
     const operation = binary === 'exponentiation'
       ? { k: 'math', op: 'exponentiateJavaScriptNumericValue', name: '**',
         args: [{ value: left, spread: false }, { value: right, spread: false }], span: node.span }
       : { k: 'binary', op: binary, left, right, span: node.span };
-    const calculated = coerce(checker.expr(operation, inner, path, field.type),
-    field.type, checker.language, node.span);
+    const calculated = coerce(checker.expr(operation, inner, path, operandType), type, checker.language, node.span);
     let body = { k: 'method', object: owner, op: readRecordFieldWriteIdentity('=', name),
       args: [calculated], type: UNIT, span: node.span };
     for (let index = bindings.length - 1; index >= 0; index -= 1)

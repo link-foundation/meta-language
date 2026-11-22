@@ -41,6 +41,18 @@ impl Checker {
             }
         };
         let value_type = field.as_ref().map(field_value_type);
+        let optional_operand = match (&field, &value_type) {
+            (Some(field), Some(Type::Option { element, absence })) if field.optional => {
+                let operation = rules::read_optional_record_compound_binary_operation(
+                    self.language.as_str(),
+                    &operator,
+                    element.kind(),
+                    absence,
+                );
+                (!operation.is_empty()).then_some((operation, element.as_ref()))
+            }
+            _ => None,
+        };
         let refusal = rules::read_record_field_source_write_refusal(
             self.language.as_str(),
             &operator,
@@ -48,7 +60,10 @@ impl Checker {
             object.ty.is_reference(),
             open,
             field.is_some(),
-            value_type.as_ref().map_or("", Type::kind),
+            optional_operand.as_ref().map_or_else(
+                || value_type.as_ref().map_or("", Type::kind),
+                |(_, element)| element.kind(),
+            ),
         );
         if !refusal.is_empty() {
             return Err(unsupported(
@@ -69,11 +84,23 @@ impl Checker {
             ));
         }
         let field = field.expect("the shared field rule retained its actual owner");
-        let binary = rules::read_record_compound_binary_operation(
-            self.language.as_str(),
-            &operator,
-            field.ty.kind(),
-        );
+        let write_type = value_type
+            .as_ref()
+            .expect("the shared field rule retained its actual value type");
+        let (binary, operand_type, optional) = if let Some((operation, element)) = optional_operand
+        {
+            (operation, element, true)
+        } else {
+            (
+                rules::read_record_compound_binary_operation(
+                    self.language.as_str(),
+                    &operator,
+                    write_type.kind(),
+                ),
+                write_type,
+                false,
+            )
+        };
         if !binary.is_empty() {
             let mut inner = env.clone();
             let mut bindings = Vec::new();
@@ -104,19 +131,43 @@ impl Checker {
                     break name;
                 }
             };
-            inner.bind_local(&previous_name, field.ty.clone());
-            bindings.push((
-                previous_name.clone(),
-                Expr::new(
-                    Node::RecordField {
-                        object: Box::new(owner.clone()),
-                        field: name.clone(),
-                        index,
+            let carrier = Expr::new(
+                Node::RecordField {
+                    object: Box::new(Self::reference_value(owner.clone())),
+                    field: name.clone(),
+                    index,
+                },
+                field.ty,
+            );
+            let previous = if optional {
+                crate::translation::javascript_constructor_presence::read_value(carrier)
+            } else {
+                carrier
+            };
+            inner.bind_local(&previous_name, previous.ty.clone());
+            bindings.push((previous_name.clone(), previous));
+            let mut left = SExpr::name(&previous_name);
+            if optional {
+                let fallback = if operand_type.kind() == "float" {
+                    SNode::Num {
+                        value: "NaN".to_owned(),
+                        ty: Some(operand_type.clone()),
+                        negative: false,
+                        unit: false,
+                    }
+                } else {
+                    SNode::Str {
+                        value: "undefined".to_owned(),
+                    }
+                };
+                left = SExpr::new(
+                    SNode::Coalesce {
+                        left: Box::new(left),
+                        right: Box::new(SExpr::new(fallback, span)),
                     },
-                    field.ty.clone(),
-                ),
-            ));
-            let left = SExpr::name(&previous_name);
+                    span,
+                );
+            }
             let right = args
                 .first()
                 .and_then(Option::as_ref)
@@ -125,7 +176,7 @@ impl Checker {
                     SExpr::new(
                         SNode::Num {
                             value: "1".to_owned(),
-                            ty: Some(field.ty.clone()),
+                            ty: Some(operand_type.clone()),
                             negative: false,
                             unit: false,
                         },
@@ -138,7 +189,7 @@ impl Checker {
                     span,
                     &inner,
                     path,
-                    Some(&field.ty),
+                    Some(operand_type),
                 )?
             } else {
                 let op = serde_json::from_value(serde_json::Value::String(binary))
@@ -151,11 +202,11 @@ impl Checker {
                     span,
                     &inner,
                     path,
-                    Some(&field.ty),
+                    Some(operand_type),
                     false,
                 )?
             };
-            let calculated = self.coerce(calculated, &field.ty, span)?;
+            let calculated = self.coerce(calculated, write_type, span)?;
             let body = Expr::new(
                 Node::Method {
                     object: Box::new(owner),

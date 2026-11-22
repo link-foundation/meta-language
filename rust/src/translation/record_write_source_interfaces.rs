@@ -76,6 +76,25 @@ pub(crate) fn read_record_compound_binary_operation(
     String::from_utf16(&value.0)
         .expect("a native source operation must preserve Unicode scalar spelling")
 }
+pub(crate) fn read_optional_record_compound_binary_operation(
+    source_argument_0: &str,
+    source_argument_1: &str,
+    source_argument_2: &str,
+    source_argument_3: &str,
+) -> String {
+    let native_argument_0 = implementation::ml_string::Text::from_text(source_argument_0);
+    let native_argument_1 = implementation::ml_string::Text::from_text(source_argument_1);
+    let native_argument_2 = implementation::ml_string::Text::from_text(source_argument_2);
+    let native_argument_3 = implementation::ml_string::Text::from_text(source_argument_3);
+    let value = implementation::read_optional_record_compound_binary_operation(
+        &native_argument_0,
+        &native_argument_1,
+        &native_argument_2,
+        &native_argument_3,
+    );
+    String::from_utf16(&value.0)
+        .expect("a native source operation must preserve Unicode scalar spelling")
+}
 pub(crate) fn read_record_field_source_write_refusal(
     source_argument_0: &str,
     source_argument_1: &str,

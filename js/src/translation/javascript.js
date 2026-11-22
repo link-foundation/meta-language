@@ -25,6 +25,7 @@ import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.j
 import { acceptJavaScriptSourceKeywordToken } from './javascript-identifier-rules.js';
 import { constructScalarAssignmentExpression, constructJavaScriptSequenceExpression, constructJavaScriptVoidExpression } from './scalar-assignments.js';
 import { readScalarAssignmentOperation } from './scalar-assignment-rules.js';
+import { acceptRecordFieldAssignmentOperator } from './record-write-rules.js';
 import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
@@ -1234,7 +1235,7 @@ class JavaScriptParser {
     const where = span(start, c.peek());
     const target = { object, ...(field === null ? { index } : { field }) };
     if (op === '++' || op === '--') return { s: 'assignReference', ...target, op, span: where };
-    if (op !== '=' && !COMPOUND[op]) throw unsupported(`${op} reference assignment`, 'the operator needs a source-language read and write rule', where);
+    if (!acceptRecordFieldAssignmentOperator(op) && !COMPOUND[op]) throw unsupported(`${op} reference assignment`, 'the operator needs a source-language read and write rule', where);
     const value = this.expr();
     return { s: 'assignReference', ...target, value, op, span: span(start, c.peek()) };
   }
