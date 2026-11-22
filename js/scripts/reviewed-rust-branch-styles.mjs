@@ -55,18 +55,24 @@ const originalNegationGuard="if (condition.startsWith('!')) {";
 assert.equal(source.split(originalNegationGuard).length,2,'the guarded derivative changes exactly one frozen negation guard');
 const originalBranchJoin='+ source.slice(tokens[inner].start, tokens[child.end].end)';
 assert.equal(source.split(originalBranchJoin).length,2,'the guarded derivative retains the complete nested if at its one frozen branch join');
+const originalRoundBound='for (let round = 0; round < 100; round += 1) {';
+assert.equal(source.split(originalRoundBound).length,4,'each reviewed pass has one round bound');
+// Each edit consumes a source opportunity. Whole dependency closures can
+// legitimately contain more than a hundred of them in a single pass.
+const closureRoundBound='for (let round = 0, limit = syntax(source).tokens.length + 1; round < limit; round += 1) {';
 const guardedSource=source.replace(originalNegationGuard,"if (condition.startsWith('!') && acceptRustWholeConditionNegation(condition)) {")
   .replace(originalBranchJoin,"+ (tokens[node.alternate.open - 1].end === tokens[node.alternate.open].start ? ' ' : '')"
     + " + source.slice(tokens[inner].start, tokens[child.end].end)")
+  .replaceAll(originalRoundBound,closureRoundBound)
   +'\n'+acceptRustWholeConditionNegation.toString()
-  +'\nexport { simplifyBranches as simplifyRustBranches };\n';
+  +'\nexport { simplifyBranches as simplifyRustBranches, simplifyReturns, bindConditionBlocks };\n';
 const guardedLinked=guardedSource.replace(/\bfrom (['"])(\.[^'"\n]+)\1/gu,(_,quote,path)=>'from '+quote+new URL(path,address).href+quote)
   .replaceAll('import.meta.url',JSON.stringify(address.href));
 const guarded=await import('data:text/javascript;base64,'+Buffer.from(guardedLinked).toString('base64'));
 
-/** Compose a guarded branch derivative with the other unchanged reviewed styles. */
+/** Compose the reviewed styles over a complete portable-library closure. */
 export function simplifyPortableProductLibraryStyles(source) {
-  return reviewed.bindConditionBlocks(reviewed.simplifyReturns(guarded.simplifyRustBranches(source)));
+  return guarded.bindConditionBlocks(guarded.simplifyReturns(guarded.simplifyRustBranches(source)));
 }
 
 /** Keep an Option's selected value and its original pure missing-value policy. */
