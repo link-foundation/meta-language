@@ -42,7 +42,7 @@ export function readRustStandardSumCombinatorBranch(owner,left,method,right){
 /** @param {string} owner @param {boolean} success @returns {string} */
 export function readRustStandardSumCombinatorConstructor(owner,success){
  const variants=readRustStandardSumSourceConstructors(owner);
- for(let at=0;at<variants.length;at+=1)if((readRustStandardSumSourceFieldArgument(owner,variants[at])===0)===success)return variants[at];
+ for(const variant of variants)if((readRustStandardSumSourceFieldArgument(owner,variant)===0)===success)return variant;
  return '';
 }
 /** @param {string} owner @param {string} method @param {number} minor @returns {string} */

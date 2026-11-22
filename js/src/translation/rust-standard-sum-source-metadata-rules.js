@@ -42,7 +42,7 @@ export function readRustStandardSumSourceMetadataRecordCost(form){
 /** @param {number} nodes @param {number} units @param {number} depth @returns {string} */
 export function readRustStandardSumSourceMetadataCountError(nodes,units,depth){
  const error=readRustStandardSumSourceMaterializationError(0,0,nodes,units);
- return error||!Number.isInteger(depth)||depth<0||depth>256?'the complete standard sum source metadata exceeds its finite node, UTF16 or depth budget':'';
+ return error!==''||!Number.isInteger(depth)||depth<0||depth>256?'the complete standard sum source metadata exceeds its finite node, UTF16 or depth budget':'';
 }
 /** Sixteen semantic copies reserve identity encoding and the bounded owned
  * constructor/catalog transports together. Counters never reset within a parser.
