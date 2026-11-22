@@ -122,15 +122,17 @@ Finite scanner-state transitions can now be inferred from explicit mode,
 spelling, token and successor-mode observations. The native scanner fragment
 orders overlapping spellings by length, refuses conflicting observations and
 round-trips through the grammar listing. The draft fixture exercises its
-token boundaries in both runtimes. Checkpoint integration, inferred lexical
-classes, attributed inference, installed-language semantic translation and
+token boundaries in both runtimes. A second draft control discovers, refines
+and installs the scanner without training files and parses Unicode input
+through the installed grammar. Inferred lexical classes, attributed inference,
+installed-language semantic translation and
 executed held-out benchmark comparisons remain open.
 
 The pinned upstream link-cli importer reads one two-endpoint row per line.
 Its native binary store archive also stores doublets, with exact addresses and
 names. Both packages now draft a reversible projection of ordered n-ary links
 and separate roots into that format. The shared command replay checks the full
-26-step fixture in each package, with real Link CLI 3.1.1 import and export in
+31-step fixture in each package, with real Link CLI 3.1.1 import and export in
 separate processes. It deletes the import packet before export, removes the
 original grammar inputs after preparation and compares the canonical archive
 bytes after eager restoration from all three formats. The preparation and

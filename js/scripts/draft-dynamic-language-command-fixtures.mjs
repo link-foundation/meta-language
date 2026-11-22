@@ -1,9 +1,11 @@
 // Author declarations only. Do not execute a grammar, command or fixture here.
-import {writeProjectData} from './project-data.mjs';
+import {readProjectData,writeProjectData} from './project-data.mjs';
 import {structuredDataToLino} from '../src/structured-data-links.js';
 import {grammarSelectionFixture} from '../tests/support/grammar-selection-cases.js';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const recursive=grammarSelectionFixture();
+const scanner=readProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino',import.meta.url)).scanner;
+const scannerSequences=[['short','begin','content','end','suffix'],['long','begin','content','end','suffix']];
 const files=[{path:'configuration.lino',text:structuredDataToLino({records:[]})},
   {path:'first.lino',text:'(grammar (start document))\n(rule document normal (literal first))\n'},
   {path:'second.lino',text:'(grammar (start document))\n(rule document normal (literal second))\n'},
@@ -13,6 +15,10 @@ const files=[{path:'configuration.lino',text:structuredDataToLino({records:[]})}
   {path:'counterexamples.lino',text:structuredDataToLino({positives:[['c']],negatives:[['y']]})},
   {path:'invalid-examples.lino',text:structuredDataToLino({positives:['a'],negatives:[]})},
   {path:'discovered.txt',text:'c'}, {path:'rejected.txt',text:'x'},
+  {path:'scanner-examples.lino',text:structuredDataToLino({positives:[scannerSequences[0]],negatives:[[],['long']],scannerObservations:scanner.observations})},
+  {path:'scanner-counterexamples.lino',text:structuredDataToLino({positives:[scannerSequences[1]],negatives:[['begin']]})},
+  {path:'scanner-source.txt',text:scanner.accepted[1].input},
+  {path:'scanner-rejection.txt',text:'==[x]🙂'},
   ...recursive.grammars.slice(0,4).map(value=>({path:value.name+'.lino',text:value.listing}))];
 const source=['--source','first-source','Example language','authored-1','first.lino'];
 const recursiveSources=recursive.grammars.slice(0,4).flatMap(value=>['--source',value.name,value.name,recursive.chain.edition,value.name+'.lino']);
@@ -43,10 +49,15 @@ const steps=[
  {name:'inventory the dynamically installed source',args:['list','installed.bin','--input-binary'],exit:0,inventory:['regular-refined']},
  {name:'parse a counterexample from the installed grammar',args:['parse','installed.bin','--input-binary','--source','regular-refined','--input','discovered.txt','--identifier','refined document'],exit:0,archive:true,concrete:'refined document',text:'c'},
  {name:'a negative observation still rejects after installation',args:['parse','installed.bin','--input-binary','--source','regular-refined','--input','rejected.txt'],exit:1,rejection:true},
+ {name:'discover with retained scanner mode observations',args:['discover','scanner-examples.lino','--identifier','scanner-original','--binary'],exit:0,save:'scanner.bin',remove:['scanner-examples.lino']},
+ {name:'keep the scanner when refining stored token observations',args:['refine','scanner.bin','--input-binary','--examples','scanner-counterexamples.lino','--identifier','scanner-refined'],exit:0,save:'scanner-refined.lino',remove:['scanner.bin','scanner-counterexamples.lino']},
+ {name:'install the refined scanner and grammar',args:['install','scanner-refined.lino','--binary'],exit:0,save:'scanner-installed.bin',archive:true,binary:true,remove:['scanner-refined.lino']},
+ {name:'the scanner installed from Links reconstructs Unicode source bytes',args:['parse','scanner-installed.bin','--input-binary','--source','scanner-refined','--input','scanner-source.txt','--identifier','scanner document'],exit:0,archive:true,concrete:'scanner document',text:scanner.accepted[1].input},
+ {name:'installed scanner rejects an unobserved spelling',args:['parse','scanner-installed.bin','--input-binary','--source','scanner-refined','--input','scanner-rejection.txt'],exit:1,rejection:true},
 ];
 writeProjectData(new URL('../../parity/fixtures/dynamic-language-command.lino',import.meta.url),{
  schemaVersion:1,model:'dynamic language command source-free snapshots 1',files,steps,
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0; ECMAScript 2025',Rust:'>=1.90.0 <1.100.0; edition 2024',linksNotation:'>=0.22.0 <0.23.0'},
- assertions:['sameCompleteCommandSequenceBothRuntimes','actualExitCodeAndDiagnostics','sourceQualifiedInventory','archivedGrammarExport','concreteDefaultAndByteReconstruction','explicitAbstractRetainsConcrete','sourceFreeTextAndBinaryReload','recursiveGrammarResolution','extensionAndPinnedReplacementContexts','strictArgumentsAndLimits','regularDiscoveryCheckpointRefinementAndInstallation'],
+ assertions:['sameCompleteCommandSequenceBothRuntimes','actualExitCodeAndDiagnostics','sourceQualifiedInventory','archivedGrammarExport','concreteDefaultAndByteReconstruction','explicitAbstractRetainsConcrete','sourceFreeTextAndBinaryReload','recursiveGrammarResolution','extensionAndPinnedReplacementContexts','strictArgumentsAndLimits','regularDiscoveryCheckpointRefinementAndInstallation','scannerDiscoveryCheckpointRefinementAndInstallation'],
  boundary:'Authored future controls only. Miniature labelled grammars exercise generic dispatch, not complete catalog-language support. No command or grammar executes during fixture authoring.',
 });

@@ -3626,6 +3626,13 @@ extension and parsing commands, and the inference checkpoint retains the
 training journal for further refinement. The command controls delete the input
 example files after use and cover byte reconstruction and rejection after
 installation.
+The discovery examples may include `scannerObservations`. Their labelled
+sequences name the scanner's external tokens. Version 2 of the discovery
+model retains the trace and its exact typed algorithm as separate archive
+entries. Reload replays the scanner and syntax learner before comparing the
+complete grammar. Refinement adds labelled token sequences under the stored
+scanner, preserving its observations and definition across the journal. The
+installed source uses the native scanner during ordinary CST parsing.
 
 `inferGrammarScanner` and `infer_grammar_scanner` compile bounded trace
 observations into native scanner operations. Each observation supplies the

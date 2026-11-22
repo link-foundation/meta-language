@@ -1,4 +1,5 @@
 import { parseGrammarLinks, percentEncodeLinksText } from './grammar-links.js';
+import { createSourceDefinitionProgramLinks } from './source-definition-catalog.js';
 import {
   planGrammarScannerTransitions,
   readGrammarScannerInferenceError,
@@ -8,6 +9,11 @@ import {
 } from './grammar-scanner-inference-rules.js';
 
 const traceFields = ['mode', 'spelling', 'token', 'nextMode'];
+export const grammarScannerInferenceArchiveIdentifier = 'regular-discovery-scanner-algorithm';
+
+export function createGrammarScannerInferenceProgramLinks() {
+  return createSourceDefinitionProgramLinks('meta-language/source-program/grammar-scanner-inference-program');
+}
 
 /** Infer native scanner declarations from a bounded, first-observed trace. */
 export function inferGrammarScanner(observations, name = 'inferred_scanner') {

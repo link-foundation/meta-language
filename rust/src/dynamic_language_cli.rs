@@ -31,16 +31,24 @@ pub struct DynamicLanguageCommandOutput {
 }
 
 #[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct LabelledExamples {
     positives: Vec<Vec<String>>,
     negatives: Vec<Vec<String>>,
+    scanner_observations: Option<Vec<crate::GrammarScannerObservation>>,
 }
 
-fn labelled_examples(text: &str) -> Result<LabelledExamples, String> {
-    serde_json::from_value(read_structured_data_lino(text)?).map_err(|_| {
-        "labelled examples must contain positive and negative symbol sequences".to_owned()
-    })
+fn labelled_examples(text: &str, allow_scanner: bool) -> Result<LabelledExamples, String> {
+    let value = read_structured_data_lino(text)?;
+    let message =
+        || "labelled examples must contain positive and negative symbol sequences".to_owned();
+    if value
+        .get("scannerObservations")
+        .is_some_and(|scanner| !allow_scanner || scanner.is_null())
+    {
+        return Err(message());
+    }
+    serde_json::from_value(value).map_err(|_| message())
 }
 
 fn archive_input<T, B>(
@@ -95,7 +103,7 @@ where
             .file
             .as_deref()
             .ok_or("a labelled examples input is required")?;
-        let examples = labelled_examples(&read_text(file)?)?;
+        let examples = labelled_examples(&read_text(file)?, true)?;
         let mut options = RegularGrammarInferenceOptions::default();
         options.identifier = identifier.cloned().unwrap_or(options.identifier);
         options.language = args
@@ -108,6 +116,7 @@ where
             .get("--edition")
             .cloned()
             .unwrap_or(options.edition);
+        options.scanner_observations = examples.scanner_observations;
         infer_regular_grammar(&examples.positives, &examples.negatives, &options)?
     } else {
         let archive = archive_input(
@@ -130,7 +139,7 @@ where
             .options
             .get("--examples")
             .ok_or("refine needs a labelled examples input")?;
-        let examples = labelled_examples(&read_text(file)?)?;
+        let examples = labelled_examples(&read_text(file)?, false)?;
         refine_regular_grammar_inference(
             &archive.network,
             archive.root,

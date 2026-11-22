@@ -4,6 +4,8 @@ import {inferRegularGrammar,readRegularGrammarInferenceLinks} from './grammar-in
 import {createMetaLanguageArchive,readMetaLanguageArchive} from './meta-language-archive.js';
 import {encodeStructuredDataLinks,decodeStructuredDataLinks} from './structured-data-links.js';
 import {LinkId} from './primitives.js';
+import {isDeepStrictEqual} from 'node:util';
+import {grammarScannerInferenceArchiveIdentifier as scannerIdentifier} from './grammar-scanner-inference.js';
 import {createSourceDefinitionProgramLinks} from './source-definition-catalog.js';
 import {createSurfaceReferenceFacts} from './translation/surface-reference-facts.js';
 import {acceptRegularGrammarRefinementCount,acceptRegularGrammarRefinementJournal,readRegularGrammarRefinementEntryName,readRegularGrammarRefinementIdentifier,readRegularGrammarRefinementResourceLimit,validateRegularGrammarRefinementHistory,acceptRegularGrammarRefinementIdentifier} from './grammar-inference-refinement-rules.js';
@@ -15,7 +17,8 @@ export const regularGrammarRefinementArchiveLimits=Object.freeze({nodeLimit:read
 function select(entries,identifier,kind){const entry=entries.find(entry=>entry.identifier===identifier);if(!entry||entry.kind!==kind)fail('missing '+identifier);return entry;}
 function model(entry){return decodeStructuredDataLinks(entry.network,entry.root);}
 function base(entries,modelEntry,grammarEntry){
- const archive=createMetaLanguageArchive([{...modelEntry,identifier:modelIdentifier},select(entries,algorithmIdentifier,'typed program'),{...grammarEntry,identifier:grammarIdentifier}]);
+ const scanner=entries.find(entry=>entry.identifier===scannerIdentifier);
+ const archive=createMetaLanguageArchive([{...modelEntry,identifier:modelIdentifier},select(entries,algorithmIdentifier,'typed program'),{...grammarEntry,identifier:grammarIdentifier},...(scanner?[scanner]:[])]);
  return readRegularGrammarInferenceLinks(archive.network,archive.root);
 }
 function journalOf(entries){
@@ -42,7 +45,14 @@ function readCheckpoint(network,root){
  }
  if(entries.some(entry=>entry.identifier.startsWith('regular-discovery-history-')&&!expected.has(entry.identifier)))fail('unreferenced history entry');
  models.push(model(currentModel));
- const roots=[...models,...journal.steps],facts=createSurfaceReferenceFacts(roots);
+ // Preserve the archived v1 history algorithm and verify its ordinary projection.
+ const projectedModels=models.map(value=>{
+  if(!value||typeof value!=='object'||Array.isArray(value))return value;
+  const {scannerObservations,...ordinary}=value;
+  return ordinary;
+ });
+ if(models.some(value=>!isDeepStrictEqual(value?.scannerObservations,models.at(-1)?.scannerObservations)))fail('scanner observations differ across the refinement history');
+ const roots=[...projectedModels,...journal.steps],facts=createSurfaceReferenceFacts(roots);
  const identities=roots.map((value,index)=>facts.targets[facts.starts[facts.root]+index]);
  const decision=validateRegularGrammarRefinementHistory(facts.forms,facts.texts,facts.starts,facts.counts,facts.labels,facts.targets,identities.slice(0,models.length),identities.slice(models.length));
  if(decision!==1)fail('invalid refinement history (reason '+decision+')');
@@ -63,11 +73,11 @@ export function refineRegularGrammarInference(network,root,positives=[],negative
  if(!Array.isArray(positives)||!Array.isArray(negatives))fail('additions must be labelled example arrays');
  const nextIdentifier=identifier??readRegularGrammarRefinementIdentifier(previous.model.identifier,ordinal+1);
  if(typeof nextIdentifier!=='string'||!acceptRegularGrammarRefinementIdentifier(nextIdentifier,[previous.model.identifier,...previous.journal.steps.map(step=>step.identifier)]))fail('a new source-qualified refinement identity is required');
- const next=inferRegularGrammar([...previous.model.positives,...positives],[...previous.model.negatives,...negatives],{...previous.model.options,identifier:nextIdentifier,language:previous.model.language,edition:previous.model.edition});
+ const next=inferRegularGrammar([...previous.model.positives,...positives],[...previous.model.negatives,...negatives],{...previous.model.options,identifier:nextIdentifier,language:previous.model.language,edition:previous.model.edition,scannerObservations:previous.model.scannerObservations});
  const nextEntries=readMetaLanguageArchive(next.network,next.root).entries;
  const journal={schemaVersion:1,model:'labelled regular grammar refinement 1',steps:[...previous.journal.steps,{identifier:previous.model.identifier,nextIdentifier,positives,negatives}]};
  const data=encodeStructuredDataLinks(journal);
- const reserved=new Set([modelIdentifier,grammarIdentifier,algorithmIdentifier,journalIdentifier,refinementIdentifier]);
+ const reserved=new Set([modelIdentifier,grammarIdentifier,algorithmIdentifier,journalIdentifier,refinementIdentifier,scannerIdentifier]);
  const entries=[...nextEntries,...previous.entries.filter(entry=>!reserved.has(entry.identifier)),
   {...previous.currentModel,identifier:readRegularGrammarRefinementEntryName(ordinal,'model')},
   {...previous.currentGrammar,identifier:readRegularGrammarRefinementEntryName(ordinal,'grammar')},

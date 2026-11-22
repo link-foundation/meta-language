@@ -1,7 +1,7 @@
 //! Actual archive/data transport; generated rules own history continuity.
 use super::{
-    Model, RegularGrammarInference, RegularGrammarInferenceOptions, index, infer_regular_grammar,
-    number, read_regular_grammar_inference_links,
+    Model, RegularGrammarInference, RegularGrammarInferenceOptions, SCANNER_ALGORITHM, index,
+    infer_regular_grammar, number, read_regular_grammar_inference_links,
 };
 use crate::grammar_inference_refinement_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
@@ -85,14 +85,18 @@ fn base(
     model.identifier = MODEL.to_owned();
     let mut grammar = grammar.clone();
     grammar.identifier = GRAMMAR.to_owned();
-    let archive = create_meta_language_archive(
-        &[
-            model,
-            select(entries, ALGORITHM, "typed program")?.clone(),
-            grammar,
-        ],
-        MetaLanguageArchiveLimits::default(),
-    )?;
+    let mut retained = vec![
+        model,
+        select(entries, ALGORITHM, "typed program")?.clone(),
+        grammar,
+    ];
+    retained.extend(
+        entries
+            .iter()
+            .filter(|entry| entry.identifier == SCANNER_ALGORITHM)
+            .cloned(),
+    );
+    let archive = create_meta_language_archive(&retained, MetaLanguageArchiveLimits::default())?;
     read_regular_grammar_inference_links(&archive.network, archive.root)
 }
 fn journal_of(entries: &[MetaLanguageArchiveEntry]) -> Result<Value, String> {
@@ -181,7 +185,25 @@ fn read_checkpoint(network: &LinkNetwork, root: LinkId) -> Result<Checkpoint, St
         return Err(fail("unreferenced history entry"));
     }
     models.push(model(&current_model)?);
-    let roots = Value::Array(models.iter().chain(steps).cloned().collect());
+    let scanner = models
+        .last()
+        .and_then(|value| value.get("scannerObservations"));
+    if models
+        .iter()
+        .any(|value| value.get("scannerObservations") != scanner)
+    {
+        return Err(fail(
+            "scanner observations differ across the refinement history",
+        ));
+    }
+    // Keep the archived v1 history algorithm and verify its exact ordinary projection.
+    let projected_models = models.iter().cloned().map(|mut value| {
+        if let Some(fields) = value.as_object_mut() {
+            fields.remove("scannerObservations");
+        }
+        value
+    });
+    let roots = Value::Array(projected_models.chain(steps.iter().cloned()).collect());
     let facts = create_surface_reference_facts(&roots);
     let start = index(facts.starts[index(facts.root)]);
     let identities = &facts.targets[start..start + models.len() + steps.len()];
@@ -294,6 +316,7 @@ pub fn refine_regular_grammar_inference(
             identifier: next_identifier.clone(),
             language: checkpoint.model.language,
             edition: checkpoint.model.edition,
+            scanner_observations: checkpoint.model.scanner_observations,
         },
     )?;
     let mut entries = read_meta_language_archive(
@@ -324,7 +347,15 @@ pub fn refine_regular_grammar_inference(
         }
     };
     entries.extend(checkpoint.entries.into_iter().filter(|entry| {
-        ![MODEL, GRAMMAR, ALGORITHM, JOURNAL, REFINEMENT].contains(&entry.identifier.as_str())
+        ![
+            MODEL,
+            GRAMMAR,
+            ALGORITHM,
+            JOURNAL,
+            REFINEMENT,
+            SCANNER_ALGORITHM,
+        ]
+        .contains(&entry.identifier.as_str())
     }));
     let mut old_model = checkpoint.current_model;
     old_model.identifier =

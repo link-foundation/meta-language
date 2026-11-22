@@ -8,6 +8,10 @@ use crate::grammar::{
     Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarRule, serialize_grammar,
 };
 use crate::grammar_inference_rules as rules;
+use crate::grammar_scanner_inference::{
+    GrammarScannerObservation, InferredGrammarScanner, SCANNER_ALGORITHM,
+    create_grammar_scanner_inference_program_links, infer_grammar_scanner,
+};
 use crate::{
     GlobalConceptSource, LinkId, LinkNetwork, MetaLanguageArchiveEntry, MetaLanguageArchiveLimits,
     TypedProgramLinks, create_discovered_concept_links, create_meta_language_archive,
@@ -67,6 +71,8 @@ pub struct RegularGrammarInferenceOptions {
     pub language: String,
     /// Caller-supplied source edition.
     pub edition: String,
+    /// Optional finite scanner trace. Sample symbols then refer to its external tokens.
+    pub scanner_observations: Option<Vec<GrammarScannerObservation>>,
 }
 
 impl Default for RegularGrammarInferenceOptions {
@@ -76,6 +82,7 @@ impl Default for RegularGrammarInferenceOptions {
             identifier: "inferred-language".to_owned(),
             language: "Inferred language".to_owned(),
             edition: "regular discovery 1".to_owned(),
+            scanner_observations: None,
         }
     }
 }
@@ -87,7 +94,7 @@ pub struct RegularGrammarInference {
     pub grammar: Grammar,
     /// Source view that can extend the common dynamic language session.
     pub source: GlobalConceptSource,
-    /// Ordered first-observed symbols; symbols have unique text segmentation.
+    /// Ordered first-observed symbols, as literals or declared scanner token names.
     pub alphabet: Vec<String>,
     /// Numeric native transport of the linked model, including recursive folds.
     pub table: Vec<f64>,
@@ -110,6 +117,8 @@ struct Model {
     negatives: Vec<Vec<String>>,
     alphabet: Vec<String>,
     table: Vec<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    scanner_observations: Option<Vec<GrammarScannerObservation>>,
 }
 
 fn fail(message: &str) -> String {
@@ -160,6 +169,7 @@ fn samples(
     positives: &[Vec<String>],
     negatives: &[Vec<String>],
     options: &RegularGrammarInferenceParameters,
+    scanner: Option<&InferredGrammarScanner>,
 ) -> Result<(Vec<String>, Vec<f64>), String> {
     if positives.len().saturating_add(negatives.len()) > options.symbol_limit {
         return Err(fail("expected bounded labelled example lists"));
@@ -192,12 +202,33 @@ fn samples(
             }
         }
     }
-    for (left, first) in alphabet.iter().enumerate() {
-        for (right, second) in alphabet.iter().enumerate() {
-            if left != right && first.starts_with(second) {
-                return Err(fail(
-                    "overlapping symbol prefixes require a separate lexer definition",
-                ));
+    if let Some(scanner) = scanner {
+        if scanner
+            .scanner
+            .tokens
+            .iter()
+            .any(|token| token.starts_with("inferred_state_"))
+        {
+            return Err(fail(
+                "scanner token name collides with the inferred rule namespace",
+            ));
+        }
+        if alphabet
+            .iter()
+            .any(|symbol| !scanner.scanner.tokens.contains(symbol))
+        {
+            return Err(fail(
+                "sample contains a token missing from the scanner observations",
+            ));
+        }
+    } else {
+        for (left, first) in alphabet.iter().enumerate() {
+            for (right, second) in alphabet.iter().enumerate() {
+                if left != right && first.starts_with(second) {
+                    return Err(fail(
+                        "overlapping symbol prefixes require a separate lexer definition",
+                    ));
+                }
             }
         }
     }
@@ -208,9 +239,10 @@ fn table(
     positives: &[Vec<String>],
     negatives: &[Vec<String>],
     options: &RegularGrammarInferenceParameters,
+    scanner: Option<&InferredGrammarScanner>,
 ) -> Result<(Vec<String>, Vec<f64>), String> {
     let selected = strategy(options)?;
-    let (alphabet, input) = samples(positives, negatives, options)?;
+    let (alphabet, input) = samples(positives, negatives, options, scanner)?;
     let table = rules::infer_regular_grammar_table(
         &input,
         number(alphabet.len()),
@@ -229,7 +261,11 @@ fn table(
     Ok((alphabet, table))
 }
 
-fn grammar_from_table(table: &[f64], alphabet: &[String]) -> Grammar {
+fn grammar_from_table(
+    table: &[f64],
+    alphabet: &[String],
+    scanner: Option<&InferredGrammarScanner>,
+) -> Grammar {
     let states = (0..table.len())
         .step_by(8)
         .filter(|at| {
@@ -245,6 +281,8 @@ fn grammar_from_table(table: &[f64], alphabet: &[String]) -> Grammar {
     let mut grammar = Grammar::new().with_source_format(GrammarFormat::Inferred);
     grammar.set_declarations(GrammarDeclarations {
         matching: Some("generalized".to_owned()),
+        modes: scanner.map_or_else(Vec::new, |definition| definition.modes.clone()),
+        scanners: scanner.map_or_else(Vec::new, |definition| vec![definition.scanner.clone()]),
         ..Default::default()
     });
     for state in states {
@@ -255,8 +293,13 @@ fn grammar_from_table(table: &[f64], alphabet: &[String]) -> Grammar {
         for edge in (0..table.len()).step_by(8) {
             if table[edge] == 1.0 && index(table[edge + 1]) == state {
                 let target = index(rules::find_inference_representative(table, table[edge + 3]));
+                let symbol = alphabet[index(table[edge + 2])].clone();
                 alternatives.push(GrammarExpr::Sequence(vec![
-                    GrammarExpr::Terminal(alphabet[index(table[edge + 2])].clone()),
+                    if scanner.is_some() {
+                        GrammarExpr::NonTerminal(symbol)
+                    } else {
+                        GrammarExpr::Terminal(symbol)
+                    },
                     GrammarExpr::NonTerminal(names[&target].clone()),
                 ]));
             }
@@ -314,8 +357,13 @@ pub fn infer_regular_grammar(
             return Err(fail("invalid source identity"));
         }
     }
-    let (alphabet, table) = table(positives, negatives, &options.parameters)?;
-    let grammar = grammar_from_table(&table, &alphabet);
+    let scanner = options
+        .scanner_observations
+        .as_deref()
+        .map(|observations| infer_grammar_scanner(observations, None))
+        .transpose()?;
+    let (alphabet, table) = table(positives, negatives, &options.parameters, scanner.as_ref())?;
+    let grammar = grammar_from_table(&table, &alphabet, scanner.as_ref());
     let source = GlobalConceptSource {
         id: options.identifier.clone(),
         language: options.language.clone(),
@@ -323,7 +371,7 @@ pub fn infer_regular_grammar(
         grammar: grammar.clone(),
     };
     let model = Model {
-        schema_version: 1,
+        schema_version: if scanner.is_some() { 2 } else { 1 },
         algorithm: ALGORITHM.to_owned(),
         identifier: source.id.clone(),
         language: source.language.clone(),
@@ -333,6 +381,7 @@ pub fn infer_regular_grammar(
         negatives: negatives.to_vec(),
         alphabet: alphabet.clone(),
         table: table.clone(),
+        scanner_observations: options.scanner_observations.clone(),
     };
     let data = encode_structured_data_links(
         &serde_json::to_value(model).map_err(|error| error.to_string())?,
@@ -340,29 +389,36 @@ pub fn infer_regular_grammar(
     let definitions = create_regular_grammar_inference_program_links()?;
     let discovered =
         create_discovered_concept_links(std::slice::from_ref(&source), &Default::default())?;
-    let archive = create_meta_language_archive(
-        &[
-            MetaLanguageArchiveEntry {
-                identifier: "regular-discovery-model".to_owned(),
-                kind: "grammar inference".to_owned(),
-                network: Arc::new(data.network),
-                root: data.root,
-            },
-            MetaLanguageArchiveEntry {
-                identifier: "regular-discovery-algorithm".to_owned(),
-                kind: "typed program".to_owned(),
-                network: Arc::new(definitions.network),
-                root: definitions.root,
-            },
-            MetaLanguageArchiveEntry {
-                identifier: "regular-discovery-grammar".to_owned(),
-                kind: "discovered concepts".to_owned(),
-                network: Arc::new(discovered.network),
-                root: discovered.root,
-            },
-        ],
-        MetaLanguageArchiveLimits::default(),
-    )?;
+    let mut entries = vec![
+        MetaLanguageArchiveEntry {
+            identifier: "regular-discovery-model".to_owned(),
+            kind: "grammar inference".to_owned(),
+            network: Arc::new(data.network),
+            root: data.root,
+        },
+        MetaLanguageArchiveEntry {
+            identifier: "regular-discovery-algorithm".to_owned(),
+            kind: "typed program".to_owned(),
+            network: Arc::new(definitions.network),
+            root: definitions.root,
+        },
+        MetaLanguageArchiveEntry {
+            identifier: "regular-discovery-grammar".to_owned(),
+            kind: "discovered concepts".to_owned(),
+            network: Arc::new(discovered.network),
+            root: discovered.root,
+        },
+    ];
+    if scanner.is_some() {
+        let definition = create_grammar_scanner_inference_program_links()?;
+        entries.push(MetaLanguageArchiveEntry {
+            identifier: SCANNER_ALGORITHM.to_owned(),
+            kind: "typed program".to_owned(),
+            network: Arc::new(definition.network),
+            root: definition.root,
+        });
+    }
+    let archive = create_meta_language_archive(&entries, MetaLanguageArchiveLimits::default())?;
     Ok(RegularGrammarInference {
         grammar,
         source,
@@ -390,12 +446,40 @@ pub fn read_regular_grammar_inference_links(
             .ok_or_else(|| fail(&format!("missing {identifier}")))
     };
     let data = select("regular-discovery-model", "grammar inference")?;
+    let model_data = decode_structured_data_links(&data.network, data.root)?;
+    let has_scanner_field = model_data.get("scannerObservations").is_some();
     let model: Model =
-        serde_json::from_value(decode_structured_data_links(&data.network, data.root)?)
-            .map_err(|error| fail(&error.to_string()))?;
-    if model.schema_version != 1 || model.algorithm != ALGORITHM {
+        serde_json::from_value(model_data).map_err(|error| fail(&error.to_string()))?;
+    if model.algorithm != ALGORITHM
+        || !matches!(model.schema_version, 1 | 2)
+        || has_scanner_field != (model.schema_version == 2)
+        || has_scanner_field != model.scanner_observations.is_some()
+    {
         return Err(fail("unsupported model version"));
     }
+    let scanner = if let Some(observations) = model.scanner_observations.as_deref() {
+        let definition = select(SCANNER_ALGORITHM, "typed program")?;
+        let bundled = create_grammar_scanner_inference_program_links()?;
+        if definition.root != bundled.root
+            || definition.network.to_lino() != bundled.network.to_lino()
+        {
+            return Err(fail(
+                "the selected scanner definition differs from its versioned implementation",
+            ));
+        }
+        Some(infer_grammar_scanner(observations, None)?)
+    } else {
+        if decoded
+            .entries
+            .iter()
+            .any(|entry| entry.identifier == SCANNER_ALGORITHM)
+        {
+            return Err(fail(
+                "the selected scanner definition needs its actual observations",
+            ));
+        }
+        None
+    };
     let definitions = select("regular-discovery-algorithm", "typed program")?;
     let bundled = create_regular_grammar_inference_program_links()?;
     if definitions.root != bundled.root
@@ -405,7 +489,12 @@ pub fn read_regular_grammar_inference_links(
             "the selected algorithm definition differs from its versioned implementation",
         ));
     }
-    let (alphabet, table) = table(&model.positives, &model.negatives, &model.options)?;
+    let (alphabet, table) = table(
+        &model.positives,
+        &model.negatives,
+        &model.options,
+        scanner.as_ref(),
+    )?;
     if alphabet != model.alphabet || table != model.table {
         return Err(fail(
             "model decisions do not follow the stored observations and algorithm",
@@ -417,7 +506,7 @@ pub fn read_regular_grammar_inference_links(
         .sources
         .first()
         .ok_or_else(|| fail("candidate grammar differs from its actual model"))?;
-    let grammar = grammar_from_table(&table, &alphabet);
+    let grammar = grammar_from_table(&table, &alphabet, scanner.as_ref());
     if discovered.sources.len() != 1
         || source.id != model.identifier
         || source.language != model.language

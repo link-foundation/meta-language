@@ -55,6 +55,24 @@ const qualifiedOperationNames = {
  'js/src/grammar-inference.js': { configuration: 'configure grammar inference' },
 };
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
+const scannerCheckpointParent='2e1af9f2a6f31a829981a6bcb4faea95e9d3bf88';
+function retainScannerCheckpointBindings(rows,expected){
+ const source='js/src/grammar-inference.js';
+ const revised=new Set(['samples','grammarFromTable','inferRegularGrammar','readRegularGrammarInferenceLinks']);
+ const path='parity/naming/module-scope-bindings-registration.lino';
+ const captured=captureGitArtifactCertificate(scannerCheckpointParent,path);
+ verifyGitArtifactCertificate(captured.certificate,captured.blob,{revision:scannerCheckpointParent,path});
+ const historical=new Map(readBootstrapStructuredDataLino(captured.blob.toString('utf8')).additions
+  .filter(row=>row.source===source&&revised.has(row.name)).map(row=>[row.id,row]));
+ assert.equal(historical.size,revised.size);
+ return rows.map((row,index)=>{
+  const earlier=historical.get(row.id),current=expected[index];
+  if(!earlier||row.source!==source||row.sourceText!==earlier.sourceText)return row;
+  assert.deepEqual(row,earlier);
+  assert.deepEqual({...current,sourceText:earlier.sourceText},earlier);
+  return current;
+ });
+}
 function operations(){
  const retainedReaderReceipt='parity/naming/module-scope-bindings-registration.lino';
  const prior=readBootstrapStructuredDataLino(readFileSync(new URL(retainedReaderReceipt,root),'utf8'));
@@ -124,7 +142,8 @@ export function generateModuleScopeNaming({section,check=false}={}){
   const preceding=list.slice(first);assert.ok(preceding.length<=additions.length);
   const retained=section==='bindings'?restoreModuleScopeDeclarationBindings(preceding):preceding;
   const expected=section==='bindings'?restoreModuleScopeDeclarationBindings(additions.slice(0,preceding.length)):additions.slice(0,preceding.length);
-  assert.deepEqual(retained,expected,'every preceding identity and definition survives; only the certified original parameter fragments gain their missing declaration text');
+  const evolved=section==='bindings'?retainScannerCheckpointBindings(retained,expected):retained;
+  assert.deepEqual(evolved,expected,'registered identities and their certified declaration revisions must survive');
   list.splice(first);
  }
  const oldCount=list.length;assert.deepEqual(pin(serializeProjectData(document,file)),original.expected,'every preceding register byte and ordered row stays exact');

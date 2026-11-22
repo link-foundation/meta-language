@@ -3,6 +3,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::grammar::{GrammarScanner, parse_grammar_links, percent_encode_links_text};
 use crate::grammar_scanner_inference_rules as rules;
+use crate::{TypedProgramLinks, create_source_definition_program_links};
+
+pub(crate) const SCANNER_ALGORITHM: &str = "regular-discovery-scanner-algorithm";
+
+pub(crate) fn create_grammar_scanner_inference_program_links() -> Result<TypedProgramLinks, String>
+{
+    create_source_definition_program_links(
+        "meta-language/source-program/grammar-scanner-inference-program",
+    )
+}
 
 /// One literal spelling, emitted token and explicit mode transition.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]

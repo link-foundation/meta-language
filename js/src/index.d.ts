@@ -1098,6 +1098,7 @@ export interface RegularGrammarInferenceOptions {
   stateLimit?: number; pairLimit?: number; attemptLimit?: number;
   symbolLimit?: number; byteLimit?: number;
   identifier?: string; language?: string; edition?: string;
+  scannerObservations?: readonly GrammarScannerObservation[];
 }
 export interface RegularGrammarInference extends TypedProgramLinks {
   grammar: Grammar; source: GlobalConceptSource; alphabet: string[]; table: number[];

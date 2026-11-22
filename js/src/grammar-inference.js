@@ -9,6 +9,7 @@ import { createMetaLanguageArchive, readMetaLanguageArchive } from './meta-langu
 import { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
 import { decodeTypedProgramLinks } from './typed-program-links.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
+import { createGrammarScannerInferenceProgramLinks, grammarScannerInferenceArchiveIdentifier, inferGrammarScanner } from './grammar-scanner-inference.js';
 import { inferRegularGrammarTable, findInferenceRepresentative,
   acceptInferredSymbolSequence, acceptInferenceTableShape, readInferenceFailureReason } from './grammar-inference-rules.js';
 
@@ -28,7 +29,7 @@ function configuration(options) {
   return result;
 }
 
-function samples(positives, negatives, options) {
+function samples(positives, negatives, options, scanner) {
   if (!Array.isArray(positives) || !Array.isArray(negatives) || positives.length + negatives.length > options.symbolLimit) fail('expected bounded labelled example lists');
   const alphabet = [], indexes = new Map(), encoded = [];
   let count = 0, bytes = 0;
@@ -43,15 +44,20 @@ function samples(positives, negatives, options) {
       encoded.push(indexes.get(symbol));
     }
   }
-  // Without a separately represented lexer, the grammar must retain a unique
-  // symbol segmentation. Character samples naturally meet this condition.
-  for (let left = 0; left < alphabet.length; left += 1) for (let right = 0; right < alphabet.length; right += 1) {
-    if (left !== right && alphabet[left].startsWith(alphabet[right])) fail('overlapping symbol prefixes require a separate lexer definition');
+  if (scanner) {
+    const tokens = new Set(scanner.scanner.tokens);
+    if ([...tokens].some(token => token.startsWith('inferred_state_'))) fail('scanner token name collides with the inferred rule namespace');
+    if (alphabet.some(symbol => !tokens.has(symbol))) fail('sample contains a token missing from the scanner observations');
+  } else {
+    // Character samples keep their unique literal segmentation.
+    for (let left = 0; left < alphabet.length; left += 1) for (let right = 0; right < alphabet.length; right += 1) {
+      if (left !== right && alphabet[left].startsWith(alphabet[right])) fail('overlapping symbol prefixes require a separate lexer definition');
+    }
   }
   return { alphabet, encoded };
 }
 
-function grammarFromTable(table, alphabet) {
+function grammarFromTable(table, alphabet, scanner) {
   const states = [];
   for (let at = 0; at < table.length; at += 8) if (table[at] === 0 && findInferenceRepresentative(table, at) === at) states.push(at);
   const names = new Map(states.map((state, index) => [state, 'inferred_state_' + index]));
@@ -60,13 +66,16 @@ function grammarFromTable(table, alphabet) {
     const alternatives = [];
     if (table[state + 2] === 1 && table[state + 3] === 0) alternatives.push({ kind: 'empty' });
     for (let edge = 0; edge < table.length; edge += 8) if (table[edge] === 1 && table[edge + 1] === state) {
-      alternatives.push({ kind: 'seq', items: [{ kind: 'literal', value: alphabet[table[edge + 2]] },
+      const symbol = alphabet[table[edge + 2]];
+      alternatives.push({ kind: 'seq', items: [scanner ? { kind: 'ref', name: symbol } : { kind: 'literal', value: symbol },
         { kind: 'ref', name: names.get(findInferenceRepresentative(table, table[edge + 3])) }] });
     }
     const name = names.get(state);
     rules.set(name, { name, kind: 'normal', expression: alternatives.length === 1 ? alternatives[0] : { kind: 'choice', ordered: false, items: alternatives } });
   }
-  return new Grammar(names.get(findInferenceRepresentative(table, 0)), rules, 'inferred', { matching: 'generalized' });
+  return new Grammar(names.get(findInferenceRepresentative(table, 0)), rules, 'inferred', {
+    matching: 'generalized', ...(scanner ? { modes: scanner.modes, scanners: [scanner.scanner] } : {}),
+  });
 }
 
 /** Complete editable typed algorithm definition; this is not execution evidence. */
@@ -84,23 +93,27 @@ export function createRegularGrammarInferenceProgramLinks() {
  * sample is promoted to a proof of the unknown language's complete meaning.
  */
 export function inferRegularGrammar(positives, negatives = [], options = {}) {
-  const limits = configuration(options), input = samples(positives, negatives, limits);
+  const scanner = options.scannerObservations === undefined ? undefined : inferGrammarScanner(options.scannerObservations);
+  const limits = configuration(options), input = samples(positives, negatives, limits, scanner);
   const identifier = options.identifier ?? 'inferred-language', language = options.language ?? 'Inferred language', edition = options.edition ?? 'regular discovery 1';
   for (const value of [identifier, language, edition]) if (typeof value !== 'string' || !value || !value.isWellFormed() || Buffer.byteLength(value) > 4096) fail('invalid source identity');
   const table = inferRegularGrammarTable(input.encoded, input.alphabet.length, strategies.indexOf(limits.strategy), limits.alpha,
     limits.stateLimit, limits.pairLimit, limits.attemptLimit);
   if (table[0] < 0) fail(readInferenceFailureReason(table[0]));
   if (!acceptInferenceTableShape(table, input.alphabet.length)) fail('invalid model table');
-  const grammar = grammarFromTable(table, input.alphabet);
+  const grammar = grammarFromTable(table, input.alphabet, scanner);
   const source = { id: identifier, language, edition, grammar };
-  const model = { schemaVersion: 1, algorithm, identifier, language, edition, options: limits,
-    positives, negatives, alphabet: input.alphabet, table };
+  const model = { schemaVersion: scanner ? 2 : 1, algorithm, identifier, language, edition, options: limits,
+    positives, negatives, alphabet: input.alphabet, table,
+    ...(scanner ? { scannerObservations: options.scannerObservations } : {}) };
   const data = encodeStructuredDataLinks(model), definitions = createRegularGrammarInferenceProgramLinks();
   const discovered = createDiscoveredConceptLinks([source]);
   const archive = createMetaLanguageArchive([
     { identifier: 'regular-discovery-model', kind: 'grammar inference', ...data },
     { identifier: 'regular-discovery-algorithm', kind: 'typed program', ...definitions },
     { identifier: 'regular-discovery-grammar', kind: 'discovered concepts', ...discovered },
+    ...(scanner ? [{ identifier: grammarScannerInferenceArchiveIdentifier, kind: 'typed program',
+      ...createGrammarScannerInferenceProgramLinks() }] : []),
   ]);
   return { grammar, source, alphabet: [...input.alphabet], table: [...table], ...archive };
 }
@@ -118,10 +131,19 @@ export function readRegularGrammarInferenceLinks(network, root) {
   };
   const data = select('regular-discovery-model', 'grammar inference');
   const model = decodeStructuredDataLinks(data.network, data.root);
-  if (model?.schemaVersion !== 1 || model.algorithm !== algorithm) fail('unsupported model version');
+  if (model?.algorithm !== algorithm || ![1, 2].includes(model.schemaVersion)
+    || Object.hasOwn(model, 'scannerObservations') !== (model.schemaVersion === 2)) fail('unsupported model version');
+  const storedScanner = entries.find(entry => entry.identifier === grammarScannerInferenceArchiveIdentifier);
+  let scanner;
+  if (model.schemaVersion === 2) {
+    const bundledScanner = createGrammarScannerInferenceProgramLinks();
+    if (!storedScanner || storedScanner.kind !== 'typed program' || !storedScanner.root.equals(bundledScanner.root)
+      || storedScanner.network.toLino() !== bundledScanner.network.toLino()) fail('the selected scanner definition differs from its versioned implementation');
+    scanner = inferGrammarScanner(model.scannerObservations);
+  } else if (storedScanner) fail('the selected scanner definition needs its actual observations');
   const definitions = select('regular-discovery-algorithm', 'typed program'), bundled = createRegularGrammarInferenceProgramLinks();
   if (!definitions.root.equals(bundled.root) || definitions.network.toLino() !== bundled.network.toLino()) fail('the selected algorithm definition differs from its versioned implementation');
-  const options = configuration(model.options), input = samples(model.positives, model.negatives, options);
+  const options = configuration(model.options), input = samples(model.positives, model.negatives, options, scanner);
   const table = inferRegularGrammarTable(input.encoded, input.alphabet.length, strategies.indexOf(options.strategy), options.alpha,
     options.stateLimit, options.pairLimit, options.attemptLimit);
   if (table[0] < 0) fail(readInferenceFailureReason(table[0]));
@@ -129,7 +151,7 @@ export function readRegularGrammarInferenceLinks(network, root) {
   if (!isDeepStrictEqual(input.alphabet, model.alphabet) || !isDeepStrictEqual(table, model.table)) fail('model decisions do not follow the stored observations and algorithm');
   const candidate = select('regular-discovery-grammar', 'discovered concepts');
   const decoded = readDiscoveredConceptLinks(candidate.network, candidate.root);
-  const grammar = grammarFromTable(table, input.alphabet), source = decoded.sources[0];
+  const grammar = grammarFromTable(table, input.alphabet, scanner), source = decoded.sources[0];
   if (decoded.sources.length !== 1 || source.id !== model.identifier || source.language !== model.language || source.edition !== model.edition
     || !isDeepStrictEqual(source.grammar.normalized(), grammar.normalized())) fail('candidate grammar differs from its actual model');
   return { grammar: source.grammar, source, alphabet: [...input.alphabet], table: [...table], network, root: LinkId.from(root) };
