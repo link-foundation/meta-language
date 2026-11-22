@@ -37,6 +37,18 @@ pub fn parse_pdf_cst(text: &str) -> GrammarNode {
     .file()
 }
 
+fn mark_invalid_source_characters(node: &mut GrammarNode, text: &str) {
+    if node.field == Some("data") {
+        return;
+    }
+    if node.children.is_empty() && text[node.start..node.end].contains('\0') {
+        node.is_error = true;
+    }
+    for child in &mut node.children {
+        mark_invalid_source_characters(child, text);
+    }
+}
+
 // Keywords of the COS file structure, kept as anonymous tokens.
 const COS_KEYWORDS: [&str; 10] = [
     "obj",
@@ -151,9 +163,15 @@ impl<'a> PdfGrammarParser<'a> {
             let end = last.end;
             children.push(GrammarNode::missing("end_of_file", true, end));
         }
-        let mut root = GrammarNode::node("pdf_file", 0, self.text.len(), children);
+        let mut root = fill_extras(
+            GrammarNode::node("pdf_file", 0, self.text.len(), children),
+            &mut |start, end| self.lex_gap(start, end),
+        );
+        if self.bytes.contains(&0) {
+            mark_invalid_source_characters(&mut root, self.text);
+        }
         propagate_errors(&mut root);
-        fill_extras(root, &mut |start, end| self.lex_gap(start, end))
+        root
     }
 
     // indirect_object = integer integer "obj" (object | stream)? "endobj"

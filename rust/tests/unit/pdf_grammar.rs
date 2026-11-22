@@ -5,6 +5,8 @@ use std::path::PathBuf;
 use meta_language::{LinkFlags, LinkId, LinkNetwork, LinkType, ParseConfiguration};
 use serde_json::{Value, json};
 
+use super::issue_195_observations::{Observation, record};
+
 /// A Syntax node of a public PDF network.
 struct Node {
     term: String,
@@ -226,6 +228,49 @@ fn terms<'a>(node: &'a Node, seen: &mut HashSet<&'a str>) {
     for child in &node.children {
         terms(child, seen);
     }
+}
+
+#[test]
+fn pdf_stream_data_preserves_null_characters() {
+    const FIXTURE: &str = include_str!("../../../parity/fixtures/pdf-stream-null-characters.lino");
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let source = fixture["source"].as_str().unwrap();
+    let network = LinkNetwork::parse(source, "PDF", ParseConfiguration::default());
+    let tree = syntax_tree(&network);
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(network.verify_full_match(None).is_clean());
+    let object = tree
+        .children
+        .iter()
+        .find(|child| child.term == "indirect_object")
+        .unwrap();
+    let data = field(field(object, "value").unwrap(), "data").unwrap();
+    assert_eq!(text_of(data, source), fixture["data"].as_str().unwrap());
+
+    let invalid_source = fixture["invalidSource"].as_str().unwrap();
+    let invalid = LinkNetwork::parse(invalid_source, "PDF", ParseConfiguration::default());
+    assert_eq!(invalid.reconstruct_text(), invalid_source);
+    assert!(!invalid.verify_full_match(None).is_clean());
+    let invalid_tree = syntax_tree(&invalid);
+    let errors: Vec<_> = leaves(&invalid_tree)
+        .into_iter()
+        .filter(|leaf| leaf.flags.is_error())
+        .map(|leaf| text_of(leaf, invalid_source))
+        .collect();
+    assert_eq!(errors, [fixture["invalidToken"].as_str().unwrap()]);
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-PDF-STREAM-NULL-CHARACTERS",
+        suffix: "behavior",
+        fixture_id: "i195-grammar-pdf-stream-null-characters",
+        fixture_file: "parity/fixtures/pdf-stream-null-characters.lino",
+        assertions: &[
+            "streamBytesRetainedInDataSpan",
+            "streamBytesDoNotCauseRecovery",
+            "invalidNullCharacterHasErrorToken",
+            "sourcesReconstructExactly",
+        ],
+        test_name: "pdf_stream_data_preserves_null_characters",
+    });
 }
 
 #[test]

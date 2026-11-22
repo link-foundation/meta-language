@@ -115,9 +115,9 @@ export function parseProgrammingLanguage(text, language) {
   }
 
   const parsed = parseGrammarCst(text, canonical);
-  if (text.includes('\0')) {
-    // NUL is prohibited input: the root reports that it contains an error
-    // without relabeling the grammar's own nodes as ERROR.
+  if (canonical !== 'PDF' && text.includes('\0')) {
+    // The PDF grammar validates NUL in context. For other grammars the root
+    // reports prohibited NUL without relabeling the grammar's own nodes.
     parsed.tree.flags = new LinkFlags({ ...parsed.tree.flags, hasError: true });
     const retained = parsed.tokens.map(({ text: token }) => token).join('');
     if (text.startsWith(retained) && retained.length < text.length) {

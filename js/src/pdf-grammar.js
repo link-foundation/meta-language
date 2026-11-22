@@ -40,6 +40,14 @@ export function parsePdfCst(text) {
   return new PdfGrammarParser(text).file();
 }
 
+function markInvalidSourceCharacters(tree, text) {
+  if (tree.field === 'data') return;
+  if (tree.children.length === 0 && text.slice(tree.start, tree.end).includes('\0')) {
+    tree.isError = true;
+  }
+  for (const child of tree.children) markInvalidSourceCharacters(child, text);
+}
+
 // Keywords of the COS file structure, kept as anonymous tokens.
 const COS_KEYWORDS = new Set([
   'obj', 'endobj', 'stream', 'endstream', 'R', 'xref', 'trailer', 'startxref', 'n', 'f',
@@ -94,9 +102,10 @@ class PdfGrammarParser {
     }
     const last = children.at(-1);
     if (last.term !== 'end_of_file') children.push(missing('end_of_file', true, last.end));
-    const root = node('pdf_file', 0, this.text.length, children);
+    const root = fillExtras(node('pdf_file', 0, this.text.length, children), (start, end) => this.lexGap(start, end));
+    if (this.text.includes('\0')) markInvalidSourceCharacters(root, this.text);
     propagateErrors(root);
-    return fillExtras(root, (start, end) => this.lexGap(start, end));
+    return root;
   }
 
   // indirect_object = integer integer "obj" (object | stream)? "endobj"

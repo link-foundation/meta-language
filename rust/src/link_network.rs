@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
-use crate::language_catalog::{GrammarProvenance, grammar_provenance, language_catalog};
+use crate::language_catalog::{
+    GrammarProvenance, canonical_language_name, grammar_provenance, language_catalog,
+};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
@@ -342,7 +344,7 @@ impl LinkNetwork {
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
         let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
-        if text.contains('\0') {
+        if text.contains('\0') && canonical_language_name(language) != Some("PDF") {
             let retained = network.reconstruct_text();
             if text.starts_with(&retained) && retained.len() < text.len() {
                 let span = SourceSpan::new(
@@ -377,8 +379,8 @@ impl LinkNetwork {
                 })
                 .map(Link::id);
             if let Some(root) = malformed_root {
-                // NUL is prohibited input: the root reports that it contains an
-                // error without relabeling the grammar's own nodes as ERROR.
+                // The PDF grammar validates NUL in context. For other grammars the
+                // root reports prohibited NUL without relabeling the grammar's nodes.
                 let flags = network
                     .link(root)
                     .map_or_else(LinkFlags::clean, |link| link.metadata().flags());

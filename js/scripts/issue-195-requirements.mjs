@@ -14,6 +14,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   sentenceAbbreviations: 'https://github.com/link-foundation/meta-language/issues/232',
   grammarAssetAvailability: 'https://github.com/link-foundation/meta-language/issues/244',
+  pdfStreamNullCharacters: 'https://github.com/link-foundation/meta-language/issues/239',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
@@ -373,6 +374,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       implementationEntryPoints: {
         javascript: ['js/src/network.js', 'js/tests/grammar-parser-availability.test.js'],
         rust: ['rust/src/link_network.rs', 'rust/tests/unit/language_catalog.rs'],
+      },
+    },
+    {
+      id: 'I195-GRAMMAR-PDF-STREAM-NULL-CHARACTERS',
+      source: ISSUE_195_SOURCES.pdfStreamNullCharacters,
+      language: 'PDF',
+      version: 'PDF 1.7 fixture parsed by the active default grammar',
+      construct: 'NUL inside stream data',
+      expectedBehavior: 'The parser preserves NUL bytes inside stream data and verifies the source cleanly. NUL after the end-of-file marker remains invalid and is identified by a source token error. Both cases reconstruct exactly.',
+      fixture: 'parity/fixtures/pdf-stream-null-characters.lino',
+      selector: 'binary stream reproduction and the trailing NUL negative case',
+      assertions: ['streamBytesRetainedInDataSpan', 'streamBytesDoNotCauseRecovery', 'invalidNullCharacterHasErrorToken', 'sourcesReconstructExactly'],
+      implementationEntryPoints: {
+        javascript: ['js/src/pdf-grammar.js', 'js/tests/pdf-grammar.test.js'],
+        rust: ['rust/src/pdf_grammar.rs', 'rust/tests/unit/pdf_grammar.rs'],
       },
     },
   ];
