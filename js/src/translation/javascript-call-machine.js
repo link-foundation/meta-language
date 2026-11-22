@@ -669,7 +669,9 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
          else{const fallback=pending.fallback;if(fallback===undefined||fallback.$!=='arrayCreationArrayFallback'||fallback.length!==request.fallback.length||!testJavaScriptSemanticSameValue(fallback.prototype,request.fallback.prototype)||suspended)return 'Array creation fallback retains its actual ArrayCreate length and prototype';const directory=program.constructorDirectory;if(directory===undefined)return 'Array creation fallback requires actual constructor authority';const classified=classifyJavaScriptArraySpeciesConstructor(heap,directory,request.constructor);if(classified.$==='arrayConstructorUnknown'||readJavaScriptKnownArrayConstructorFact(classified)?.constructable===true)return 'Array creation fallback cannot replace an actual constructor';}
         }
         if(suspended&&(pending.construction?.call===undefined&&pending.state.call===undefined||pending.error!==undefined))return 'an Array creation child retains only its actual selected call';
-        if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(pending.construction!==undefined||pending.fallback!==undefined||actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Array creation setup failure retains its actual selected callee Error realm and reason';}return '';
+        const setup=pending.error;
+        if(setup!==undefined&&(pending.construction!==undefined||pending.fallback!==undefined||!testJavaScriptPendingCallConstructorFailure(program,heap,pending.state.call?.callee??{$:'undefined'},setup)))return 'Array creation setup failure retains its actual selected callee Error realm and reason';
+        return '';
       }
       case 'waitConstructorCheck':{
         const invalidInstruction='constructor checks retain actual selected input predicate mode and instruction';
@@ -719,7 +721,9 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey))return invalidInstruction;
         const invalid=readJavaScriptObjectFromEntriesStateError(heap,pending.state);if(invalid!=='')return invalid;
         if(suspended&&(pending.state.call===undefined||pending.error!==undefined))return 'Object.fromEntries child retains its actual selected call rather than an allocation request';
-        if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Object.fromEntries selected-call failure retains its actual callee constructor kind Error realm and reason';}return '';
+        const setup=pending.error;
+        if(setup!==undefined&&!testJavaScriptPendingCallConstructorFailure(program,heap,pending.state.call?.callee??{$:'undefined'},setup))return 'Object.fromEntries selected-call failure retains its actual callee constructor kind Error realm and reason';
+        return '';
       }
       case 'waitPrimitiveWrapper':{
         const invalidInstruction='primitive wrappers retain their actual selected input prototype and allocation instruction';
@@ -2783,6 +2787,17 @@ export function readJavaScriptCallConstructorFailure(heap,fn){
  else if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode))reason=readJavaScriptOrdinaryClassCallReason(heap,fn.identity);
  else if(testJavaScriptCollectionConstructorMode(fn.receiverMode))reason='Constructor '+readJavaScriptCollectionConstructorKind(fn)+" requires 'new'";
  return reason===''?undefined:{$:'objectFromEntriesErrorRequest',realm:fn.realm,errorClass:'TypeError',reason};
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptSemanticValue} callee @param {JavaScriptObjectFromEntriesErrorRequest} retained @returns {boolean} */
+function testJavaScriptPendingCallConstructorFailure(program,heap,callee,retained){
+ if(callee.$!=='object'||retained.$!=='objectFromEntriesErrorRequest')return false;
+ const owner=readJavaScriptExecutableCallFunction(program,heap,callee.identity);
+ if(owner===undefined)return false;
+ const actual=readJavaScriptCallConstructorFailure(heap,owner);
+ if(actual===undefined)return false;
+ return retained.realm===actual.realm&&retained.errorClass===actual.errorClass&&retained.reason===actual.reason;
 }
 
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
