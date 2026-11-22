@@ -17,6 +17,12 @@ import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.
  * {$:'objectEnumerationResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectEnumerationState,reason:string}} JavaScriptObjectEnumerationTransition */
 /** @param {string} operation @returns {boolean} */
 export function testJavaScriptObjectEnumerationOperation(operation){return testJavaScriptStandardObjectEnumerationOperation(operation);}
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} value @param {JavaScriptSemanticValue} prototype @param {number} length @returns {boolean} */
+function testJavaScriptEnumerationArray(heap,value,prototype,length){
+ if(value.$!=='object')return false;
+ const array=heap.objects[findJavaScriptOrdinaryObject(heap.objects,value.identity)];
+ return array!==undefined&&array.$==='arrayObject'&&readJavaScriptArrayLength(array)===length&&testJavaScriptSemanticSameValue(array.prototype,prototype);
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectEnumerationState} state @returns {string} */
 export function readJavaScriptObjectEnumerationStateError(heap,state){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;
@@ -25,7 +31,7 @@ export function readJavaScriptObjectEnumerationStateError(heap,state){
  for(const value of [state.input,state.prototype,state.value,state.callee,state.pair,state.target,...state.values]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
  const seen=[];for(const key of state.keys){const invalid=readJavaScriptOrdinaryKeyError(heap,key);if(invalid!=='')return invalid;if(seen.some(prior=>testJavaScriptSemanticSameValue(prior,key)))return 'Object enumeration key snapshots retain unique actual property keys';seen.push(key);}
  if(state.values.length>state.position)return 'enumeration Lists retain only completed preceding own properties';
- for(const value of state.values){if(state.operation==='Object.keys'&&value.$!=='text'&&value.$!=='sourceText')return 'Object.keys result Lists contain only actual text keys';if(state.operation==='Object.entries'){const pair=value.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,value.identity)]:undefined;if(pair===undefined||pair.$!=='arrayObject'||readJavaScriptArrayLength(pair)!==2||!testJavaScriptSemanticSameValue(pair.prototype,state.prototype))return 'Object.entries result Lists retain actual length-two entry Arrays';}}
+ for(const value of state.values){if(state.operation==='Object.keys'&&value.$!=='text'&&value.$!=='sourceText')return 'Object.keys result Lists contain only actual text keys';if(state.operation==='Object.entries'&&!testJavaScriptEnumerationArray(heap,value,state.prototype,2))return 'Object.entries result Lists retain actual length-two entry Arrays';}
  if((state.phase==='allocate'||state.phase==='output write')&&state.position!==state.keys.length||state.phase==='getter'&&state.operation==='Object.keys')return 'enumeration allocation follows all own keys and key-only enumeration invokes no getter';
  if(state.phase!=='keys'&&state.input.$!=='object'){
   const length=state.input.$==='text'||state.input.$==='sourceText'?readJavaScriptSemanticTextLength(state.input):0;
@@ -36,8 +42,8 @@ export function readJavaScriptObjectEnumerationStateError(heap,state){
  if(state.phase==='keys'&&(state.keys.length!==0||state.values.length!==0||state.position!==0)||['getter','pair allocation','pair write'].includes(state.phase)&&state.position>=state.keys.length)return 'Object enumeration phases retain their actual selected source property';
  if(state.phase==='getter'&&(state.input.$!=='object'||state.callee.$!=='object'||!state.callee.callable)||state.phase!=='getter'&&state.callee.$!=='undefined')return 'Object enumeration getters retain their actual selected callable and receiver';
  if(['pair allocation','pair write'].includes(state.phase)&&state.operation!=='Object.entries'||state.phase!=='pair write'&&(state.pair.$!=='undefined'||state.pairIndex!==0))return 'entry pair storage belongs only to its actual pair creation phase';
- if(state.phase==='pair write'){const pair=state.pair.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.pair.identity)]:undefined;if(pair===undefined||pair.$!=='arrayObject'||readJavaScriptArrayLength(pair)!==2||!testJavaScriptSemanticSameValue(pair.prototype,state.prototype))return 'entry pair writes retain their actual fresh length-two Array';}
- if(state.phase==='output write'){const target=state.target.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)]:undefined;if(target?.$!=='arrayObject'||readJavaScriptArrayLength(target)!==state.values.length||!testJavaScriptSemanticSameValue(target.prototype,state.prototype)||state.position!==state.keys.length)return 'Object enumeration output retains its actual completed List and result Array';}
+ if(state.phase==='pair write'&&!testJavaScriptEnumerationArray(heap,state.pair,state.prototype,2))return 'entry pair writes retain their actual fresh length-two Array';
+ if(state.phase==='output write'){if(!testJavaScriptEnumerationArray(heap,state.target,state.prototype,state.values.length)||state.position!==state.keys.length)return 'Object enumeration output retains its actual completed List and result Array';}
  else if(state.target.$!=='undefined'||state.outputIndex!==0)return 'Object enumeration allocates its final Array only after collecting the complete List';
  return '';
 }
