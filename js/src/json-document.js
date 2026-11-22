@@ -18,15 +18,29 @@ export function pointerChild(pointer, key) {
   return `${pointer}/${String(key).replaceAll('~', '~0').replaceAll('/', '~1')}`;
 }
 
+function documentParser() {
+  return parser ??= compileGrammar(jsonDocumentGrammar());
+}
+
+export function containsOnlyJsonValues(source) {
+  const values = documentParser().findAll(source, { rule: 'value', wordBoundaries: true });
+  let end = 0;
+  for (const value of values) {
+    if (!/^[ \t\r\n]*$/u.test(source.slice(end, value.start))) return false;
+    end = value.end;
+  }
+  return values.length > 0 && /^[ \t\r\n]*$/u.test(source.slice(end));
+}
+
 function isValue(node) {
   return !node.trivia && node.type !== 'missing' && valueKinds.has(node.kind);
 }
 
 export function readJsonDocument(source) {
   if (typeof source !== 'string') throw new TypeError('a JSON document must be text');
-  parser ??= compileGrammar(jsonDocumentGrammar());
-  const strict = parser.parseTree(source);
-  const { tree } = strict.ok ? strict : parser.parseTree(source, { errorRecovery: true, recovery: 'accept' });
+  const compiled = documentParser();
+  const strict = compiled.parseTree(source);
+  const { tree } = strict.ok ? strict : compiled.parseTree(source, { errorRecovery: true, recovery: 'accept' });
   const network = new LinkNetwork();
   const boundaries = sourceBoundaries(source);
   const nodes = [];

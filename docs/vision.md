@@ -2254,6 +2254,20 @@ ASCII case-insensitive patterns with Python's additional Unicode equivalents,
 and dot-all matching. Patterns outside the subset report the UTF-8 byte
 position of the unsupported syntax during import.
 
+The strict JSON document grammar retains the full source as Links, including
+trivia and syntax recovery. JSON Schema validation refers to those links
+through their JSON Pointers, byte spans and expected values. The grammar
+importer lowers schema constraints to the shared grammar expressions.
+Constraints that require separate validation have their own schema pointers
+and diagnostics. Reverse emission can recover the source schema of an
+unchanged import or infer constants from finite JSON productions.
+
+JSON recovery applies caller-enabled edits anchored to recovery links.
+Every edit retains the original span, old spelling and replacement. The
+original and edited documents have separate networks. Closing input at its
+end preserves the truncated state, and schema validation reports required
+fields still missing after recovery.
+
 Quote location builds a Unicode projection of the source and fragment and
 retains original offsets across character expansion, whitespace collapse and
 soft-hyphen removal. An exact occurrence reports the transformations it used.

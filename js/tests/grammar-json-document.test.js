@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { compileGrammar, GrammarBuilder } from '../src/grammar.js';
+import { emitGbnf } from '../src/grammar-emitters/gbnf.js';
+import { emitJsonSchema } from '../src/grammar-emitters/json-schema.js';
+import { emitLark } from '../src/grammar-emitters/lark.js';
+import { importGbnf } from '../src/grammar-importers/gbnf.js';
+import { importJsonSchema } from '../src/grammar-importers/json-schema.js';
+import { importLark } from '../src/grammar-importers/lark.js';
 import { recoverJson } from '../src/json-recovery.js';
 import { validateJson } from '../src/json-schema-validation.js';
 
@@ -8,6 +15,81 @@ const answerSchema = {
   properties: { status: { enum: ['met', 'not_met', 'unknown'] }, evidence: { type: 'string' } },
 };
 const range = ({ byteRange }) => [byteRange.start, byteRange.end];
+
+function schemaParsers(schema) {
+  const grammar = importJsonSchema(schema);
+  return [
+    grammar,
+    importGbnf(emitGbnf(grammar).source),
+    importLark(emitLark(grammar).source),
+  ].map(item => compileGrammar(item));
+}
+
+test('JSON Schema emits decoders that constrain required fields, enums and escaped property names', () => {
+  for (const parser of schemaParsers(answerSchema)) {
+    for (const [source, accepted] of [
+      ['{"status":"met","evidence":"café"}', true],
+      ['{"evidence":"x","status":"unknown"}', true],
+      ['{"st\\u0061tus":"m\\u0065t", "evidence":"x"}', true],
+      ['{"status":"partially","evidence":"x"}', false],
+      ['{"status":"met"}', false],
+      ['{"status":"met","evidence":"x","extra":1}', false],
+      ['{"status":"met","evidence":"x","status":"met"}', false],
+      ['{"status":"met","evidence":"unterminated}', false],
+    ]) assert.equal(parser.parseTree(source).ok, accepted, source);
+  }
+  const grammar = importJsonSchema(answerSchema);
+  assert.deepEqual(grammar.schemaDiagnostics, []);
+  assert.deepEqual(emitJsonSchema(grammar).schema, answerSchema);
+});
+
+test('JSON Schema lowers tuple limits, local references, formats and finite integer ranges', () => {
+  const schema = {
+    $defs: { code: { type: 'string', pattern: '^[A-Z]{2}$' } },
+    type: 'array', minItems: 4, maxItems: 5,
+    prefixItems: [
+      { $ref: '#/$defs/code' },
+      { type: 'integer', exclusiveMinimum: -3, maximum: 13 },
+      { type: 'string', format: 'date' },
+      { anyOf: [{ type: 'null' }, { type: 'string', format: 'uuid' }] },
+    ],
+    items: { type: 'string', format: 'email' },
+  };
+  for (const parser of schemaParsers(schema)) {
+    for (const [source, accepted] of [
+      ['["AX",-2,"2024-02-29",null]', true],
+      ['["AX",13,"2000-02-29","123e4567-e89b-12d3-a456-426614174000","first.last@example.org"]', true],
+      ['["Ax",0,"2024-02-29",null]', false],
+      ['["AX",-3,"2024-02-29",null]', false],
+      ['["AX",14,"2024-02-29",null]', false],
+      ['["AX",0,"2100-02-29",null]', false],
+      ['["AX",0,"2024-02-29","short"]', false],
+      ['["AX",0,"2024-02-29",null,"bad@@example.org"]', false],
+      ['["AX",0,"2024-02-29",null,"a@example.org","b@example.org"]', false],
+      ['["AX",0,"2024-02-29"]', false],
+    ]) assert.equal(parser.parseTree(source).ok, accepted, source);
+  }
+  const residual = importJsonSchema({ oneOf: [{ type: 'number' }, { const: 1 }], unsupportedKeyword: true });
+  assert.deepEqual(residual.schemaDiagnostics.map(issue => issue.pointer), ['/unsupportedKeyword', '/oneOf', '/oneOf']);
+  assert.match(residual.schemaDiagnostics[2].message, /Exclusive branch selection/u);
+});
+
+test('JSON Schema reverse export infers semantic constants from sample productions', () => {
+  const { choice, literal, ref, seq } = GrammarBuilder;
+  const grammar = new GrammarBuilder('document')
+    .rule('document', seq(literal('{"status":'), ref('status'), literal('}')))
+    .rule('status', choice(literal('"met"'), literal('"unknown"')))
+    .build();
+  const emitted = emitJsonSchema(grammar);
+  assert.deepEqual(emitted.schema, { enum: [{ status: 'met' }, { status: 'unknown' }] });
+  assert.equal(emitted.report.lossy.length, 1);
+  assert.equal(validateJson('{"status":"met"}', emitted.schema).valid, true);
+  assert.equal(validateJson('{"status":"not_met"}', emitted.schema).valid, false);
+  assert.equal(emitJsonSchema(new GrammarBuilder('word').rule('word', literal('not JSON')).build()).schema, null);
+  const imported = importJsonSchema(answerSchema);
+  imported.rules.delete('object');
+  assert.equal(emitJsonSchema(imported).schema, null);
+});
 
 function assertEditAnchors(source, result) {
   assert.equal(result.sourceNetwork.reconstructText(), source);
@@ -78,15 +160,23 @@ test('JSON recovery only edits explicitly enabled locations and preserves trunca
     ['[1,2, ]', 'dropTrailingCommas', [1, 2]],
     ['```json\n{"status":"met"}\n```', 'stripCodeFence', { status: 'met' }],
     ['true false', 'extractFirstValue', true],
+    ['true false null', 'extractFirstValue', true],
     ['{"a":true} suffix', 'stripTrailingGarbage', { a: true }],
     ['{"a":"x\u0004y"}', 'repairEscapes', { a: 'x\u0004y' }],
     ['{"a":"x\\qy"}', 'repairEscapes', { a: 'x\\qy' }],
+    ['{"a":"x\\Q\\u01Z\u0001y"}', 'repairEscapes', { a: 'x\\Q\\u01Z\u0001y' }],
   ]) {
     const result = recoverJson(source, { allow: [action] });
     assert.deepEqual(result.value, expected, JSON.stringify(source));
     assert.equal(result.complete, true);
     assert.ok(result.edits.length);
     assert.ok(result.edits.every(edit => edit.kind === action));
+    assertEditAnchors(source, result);
+  }
+  for (const [source, expected] of [['[1,', [1]], ['{"a":1,', { a: 1 }]]) {
+    const result = recoverJson(source, { allow: ['dropTrailingCommas', 'closeOpenContainers'] });
+    assert.deepEqual(result.value, expected);
+    assert.equal(result.complete, false);
     assertEditAnchors(source, result);
   }
   assert.throws(() => recoverJson('null', { allow: ['inventValues'] }), RangeError);

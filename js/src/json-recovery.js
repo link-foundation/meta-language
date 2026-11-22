@@ -1,5 +1,5 @@
 import { ByteRange } from './primitives.js';
-import { jsonDocumentError, readJsonDocument } from './json-document.js';
+import { containsOnlyJsonValues, jsonDocumentError, readJsonDocument } from './json-document.js';
 import { validateJsonDocument } from './json-schema-validation.js';
 
 const allowedActions = new Set([
@@ -87,8 +87,10 @@ export function recoverJson(source, { allow = [], schema } = {}) {
       if (node.kind !== 'array' && node.kind !== 'object') continue;
       const significant = node.children.filter(child => child.start < child.end && !child.trivia
         && !(child.flags.hasError && /^[ \t\r\n]*$/u.test(child.text)));
-      const [comma, closing] = significant.slice(-2);
-      if (comma?.text !== ',' || closing?.text !== closingToken.get(node.kind)) continue;
+      const last = node.children.at(-1);
+      const [comma, closing] = actions.has('closeOpenContainers') && last?.flags.isMissing && last.end === root.end
+        ? [significant.at(-1), last] : significant.slice(-2);
+      if (comma?.text !== ',' || (closing?.kind ?? closing?.text) !== closingToken.get(node.kind)) continue;
       const missing = node.children.find(child => child.start >= comma.end && child.end <= closing.start && child.flags.hasError);
       if (missing || closing.flags.hasError) add('dropTrailingCommas', comma.start, comma.end, '', (missing ?? closing).linkId);
     }
@@ -109,18 +111,19 @@ export function recoverJson(source, { allow = [], schema } = {}) {
     for (const node of nodes) {
       if (node.kind !== 'string') continue;
       const closing = node.children.at(-1);
-      for (const error of errors.filter(error => error.start > node.start && error.end <= node.end)) {
-        const character = error.text[0];
-        if (character === '\\') add('repairEscapes', error.start, error.start + 1, '\\\\', error.linkId);
-        if (character && /^[\u0000-\u001f]$/u.test(character)) {
-          add('repairEscapes', error.start, error.start + 1, JSON.stringify(character).slice(1, -1), error.linkId);
+      for (const error of errors) {
+        const insideString = error.start > node.start && error.end <= node.end;
+        const controlAtBoundary = closing?.flags.isMissing && error.start === closing.start
+          && /^[\u0000-\u001f]/u.test(error.text);
+        if (!insideString && !controlAtBoundary) continue;
+        const marked = insideString ? error.text : error.text[0];
+        const offset = boundaries.offsetOf(error.start);
+        for (const match of marked.matchAll(/\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4})|\\|[\u0000-\u001f]/gu)) {
+          const [character] = match;
+          if (character.length !== 1) continue;
+          const start = boundaries.get(offset + match.index).byte;
+          add('repairEscapes', start, start + 1, JSON.stringify(character).slice(1, -1), error.linkId);
         }
-      }
-      if (!closing?.flags.isMissing) continue;
-      const error = errors.find(candidate => candidate.start === closing.start);
-      if (error && /^[\u0000-\u001f]/u.test(error.text)) {
-        const encoded = JSON.stringify(error.text[0]).slice(1, -1);
-        add('repairEscapes', error.start, error.start + 1, encoded, error.linkId);
       }
     }
   }
@@ -128,7 +131,7 @@ export function recoverJson(source, { allow = [], schema } = {}) {
   if (firstValue && !firstValue.flags.hasError && edits.length === 0) {
     const suffix = root.children.filter(child => child.flags.isError && child.start >= firstValue.end);
     for (const child of suffix) {
-      if (actions.has('extractFirstValue') && !readJsonDocument(child.text).rejection) {
+      if (actions.has('extractFirstValue') && containsOnlyJsonValues(child.text)) {
         add('extractFirstValue', child.start, child.end, '', child.linkId);
       } else if (actions.has('stripTrailingGarbage')) {
         add('stripTrailingGarbage', child.start, child.end, '', child.linkId);
