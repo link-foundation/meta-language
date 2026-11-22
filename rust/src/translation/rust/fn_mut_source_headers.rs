@@ -57,6 +57,81 @@ fn append_instances(
 }
 
 impl RustParser {
+    pub(super) fn select_fn_mut_source_template(
+        &self,
+        segments: &[String],
+        path: &[String],
+    ) -> Option<FnMutSourceDeclaration> {
+        if segments.len() == 1 && self.origins.scope.contains_key(&segments[0]) {
+            return None;
+        }
+        let resolved = self.resolve(segments, path);
+        let owner = self.origins.lookup_value_owner(&resolved, path)?;
+        match owner.declaration {
+            CatalogDeclaration::FnMutTemplate(template) => Some(*template),
+            _ => None,
+        }
+    }
+
+    pub(super) fn read_fn_mut_source_type_arguments(
+        &mut self,
+        declaration: &FnMutSourceDeclaration,
+    ) -> Result<Vec<(String, SourceOrigin)>> {
+        let directory = Rc::clone(self.fn_mut_source_declarations.as_ref().ok_or_else(|| {
+            unsupported(
+                "Rust source FnMut function",
+                "the original declaration inventory is required",
+                None,
+            )
+        })?);
+        let owner = directory.checked_owner(declaration);
+        if self.cursor.is("::") && self.cursor.is_at("<", 1) {
+            self.cursor.advance();
+            self.cursor.advance();
+            let mut arguments = Vec::new();
+            for (index, binder) in owner.generics.into_iter().enumerate() {
+                if index > 0 {
+                    self.cursor
+                        .expect(",", Some("source FnMut type arguments"))?;
+                }
+                self.parse_type()?;
+                arguments.push((binder.name, self.origins.current_type.clone()));
+            }
+            self.cursor.eat(",");
+            self.split_type_closing_token();
+            self.cursor
+                .expect(">", Some("source FnMut type arguments"))?;
+            return Ok(arguments);
+        }
+        if owner.generics.is_empty() {
+            return Ok(Vec::new());
+        }
+        if let [binder] = owner.generics.as_slice()
+            && let Some(range) = &declaration.result
+            && let Some(expected) = self.standard_sum_source.expected_origin.as_ref()
+            && let Some(expected) = self.origins.standard_sum_source_origin(expected)
+            && let Some(sum) = expected.standard_sum_source
+            && sum.owner == "std::result::Result"
+            && let [_, error] = sum.arguments.as_slice()
+        {
+            let tokens = directory.read_tokens(range);
+            let source_result = &tokens[..tokens.len() - 1];
+            if source_result.iter().any(|token| token.value == "Result")
+                && let [.., comma, argument, close] = source_result
+                && comma.value == ","
+                && argument.value == binder.name
+                && close.value == ">"
+            {
+                return Ok(vec![(binder.name.clone(), error.clone())]);
+            }
+        }
+        Err(unsupported(
+            "Rust source FnMut type arguments",
+            "concrete source type arguments need actual turbofish positions or the selected standard Result error context",
+            Some(super::Span::new(owner.range.start, owner.range.end)),
+        ))
+    }
+
     pub(super) fn preview_fn_mut_source_header(
         &mut self,
         declaration: &FnMutSourceDeclaration,
@@ -553,5 +628,59 @@ mod tests {
         assert_eq!(header.result.ty, Some(expected));
         assert_eq!(parser.cursor.index, 0);
         assert!(parser.fn_mut_source_type_bindings.is_empty());
+    }
+
+    #[test]
+    fn a_template_is_selected_by_its_source_owner_and_explicit_type_arguments() {
+        let source = "fn apply<T>(value: u8, mut map: impl FnMut(&T) -> T) -> T { map(&value) } fn main() { apply::<u8>(0, |x| *x); }";
+        let tokens = Arc::new(tokenize(source, Language::Rust).unwrap().tokens);
+        let directory = Rc::new(FnMutSourceDeclarations::new(source, Arc::clone(&tokens)).unwrap());
+        let mut parser = RustParser::new(
+            (*tokens).clone(),
+            SourceOrigins::new(None, ""),
+            SourceProfiles {
+                exclusive_source: "Rust exclusive source loans 1",
+                fn_mut_source: "Rust closed source FnMut specializations 1",
+                ..SourceProfiles::default()
+            },
+            true,
+            None,
+        );
+        parser.fn_mut_source_declarations = Some(directory);
+        assert!(parser.capture_fn_mut_source_item(&[]).unwrap());
+        assert_eq!(parser.cursor.peek().value, "fn");
+        let segments = vec!["apply".to_owned()];
+        let template = parser
+            .select_fn_mut_source_template(&segments, &[])
+            .unwrap();
+        parser.cursor.index = tokens.iter().position(|token| token.value == "::").unwrap();
+        let bindings = parser.read_fn_mut_source_type_arguments(&template).unwrap();
+        assert_eq!(parser.cursor.peek().value, "(");
+        let (callback, concrete) = parser
+            .preview_fn_mut_source_header(&template, bindings)
+            .unwrap();
+        assert_eq!(callback.owner.callback.name, "map");
+        assert_eq!(
+            concrete.result.ty,
+            Some(Type::Fixed {
+                bits: 8,
+                signed: false
+            })
+        );
+        assert_eq!(parser.cursor.peek().value, "(");
+        parser
+            .origins
+            .scope
+            .insert("apply".to_owned(), SourceOrigin::value());
+        assert!(
+            parser
+                .select_fn_mut_source_template(&segments, &[])
+                .is_none()
+        );
+        assert!(
+            parser
+                .select_fn_mut_source_template(&["crate".into(), "apply".into()], &[])
+                .is_some()
+        );
     }
 }
