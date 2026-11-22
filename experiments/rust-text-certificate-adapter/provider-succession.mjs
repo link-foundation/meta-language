@@ -29,7 +29,20 @@ export const OVERLAY_PROVIDER_APPEND_REVIEW=Object.freeze({
  review:'Reviewed the complete Rust emitter successor against8ef026a395ebbbc415f948777f7f6f7e082a572e: optional nonserialized definition-ownership capture records actual complete emitted blocks/source spans/mapping intervals/targets, and a thin external-target reader uses the actual normal emitter naming path. Default output, complete original function bodies, source mappings and exact decorator actions retain their existing independent tests. Only this complete79595-byte source is admitted by this review; its full source inverse restores every predecessor byte. This is source succession and review, not semantic equivalence, native compilation or execution evidence.',
 });
 export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-reference-provider-review.lino',import.meta.url)));
-const packetSha256='5657e1cc9cda5c71717c245fe43a562dda8bc7a3811d352603acee5d26be7913';
+export const OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW=Object.freeze({
+ kind:'optional binary comparison domain',
+ previous:'8bc0ef9725388c7927acf1854870bf46f5e365be',
+ module:'translation/emit-rust.js',previousSha256:'b2441ae997ab0a897530b235c8acb570fb47c9a110d7467bd84dd80f7b64f8cd',
+ currentBytes:80496,currentSha256:'0143fa7ab50226e06aba573f5a8508659bf52bd9885a174311a8e2580c205acf',
+ review:'The Rust emitter checks that an optional binary comparison domain is present before structural comparison. Both absent representations remain distinct from actual domain values. The single complete source inverse preserves the old provider, and the binary archive translation tests cover behavior independently.',
+});
+export function readOverlayProviderEpochReview(previous){
+  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW];
+  const review=reviews.find(row=>row.previous===previous);
+  assert.ok(review,'the preceding provider profile has an exact registered review');
+  return review;
+}
+const packetSha256='f2de86a22c931c93a6017f67cf1222951f85b75952bd6ce055a0977365b009c1';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
@@ -120,10 +133,12 @@ export function readReviewedOverlayProviderSuccessionHistory(){
   return structuredClone(cached);
 }
 export function verifyCurrentReviewedOverlayProviderSources(packet){
-  for(const row of packet.profiles.at(-1).certificates)assert.equal(row.current.source,readFileSync(new URL('js/src/'+row.module,root),'utf8'),
-    'every actual complete current provider belongs to the real checkpoint');
+  for(const row of packet.profiles.at(-1).certificates){
+    assert.equal(readFileSync(new URL('js/src/'+row.module,root),'utf8'),row.current.source,'every actual complete current provider belongs to the real checkpoint');
+  }
   return packet;
 }
+
 export function verifyReviewedOverlayProviderSuccession(packet){
   return verifyCurrentReviewedOverlayProviderSources(verifyReviewedOverlayProviderSuccessionHistory(packet));
 }
@@ -188,7 +203,7 @@ export function deriveReviewedOverlayProviderPolicy(packet){
 
 function verifyReviewedOverlayProviderEpoch(packet,index){
   const profile=packet.profiles[index],epoch=profile.epoch;
-  const review=profile.previousSourceCommit===OVERLAY_PROVIDER_APPEND_REVIEW.previous?OVERLAY_PROVIDER_APPEND_REVIEW:OVERLAY_PROVIDER_REFERENCE_REVIEW;
+  const review=readOverlayProviderEpochReview(profile.previousSourceCommit);
   const reviewed=review.modules??[review];
   exactKeys(epoch,['reviewKind','predecessorPacket','predecessorOutputs']);
   assert.equal(epoch.reviewKind,review.kind);assert.equal(profile.previousSourceCommit,review.previous);

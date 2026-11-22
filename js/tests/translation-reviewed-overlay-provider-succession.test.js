@@ -7,7 +7,8 @@ import {reviewedOverlayProviderPolicy,readReviewedOverlayProviderSources,restore
   from '../../experiments/rust-text-certificate-adapter/reviewed-providers.mjs';
 import {readReviewedOverlayProviderSuccession,verifyReviewedOverlayProviderSuccession,
   restoreReviewedOverlayProviderPolicy,restoreReviewedOverlayProviderReceiptSource,
-  OVERLAY_PROVIDER_ORIGINAL_PACKET,OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,deriveReviewedOverlayProviderPolicy,
+  OVERLAY_PROVIDER_ORIGINAL_PACKET,OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,
+  OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,deriveReviewedOverlayProviderPolicy,
   verifyReviewedOverlayProviderSuccessionHistory,restoreReviewedOverlayProviderModuleSource}
   from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 import {generateReviewedOverlayProviderSuccession} from '../../experiments/rust-text-certificate-adapter/generate-provider-succession.mjs';
@@ -136,7 +137,8 @@ test('a real appended source epoch preserves the complete original packet policy
 
 
 test('the reference and identifier provider epoch retains every preceding packet and all three complete source inverses',()=>{
-  const packet=readReviewedOverlayProviderSuccession();assert.equal(packet.profiles.length,4);
+  const current=readReviewedOverlayProviderSuccession(),packet={...current,profiles:current.profiles.slice(0,4)};
+  assert.equal(packet.profiles.length,4);verifyReviewedOverlayProviderSuccessionHistory(packet);
   const profile=packet.profiles[3],review=OVERLAY_PROVIDER_REFERENCE_REVIEW;
   assert.equal(profile.sourceCommit,'8bc0ef9725388c7927acf1854870bf46f5e365be');
   assert.equal(profile.previousSourceCommit,packet.profiles[2].sourceCommit);
@@ -149,7 +151,7 @@ test('the reference and identifier provider epoch retains every preceding packet
     const row=profile.certificates.find(row=>row.module===owner.module);assert.ok(row);
     assert.equal(hash(row.previous.source),owner.previousSha256);assert.equal(hash(row.current.source),owner.currentSha256);
     assert.equal(Buffer.byteLength(row.current.source),owner.currentBytes);
-    assert.equal(read('js/src/'+row.module).toString('utf8'),row.current.source);
+    assert.equal(restoreReviewedOverlayProviderModuleSource(read('js/src/'+row.module).toString('utf8'),'js/src/'+row.module,profile.sourceCommit),row.current.source);
     assert.equal(restoreReviewedOverlayProviderModuleSource(row.current.source,'js/src/'+row.module,profile.previousSourceCommit),row.previous.source);
   }
   for(const change of [
@@ -160,4 +162,19 @@ test('the reference and identifier provider epoch retains every preceding packet
     value=>{value.profiles[3].review+=' changed';},
   ]){const changed=structuredClone(packet);change(changed);assert.throws(()=>verifyReviewedOverlayProviderSuccession(changed));}
   assert.throws(()=>restoreReviewedOverlayProviderModuleSource(profile.certificates[0].current.source,'js/src/typed-program-links.js','0'.repeat(40)));
+});
+
+test('the optional binary comparison domain provider retains all earlier sources and exact overlay receipts',()=>{
+  const packet=readReviewedOverlayProviderSuccession(),profile=packet.profiles.at(-1),review=OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW;
+  assert.equal(packet.profiles.length,5);
+  assert.equal(profile.sourceCommit,'da38bf7a9a3cadcd3d768cb6f87a1bbf9e02e257');
+  assert.equal(profile.previousSourceCommit,review.previous);
+  assert.equal(profile.epoch.reviewKind,review.kind);
+  assert.deepEqual(profile.inverse.map(row=>row.module),[review.module]);
+  const row=profile.certificates.find(row=>row.module===review.module),file='js/src/'+row.module;
+  const actual=read(file).toString('utf8');
+  assert.equal(actual,row.current.source);
+  assert.equal(restoreReviewedOverlayProviderModuleSource(actual,file,review.previous),row.previous.source);
+  assert.equal(hash(serializeProjectData({...packet,profiles:packet.profiles.slice(0,-1)},'parity/self-translation/reviewed-overlay-provider-succession.lino')),
+    profile.epoch.predecessorPacket.sha256);
 });
