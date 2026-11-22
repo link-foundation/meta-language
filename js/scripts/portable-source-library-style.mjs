@@ -273,12 +273,18 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
   assert.ok(starts.length, 'a complete portable library has emitted public declarations');
   const prefix = lines.slice(0, starts[0]).join('\n');
   starts.push(lines.length);
+  const oversizedDeclarations = [];
   const parts = [''], nestedFiles=[];
   for (let index = 0; index + 1 < starts.length; index += 1) {
     let item = lines.slice(starts[index], starts[index + 1]).join('\n').trim();
-    if(item.split('\n').length>maximumLines){
+    const itemLines = item.split('\n').length;
+    if(itemLines>maximumLines){
       const module=/^pub mod ([a-z][a-z_0-9]*) \{/mu.exec(item);
-      assert.ok(module,'an oversized generated function/type body cannot be split; only complete inline modules can be recursively placed: '+(item.match(/^pub (?:(?:const )?fn|enum|struct) [^\n{]+/mu)?.[0]??'unidentified declaration')+'; lines='+item.split('\n').length+'; limit='+maximumLines);
+      if (!module) {
+        const declaration = item.match(/^pub (?:(?:const )?fn|enum|struct) [^\n{]+/mu)?.[0] ?? 'unidentified declaration';
+        oversizedDeclarations.push(declaration.trimEnd() + ' (' + itemLines + ' lines)');
+        continue;
+      }
       const itemTokens=tokenize(item,'Rust').tokens,first=itemTokens.findIndex(token=>token.kind==='identifier'&&token.value==='pub');
       assert.ok(first>=0&&itemTokens[first+1]?.value==='mod'&&itemTokens[first+2]?.value===module[1],'nested placement cannot split an enclosing function/type body');
       const name=module[1],block=readSourceTextRustBlock(item,'mod',name);
@@ -300,6 +306,8 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
     if (previous && previous.split('\n').length + item.split('\n').length + 2 > maximumLines) parts.push(item);
     else parts[parts.length - 1] = previous ? previous + '\n\n' + item : item;
   }
+  assert.equal(oversizedDeclarations.length, 0, 'generated functions and types must fit the '
+    + maximumLines + '-line limit without splitting their bodies:\n' + oversizedDeclarations.join('\n'));
   const root = notice + prefix + '\n' + parts.map((_, index) => `#[path = "${directory}/part_${index + 1}.rs"]\nmod part_${index + 1};\npub use part_${index + 1}::*;\n`).join('');
   assert.ok(root.split('\n').length < 1000, 'the portable library root retains its bounded size');
   const declarations = new Set([...source.matchAll(/^pub (?:(?:const )?fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)/gmu)].map(match => match[1]));

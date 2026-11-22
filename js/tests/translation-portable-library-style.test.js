@@ -292,7 +292,9 @@ test('large inline generated modules split recursively while complete bodies and
  for(let index=0;index<24;index+=1)assert.equal([...all.matchAll(new RegExp('pub fn item'+index+'\\(','gu'))].length,1);
  assert.ok(all.includes('#[path = "runtime.rs"]\npub mod runtime;'));
  assert.ok(files.every(file=>file.source.split('\n').length<1000));
- assert.throws(()=>partitionPortableRustLibrary('pub fn large() -> bool {\n'+Array.from({length:20},()=> '    let value = true;').join('\n')+'\n    true\n}\n',{directory:'unsplit_body',maximumLines:12}));
+ const largeBody='\n'+Array.from({length:20},()=> '    let value = true;').join('\n')+'\n    true\n}\n';
+ assert.throws(()=>partitionPortableRustLibrary('pub fn first() -> bool {'+largeBody+'pub fn second() -> bool {'+largeBody,{directory:'unsplit_body',maximumLines:12}),
+  /12-line limit[\s\S]*first\(\)[\s\S]*second\(\)/u);
  assert.throws(()=>partitionPortableRustLibrary('pub mod runtime {\n'+functions+'    pub fn parent() -> bool { super::value() }\n}\n',{directory:'parent_path',maximumLines:12}));
 });
 
