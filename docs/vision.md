@@ -1381,6 +1381,10 @@ JavaScript undefined, null, or a value according to the field's type.
 Property reads project the value, and membership and spread consult the
 outer carrier. Both typed Links transports retain the field declaration and
 the complete carrier.
+The call-source fixture codecs use value trees. An omitted field has no wire
+key, while an own undefined field uses the `fieldPresence` marker. Each
+array or record in this fixture transport decodes into its own container.
+Identity-bearing source graphs use typed Links to retain shared nodes.
 Tagged constructors also accept recursively nested spreads of closed literal
 records and conditional choices between such records. The frontends capture
 fields already visited before evaluating each condition, then bind supplied

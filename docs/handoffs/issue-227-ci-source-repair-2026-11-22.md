@@ -171,10 +171,16 @@ typed program and source receipt in
 directory shares its construction authority and source-span schema with the
 call-code module. Its stable merge orders exact unsigned64 identities, and
 the draft regression checks ties, wide identities and input preservation.
-The Error class closure progressed past the grouped `sourceLet` and
-`sourceLocalLet` field projection. It still needs the complete call-source
-closure to regenerate. Native compilation, regression execution and the
-lint-policy assertions remain pending.
+The checked call-source closure regenerated in `9232bc77c` with 25 Rust
+parts and a pair of byte-identical Links archives. The generator memoizes
+validation of shared type graphs and still checks expanded type size against
+the original limit. The fixture codecs preserve absent fields and explicitly
+present `undefined` fields. The shared regression exercises both forms in
+JavaScript and Rust. Source authoring completed in
+`ci-logs/javascript-call-source-presence-codecs.log`. The Error class closure
+now reaches reference captures and recursive binding declarations. Native
+compilation, regression execution and the lint-policy assertions remain
+pending.
 
 The draft JSON holdout measures RPNI, EDSM or ALERGIA in a separate process
 against the same pinned JSONTestSuite corpus and budgets. It keeps training
