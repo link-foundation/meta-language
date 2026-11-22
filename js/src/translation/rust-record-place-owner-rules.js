@@ -2,17 +2,20 @@
 // layers. The complete original position is retained by its caller; this view
 // selects the nominal record underneath without granting a new source owner.
 import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
+import {readRustRecordPlaceReferenceCount} from './rust-record-place-layer-rules.js';
 /** @param {object} position @param {boolean} [references] @returns {object|null} */
 export function readRustRecordPlaceOwner(position,references=true){
  if(!position||!Array.isArray(position.wrappers)||position.wrappers.length>256||!Array.isArray(position.lifetimes))return null;
- let owner=position.owner,boxed=false,borrowed=false,count=0;
+ let owner=position.owner;const boxes=[];
  for(const layer of position.wrappers){
-  if(layer==='reference'&&references&&!boxed){borrowed=true;count++;continue;}
+  if(layer==='reference')continue;
   if(layer!=='box'||!owner||!Array.isArray(owner.path)||!Array.isArray(owner.arguments)||!acceptRustOwnedBoxTypeNode(['box'],owner.kind,owner.path.join('::'),owner.arguments.length))return null;
-  boxed=true;owner=owner.arguments[0];
+  boxes.push(true);owner=owner.arguments[0];
  }
- if(count!==position.lifetimes.length||!owner||!Array.isArray(owner.path)||!Array.isArray(owner.arguments)||acceptRustOwnedBoxTypeNode(['box'],owner.kind,owner.path.join('::'),owner.arguments.length))return null;
- return {position:{...position,owner,wrappers:[],lifetimes:[]},borrowed,boxed};
+ if(!owner||!Array.isArray(owner.path)||!Array.isArray(owner.arguments))return null;
+ const count=readRustRecordPlaceReferenceCount(position.wrappers,position.lifetimes.length,references,boxes,acceptRustOwnedBoxTypeNode(['box'],owner.kind,owner.path.join('::'),owner.arguments.length));
+ if(count<0)return null;
+ return {position:{...position,owner,wrappers:[],lifetimes:[]},borrowed:count>0,boxed:boxes.length>0};
 }
 /** Exact source owner transport, or an actual partial canonical Box projection.
  * Core type agreement belongs to the independent expression checker.

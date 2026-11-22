@@ -10,6 +10,7 @@ import {sameRustSourcePlaceOwner} from './rust-source-place-transforms.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import {acceptRustDataTypeFieldSignatureContainer} from './rust-data-type-field-signature-rules.js';
 import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
+import {acceptRustSourceRecordPlace} from './rust-record-place-layer-rules.js';
 import {readRustSourceRecordProjectionOwner,projectRustSourceRecordFieldImage} from './rust-source-field-images.js';
 const model='Rust source record place 1',exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 const fail=reason=>{throw typeError(reason);};
@@ -22,7 +23,7 @@ export function attachRustRecordPlace(parser,node,root,field,index){
 function plain(node){if(!node||node.sourcePosition||node.sourceStateTransition||node.sourceLoopFold||node.sourcePlaceTransform||node.sourceRecordPlace)fail('a source field projection retains its actual generated pattern plumbing');}
 export function readRustRecordPlacePlan(facet,node,language,resolveType=value=>value,resolveData=()=>null){
  checkOwnedProgramContainers({sourceRecordPlace:facet},{selectedFields:['sourceRecordPlace'],acceptContainer:acceptRustDataTypeFieldSignatureContainer,fail});
- if(language!=='Rust'||!exact(facet,['model','root','field','value','span'])||facet.model!==model||!Number.isSafeInteger(facet.field)||facet.field<0||Object.is(facet.field,-0)||!exact(facet.span,['start','end'])||!Number.isSafeInteger(facet.span.start)||!Number.isSafeInteger(facet.span.end)||facet.span.start<0||facet.span.end<=facet.span.start||node.span?.start!==facet.span.start||node.span?.end!==facet.span.end||node.sourceStateTransition||node.sourceLoopFold||node.sourcePlaceTransform)fail('a source record place retains its exact model, original field span and actual declaration index');
+ if(!exact(facet,['model','root','field','value','span'])||!exact(facet.span,['start','end'])||!acceptRustSourceRecordPlace(language,facet.model,facet.field,facet.span.start,facet.span.end)||node.span?.start!==facet.span.start||node.span?.end!==facet.span.end||node.sourceStateTransition||node.sourceLoopFold||node.sourcePlaceTransform)fail('a source record place retains its exact model, original field span and actual declaration index');
  let projected=node,base=node.scrutinee;if(node.k==='let'){projected=node.body;plain(projected);if(projected?.scrutinee?.k!=='var'||projected.scrutinee.name!==node.name)fail('a source projection wrapper evaluates its actual owner once');plain(projected.scrutinee);base=node.value;}
  if(projected?.k!=='match'||!Array.isArray(projected.cases)||projected.cases.length!==1||!base?.type)fail('a source record place retains its actual one-constructor projection');
  const position=(value,type)=>checkRustSourceExpressionPosition({model:'Rust borrowed expression source position 1',position:value},type,language,resolveType,resolveData).position,root=position(facet.root,base.type),value=position(facet.value,node.type),owner=readRustRecordPlaceOwner(root),data=owner?.position.type.kind==='data'?resolveData(owner.position.type):null,fields=data?.sourceFieldSignatures?.ctors?.[0]?.fields;
