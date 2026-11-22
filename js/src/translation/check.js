@@ -1911,10 +1911,11 @@ class Checker {
   }
 
   ctorObject(node, env, path, expected) {
+    const owner = this.language === 'JavaScript' && expected?.kind === 'option' ? expected.element : expected;
     const candidates = [];
     for (const entry of this.items.values()) {
       if (entry.k !== 'data' || !entry.ctors) continue;
-      if (expected && expected.kind === 'data' && entry.fullName !== expected.name) continue;
+      if (owner?.kind === 'data' && entry.fullName !== owner.name) continue;
       const ctor = entry.ctors.find((candidate) => candidate.name === node.tag);
       if (ctor) candidates.push([entry, ctor]);
     }

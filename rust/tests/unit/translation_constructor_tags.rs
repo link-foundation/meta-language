@@ -701,7 +701,7 @@ fn declared_fields_carry_exact_constructor_owners_through_literals_and_accesses(
         include_str!("../../../experiments/javascript-tag-context/declared-field-owners.js");
     let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
     let emitted = emit_javascript(&checked).unwrap();
-    let expected = "7\n-1\ntrue\nfalse\n";
+    let expected = "7\n-1\ntrue\nfalse\ntrue\ntrue\n";
     for script in [source, emitted.text.as_str()] {
         let output = run(Command::new("node").args(["--input-type=module", "-e", script]));
         assert!(output.ok, "{}", output.stderr);

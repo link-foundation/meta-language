@@ -1351,7 +1351,8 @@ class Inference {
   }
 
   ctorObject(node, env, expected) {
-    const owner = expected && this.resolve(expected);
+    const context = expected && this.resolve(expected);
+    const owner = context?.kind === 'option' ? this.resolve(context.element) : context;
     const owners = [...this.data].filter(([name, ctors]) =>
       (owner?.kind !== 'data' || owner.name === name) && ctors.some((ctor) => ctor.name === node.tag));
     const [name, ctors] = owners.length === 1 ? owners[0] : [];

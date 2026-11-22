@@ -30,7 +30,7 @@ test('declared fields carry exact constructor owners through nested literals and
     return output;
   };
   const original = run(source);
-  assert.deepEqual(original, [7, -1, true, false]);
+  assert.deepEqual(original, [7, -1, true, false, true, true]);
   const checked = checkProgram(parseJavaScript(source));
   const packet = encodeTypedProgramLinks(checked);
   const replayed = recheckLinkedTypedProgram(decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root), { wholeProgram: true });

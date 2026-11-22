@@ -510,12 +510,18 @@ impl Checker {
         expected: Option<&Type>,
         frozen: bool,
     ) -> Result<Expr> {
+        let owner = match expected {
+            Some(Type::Option { element, .. }) if self.language.as_str() == "JavaScript" => {
+                Some(element.as_ref())
+            }
+            _ => expected,
+        };
         let mut candidates = Vec::new();
         for name in &self.order {
             let Some(Decl::Data(entry)) = self.decls.get(name) else {
                 continue;
             };
-            if let Some(Type::Data { name: expected }) = expected
+            if let Some(Type::Data { name: expected }) = owner
                 && entry.full_name != *expected
             {
                 continue;

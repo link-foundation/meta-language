@@ -607,7 +607,11 @@ impl Inference {
         if let Some(definition) = prototype_definition {
             self.expr(&definition.value, env)?;
         }
-        let expected_owner = match expected {
+        let context = expected.map(|term| match term {
+            Term::Option { element, .. } => self.resolve(element),
+            _ => term.clone(),
+        });
+        let expected_owner = match &context {
             Some(Term::Known(Type::Data { name })) => Some(name),
             _ => None,
         };
