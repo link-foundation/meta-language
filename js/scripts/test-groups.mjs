@@ -129,6 +129,52 @@ export const TEST_GROUPS = Object.freeze({
     /^(?:cache-|project-data(?:-|$)|external-grammar-|assertion-version-ranges$|issue-195-rust-suite-partitions$|issue-195-(?:observation-links|record-storage|report-storage)$|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-meta-theory-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-(?:inventory|upgrades|downloaded-grammar-assets)$|test-groups$|ci-workflow-structure$|ci-cancellation-investigation$|ci-rocq-toolchain-cache$|export-parity$|own-codebase-baseline-naming-history$)/u,
 });
 
+// Exact assignments for controls whose names precede their group prefixes.
+export const CONTINUATION_TEST_GROUPS = Object.freeze({
+  'big-integer-conversion': 'translation',
+  'boolean-constructor-match': 'translation',
+  'canonical-network-reader': 'conformance',
+  'class-owner-schema-extension': 'translation',
+  'class-owner-source-profiles': 'translation',
+  'dynamic-language-command': 'conformance',
+  'exact-fixture-authoring': 'tooling',
+  'exclusive-source-schema-extension': 'translation',
+  'issue-227-own-source-concrete-baseline': 'translation',
+  'javascript-source-transition-resumption': 'translation',
+  'link-allocation': 'conformance',
+  'model-text-wire': 'conformance',
+  'native-policy-assertion-authoring': 'tooling',
+  'native-policy-control-publication': 'tooling',
+  'own-source-construct-inventory': 'tooling',
+  'program-module-binding-roles': 'translation',
+  'project-dependency-gaps': 'translation',
+  'project-translation-archive': 'translation',
+  'resource-description-addresses': 'conformance',
+  'rust-baseline-source-authoring-order': 'tooling',
+  'rust-baseline-source-policies': 'tooling',
+  'rust-package-source-assets': 'downstream',
+  'rust-source-project-signature-model': 'translation',
+  'rust-source-project': 'translation',
+  'source-construct-signals': 'tooling',
+  'source-definition-catalog-authoring': 'tooling',
+  'source-definition-catalog-roots': 'conformance',
+  'source-definition-catalog': 'conformance',
+  'source-library-class-composition': 'translation',
+  'source-library-constant-functions': 'translation',
+  'source-library-error-composition': 'translation',
+  'source-library-staging-paths': 'tooling',
+  'source-module-requests': 'translation',
+  'source-module-syntax': 'translation',
+  'source-parameter-bindings': 'translation',
+  'source-project-archive': 'translation',
+  'source-rust-literal-masking': 'translation',
+  'source-state-transition-links': 'translation',
+  'unsigned-graph-command': 'conformance',
+  'unsigned-link-network': 'conformance',
+  'unsigned-source-command': 'conformance',
+  'unsigned-source-documents': 'conformance',
+});
+
 export function testFiles(root = packageRoot) {
   return readdirSync(path.join(root, 'tests'))
     .filter((name) => name.endsWith('.test.js'))
@@ -143,6 +189,7 @@ export function partitionTests(files) {
   for (const file of files) {
     const stem = file.replace(/\.test\.js$/u, '');
     const matches = Object.entries(TEST_GROUPS).filter(([, pattern]) => pattern.test(stem)).map(([group]) => group);
+    if (Object.hasOwn(CONTINUATION_TEST_GROUPS, stem)) matches.push(CONTINUATION_TEST_GROUPS[stem]);
     if (matches.length === 0) unassigned.push(file);
     else if (matches.length > 1) ambiguous.push(`${file} (${matches.join(', ')})`);
     else groups[matches[0]].push(file);

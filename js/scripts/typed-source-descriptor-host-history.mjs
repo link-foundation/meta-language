@@ -7,7 +7,7 @@ import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 export const TYPED_SOURCE_DESCRIPTOR_HOST_REVISION='d3e4076667add3e19e4cf5f10a3cea60255dd2d7';
 export const TYPED_SOURCE_DESCRIPTOR_HOST_OUTPUT='parity/self-translation/typed-source-descriptor-host-history.lino';
 export const TYPED_SOURCE_DESCRIPTOR_HOST_FILES=Object.freeze(['js/scripts/program-string-source-descriptors.mjs','js/scripts/generate-program-string-source-descriptors.mjs','js/scripts/generate-own-codebase-raw-source-descriptors.mjs','js/tests/translation-own-codebase-raw-source-descriptors.test.js','js/scripts/test-groups.mjs','js/tests/issue-195-evidence-node-dependency.test.js']);
-const packetSha256='2172621bcbf5df42f79c124b968f4abb9f67df809b6950bf637cbbb46436a0ee';
+const packetSha256='bd994f99dafda2da956ee23784f60939b5f87ec895f249386f13c2d2846082cf';
 export const pinTypedSourceDescriptorHost=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let cached;
 export function deriveTypedSourceDescriptorHostEdit(before,after){

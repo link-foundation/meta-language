@@ -8,6 +8,7 @@ import {tokenize} from '../src/translation/lexer.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readOwnCodebaseTestRegistrationHistory,restoreOwnCodebaseTestRegistrationClassifier} from './own-codebase-test-registration-history.mjs';
 import {restoreCrateFixturePackageSource} from './crate-fixture-package-source-history.mjs';
+import {CONTINUATION_TEST_GROUPS} from './test-groups.mjs';
 const root=new URL('../../',import.meta.url);
 export const TOOLING_FROZEN_SOURCE_REVISION='7881e1e6f83818e0b25b77e1b3ab15c2d51ca9f3';
 export const CRITICAL_DELIVERY_SOURCE_HISTORY={path:'parity/self-translation/critical-delivery-source-history.lino',bytes:419191,
@@ -86,7 +87,9 @@ export function readFrozenToolingTestGroups(classifier=readFileSync(new URL('js/
     if(tokens[at]?.value===',')at+=1;else assert.equal(tokens[at]?.value,'}');
   }
   assert.ok(groups.tooling instanceof RegExp);
-  return{source,groups,registrations:structuredClone(history.registrations)};
+  const continuation = Object.entries(CONTINUATION_TEST_GROUPS)
+    .map(([stem, group]) => ({file: stem + '.test.js', group}));
+  return{source,groups,registrations:[...structuredClone(history.registrations), ...continuation]};
 }
 
 export function readCriticalDeliveryFrozenSource(){

@@ -1983,7 +1983,7 @@ jobs:
           if-no-files-found: error
       - name: Clean project caches
         if: ${{ !cancelled() }}
-        run: node scripts/clean-caches.mjs --project-owned-only --no-preflight --no-docker
+        run: node scripts/clean-caches.mjs --event ci-teardown --project-owned-only --no-preflight --no-docker
 
   acceptance:
     name: Full Requirements Aggregate
