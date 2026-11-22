@@ -633,6 +633,7 @@ impl<'a> LeanParser<'a> {
             self.end_decl(&start, "termination_by")?;
             return Ok(Definition::Fn(Box::new(SFn {
                 source_state_transform: None,
+                source_vector_mutation: None,
                 source_finite_record_loop_helper:false,
                 source_finite_record_loop_witness:None,
                 semantic_ret: None,
@@ -675,6 +676,7 @@ impl<'a> LeanParser<'a> {
         self.end_decl(&start, "termination_by")?;
         Ok(Definition::Fn(Box::new(SFn {
             source_state_transform: None,
+            source_vector_mutation: None,
             source_finite_record_loop_helper:false,
             source_finite_record_loop_witness:None,
             semantic_ret: None,

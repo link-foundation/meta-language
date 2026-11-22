@@ -646,6 +646,9 @@ pub struct SFn {
     /// Exact checked interface of a generated finite source state helper.
     #[serde(rename = "sourceStateTransform", default, deserialize_with = "crate::translation::source_position_transport::read_present_box", skip_serializing_if = "Option::is_none")]
     pub source_state_transform: Option<Box<super::source_state_transforms::RustFiniteLoopStateTransform>>,
+    /// Complete checked interface for a generated standard Vec mutation.
+    #[serde(rename = "sourceVectorMutation", default, deserialize_with = "crate::translation::source_position_transport::read_present_box", skip_serializing_if = "Option::is_none")]
+    pub source_vector_mutation: Option<Box<super::source_vector_mutations::RustVectorMutation>>,
     /// Restriction selector; only an opaque admitted-loop witness authenticates it.
     #[serde(default,rename="sourceFiniteRecordLoopHelper",skip_serializing_if="is_false")]
     pub source_finite_record_loop_helper: bool,

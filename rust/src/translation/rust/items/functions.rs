@@ -272,6 +272,7 @@ impl RustParser {
             let close = self.declaration_body_boundary()?;
             return Ok(SFn {
                 source_state_transform: None,
+                source_vector_mutation: None,
                 source_finite_record_loop_helper:false,
                 source_finite_record_loop_witness:None,
                 source_diagnostic_attributes: None,
@@ -436,6 +437,7 @@ impl RustParser {
         self.origins.restore_owned_temporary_frame(function_temporaries);
         Ok(SFn {
             source_state_transform: None,
+            source_vector_mutation: None,
             source_finite_record_loop_helper:false,
             source_finite_record_loop_witness:None,
             source_diagnostic_attributes: None,

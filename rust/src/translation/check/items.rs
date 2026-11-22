@@ -109,6 +109,7 @@ impl Checker {
                     mutual: false,
                     source_signature: None,
                     source_state_transform: None,
+                    source_vector_mutation: None,
                     source_primitive_owners: function.source_primitive_owners.clone(),
                     source_empty_option: function.source_empty_option.as_deref().cloned(),
                     source_type_namespace: function.source_type_namespace.as_deref().cloned(),
@@ -296,6 +297,19 @@ impl Checker {
                     },
                 ).map(Box::new)
             }).transpose()?;
+            let source_vector_mutation = item.source_vector_mutation.as_deref().map(|facet| {
+                super::super::source_vector_mutations::check_surface(
+                    facet, item, &params, &ret, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, item.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                ).map(Box::new)
+            }).transpose()?;
             if let Some(annotation) = &annotated_ret
                 && !super::optional_values::annotation_compatible(&ret, annotation)
             {
@@ -308,6 +322,7 @@ impl Checker {
             if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                 entry.source_signature = source_signature;
                 entry.source_state_transform = source_state_transform;
+                entry.source_vector_mutation = source_vector_mutation;
                 entry.params = params;
                 entry.ret = ret;
                 entry.semantic_ret.clone_from(&item.semantic_ret);
@@ -341,6 +356,9 @@ impl Checker {
                     let body = self.coerce(body, &ret, item.span)?;
                     if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                         entry.body = body;
+                        if let Some(facet) = entry.source_vector_mutation.as_deref() {
+                            super::super::source_vector_mutations::check_body(entry, facet)?;
+                        }
                         if let Some(proof) = &entry.source_local_state {
                             entry.source_local_state = Some(
                                 super::super::owned_local_state::prepare_owned_local_state_proof(

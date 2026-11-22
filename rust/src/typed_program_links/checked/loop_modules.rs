@@ -10,6 +10,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
         super::declarations::project_function_result_types(function, program)?;
     Ok(SItem::Fn(SFn {
         source_state_transform: function.source_state_transform.clone(),
+        source_vector_mutation: function.source_vector_mutation.clone(),
         source_finite_record_loop_helper: false,
         source_finite_record_loop_witness: None,
         semantic_ret,

@@ -43,6 +43,7 @@ impl RustParser {
         }
         Ok(SFn {
             source_state_transform: None,
+            source_vector_mutation: None,
             source_finite_record_loop_helper:false,
             source_finite_record_loop_witness:None,
             source_diagnostic_attributes: None,
