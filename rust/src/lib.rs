@@ -565,6 +565,7 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_const_function_model,
     create_typed_program_links_with_rust_empty_option_source_model,
     create_typed_program_links_with_rust_exclusive_source_model,
+    create_typed_program_links_with_rust_fn_mut_source_model,
     create_typed_program_links_with_rust_owned_local_state_model,
     create_typed_program_links_with_rust_primitive_owner_model,
     create_typed_program_links_with_rust_pure_unit_call_model,

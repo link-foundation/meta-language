@@ -1,5 +1,13 @@
+use meta_language::translation::check::check_program;
 use meta_language::translation::rust::parse_rust_with_fn_mut_source_model;
 use meta_language::translation::surface::{SItem, SNode};
+use meta_language::{
+    BinaryLinksOptions, LinkNetwork, create_typed_program_links_with_rust_fn_mut_source_model,
+    decode_link_network_binary, decode_typed_program_links, encode_link_network_binary,
+};
+
+const FN_MUT_MODEL: &str = "Rust closed source FnMut specializations 1";
+const EXCLUSIVE_MODEL: &str = "Rust exclusive source loans 1";
 
 #[test]
 fn direct_callback_calls_replay_every_call_in_the_original_declaration() {
@@ -11,13 +19,9 @@ fn direct_callback_calls_replay_every_call_in_the_original_declaration() {
             assert!(transform(2u8, |value| value + 1u8) == 4u8);
         }
     ";
-    let surface = parse_rust_with_fn_mut_source_model(
-        source,
-        "Rust closed source FnMut specializations 1",
-        "Rust exclusive source loans 1",
-        "1.93.2",
-    )
-    .unwrap();
+    let surface =
+        parse_rust_with_fn_mut_source_model(source, FN_MUT_MODEL, EXCLUSIVE_MODEL, "1.93.2")
+            .unwrap();
     let function = surface.items.iter().find_map(|item| match item {
         SItem::Fn(function) if function.source_fn_mut_specialization.is_some() => Some(function),
         _ => None,
@@ -30,4 +34,25 @@ fn direct_callback_calls_replay_every_call_in_the_original_declaration() {
     assert!(facet.packet.is_empty());
     assert!(matches!(&function.body.node, SNode::Tuple { items, .. } if items.len() == 1));
     assert!(!surface.items.iter().any(|item| item.name() == "transform"));
+
+    let checked = check_program(&surface).unwrap();
+    let packet = create_typed_program_links_with_rust_fn_mut_source_model(
+        source,
+        FN_MUT_MODEL,
+        EXCLUSIVE_MODEL,
+        "1.93.2",
+        None,
+    )
+    .unwrap();
+    let binary =
+        encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap();
+    for restored in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),
+    ] {
+        assert_eq!(
+            decode_typed_program_links(&restored, packet.root).unwrap(),
+            checked
+        );
+    }
 }

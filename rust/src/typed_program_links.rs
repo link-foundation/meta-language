@@ -502,6 +502,39 @@ pub fn create_typed_program_links_with_rust_exclusive_source_model(
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 
+/// Import Rust with the actual source FnMut specialization and state profiles.
+///
+/// # Errors
+/// Refuses unknown models, uncovered versions and unproved source declarations.
+pub fn create_typed_program_links_with_rust_fn_mut_source_model(
+    source: &str,
+    model: &str,
+    exclusive_source_model: &str,
+    version: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    let version = crate::translation::rust::source_versions::canonical(version)
+        .map_err(|failure| error(failure.to_string()))?;
+    let surface = crate::translation::rust::parse_rust_with_fn_mut_source_model(
+        source,
+        model,
+        exclusive_source_model,
+        &version,
+    )
+    .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected = serde_json::json!({
+        "sourceProfile": {
+            "language": "Rust",
+            "rustSourceVersion": version,
+            "rustExclusiveSourceModel": exclusive_source_model,
+            "rustFnMutSourceModel": model,
+        },
+        "userProvenance": provenance,
+    });
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
 /// Import actual standard Rust collection operations through the checked source library.
 ///
 /// # Errors
