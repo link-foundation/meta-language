@@ -205,4 +205,3 @@ export function wordNgramOverlap(left, right, { size = 3, normalize = [] } = {})
   }
   return matches;
 }
-
