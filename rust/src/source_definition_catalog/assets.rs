@@ -35,6 +35,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "callable-source-program.lino" => {
             Some(include_str!("../data/callable-source-program.lino"))
         }
+        "closed-source-class-composition-program.lino" => Some(include_str!(
+            "../data/closed-source-class-composition-program.lino"
+        )),
         "collection-access-program.lino" => {
             Some(include_str!("../data/collection-access-program.lino"))
         }
@@ -49,6 +52,12 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         )),
         "datatype-dependency-group-program.lino" => Some(include_str!(
             "../data/datatype-dependency-group-program.lino"
+        )),
+        "disjoint-collection-iteration-program.lino" => Some(include_str!(
+            "../data/disjoint-collection-iteration-program.lino"
+        )),
+        "disjoint-collection-projection-program.lino" => Some(include_str!(
+            "../data/disjoint-collection-projection-program.lino"
         )),
         "dynamic-language-command-program.lino" => Some(include_str!(
             "../data/dynamic-language-command-program.lino"
@@ -116,6 +125,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-descriptor-conversion-program.lino" => Some(include_str!(
             "../data/javascript-descriptor-conversion-program.lino"
         )),
+        "javascript-error-class-program.lino" => {
+            Some(include_str!("../data/javascript-error-class-program.lino"))
+        }
         "javascript-fixed-integer-cast-program.lino" => Some(include_str!(
             "../data/javascript-fixed-integer-cast-program.lino"
         )),
@@ -401,6 +413,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "rust-owned-record-update-program.lino" => Some(include_str!(
             "../data/rust-owned-record-update-program.lino"
+        )),
+        "rust-owned-recursive-datatype-program.lino" => Some(include_str!(
+            "../data/rust-owned-recursive-datatype-program.lino"
         )),
         "rust-owned-standard-sum-callback-program.lino" => Some(include_str!(
             "../data/rust-owned-standard-sum-callback-program.lino"
