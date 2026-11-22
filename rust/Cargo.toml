@@ -33,6 +33,7 @@ include = [
     "src/data/foundation-models.lino",
     "src/data/native-text-metadata.lino",
     "src/data/native-text-grammar.lino",
+    "src/data/json-document/*.lino",
     "src/data/morphology/*.lino",
     "src/data/morphology/OPEN-CORPORA-LICENSE.txt",
     "src/data/natural-language-values/*.lino",

@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { GrammarBuilder as Expression } from '../grammar.js';
+import { parseGrammarLinks } from '../grammar-links.js';
 import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-document.js';
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { lowerLarkRegex } from './lark-regex.js';
@@ -10,6 +12,8 @@ const referenceKeys = new Set(['$ref', '$defs', '$id', '$schema', '$comment', 't
 const jsonTypes = ['object', 'array', 'string', 'number', 'boolean', 'null'];
 const characters = (value) => charClass(Array.from(value, character => ({ kind: 'char', value: character })));
 const importedSchemas = new WeakMap();
+const baseFile = new URL('../data/json-document/decoder.lino', import.meta.url);
+let decoderBase;
 
 export function originalJsonSchema(grammar) {
   const saved = importedSchemas.get(grammar);
@@ -108,17 +112,18 @@ function signedIntegerRange(first, last) {
   function unsigned(min, max) {
     const widths = [];
     const low = String(min);
-    const high = String(max);
+    const high = String(max ?? min);
     for (let width = low.length; width <= high.length; width += 1) {
       const start = width === low.length ? low : `1${'0'.repeat(width - 1)}`;
-      const end = width === high.length ? high : '9'.repeat(width);
+      const end = max !== null && width === high.length ? high : '9'.repeat(width);
       widths.push(rangeWithWidth(start, end));
     }
+    if (max === null) widths.push(seq(charRange('1', '9'), repeat(charRange('0', '9'), high.length)));
     return choice(...widths);
   }
   const parts = [];
-  if (first < 0) parts.push(seq(literal('-'), unsigned(Math.max(1, -last), -first)));
-  if (last >= 0) parts.push(unsigned(Math.max(0, first), last));
+  if (first === null || first <= 0) parts.push(seq(literal('-'), unsigned(last === null ? 0 : Math.max(0, -last), first === null ? null : -first)));
+  if (last === null || last >= 0) parts.push(unsigned(Math.max(0, first ?? 0), last));
   return choice(...parts);
 }
 
@@ -171,6 +176,26 @@ const formatExpressions = new Map([
   ['uuid', uuidExpression], ['date', dateExpression], ['date-time', dateTimeExpression], ['email', emailExpression],
 ]);
 
+/** Shared decoder productions for the JavaScript and Rust importers. */
+export function buildJsonDecoderBase() {
+  const builder = new Expression('value');
+  installJsonRules(builder);
+  for (const [format, expression] of formatExpressions) {
+    builder.rule(formatRule(format), seq(literal('"'), expression(), literal('"')));
+  }
+  return builder.build();
+}
+
+function finiteConstants(rules) {
+  if (rules === false) return [];
+  if (Object.hasOwn(rules, 'const')) return [rules.const];
+  return rules.enum;
+}
+
+function formatRule(format) {
+  return `json_format_${format.replaceAll('-', '_')}`;
+}
+
 function safeStringPattern(expression) {
   const escaped = /["\\\u0000-\u001f\ud800-\udfff]/u;
   const safeRange = ({ start, end }) => {
@@ -215,7 +240,8 @@ function lowerStringPattern(pattern) {
 export function importJsonSchema(schema) {
   const analysis = analyzeJsonSchema(schema);
   const builder = new Expression('document').source('json-schema');
-  installJsonRules(builder);
+  decoderBase ??= parseGrammarLinks(readFileSync(baseFile, 'utf8'));
+  for (const rule of decoderBase.rules.values()) builder.rule(rule.name, rule.expression);
   const compiled = new Map();
   const diagnostics = [...analysis.issues];
   const report = (pointer, keyword, message) => diagnostics.push({
@@ -307,7 +333,7 @@ export function importJsonSchema(schema) {
   function stringExpression(rules, pointer) {
     if (formatExpressions.has(rules.format) && rules.pattern === undefined) {
       report(pointer, 'format', 'The decoder generates direct character spellings in the supported format. Validation also checks escaped strings.');
-      return seq(literal('"'), formatExpressions.get(rules.format)(), literal('"'));
+      return ref(formatRule(rules.format));
     }
     if (rules.format !== undefined) report(pointer, 'format', 'The format constraint combined with a pattern is checked during document validation.');
     if (rules.pattern !== undefined) {
@@ -330,14 +356,18 @@ export function importJsonSchema(schema) {
     if (keywords.length === 0) return ref(type);
     const first = Math.max(Math.ceil(rules.minimum ?? -Infinity), Math.floor(rules.exclusiveMinimum ?? -Infinity) + 1);
     const last = Math.min(Math.floor(rules.maximum ?? Infinity), Math.ceil(rules.exclusiveMaximum ?? Infinity) - 1);
-    if (type === 'integer' && Number.isSafeInteger(first) && Number.isSafeInteger(last)) return first <= last ? signedIntegerRange(first, last) : null;
+    if (type === 'integer' && (first === -Infinity || Number.isSafeInteger(first)) && (last === Infinity || Number.isSafeInteger(last))) {
+      return first <= last ? signedIntegerRange(Number.isFinite(first) ? first : null, Number.isFinite(last) ? last : null) : null;
+    }
     for (const keyword of keywords) report(pointer, keyword, 'This bound is checked during document validation.');
     return ref(type);
   }
   function lower(rules, pointer) {
     if (rules === true) return value;
     if (rules === false) return null;
-    const constants = Object.hasOwn(rules, 'const') ? [rules.const] : rules.enum;
+    const constants = finiteConstants(rules)
+      ?? ((rules.anyOf ?? rules.oneOf)?.every(child => finiteConstants(child))
+        ? (rules.anyOf ?? rules.oneOf).flatMap(finiteConstants) : undefined);
     if (constants) {
       const entries = constants.filter(item => validateJsonDocument(readJsonDocument(JSON.stringify(item)), rules, analysis).errors.length === 0);
       return entries.length ? choice(...entries.map(constantExpression)) : null;

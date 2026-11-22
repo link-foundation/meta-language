@@ -4600,3 +4600,25 @@ assertion remain intact; snapshots are not shared across unrelated builds.
 Provenance-only refresh updates selected native provider digests while refusing
 changed source identities, provider versions or independent oracle receipts.
 It retains all expected trees; CI still recomputes the complete fixture checks.
+
+### JSON Schema and document recovery
+
+The JSON document grammar preserves tokens, trivia, and recovery links in
+original UTF-8 coordinates. Validation resolves local draft 2020-12 schemas
+against the same concrete syntax, including intact members of incomplete
+documents. Instance errors carry a JSON Pointer, source span, expected values
+or tokens, and a link that can be inspected in the returned network.
+
+The schema importer builds the shared grammar representation for existing
+emitters. The imported grammar carries diagnostics for assertions that
+require validation, including overlapping alternatives, general numeric
+bounds, unsupported patterns, and combinations of declared and arbitrary
+properties. Decoder and validation rules share the JSON grammar and keyword
+policy. The reverse API preserves an imported schema and can infer constants
+from bounded finite JSON productions.
+
+JSON recovery starts from the unmodified syntax and applies explicitly
+selected actions. Edits identify the original recovery link, byte range,
+removed text, and replacement. Closing a truncated document preserves its
+incomplete status. Schema validation reports missing fields, and repetition is
+reported over the original text.

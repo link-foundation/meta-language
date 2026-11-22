@@ -22,6 +22,7 @@ pub use bnf::import_bnf;
 pub use ebnf::import_ebnf;
 pub use gbnf::import_gbnf;
 pub use lark::import_lark;
+pub(crate) use lark::lower_regex as lower_lark_regex;
 pub use pest::import_pest;
 pub(crate) use pest::pest_built_in_source;
 pub use tree_sitter_json::import_tree_sitter_json;

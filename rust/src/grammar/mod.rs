@@ -34,6 +34,7 @@ mod field_range_forms;
 pub mod import;
 pub mod inference;
 pub mod interchange;
+pub mod json_document;
 mod lexical_forms;
 mod links;
 pub mod merge;

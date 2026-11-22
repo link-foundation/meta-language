@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { compileGrammar, GrammarBuilder } from '../src/grammar.js';
-import { emitGbnf } from '../src/grammar-emitters/gbnf.js';
-import { emitJsonSchema } from '../src/grammar-emitters/json-schema.js';
-import { emitLark } from '../src/grammar-emitters/lark.js';
-import { importGbnf } from '../src/grammar-importers/gbnf.js';
-import { importJsonSchema } from '../src/grammar-importers/json-schema.js';
-import { importLark } from '../src/grammar-importers/lark.js';
-import { recoverJson } from '../src/json-recovery.js';
-import { validateJson } from '../src/json-schema-validation.js';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
+import {
+  compileGrammar, GrammarBuilder, emitGbnf, emitJsonSchema, emitLark, importGbnf,
+  importJsonSchema, importLark, recoverJson, validateJson,
+} from '../src/index.js';
+
+const fixtureFile = 'parity/fixtures/json-schema-and-recovery.lino';
+const shared = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
 
 const answerSchema = {
   type: 'object', additionalProperties: false, required: ['status', 'evidence'],
@@ -193,4 +193,71 @@ test('degenerate substring repetition is reported without editing valid JSON', (
   assert.equal(issue.pointer, '/content');
   assert.equal(issue.pattern, 'abcde');
   assert.equal(Buffer.from(source).subarray(issue.span.start, issue.span.end).toString(), 'abcde'.repeat(20));
+});
+
+test('shared JSON Schema fixtures validate decoders and locate document errors', context => {
+  for (const [schema, cases] of shared.grammars) {
+    for (const parser of schemaParsers(schema)) {
+      for (const [source, accepted] of cases) assert.equal(parser.parseTree(source).ok, accepted, source);
+    }
+  }
+  assert.deepEqual(emitJsonSchema(importJsonSchema(shared.schema)).schema, shared.schema);
+  const grammar = new GrammarBuilder('document').rule('document',
+    GrammarBuilder.choice(GrammarBuilder.literal('{"status":"met"}'), GrammarBuilder.literal('{"status":"unknown"}'))).build();
+  assert.deepEqual(emitJsonSchema(grammar).schema, { enum: [{ status: 'met' }, { status: 'unknown' }] });
+  for (const [source, errors] of [
+    [shared.wrong, [['enum', '/status', [10, 21]], ['additionalProperties', '/extra', [41, 48]]]],
+    [shared.truncated, [['syntax', '/evidence', [Buffer.byteLength(shared.truncated), Buffer.byteLength(shared.truncated)]], ['enum', '/status', [10, 21]]]],
+  ]) {
+    const report = validateJson(source, shared.schema);
+    assert.equal(report.valid, false);
+    assert.equal(report.network.reconstructText(), source);
+    assert.deepEqual(report.errors.map(issue => [issue.keyword, issue.pointer, range(issue.span)]), errors);
+    for (const issue of report.errors) {
+      assert.ok(report.network.link(issue.linkId));
+      assert.ok(issue.expected.length);
+    }
+  }
+  const unsupported = importJsonSchema({ type: 'string', unregistered: true });
+  assert.deepEqual(unsupported.schemaDiagnostics.map(issue => issue.pointer), ['/unregistered']);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema', fixtureFile,
+    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip'],
+    testName: context.name,
+  });
+});
+
+test('shared JSON recovery fixtures preserve opt-in edits and provenance', context => {
+  for (const [source, allow, value, complete, insertions] of shared.recovery) {
+    const untouched = recoverJson(source);
+    assert.equal(untouched.text, source);
+    assert.deepEqual(untouched.edits, []);
+    const report = recoverJson(source, { allow });
+    assert.deepEqual(report.value, value, source);
+    assert.equal(report.complete, complete, source);
+    assert.deepEqual(report.edits.map(edit => edit.inserted), insertions, source);
+    assert.ok(report.edits.every(edit => allow.includes(edit.kind)));
+    assertEditAnchors(source, report);
+  }
+  const missing = recoverJson(shared.missing, { schema: shared.schema, allow: ['closeOpenContainers'] });
+  assert.deepEqual(missing.value, { status: 'met' });
+  assert.equal(missing.complete, false);
+  assert.deepEqual(missing.issues.map(issue => [issue.keyword, issue.pointer]), [['required', '/evidence']]);
+  const repeated = recoverJson(shared.repeated);
+  assert.equal(repeated.text, shared.repeated);
+  assert.equal(repeated.complete, true);
+  assert.deepEqual(repeated.edits, []);
+  const [issue] = repeated.issues;
+  assert.equal(issue.keyword, 'repetition');
+  assert.equal(issue.pattern, 'abcde');
+  assert.equal(issue.pointer, '/content');
+  assert.equal(Buffer.from(shared.repeated).subarray(issue.span.start, issue.span.end).toString(), 'abcde'.repeat(20));
+  assert.ok(repeated.sourceNetwork.link(issue.linkId));
+  recordIssue195Observations({
+    requirementId: 'I195-I241-JSON-RECOVERY', suffix: 'behavior',
+    fixtureId: 'i195-i241-json-recovery', fixtureFile,
+    assertions: ['permittedRepairsRetainEditAnchors', 'closingRetainsTruncatedStatusAndMissingFields', 'repetitionsRetainSourceSpans'],
+    testName: context.name,
+  });
 });

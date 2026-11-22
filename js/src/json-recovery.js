@@ -2,10 +2,9 @@ import { ByteRange } from './primitives.js';
 import { containsOnlyJsonValues, jsonDocumentError, readJsonDocument } from './json-document.js';
 import { validateJsonDocument } from './json-schema-validation.js';
 
-const allowedActions = new Set([
-  'closeOpenContainers', 'dropTrailingCommas', 'stripCodeFence', 'extractFirstValue',
-  'stripTrailingGarbage', 'repairEscapes',
-]);
+import { jsonDocumentPolicy } from './json-document-policy.js';
+
+const allowedActions = new Set(jsonDocumentPolicy.repair);
 const closingToken = new Map([['array', ']'], ['object', '}'], ['string', '"']]);
 const openingToken = new Map([['array', '['], ['object', '{'], ['string', '"']]);
 

@@ -390,6 +390,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emitGbnf", "emit_gbnf", "function"),
     ("emitGrammarLossless", "emit_grammar_lossless", "function"),
     ("emitJavascriptParser", "emit_javascript_parser", "function"),
+    (
+        "emitJsonSchema",
+        "grammar::json_document::emit_json_schema",
+        "function",
+    ),
     ("emitLark", "emit_lark", "function"),
     ("emitPeggy", "emit_peggy", "function"),
     ("emitPest", "emit_pest", "function"),
@@ -483,6 +488,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "importGrammarLossless",
         "import_grammar_lossless",
+        "function",
+    ),
+    (
+        "importJsonSchema",
+        "grammar::json_document::import_json_schema",
         "function",
     ),
     ("importLark", "import_lark", "function"),
@@ -667,6 +677,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
+    (
+        "recoverJson",
+        "grammar::json_document::recover_json",
+        "function",
+    ),
     ("rejectPredicateHost", "RejectPredicateHost", "type"),
     ("renameGrammarRule", "rename_grammar_rule", "function"),
     (
@@ -760,6 +775,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("translationContract", "translation_contract", "function"),
     ("translationContracts", "translation_contracts", "function"),
     ("validateGrammar", "validate", "function"),
+    (
+        "validateJson",
+        "grammar::json_document::validate_json",
+        "function",
+    ),
     (
         "verifyFormalConceptEquivalence",
         "verify_formal_concept_equivalence",

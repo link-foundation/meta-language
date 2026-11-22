@@ -9,3 +9,4 @@ export {
   emitTreeSitterJson,
   emitTreeSitterJson as emit_tree_sitter_json,
 } from './grammar-emitters/tree-sitter-json.js';
+export { emitJsonSchema } from './grammar-emitters/json-schema.js';

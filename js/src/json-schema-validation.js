@@ -1,17 +1,16 @@
 import { jsonDocumentError, pointerChild, readJsonDocument, readJsonValue } from './json-document.js';
 
-const annotations = new Set([
-  '$id', '$schema', '$comment', 'title', 'description', 'default', 'examples',
-  'deprecated', 'readOnly', 'writeOnly',
-]);
-const schemaMaps = ['properties', '$defs'];
-const schemaLists = ['prefixItems', 'anyOf', 'oneOf'];
-const schemaValues = ['items', 'additionalProperties'];
+import { jsonDocumentPolicy } from './json-document-policy.js';
+
+const annotations = new Set(jsonDocumentPolicy.annotation);
+const schemaMaps = jsonDocumentPolicy.map;
+const schemaLists = jsonDocumentPolicy.list;
+const schemaValues = jsonDocumentPolicy.schema;
 const numericLimits = new Map([
   ['minimum', (actual, limit) => actual < limit], ['maximum', (actual, limit) => actual > limit],
   ['exclusiveMinimum', (actual, limit) => actual <= limit], ['exclusiveMaximum', (actual, limit) => actual >= limit],
 ]);
-const schemaTypes = new Set(['object', 'array', 'string', 'integer', 'number', 'boolean', 'null']);
+const schemaTypes = new Set(jsonDocumentPolicy.type);
 const typeSet = value => Array.isArray(value) ? value : [value];
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 

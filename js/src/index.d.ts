@@ -1946,6 +1946,56 @@ export function emitJavascriptParser(grammar: Grammar): string;
 export function serializeGrammar(grammar: Grammar): string;
 export function deserializeGrammar(source: string | NormalizedGrammar): Grammar;
 
+export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+/** A draft 2020-12 boolean schema or keyword map, including extension keywords. */
+export type JsonSchema = boolean | { [keyword: string]: unknown };
+export interface JsonSchemaIssue {
+  keyword: string;
+  pointer: string;
+  message: string;
+}
+export interface JsonDocumentIssue {
+  keyword: string;
+  pointer: string;
+  span: SourceSpan | ByteRange;
+  linkId: LinkId;
+  expected: JsonValue[];
+  reason?: string;
+  pattern?: string;
+  alternatives?: JsonDocumentIssue[][];
+  accepted?: number;
+}
+export interface JsonValidation {
+  valid: boolean;
+  value: JsonValue | undefined;
+  errors: JsonDocumentIssue[];
+  schemaIssues: JsonSchemaIssue[];
+  network: LinkNetwork;
+}
+export type JsonRecoveryAction = 'closeOpenContainers' | 'dropTrailingCommas' | 'stripCodeFence'
+  | 'extractFirstValue' | 'stripTrailingGarbage' | 'repairEscapes';
+export interface JsonRecoveryEdit {
+  kind: JsonRecoveryAction;
+  span: ByteRange;
+  inserted: string;
+  removed: string;
+  linkId: LinkId;
+}
+export interface JsonRecovery {
+  text: string;
+  value: JsonValue | undefined;
+  edits: JsonRecoveryEdit[];
+  complete: boolean;
+  issues: JsonDocumentIssue[];
+  schemaIssues: JsonSchemaIssue[];
+  network: LinkNetwork;
+  sourceNetwork: LinkNetwork;
+}
+export function validateJson(source: string, schema: JsonSchema): JsonValidation;
+export function recoverJson(source: string, options?: { schema?: JsonSchema; allow?: JsonRecoveryAction[] }): JsonRecovery;
+export function importJsonSchema(schema: JsonSchema): Grammar & { schemaDiagnostics: JsonSchemaIssue[] };
+export function emitJsonSchema(grammar: Grammar): { schema: JsonSchema | null; report: GrammarEmitReport };
+
 export class GrammarImportError extends Error {
   format: string;
   kind: 'parse' | 'unsupported';

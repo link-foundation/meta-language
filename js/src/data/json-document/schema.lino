@@ -1,0 +1,7 @@
+(annotation $id $schema $comment title description default examples deprecated readOnly writeOnly)
+(map properties $defs)
+(list prefixItems anyOf oneOf)
+(schema items additionalProperties)
+(type object array string integer number boolean null)
+(limit minimum maximum exclusiveMinimum exclusiveMaximum)
+(repair closeOpenContainers dropTrailingCommas stripCodeFence extractFirstValue stripTrailingGarbage repairEscapes)

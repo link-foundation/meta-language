@@ -12,7 +12,7 @@ use policy::{
     accept_lark_regex_quantifier,
 };
 
-pub(super) fn lower_regex(
+pub(crate) fn lower_regex(
     value: &str,
     flags: &str,
     offset: usize,

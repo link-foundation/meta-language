@@ -2,7 +2,7 @@ use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
 mod regex;
-use regex::lower_regex;
+pub(crate) use regex::lower_regex;
 
 const FORMAT: GrammarFormat = GrammarFormat::Lark;
 
