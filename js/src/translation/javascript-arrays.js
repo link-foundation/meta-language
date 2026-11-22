@@ -53,8 +53,9 @@ export function stepJavaScriptArrayPropertyDefinition(heap,state){
  const error=readJavaScriptArrayDefinitionStateError(heap,state);if(error!=='')return {$:'arrayInvalid',heap,reason:error};
  if(state.phase!=='apply')return {$:'arrayNumberRequest',heap,state,input:state.descriptor.value};
  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.identity)];if(object===undefined||object.$!=='arrayObject')return {$:'arrayInvalid',heap,reason:'Array receiver must remain in the shared global directory'};
- if(state.numberLength.$!=='number')return {$:'arrayInvalid',heap,reason:'Array length application retains its actual semantic Number'};
- const plan=testJavaScriptArrayLengthKey(state.key)&&state.descriptor.valuePresent?planJavaScriptArrayLengthDefinition(object,state.descriptor,state.unsignedLength,state.numberLength.value):planJavaScriptArrayPropertyDefinition(object,state.key,state.descriptor);
+ const numberLength=state.numberLength;
+ if(numberLength.$!=='number')return {$:'arrayInvalid',heap,reason:'Array length application retains its actual semantic Number'};
+ const plan=testJavaScriptArrayLengthKey(state.key)&&state.descriptor.valuePresent?planJavaScriptArrayLengthDefinition(object,state.descriptor,state.unsignedLength,numberLength.value):planJavaScriptArrayPropertyDefinition(object,state.key,state.descriptor);
  if(plan.errorClass==='RangeError'||plan.errorClass==='TypeError')return {$:'arrayError',heap,errorClass:plan.errorClass,reason:plan.error};
  if(plan.errorClass==='resource')return {$:'arrayResourceLimit',heap,reason:plan.error,state};
  if(plan.errorClass!=='')return {$:'arrayInvalid',heap,reason:plan.error};
@@ -66,7 +67,8 @@ export function stepJavaScriptArrayPropertyDefinition(heap,state){
 export function resumeJavaScriptArrayPropertyNumber(heap,state,value){
  const error=readJavaScriptArrayDefinitionStateError(heap,state);if(error!=='')return {$:'arrayInvalid',heap,reason:error};
  const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {$:'arrayInvalid',heap,reason:invalid};
- if(value.$!=='number'||state.phase==='apply')return {$:'arrayInvalid',heap,reason:'Array numeric conversion resumes once with its actual ToNumber result'};
+ if(value.$!=='number')return {$:'arrayInvalid',heap,reason:'Array numeric conversion resumes once with its actual ToNumber result'};
+ if(state.phase==='apply')return {$:'arrayInvalid',heap,reason:'Array numeric conversion resumes once with its actual ToNumber result'};
  const next=state.phase==='first number'?{...state,phase:'second number',unsignedLength:convertJavaScriptArrayUnsignedLength(value.value)}:{...state,phase:'apply',numberLength:value};
  return {$:'arrayDefinitionContinue',heap,state:next};
 }
@@ -75,6 +77,7 @@ export function resumeJavaScriptArrayPropertyNumber(heap,state,value){
 export function testJavaScriptArrayValue(heap,value){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {array:false,error};
  const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {array:false,error:invalid};
- const object=value.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,value.identity)]:undefined;
+ if(value.$!=='object')return {array:false,error:''};
+ const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,value.identity)];
  return {array:object!==undefined&&(object.$==='arrayObject'||object.$==='hostArrayObject'),error:''};
 }

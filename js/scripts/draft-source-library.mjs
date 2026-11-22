@@ -1,3 +1,4 @@
+import {removeTrailingRustLayoutWhitespace} from './rust-layout-whitespace.mjs';
 // Shared authoring pipeline. It writes complete translated declarations and
 // source records without fixtures, behavioral replays or native compilation.
 import { readFileSync, writeFileSync, mkdirSync, existsSync, lstatSync, realpathSync, unlinkSync } from 'node:fs';
@@ -98,7 +99,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   trace('selected Rust lint styles');
   if (!['rustfmt', 'preserve'].includes(sourceFormatting)) throw new TypeError('unknown source formatting selection');
   let output;
-  try { output = sourceFormatting === 'preserve' ? styles.source : formatProductRuleSource(styles.source); }
+  try { output = sourceFormatting === 'preserve' ? styles.source : formatProductRuleSource(removeTrailingRustLayoutWhitespace(styles.source)); }
   catch (error) {
     const line = Number(String(error.message).match(/rules\.rs:(\d+)/u)?.[1]);
     if (Number.isSafeInteger(line) && line > 0) error.message += '\nSource formatting context:\n'

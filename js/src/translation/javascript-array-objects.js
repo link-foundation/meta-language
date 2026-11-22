@@ -5,7 +5,7 @@ import {createJavaScriptPropertyDescriptor,planJavaScriptPropertyDefinition} fro
 import {testJavaScriptSemanticSameValue,readJavaScriptSemanticTextLength,constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-rules.js';
 import {findJavaScriptHeapDirectoryProperty} from './javascript-ordinary-heap-directory.js';
-/** @typedef {{$:'arrayPropertyPlan',object:JavaScriptArrayObject,success:boolean,error:string,errorClass:string,writes:string[]}} JavaScriptArrayPropertyPlan */
+/** @typedef {{$:'arrayPropertyPlan',object:JavaScriptOrdinaryObject,success:boolean,error:string,errorClass:string,writes:string[]}} JavaScriptArrayPropertyPlan */
 /** @returns {JavaScriptSemanticValue} */
 export function readJavaScriptArrayLengthKey(){return {$:'text',units:[108,101,110,103,116,104]};}
 /** @param {JavaScriptSemanticValue} key @returns {boolean} */
@@ -14,7 +14,7 @@ export function testJavaScriptArrayLengthKey(key){return testJavaScriptSemanticS
 export function readJavaScriptArrayIndex(key){const length=readJavaScriptSemanticTextLength(key);return length<0||length>10?-1:readJavaScriptLiteralPropertyIndex(constructJavaScriptSemanticTextUnits(key,10));}
 /** @param {JavaScriptOrdinaryProperty[]} properties @param {JavaScriptSemanticValue} key @returns {number} */
 export function findJavaScriptArrayProperty(properties,key){return findJavaScriptHeapDirectoryProperty(properties,key);}
-/** @param {JavaScriptArrayObject} object @returns {number} */
+/** @param {JavaScriptOrdinaryObject} object @returns {number} */
 export function readJavaScriptArrayLength(object){
  const property=object.properties[findJavaScriptArrayProperty(object.properties,readJavaScriptArrayLengthKey())];
  return property===undefined?-1:readJavaScriptArrayLengthValue(property.descriptor.value);
@@ -28,7 +28,7 @@ function readJavaScriptArrayLengthValue(value){
 }
 /** @param {number} length @returns {boolean} */
 export function testJavaScriptArrayLength(length){return Number.isInteger(length)&&length>=0&&length<=4294967295&&!Object.is(length,-0);}
-/** @param {JavaScriptArrayObject} object @returns {string} */
+/** @param {JavaScriptOrdinaryObject} object @returns {string} */
 export function readJavaScriptArrayObjectError(object){
  if(object.callable)return 'an Array exotic object is not callable';
  const property=object.properties[findJavaScriptArrayProperty(object.properties,readJavaScriptArrayLengthKey())];
@@ -39,12 +39,12 @@ export function readJavaScriptArrayObjectError(object){
  for(const entry of object.properties){const index=readJavaScriptArrayIndex(entry.key);if(index>=length)return 'an Array index must remain below its actual length';}
  return '';
 }
-/** @param {bigint} identity @param {JavaScriptSemanticValue} prototype @param {number} length @returns {JavaScriptArrayObject} */
+/** @param {bigint} identity @param {JavaScriptSemanticValue} prototype @param {number} length @returns {JavaScriptOrdinaryObject} */
 export function constructJavaScriptArrayObject(identity,prototype,length){
  const descriptor=createJavaScriptPropertyDescriptor('data',true,false);descriptor.configurable=false;descriptor.writable=true;descriptor.value={$:'number',value:length};
  return {$:'arrayObject',identity,prototype,extensible:true,callable:false,properties:[{$:'ordinaryProperty',key:readJavaScriptArrayLengthKey(),descriptor}]};
 }
-/** @param {JavaScriptArrayObject} object @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed @returns {JavaScriptArrayPropertyPlan} */
+/** @param {JavaScriptOrdinaryObject} object @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed @returns {JavaScriptArrayPropertyPlan} */
 export function planJavaScriptArrayOrdinaryDefinition(object,key,proposed){
  const at=findJavaScriptArrayProperty(object.properties,key),property=object.properties[at],current=property===undefined?createJavaScriptPropertyDescriptor('data',false,false):property.descriptor;
  const plan=planJavaScriptPropertyDefinition(property!==undefined,object.extensible,current,proposed);
@@ -62,7 +62,7 @@ export function planJavaScriptArrayOrdinaryDefinition(object,key,proposed){
 }
 /** Define an already converted numeric length. This runs against the ACTUAL
  * object AFTER both ToNumber effects. No source valueOf or getter executes here.
- * @param {JavaScriptArrayObject} object @param {JavaScriptPropertyDescriptor} proposed
+ * @param {JavaScriptOrdinaryObject} object @param {JavaScriptPropertyDescriptor} proposed
  * @param {number} unsignedLength @param {number} numberLength @returns {JavaScriptArrayPropertyPlan} */
 export function planJavaScriptArrayLengthDefinition(object,proposed,unsignedLength,numberLength){
  if(!testJavaScriptArrayLength(unsignedLength))return {$:'arrayPropertyPlan',object,success:false,error:'array length continuation requires its actual unsigned32 conversion',errorClass:'invalid',writes:[]};
@@ -90,7 +90,7 @@ export function planJavaScriptArrayLengthDefinition(object,proposed,unsignedLeng
  }
  return {$:'arrayPropertyPlan',object:{...initial.object,properties},success:blocked<0,error:'',errorClass:'',writes:initial.writes.concat(['array indices','array length'],!newWritable&&!initial.writes.includes('writable')?['writable']:[])};
 }
-/** @param {JavaScriptArrayObject} object @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed @returns {JavaScriptArrayPropertyPlan} */
+/** @param {JavaScriptOrdinaryObject} object @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed @returns {JavaScriptArrayPropertyPlan} */
 export function planJavaScriptArrayPropertyDefinition(object,key,proposed){
  if(testJavaScriptArrayLengthKey(key)){
   if(!proposed.valuePresent)return planJavaScriptArrayOrdinaryDefinition(object,key,proposed);
