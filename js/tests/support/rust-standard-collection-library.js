@@ -9,7 +9,7 @@ import {createRustStandardCollectionSourceLibrary} from '../../src/translation/r
 let currentAsset,currentLibrary;
 export function readRustStandardCollectionTestAsset(){
  if(!currentAsset){
-  const entryPath='js/src/translation/rust-standard-collection-value-packet.js',closure=readSourceLibraryClosure(entryPath,{aliases:true}),program=checkProgram(parseJavaScript(closure.source)),linked=encodeTypedProgramLinks(program),text=linked.network.toLino();
+  const entryPath='js/src/translation/rust-standard-collection-value-packet.js',closure=readSourceLibraryClosure(entryPath,{aliases:true}),program=checkProgram(parseJavaScript(closure.source,{referenceSemantics:false})),linked=encodeTypedProgramLinks(program),text=linked.network.toLino();
   currentAsset={text,receipt:{model:'Complete source library asset receipt 1',schemaVersion:1,entryPath,referenceSemantics:false,sourceClosure:closure,sourceDeclarationOwners:readSourceLibraryDeclarationOwnership(closure,program),programAsset:{path:'js/src/data/rust-standard-collection-value-packet-program.lino',bytes:Buffer.byteLength(text),sha256:createHash('sha256').update(text).digest('hex')}}};
  }
  return structuredClone(currentAsset);

@@ -93,9 +93,13 @@ export function readRustStandardCollectionProjectedLibraryError(library){
  if(!library?.closure||!library.program?.declarations||!library.sourceProgram?.items||!Array.isArray(library.functions)||library.functions.length!==3||new Set(library.functions.map(row=>row.role)).size!==3||!['packet','kernel','equality'].every(role=>library.functions.some(row=>row.role===role))||typeof library.entryPath!=='string'||!library.entryPath.endsWith('/rust-standard-collection-value-packet.js'))return 'collection source linkage requires complete actual packet kernel equality and source declaration graphs';
  let owners;
  try{
-  const actualClosure=readSuppliedSourceLibraryClosure(library.entryPath,library.closure.inputs.map(row=>({path:row.path,source:row.source})),{aliases:true}),surface=parseJavaScript(actualClosure.source),checked=checkProgram(surface),projected=checkProgram(structuredClone(library.sourceProgram));
+  const actualClosure=readSuppliedSourceLibraryClosure(library.entryPath,library.closure.inputs.map(row=>({path:row.path,source:row.source})),{aliases:true}),surface=parseJavaScript(actualClosure.source,{referenceSemantics:false});
   if(actualClosure.source!==library.closure.source||actualClosure.sourceSha256!==library.closure.sourceSha256||actualClosure.bytes!==library.closure.bytes)return 'collection closure must match its actual recomposed complete source inputs';
-  if(!testRustStandardCollectionProjectedGraphEquality(checked,library.program)||!testRustStandardCollectionProjectedGraphEquality(projected,checked))return 'collection source and library bodies must recheck to the same complete actual checked graph; unsupported projection remapping refuses';
+  if(!testRustStandardCollectionProjectedGraphEquality(surface,library.sourceProgram))return 'collection source interface must match the complete reparsed actual surface graph; unsupported projection remapping refuses';
+  // Check the freshly parsed surface so interned compiler types retain their
+  // sharing with types introduced by the checker itself.
+  const checked=checkProgram(surface);
+  if(!testRustStandardCollectionProjectedGraphEquality(checked,library.program))return 'collection source and library bodies must recheck to the same complete actual checked graph';
   // An identity projection still checks actual bodies; it is not permission to
   // attach arbitrary source declarations to a genuine checked kernel graph.
   for(const row of library.functions)if(!sameRustStandardCollectionSourceTree(row.sourcePath,['crate',...row.checkedName.split('.')]))return 'collection source function remapping requires a separate exact checked projection interpretation';

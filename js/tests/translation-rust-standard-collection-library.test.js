@@ -2,10 +2,18 @@
 // during interface construction; do not execute while drafting requirements.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRustStandardCollectionSourceLibrary} from '../src/translation/rust-standard-collection-library.js';
+import {createRustStandardCollectionSourceLibrary,loadRustStandardCollectionSourceLibrary} from '../src/translation/rust-standard-collection-library.js';
+import {readRustStandardCollectionProjectedLibraryError} from '../src/translation/rust-standard-collection-call-adapter.js';
 import {readRustStandardCollectionTestAsset as actualAsset} from './support/rust-standard-collection-library.js';
 const entryPath='js/src/translation/rust-standard-collection-value-packet.js';
 const handlers={invalid:reason=>({k:'unit'}),resource:(state,reason)=>({k:'unit'})};
+test('the installed library rechecks its exact ordinary surface and rejects a rewritten body',()=>{
+ const library=loadRustStandardCollectionSourceLibrary(handlers);
+ assert.equal(readRustStandardCollectionProjectedLibraryError({...library,sourceProgram:structuredClone(library.sourceProgram)}),'');
+ const forged=structuredClone(library.sourceProgram),packet=forged.items.find(item=>item.name===library.functions[0].checkedName);
+ packet.body={k:'unit'};
+ assert.match(readRustStandardCollectionProjectedLibraryError({...library,sourceProgram:forged}),/complete reparsed actual surface graph/);
+});
 test('automatic interfaces retain complete actual source owners and packet transition bodies',()=>{
  const {text,receipt}=actualAsset(),library=createRustStandardCollectionSourceLibrary(text,receipt,handlers);
  assert.equal(library.entryPath,entryPath);assert.equal(library.sourceHandlers,handlers);assert.equal(library.functions.length,3);
