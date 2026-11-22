@@ -14,7 +14,7 @@ export const CRITICAL_DELIVERY_SOURCE_HISTORY={path:'parity/self-translation/cri
 export const CURRENT_CONVERSATION_SOURCE={path:'js/scripts/issue-195-conversation-requirements.mjs',bytes:72335,
   sha256:'fa1bda21f330724dce2bda4d068fbb7758e0dcb45d4494044171138721e088f2'};
 const policyPath='parity/self-translation/tooling-frozen-source-history.lino';
-const policySha256='83bbc27757f467f73c70f8dad5074c70a46414455a4602f6c25b48879017cf47';
+const policySha256='509bc3c755cc79cf7a33ba6e6ad5040b892caaa6ae659499574d1689b2cfb043';
 export const toolingFrozenSourcePin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());};
 
@@ -30,6 +30,14 @@ export const TOOLING_FROZEN_HOSTS=[
       after:"    const registered = historicalRegistration.registrations.find(row => row.file === file);\n    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions, rocqStem].some(stem => file === `${stem}.test.js`) ? ['tooling'] : registered ? [registered.group] : before, file);\n"},
     {before:"  assert.ok(files.includes(`${rocqStem}.test.js`), 'the new Rocq controls are an actual discovered test file');\n",
       after:"  for (const registration of historicalRegistration.registrations) {\n    assert.ok(files.includes(registration.file), 'each later registered test is an actual discovered file');\n    const actual = partitionTests([registration.file]);\n    assert.deepEqual(actual.unassigned, []);assert.deepEqual(actual.ambiguous, []);\n    assert.deepEqual(actual.groups[registration.group], [registration.file]);\n  }\n  assert.ok(files.includes(`${rocqStem}.test.js`), 'the new Rocq controls are an actual discovered test file');\n"},
+    // Exact provenance changes from 8f2f6c483. The source inverse still
+    // authenticates the old checkout profiles while the test checks each successor.
+    {before:"test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', () => {",
+      after:"test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', async () => {"},
+    {before:"  const sources = [fixture.contract, ...fixture.sourceProfiles,\n",
+      after:"  const {buildModernArrayParityFixture}=await import('../scripts/generate-modern-javascript-array-parity-fixtures.mjs');\n  assert.deepEqual(fixture,buildModernArrayParityFixture({historicalSource:fixture.historicalNative.source}),\n    'the normal source inverse checks every original profile byte and the complete prior fixture');\n  const sources = [fixture.contract, ...fixture.sourceProfiles.map(source=>{\n    const current=fixture.identityCorrection.sourceEpochs.find(row=>row.path===source.path);\n    assert.ok(current,'each original source path retains its complete current checkout profile');return current;\n  }),\n"},
+    {before:"    if (source !== fixture.contract) {\n",
+      after:"    if (source !== fixture.contract && !fixture.identityCorrection.sourceEpochs.includes(source)) {\n"},
   ]},
   {path:'experiments/critical-delivery/generate-source-history.mjs',previous:{bytes:2791,sha256:'f327f499381454eeb8180e31f67b55fcfb4f1aa622d9501080ba8152bc8aa68f'},changes:[
     {before:"import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';\n",
