@@ -33,7 +33,7 @@ function readPest(source) {
   const start = definitions[0]?.name;
   if (!start) return grammarFromRules(FORMAT, []);
   const grammar = new Grammar(start, rules, FORMAT);
-  const builtIns = grammar.undefinedNonterminals().map(name => [name, pestBuiltInSource(name)]);
+  const builtIns = grammar.undefinedNonterminals().sort().map(name => [name, pestBuiltInSource(name)]);
   const undefinedRule = builtIns.find(([, definition]) => !definition);
   if (undefinedRule) throw parseError(FORMAT, `undefined non-terminal ${undefinedRule[0]}`);
   if (builtIns.length > 0) {

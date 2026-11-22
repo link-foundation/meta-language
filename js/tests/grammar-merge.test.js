@@ -150,7 +150,7 @@ test('language editions are merged separately and listed as explicit alternative
   const older = group(result, 'arithmetic@2024');
   const newer = group(result, 'arithmetic@2025');
   assert.ok(Object.keys(older.identities).every((alias) => !alias.startsWith('upstream-c:')));
-  assert.deepEqual(Object.keys(newer.identities), ['upstream-c:expression', 'upstream-c:term', 'upstream-c:number']);
+  assert.deepEqual(Object.keys(newer.identities), ['upstream-c:expression', 'upstream-c:term', 'upstream-c:number', 'upstream-c:ASCII_DIGIT']);
   assert.notDeepEqual(newer.grammar.rule('number').expression, older.grammar.rule('number').expression);
   assert.deepEqual(result.alternatives, [{ reason: 'edition', name: 'arithmetic', options: ['2024', '2025'] }]);
   observe('I195-MERGE-DETERMINISM', ['editionBoundariesPreserved'], 'language editions are merged separately');
@@ -164,6 +164,8 @@ test('differently named equivalent rules are merged, recursively and after norma
       ['expression', ['upstream-a:expression', 'upstream-b:sum']],
       ['term', ['upstream-a:term', 'upstream-b:operand']],
       ['number', ['upstream-a:number', 'upstream-b:integer']],
+      ['ASCII_ALPHA', ['upstream-a:ASCII_ALPHA', 'upstream-b:ASCII_ALPHA']],
+      ['ASCII_DIGIT', ['upstream-a:ASCII_DIGIT', 'upstream-b:ASCII_DIGIT']],
     ],
   );
   // `ASCII_DIGIT ~ ASCII_DIGIT*` and `ASCII_DIGIT+` mean the same, and the
@@ -178,7 +180,8 @@ test('differently named equivalent rules are merged, recursively and after norma
 
   for (const decision of decisions(older, 'merged')) {
     assert.equal(decision.basis, GRAMMAR_MERGE_METHOD);
-    assert.match(decision.definition, /^(normal|atomic):/u);
+    if (['ASCII_ALPHA', 'ASCII_DIGIT'].includes(decision.name)) assert.match(decision.definition, /^silent:/u);
+    else assert.match(decision.definition, /^(normal|atomic):/u);
     assert.equal(decision.definition, normalizedRuleDefinition(older.grammar.rule(decision.name)));
   }
   observe('I195-MERGE-MEANING-AWARE-DEDUPLICATION', ['equivalenceJustified'], 'every merge records its proof method and definition');

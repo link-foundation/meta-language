@@ -391,7 +391,8 @@ fn language_editions_are_merged_separately_and_listed_as_explicit_alternatives()
         BTreeSet::from([
             "upstream-c:expression",
             "upstream-c:term",
-            "upstream-c:number"
+            "upstream-c:number",
+            "upstream-c:ASCII_DIGIT",
         ])
     );
     assert_ne!(
@@ -432,6 +433,14 @@ fn differently_named_equivalent_rules_are_merged_recursively_and_after_normaliza
             ),
             ("term", vec!["upstream-a:term", "upstream-b:operand"]),
             ("number", vec!["upstream-a:number", "upstream-b:integer"]),
+            (
+                "ASCII_ALPHA",
+                vec!["upstream-a:ASCII_ALPHA", "upstream-b:ASCII_ALPHA"]
+            ),
+            (
+                "ASCII_DIGIT",
+                vec!["upstream-a:ASCII_DIGIT", "upstream-b:ASCII_DIGIT"]
+            ),
         ]
     );
     // `ASCII_DIGIT ~ ASCII_DIGIT*` and `ASCII_DIGIT+` mean the same, and the
@@ -460,10 +469,14 @@ fn differently_named_equivalent_rules_are_merged_recursively_and_after_normaliza
     for decision in decisions(older, GrammarMergeDecisionKind::Merged) {
         assert_eq!(decision.basis, GRAMMAR_MERGE_METHOD);
         let definition = decision.definition.as_deref().expect("definition");
-        assert!(
-            definition.starts_with("normal:") || definition.starts_with("atomic:"),
-            "{definition}"
-        );
+        if matches!(decision.name.as_str(), "ASCII_ALPHA" | "ASCII_DIGIT") {
+            assert!(definition.starts_with("silent:"), "{definition}");
+        } else {
+            assert!(
+                definition.starts_with("normal:") || definition.starts_with("atomic:"),
+                "{definition}"
+            );
+        }
         assert_eq!(
             normalized_rule_definition(rule(&older.grammar, &decision.name)).expect("normalizes"),
             definition
