@@ -19,7 +19,6 @@ mod packets;
 pub(super) struct StandardCollectionSource {
     library: Rc<dyn CollectionSourceDeclarations>,
     carriers: Vec<SourceCarrier>,
-    pub(super) ordered_iteration_head: Option<Vec<OrderedIterationHead>>,
 }
 
 pub(super) struct OrderedIterationHead {
@@ -41,7 +40,6 @@ impl StandardCollectionSource {
         Self {
             library,
             carriers: Vec::new(),
-            ordered_iteration_head: None,
         }
     }
 }

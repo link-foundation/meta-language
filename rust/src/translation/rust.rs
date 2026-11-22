@@ -62,6 +62,7 @@ pub(super) mod owned_record_loops;
 pub(super) mod mutable_record_loans;
 mod owned_containers;
 mod owned_vectors;
+mod owned_vector_iteration;
 mod borrowed_vectors;
 mod borrowed_iterators;
 mod borrowed_iterator_callbacks;
@@ -170,6 +171,7 @@ mod source_profiles;
 pub(crate) use source_profiles::parse_rust_with_loop_profiles;
 pub use source_profiles::{
     parse_rust, parse_rust_with_array_result_model, parse_rust_with_completion_model,
+    parse_rust_with_exclusive_source_model,
     parse_rust_with_empty_option_source_model, parse_rust_with_primitive_owner_model,
     parse_rust_with_pure_unit_call_model, parse_rust_with_runtime_shell_model,
     parse_rust_with_scalar_loop_model, parse_rust_with_shared_array_handle_source_model,
@@ -221,6 +223,7 @@ pub fn parse_rust_with_const_function_model(
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
     source_version: &'a str,
+    exclusive_source: &'a str,
     retain_source_type_owners: bool,
     shared_array_handle_source: &'a str,
     const_function: &'a str,
@@ -244,6 +247,7 @@ fn parse_rust_with_selected_profiles(
     let source_version_minor = source_versions::minor(profiles.source_version)?;
     let SourceProfiles {
         source_version: _,
+        exclusive_source: _,
         shared_array_handle_source: shared_array_handle_source_model,
         const_function: const_function_model,
         array_result: array_result_model,
@@ -504,6 +508,7 @@ fn parse_rust_with_selected_profiles(
     // every public Rust source pipeline checks this identical Surface again.
     if super::check::check_program(&surface).is_err() && shared_array_handle_source_model.is_empty()
         && profiles.standard_collections.is_none()
+        && profiles.exclusive_source.is_empty()
         && !syntax.origins.standard_sum_source_needs_final_admission
         && !syntax.origins.borrowed_vector_needs_final_admission
     {
@@ -536,7 +541,7 @@ fn parse_rust_with_selected_profiles(
     parser.named_records = syntax.named_records;
     parser.inherent_methods = syntax.inherent_methods;
     let surface = parser.file()?;
-    if profiles.standard_collections.is_some() {
+    if profiles.standard_collections.is_some() || !profiles.exclusive_source.is_empty() {
         super::check::check_program(&surface)?;
     }
     Ok(surface)
@@ -575,6 +580,8 @@ struct Binding {
 
 struct RustParser {
     source_version_minor: f64,
+    exclusive_source_enabled: bool,
+    ordered_iteration_head: Option<Vec<standard_collections::OrderedIterationHead>>,
     retain_source_type_owners: bool,
     source_type_aliases: type_aliases::SourceTypeAliases,
     standard_sum_source: standard_sum_source::StandardSumSourceState,
@@ -676,12 +683,14 @@ impl RustParser {
             !profiles.scalar_loop.is_empty() || !profiles.const_function.is_empty();
         let source_constant_tokens = Arc::new(tokens.clone());
         let mut owned_record_state = owned_record_state::OwnedRecordState::default();
-        if profiles.standard_collections.is_some() {
+        if profiles.standard_collections.is_some() || !profiles.exclusive_source.is_empty() {
             owned_record_state.effects = Some(Default::default());
         }
         Self {
             source_constant_tokens,
             source_version_minor: 0.0,
+            exclusive_source_enabled: !profiles.exclusive_source.is_empty(),
+            ordered_iteration_head: None,
             retain_source_type_owners: profiles.retain_source_type_owners,
             source_type_aliases: type_aliases::SourceTypeAliases::default(),
             standard_sum_source: standard_sum_source::StandardSumSourceState::default(),

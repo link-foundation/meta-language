@@ -6,6 +6,38 @@ use crate::translation::rust_standard_collection_carriers::CollectionSourceDecla
 use crate::translation::rust_standard_collection_library::RustStandardCollectionSourceLibrary;
 use crate::translation::surface::SExpr;
 
+/// Read the explicitly versioned Rust exclusive source profile.
+///
+/// # Errors
+/// Refuses unknown models, uncovered versions and unproved source ownership.
+pub fn parse_rust_with_exclusive_source_model(
+    source: &str,
+    model: &str,
+    source_version: &str,
+) -> Result<SProgram> {
+    use crate::translation::rust_exclusive_source_loan_rules::{
+        read_rust_exclusive_source_loan_profile, read_rust_exclusive_source_loan_version_error,
+    };
+    let fail = |reason: &str| super::unsupported("Rust exclusive source loans", reason, None);
+    if model != read_rust_exclusive_source_loan_profile() {
+        return Err(fail("select the exact exclusive source loan profile"));
+    }
+    let minor = super::source_versions::minor(source_version)?;
+    let reason = read_rust_exclusive_source_loan_version_error(1.0, minor);
+    if !reason.is_empty() {
+        return Err(fail(&reason));
+    }
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            source_version,
+            exclusive_source: model,
+            retain_source_type_owners: true,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 /// Read concrete standard collections against the checked shared source library.
 ///
 /// # Errors

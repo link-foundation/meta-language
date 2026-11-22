@@ -12,10 +12,16 @@ impl SourceOrigins {
   if !error.is_empty(){return Err(unsupported("Rust mutable record loan",&error,span));}
   state.nodes+=nodes;state.text+=text;Ok(())
  }
- pub(in super::super) fn register_mutable_record_loan_root(&mut self,origin:&SourceOrigin,span:Option<Span>)->Result<()> {
+ pub(in super::super) fn register_mutable_record_loan_root(&mut self,origin:&SourceOrigin,span:Option<Span>,exclusive_profile:bool)->Result<()> {
   if self.collecting{return Ok(());}
   let Some((root,lexical))=origin.source_binding_identity.as_ref().zip(origin.source_lexical_binding_identity.as_ref()) else{return Err(unsupported("Rust mutable record loan","a loan root needs its actual available mutable nominal binding",span));};
-  if !origin.proven||!origin.wrappers.is_empty()||self.nominal_ownership_facts(origin).profile!="owned"||self.source_binding_states.get(root).map(String::as_str)!=Some("available"){return Err(unsupported("Rust mutable record loan","a loan root needs its actual available mutable nominal binding",span));}
+  let ownership = if exclusive_profile {
+   let profile = self.standard_sum_ownership_facts(origin).profile;
+   matches!(profile.as_str(), "copy" | "owned")
+  } else {
+   self.nominal_ownership_facts(origin).profile == "owned"
+  };
+  if !origin.proven||!origin.wrappers.is_empty()||!ownership||self.source_binding_states.get(root).map(String::as_str)!=Some("available"){return Err(unsupported("Rust mutable record loan","a loan root needs its actual available mutable binding",span));}
   if !self.mutable_record_loans.roots.contains_key(root){self.charge_mutable_record_loans(4,2*(root.len()+lexical.len()),span)?;}
   self.mutable_record_loans.roots.insert(root.clone(),lexical.clone());self.mutable_record_loans.lexicals.insert(lexical.clone(),root.clone());Ok(())
  }

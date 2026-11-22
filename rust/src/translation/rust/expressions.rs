@@ -460,6 +460,14 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                if let Some(result) = self.read_exclusive_owned_string_mutation(&value, &method, path)? {
+                    value = result;
+                    continue;
+                }
+                if let Some(result) = self.read_owned_vector_iteration_method(&value, &method, path)? {
+                    value = result;
+                    continue;
+                }
                 if let Some(result) = self.standard_collection_method(&value, &method, path)? {
                     value = result;
                     continue;

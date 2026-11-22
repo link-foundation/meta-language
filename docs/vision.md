@@ -246,6 +246,13 @@ retain their own actual source identities rather than borrow another profile's
 interpretation. Stored/escaping references and additional ownership families
 remain required independent interpretations, not silently erased source facets.
 
+The native exclusive source entry point selects the same versioned loan rules.
+An explicit or implicit owned `Vec` loop transfers its actual vector owner before
+body checking. Its ordered loop transport retains the item type and lexical
+pattern bindings while the iterator remains private to the loop head. Native
+direct mutable locals use the existing ordered state transport for assignment,
+primitive compound assignment, and supported owned `String` writes.
+
 The closed standard Rust collection profile resolves actual HashMap, HashSet,
 BTreeMap and BTreeSet owners and concrete Eq or Ord domains. Boolean, exact
 integer and valid Unicode String keys use explicit owned entries. Hash

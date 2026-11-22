@@ -138,7 +138,7 @@ impl RustParser{
  }
  pub(super) fn read_owned_record_finite_loop(&mut self,path:&[String])->Result<Option<SExpr>>{
   let start=self.cursor.peek().clone();
-  if start.raw == "for" && self.standard_collections.is_some() {
+  if start.raw == "for" && (self.standard_collections.is_some() || self.exclusive_source_enabled) {
    return self.read_ordered_collection_loop(path).map(Some);
   }
   if start.kind!=TokenKind::Identifier||start.value!="while"||start.raw!="while"{return Ok(None);}let slots=self.record_state_active_slots();if slots.is_empty(){return Ok(None);}self.cursor.advance();

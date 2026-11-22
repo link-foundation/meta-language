@@ -9,6 +9,7 @@ use meta_language::{
     BinaryLinksOptions, LinkNetwork, RustStandardCollectionLibraryLimits,
     RustStandardCollectionSourceHandlers, TypedProgramLinksLimits,
     create_rust_standard_collection_source_library,
+    create_typed_program_links_with_rust_exclusive_source_model,
     create_typed_program_links_with_rust_standard_collection_source_model,
     decode_link_network_binary, decode_typed_program_links_with_limits, encode_link_network_binary,
     load_rust_standard_collection_source_library,
@@ -17,6 +18,74 @@ use serde_json::json;
 use std::{fs, process::Command, rc::Rc};
 
 const MODEL: &str = "Rust closed standard collections 1";
+
+#[test]
+fn actual_owned_vector_heads_use_the_same_ordered_loop_transport() {
+    let rust = run(Command::new("rustc").arg("--version"));
+    assert!(rust.ok, "{}", rust.stderr);
+    let version = rust.stdout.split_whitespace().nth(1).unwrap();
+    let model = "Rust exclusive source loans 1";
+    let source = r#"fn main() {
+        let values = vec![7u16, 1u16];
+        for value in (values.into_iter()) { println!("{}", value); }
+        for value in vec![3u16, 9u16] { println!("{}", value); break; }
+        for (mut value, label) in vec![(4u16, true)].into_iter() {
+            value += 2u16;
+            println!("{}", value);
+            println!("{}", label);
+        }
+        for mut text in vec![String::from("z")] {
+            text.push_str("!");
+            println!("{}", text);
+        }
+    }"#;
+    let packet =
+        create_typed_program_links_with_rust_exclusive_source_model(source, model, version, None)
+            .unwrap_or_else(|error| panic!("owned vector traversal under Rust {version}: {error}"));
+    let checked = decode_typed_program_links_with_limits(
+        &packet.network,
+        packet.root,
+        TypedProgramLinksLimits::default(),
+    )
+    .unwrap();
+    let original = compile_and_observe(source);
+    assert_eq!(original, "7\n1\n3\n6\ntrue\nz!\n");
+    assert_eq!(
+        compile_and_observe(&emit_rust(&checked).unwrap().text),
+        original
+    );
+    let directory = TemporaryDirectory::new("javascript-owned-vector");
+    let output = directory.0.join("vector.mjs");
+    fs::write(&output, emit_javascript(&checked).unwrap().text).unwrap();
+    let execution = run(Command::new("node").arg(output));
+    assert!(execution.ok, "{}", execution.stderr);
+    assert_eq!(execution.stdout, original);
+    for invalid in [
+        r#"fn main() { let values = vec![7u16]; for _value in values {} println!("{}", values.len()); }"#,
+        r#"fn main() { let values = vec![7u16]; for _value in values.into_iter() { break; } println!("{}", values.len()); }"#,
+        r#"fn main() { let values = vec![7u16]; for _value in &values {} }"#,
+        r#"fn main() { let values = vec![7u16]; let iter = values.into_iter(); for _value in iter {} }"#,
+    ] {
+        assert!(
+            create_typed_program_links_with_rust_exclusive_source_model(
+                invalid, model, version, None
+            )
+            .is_err(),
+            "{invalid}"
+        );
+    }
+    for uncovered in ["1.89.0", "1.100.0"] {
+        assert!(
+            create_typed_program_links_with_rust_exclusive_source_model(
+                source, model, uncovered, None
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("Rust >=1.90.0 <1.100.0"),
+            "{uncovered}"
+        );
+    }
+}
 
 fn abort() -> SExpr {
     SExpr::new(

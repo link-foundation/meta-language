@@ -881,10 +881,7 @@ impl RustParser {
         if matches!(
             method.value.as_str(),
             "iter" | "keys" | "values" | "into_iter"
-        ) && self
-            .standard_collections
-            .as_ref()
-            .is_some_and(|source| source.ordered_iteration_head.is_some())
+        ) && self.ordered_iteration_head.is_some()
         {
             self.cursor
                 .expect("(", Some("ordered collection iterator"))?;
@@ -902,9 +899,8 @@ impl RustParser {
             let origin = self.origins.origin(&node, module);
             node.span = receiver.span.map(|start| Span::new(start.start, end.end));
             self.origins.mark(&node, origin);
-            self.standard_collections
+            self.ordered_iteration_head
                 .as_mut()
-                .and_then(|source| source.ordered_iteration_head.as_mut())
                 .expect("actual ordered iteration head reader")
                 .push(super::OrderedIterationHead {
                     expression: node.clone(),
@@ -1107,7 +1103,7 @@ impl RustParser {
             });
         if let Some(owning) = owning {
             self.origins
-                .register_mutable_record_loan_root(&owning, location)?;
+                .register_mutable_record_loan_root(&owning, location, false)?;
         }
         let regions = super::super::borrowed_iterators::argument_regions(&actual)?;
         if !self.origins.collecting && regions.is_empty() {

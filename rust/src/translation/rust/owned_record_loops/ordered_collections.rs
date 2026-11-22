@@ -18,7 +18,7 @@ pub(in super::super) struct AdmittedOrderedCollectionLoop {
 
 enum Pattern {
     Wildcard,
-    Name(String, Option<Span>),
+    Name(String, bool, Option<Span>),
     Tuple(Vec<Pattern>, Option<Span>),
     Reference(Box<Pattern>, Option<Span>),
 }
@@ -35,6 +35,16 @@ fn pattern(parser: &mut RustParser, path: &[String], depth: usize) -> Result<Pat
             span,
         ));
     }
+    let mutable = parser.cursor.eat("mut").is_some();
+    if mutable
+        && (parser.cursor.peek().kind != super::super::TokenKind::Identifier
+            || parser.cursor.is("_"))
+    {
+        return Err(fail(
+            "a mutable item pattern requires a direct lexical binding",
+            span,
+        ));
+    }
     if parser.cursor.eat("&").is_some() {
         return Ok(Pattern::Reference(
             Box::new(pattern(parser, path, depth + 1)?),
@@ -42,15 +52,23 @@ fn pattern(parser: &mut RustParser, path: &[String], depth: usize) -> Result<Pat
         ));
     }
     if parser.cursor.eat("(").is_some() {
+        if parser.cursor.eat(")").is_some() {
+            return Ok(Pattern::Tuple(Vec::new(), span));
+        }
         let first = pattern(parser, path, depth + 1)?;
         if parser.cursor.eat(",").is_none() {
             parser.cursor.expect(")", Some("ordered item pattern"))?;
             return Ok(first);
         }
-        let second = pattern(parser, path, depth + 1)?;
-        parser.cursor.eat(",");
-        parser.cursor.expect(")", Some("ordered pair pattern"))?;
-        return Ok(Pattern::Tuple(vec![first, second], span));
+        let mut items = vec![first];
+        while !parser.cursor.is(")") {
+            items.push(pattern(parser, path, depth + 1)?);
+            if parser.cursor.eat(",").is_none() {
+                break;
+            }
+        }
+        parser.cursor.expect(")", Some("ordered tuple pattern"))?;
+        return Ok(Pattern::Tuple(items, span));
     }
     if parser.cursor.eat("_").is_some() {
         return Ok(Pattern::Wildcard);
@@ -75,7 +93,7 @@ fn pattern(parser: &mut RustParser, path: &[String], depth: usize) -> Result<Pat
             Some(binder.span()),
         ));
     }
-    Ok(Pattern::Name(binder.value, span))
+    Ok(Pattern::Name(binder.value, mutable, span))
 }
 
 struct Binding {
@@ -118,12 +136,21 @@ fn bind(
             bind(parser, *inner, value, copied, path, bindings, names)
         }
         Pattern::Tuple(items, span) => {
+            if !origin.wrappers.is_empty() {
+                return Err(fail(
+                    "a tuple pattern requires its actual direct tuple positions",
+                    span,
+                ));
+            }
+            if items.is_empty() && origin.ty == Some(super::super::UNIT) {
+                return Ok(());
+            }
             let fields = origin
                 .fields
                 .filter(|fields| fields.len() == items.len())
                 .ok_or_else(|| {
                     fail(
-                        "the map pattern must preserve both actual tuple positions",
+                        "the ordered item pattern must preserve every actual tuple position",
                         span,
                     )
                 })?;
@@ -139,12 +166,23 @@ fn bind(
             }
             Ok(())
         }
-        Pattern::Name(name, span) => {
+        Pattern::Name(name, mutable, span) => {
             if !names.insert(name.clone()) {
                 return Err(fail("ordered item pattern bindings must be distinct", span));
             }
             parser.origins.mark(&value, origin.clone());
             parser.origins.bind(&name, &value, path, Some(&origin))?;
+            let name = if mutable {
+                if !origin.wrappers.is_empty() || origin.source_borrowed_place {
+                    return Err(fail(
+                        "a mutable item binding requires its actual owned position",
+                        span,
+                    ));
+                }
+                parser.register_owned_record_mutable_binding(&name, span)?
+            } else {
+                name
+            };
             bindings.push(Binding {
                 name,
                 value,
@@ -245,12 +283,7 @@ impl RustParser {
         location: Option<Span>,
         callable_result: bool,
     ) -> Result<SExpr> {
-        let previous = self
-            .standard_collections
-            .as_mut()
-            .expect("actual collection source profile")
-            .ordered_iteration_head
-            .replace(Vec::new());
+        let previous = self.ordered_iteration_head.replace(Vec::new());
         let receiver = self.with_standard_sum_source_context(None, |parser| {
             parser.expr(
                 path,
@@ -260,35 +293,40 @@ impl RustParser {
                 },
             )
         });
-        let heads = std::mem::replace(
-            &mut self
-                .standard_collections
-                .as_mut()
-                .expect("actual collection source profile")
-                .ordered_iteration_head,
-            previous,
-        )
-        .expect("actual ordered head inventory");
+        let heads = std::mem::replace(&mut self.ordered_iteration_head, previous)
+            .expect("actual ordered head inventory");
         let receiver = receiver?;
         let (input, item) = match heads.as_slice() {
             [] => {
-                let method = if self.origins.origin(&receiver, path).wrappers.is_empty() {
-                    "into_iter"
+                if let Some(iteration) = self.owned_vector_source_iteration(&receiver, path)? {
+                    iteration
                 } else {
-                    "iter"
-                };
-                self.standard_collection_iteration(&receiver, method, path)?
-                    .ok_or_else(|| {
+                    let method = if self.origins.origin(&receiver, path).wrappers.is_empty() {
+                        "into_iter"
+                    } else {
+                        "iter"
+                    };
+                    self.standard_collection_iteration(&receiver, method, path)?.ok_or_else(|| {
                         fail(
-                            "for requires its actual standard BTree receiver",
+                            if self.exclusive_source_enabled {
+                                "for requires its actual selected standard collection or owned Vec receiver"
+                            } else {
+                                "for requires its actual standard BTree receiver"
+                            },
                             receiver.span,
                         )
                     })?
+                }
             }
             [head]
                 if head.expression.node == receiver.node
-                    && self.cursor.tokens.get(head.end_token..self.cursor.index)
-                        .is_some_and(|remaining| remaining.iter().all(|token| token.value == ")"))
+                    && self
+                        .cursor
+                        .tokens
+                        .get(head.end_token..self.cursor.index)
+                        .is_some_and(|remaining| {
+                            remaining.iter().all(|token| token.value == ")")
+                        })
                     && self.origins.origin(&receiver, path).wrappers.is_empty() =>
             {
                 (head.expression.clone(), head.item.clone())

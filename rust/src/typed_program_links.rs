@@ -474,6 +474,34 @@ pub fn create_typed_program_links_with_rust_shared_array_handle_source_model(
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 
+/// Import Rust under the explicitly versioned exclusive source model.
+///
+/// # Errors
+/// Refuses unknown models, uncovered versions and unproved source ownership.
+pub fn create_typed_program_links_with_rust_exclusive_source_model(
+    source: &str,
+    model: &str,
+    version: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    let version = crate::translation::rust::source_versions::canonical(version)
+        .map_err(|failure| error(failure.to_string()))?;
+    let surface = crate::translation::rust::parse_rust_with_exclusive_source_model(
+        source, model, &version,
+    )
+    .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected = serde_json::json!({
+        "sourceProfile": {
+            "language": "Rust",
+            "rustSourceVersion": version,
+            "rustExclusiveSourceModel": model,
+        },
+        "userProvenance": provenance,
+    });
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
 /// Import actual standard Rust collection operations through the checked source library.
 ///
 /// # Errors
