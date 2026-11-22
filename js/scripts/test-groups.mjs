@@ -37,15 +37,27 @@ const schedulingProfiles = {
       [45055131879, '81e9e733677877f2440018a09d65d3d7f5f1f113'],
     ]),
   },
+  'self-translation-report-12': {
+    file: new URL('../../parity/fixtures/ci-45060692627-self-translation-workload-costs.lino', import.meta.url),
+    revisions: new Map([[45060692627, 'f1c7cb555e37b9ddf09c10f772b0adebf4f6e587']]),
+  },
 };
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
+
+function schedulingGroup(files, count) {
+  if (files.every(file => file.startsWith('js/src/'))) {
+    if (count === 12) return 'self-translation-report-12';
+    if (count === 8) return 'self-translation-report';
+  }
+  return 'grammar';
+}
 
 /** Largest observed workload first; source changes use a byte-size estimate.
  * Timing samples only choose owners. They never establish test completion. */
 export function partitionMeasuredWorkloads(files,count,{readSource,costs,group}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
- const profile = schedulingProfiles[group ?? (count === 8 && files.every(file => file.startsWith('js/src/')) ? 'self-translation-report' : 'grammar')];
+ const profile = schedulingProfiles[group ?? schedulingGroup(files, count)];
  assert.ok(profile);
  const measured=costs??readProjectData(profile.file);
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');

@@ -116,6 +116,19 @@ test('all eight self-translation reports retain their complete source inventory 
   assert.ok(Math.max(...current.map(latestLoad)) < Math.max(...shards.map(latestLoad)) * 0.75);
 });
 
+test('twelve self-translation reports reserve time for setup and upload while measuring every module', () => {
+  const modules = readdirSync(new URL('../src/', import.meta.url), { recursive: true })
+    .filter(file => file.endsWith('.js')).map(file => 'js/src/' + file.split(sep).join('/')).sort();
+  const observed = readProjectData(new URL('../../parity/fixtures/ci-45060692627-self-translation-workload-costs.lino', import.meta.url));
+  const timing = new Map(observed.entries.map(row => [row.file, row.milliseconds]));
+  const load = shard => shard.reduce((total, file) => total + (timing.get(file) ?? 0), 0);
+  const previous = partitionMeasuredWorkloads(modules, 8);
+  const current = partitionMeasuredWorkloads(modules, 12);
+  assert.deepEqual(current.flat().sort(), modules);
+  assert.ok(current.every(shard => shard.length > 0));
+  assert.ok(Math.max(...current.map(load)) < Math.max(...previous.map(load)) * 0.75);
+});
+
 test('six JavaScript native grammar partitions conserve each historical partition after the recorded automatic deadline', async () => {
   const path = 'parity/fixtures/javascript-native-grammar-deadline-2026-10-18.lino';
   const bytes = await readFile(new URL('../../' + path, import.meta.url));
@@ -319,8 +332,9 @@ test('standalone JavaScript runs produce and validate the same report shards', a
   assert.match(workflow, /external_reports:\n(?:[^\n]*\n)*? {8}default: false\n/u);
   assert.match(producers.header, /!inputs.external_reports/u);
   assert.match(producers.header, /fail-fast: false/u);
-  assert.match(producers.header, /shard: \[1, 2, 3, 4, 5, 6, 7, 8\]/u);
-  assert.match(producers.steps.map(step => step.text).join('\n'), /--shard \$\{\{ matrix.shard \}\}\/8/u);
+  assert.match(producers.header, /timeout-minutes: 30/u);
+  assert.match(producers.header, /shard: \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12\]/u);
+  assert.match(producers.steps.map(step => step.text).join('\n'), /--shard \$\{\{ matrix.shard \}\}\/12/u);
   assert.match(producers.steps.map(step => step.text).join('\n'), /name: self-translation-report-\$\{\{ github.sha \}\}-\$\{\{ matrix.shard \}\}/u);
   assert.match(assertions.header, /needs: reports/u);
   assert.match(assertions.header, /!cancelled\(\) && !inputs.external_reports/u);

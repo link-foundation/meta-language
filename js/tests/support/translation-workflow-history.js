@@ -12,6 +12,7 @@ let history;
 export function restoreTranslationWorkflowHistory(source) {
   assert.equal(typeof source,'string');
   source=restoreIntegrationSource(source,'.github/workflows/js.yml');
+  source=restoreIntegrationSource(source,'.github/workflows/ci.yml');
   source=restoreCurrentCiRepairSource(source,'.github/workflows/rust.yml');
   source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);
   if(!history){assert.equal(digest(readFileSync(file)),historyHash);history=readProjectData(file);}

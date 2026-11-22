@@ -23,13 +23,21 @@ const captures = {
     unfinished: [137308556276, 137308556219],
     previousRun: 45049378352,
   },
+  45060692627: {
+    revision: 'f1c7cb555e37b9ddf09c10f772b0adebf4f6e587',
+    mergeCommit: 'f956894159f88162f30bb4473a73edf7ea6d7283',
+    jobs: [137325711520, 137325711617, 137325711503, 137325711666, 137325711685, 137325711656, 137325711693, 137325711694],
+    unfinished: [137325711694],
+    previousRun: 45055131879,
+    nextCount: 12,
+  },
 };
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const git = (...args) => execFileSync('git', ['--no-replace-objects', ...args], { cwd: root });
 const [directory, mode, runOption = 45049378352] = process.argv.slice(2);
 const run = Number(runOption);
 assert.ok(directory && Object.hasOwn(captures, run) && [undefined, '--check', '--preview', '--write'].includes(mode));
-const { revision, mergeCommit, jobs, unfinished, previousRun } = captures[run];
+const { revision, mergeCommit, jobs, unfinished, previousRun, nextCount = jobs.length } = captures[run];
 const costPath = costRun => new URL(`../../parity/fixtures/ci-${costRun}-${costRun === 39615628279 ? '' : 'self-translation-'}workload-costs.lino`, import.meta.url);
 
 const files = git('ls-tree', '-r', '--name-only', revision, '--', 'js/src').toString().trimEnd().split('\n').filter(file => file.endsWith('.js'));
@@ -72,7 +80,8 @@ const packet = { schemaVersion: 1, model: 'observed CI workload scheduling costs
   logs, entries: [...entries.values()].sort((left, right) => left.file.localeCompare(right.file)),
   boundary: 'Advisory time between recorded modules includes the time spent on overlapping imports. Unfinished modules retain older source-bound measurements or the scheduler estimate. Every module retains mandatory measurement under the same report deadline.' };
 const output = costPath(run);
-const updatedOwners = partitionMeasuredWorkloads(files, jobs.length, { group, costs: packet, readSource });
+const updatedGroup = nextCount === jobs.length ? group : `${group}-${nextCount}`;
+const updatedOwners = partitionMeasuredWorkloads(files, nextCount, { group: updatedGroup, costs: packet, readSource });
 const elapsed = owners => owners.map(shard => Math.round(shard.reduce((sum, file) => sum + (entries.get(file)?.milliseconds ?? 0), 0) / 1000));
 console.log(`Refreshed ${observed.size} of ${files.length} module timings. Previous owners ${elapsed(initialOwners).join(', ')} seconds. Updated owners ${elapsed(updatedOwners).join(', ')} seconds.`);
 if (mode === '--check') checkProjectData(output, packet);

@@ -41,8 +41,9 @@ test('linked report storage keeps every self-translation shard and exact-commit 
     ['js.yml', 'reports', 'report-assertions'],
   ]) {
     const jobs = workflowJobs(file);
-    assert.match(jobs.get(producer).header, /shard: \[1, 2, 3, 4, 5, 6, 7, 8\]/u);
-    assert.ok(jobs.get(producer).steps.some((step) => /--shard \$\{\{ matrix\.shard \}\}\/8/u.test(step.run)));
+    assert.match(jobs.get(producer).header, /timeout-minutes: 30/u);
+    assert.match(jobs.get(producer).header, /shard: \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12\]/u);
+    assert.ok(jobs.get(producer).steps.some((step) => /--shard \$\{\{ matrix\.shard \}\}\/12/u.test(step.run)));
     const validator = jobs.get(consumer);
     assert.match(validator.header, new RegExp(`needs: ${producer}`, 'u'));
     assert.ok(validator.steps.some((step) => /pattern: self-translation-report-\$\{\{ github\.sha \}\}-\*/u.test(step.text)));

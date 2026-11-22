@@ -14,11 +14,13 @@ const inputs=[
     '12f0f07a38e2d95ef60eaba218dde5f6d45c22fdbfed0234188a7f1131e896d4',
     '9a7bb59111b14608b029c592704c43fac2a708a18bfb2b8566fbe9c70d2282d2',
     '015805e387c1de0e687fa65c179cba9350d12c9f990d7aa8423bd4c78869489e',
+    '98657d6680b3115e3578d46b6027b44e4e775ad5d7117607c5b4522020c6b70e',
   ]],
   ['js/scripts/test-groups.mjs',mainPredecessor,[
     'eb3714069fc2701c0de60aaa7ecd211a192c6a1db40d8920f33a542dffed37fa',
     '417738dadaac55030c9c71ae61cf702d38c197815d9b4a4a59791a0fede8cf7e',
     '1983d9d2a309cf439eff2ae8b2c27c7b7ba9ac5669bcfcdb7813f826820c91a4',
+    'c9a37bb709f651fc322843362fdd694eed6e6594715e2601e79226418e15d3b3',
   ]],
   ['js/tests/issue-195-evidence-node-dependency.test.js',mainPredecessor,[
     '5c5ace4a4f3be5b60912ed5807655509aabe92ab74a160d15d6dcca17a657917',
@@ -34,6 +36,10 @@ const inputs=[
   ]],
   ['.github/workflows/js.yml',mainPredecessor,[
     '0b1be4489eb7608d18e68cbd1f05f7562aa427451128ba5015129d610bbd374c',
+    'cfa9aa626f7e92b76590fd860fabd8a552fa2e0df29ee0e7aef4560f4647726b',
+  ]],
+  ['.github/workflows/ci.yml','f1c7cb555e37b9ddf09c10f772b0adebf4f6e587',[
+    '3bc9784ef73d8e69cd693ce23884ff8d4454c7d8b9be8c98e4ebccccae331b3a',
   ]],
 ];
 
