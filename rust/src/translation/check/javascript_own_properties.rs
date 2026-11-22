@@ -1,6 +1,6 @@
 //! Actual source arguments/types into ordinary Boolean/value/error IR.
 use super::{
-    BOOL, BinaryOp, Checker, Env, Expr, FLOAT, Language, LitValue, Node, Result, SArrayItem,
+    BOOL, BinaryOp, Case, Checker, Env, Expr, FLOAT, Language, LitValue, Node, Pattern, Result, SArrayItem,
     STRING, Span, Type, UNIT, binary_node, plain_binary, text_lit, unsupported,
 };
 use crate::translation::ir::RecordEntry;
@@ -75,6 +75,41 @@ impl Checker {
         }
         if form == "empty" {
             return Ok(boolean(false));
+        }
+        if form == "nominal" {
+            let Type::Data { name } = &receiver.ty else {
+                unreachable!("the selected nominal type retains its owner")
+            };
+            let declaration = self.data_decl(name)?.clone();
+            let mut cases = Vec::new();
+            for ctor in declaration.ctors {
+                let mut body = equal(key.clone(), text_lit(STRING, "$"));
+                let mut binds = Vec::new();
+                for field in ctor.fields {
+                    let selected = equal(key.clone(), text_lit(STRING, field.name));
+                    if let Type::Option { element, .. } = &field.ty
+                        && field.optional
+                    {
+                        let name = self.fresh_name("ml_owned_constructor_field");
+                        let carrier = Expr::var(name.clone(), field.ty.clone());
+                        let present = Self::javascript_optional_presence(carrier, element, span)?;
+                        body = either(body, both(selected, present));
+                        binds.push(Some(name));
+                    } else {
+                        body = either(body, selected);
+                        binds.push(None);
+                    }
+                }
+                cases.push(Case {
+                    pattern: Pattern::Ctor {
+                        data: declaration.full_name.clone(),
+                        ctor: ctor.name,
+                        binds,
+                    },
+                    body,
+                });
+            }
+            return Ok(Expr::new(Node::Match { scrutinee: Box::new(receiver), cases }, BOOL));
         }
         if form != "indexed" {
             return Err(unsupported(

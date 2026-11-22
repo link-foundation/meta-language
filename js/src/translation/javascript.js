@@ -41,6 +41,7 @@ import { readCallableReferenceConstruct, readCallableReferenceObligation, readCa
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { readJavaScriptConstructorFieldBoundary } from './javascript-constructor-field-type-rules.js';
+import { javaScriptOptionalConstructorFieldType, readJavaScriptOptionalConstructorField } from './javascript-constructor-presence.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
@@ -503,6 +504,7 @@ class JavaScriptParser {
           const fields = [];
           while (!c.is('}')) {
             const key = c.identifier('object type');
+            const optional = key.value !== '$' && Boolean(c.eat('?'));
             c.expect(':', 'object type');
             if (key.value === '$') {
               const value = c.next();
@@ -518,7 +520,8 @@ class JavaScriptParser {
                 const separator = index > 0 && previous.kind !== 'punct' && token.kind !== 'punct' ? ' ' : '';
                 return separator + (token.kind === 'identifier' ? token.value : token.raw);
               }).join('');
-              fields.push({ name: key.value, type: this.type(typeText, range) });
+              const type = this.type(typeText, range);
+              fields.push({ name: key.value, type: optional ? javaScriptOptionalConstructorFieldType(type) : type, ...(optional && { optional: true }) });
               c.index = end;
             }
             if (!c.eat(',') && !c.eat(';')) break;
@@ -1878,7 +1881,7 @@ class JavaScriptParser {
     let rest = body;
     const direct = [];
     while (rest.k === 'let' && rest.value.k === 'field' && rest.value.object.k === 'name' && rest.value.object.path.length === 1
-      && rest.value.object.path[0] === subject && ctor.fields.some((field) => field.name === rest.value.field)
+      && rest.value.object.path[0] === subject && ctor.fields.some((field) => field.name === rest.value.field && !field.optional)
       && !binders.has(rest.value.field) && rest.name !== subject && !direct.includes(rest.name)) {
       binders.set(rest.value.field, rest.name);
       direct.push(rest.name);
@@ -1906,7 +1909,11 @@ class JavaScriptParser {
       }
       return binders.get(field);
     };
-    const substituted = substituteFields(body, subject, binderFor);
+    const substituted = substituteFields(body, subject, (field, span) => {
+      const binder = { k: 'name', path: [binderFor(field)], span };
+      return ctor.fields.find(candidate => candidate.name === field).optional
+        ? readJavaScriptOptionalConstructorField(binder, span) : binder;
+    });
     const args = ctor.fields.map((field) => (binders.has(field.name)
       ? { k: 'bindOrCtor', name: binders.get(field.name), span: test.span }
       : { k: 'wild', span: test.span }));
@@ -2815,7 +2822,7 @@ function substituteFields(node, subject, binderFor) {
   if (!node || typeof node !== 'object') return node;
   if (Array.isArray(node)) return node.map((item) => substituteFields(item, subject, binderFor));
   if (node.k === 'field' && node.object.k === 'name' && node.object.path.length === 1 && node.object.path[0] === subject) {
-    return { k: 'name', path: [binderFor(node.field)], span: node.span };
+    return binderFor(node.field, node.span);
   }
   if (node.k === 'let') {
     const plan = readJavaScriptFieldSubstitutionPlan(node.name, subject, node.value.k,

@@ -4,6 +4,8 @@ import {readJavaScriptNominalSpreadError,readJavaScriptNominalSpreadGuardArm} fr
 import {checkJavaScriptDataField} from './javascript-data-fields.js';
 import {coerce} from './check.js';
 import {typeError} from './diagnostics.js';
+import {constructJavaScriptOwnedConstructorField,javaScriptConstructorFieldValueType} from './javascript-constructor-presence.js';
+import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
 const present=Symbol('unchanged nominal spread absence guards');
 export function forgetJavaScriptNominalSpreadGuard(env,name){if(env.has(present))env.set(present,env.get(present).filter(row=>row.name!==name));}
 export function readJavaScriptNominalSpreadBranches(condition,env){
@@ -29,7 +31,7 @@ export function checkJavaScriptNominalSpread(checker,node,env,path,expected){
  const values=[],bindings=[],fields=new Map();
  for(const entry of node.entries){
   const declared=!entry.spread?ctor?.fields.find(field=>field.name===entry.name):undefined;
-  const value=checker.expr(entry.value,env,path,declared?.type);values.push(entry.spread?projectJavaScriptGuardedOptional(entry.value,value,env):value);
+  const value=checker.expr(entry.value,env,path,declared&&javaScriptConstructorFieldValueType(declared));values.push(entry.spread?projectJavaScriptGuardedOptional(entry.value,value,env):value);
  }
  const error=readJavaScriptNominalSpreadError(checker.language,constructors.length,ctor?.fields.map(field=>field.name)??[],
   node.entries.map(entry=>entry.spread?'spread':'field'),node.entries.map(entry=>entry.spread?'':entry.name),
@@ -40,8 +42,20 @@ export function checkJavaScriptNominalSpread(checker,node,env,path,expected){
   const value=values[index],name=checker.freshName(entry.spread?'ml_nominal_spread':'ml_nominal_override');bindings.push({name,value});
   const variable={k:'var',name,type:value.type};
   if(entry.spread){
-   for(const field of ctor.fields){const name=checker.freshName('ml_nominal_field'),value=checkJavaScriptDataField(checker,variable,field.name,node.span);bindings.push({name,value});fields.set(field.name,{k:'var',name,type:field.type});}
-  }else fields.set(entry.name,coerce(variable,ctor.fields.find(field=>field.name===entry.name).type,checker.language,node.span));
+   for(const field of ctor.fields){
+    const name=checker.freshName('ml_nominal_field');
+    const value=checkJavaScriptDataField(checker,variable,field.name,node.span,field.optional===true);
+    bindings.push({name,value});
+    const current={k:'var',name,type:field.type},previous=fields.get(field.name);
+    fields.set(field.name,field.optional&&previous
+      ?{k:'if',cond:constructJavaScriptOptionalPresence(current,field.type.element,node.span),then:current,else:previous,type:field.type}
+      :current);
+   }
+  }else{
+   const field=ctor.fields.find(field=>field.name===entry.name);
+   const checked=coerce(variable,javaScriptConstructorFieldValueType(field),checker.language,node.span);
+   fields.set(entry.name,field.optional?constructJavaScriptOwnedConstructorField(checked,field.type):checked);
+  }
  }
  let body={k:'ctor',data:declaration.fullName,ctor:ctor.name,args:ctor.fields.map(field=>fields.get(field.name)),type:selected};
  for(const binding of bindings.toReversed())body={k:'let',name:binding.name,value:binding.value,body,type:selected};

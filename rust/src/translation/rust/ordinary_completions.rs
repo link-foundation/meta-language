@@ -657,6 +657,7 @@ impl RustParser {
                 SCtor {
                     name: "FunctionResult".to_owned(),
                     fields: vec![SField {
+                        optional: false,
                         name: Some("result".to_owned()),
                         ty: context.ret.clone(),
                         rocq_type: None,

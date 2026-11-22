@@ -19,6 +19,22 @@ function membership(checker,receiver,key,form,span){
   return receiver.type.fields.reduce((result,field)=>either(result,equal(key,literal(STRING,field.name))),literal(BOOL,false));
  }
  if(form==='empty')return literal(BOOL,false);
+ if(form==='nominal'){
+  const declaration=checker.items.get(receiver.type.name);
+  if(declaration?.k!=='data')throw unsupported('own property membership','the actual nominal declaration is unavailable',span);
+  const cases=declaration.ctors.map(ctor=>{
+   let body=equal(key,literal(STRING,'$'));
+   const binds=ctor.fields.map(field=>{
+    const selected=equal(key,literal(STRING,field.name));
+    const name=field.optional?checker.freshName('ml_owned_constructor_field'):null;
+    const owned=name?both(selected,constructJavaScriptOptionalPresence(variable(name,field.type),field.type.element,span)):selected;
+    body=either(body,owned);
+    return name;
+   });
+   return {pattern:{k:'ctor',data:declaration.fullName,ctor:ctor.name,binds},body};
+  });
+  return {k:'match',scrutinee:receiver,cases,type:BOOL};
+ }
  if(form!=='indexed')throw unsupported('own property membership','the actual callable, nominal value, proxy or exotic object needs its complete own-property protocol',span);
  const name=checker.freshName('ml_own_property_index'),index=variable(name,FLOAT);
  const number=materializeJavaScriptNumberConversion(checker,key,'convertJavaScriptNumber');

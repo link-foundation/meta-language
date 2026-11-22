@@ -7,6 +7,7 @@ export function readJavaScriptOwnPropertyReceiverForm(kind,element){
  if(kind==='unit'||kind==='option'&&element==='unit')return 'absent';
  if(kind==='option')return 'guarded';
  if(kind==='record')return 'record';
+ if(kind==='data')return 'nominal';
  if(kind==='array'||kind==='tuple'||kind==='string')return 'indexed';
  if(kind==='bool'||kind==='float'||kind==='int'||kind==='nat'||kind==='map'||kind==='set')return 'empty';
  return 'refuse';

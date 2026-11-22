@@ -21,6 +21,7 @@ impl RustParser {
             names.push(field.value.clone());
             let ty = self.parse_type()?;
             fields.push(SField {
+                optional: false,
                 name: Some(field.value),
                 ty,
                 rocq_type: None,

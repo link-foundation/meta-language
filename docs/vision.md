@@ -1374,6 +1374,13 @@ undefined absence through surface, checked and linked representations.
 Documentation defaults do not supply runtime initializers. Provided arguments
 evaluate once in source order before applicable lazy defaults, which retain
 their callee scope and initializer order through source-free rechecking.
+Optional fields of a tagged JavaScript constructor retain an independent
+own-property presence carrier in the checked datatype. Its empty state
+represents omission. A present one-element product can hold the ordinary
+JavaScript undefined, null, or a value according to the field's type.
+Property reads project the value, and membership and spread consult the
+outer carrier. Both typed Links transports retain the field declaration and
+the complete carrier.
 Known record, tuple, Map and Set bindings have JavaScript `typeof` tag `object`.
 The evaluated-query extension captures calls, field reads, constructed values
 and other represented operands before yielding their statically known tag.

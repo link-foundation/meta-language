@@ -297,6 +297,7 @@ impl Normaliser<'_> {
                 Ctor {
                     name: "succ".to_owned(),
                     fields: vec![Field {
+                        optional: false,
                         name: "pred".to_owned(),
                         ty: ty.clone(),
                     }],

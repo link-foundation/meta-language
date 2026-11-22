@@ -22,6 +22,9 @@ use super::ir::{
     Program, Semantics, rename_function, rename_main, tail_loop,
 };
 use super::lexer::json_string;
+use super::javascript_constructor_field_type_rules::{
+    render_java_script_optional_constructor_binding, render_java_script_optional_constructor_property,
+};
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{Type, fixed_bounds};
 
@@ -78,7 +81,12 @@ fn ctor_object(ctor: &Ctor, args: &[String], language: Language, explicit_frozen
         .enumerate()
         .map(|(index, field)| {
             let arg = args.get(index).map_or("undefined", String::as_str);
-            format!("[{}]: {arg}", field_key(&field.name))
+            let key = field_key(&field.name);
+            if field.optional {
+                render_java_script_optional_constructor_property(&key, arg)
+            } else {
+                format!("[{key}]: {arg}")
+            }
         })
         .collect();
     let fields = if fields.is_empty() {
@@ -622,10 +630,14 @@ impl<'p> JavaScriptEmitter<'p> {
                 .enumerate()
                 .filter_map(|(index, bind)| {
                     bind.as_ref().map(|bind| {
-                        format!(
-                            "const {bind} = {subject}[{}];",
-                            field_key(&ctor.fields[index].name)
-                        )
+                        let field = &ctor.fields[index];
+                        let key = field_key(&field.name);
+                        let value = if field.optional {
+                            render_java_script_optional_constructor_binding(&subject, &key)
+                        } else {
+                            format!("{subject}[{key}]")
+                        };
+                        format!("const {bind} = {value};")
                     })
                 })
                 .collect();

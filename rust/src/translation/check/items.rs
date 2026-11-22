@@ -182,12 +182,17 @@ impl Checker {
             for ctor in &item.ctors {
                 let mut fields = Vec::new();
                 for (index, field) in ctor.fields.iter().enumerate() {
+                    let ty = self.resolve_type(Some(&field.ty), path, item.span)?;
+                    if field.optional && crate::translation::javascript_constructor_presence::field_value_type(&ty).is_none() {
+                        return Err(type_error("an optional constructor field requires its complete own-property presence carrier", item.span));
+                    }
                     fields.push(Field {
+                        optional: field.optional,
                         name: field
                             .name
                             .clone()
                             .unwrap_or_else(|| format!("field{index}")),
-                        ty: self.resolve_type(Some(&field.ty), path, item.span)?,
+                        ty,
                     });
                 }
                 ctors.push(Ctor {

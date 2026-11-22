@@ -56,6 +56,7 @@ pub(super) fn project_data(data: &DataDecl, program: &Program) -> Result<SItem> 
                         .iter()
                         .map(|field| -> Result<SField> {
                             Ok(SField {
+                                optional: field.optional,
                                 name: Some(field.name.clone()),
                                 ty: project_type(&field.ty, program)?,
                                 rocq_type: None,

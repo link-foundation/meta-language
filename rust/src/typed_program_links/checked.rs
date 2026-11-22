@@ -301,6 +301,13 @@ pub(super) fn validate(program: &Program) -> Result<()> {
             && data_declarations.insert(data.full_name.as_str(),data).is_some()
         { return Err(error("the linked program contains duplicate datatype declarations")); }
     }
+    for data in data_declarations.values() {
+        if data.ctors.iter().flat_map(|ctor| &ctor.fields).any(|field| {
+            field.optional && crate::translation::javascript_constructor_presence::field_value_type(&field.ty).is_none()
+        }) {
+            return Err(error("a linked optional constructor field needs its separate own-property presence carrier"));
+        }
+    }
     // A selected runtime interpretation cannot hide owned datatype facets.
     for declaration in &program.declarations {
         if let Decl::Data(data) = declaration

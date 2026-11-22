@@ -230,6 +230,7 @@ impl RocqParser {
             let mut fields = Vec::new();
             while self.is("(") {
                 fields.extend(self.binder_group()?.into_iter().map(|binder| SField {
+                    optional: false,
                     name: Some(binder.name),
                     ty: binder.ty.unwrap_or(UNIT),
                     rocq_type: binder.rocq_type,
@@ -249,6 +250,7 @@ impl RocqParser {
                     ));
                 }
                 fields.extend(types.into_iter().map(|ty| SField {
+                    optional: false,
                     name: None,
                     ty,
                     rocq_type: None,

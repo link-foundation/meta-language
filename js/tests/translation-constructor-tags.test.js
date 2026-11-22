@@ -1,5 +1,6 @@
 import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
@@ -68,6 +69,29 @@ test('constructor descriptors retain their declared source model and explicit im
   for (const target of ['Rust', 'Lean', 'Rocq']) assert.match(translateProgram(frozenSource, 'JavaScript', target).diagnostic?.message ?? '', /^explicit data object freeze:/u, target);
 });
 
+
+test('optional tagged fields preserve omission, own undefined, and spread precedence through typed archives', async () => {
+  const source = readFileSync(new URL('../../parity/fixtures/translation-optional-constructor-fields.js', import.meta.url), 'utf8');
+  const { encodeTypedProgramLinks, decodeTypedProgramLinks } = await import('../src/typed-program-links.js');
+  const { recheckLinkedTypedProgram } = await import('../src/typed-program-checked-projection.js');
+  const { LinkNetwork } = await import('../src/network.js');
+  const { encodeLinkNetworkBinary, decodeLinkNetworkBinary } = await import('../src/link-network-binary.js');
+  const expected = ['false 0', 'true 0', 'true 7', 'true 7', 'true 0'];
+  const observe = text => {
+    const output = [];
+    runInNewContext(text, { console: { log: (...values) => output.push(values.join(' ')) } }, { timeout: 1000 });
+    return output;
+  };
+  assert.deepEqual(observe(source), expected);
+  const checked = checkProgram(parseJavaScript(source));
+  assert.deepEqual(observe(emitJavaScript(checked).text), expected);
+  const saved = encodeTypedProgramLinks(checked);
+  for (const network of [LinkNetwork.fromLino(saved.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(saved.network))]) {
+    const restored = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, saved.root), { wholeProgram: true });
+    assert.equal(restored.declarations.get('Entry').ctors[0].fields[0].optional, true);
+    assert.deepEqual(observe(emitJavaScript(restored).text), expected);
+  }
+});
 
 test('terminal tag guard sequences preserve constructor fields scope and ordered effects through both semantic archives', async () => {
   const { encodeTypedProgramLinks, decodeTypedProgramLinks } = await import('../src/typed-program-links.js');

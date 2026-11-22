@@ -545,6 +545,9 @@ pub struct SProof {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SField {
+    /// Whether a JavaScript property can be omitted independently of its value.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub optional: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(rename = "type")]

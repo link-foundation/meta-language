@@ -492,6 +492,7 @@ impl RustParser {
             if self.cursor.eat("(").is_some() {
                 while !self.cursor.is(")") {
                     fields.push(SField {
+                        optional: false,
                         name: None,
                         ty: self.parse_type()?,
                         rocq_type: None,

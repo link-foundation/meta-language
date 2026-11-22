@@ -1,4 +1,5 @@
 import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
+import { renderJavaScriptOptionalConstructorBinding, renderJavaScriptOptionalConstructorProperty } from './javascript-constructor-field-type-rules.js';
 import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
 import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
@@ -367,7 +368,12 @@ class JavaScriptEmitter {
   }
 
   ctorObject(entry, ctor, args, explicitFrozen = false) {
-    const fields = ctor.fields.map((field, index) => `[${fieldKey(field.name)}]: ${args[index]}`);
+    const fields = ctor.fields.map((field, index) => {
+      const key = fieldKey(field.name);
+      return field.optional
+        ? renderJavaScriptOptionalConstructorProperty(key, args[index])
+        : `[${key}]: ${args[index]}`;
+    });
     const object = `{ $: ${JSON.stringify(ctor.name)}${fields.length ? `, ${fields.join(', ')}` : ''} }`;
     return requireDataObjectFreeze(this.program.sourceLanguage, explicitFrozen) ? `Object.freeze(${object})` : `(${object})`;
   }
@@ -468,7 +474,12 @@ class JavaScriptEmitter {
       if (kase.pattern.k !== 'ctor') continue;
       const ctor = entry.ctors.find((candidate) => candidate.name === kase.pattern.ctor);
       const binds = kase.pattern.binds
-        .map((bind, index) => (bind ? `const ${bind} = ${subject}[${fieldKey(ctor.fields[index].name)}];` : null))
+        .map((bind, index) => {
+          if (!bind) return null;
+          const field = ctor.fields[index], key = fieldKey(field.name);
+          const value = field.optional ? renderJavaScriptOptionalConstructorBinding(subject, key) : `${subject}[${key}]`;
+          return `const ${bind} = ${value};`;
+        })
         .filter(Boolean);
       lines.push(`  case ${JSON.stringify(ctor.name)}: {`);
       lines.push(indent([...binds, ...this.statements(kase.body)].join('\n'), 2));

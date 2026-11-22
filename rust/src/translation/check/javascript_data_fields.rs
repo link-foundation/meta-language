@@ -5,6 +5,15 @@ use super::{
     unsupported,
 };
 use crate::translation::javascript_data_field_rules as rules;
+use crate::translation::javascript_constructor_presence::{field_value_type, read_value};
+
+fn value_type(field: &crate::translation::ir::Field) -> &Type {
+    if field.optional {
+        field_value_type(&field.ty).expect("checked field type")
+    } else {
+        &field.ty
+    }
+}
 
 impl Checker {
     #[allow(clippy::cast_precision_loss)] // actual in-memory field coordinates
@@ -13,6 +22,16 @@ impl Checker {
         object: &Expr,
         field: &str,
         span: Option<Span>,
+    ) -> Result<Option<Expr>> {
+        self.javascript_data_field_projection(object, field, span, false)
+    }
+
+    pub(super) fn javascript_data_field_projection(
+        &mut self,
+        object: &Expr,
+        field: &str,
+        span: Option<Span>,
+        preserve_presence: bool,
     ) -> Result<Option<Expr>> {
         let Type::Data { name } = &object.ty else {
             return Ok(None);
@@ -39,12 +58,17 @@ impl Checker {
             .iter()
             .zip(&positions)
             .map(|(ctor, position)| {
-                position.map_or_else(String::new, |position| ctor.fields[position].ty.key())
+                position.map_or_else(String::new, |position| value_type(&ctor.fields[position]).key())
             })
             .collect::<Vec<_>>();
         let inherited=crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_field_form(
             &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text("record"),false,false,
             &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text(field)).to_string()=="prototype";
+        if !preserve_presence && inherited && entry.ctors.iter().zip(&positions).any(|(ctor, position)| {
+            position.is_some_and(|position| ctor.fields[position].optional)
+        }) {
+            return Err(unsupported("datatype property", "an absent own field can expose an inherited property", span));
+        }
         let (error, mode, optional) = rules::read_java_script_data_field_plan(
             "JavaScript",
             field,
@@ -76,7 +100,10 @@ impl Checker {
             .iter()
             .enumerate()
             .find_map(|(index, position)| {
-                position.map(|position| entry.ctors[index].fields[position].ty.clone())
+                position.map(|position| {
+                    let field = &entry.ctors[index].fields[position];
+                    if preserve_presence { field.ty.clone() } else { value_type(field).clone() }
+                })
             })
             .unwrap_or(UNIT);
         let ty = if mode == "tag" {
@@ -109,10 +136,12 @@ impl Checker {
             let value = if mode == "tag" {
                 Expr::lit(STRING, LitValue::Text(ctor.name.clone()))
             } else if let Some(position) = position {
-                Expr::var(
+                let field = &ctor.fields[position];
+                let value = Expr::var(
                     binding.expect("the selected actual field has its binder"),
-                    ctor.fields[position].ty.clone(),
-                )
+                    field.ty.clone(),
+                );
+                if field.optional && !preserve_presence { read_value(value) } else { value }
             } else {
                 Expr::new(
                     Node::None {

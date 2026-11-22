@@ -235,6 +235,7 @@ impl Alternative {
 /// The field of a generated constructor, whose type inference fills in.
 fn untyped(name: &str) -> SField {
     SField {
+        optional: false,
         name: Some(name.to_owned()),
         ty: Type::Literal,
         rocq_type: None,

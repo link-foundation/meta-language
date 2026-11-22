@@ -253,6 +253,7 @@ impl Checker {
                 Ctor {
                     name: "succ".to_owned(),
                     fields: vec![Field {
+                        optional: false,
                         name: String::new(),
                         ty: column.ty.clone(),
                     }],

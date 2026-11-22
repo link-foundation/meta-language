@@ -304,10 +304,12 @@ impl Threader<'_> {
             name: format!("{name}_mk"),
             fields: vec![
                 Field {
+                    optional: false,
                     name: "output".to_owned(),
                     ty: Type::Output,
                 },
                 Field {
+                    optional: false,
                     name: "value".to_owned(),
                     ty,
                 },
@@ -318,10 +320,12 @@ impl Threader<'_> {
                 name: format!("{name}_abort"),
                 fields: vec![
                     Field {
+                        optional: false,
                         name: "output".to_owned(),
                         ty: Type::Output,
                     },
                     Field {
+                        optional: false,
                         name: "message".to_owned(),
                         ty: STRING,
                     },
@@ -331,10 +335,12 @@ impl Threader<'_> {
         if self.source_exceptions {
             ctors[1].fields.extend([
                 Field {
+                    optional: false,
                     name: "className".to_owned(),
                     ty: STRING,
                 },
                 Field {
+                    optional: false,
                     name: "messagePresent".to_owned(),
                     ty: BOOL,
                 },

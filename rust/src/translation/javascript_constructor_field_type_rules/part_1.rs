@@ -238,6 +238,28 @@ pub fn read_java_script_constructor_field_boundary(punctuation: &[String], start
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_optional_constructor_property(key: &str, carrier: &str) -> String {
+    format!(
+        "...((value) => value === undefined ? {{}} : {{[{}]: value[0]}})({})",
+        key.to_owned(),
+        carrier.to_owned()
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_optional_constructor_binding(subject: &str, key: &str) -> String {
+    format!(
+        "(Object.hasOwn({}, {}) ? [{}[{}]] : undefined)",
+        subject.to_owned(),
+        key.to_owned(),
+        subject.to_owned(),
+        key.to_owned()
+    )
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlTemporaryReadJavaScriptConstructorFieldBoundaryLoop1Result {
     MlTemporaryReadJavaScriptConstructorFieldBoundaryLoop1Done,

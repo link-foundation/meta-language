@@ -131,6 +131,7 @@ impl JavaScriptParser {
             let mut fields = Vec::new();
             while !c.is("}") {
                 let key = c.identifier(Some("object type"))?;
+                let optional = key.value != "$" && c.eat("?").is_some();
                 c.expect(":", Some("object type"))?;
                 if key.value == "$" {
                     let value = c.advance();
@@ -174,8 +175,9 @@ impl JavaScriptParser {
                     }
                     let ty = self.ty(&field_type, range)?;
                     fields.push(SField {
+                        optional,
                         name: Some(key.value),
-                        ty,
+                        ty: if optional { crate::translation::javascript_constructor_presence::field_type(ty) } else { ty },
                         rocq_type: None,
                         span: None,
                     });

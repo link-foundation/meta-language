@@ -3,6 +3,7 @@ use super::{
     Checker, Env, Expr, Language, Node, Result, SExpr, SNode, Span, Type, UnaryOp, type_error,
 };
 use crate::translation::javascript_nominal_spread_rules as rules;
+use crate::translation::javascript_constructor_presence::{field_value_type, own_value};
 use crate::translation::surface::SRecordEntry;
 
 impl Checker {
@@ -116,7 +117,7 @@ impl Checker {
                         .iter()
                         .find(|field| Some(field.name.as_str()) == entry.name.as_deref())
                 })
-                .map(|field| &field.ty)
+                .map(|field| if field.optional { field_value_type(&field.ty).expect("checked field presence") } else { &field.ty })
             };
             let value = self.expr(&entry.value, env, path, declared, false)?;
             values.push(if entry.spread {
@@ -180,7 +181,7 @@ impl Checker {
         }
         let ctor = ctor.expect("the shared rule selects one actual constructor");
         let mut bindings = Vec::new();
-        let mut selected_fields = std::collections::HashMap::new();
+        let mut selected_fields = std::collections::HashMap::<String, Expr>::new();
         for (entry, value) in entries.iter().zip(values) {
             let name = self.fresh_name(if entry.spread {
                 "ml_nominal_spread"
@@ -193,23 +194,36 @@ impl Checker {
                 for field in &ctor.fields {
                     let name = self.fresh_name("ml_nominal_field");
                     let value = self
-                        .javascript_data_field(&variable, &field.name, span)?
+                        .javascript_data_field_projection(&variable, &field.name, span, field.optional)?
                         .expect("actual nominal field projection");
                     bindings.push((name.clone(), value));
-                    selected_fields.insert(field.name.clone(), Expr::var(name, field.ty.clone()));
+                    let current = Expr::var(name, field.ty.clone());
+                    let value = match (selected_fields.remove(&field.name), &field.ty) {
+                        (Some(previous), Type::Option { element, .. }) if field.optional => {
+                            let condition = Self::javascript_optional_presence(current.clone(), element, span)?;
+                            Expr::new(Node::If {
+                                cond: Box::new(condition),
+                                then: Box::new(current),
+                                otherwise: Box::new(previous),
+                            }, field.ty.clone())
+                        }
+                        _ => current,
+                    };
+                    selected_fields.insert(field.name.clone(), value);
                 }
             } else {
                 let field = entry
                     .name
                     .as_deref()
                     .expect("a checked explicit field has its name");
-                let expected = &ctor
+                let declaration = ctor
                     .fields
                     .iter()
                     .find(|item| item.name == field)
-                    .expect("the shared rule selects a declared field")
-                    .ty;
-                selected_fields.insert(field.to_owned(), self.coerce(variable, expected, span)?);
+                    .expect("the shared rule selects a declared field");
+                let expected = if declaration.optional { field_value_type(&declaration.ty).expect("checked field presence") } else { &declaration.ty };
+                let value = self.coerce(variable, expected, span)?;
+                selected_fields.insert(field.to_owned(), if declaration.optional { own_value(value, &declaration.ty) } else { value });
             }
         }
         let args = ctor

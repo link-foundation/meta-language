@@ -543,15 +543,7 @@ impl Checker {
                         Some(definition.span),
                     ));
                 }
-                let mut value = self.ctor_object(tag, fields, span, env, path, expected)?;
-                if let Node::Ctor {
-                    frozen: checked_frozen,
-                    ..
-                } = &mut value.node
-                {
-                    *checked_frozen = *frozen;
-                }
-                Ok(value)
+                self.ctor_object(tag, fields, span, env, path, expected, *frozen)
             }
             SNode::Print { expr, style, body } => {
                 let text = self.show(expr, env, path, *style)?;

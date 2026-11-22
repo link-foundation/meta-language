@@ -508,6 +508,7 @@ impl Checker {
         env: &Env,
         path: &[String],
         expected: Option<&Type>,
+        frozen: bool,
     ) -> Result<Expr> {
         let mut candidates = Vec::new();
         for name in &self.order {
@@ -539,7 +540,7 @@ impl Checker {
             .iter()
             .map(|field| field.name.as_str())
             .collect();
-        if fields.len() != expected_names.len()
+        if ctor.fields.iter().any(|field| !field.optional && !fields.iter().any(|(name, _)| name.as_str() == field.name))
             || fields
                 .iter()
                 .any(|(name, _)| !expected_names.contains(&name.as_str()))
@@ -548,6 +549,37 @@ impl Checker {
                 format!("{tag} expects fields {}", expected_names.join(", ")),
                 span,
             ));
+        }
+        if ctor.fields.iter().any(|field| field.optional) {
+            let mut bindings = Vec::new();
+            for (name, source) in fields {
+                let field = ctor.fields.iter().find(|field| field.name == name.as_str()).expect("checked field name");
+                let ty = if field.optional {
+                    crate::translation::javascript_constructor_presence::field_value_type(&field.ty).expect("checked field type")
+                } else {
+                    &field.ty
+                };
+                let value = self.expr(source, env, path, Some(ty), false)?;
+                let value = self.coerce(value, ty, source.span.or(span))?;
+                bindings.push((name, self.fresh_name("ml_constructor_field"), value));
+            }
+            let args = ctor.fields.iter().map(|field| {
+                let Some((_, name, value)) = bindings.iter().rev().find(|(name, _, _)| name.as_str() == field.name) else {
+                    return Expr::new(Node::None { absence: "undefined".to_owned() }, field.ty.clone());
+                };
+                let variable = Expr::var(name.clone(), value.ty.clone());
+                if field.optional {
+                    crate::translation::javascript_constructor_presence::own_value(variable, &field.ty)
+                } else {
+                    variable
+                }
+            }).collect();
+            let ty = data(&data_name);
+            let mut body = Expr::new(Node::Ctor { data: data_name, ctor: ctor.name, args, frozen }, ty.clone());
+            for (_, name, value) in bindings.into_iter().rev() {
+                body = Expr::new(Node::Let { name, value: Box::new(value), body: Box::new(body) }, ty.clone());
+            }
+            return Ok(body);
         }
         let args: Vec<SExpr> = expected_names
             .iter()
@@ -559,7 +591,11 @@ impl Checker {
                     .map(|(_, value)| value.clone())
             })
             .collect();
-        self.construct(&data_name, &ctor, &args, env, path, span)
+        let mut value = self.construct(&data_name, &ctor, &args, env, path, span)?;
+        if let Node::Ctor { frozen: retained, .. } = &mut value.node {
+            *retained = frozen;
+        }
+        Ok(value)
     }
 }
 

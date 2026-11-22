@@ -12,6 +12,7 @@ import {checkRustFiniteLoopStateTransform} from './translation/rust-source-state
 import {checkJavaScriptClassOwners} from './translation/javascript-class-owners.js';
 import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
+import { isJavaScriptOptionalConstructorFieldType } from './translation/javascript-constructor-presence.js';
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
@@ -172,6 +173,9 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         const fields = new Set();
         for (const field of constructor.fields) {
           if (!field || typeof field.name !== 'string' || !field.name || fields.has(field.name)) throw new TypeError('a linked constructor has malformed or duplicate fields');
+          if (Object.hasOwn(field, 'optional') && (field.optional !== true || !isJavaScriptOptionalConstructorFieldType(field.type))) {
+            throw new TypeError('a linked optional constructor field needs its separate own-property presence carrier');
+          }
           fields.add(field.name); type(field.type);
         }
       }

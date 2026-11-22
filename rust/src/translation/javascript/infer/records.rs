@@ -319,7 +319,12 @@ impl Inference {
                             .enumerate()
                             .find(|(_, field)| field.name.as_deref() == entry.name.as_deref())
                     });
-                    let declared = field.map(|(index, _)| {
+                    let declared = field.map(|(index, field)| {
+                        if field.optional {
+                            let value = crate::translation::javascript_constructor_presence::field_value_type(&field.ty)
+                                .expect("parsed optional field presence").clone();
+                            return self.declared(Some(&value));
+                        }
                         self.field(
                             &owner,
                             &ctor.expect("actual declared constructor").name,

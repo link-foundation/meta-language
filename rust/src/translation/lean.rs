@@ -453,6 +453,7 @@ impl<'a> LeanParser<'a> {
             let mut fields = Vec::new();
             while self.cursor.is("(") {
                 fields.extend(self.binder_group()?.into_iter().map(|(name, ty)| SField {
+                    optional: false,
                     name: Some(name),
                     ty,
                     rocq_type: None,
@@ -474,6 +475,7 @@ impl<'a> LeanParser<'a> {
                     ));
                 }
                 fields.extend(types.into_iter().map(|ty| SField {
+                    optional: false,
                     name: None,
                     ty,
                     rocq_type: None,

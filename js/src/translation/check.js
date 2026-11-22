@@ -35,6 +35,7 @@ import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
 import {checkJavaScriptDataField} from './javascript-data-fields.js';
+import {constructJavaScriptOwnedConstructorField,isJavaScriptOptionalConstructorFieldType,javaScriptConstructorFieldValueType} from './javascript-constructor-presence.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {forgetJavaScriptOwnPropertyGuard,readJavaScriptOwnPropertyBranchEnvironments,checkJavaScriptGuardedRecordIndex,createJavaScriptOwnKeyCallbackEnvironment,installJavaScriptOwnKeyCallbackBindings} from './javascript-guarded-record-indices.js';
@@ -369,10 +370,13 @@ class Checker {
       if (item.k !== 'data') return;
       entry.ctors = item.ctors.map((ctor) => ({
         name: ctor.name,
-        fields: ctor.fields.map((field, index) => ({
-          name: field.name ?? `field${index}`,
-          type: this.resolveType(field.type, itemPath, item.span),
-        })),
+        fields: ctor.fields.map((field, index) => {
+          const type = this.resolveType(field.type, itemPath, item.span);
+          if (field.optional !== undefined && (field.optional !== true || !isJavaScriptOptionalConstructorFieldType(type))) {
+            throw typeError('an optional constructor field requires its complete own-property presence carrier', item.span);
+          }
+          return { name: field.name ?? `field${index}`, type, ...(field.optional && { optional: true }) };
+        }),
       }));
       if('sourceFieldSignatures' in item){
         checkRustDataTypeFieldSignatureContainers(item);
@@ -1831,12 +1835,31 @@ class Checker {
     const [entry, ctor] = candidates[0];
     const names = Object.keys(node.fields);
     const expectedNames = ctor.fields.map((field) => field.name);
-    if (names.length !== expectedNames.length || names.some((name) => !expectedNames.includes(name))) {
+    if (ctor.fields.some(field => !field.optional && !Object.hasOwn(node.fields, field.name))
+      || names.some((name) => !expectedNames.includes(name))) {
       throw typeError(`${node.tag} expects fields ${expectedNames.join(', ')}`, node.span);
     }
-    const value = this.construct(entry, ctor, expectedNames.map((name) => node.fields[name]), env, path, node.span);
     if (Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw typeError('constructor immutability must be Boolean', node.span);
-    return node.frozen ? { ...value, frozen: true } : value;
+    if (!ctor.fields.some(field => field.optional)) {
+      const value = this.construct(entry, ctor, expectedNames.map(name => node.fields[name]), env, path, node.span);
+      return node.frozen ? { ...value, frozen: true } : value;
+    }
+    const bindings = names.map(name => {
+      const field = ctor.fields[expectedNames.indexOf(name)], source = node.fields[name];
+      const type = javaScriptConstructorFieldValueType(field);
+      const value = coerce(this.expr(source, env, path, type), type, this.language, source.span ?? node.span);
+      return { field, name: this.freshName('ml_constructor_field'), value };
+    });
+    const args = ctor.fields.map(field => {
+      const binding = bindings.find(binding => binding.field === field);
+      if (!binding) return { k: 'none', absence: 'undefined', type: field.type };
+      const variable = { k: 'var', name: binding.name, type: binding.value.type };
+      if (!field.optional) return variable;
+      return constructJavaScriptOwnedConstructorField(variable, field.type);
+    });
+    const type = data(entry.fullName);
+    const value = { k: 'ctor', data: entry.fullName, ctor: ctor.name, args, type, ...(node.frozen && { frozen: true }) };
+    return bindings.reduceRight((body, binding) => ({ k: 'let', name: binding.name, value: binding.value, body, type }), value);
   }
 
   /**

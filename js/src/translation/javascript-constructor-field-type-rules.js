@@ -24,3 +24,13 @@ export function readJavaScriptConstructorFieldBoundary(punctuation, start) {
   }
   return -1;
 }
+
+/** @param {string} key @param {string} carrier @returns {string} */
+export function renderJavaScriptOptionalConstructorProperty(key, carrier) {
+  return '...((value) => value === undefined ? {} : {[' + key + ']: value[0]})(' + carrier + ')';
+}
+
+/** @param {string} subject @param {string} key @returns {string} */
+export function renderJavaScriptOptionalConstructorBinding(subject, key) {
+  return '(Object.hasOwn(' + subject + ', ' + key + ') ? [' + subject + '[' + key + ']] : undefined)';
+}

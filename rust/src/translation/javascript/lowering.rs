@@ -661,7 +661,7 @@ pub(super) fn tag_row(
             break;
         };
         if object.simple_name() != Some(subject)
-            || !has_field(field)
+            || !ctor.fields.iter().any(|candidate| !candidate.optional && candidate.name.as_deref() == Some(field))
             || binders.iter().any(|(bound, _)| bound == field)
             || name == subject
             || direct.contains(&name.as_str())
@@ -684,7 +684,7 @@ pub(super) fn tag_row(
     for (_, name) in &binders {
         used.insert(name.clone());
     }
-    let mut binder_for = |field: &str| -> Result<String> {
+    let mut binder_for = |field: &str| -> Result<(String, bool)> {
         if !has_field(field) {
             return Err(type_error(
                 format!(
@@ -694,8 +694,9 @@ pub(super) fn tag_row(
                 Some(place),
             ));
         }
+        let optional = ctor.fields.iter().any(|candidate| candidate.optional && candidate.name.as_deref() == Some(field));
         if let Some((_, name)) = binders.iter().find(|(bound, _)| bound == field) {
-            return Ok(name.clone());
+            return Ok((name.clone(), optional));
         }
         let mut name = if used.contains(field) || field == subject {
             format!("{subject}_{field}")
@@ -709,7 +710,7 @@ pub(super) fn tag_row(
         }
         used.insert(name.clone());
         binders.push((field.to_owned(), name.clone()));
-        Ok(name)
+        Ok((name, optional))
     };
     substitute_fields(&mut body, subject, &mut binder_for)?;
     let args = ctor
@@ -814,13 +815,18 @@ pub(super) fn reads_fields(expr: &SExpr, subject: &str) -> bool {
 pub(super) fn substitute_fields(
     expr: &mut SExpr,
     subject: &str,
-    binder_for: &mut dyn FnMut(&str) -> Result<String>,
+    binder_for: &mut dyn FnMut(&str) -> Result<(String, bool)>,
 ) -> Result<()> {
     if let SNode::Field { object, field } = &expr.node
         && object.simple_name() == Some(subject)
     {
-        let name = binder_for(field)?;
-        expr.node = SNode::Name { path: vec![name] };
+        let (name, optional) = binder_for(field)?;
+        let binding = SExpr::new(SNode::Name { path: vec![name] }, expr.span);
+        *expr = if optional {
+            crate::translation::javascript_constructor_presence::surface_projection(binding, expr.span)
+        } else {
+            binding
+        };
         return Ok(());
     }
     match &mut expr.node {

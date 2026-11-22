@@ -538,6 +538,8 @@ pub fn read_java_script_own_property_receiver_form(kind: &str, element: &str) ->
         String::from("guarded")
     } else if kind == "record" {
         String::from("record")
+    } else if kind == "data" {
+        String::from("nominal")
     } else if ((kind == "array") || (kind == "tuple")) || (kind == "string") {
         String::from("indexed")
     } else if (((((kind == "bool") || (kind == "float")) || (kind == "int")) || (kind == "nat"))

@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Field {
+    /// Whether a JavaScript property can be omitted independently of its value.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub optional: bool,
     pub name: String,
     #[serde(rename = "type")]
     pub ty: Type,

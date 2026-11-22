@@ -328,6 +328,7 @@ pub mod surface_reference_analysis_rules;
 pub(crate) mod surface_reference_facts;
 pub(crate) mod type_namespace_rules;
 pub(crate) mod javascript_constructor_field_type_rules;
+pub(crate) mod javascript_constructor_presence;
 pub(crate) mod type_syntax_rules;
 pub(crate) mod typed_program_link_rules;
 pub mod types;

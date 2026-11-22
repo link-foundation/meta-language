@@ -236,6 +236,46 @@ console.log(JSON.stringify({surface,javascript,rust,archives,observations:[obser
 }
 
 #[test]
+fn optional_tagged_fields_keep_own_presence_through_execution_and_typed_archives() {
+    use meta_language::translation::emit_rust::emit_rust;
+    use meta_language::{
+        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
+        encode_link_network_binary, encode_typed_program_links,
+    };
+    let source = include_str!("../../../parity/fixtures/translation-optional-constructor-fields.js");
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let javascript = emit_javascript(&program).unwrap().text;
+    let native = emit_rust(&program).unwrap().text;
+    let expected = "false 0\ntrue 0\ntrue 7\ntrue 7\ntrue 0\n";
+    for text in [source, &javascript] {
+        let result = run(Command::new("node").args(["--input-type=module", "-e", text]));
+        assert!(result.ok, "{}", result.stderr);
+        assert_eq!(result.stdout, expected);
+    }
+    let packet = encode_typed_program_links(&program).unwrap();
+    let binary_options = BinaryLinksOptions::default();
+    let bytes = encode_link_network_binary(&packet.network, binary_options).unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(&bytes, binary_options).unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(restored, program);
+        assert_eq!(emit_javascript(&restored).unwrap().text, javascript);
+        assert_eq!(emit_rust(&restored).unwrap().text, native);
+    }
+    let directory = TemporaryDirectory::new("optional-constructor-fields");
+    let file = directory.0.join("program.rs");
+    let executable = directory.0.join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&file, native).unwrap();
+    let compiled = run(Command::new("rustc").arg("--edition=2024").arg(&file).arg("-o").arg(&executable));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let actual = run(&mut Command::new(&executable));
+    assert!(actual.ok, "{}", actual.stderr);
+    assert_eq!(actual.stdout, expected);
+}
+
+#[test]
 fn terminal_tag_guard_sequences_retain_all_exclusions_scopes_effects_and_source_free_archives() {
     use meta_language::translation::emit_rust::{
         RustEmissionOptions, emit_rust_with_array_consumption,

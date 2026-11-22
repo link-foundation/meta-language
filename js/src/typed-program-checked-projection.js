@@ -70,7 +70,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     if (entry.k === 'data') return {
       k: 'data', name: entry.name,
       ctors: entry.ctors.map(constructor => ({ name: constructor.name,
-        fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type) })),
+        fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type), ...(field.optional && { optional: true }) })),
       })), span: entry.span, ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
       ...(entry.sourceFieldSignatures!==undefined?{sourceFieldSignatures:entry.sourceFieldSignatures}:{}),

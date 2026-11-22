@@ -146,6 +146,7 @@ impl RustParser {
                 let ty = self.parse_type()?;
                 names.push(field.value.clone());
                 fields.push(SField {
+                    optional: false,
                     name: Some(field.value),
                     ty,
                     rocq_type: None,
@@ -165,6 +166,7 @@ impl RustParser {
                 names.push(fields.len().to_string());
                 let ty = self.parse_type()?;
                 fields.push(SField {
+                    optional: false,
                     name: None,
                     ty,
                     rocq_type: None,

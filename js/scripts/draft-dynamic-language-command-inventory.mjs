@@ -36,6 +36,19 @@ const scannerRow={id:scannerId,required:true,
 };
 const previousScanner=value.features.findIndex(entry=>entry.id===scannerId);
 if(previousScanner<0)value.features.push(scannerRow);else value.features[previousScanner]=scannerRow;
+const optionalConstructorId='javascript-tagged-constructor-optional-field-presence';
+const optionalConstructorControls=['parity/fixtures/translation-optional-constructor-fields.js',
+ 'parity/self-translation/javascript-constructor-field-type-rules-native.lino'];
+const optionalConstructorRow={id:optionalConstructorId,required:true,
+ javascript:{status:'implemented',evidence:['js/src/translation/javascript-constructor-presence.js',
+  'js/src/translation/javascript-constructor-field-type-rules.js','js/tests/translation-constructor-tags.test.js',
+  ...optionalConstructorControls]},
+ rust:{status:'implemented',evidence:['rust/src/translation/javascript_constructor_presence.rs',
+  'rust/src/translation/javascript_constructor_field_type_rules.rs','rust/tests/unit/translation_constructor_tags.rs',
+  ...optionalConstructorControls]},
+};
+const previousOptionalConstructor=value.features.findIndex(entry=>entry.id===optionalConstructorId);
+if(previousOptionalConstructor<0)value.features.push(optionalConstructorRow);else value.features[previousOptionalConstructor]=optionalConstructorRow;
 // These declarations identify source counterparts; they are not observations.
 const source=readFileSync(new URL('../src/index.js',import.meta.url),'utf8');
 const modules=new Set(['meta-language-archive.js','dynamic-meta-language.js','dynamic-language-cli.js',

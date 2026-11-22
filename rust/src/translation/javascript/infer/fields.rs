@@ -148,11 +148,18 @@ impl Inference {
                     ctor.fields
                         .iter()
                         .position(|field| field.name.as_deref() == Some(constraint.field.as_str()))
-                        .map(|index| (ctor.name.clone(), index))
+                        .map(|index| {
+                            let field = &ctor.fields[index];
+                            let value = field.optional.then(|| {
+                                crate::translation::javascript_constructor_presence::field_value_type(&field.ty)
+                                    .expect("parsed optional field presence").clone()
+                            });
+                            (ctor.name.clone(), index, value)
+                        })
                 })
             });
-        if let Some((ctor, index)) = declared {
-            let term = self.field(&name, &ctor, index);
+        if let Some((ctor, index, value)) = declared {
+            let term = if let Some(value) = value.as_ref() { self.declared(Some(value)) } else { self.field(&name, &ctor, index) };
             let term = if projection_form == "optional" {
                 match self.resolve(&term) {
                     Term::Option { element, absence } => Term::Option {

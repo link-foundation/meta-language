@@ -53,6 +53,7 @@ import { acceptCallableApplicationInferenceResult, requireCallableNamedInference
 import { acceptArgumentCount, acceptJavaScriptOptionalTupleContext } from './frontend-rules.js';
 import { readParameterDefaultArgumentInference } from './parameter-default-rules.js';
 import { BOOL, FLOAT, INT, STRING, UNIT, option } from './types.js';
+import { javaScriptConstructorFieldValueType } from './javascript-constructor-presence.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
 import { readJavaScriptProductIndex, requiresJavaScriptProductProof } from './javascript-products.js';
 import { acceptJavaScriptArrayTupleContext } from './product-source-rules.js';
@@ -822,7 +823,7 @@ class Inference {
     if(projectionForm==='absent'){this.unify(result,option(UNIT,'undefined'),where);return true;}
     if(projectionForm==='refuse')throw unsupported('datatype property','a datatype property needs its complete bounded constructor directory',where);
     const declared=constructors.flatMap(ctor=>ctor.fields).find(candidate=>candidate.name===field);
-    if(declared){const term=this.field(declared),resolved=this.resolve(term);this.unify(result,projectionForm==='optional'
+    if(declared){const term=declared.optional?this.declared(javaScriptConstructorFieldValueType(declared)):this.field(declared),resolved=this.resolve(term);this.unify(result,projectionForm==='optional'
       ?resolved.kind==='option'?{kind:'option',element:resolved.element,absence:mergeOptionalAbsence(resolved.absence,'undefined')}:{kind:'option',element:term,absence:'undefined'}:term,where);}
     return true;
   }
@@ -1347,7 +1348,7 @@ class Inference {
     const ctor = ctors.find((candidate) => candidate.name === node.tag);
     for (const [field, type, where] of fieldTypes) {
       const declared = ctor.fields.find((candidate) => candidate.name === field);
-      if (declared) this.unify(type, this.field(declared), where ?? node.span);
+      if (declared) this.unify(type, declared.optional ? this.declared(javaScriptConstructorFieldValueType(declared)) : this.field(declared), where ?? node.span);
     }
     return { kind: 'data', name };
   }
@@ -1365,7 +1366,7 @@ class Inference {
       const ctors=this.data.get(nominal.name)??[],ctor=ctors[0],owners=[];
       for(const [index,entry]of node.entries.entries()){
         if(entry.spread){const term=entryTerms?.[index]??(index===0?leading:this.expr(entry.value,env)),raw=this.resolve(term),present=raw.kind==='option'?raw.element:term;this.unify(present,nominal,entry.value.span??node.span);const actual=this.resolve(present);owners.push(actual.kind==='data'?actual.name:'');}
-        else{const field=ctor?.fields.find(field=>field.name===entry.name),declared=field?this.field(field):null,value=entryTerms?.[index]??this.expr(entry.value,env,declared);if(declared)this.unify(value,declared,entry.value.span??node.span);owners.push('');}
+        else{const field=ctor?.fields.find(field=>field.name===entry.name),declared=field?(field.optional?this.declared(javaScriptConstructorFieldValueType(field)):this.field(field)):null,value=entryTerms?.[index]??this.expr(entry.value,env,declared);if(declared)this.unify(value,declared,entry.value.span??node.span);owners.push('');}
       }
       const error=readJavaScriptNominalSpreadError('JavaScript',ctors.length,ctor?.fields.map(field=>field.name)??[],node.entries.map(entry=>entry.spread?'spread':'field'),node.entries.map(entry=>entry.spread?'':entry.name),owners,nominal.name,node.prototypeDefinition!==undefined);
       if(error)throw typeError(error,node.span);

@@ -616,7 +616,12 @@ impl Inference {
                 .iter()
                 .position(|candidate| candidate.name.as_deref() == Some(field.as_str()))
             {
-                let declared = self.field(name, tag, index);
+                let field = &ctor.fields[index];
+                let declared = if field.optional {
+                    self.declared(crate::translation::javascript_constructor_presence::field_value_type(&field.ty))
+                } else {
+                    self.field(name, tag, index)
+                };
                 self.unify(&term, &declared, span.or(place))?;
             }
         }

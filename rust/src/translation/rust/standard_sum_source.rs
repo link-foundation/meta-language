@@ -593,7 +593,7 @@ impl RustParser {
             for variant in rules::read_rust_standard_sum_source_constructors(&sum.owner) {
                 let argument=rules::read_rust_standard_sum_source_field_argument(&sum.owner,&variant);
                 let origins=if argument<0.0 { Vec::new() } else { vec![sum.arguments[argument as usize].clone()] };
-                let fields=origins.iter().map(|origin|SField { name:None,ty:origin.ty.clone().expect("complete child"),rocq_type:None,span:None }).collect();
+                let fields=origins.iter().map(|origin|SField { optional: false, name:None,ty:origin.ty.clone().expect("complete child"),rocq_type:None,span:None }).collect();
                 groups.push((variant.clone(),origins));ctors.push(SCtor { name:variant,fields });
             }
             let previous=self.retain_source_type_owners;self.retain_source_type_owners=true;
