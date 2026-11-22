@@ -29,7 +29,7 @@ function textBytes(value) {
   if (typeof value !== 'string') throw new BinaryLinksError('metadata and cache strings must be strings');
   const units = Array.from({ length: value.length }, (_, index) => value.charCodeAt(index));
   if (!acceptLinkNetworkBinaryUnicode(units)) throw new BinaryLinksError('isolated surrogate in metadata or cache string is outside the interoperable UTF-8 profile');
-  return Array.from(encoder.encode(value));
+  return encoder.encode(value);
 }
 
 function appendText(fields, value, optional = false) {
@@ -53,8 +53,7 @@ function outcome(input, binary, options) {
     const [code, offset] = result.split(',');
     throw new BinaryLinksError(`${schema.errors[String(-Number(code))]} at ${binary ? 'byte' : 'field'} ${offset}`);
   }
-  if (binary) return result.slice(0, -1).split(',').map(Number);
-  return Array.from({ length: result.length / 2 }, (_, index) => Number.parseInt(result.slice(index * 2, index * 2 + 2), 16));
+  return result;
 }
 
 /** Encode every graph link, exact term cache, selected syntax and next ID.
@@ -103,7 +102,16 @@ export function encodeLinkNetworkBinary(network, options = {}) {
   syntax.sort((first, second) => compareBytes(first.conceptBytes, second.conceptBytes) || compareBytes(first.languageBytes, second.languageBytes));
   fields.push(syntax.length);
   for (const entry of syntax) { appendText(fields, entry.concept); appendText(fields, entry.language); appendText(fields, entry.value); }
-  return Uint8Array.from(outcome(fields, false, options));
+  const encoded = outcome(fields, false, options);
+  const bytes = new Uint8Array(encoded.length / 2);
+  const nibble = offset => {
+    const code = encoded.charCodeAt(offset);
+    return code < 97 ? code - 48 : code - 87;
+  };
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = nibble(index * 2) * 16 + nibble(index * 2 + 1);
+  }
+  return bytes;
 }
 
 /** Reload exact network state without source parsing or token reconstruction.
@@ -114,14 +122,28 @@ export function decodeLinkNetworkBinary(bytes, options = {}) {
   if (!(bytes instanceof Uint8Array) && !Array.isArray(bytes)) throw new BinaryLinksError('expected a byte array');
   const bounds = limits(options);
   if (bytes.length > bounds.byteLimit) throw new BinaryLinksError('byte resource limit exceeded');
-  const fields = outcome(Array.from(bytes), true, options);
+  const input = ArrayBuffer.isView(bytes) && bytes[Symbol.iterator] === Uint8Array.prototype[Symbol.iterator]
+    ? Uint8Array.from(bytes)
+    : Array.from(bytes);
+  const fields = outcome(input, true, options);
   let cursor = 0;
-  const number = () => fields[cursor++];
+  const number = () => {
+    let value = 0;
+    for (; cursor < fields.length; cursor += 1) {
+      const digit = fields.charCodeAt(cursor);
+      if (digit === 44) {
+        cursor += 1;
+        return value;
+      }
+      value = value * 10 + (digit - 48);
+    }
+    throw new BinaryLinksError('generated numeric framing is invalid');
+  };
   const text = (optional = false) => {
     if (optional && number() === 0) return undefined;
     const length = number();
-    const encoded = Uint8Array.from(fields.slice(cursor, cursor + length));
-    cursor += length;
+    const encoded = new Uint8Array(length);
+    for (let index = 0; index < length; index += 1) encoded[index] = number();
     try { return decoder.decode(encoded); } catch { throw new BinaryLinksError('metadata or cache string is not valid UTF-8'); }
   };
   const network = new LinkNetwork();
@@ -131,8 +153,7 @@ export function decodeLinkNetworkBinary(bytes, options = {}) {
   for (let index = 0; index < count; index += 1) {
     const identity = number();
     const arity = number();
-    const references = fields.slice(cursor, cursor + arity);
-    cursor += arity;
+    const references = Array.from({ length: arity }, number);
     number(); // The shared scanner already checked the metadata version.
     const type = types[number()];
     const named = number() === 1;
