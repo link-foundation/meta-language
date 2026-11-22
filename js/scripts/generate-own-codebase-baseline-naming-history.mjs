@@ -6,11 +6,10 @@ import {fileURLToPath} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {Worker} from 'node:worker_threads';
 import {deriveOwnCodebaseHistoricalNamingViews} from './derive-own-codebase-historical-naming-views.mjs';
-import {storeHistoricalNamingInventories,readHistoricalNamingInventoryBundle,verifyHistoricalNamingInventorySerialization} from './historical-naming-inventory-storage.mjs';
-import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {storeHistoricalNamingInventories,verifyHistoricalNamingInventorySerialization} from './historical-naming-inventory-storage.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
-import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
-import {readOwnCodebaseHistoricalNamingPolicy,verifyOwnCodebaseHistoricalNamingSources} from './own-codebase-baseline-naming-history.mjs';
+import {captureGitArtifactCertificate,captureGitArtifactCertificates} from './capture-git-artifact-certificate.mjs';
+import {readOwnCodebaseHistoricalNamingPolicy,readOwnCodebaseHistoricalNamingPolicyForVerification,verifyOwnCodebaseHistoricalNamingSources} from './own-codebase-baseline-naming-history.mjs';
 import {checkProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:createHash('sha256').update(bytes).digest('hex')});
@@ -61,11 +60,8 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       ...changedAt(integration).map(path=>({path,revision:integration})),
       ...changedAt(continuation).map(path=>({path,revision:continuation}))];
     const scalarSources=new Map();
-    sources=selections.map(({path,revision})=>{
-      globalThis.gc?.();
-      const {blob,certificate}=captureGitArtifactCertificate(revision,path);
-      assert.deepEqual(verifyGitArtifactCertificate(certificate,blob,{revision,path}),blob);
-      const sourcePin=pin(blob);
+    sources=Array.from(captureGitArtifactCertificates(selections),({blob,certificate})=>{
+      const {path,revision}=certificate,{bytes,sha256}=certificate.blob,sourcePin={bytes,sha256};
       if(!scalarSources.has(sourcePin.sha256))scalarSources.set(sourcePin.sha256,blob.toString('utf8'));
       // Only equal immutable scalar strings share storage. All ordered source
       // rows, certificates and containers keep their independent identities.
@@ -78,17 +74,35 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   // Its binding graph and Git's pack buffers need separate memory lifetimes.
   globalThis.gc?.();
   const views=authorOnly?await new Promise((resolve,reject)=>{
-    let result,failure,messages=0;
+    let result,failure,ready=false;
     const worker=new Worker(new URL('./derive-own-codebase-historical-naming-views.mjs',import.meta.url),{
-      workerData:sources.map(({file,current,predecessor})=>({file,current,predecessor:{revision:predecessor.revision,source:predecessor.source}})),
       execArgv:[],resourceLimits:{maxOldGenerationSizeMb:352,maxYoungGenerationSizeMb:1},
     });
-    worker.on('message',value=>{messages++;result=value;});
+    worker.on('message',value=>{
+      if(!ready&&value==='ready'){
+        ready=true;
+        console.error('Loaded the complete naming inventories.');
+        const texts=[],positions=new Map();
+        const epochs=sources.map(({file,current,predecessor})=>{
+          if(!positions.has(predecessor.source)){
+            positions.set(predecessor.source,texts.length);
+            texts.push(predecessor.source);
+          }
+          return{file,current,revision:predecessor.revision,text:positions.get(predecessor.source)};
+        });
+        // Complete inventory admission precedes loading source texts into its heap.
+        worker.postMessage({sources:epochs,texts});
+      }else if(ready&&result===undefined&&Array.isArray(value)){
+        result=value;
+      }else{
+        failure=new Error('unexpected naming inventory worker message');
+      }
+    });
     worker.on('error',error=>{failure=error;});
     // Wait for heap release before retaining the complete serialization graph.
     worker.on('exit',code=>{
       if(failure)return reject(failure);
-      if(code!==0||messages!==1||!Array.isArray(result))return reject(new Error('complete naming inventory worker failed'));
+      if(code!==0||!ready||!Array.isArray(result))return reject(new Error('complete naming inventory worker failed'));
       resolve(result);
     });
   }):deriveOwnCodebaseHistoricalNamingViews(sources,(await import('./issue-195-naming.mjs')).NAME_INVENTORIES);
@@ -113,8 +127,9 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
     assert.match(args[1],/^[a-f0-9]{64}$/u);const expected={bytes:Number(args[2]),sha256:args[1]};
     assert.ok(Number.isSafeInteger(expected.bytes)&&expected.bytes>0&&expected.bytes<=64*1024*1024);
     assert.deepEqual(pin(readFileSync(file)),expected,'the entire actual output equals the completed normal author receipt');
-    const history=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
-    globalThis.gc?.();verifyHistoricalNamingInventorySerialization(history,readHistoricalNamingInventoryBundle());
+    const {bundle,history}=readOwnCodebaseHistoricalNamingPolicyForVerification();
+    console.error('Verified all '+history.sources.length+' original naming source certificates.');
+    globalThis.gc?.();verifyHistoricalNamingInventorySerialization(history,bundle);
     assert.deepEqual(pin(readFileSync(file)),expected,'output did not change during complete reader verification');
   }else{
     assert.ok(new Set(args).size===args.length&&args.every(arg=>['--check','--additional-inventories'].includes(arg)));

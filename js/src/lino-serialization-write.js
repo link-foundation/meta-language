@@ -61,6 +61,13 @@ export function percentEncode(value) {
     return '%';
   }
   if (/^[0-9A-Za-z_.-]+$/u.test(source)) return source;
+  try {
+    return encodeURIComponent(source).replace(/[!'()*~]/gu, character =>
+      '%' + character.charCodeAt(0).toString(16).toUpperCase());
+  } catch (error) {
+    if (!(error instanceof URIError)) throw error;
+  }
+  // TextEncoder preserves the established replacement for lone surrogates.
   const pieces = [], chunk = [];
   for (const byte of textEncoder.encode(source)) {
     const unreserved = (byte >= 0x30 && byte <= 0x39)

@@ -89,10 +89,18 @@ function copyOwnCodebaseNamingData(value,seen=new Map()){
 
 /** Return a detached copy; callers cannot change the trusted source anchors. */
 export function readOwnCodebaseHistoricalNamingPolicy(){
+  return readHistoricalNamingPolicy(readHistoricalNamingInventoryBundle(),true);
+}
+
+export function readOwnCodebaseHistoricalNamingPolicyForVerification(){
   const bundle=readHistoricalNamingInventoryBundle();
-  if(additionalSnapshot?.documents.length===bundle.documents.length&&bundle.documents.every((row,index)=>
+  return {history:readHistoricalNamingPolicy(bundle,false).additionalSourceViews,bundle};
+}
+
+function readHistoricalNamingPolicy(bundle,cache){
+  if(cache&&additionalSnapshot?.documents.length===bundle.documents.length&&bundle.documents.every((row,index)=>
     row.file===additionalSnapshot.documents[index].file&&row.text===additionalSnapshot.documents[index].text))return{...structuredClone(policy),additionalSourceViews:copyOwnCodebaseNamingData(additionalSnapshot.value)};
-  additionalSnapshot=undefined;
+  if(cache)additionalSnapshot=undefined;
   const additional=decodeHistoricalNamingInventoryBundle(bundle);
   exactKeys(additional,['schemaVersion','model','revision','sources','views','boundary']);
   assert.equal(additional.schemaVersion,1);assert.equal(additional.model,'array identity historical naming inventories 1');
@@ -115,7 +123,7 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
     assert.equal(typeof view.inventory,'string');assert.ok(Array.isArray(view.names)&&view.names.length>0);
     for(const row of view.names){exactKeys(row,['name','record']);assert.equal(typeof row.name,'string');assert.equal(typeof row.record,'string');}
   }
-  additionalSnapshot={documents:bundle.documents,value:copyOwnCodebaseNamingData(additional)};
+  if(cache)additionalSnapshot={documents:bundle.documents,value:copyOwnCodebaseNamingData(additional)};
   return{...structuredClone(policy),additionalSourceViews:additional};
 }
 

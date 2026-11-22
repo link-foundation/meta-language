@@ -8972,8 +8972,24 @@ scope, assertion, output or resource ceiling.
 
 Historical inventory generation finishes Git object capture before loading the
 complete naming inventory. Git pack buffers and the decoded binding graph use
-separate memory lifetimes. Full certificate, extraction, freshness and byte
-inverse checks remain required under the same local resource limits.
+separate memory lifetimes. One capture batch can reuse up to eight mebibytes
+of immutable Git object bytes. Each path still produces and
+verifies its own complete certificate and blob. The naming worker loads the
+complete inventory before receiving the ordered epochs and their shared
+immutable source strings. Every epoch checks the current source pin before
+reusing names for the same inventory and source bytes. The bootstrap reader
+checks canonical percent escapes using URI encoding with the exact Links
+Notation punctuation rules. Invalid tokens retain the shared decoder's original
+diagnostics. Full historical extraction, freshness and byte inverse checks
+remain required under the same local resource limits.
+
+The historical naming index supports ordered continuation documents for
+larger revisions. Each continuation starts after 64 complete source rows,
+keeps all scoped views with their source row, and retains the 64 MiB document
+ceiling. At most sixteen documents can represent one registered revision, with
+an aggregate limit of 384 MiB for the source documents.
+The reader still accepts the original index and legacy single-document form.
+The writer stages complete pages and publishes the index after the pages.
 
 Self-translation reuses each source group's existing declaration scan when
 classifying primitive literal bindings. A proven named function cannot satisfy

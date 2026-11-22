@@ -46,6 +46,39 @@ test('changed missing reordered or foreign documents and cross-document aliases 
  }finally{rmSync(base,{recursive:true,force:true});}
 });
 
+test('large naming revisions continue in ordered bounded documents without changing source or view order',()=>{
+ const base=mkdtempSync(join(tmpdir(),'meta-language-naming-storage-'));
+ try{
+  const history=fixture(),sources=[],views=[];
+  for(let part=0;part<64;part++){
+   const file='source-'+part;
+   sources.push({...structuredClone(history.sources[0]),file});
+   views.push({...structuredClone(history.views[0]),file});
+  }
+  history.sources.splice(1,0,...sources);
+  history.views.splice(1,0,...views);
+  const index=storeHistoricalNamingInventories(history,{base}),bundle=readHistoricalNamingInventoryBundle({base});
+  assert.equal(index.schemaVersion,2);
+  assert.deepEqual(index.partitions.map(({part,sources})=>[part,sources]),[[0,64],[1,1],[0,1],[0,1],[0,1]]);
+  assert.deepEqual(decodeHistoricalNamingInventoryBundle(bundle),history);
+  verifyHistoricalNamingInventorySerialization(history,bundle,{base});
+  storeHistoricalNamingInventories(history,{base,check:true});
+  const indexFile=join(base,HISTORICAL_NAMING_INVENTORY_INDEX),original=readFileSync(indexFile);
+  for(const mutate of [
+   value=>{value.partitions[1].part++;},
+   value=>{[value.partitions[0],value.partitions[1]]=[value.partitions[1],value.partitions[0]];},
+   value=>{value.partitions[1].sources=0;},
+  ]){
+   const changed=structuredClone(index);mutate(changed);
+   writeProjectData(indexFile,changed);assert.throws(()=>readHistoricalNamingInventoryBundle({base}));
+  }
+  writeFileSync(indexFile,original);
+  history.sources[0].shared=history.sources[64].shared={same:'container'};
+  assert.throws(()=>storeHistoricalNamingInventories(history,{base}),/shared container cannot cross/u);
+  assert.deepEqual(readHistoricalNamingInventoryBundle({base}),bundle);
+ }finally{rmSync(base,{recursive:true,force:true});}
+});
+
 test('repeated document reads keep caller containers detached and observe page edits behind an unchanged index',()=>{
  const base=mkdtempSync(join(tmpdir(),'meta-language-naming-storage-'));
  try{

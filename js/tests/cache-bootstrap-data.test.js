@@ -45,6 +45,22 @@ test('bootstrap canonical data readers share exact values and strict graph valid
   }
 });
 
+test('bootstrap token decoding preserves canonical punctuation, Unicode and escape refusals', () => {
+  const value = ['', "!'()*~", '%', '\uFEFF', 'é', '🌍', '\0'];
+  const source = structuredDataToLino(value);
+  assert.deepEqual(readBootstrapStructuredDataLino(source), value);
+  for (const [replacement, message] of [
+    ['%4cinks', /noncanonical string escape/u],
+    ['%4Cinks', /noncanonical string escape/u],
+    ['%C0%AF', /percent escape is not valid UTF-8/u],
+    ['%XZ', /invalid percent escape digit/u],
+    ['%2', /truncated percent escape/u],
+  ]) {
+    assert.throws(() => readBootstrapStructuredDataLino(
+      source.replace('meta-language%20structured%20data', replacement)), message);
+  }
+});
+
 test('cleanup before npm installation writes canonical reports using only repository leaf modules', t => {
   const fixture = makeRepository(makeBase(t));
   cpSync(path.join(REPOSITORY_ROOT, 'scripts'), path.join(fixture.root, 'scripts'), { recursive: true });

@@ -22,6 +22,16 @@ function textLimit(source, options) {
 }
 
 function canonicalString(source) {
+  // The statement tokenizer limits literal characters to the safe ASCII set.
+  if (!source.includes('%')) return source;
+  if (source === '%') return '';
+  try {
+    const decoded = decodeURIComponent(source);
+    if (percentEncode(decoded) === source) return decoded;
+  } catch (error) {
+    if (!(error instanceof URIError)) throw error;
+  }
+  // Use the shared codec for its original malformed-escape diagnostics.
   const value = percentDecode(source);
   if (percentEncode(value) !== source) fail('noncanonical string escape');
   return value;
@@ -33,7 +43,7 @@ function identity(source) {
   return value;
 }
 
-function graph(source, namespace, options, expectedRoot = null) {
+function graph(source, namespace, options, expectedRoot = null, reportCost = true) {
   const limits = textLimit(source, options);
   const prefix = namespace ? `${namespace}/` : '';
   const id = `${prefix}[1-9][0-9]*`;
@@ -77,14 +87,16 @@ function graph(source, namespace, options, expectedRoot = null) {
   }
   if (roots.length !== 1 || (expectedRoot !== null && roots[0] !== expectedRoot)) fail('invalid schema root');
   const value = decodeStructuredDataLinks(network, roots[0], limits);
-  return { value, cost: structuredDataGraphCost(network, roots[0]) };
+  return { value, cost: reportCost ? structuredDataGraphCost(network, roots[0]) : undefined };
 }
 
 /** The canonical numeric graph format emitted by structuredDataToLino. */
 export function readBootstrapStructuredDataLino(source, options = {}) {
   textLimit(source, options);
   if (!source.endsWith('\n')) fail('incomplete canonical document');
-  return graph(source, null, options).value;
+  // The decoder enforces every traversal and expansion limit. Only the
+  // inspection and record APIs ask for a separate exact cost report.
+  return graph(source, null, options, null, false).value;
 }
 
 /** One physical line per complete UUID-scoped owned data frame. */
