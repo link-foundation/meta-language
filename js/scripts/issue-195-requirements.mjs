@@ -17,6 +17,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   pestBuiltInRules: 'https://github.com/link-foundation/meta-language/issues/234',
   grammarAssetAvailability: 'https://github.com/link-foundation/meta-language/issues/244',
   pdfStreamNullCharacters: 'https://github.com/link-foundation/meta-language/issues/239',
+  visibleDocumentText: 'https://github.com/link-foundation/meta-language/issues/238',
   rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
   grammarSearch: 'https://github.com/link-foundation/meta-language/issues/235',
   normalizedTextLocation: 'https://github.com/link-foundation/meta-language/issues/243',
@@ -548,6 +549,43 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       implementationEntryPoints: {
         javascript: ['js/src/text-location.js', 'js/tests/language-text-location.test.js'],
         rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
+      },
+    })),
+    ...[
+      {
+        id: 'I195-I238-HTML-VISIBLE-TEXT',
+        language: 'HTML',
+        version: 'HTML Living Standard character reference table pinned in build-document-character-references.mjs',
+        construct: 'visible HTML text and character reference projection',
+        expectedBehavior: 'Visible HTML omits hidden elements, comments and attributes, applies the configured entity and block options, and maps each visible range to its original bytes.',
+        selector: 'HTML cases, exact text, projection options, monotonic ranges and selected source spans',
+        assertions: ['htmlVisibleTextAndOptions', 'htmlVisibleTextKeepsSourceRanges'],
+      },
+      {
+        id: 'I195-I238-MARKDOWN-VISIBLE-TEXT',
+        language: 'Markdown',
+        version: 'CommonMark 0.31.2 inline text and code span notation',
+        construct: 'visible Markdown text and source ranges',
+        expectedBehavior: 'Visible Markdown retains link labels, list bodies and literal code, removes syntax markers, and maps visible ranges to their original bytes.',
+        selector: 'Markdown cases, exact text, monotonic ranges and selected source spans',
+        assertions: ['markdownVisibleText', 'markdownVisibleTextKeepsSourceRanges'],
+      },
+      {
+        id: 'I195-I238-WORDPROCESSINGML-VISIBLE-TEXT',
+        language: 'WordprocessingML',
+        version: 'ECMA-376 WordprocessingML transitional namespace for paragraph, text and break markup',
+        construct: 'visible WordprocessingML text and source ranges',
+        expectedBehavior: 'Visible XML document text preserves runs, tabs and line breaks in document order and maps visible ranges to their original bytes.',
+        selector: 'WordprocessingML cases, exact text, monotonic ranges and selected source spans',
+        assertions: ['wordprocessingmlVisibleText', 'wordprocessingmlVisibleTextKeepsSourceRanges'],
+      },
+    ].map(entry => ({
+      ...entry,
+      source: ISSUE_195_SOURCES.visibleDocumentText,
+      fixture: 'parity/fixtures/visible-document-text.lino',
+      implementationEntryPoints: {
+        javascript: ['js/src/visible-document-text.js', 'js/tests/visible-document-text.test.js'],
+        rust: ['rust/src/link_network/visible_document_text/mod.rs', 'rust/tests/unit/visible_document_text.rs'],
       },
     })),
   ];

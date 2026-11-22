@@ -46,6 +46,7 @@ import {
 } from './translation/embedded-region-rules.js';
 import { acceptNetworkProjection, acceptNetworkProjectionLink } from './network-projection-rules.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
+import { projectVisibleDocumentText } from './visible-document-text.js';
 import {
   CONCEPT_RECORDS,
   FORMER_CONCEPT_ID_VOCABULARY,
@@ -703,6 +704,15 @@ export class LinkNetwork {
       if (range) coveredUntil = range.end;
     }
     return reconstructed.join('');
+  }
+
+  /** Returns document text and a map to the original UTF-8 source ranges. */
+  visibleText(options = {}) {
+    return projectVisibleDocumentText(this, options);
+  }
+
+  visible_text(options = {}) {
+    return this.visibleText(options);
   }
 
   /** Returns mixed-language regions discovered and parsed into this network. */

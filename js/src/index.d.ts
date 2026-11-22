@@ -1125,6 +1125,32 @@ export interface LanguageParserAvailability {
   missingGrammarAssets: string[];
 }
 
+export interface VisibleDocumentTextOptions {
+  blockSeparator?: string;
+  decodeEntities?: boolean;
+  collapseWhitespace?: boolean;
+  nbsp?: 'space' | 'keep';
+  /** String placed before visible list items. The default is empty. */
+  listBullet?: string;
+}
+
+export interface VisibleDocumentTextSpan {
+  /** Offsets in the projected JavaScript string, in UTF-16 code units. */
+  textStart: number;
+  textEnd: number;
+  /** Offset range in the original document, in UTF-8 bytes. */
+  sourceStart: number;
+  sourceEnd: number;
+  kind: 'source' | 'reference' | 'whitespace' | 'separator' | 'bullet' | 'replacement';
+}
+
+export interface VisibleDocumentText {
+  text: string;
+  map: VisibleDocumentTextSpan[];
+  /** Returns a UTF-8 source range for a nonempty projected string interval. */
+  sourceRange(start: number, end: number): { start: number; end: number } | null;
+}
+
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
@@ -1201,6 +1227,8 @@ export class LinkNetwork {
   snapshot(version: number, provenance: string): NetworkSnapshot;
   verifyFullMatch(): VerificationReport;
   reconstructText(): string;
+  visibleText(options?: VisibleDocumentTextOptions): VisibleDocumentText;
+  visible_text(options?: VisibleDocumentTextOptions): VisibleDocumentText;
   embeddedRegions(): EmbeddedRegion[];
   parseGrammars(): ParseGrammar[];
   embedded_regions(): EmbeddedRegion[];

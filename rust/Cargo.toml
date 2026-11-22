@@ -24,6 +24,8 @@ include = [
     "src/data/native-grammars/*.lino",
     "src/data/pest-built-ins.lino",
     "src/data/pest-built-ins-license.txt",
+    "src/data/document-character-references.lino",
+    "src/data/document-projection-rules.lino",
     "src/data/concept-records.lino",
     "src/data/foundation-models.lino",
     "src/data/native-text-metadata.lino",

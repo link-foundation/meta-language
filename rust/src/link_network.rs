@@ -27,6 +27,7 @@ use crate::substitution::{
 pub mod text_location;
 mod trivia;
 mod verification;
+pub mod visible_document_text;
 
 /// Availability of a registered language's standalone default parser.
 #[derive(Clone, Debug, Eq, PartialEq)]

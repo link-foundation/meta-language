@@ -270,6 +270,7 @@ mod typed_program_source_spans;
 mod typescript_erasure;
 mod typescript_portable_typing;
 mod unicode_input_chunks;
+mod visible_document_text;
 
 #[path = "ci-cd/mod.rs"]
 mod ci_cd;

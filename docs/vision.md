@@ -1770,6 +1770,14 @@ region. Abstract syntax is an explicitly selected projection or mode with
 provenance to the complete concrete tree; omitting that selection always keeps
 the full concrete representation.
 
+Visible text is a separate projection of document syntax. HTML, Markdown and
+WordprocessingML use shared projection rules for hidden syntax, block breaks,
+list markers and character references. Projected coordinates use the runtime's
+string indices (JavaScript UTF-16 and Rust UTF-8), and source coordinates are
+always UTF-8 byte ranges. Each projected interval maps to the bytes that
+produced it, including character references, collapsed whitespace and inserted
+separators. A selection can be resolved back to its covering source range.
+
 An inspectable linked `any-grammar` or `all-grammar` selection rule invokes
 supported grammar definitions recursively through the same algorithms and
 global concept space. Embedding is defined by grammar data and explicit
