@@ -37,6 +37,8 @@ mod repetition;
 mod results;
 mod roots;
 mod rules;
+mod search;
+mod search_policy;
 mod selection_source_mapping;
 mod separators;
 mod text;
@@ -54,6 +56,10 @@ pub use grammar_selection::{GrammarSelection, GrammarSelectionAlternative};
 pub use load::GrammarRuntimeError;
 pub use mapped_tree_validation::check_grammar_selection_mapped_tree;
 pub use operations::OperationValue;
+pub use search::{
+    GrammarMatchPolicy, GrammarSearchMatch, GrammarSearchOptions, GrammarSearchPredicate,
+    GrammarSearchSpan,
+};
 pub use tree::{Ambiguity, LeafText, SyntaxAttributes, SyntaxTree};
 
 use super::Grammar;
@@ -167,7 +173,7 @@ pub struct ParseRejection {
 }
 
 impl ParseRejection {
-    const fn limited(reason: &'static str, limit: usize) -> Self {
+    const fn unpositioned(reason: &'static str) -> Self {
         Self {
             diagnostics: None,
             offset_semantics: None,
@@ -176,7 +182,14 @@ impl ParseRejection {
             line: None,
             column: None,
             expected: None,
+            limit: None,
+        }
+    }
+
+    const fn limited(reason: &'static str, limit: usize) -> Self {
+        Self {
             limit: Some(limit),
+            ..Self::unpositioned(reason)
         }
     }
 
@@ -320,10 +333,10 @@ impl FeatureGrammarParser {
             std::thread::Builder::new()
                 .stack_size(PARSE_STACK)
                 .spawn_scoped(scope, || {
-                    parse_program(compiled, start_rule, source, &options)
+                    parse_program(compiled, start_rule, source, &options, None)
                 })
                 .map_or_else(
-                    |_| parse_program(compiled, start_rule, source, &options),
+                    |_| parse_program(compiled, start_rule, source, &options, None),
                     |handle| {
                         handle
                             .join()
@@ -481,7 +494,9 @@ fn parse_program(
     start_rule: usize,
     bytes: &[u8],
     options: &FeatureParseOptions,
+    search: Option<&search::SearchAttempt<'_>>,
 ) -> Result<ParseOutcome, GrammarRuntimeError> {
+    let begin = search.map_or(0, |attempt| attempt.begin);
     let max_depth = options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH);
     // Error recovery parses each repaired alternative too: twice the budget.
     let limit = options.step_limit.unwrap_or_else(|| {
@@ -546,7 +561,7 @@ fn parse_program(
             active_embedded: Rc::new(RefCell::new(HashSet::new())),
             selection_sources: Rc::clone(&selection_sources),
             selection_mapping_failures: Rc::clone(&selection_mapping_failures),
-            steps: Rc::new(Cell::new(0)),
+            steps: Rc::new(Cell::new(search.map_or(0, |attempt| attempt.steps.get()))),
             limit,
             frames: Rc::new(Cell::new(0)),
             memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
@@ -560,15 +575,18 @@ fn parse_program(
                 compiled,
                 compiled.main,
                 bytes,
-                0,
+                begin,
                 bytes.len(),
                 &shared,
                 max_depth,
             );
             executor.repair_points = points.cloned();
             executor.keywords = keywords.as_ref();
-            let outcome = executor.run(start_rule);
+            let outcome = executor.run_with_search(start_rule, search);
             last_steps.set(shared.steps.get());
+            if let Some(attempt) = search {
+                attempt.steps.set(shared.steps.get());
+            }
             outcome
         };
         let record = shared.expectations.into_inner();
@@ -625,6 +643,9 @@ fn parse_program(
         Ok(Outcome::Failed {
             farthest, expected, ..
         }) => {
+            if search.is_some() {
+                return refused(ParseRejection::unpositioned("syntax"), None);
+            }
             if let Some(rejection) =
                 grammar_selection::selection_rejection(&selection_diagnostics.borrow(), bytes)
             {
@@ -669,7 +690,7 @@ fn parse_program(
             compiled,
             compiled.main,
             bytes,
-            0,
+            begin,
             bytes.len(),
             &shared,
             max_depth,

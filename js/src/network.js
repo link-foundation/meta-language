@@ -768,14 +768,31 @@ export class LinkNetwork {
   }
 
   capturedText(id) {
-    const link = this.link(id);
-    if (!link) {
-      return '';
+    const active = new Set();
+    const pending = [{ id }];
+    const pieces = [];
+    while (pending.length > 0) {
+      const { id: current, leaving } = pending.pop();
+      const link = this.link(current);
+      if (!link) continue;
+      const key = idKey(current);
+      if (leaving) {
+        active.delete(key);
+        continue;
+      }
+      if (active.has(key)) continue;
+      if (link.metadata().linkType === LinkType.SourceToken) {
+        pieces.push(link.metadata().term ?? '');
+        continue;
+      }
+      active.add(key);
+      pending.push({ id: current, leaving: true });
+      const references = link.references();
+      for (let index = references.length - 1; index >= 0; index -= 1) {
+        pending.push({ id: references[index] });
+      }
     }
-    if (link.metadata().linkType === LinkType.SourceToken) {
-      return link.metadata().term ?? '';
-    }
-    return link.references().map((reference) => this.capturedText(reference)).join('');
+    return pieces.join('');
   }
 
   _allocateId() {

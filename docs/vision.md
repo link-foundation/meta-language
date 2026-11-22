@@ -1573,6 +1573,15 @@ source preservation from any richer linguistic capability they verify.
 
 ## Grammar feature union
 
+A compiled grammar can scan a text with a selected rule. Grammar search
+keeps the original text and tree coordinates, captures each occurrence of a named
+concrete rule, and selects either the longest admitted result or the first
+admitted result at each start. Callers can allow overlapping matches and require
+Unicode word boundaries. Search positions use UTF-16 code units in JavaScript
+and UTF-8 bytes in Rust. Concrete tree coordinates use UTF-8 bytes in both
+runtimes. The `#grammar-match?` predicate composes with source text predicates
+over a captured link. Whole-input parsing continues to use the full source range.
+
 Grammar attributes preserve ordinary JavaScript own-key order: canonical
 array-index names come first numerically, other names retain insertion order,
 and overwrites retain position. The complete shared JavaScript kernel generates

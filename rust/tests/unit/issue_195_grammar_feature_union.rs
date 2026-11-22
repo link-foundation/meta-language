@@ -57,6 +57,212 @@ fn native(listing: &str) -> Grammar {
     parse_native_grammar(listing).expect("the listing parses")
 }
 
+#[test]
+fn grammar_search_reports_original_ranges_captures_and_query_results() {
+    use meta_language::grammar::feature_runtime::{GrammarMatchPolicy, GrammarSearchOptions};
+    use meta_language::{LinkNetwork, LinkQuery, ParseConfiguration, import_ebnf};
+
+    let fixture_file = "parity/fixtures/grammar-search.json";
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-search.lino"
+    ))
+    .unwrap();
+    let make_parser = |key| {
+        compile_feature_grammar(
+            &import_ebnf(text(&fixture, key)).unwrap(),
+            None,
+            FeatureParseOptions::default(),
+        )
+        .unwrap()
+    };
+    let observe = |requirement_id: &str, assertions: &[&str]| {
+        record(&Observation {
+            requirement_id,
+            suffix: "behavior",
+            fixture_id: &requirement_id.to_ascii_lowercase(),
+            fixture_file,
+            assertions,
+            test_name: "grammar_search_reports_original_ranges_captures_and_query_results",
+        });
+    };
+    let parser = make_parser("grammar");
+    let source = text(&fixture, "source");
+    let expected = fixture["matches"].as_array().unwrap();
+    assert!(
+        !parser
+            .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+            .unwrap()
+            .ok
+    );
+    assert!(
+        parser
+            .parse_tree(
+                text(&expected[2], "text").as_bytes(),
+                &FeatureParseOptions::default()
+            )
+            .unwrap()
+            .ok
+    );
+    let matches = parser
+        .find_all(
+            source,
+            &GrammarSearchOptions {
+                rule: Some("price".to_owned()),
+                word_boundaries: true,
+                captures: vec!["amount".to_owned(), "currency".to_owned()],
+                ..GrammarSearchOptions::default()
+            },
+        )
+        .unwrap();
+    assert_eq!(matches.len(), expected.len());
+    for (found, expected) in matches.iter().zip(expected) {
+        let spelling = text(expected, "text");
+        let start = source.find(spelling).unwrap();
+        assert_eq!(
+            (found.span.start, found.span.end, found.span.text.as_str()),
+            (start, start + spelling.len(), spelling)
+        );
+        assert_eq!(
+            (found.tree.start(), found.tree.end()),
+            (found.span.start, found.span.end)
+        );
+        for name in ["amount", "currency"] {
+            let captures: Vec<_> = found.captures[name]
+                .iter()
+                .map(|capture| {
+                    assert_eq!(&source[capture.start..capture.end], capture.text);
+                    capture.text.as_str()
+                })
+                .collect();
+            assert_eq!(json!(captures), expected[name]);
+        }
+    }
+    observe(
+        "I235-GRAMMAR-SEARCH-SPANS",
+        &["searchFindsOriginalSpans", "wholeInputParseIsPreserved"],
+    );
+    observe(
+        "I235-GRAMMAR-SEARCH-CAPTURES",
+        &["repeatedNamedCapturesRetainSourceSpans"],
+    );
+
+    let boundary_source = text(&fixture, "boundarySource");
+    let words = make_parser("boundaryGrammar");
+    let starts: Vec<_> = words
+        .find_all(
+            boundary_source,
+            &GrammarSearchOptions {
+                word_boundaries: true,
+                ..GrammarSearchOptions::default()
+            },
+        )
+        .unwrap()
+        .iter()
+        .map(|found| boundary_source[..found.span.start].encode_utf16().count())
+        .collect();
+    assert_eq!(json!(starts), fixture["boundaryStarts"]);
+    assert_eq!(
+        words
+            .find_all(boundary_source, &GrammarSearchOptions::default())
+            .unwrap()
+            .len(),
+        7
+    );
+    let choices = make_parser("selectionGrammar");
+    for (name, match_policy, overlapping) in [
+        ("longest", GrammarMatchPolicy::LeftmostLongest, false),
+        ("first", GrammarMatchPolicy::PegFirst, false),
+        ("overlapping", GrammarMatchPolicy::LeftmostLongest, true),
+    ] {
+        let found: Vec<_> = choices
+            .find_all(
+                text(&fixture, "selectionSource"),
+                &GrammarSearchOptions {
+                    match_policy,
+                    overlapping,
+                    ..GrammarSearchOptions::default()
+                },
+            )
+            .unwrap()
+            .into_iter()
+            .map(|found| found.span.text)
+            .collect();
+        assert_eq!(json!(found), fixture["selection"][name]);
+    }
+    let empty = compile_feature_grammar(
+        &import_ebnf("start = \"\" ;").unwrap(),
+        None,
+        FeatureParseOptions::default(),
+    )
+    .unwrap();
+    assert!(
+        empty
+            .find_all("aaa", &GrammarSearchOptions::default())
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(
+        choices
+            .find_all(
+                "aaa",
+                &GrammarSearchOptions {
+                    rule: Some("missing".to_owned()),
+                    ..GrammarSearchOptions::default()
+                }
+            )
+            .unwrap_err()
+            .reason,
+        "reference"
+    );
+    let limited = compile_feature_grammar(
+        &import_ebnf(text(&fixture, "selectionGrammar")).unwrap(),
+        None,
+        FeatureParseOptions {
+            step_limit: Some(1),
+            ..FeatureParseOptions::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        limited
+            .find_all("aaa", &GrammarSearchOptions::default())
+            .unwrap_err()
+            .reason,
+        "stepLimit"
+    );
+    observe(
+        "I235-GRAMMAR-SEARCH-POLICY",
+        &[
+            "wordBoundariesUseUnicode",
+            "matchPoliciesChooseAtEachStart",
+            "overlapAndEmptyMatchesAreControlled",
+        ],
+    );
+
+    let network = LinkNetwork::parse(
+        text(&fixture, "html"),
+        "HTML",
+        ParseConfiguration::default(),
+    );
+    let query = LinkQuery::from_sexpression(text(&fixture, "query")).unwrap();
+    let matches = network.query_matches_with(
+        &query,
+        &parser.search_predicate(GrammarSearchOptions {
+            word_boundaries: true,
+            ..GrammarSearchOptions::default()
+        }),
+    );
+    assert_eq!(matches.len(), 1);
+    let expected_query =
+        LinkQuery::from_sexpression("(text) @candidate (#eq? @candidate \"от 250 000 ₽\")")
+            .unwrap();
+    assert_eq!(matches, network.find(&expected_query));
+    observe(
+        "I235-GRAMMAR-SEARCH-QUERY",
+        &["sourceTextQueryPredicateComposes"],
+    );
+}
+
 fn languages(fixture: &Value) -> HashMap<String, Grammar> {
     fixture["languages"]
         .as_object()

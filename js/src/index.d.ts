@@ -1193,6 +1193,7 @@ export class LinkNetwork {
   len(): number;
   queryLinks(query: LinkQuery): Link[];
   find(query: LinkQuery): QueryMatch[];
+  queryMatchesWith(query: LinkQuery, predicateHost: QueryPredicateHost): QueryMatch[];
   replace(matches: QueryMatch[], rule: ReplacementRule, options?: DecoratorOptions): ReplacementReport;
   applySubstitution(rule: SubstitutionRule): SubstitutionReport;
   applyLinkCliSubstitutionText(source: string): SubstitutionReport;
@@ -1262,6 +1263,12 @@ export class LinkQuery {
 export class QueryMatch {
   linkId: LinkId;
 }
+
+export type QueryPredicateHost = (
+  predicate: { name: string; arguments: Array<{ capture?: string; literal?: string }> },
+  captures: { first(name: string): LinkId | undefined },
+  network: LinkNetwork,
+) => boolean;
 
 export class ReplacementRule {
   static capturedText(captureName: string, replacementText: string): ReplacementRule;
@@ -1758,6 +1765,31 @@ export interface GrammarParser {
   /** A mapped success requires parseTree so its source-plane registry is retained. */
   parse(source: string | Uint8Array, options?: GrammarParserOptions): SyntaxTreeNode;
   parseTree(source: string | Uint8Array, options?: GrammarParserOptions): GrammarParseOutcome;
+  findAll(source: string, options?: GrammarSearchOptions): GrammarSearchMatch[];
+  /** Predicate host for #grammar-match? and the standard source text predicates. */
+  searchPredicate(options?: GrammarSearchOptions): QueryPredicateHost;
+}
+
+export interface GrammarSearchOptions {
+  rule?: string;
+  overlapping?: boolean;
+  wordBoundaries?: boolean;
+  matchPolicy?: 'leftmost-longest' | 'peg-first';
+  captures?: string[];
+}
+
+/** UTF-16 offsets into the original source string. */
+export interface GrammarSearchSpan {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface GrammarSearchMatch extends GrammarSearchSpan {
+  /** The same UTF-8 CST coordinates that parseTree publishes. */
+  tree: SyntaxTreeNode;
+  captures: Record<string, GrammarSearchSpan[]>;
+  sourcePlanes?: GrammarSourcePlane[];
 }
 
 export class GrammarParseError extends Error {

@@ -664,6 +664,14 @@ impl Executor<'_> {
     /// farthest, with the rest of the input as an ERROR leaf, or of the
     /// cheapest complete result when the round asks for one more repair point.
     pub(super) fn run(&mut self, start_rule: usize) -> Run<Outcome> {
+        self.run_with_search(start_rule, None)
+    }
+
+    pub(super) fn run_with_search(
+        &mut self,
+        start_rule: usize,
+        search: Option<&super::search::SearchAttempt<'_>>,
+    ) -> Run<Outcome> {
         let results = self.reference(
             &Target::Rule(start_rule),
             self.begin,
@@ -676,6 +684,18 @@ impl Executor<'_> {
         // The result that reaches farthest, with its cost before the rest.
         let mut partial: Option<(usize, usize, Res, Children)> = None;
         for result in results {
+            if let Some(search) = search {
+                if super::search_policy::accept_grammar_search_end(
+                    result.end > self.begin,
+                    search.accepts_boundary(result.end),
+                ) {
+                    complete.push((result, no_children(), None));
+                    if search.match_policy == super::search::GrammarMatchPolicy::PegFirst {
+                        break;
+                    }
+                }
+                continue;
+            }
             let previous = self.lexer_family.clone();
             if let Some(family) = &result.lexical_family {
                 self.lexer_family = family.clone();
@@ -725,7 +745,9 @@ impl Executor<'_> {
             let partial = self.repair_points.is_some().then(|| {
                 Rc::new(partial.map_or_else(
                     || self.error_root(start_rule),
-                    |(_, _, result, trailing)| self.root(start_rule, &result, &trailing, false),
+                    |(_, _, result, trailing)| {
+                        self.root(start_rule, &result, &trailing, false, self.end)
+                    },
                 ))
             });
             // A round that repairs and completes nothing asks for the offset
@@ -752,12 +774,16 @@ impl Executor<'_> {
         let mut chosen = &complete[0];
         let mut tied = false;
         for candidate in &complete[1..] {
-            match complete_order(
-                (&candidate.0, &candidate.1),
-                (&chosen.0, &chosen.1),
-                self.settling,
-                self.longest_tokens,
-            ) {
+            let range_order =
+                search.map_or(Ordering::Equal, |_| candidate.0.end.cmp(&chosen.0.end));
+            match range_order.then_with(|| {
+                complete_order(
+                    (&candidate.0, &candidate.1),
+                    (&chosen.0, &chosen.1),
+                    self.settling,
+                    self.longest_tokens,
+                )
+            }) {
                 Ordering::Greater => {
                     chosen = candidate;
                     tied = false;
@@ -767,7 +793,8 @@ impl Executor<'_> {
             }
         }
         let several = tied && self.settling.ambiguity() && chosen.0.cost == 0;
-        let root = Rc::new(self.root(start_rule, &chosen.0, &chosen.1, several));
+        let end = search.map_or(self.end, |_| chosen.0.end);
+        let root = Rc::new(self.root(start_rule, &chosen.0, &chosen.1, several, end));
         // When the cheapest complete result takes the rest of the input as
         // ERROR at a repair point, a result that reached past that point
         // without completing costs at least one more repair, at its end. While

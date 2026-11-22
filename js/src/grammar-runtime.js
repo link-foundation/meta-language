@@ -10,10 +10,12 @@ import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
 import { decorateGrammar, decorateSyntaxTree } from './grammar-decorators.js';
 import { DecoratorError, decoratorSet } from './decorators.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
-import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
+import { inputBytes, lineAndColumn, utf16View } from './grammar-runtime/text.js';
 import { qualifyGrammarRoot } from './grammar-runtime/grammar-selection.js';
 import { withGrammarSelectionSources } from './grammar-runtime/selection-source-mapping.js';
 import { readGrammarCompositionPublicationIssue } from './translation/grammar-rule-composition-rules.js';
+import { sourceTextPredicateHost } from './query.js';
+import { insideGrammarSearchWord, skipGrammarSearchStart } from './grammar-search-policy.js';
 
 export { GrammarRuntimeError, renderSyntaxTree };
 export { checkGrammarSelectionMappedTree } from './grammar-runtime/mapped-tree-validation.js';
@@ -56,12 +58,15 @@ function positioned(reason, bytes, offset, extra = {}) {
  * `Expectations` in grammar-runtime/executor.js). Each run has its own step
  * budget; all runs share the parse's `memory` budget.
  */
-function runParse(program, bytes, startRule, options, maxDepth, expectations, memory, prepare) {
+function runParse(program, bytes, startRule, options, maxDepth, expectations, memory, prepare, search) {
   for (;;) {
-    const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length, memory), maxDepth);
+    const budget = stepBudget(options, bytes.length, memory);
+    if (search) budget.steps = search.steps;
+    const executor = new Executor(program, bytes, search?.begin ?? 0, bytes.length, options, budget, maxDepth);
     executor.expectations = expectations.restart();
     prepare(executor);
-    const outcome = executor.run(startRule);
+    const outcome = executor.run(startRule, search);
+    if (search) search.steps = budget.steps;
     if (!expectations.stale) return { ...outcome, executor };
   }
 }
@@ -101,7 +106,7 @@ function repairParse(program, bytes, startRule, options, maxDepth, failed, keywo
  * `{ ok, tree, ambiguities, rejection }`: `ok` is true only without a
  * rejection; the tree is kept whenever one was built.
  */
-function parseProgram(program, source, options) {
+function parseProgram(program, source, options, search) {
   const bytes = inputBytes(source);
   const startRule = options.startRule ?? program.start;
   if (!program.rules.has(startRule)) throw new GrammarRuntimeError(`undefined start rule ${startRule}`, 'reference');
@@ -119,7 +124,7 @@ function parseProgram(program, source, options) {
         executor.keywords = keywords;
         // With no repair point yet, recovery only notes where elements fail.
         if (options.errorRecovery) executor.repairPoints = new Set();
-      });
+      }, search);
       if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome, keywords, expectations, memory);
     } while (keywords && outcome.ok && keywords.conflicts(outcome.root));
     if (outcome.ok && options.grammarName && options.globalConceptSpace) outcome.root = qualifyGrammarRoot(outcome.executor, outcome.root, options.grammarName);
@@ -137,6 +142,7 @@ function parseProgram(program, source, options) {
     throw error;
   }
   if (!outcome.ok) {
+    if (search) return { ok: false, rejection: { reason: 'syntax' } };
     const diagnostics = budget.memory.selectionDiagnostics;
     if (diagnostics?.length) return withGrammarSelectionSources({ ok: false, tree: null, ambiguities: [], rejection: positioned(diagnostics[0].reason, bytes, diagnostics[0].start, { diagnostics }) }, memory);
     const mappingDiagnostics = memory.selectionMappingFailures;
@@ -156,6 +162,7 @@ function parseProgram(program, source, options) {
   const publicationIssue = readGrammarCompositionPublicationIssue(Boolean(memory.selectionSources?.records.length),
     decorators.has('executor') || decorators.has('recovery'));
   if (publicationIssue) throw new DecoratorError(publicationIssue);
+  const matchEnd = search ? outcome.root.end : undefined;
   const tree = decorateSyntaxTree(publicTree(outcome.root, bytes), decorators);
   const ambiguities = collectAmbiguities(outcome.root, program);
   let rejection = null;
@@ -165,7 +172,75 @@ function parseProgram(program, source, options) {
   else if (recovery && options.recovery !== 'accept') rejection = positioned('recovered', bytes, recovery.start,
     recovery.source === undefined ? {} : { diagnostics: [recovery], offsetSemantics: 'covering-source-spelling' });
   else if (ambiguities.length > 0 && options.ambiguity === 'reject') rejection = positioned('ambiguity', bytes, ambiguities[0].start);
-  return withGrammarSelectionSources({ ok: rejection === null, tree, ambiguities, rejection }, memory);
+  return withGrammarSelectionSources({ ok: rejection === null, tree, ambiguities, rejection, ...(search ? { matchEnd } : {}) }, memory);
+}
+
+const WORD_CHARACTER = /^[\p{L}\p{M}\p{N}\p{Pc}]$/u;
+
+function wordCharacters(source) {
+  const words = new Map();
+  let offset = 0;
+  let previous = false;
+  for (const character of source) {
+    const current = WORD_CHARACTER.test(character);
+    words.set(offset, insideGrammarSearchWord(previous, current));
+    offset += character.length;
+    previous = current;
+  }
+  words.set(offset, false);
+  return words;
+}
+
+function searchCaptures(tree, source, byteToUnit, captureNames) {
+  const captures = Object.create(null);
+  for (const name of captureNames) captures[name] = [];
+  const pending = [tree];
+  while (pending.length) {
+    const node = pending.pop();
+    if ((node.type === 'node' || node.type === 'token') && Object.hasOwn(captures, node.kind)) {
+      const start = byteToUnit.get(node.start);
+      const end = byteToUnit.get(node.end);
+      if (start !== undefined && end !== undefined) captures[node.kind].push({ start, end, text: source.slice(start, end) });
+    }
+    const children = node.children ?? node.sourceChildren ?? (node.root ? [node.root] : []);
+    for (let index = children.length - 1; index >= 0; index -= 1) pending.push(children[index]);
+  }
+  return captures;
+}
+
+function findGrammarMatches(program, source, options, {
+  rule = options.startRule ?? program.start, overlapping = false, wordBoundaries = false,
+  matchPolicy = 'leftmost-longest', captures = [],
+} = {}) {
+  if (typeof source !== 'string') throw new TypeError('grammar search reads Unicode text');
+  if (!program.rules.has(rule)) throw new GrammarRuntimeError(`undefined start rule ${rule}`, 'reference');
+  if (matchPolicy !== 'leftmost-longest' && matchPolicy !== 'peg-first') throw new TypeError('unknown grammar search match policy');
+  if (!Array.isArray(captures) || captures.some(name => typeof name !== 'string')) throw new TypeError('grammar search capture names must be strings');
+  const bytes = inputBytes(source);
+  const { byteToUnit } = utf16View(bytes, 0, bytes.length);
+  const words = wordBoundaries ? wordCharacters(source) : null;
+  const acceptsBoundary = (position) => byteToUnit.has(position) && !words?.get(byteToUnit.get(position));
+  const search = { begin: 0, acceptEnd: acceptsBoundary, matchPolicy, steps: 0 };
+  const parseOptions = { ...options, startRule: rule, errorRecovery: false };
+  const matches = [];
+  let next = 0;
+  for (const [begin, start] of byteToUnit) {
+    if (begin === bytes.length || skipGrammarSearchStart(begin < next, overlapping) || !acceptsBoundary(begin)) continue;
+    search.begin = begin;
+    const outcome = parseProgram(program, bytes, parseOptions, search);
+    if (!outcome.ok) {
+      if (['stepLimit', 'memoryBudget', 'nestingDepth'].includes(outcome.rejection.reason)) {
+        throw new GrammarParseError(outcome.rejection);
+      }
+      continue;
+    }
+    const { tree, sourcePlanes, matchEnd } = outcome;
+    const end = byteToUnit.get(matchEnd);
+    matches.push({ start, end, text: source.slice(start, end), tree,
+      captures: searchCaptures(tree, source, byteToUnit, captures), ...(sourcePlanes ? { sourcePlanes } : {}) });
+    next = matchEnd;
+  }
+  return matches;
 }
 
 /**
@@ -194,6 +269,26 @@ export function createGrammarParser(grammar, options = {}) {
   const parseTree = (source, parseOptions = {}) => parseProgram(program, source, { ...options, ...parseOptions });
   return {
     parseTree,
+    findAll(searchSource, searchOptions) {
+      return findGrammarMatches(program, searchSource, options, searchOptions);
+    },
+    searchPredicate(searchOptions) {
+      const textPredicate = sourceTextPredicateHost((network, id) => network.capturedText(id));
+      return (predicate, captures, network) => {
+        if (predicate.name !== 'grammar-match?') return textPredicate(predicate, captures, network);
+        const [argument] = predicate.arguments;
+        if (predicate.arguments.length !== 1 || argument?.capture === undefined) return false;
+        const id = captures.first(argument.capture);
+        if (id === undefined) return false;
+        const text = network.capturedText(id);
+        try {
+          return findGrammarMatches(program, text, options, searchOptions).length > 0;
+        } catch (error) {
+          if (error instanceof GrammarParseError || error instanceof GrammarRuntimeError) return false;
+          throw error;
+        }
+      };
+    },
     parse(source, parseOptions = {}) {
       const outcome = parseTree(source, parseOptions);
       if (!outcome.ok) throw new GrammarParseError(outcome.rejection);

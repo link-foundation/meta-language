@@ -16,6 +16,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   grammarAssetAvailability: 'https://github.com/link-foundation/meta-language/issues/244',
   pdfStreamNullCharacters: 'https://github.com/link-foundation/meta-language/issues/239',
   rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
+  grammarSearch: 'https://github.com/link-foundation/meta-language/issues/235',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
@@ -407,6 +408,46 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/language_identification.rs', 'rust/tests/unit/language_identification.rs'],
       },
     },
+    ...[
+      {
+        id: 'I235-GRAMMAR-SEARCH-SPANS',
+        construct: 'grammar search and original-text coordinates',
+        expectedBehavior: 'A compiled grammar finds the reported price phrases and returns their half-open locations and concrete trees. JavaScript uses UTF-16 offsets for match ranges and Rust uses byte offsets. Whole-input parsing keeps its existing acceptance behavior.',
+        selector: 'all three price phrases and the original whole-input parse',
+        assertions: ['searchFindsOriginalSpans', 'wholeInputParseIsPreserved'],
+      },
+      {
+        id: 'I235-GRAMMAR-SEARCH-CAPTURES',
+        construct: 'named grammar captures',
+        expectedBehavior: 'A caller can read all occurrences of a named rule in the match, including both amounts in the range, with the original spelling and span for each.',
+        selector: 'amount and currency captures from all three price phrases',
+        assertions: ['repeatedNamedCapturesRetainSourceSpans'],
+      },
+      {
+        id: 'I235-GRAMMAR-SEARCH-POLICY',
+        construct: 'Unicode word boundaries, match selection and overlap',
+        expectedBehavior: 'Search exposes first and longest match selection at each start, controls whether matches overlap, ignores zero-width results, and can require Unicode word boundaries.',
+        selector: 'word-boundary, overlapping, match policy and empty-result controls',
+        assertions: ['wordBoundariesUseUnicode', 'matchPoliciesChooseAtEachStart', 'overlapAndEmptyMatchesAreControlled'],
+      },
+      {
+        id: 'I235-GRAMMAR-SEARCH-QUERY',
+        construct: 'grammar search in source text predicates',
+        expectedBehavior: 'A grammar predicate composes with existing source text predicates in a LinkQuery over captured text.',
+        selector: 'the positive and negative HTML text links with combined predicates',
+        assertions: ['sourceTextQueryPredicateComposes'],
+      },
+    ].map(entry => ({
+      ...entry,
+      source: ISSUE_195_SOURCES.grammarSearch,
+      language: 'native grammar execution',
+      version: 'active shared grammar executors',
+      fixture: 'parity/fixtures/grammar-search.json',
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-runtime.js', 'js/tests/grammar-search.test.js'],
+        rust: ['rust/src/grammar/feature_runtime/search.rs', 'rust/tests/unit/issue_195_grammar_feature_union.rs'],
+      },
+    })),
   ];
   return entries.map(({ id, source, language, version, construct, expectedBehavior, fixture, selector, assertions, implementationEntryPoints }) => {
     const fixtureId = id.toLowerCase();
