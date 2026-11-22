@@ -8,6 +8,7 @@ pub(super) struct ClassSource {
     pub(super) text: String,
     intervals: Vec<f64>,
     brands: Vec<String>,
+    exports: Vec<String>,
     public_fields: Vec<String>,
     pub(super) prototype_methods: Vec<String>,
     pub(super) owners: serde_json::Value,
@@ -103,6 +104,10 @@ pub(super) fn read(
         text: text.to_string(),
         intervals,
         brands: brands.iter().map(ToString::to_string).collect(),
+        exports: rules::read_java_script_closed_class_function_exports(&values, &kinds)
+            .iter()
+            .map(ToString::to_string)
+            .collect(),
         public_fields: public_fields.iter().map(ToString::to_string).collect(),
         prototype_methods: prototype_methods.iter().map(ToString::to_string).collect(),
         owners: crate::translation::class_owners::owners_from_rows(&owner_rows)?,
@@ -227,6 +232,16 @@ fn validate_uses(surface: &SProgram, plan: &ClassSource) -> Result<()> {
     })?;
     let facts=crate::translation::surface_reference_facts::create_surface_reference_facts(&value);
     let declarations=crate::translation::collection_construction_rules::read_collection_construction_field(&facts.starts,&facts.counts,&facts.labels,&facts.targets,facts.root,"declarations");
+    if crate::translation::javascript_class_observation_rules::has_java_script_closed_class_exported_brand(
+        &facts.texts, &facts.starts, &facts.counts, &facts.labels, &facts.targets,
+        declarations, &plan.exports, &plan.brands,
+    ) {
+        return Err(unsupported(
+            "JavaScript closed class observation",
+            "an exported function needs a complete public signature without private class values",
+            Some(Span::new(0, plan.text.encode_utf16().count())),
+        ));
+    }
     let mut pending = vec![(&value, false)];
     while let Some((node, direct)) = pending.pop() {
         let kind = node

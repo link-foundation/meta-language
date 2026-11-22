@@ -45,3 +45,32 @@ export function containsJavaScriptClosedClassBrand(texts,starts,counts,labels,ta
   }else if(!['unit','bool','float','int','nat','fixed','string'].includes(kind))return true;
  }return false;
 }
+
+/** @param {string[]} texts @param {number[]} starts @param {number[]} counts
+ * @param {string[]} labels @param {number[]} targets @param {number} declarations
+ * @param {string[]} exports @param {string[]} brands @returns {boolean} */
+export function hasJavaScriptClosedClassExportedBrand(texts,starts,counts,labels,targets,declarations,exports,brands) {
+  if (exports.length === 0) return false;
+  if (declarations < 0) return true;
+  for (const exported of exports) {
+    let found = false;
+    for (let index = 0; index < readRequiredNumberFact(counts,declarations); index += 1) {
+      const declaration = element(starts,counts,targets,declarations,index);
+      const name = field(starts,counts,labels,targets,declaration,'name');
+      if (name < 0 || readRequiredTextFact(texts,name) !== exported) continue;
+      const kind = field(starts,counts,labels,targets,declaration,'k');
+      if (kind < 0 || readRequiredTextFact(texts,kind) !== 'fn') continue;
+      const params = field(starts,counts,labels,targets,declaration,'params');
+      const ret = field(starts,counts,labels,targets,declaration,'ret');
+      if (found || params < 0 || containsJavaScriptClosedClassBrand(texts,starts,counts,labels,targets,ret,declarations,brands)) return true;
+      found = true;
+      for (let at = 0; at < readRequiredNumberFact(counts,params); at += 1) {
+        const parameter = element(starts,counts,targets,params,at);
+        const type = field(starts,counts,labels,targets,parameter,'type');
+        if (containsJavaScriptClosedClassBrand(texts,starts,counts,labels,targets,type,declarations,brands)) return true;
+      }
+    }
+    if (!found) return true;
+  }
+  return false;
+}

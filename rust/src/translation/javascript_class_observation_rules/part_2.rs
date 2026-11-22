@@ -1,12 +1,416 @@
 // Generated from complete js/src/translation/javascript-class-observation-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result;
-use super::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result;
+use super::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Result;
 use super::dependency_function1;
 use super::dependency_function2;
+use super::ml;
 use super::ml_array;
+use super::read_collection_construction_binding;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
-use super::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop3;
+use super::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop2;
+use super::source_ml_source1_temporary_has_java_script_closed_class_exported_brand_loop9;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_collection_construction(
+    target: &str,
+    kind: &str,
+    key_kind: &str,
+    values: &str,
+    collection_type: &str,
+    element_type: &str,
+    comparison: &str,
+) -> String {
+    {
+        let set = kind == "set";
+        if target == "JavaScript" {
+            format!(
+                "new {}({})",
+                if set {
+                    String::from("Set")
+                } else {
+                    String::from("Map")
+                },
+                values.to_owned()
+            )
+        } else if target == "Rust" {
+            {
+                let comparator = if key_kind == "float" {
+                    String::from("|a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan())")
+                } else {
+                    String::from("|a, b| a == b")
+                };
+                {
+                    let values_3 = if key_kind == "float" {
+                        {
+                            format!(
+                                "({}).into_iter().map(|ml_value| {}).collect::<Vec<_>>()",
+                                values.to_owned(),
+                                if set {
+                                    String::from("if ml_value == 0f64 { 0f64 } else { ml_value }")
+                                } else {
+                                    String::from(
+                                        "(if ml_value.0 == 0f64 { 0f64 } else { ml_value.0 }, ml_value.1)",
+                                    )
+                                }
+                            )
+                        }
+                    } else {
+                        values.to_owned()
+                    };
+                    format!(
+                        "crate::ml_array::{}({values_3}, {comparator})",
+                        kind.to_owned()
+                    )
+                }
+            }
+        } else {
+            {
+                let value = self::read_collection_construction_binding(target, kind, "value");
+                {
+                    let previous =
+                        self::read_collection_construction_binding(target, kind, "previous");
+                    if target == "Lean" {
+                        {
+                            let equal = if key_kind == "float" {
+                                format!(
+                                    "({previous} == {value} || ({previous}.isNaN && {value}.isNaN))"
+                                )
+                            } else {
+                                format!("({previous} == {value})")
+                            };
+                            {
+                                let normalized = if key_kind == "float" {
+                                    if set {
+                                        String::from(
+                                            "(if ml_original == (0 : Float) then (0 : Float) else ml_original)",
+                                        )
+                                    } else {
+                                        String::from(
+                                            "((if ml_original.1 == (0 : Float) then (0 : Float) else ml_original.1), ml_original.2)",
+                                        )
+                                    }
+                                } else {
+                                    String::from("ml_original")
+                                };
+                                {
+                                    let existing = if set {
+                                        String::from("ml_accumulator")
+                                    } else {
+                                        format!(
+                                            "(ml_accumulator.map (fun ml_previous => if {equal} then (ml_previous.1, ml_value.2) else ml_previous))"
+                                        )
+                                    };
+                                    format!(
+                                        "({}.foldl (fun ml_accumulator ml_original => let ml_value := {normalized}; if ml_accumulator.any (fun ml_previous => {equal}) then {existing} else ml_accumulator.push ml_value) (#[] : {}))",
+                                        values.to_owned(),
+                                        collection_type.to_owned()
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        {
+                            let equal_2 = comparison.to_owned();
+                            {
+                                let equal_4 = if key_kind == "float" {
+                                    {
+                                        format!(
+                                            "(orb {equal_2} (andb (PrimFloat.is_nan {previous}) (PrimFloat.is_nan {value})))"
+                                        )
+                                    }
+                                } else {
+                                    equal_2
+                                };
+                                {
+                                    let normalized_2 = if key_kind == "float" {
+                                        if set {
+                                            String::from(
+                                                "(if PrimFloat.eqb ml_original 0%float then 0%float else ml_original)",
+                                            )
+                                        } else {
+                                            String::from(
+                                                "((if PrimFloat.eqb (fst ml_original) 0%float then 0%float else fst ml_original), snd ml_original)",
+                                            )
+                                        }
+                                    } else {
+                                        String::from("ml_original")
+                                    };
+                                    {
+                                        let existing_2 = if set {
+                                            String::from("ml_accumulator")
+                                        } else {
+                                            format!(
+                                                "(List.map (fun ml_previous => if {equal_4} then (fst ml_previous, snd ml_value) else ml_previous) ml_accumulator)"
+                                            )
+                                        };
+                                        format!(
+                                            "(List.fold_left (fun ml_accumulator ml_original => let ml_value := {normalized_2} in if List.existsb (fun ml_previous => {equal_4}) ml_accumulator then {existing_2} else List.app ml_accumulator (ml_value :: nil)) {} (@nil {}))",
+                                            values.to_owned(),
+                                            element_type.to_owned()
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_observation_operands(kind: &str, proof: &str) -> String {
+    if self::ml_array::includes(
+        &vec![
+            String::from("eq"),
+            String::from("ne"),
+            String::from("lt"),
+            String::from("le"),
+            String::from("gt"),
+            String::from("ge"),
+        ],
+        &proof.to_owned(),
+        0f64,
+        false,
+        |a, b| a == b,
+    ) {
+        String::from("left right")
+    } else if proof == "forall" {
+        String::from("binders")
+    } else if (kind == "toString") || (kind == "optionalText") {
+        String::from("arg")
+    } else if kind == "strictEqual" {
+        String::from("left right")
+    } else if (kind == "print") || (kind == "output") {
+        String::from("expr")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_observation_operation_operands(
+    kind: &str,
+    proof: &str,
+    operation: &str,
+) -> String {
+    if (kind == "binary")
+        && self::ml_array::includes(
+            &vec![String::from("eq"), String::from("ne")],
+            &operation.to_owned(),
+            0f64,
+            false,
+            |a, b| a == b,
+        )
+    {
+        String::from("left right")
+    } else {
+        self::read_java_script_closed_class_observation_operands(kind, proof)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn contains_java_script_closed_class_brand(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    root: f64,
+    declarations: f64,
+    brands: &[String],
+) -> bool {
+    if (brands.len() as f64) == 0f64 {
+        false
+    } else {
+        {
+            let pending = vec![root];
+            {
+                let seen = Vec::<f64>::new();
+                {
+                    let source_ml_source2_s2 = self::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop2(texts, starts, counts, labels, targets, declarations, brands, pending, seen);
+                    match source_ml_source2_s2 {
+                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Done => {
+                            false
+                        }
+                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(source_ml_source1_temporary_result2) => {
+                            source_ml_source1_temporary_result2
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn has_java_script_closed_class_exported_brand(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    declarations: f64,
+    exports: &[String],
+    brands: &[String],
+) -> bool {
+    if (exports.len() as f64) == 0f64 {
+        false
+    } else if declarations < 0f64 {
+        true
+    } else {
+        {
+            let source_ml_source1_temporary_values8 = exports.to_vec();
+            {
+                let source_ml_source1_temporary_index8 = self::ml::Big::from_i128(0);
+                {
+                    let source_ml_source2_s3 = self::source_ml_source1_temporary_has_java_script_closed_class_exported_brand_loop9(texts, starts, counts, labels, targets, declarations, brands, &(source_ml_source1_temporary_values8), source_ml_source1_temporary_index8);
+                    match source_ml_source2_s3 {
+                            self::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Result::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Done => {
+                                false
+                            }
+                            self::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Result::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Return(source_ml_source1_temporary_result9) => {
+                                source_ml_source1_temporary_result9
+                            }
+                        }
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryDependencyFunction1Loop1Result {
+    MlSource1TemporaryDependencyFunction1Loop1Done,
+    MlSource1TemporaryDependencyFunction1Loop1Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_dependency_function1_loop1(
+    labels: &[String],
+    targets: &[f64],
+    field: &str,
+    mut start: f64,
+    mut count: f64,
+    mut at: f64,
+) -> self::MlSource1TemporaryDependencyFunction1Loop1Result {
+    loop {
+        return if at < (start + count) {
+            if (self::read_required_text_fact(labels, at)) == field {
+                self::MlSource1TemporaryDependencyFunction1Loop1Result::MlSource1TemporaryDependencyFunction1Loop1Return(self::read_required_number_fact(targets, at))
+            } else {
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryDependencyFunction1Loop1Result::MlSource1TemporaryDependencyFunction1Loop1Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result {
+    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Done,
+    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(bool),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result {
+    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Done(Vec<f64>),
+    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop3(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    brands: &[String],
+    mut pending: Vec<f64>,
+    mut fields: f64,
+    mut at: f64,
+) -> self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result {
+    loop {
+        return if at < (self::read_required_number_fact(counts, fields)) {
+            {
+                let row = self::dependency_function2(starts, counts, targets, fields, at);
+                {
+                    let name =
+                        self::dependency_function1(starts, counts, labels, targets, row, "name");
+                    if (name < 0f64)
+                        || (self::ml_array::includes(
+                            brands,
+                            &self::read_required_text_fact(texts, name),
+                            0f64,
+                            false,
+                            |a, b| a == b,
+                        ))
+                    {
+                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Return(true)
+                    } else {
+                        {
+                            let pending_2 = {
+                                let source_ml_source2_concat_value4 = pending;
+                                {
+                                    let source_ml_source2_concat_value5 =
+                                        vec![self::dependency_function1(
+                                            starts, counts, labels, targets, row, "type",
+                                        )];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<f64>::new(),
+                                            source_ml_source2_concat_value4,
+                                        ),
+                                        source_ml_source2_concat_value5,
+                                    )
+                                }
+                            };
+                            {
+                                let at_2 = at + 1f64;
+                                {
+                                    (pending, at) = (pending_2, at_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Done(pending)
+        };
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -22,17 +426,17 @@ pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop4
         if at < (self::read_required_number_fact(counts, children)) {
             {
                 let pending_2 = {
-                    let source_ml_source2_concat_value5 = pending;
+                    let source_ml_source2_concat_value6 = pending;
                     {
-                        let source_ml_source2_concat_value6 = vec![self::dependency_function2(
+                        let source_ml_source2_concat_value7 = vec![self::dependency_function2(
                             starts, counts, targets, children, at,
                         )];
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<f64>::new(),
-                                source_ml_source2_concat_value5,
+                                source_ml_source2_concat_value6,
                             ),
-                            source_ml_source2_concat_value6,
+                            source_ml_source2_concat_value7,
                         )
                     }
                 };
@@ -76,9 +480,9 @@ pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop7
         if index < (self::read_required_number_fact(counts, fields)) {
             {
                 let pending_2 = {
-                    let source_ml_source2_concat_value7 = pending;
+                    let source_ml_source2_concat_value8 = pending;
                     {
-                        let source_ml_source2_concat_value8 = vec![self::dependency_function1(
+                        let source_ml_source2_concat_value9 = vec![self::dependency_function1(
                             starts,
                             counts,
                             labels,
@@ -89,9 +493,9 @@ pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop7
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<f64>::new(),
-                                source_ml_source2_concat_value7,
+                                source_ml_source2_concat_value8,
                             ),
-                            source_ml_source2_concat_value8,
+                            source_ml_source2_concat_value9,
                         )
                     }
                 };
@@ -206,8 +610,8 @@ pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop5
                                     {
                                         let ctor = 0f64;
                                         {
-                                            let source_ml_source2_s9 = self::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop6(starts, counts, labels, targets, pending, constructors, ctor);
-                                            match source_ml_source2_s9 {
+                                            let source_ml_source2_s10 = self::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop6(starts, counts, labels, targets, pending, constructors, ctor);
+                                            match source_ml_source2_s10 {
                                                 self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop6Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop6Done(pending_2) => {
                                                     {
                                                         let at_3 = at + 1f64;
@@ -231,283 +635,6 @@ pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop5
             }
         } else {
             self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop5Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop5Done(pending, found)
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop2(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    mut declarations: f64,
-    brands: &[String],
-    mut pending: Vec<f64>,
-    mut seen: Vec<f64>,
-) -> self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result {
-    loop {
-        return {
-            let ml_library_condition_1 = {
-                let ml_value = pending.len() as f64;
-                ml_value != 0f64 && !ml_value.is_nan()
-            };
-            if ml_library_condition_1 {
-                if ((seen.len() as f64) >= 100_000f64) || ((pending.len() as f64) > 100_000f64) {
-                    self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                } else {
-                    {
-                        let node = self::read_required_number_fact(
-                            &(pending),
-                            ((pending.len() as f64) - 1f64),
-                        );
-                        {
-                            let pending_2 = self::ml_array::slice(&pending, 0f64, -1f64);
-                            if (node < 0f64) || (node >= (starts.len() as f64)) {
-                                self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                            } else {
-                                if self::ml_array::includes(
-                                    &seen,
-                                    &node,
-                                    0f64,
-                                    false,
-                                    |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
-                                ) {
-                                    {
-                                        pending = pending_2;
-                                        continue;
-                                    }
-                                }
-                                {
-                                    {
-                                        let seen_2 = {
-                                            let source_ml_source2_concat_value10 = seen;
-                                            {
-                                                let source_ml_source2_concat_value11 = vec![node];
-                                                self::ml_array::append(
-                                                    self::ml_array::append(
-                                                        Vec::<f64>::new(),
-                                                        source_ml_source2_concat_value10,
-                                                    ),
-                                                    source_ml_source2_concat_value11,
-                                                )
-                                            }
-                                        };
-                                        {
-                                            let owner = self::dependency_function1(
-                                                starts, counts, labels, targets, node, "kind",
-                                            );
-                                            if owner < 0f64 {
-                                                self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                                            } else {
-                                                {
-                                                    let kind =
-                                                        self::read_required_text_fact(texts, owner);
-                                                    if kind == "record" {
-                                                        {
-                                                            let fields = self::dependency_function1(
-                                                                starts, counts, labels, targets,
-                                                                node, "fields",
-                                                            );
-                                                            if fields < 0f64 {
-                                                                self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                                                            } else {
-                                                                {
-                                                                    let at = 0f64;
-                                                                    {
-                                                                        let source_ml_source2_s12 = self::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop3(texts, starts, counts, labels, targets, brands, pending_2, fields, at);
-                                                                        match source_ml_source2_s12 {
-                                                                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Done(pending_3) => {
-                                                                            {
-                                                                                (pending, seen) = (pending_3, seen_2);
-                                                                                continue;
-                                                                            }
-                                                                        }
-                                                                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Return(source_ml_source1_temporary_result3) => {
-                                                                            self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(source_ml_source1_temporary_result3)
-                                                                        }
-                                                                    }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    } else {
-                                                        if self::ml_array::includes(
-                                                            &vec![
-                                                                String::from("array"),
-                                                                String::from("option"),
-                                                                String::from("set"),
-                                                                String::from("cell"),
-                                                            ],
-                                                            &kind.clone(),
-                                                            0f64,
-                                                            false,
-                                                            |a, b| a == b,
-                                                        ) {
-                                                            {
-                                                                let pending_4 = {
-                                                                    let source_ml_source2_concat_value13 =
-                                                                        pending_2;
-                                                                    {
-                                                                        let source_ml_source2_concat_value14 = vec![self::dependency_function1(starts, counts, labels, targets, node, "element")];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value13), source_ml_source2_concat_value14)
-                                                                    }
-                                                                };
-                                                                {
-                                                                    (pending, seen) =
-                                                                        (pending_4, seen_2);
-                                                                    continue;
-                                                                }
-                                                            }
-                                                        }
-                                                        {
-                                                            if kind == "map" {
-                                                                {
-                                                                    let pending_5 = {
-                                                                        let source_ml_source2_concat_value15 =
-                                                                            pending_2;
-                                                                        {
-                                                                            let source_ml_source2_concat_value16 = vec![self::dependency_function1(starts, counts, labels, targets, node, "key"), self::dependency_function1(starts, counts, labels, targets, node, "value")];
-                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value15), source_ml_source2_concat_value16)
-                                                                        }
-                                                                    };
-                                                                    {
-                                                                        (pending, seen) =
-                                                                            (pending_5, seen_2);
-                                                                        continue;
-                                                                    }
-                                                                }
-                                                            }
-                                                            {
-                                                                if ((kind == "tuple")
-                                                                    || (kind == "union"))
-                                                                    || (kind == "function")
-                                                                {
-                                                                    {
-                                                                        let children = self::dependency_function1(starts, counts, labels, targets, node, &(if kind == "tuple" {
-                                                                        String::from("elements")
-                                                                    } else if kind == "union" {
-                                                                            String::from("alternatives")
-                                                                        } else {
-                                                                            String::from("params")
-                                                                        }));
-                                                                        if children < 0f64 {
-                                                                            self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                                                                        } else {
-                                                                            {
-                                                                                let at_2 = 0f64;
-                                                                                {
-                                                                                    let pending_6 = self::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop4(starts, counts, targets, pending_2, children, at_2);
-                                                                                    if kind
-                                                                                        == "function"
-                                                                                    {
-                                                                                        {
-                                                                                            let pending_7 = {
-                                                                                                let source_ml_source2_concat_value17 = pending_6;
-                                                                                                {
-                                                                                                    let source_ml_source2_concat_value18 = vec![self::dependency_function1(starts, counts, labels, targets, node, "ret")];
-                                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value17), source_ml_source2_concat_value18)
-                                                                                                }
-                                                                                            };
-                                                                                            {
-                                                                                                (pending, seen) = (pending_7, seen_2);
-                                                                                                continue;
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                    {
-                                                                                        {
-                                                                                            (pending, seen) = (pending_6, seen_2);
-                                                                                            continue;
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                } else if kind == "data" {
-                                                                    {
-                                                                        let name = self::dependency_function1(starts, counts, labels, targets, node, "name");
-                                                                        if (name < 0f64)
-                                                                            || (declarations < 0f64)
-                                                                        {
-                                                                            self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                                                                        } else {
-                                                                            {
-                                                                                let found = false;
-                                                                                {
-                                                                                    let at_3 = 0f64;
-                                                                                    {
-                                                                                        let source_ml_source2_s19 = self::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop5(texts, starts, counts, labels, targets, declarations, pending_2, name, found, at_3);
-                                                                                        match source_ml_source2_s19 {
-                                                                                            self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop5Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop5Done(pending_8, found_2) => {
-                                                                                                if found_2 {
-                                                                                                    {
-                                                                                                        (pending, seen) = (pending_8, seen_2);
-                                                                                                        continue;
-                                                                                                    }
-                                                                                                }
-{
-                                                                                                    self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                                                                                                }
-                                                                                            }
-                                                                                            self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop5Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop5Return(source_ml_source1_temporary_result5) => {
-                                                                                                self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(source_ml_source1_temporary_result5)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                } else {
-                                                                    if (self::ml_array::includes(
-                                                                        &vec![
-                                                                            String::from("unit"),
-                                                                            String::from("bool"),
-                                                                            String::from("float"),
-                                                                            String::from("int"),
-                                                                            String::from("nat"),
-                                                                            String::from("fixed"),
-                                                                            String::from("string"),
-                                                                        ],
-                                                                        &kind.clone(),
-                                                                        0f64,
-                                                                        false,
-                                                                        |a, b| a == b,
-                                                                    )) {
-                                                                        {
-                                                                            (pending, seen) =
-                                                                                (pending_2, seen_2);
-                                                                            continue;
-                                                                        }
-                                                                    }
-                                                                    {
-                                                                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(true)
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Done
-            }
         };
     }
 }

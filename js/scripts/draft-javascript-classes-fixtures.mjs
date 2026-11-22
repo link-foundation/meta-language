@@ -6,9 +6,9 @@ import {createHash} from 'node:crypto';
 import {writeFileSync,readFileSync,existsSync,lstatSync} from 'node:fs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const cases=[];
-function add(name,classSource,body,value,resultType='number',helpers=''){
+function add(name,classSource,body,value,resultType='number',helpers='',exported=false){
   const entry='computeClosedClass'+cases.length;
-  cases.push({name,classSource,helpers,body,source:classSource+'\n'+helpers+'\nfunction compute(){'+body+'}',entry,value:String(value),abort:null,resultType});
+  cases.push({name,classSource,helpers,body,source:classSource+'\n'+helpers+'\n'+(exported?'export ':'')+'function compute(){'+body+'}',entry,value:String(value),abort:null,resultType});
 }
 add('ordinary construction retains initial own fields','class Initial { constructor(value){this.value=value;} read(){return this.value;} }','const object=new Initial(12);return object.read();',12);
 add('an alias sees the same field allocation','class Aliased { constructor(value){this.value=value;} add(amount){this.value+=amount;return this.value;} }','const object=new Aliased(2);const alias=object;alias.add(5);return object.value;',7);
@@ -82,6 +82,7 @@ add('static set names do not become accessors','class StaticContextSet { static 
 add('static async names remain synchronous ordinary methods','class StaticContextAsync { static async(value){return value+3;} }','return StaticContextAsync.async(5);',8);
 add('static static names retain both contextual coordinates','class StaticContextStatic { static static(value){return value+4;} }','return StaticContextStatic.static(5);',9);
 add('one contextual property spelling can have distinct instance and static owners','class ContextOwners { value=2; get(value){return this.value+value;} static get(value){return value+10;} }','return new ContextOwners().get(3)+ContextOwners.get(4);',19);
+add('an exported function can observe a private instance and return a public scalar','class PrivateCounter { value=12; read(){return this.value;} }','return new PrivateCounter().read();',12,'number','',true);
 const counter='class Refusal { constructor(value){this.value=value;} read(){return this.value;} }\n';
 const refusals=[
  ['a constructor cannot be called as an ordinary function',counter+'function compute(){return Refusal(1).read();}'],
@@ -95,6 +96,7 @@ const refusals=[
  ['serialization cannot expose the target representation',counter+'function compute(){return JSON.stringify(new Refusal(1));}'],
  ['deep equality needs actual own fields and prototypes',counter+'function compute(){const assert=1;return assert.deepEqual(new Refusal(1),new Refusal(1));}'],
  ['exported constructors need complete external class interfaces','export '+counter+'function compute(){return 1;}'],
+ ['an exported function cannot return a private instance',counter+'export function compute(){return new Refusal(1);}'],
  ['object spread cannot copy synthetic method slots',counter+'function compute(){const object=new Refusal(1);const copy={...object};return copy.value;}'],
  ['constructor return overrides remain explicit','class ReturnOverride { constructor(){return {value:1};} } function compute(){return new ReturnOverride().value;}'],
  ['reads before initial allocation cannot use a fabricated instance','class EarlyRead { constructor(){this.value=this.other;} } function compute(){return 1;}'],

@@ -7,9 +7,8 @@ use super::MlTemporaryReadJavaScriptClosedClassDirectoryJoin14;
 use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Result;
 use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop13Result;
 use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop15Result;
-use super::MlTemporaryReadJavaScriptClosedClassParameterPositionsLoop2Result;
+use super::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsLoop2Result;
 use super::MlTemporaryRenderJavaScriptClosedClassFieldDocumentationLoop8Result;
-use super::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Result;
 use super::ml_array;
 use super::ml_math;
 use super::source_ml_temporary_find_java_script_class_group_end_loop1;
@@ -19,12 +18,10 @@ use super::source_ml_temporary_read_java_script_closed_class_assigned_field_posi
 use super::source_ml_temporary_read_java_script_closed_class_directory_loop12;
 use super::source_ml_temporary_read_java_script_closed_class_directory_loop13;
 use super::source_ml_temporary_read_java_script_closed_class_directory_loop15;
-use super::source_ml_temporary_read_java_script_closed_class_methods_loop22;
-use super::source_ml_temporary_read_java_script_closed_class_parameter_positions_loop2;
+use super::source_ml_temporary_read_java_script_closed_class_parameter_positions_with_collections_loop2;
 use super::source_ml_temporary_read_java_script_closed_class_prefix_end_loop10;
 use super::source_ml_temporary_render_java_script_closed_class_field_documentation_loop8;
 use super::source_ml_temporary_render_java_script_closed_class_parameter_arguments_loop4;
-use super::source_ml_temporary_render_java_script_closed_class_range_loop21;
 
 /// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
 pub mod ml_string {
@@ -356,6 +353,9 @@ pub mod ml_string {
     }
 }
 
+#[path = "ml_string_number.rs"]
+pub mod ml_string_number;
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn find_java_script_class_group_end(values: &[self::ml_string::Text], open: f64) -> f64 {
@@ -408,17 +408,44 @@ pub fn read_java_script_closed_class_parameter_positions(
     open: f64,
     close: f64,
 ) -> Vec<f64> {
+    self::read_java_script_closed_class_parameter_positions_with_collections(
+        values, kinds, open, close, false,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_collection_parameter_positions(
+    values: &[self::ml_string::Text],
+    kinds: &[self::ml_string::Text],
+    open: f64,
+    close: f64,
+) -> Vec<f64> {
+    self::read_java_script_closed_class_parameter_positions_with_collections(
+        values, kinds, open, close, true,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_parameter_positions_with_collections(
+    values: &[self::ml_string::Text],
+    kinds: &[self::ml_string::Text],
+    open: f64,
+    close: f64,
+    collections: bool,
+) -> Vec<f64> {
     {
         let result = Vec::<f64>::new();
         {
             let at = open + 1f64;
             {
-                let source_ml_source1_s2 = self::source_ml_temporary_read_java_script_closed_class_parameter_positions_loop2(values, kinds, close, result, at);
+                let source_ml_source1_s2 = self::source_ml_temporary_read_java_script_closed_class_parameter_positions_with_collections_loop2(values, kinds, close, collections, result, at);
                 match source_ml_source1_s2 {
-                    self::MlTemporaryReadJavaScriptClosedClassParameterPositionsLoop2Result::MlTemporaryReadJavaScriptClosedClassParameterPositionsLoop2Done(result_2) => {
+                    self::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsLoop2Result::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsLoop2Done(result_2) => {
                         result_2
                     }
-                    self::MlTemporaryReadJavaScriptClosedClassParameterPositionsLoop2Result::MlTemporaryReadJavaScriptClosedClassParameterPositionsLoop2Return(source_ml_temporary_result2) => {
+                    self::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsLoop2Result::MlTemporaryReadJavaScriptClosedClassParameterPositionsWithCollectionsLoop2Return(source_ml_temporary_result2) => {
                         source_ml_temporary_result2
                     }
                 }
@@ -760,6 +787,15 @@ pub fn read_java_script_closed_class_refusal(code: f64) -> self::ml_string::Text
             114, 97, 109, 101, 116, 101, 114, 32, 101, 110, 118, 105, 114, 111, 110, 109, 101, 110,
             116,
         ])
+    } else if code == -11f64 {
+        self::ml_string::Text::from_units(vec![
+            97, 32, 99, 108, 111, 115, 101, 100, 32, 99, 111, 108, 108, 101, 99, 116, 105, 111,
+            110, 32, 100, 101, 102, 97, 117, 108, 116, 32, 99, 97, 110, 110, 111, 116, 32, 114,
+            101, 112, 108, 97, 99, 101, 32, 97, 110, 32, 97, 99, 116, 117, 97, 108, 32, 108, 111,
+            99, 97, 108, 32, 99, 108, 97, 115, 115, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116,
+            111, 114, 32, 119, 105, 116, 104, 32, 116, 104, 101, 32, 115, 116, 97, 110, 100, 97,
+            114, 100, 32, 77, 97, 112, 32, 111, 114, 32, 83, 101, 116, 32, 111, 119, 110, 101, 114,
+        ])
     } else if code == -4f64 {
         self::ml_string::Text::from_units(vec![
             105, 110, 105, 116, 105, 97, 108, 32, 111, 119, 110, 32, 102, 105, 101, 108, 100, 115,
@@ -825,101 +861,5 @@ pub fn read_java_script_closed_class_refusal(code: f64) -> self::ml_string::Text
         ])
     } else {
         self::ml_string::Text::from_units(vec![])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn render_java_script_closed_class_range(
-    source: &self::ml_string::Text,
-    values: &[self::ml_string::Text],
-    starts: &[f64],
-    ends: &[f64],
-    first: f64,
-    last: f64,
-    receiver: &self::ml_string::Text,
-    class_names: &[self::ml_string::Text],
-    static_calls: &[self::ml_string::Text],
-) -> self::ml_string::Text {
-    if first >= last {
-        self::ml_string::Text::from_units(vec![])
-    } else {
-        {
-            let result = self::ml_string::Text::from_units(vec![]);
-            {
-                let previous =
-                    (self::ml_array::optional_at(starts, self::ml_array::number_index(first)))
-                        .unwrap_or_else(|| 0f64);
-                {
-                    let at = first;
-                    {
-                        let source_ml_source1_s20 =
-                            self::source_ml_temporary_render_java_script_closed_class_range_loop21(
-                                source,
-                                values,
-                                starts,
-                                ends,
-                                last,
-                                receiver,
-                                class_names,
-                                static_calls,
-                                result,
-                                previous,
-                                at,
-                            );
-                        match source_ml_source1_s20 {
-                            self::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Result::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Done(result_2, previous_2) => {
-                                result_2.concat(&{
-                                    let source_ml_source1_string_range_operand21 = source.clone();
-                                    {
-                                        let source_ml_source1_string_range_operand22 = previous_2;
-                                        {
-                                            let source_ml_source1_string_range_operand23 = (self::ml_array::optional_at(ends, self::ml_array::number_index(last - 1f64))).unwrap_or_else(|| previous_2);
-                                            {
-                                                let source_ml_source1_string_range_position24 = source_ml_source1_string_range_operand22;
-                                                {
-                                                    let source_ml_source1_string_range_position25 = source_ml_source1_string_range_operand23;
-                                                    source_ml_source1_string_range_operand21.slice(source_ml_source1_string_range_position24, source_ml_source1_string_range_position25)
-                                                }
-                                            }
-                                        }
-                                    }
-                                })
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_closed_class_methods(
-    values: &[self::ml_string::Text],
-    directory: &[f64],
-) -> Vec<self::ml_string::Text> {
-    {
-        let result = Vec::<self::ml_string::Text>::new();
-        {
-            let first = 9f64
-                + (3f64
-                    * (self::ml_array::optional_at(directory, self::ml_array::number_index(7f64)))
-                        .unwrap_or_else(|| 0f64));
-            {
-                let at = first;
-                {
-                    self::source_ml_temporary_read_java_script_closed_class_methods_loop22(
-                        values, directory, result, at,
-                    )
-                }
-            }
-        }
     }
 }

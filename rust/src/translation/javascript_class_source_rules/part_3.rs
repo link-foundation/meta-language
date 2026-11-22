@@ -1,35 +1,130 @@
 // Generated from complete js/src/translation/javascript-class-source-rules.js. Do not edit by hand.
-use super::MlTemporaryLowerJavaScriptClosedClassSourceJoin42;
-use super::MlTemporaryLowerJavaScriptClosedClassSourceJoin43;
-use super::MlTemporaryLowerJavaScriptClosedClassSourceLoop41Result;
-use super::MlTemporaryLowerJavaScriptClosedClassSourceLoop44Result;
-use super::MlTemporaryLowerJavaScriptClosedClassSourceLoop46Result;
-use super::MlTemporaryProjectJavaScriptClassSourceIntervalLoop48Result;
-use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop29Result;
-use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop30Result;
+use super::MlTemporaryReadJavaScriptClosedClassCollectionDefaultClassOwnerErrorLoop30Result;
+use super::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result;
+use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Result;
+use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Result;
 use super::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop26Result;
-use super::MlTemporaryRenderJavaScriptClosedClassLoop35Result;
-use super::MlTemporaryRenderJavaScriptClosedClassLoop36Result;
+use super::MlTemporaryRenderJavaScriptClosedClassLoop43Result;
+use super::MlTemporaryRenderJavaScriptClosedClassLoop44Result;
+use super::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Result;
+use super::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
 use super::ml_number;
 use super::ml_string;
+use super::ml_string_number;
 use super::read_java_script_closed_class_prefix_end;
-use super::read_java_script_closed_class_refusal;
-use super::render_java_script_closed_class_range;
-use super::source_ml_temporary_lower_java_script_closed_class_source_loop40;
-use super::source_ml_temporary_lower_java_script_closed_class_source_loop41;
-use super::source_ml_temporary_lower_java_script_closed_class_source_loop44;
-use super::source_ml_temporary_lower_java_script_closed_class_source_loop45;
-use super::source_ml_temporary_lower_java_script_closed_class_source_loop46;
-use super::source_ml_temporary_project_java_script_class_source_interval_loop48;
-use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop29;
-use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop30;
+use super::source_ml_temporary_read_java_script_closed_class_collection_default_class_owner_error_loop29;
+use super::source_ml_temporary_read_java_script_closed_class_collection_default_class_owner_error_loop30;
+use super::source_ml_temporary_read_java_script_closed_class_function_exports_loop34;
+use super::source_ml_temporary_read_java_script_closed_class_method_target_loop53;
+use super::source_ml_temporary_read_java_script_closed_class_methods_loop22;
+use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop37;
+use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop38;
 use super::source_ml_temporary_read_java_script_closed_class_static_calls_loop24;
 use super::source_ml_temporary_read_java_script_closed_class_static_target_loop26;
-use super::source_ml_temporary_render_java_script_closed_class_loop35;
-use super::source_ml_temporary_render_java_script_closed_class_loop36;
+use super::source_ml_temporary_render_java_script_closed_class_loop43;
+use super::source_ml_temporary_render_java_script_closed_class_loop44;
+use super::source_ml_temporary_render_java_script_closed_class_range_loop21;
+use super::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop49;
+use super::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop50;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn render_java_script_closed_class_range(
+    source: &self::ml_string::Text,
+    values: &[self::ml_string::Text],
+    starts: &[f64],
+    ends: &[f64],
+    first: f64,
+    last: f64,
+    receiver: &self::ml_string::Text,
+    class_names: &[self::ml_string::Text],
+    static_calls: &[self::ml_string::Text],
+) -> self::ml_string::Text {
+    if first >= last {
+        self::ml_string::Text::from_units(vec![])
+    } else {
+        {
+            let result = self::ml_string::Text::from_units(vec![]);
+            {
+                let previous =
+                    (self::ml_array::optional_at(starts, self::ml_array::number_index(first)))
+                        .unwrap_or_else(|| 0f64);
+                {
+                    let at = first;
+                    {
+                        let source_ml_source1_s20 =
+                            self::source_ml_temporary_render_java_script_closed_class_range_loop21(
+                                source,
+                                values,
+                                starts,
+                                ends,
+                                last,
+                                receiver,
+                                class_names,
+                                static_calls,
+                                result,
+                                previous,
+                                at,
+                            );
+                        match source_ml_source1_s20 {
+                            self::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Result::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Done(result_2, previous_2) => {
+                                result_2.concat(&{
+                                    let source_ml_source1_string_range_operand21 = source.clone();
+                                    {
+                                        let source_ml_source1_string_range_operand22 = previous_2;
+                                        {
+                                            let source_ml_source1_string_range_operand23 = (self::ml_array::optional_at(ends, self::ml_array::number_index(last - 1f64))).unwrap_or_else(|| previous_2);
+                                            {
+                                                let source_ml_source1_string_range_position24 = source_ml_source1_string_range_operand22;
+                                                {
+                                                    let source_ml_source1_string_range_position25 = source_ml_source1_string_range_operand23;
+                                                    source_ml_source1_string_range_operand21.slice(source_ml_source1_string_range_position24, source_ml_source1_string_range_position25)
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_methods(
+    values: &[self::ml_string::Text],
+    directory: &[f64],
+) -> Vec<self::ml_string::Text> {
+    {
+        let result = Vec::<self::ml_string::Text>::new();
+        {
+            let first = 9f64
+                + (3f64
+                    * (self::ml_array::optional_at(directory, self::ml_array::number_index(7f64)))
+                        .unwrap_or_else(|| 0f64));
+            {
+                let at = first;
+                {
+                    self::source_ml_temporary_read_java_script_closed_class_methods_loop22(
+                        values, directory, result, at,
+                    )
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -126,6 +221,94 @@ pub fn read_java_script_closed_class_static_target(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_closed_class_collection_default_class_owner_error(
+    values: &[self::ml_string::Text],
+    directory: &[Vec<f64>],
+) -> f64 {
+    {
+        let names = Vec::<self::ml_string::Text>::new();
+        {
+            let source_ml_temporary_values27 = directory.to_vec();
+            {
+                let source_ml_temporary_index27 = self::ml::Big::from_i128(0);
+                {
+                    let names_2 = self::source_ml_temporary_read_java_script_closed_class_collection_default_class_owner_error_loop29(values, names, &(source_ml_temporary_values27), source_ml_temporary_index27);
+                    {
+                        let source_ml_temporary_values28 = directory.to_vec();
+                        {
+                            let source_ml_temporary_index28 = self::ml::Big::from_i128(0);
+                            {
+                                let source_ml_source1_s27 = self::source_ml_temporary_read_java_script_closed_class_collection_default_class_owner_error_loop30(values, &(names_2), &(source_ml_temporary_values28), source_ml_temporary_index28);
+                                match source_ml_source1_s27 {
+                                    self::MlTemporaryReadJavaScriptClosedClassCollectionDefaultClassOwnerErrorLoop30Result::MlTemporaryReadJavaScriptClosedClassCollectionDefaultClassOwnerErrorLoop30Done => {
+                                        -1f64
+                                    }
+                                    self::MlTemporaryReadJavaScriptClosedClassCollectionDefaultClassOwnerErrorLoop30Result::MlTemporaryReadJavaScriptClosedClassCollectionDefaultClassOwnerErrorLoop30Return(source_ml_temporary_result30) => {
+                                        source_ml_temporary_result30
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_closed_class_function_export(
+    values: &[self::ml_string::Text],
+    kinds: &[self::ml_string::Text],
+    at: f64,
+) -> bool {
+    {
+        let previous =
+            (self::ml_array::optional_at(values, self::ml_array::number_index(at - 1f64)))
+                .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]));
+        ((((((((self::ml_array::optional_at(values, self::ml_array::number_index(at)))
+            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+            == (self::ml_string::Text::from_units(vec![101, 120, 112, 111, 114, 116])))
+            && (previous != (self::ml_string::Text::from_units(vec![46]))))
+            && (previous != (self::ml_string::Text::from_units(vec![63, 46]))))
+            && (((self::ml_array::optional_at(values, self::ml_array::number_index(at + 1f64)))
+                .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+                == (self::ml_string::Text::from_units(vec![
+                    102, 117, 110, 99, 116, 105, 111, 110,
+                ]))))
+            && (((self::ml_array::optional_at(kinds, self::ml_array::number_index(at + 2f64)))
+                .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+                == (self::ml_string::Text::from_units(vec![
+                    105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
+                ]))))
+            && (((self::ml_array::optional_at(values, self::ml_array::number_index(at + 3f64)))
+                .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+                == (self::ml_string::Text::from_units(vec![40]))))
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_function_exports(
+    values: &[self::ml_string::Text],
+    kinds: &[self::ml_string::Text],
+) -> Vec<self::ml_string::Text> {
+    {
+        let result = Vec::<self::ml_string::Text>::new();
+        {
+            let at = 0f64;
+            {
+                self::source_ml_temporary_read_java_script_closed_class_function_exports_loop34(
+                    values, kinds, result, at,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_closed_class_observation_error(
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
@@ -137,30 +320,30 @@ pub fn read_java_script_closed_class_observation_error(
         {
             let methods = Vec::<self::ml_string::Text>::new();
             {
-                let source_ml_temporary_values27 = directory.to_vec();
+                let source_ml_temporary_values35 = directory.to_vec();
                 {
-                    let source_ml_temporary_index27 = self::ml::Big::from_i128(0);
+                    let source_ml_temporary_index35 = self::ml::Big::from_i128(0);
                     {
-                        let source_ml_source1_s27 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop29(values, names, methods, &(source_ml_temporary_values27), source_ml_temporary_index27);
-                        match source_ml_source1_s27 {
-                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop29Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop29Done(names_2, methods_2) => {
+                        let source_ml_source1_s28 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop37(values, names, methods, &(source_ml_temporary_values35), source_ml_temporary_index35);
+                        match source_ml_source1_s28 {
+                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Done(names_2, methods_2) => {
                                 {
                                     let at = 0f64;
                                     {
-                                        let source_ml_source1_s28 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop30(values, kinds, directory, static_calls, &(names_2), &(methods_2), at);
-                                        match source_ml_source1_s28 {
-                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop30Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop30Done => {
+                                        let source_ml_source1_s29 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop38(values, kinds, directory, static_calls, &(names_2), &(methods_2), at);
+                                        match source_ml_source1_s29 {
+                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Done => {
                                                 -1f64
                                             }
-                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop30Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop30Return(source_ml_temporary_result30) => {
-                                                source_ml_temporary_result30
+                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Return(source_ml_temporary_result38) => {
+                                                source_ml_temporary_result38
                                             }
                                         }
                                     }
                                 }
                             }
-                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop29Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop29Return(source_ml_temporary_result32) => {
-                                source_ml_temporary_result32
+                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Return(source_ml_temporary_result40) => {
+                                source_ml_temporary_result40
                             }
                         }
                     }
@@ -187,6 +370,7 @@ pub fn render_java_script_closed_class(
     ordinal: f64,
     class_names: &[self::ml_string::Text],
     static_calls: &[self::ml_string::Text],
+    prototype: bool,
 ) -> self::ml_string::Text {
     {
         let name = (self::ml_array::optional_at(
@@ -203,9 +387,9 @@ pub fn render_java_script_closed_class(
                 99, 108, 97, 115, 115, 95, 114, 101, 99, 101, 105, 118, 101, 114, 95,
             ])))
             .concat(&{
-                let source_ml_source1_string_argument29 = ordinal;
+                let source_ml_source1_string_argument30 = ordinal;
                 self::ml_string::Text::from_text(&self::ml_number::js_number(
-                    source_ml_source1_string_argument29,
+                    source_ml_source1_string_argument30,
                 ))
             });
             {
@@ -213,468 +397,151 @@ pub fn render_java_script_closed_class(
                     99, 108, 97, 115, 115, 95, 105, 100, 101, 110, 116, 105, 116, 121, 95,
                 ])))
                 .concat(&{
-                    let source_ml_source1_string_argument30 = ordinal;
+                    let source_ml_source1_string_argument31 = ordinal;
                     self::ml_string::Text::from_text(&self::ml_number::js_number(
-                        source_ml_source1_string_argument30,
+                        source_ml_source1_string_argument31,
                     ))
                 });
                 {
-                    let field_count =
-                        (self::ml_array::optional_at(row, self::ml_array::number_index(7f64)))
-                            .unwrap_or_else(|| 0f64);
+                    let brand_value = (prefix.concat(&self::ml_string::Text::from_units(vec![
+                        99, 108, 97, 115, 115, 95, 98, 114, 97, 110, 100, 95, 118, 97, 108, 117,
+                        101, 95,
+                    ])))
+                    .concat(&{
+                        let source_ml_source1_string_argument32 = ordinal;
+                        self::ml_string::Text::from_text(&self::ml_number::js_number(
+                            source_ml_source1_string_argument32,
+                        ))
+                    });
                     {
-                        let methods = 9f64 + (field_count * 3f64);
+                        let field_count =
+                            (self::ml_array::optional_at(row, self::ml_array::number_index(7f64)))
+                                .unwrap_or_else(|| 0f64);
                         {
-                            let parameter_first = (self::ml_array::optional_at(
-                                row,
-                                self::ml_array::number_index(3f64),
-                            ))
-                            .unwrap_or_else(|| -1f64)
-                                + 1f64;
+                            let methods = 9f64 + (field_count * 3f64);
                             {
-                                let parameter_last = (self::ml_array::optional_at(
+                                let parameter_first = (self::ml_array::optional_at(
                                     row,
-                                    self::ml_array::number_index(4f64),
+                                    self::ml_array::number_index(3f64),
                                 ))
-                                .unwrap_or_else(|| -1f64);
+                                .unwrap_or_else(|| -1f64)
+                                    + 1f64;
                                 {
-                                    let parameters = if parameter_last < 0f64 {
-                                        self::ml_string::Text::from_units(vec![])
-                                    } else {
-                                        self::render_java_script_closed_class_range(
-                                            source,
-                                            values,
-                                            starts,
-                                            ends,
-                                            parameter_first,
-                                            parameter_last,
-                                            &(self::ml_string::Text::from_units(vec![])),
-                                            class_names,
-                                            static_calls,
-                                        )
-                                    };
+                                    let parameter_last = (self::ml_array::optional_at(
+                                        row,
+                                        self::ml_array::number_index(4f64),
+                                    ))
+                                    .unwrap_or_else(|| -1f64);
                                     {
-                                        let stubs = self::ml_string::Text::from_units(vec![]);
+                                        let parameters = if parameter_last < 0f64 {
+                                            self::ml_string::Text::from_units(vec![])
+                                        } else {
+                                            self::render_java_script_closed_class_range(
+                                                source,
+                                                values,
+                                                starts,
+                                                ends,
+                                                parameter_first,
+                                                parameter_last,
+                                                &(self::ml_string::Text::from_units(vec![])),
+                                                class_names,
+                                                static_calls,
+                                            )
+                                        };
                                         {
-                                            let initializations =
-                                                self::ml_string::Text::from_units(vec![]);
+                                            let stubs =
+                                                ((self::ml_string::Text::from_units(vec![
+                                                    10, 102, 117, 110, 99, 116, 105, 111, 110, 32,
+                                                ]))
+                                                .concat(&brand_value))
+                                                .concat(&self::ml_string::Text::from_units(vec![
+                                                    40, 41, 32, 123, 32, 114, 101, 116, 117, 114,
+                                                    110, 59, 32, 125, 10,
+                                                ]));
                                             {
-                                                let constructor_fields =
+                                                let initializations =
                                                     self::ml_string::Text::from_units(vec![]);
                                                 {
-                                                    let field_names =
-                                                        Vec::<self::ml_string::Text>::new();
+                                                    let constructor_fields =
+                                                        self::ml_string::Text::from_units(vec![]);
                                                     {
-                                                        let fields = brand.concat(
-                                                            &self::ml_string::Text::from_units(
-                                                                vec![
-                                                                    58, 32, 40, 118, 111, 105, 100,
-                                                                    32, 48, 41,
-                                                                ],
-                                                            ),
-                                                        );
+                                                        let field_names =
+                                                            Vec::<self::ml_string::Text>::new();
                                                         {
-                                                            let at = 9f64;
+                                                            let fields = ((brand.concat(
+                                                                &self::ml_string::Text::from_units(
+                                                                    vec![58, 32],
+                                                                ),
+                                                            ))
+                                                            .concat(&brand_value))
+                                                            .concat(
+                                                                &self::ml_string::Text::from_units(
+                                                                    vec![40, 41],
+                                                                ),
+                                                            );
                                                             {
-                                                                let source_ml_source1_s31 = self::source_ml_temporary_render_java_script_closed_class_loop35(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, methods, stubs, initializations, constructor_fields, field_names, fields, at);
-                                                                match source_ml_source1_s31 {
-                                                                    self::MlTemporaryRenderJavaScriptClosedClassLoop35Result::MlTemporaryRenderJavaScriptClosedClassLoop35Done(stubs_2, initializations_2, constructor_fields_2, fields_2) => {
-                                                                        {
-                                                                            let assignments = self::ml_string::Text::from_units(vec![]);
+                                                                let at = 9f64;
+                                                                {
+                                                                    let source_ml_source1_s33 = self::source_ml_temporary_render_java_script_closed_class_loop43(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, methods, stubs, initializations, constructor_fields, field_names, fields, at);
+                                                                    match source_ml_source1_s33 {
+                                                                        self::MlTemporaryRenderJavaScriptClosedClassLoop43Result::MlTemporaryRenderJavaScriptClosedClassLoop43Done(stubs_2, initializations_2, constructor_fields_2, fields_2) => {
                                                                             {
-                                                                                let at_2 = methods;
+                                                                                let assignments = self::ml_string::Text::from_units(vec![]);
                                                                                 {
-                                                                                    let source_ml_source1_s32 = self::source_ml_temporary_render_java_script_closed_class_loop36(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, &(receiver), stubs_2.clone(), fields_2.clone(), assignments, at_2);
-                                                                                    match source_ml_source1_s32 {
-                                                                                        self::MlTemporaryRenderJavaScriptClosedClassLoop36Result::MlTemporaryRenderJavaScriptClosedClassLoop36Done(stubs_3, fields_3, assignments_2) => {
-                                                                                            {
-                                                                                                let constructor_body = (self::ml_array::optional_at(row, self::ml_array::number_index(5f64))).unwrap_or_else(|| -1f64);
+                                                                                    let at_2 = methods;
+                                                                                    {
+                                                                                        let source_ml_source1_s34 = self::source_ml_temporary_render_java_script_closed_class_loop44(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, prototype, &(receiver), stubs_2.clone(), fields_2.clone(), assignments, at_2);
+                                                                                        match source_ml_source1_s34 {
+                                                                                            self::MlTemporaryRenderJavaScriptClosedClassLoop44Result::MlTemporaryRenderJavaScriptClosedClassLoop44Done(stubs_3, fields_3, assignments_2) => {
                                                                                                 {
-                                                                                                    let constructor_end = (self::ml_array::optional_at(row, self::ml_array::number_index(6f64))).unwrap_or_else(|| -1f64);
+                                                                                                    let constructor_body = (self::ml_array::optional_at(row, self::ml_array::number_index(5f64))).unwrap_or_else(|| -1f64);
                                                                                                     {
-                                                                                                        let initialization = (self::ml_array::optional_at(row, self::ml_array::number_index(8f64))).unwrap_or_else(|| -1f64);
+                                                                                                        let constructor_end = (self::ml_array::optional_at(row, self::ml_array::number_index(6f64))).unwrap_or_else(|| -1f64);
                                                                                                         {
-                                                                                                            let prologue = if constructor_body < 0f64 {
-                                                                                                                self::ml_string::Text::from_units(vec![])
-                                                                                                            } else {
-                                                                                                                self::render_java_script_closed_class_range(source, values, starts, ends, (constructor_body + 1f64), initialization, &(self::ml_string::Text::from_units(vec![])), class_names, static_calls)
-                                                                                                            };
+                                                                                                            let initialization = (self::ml_array::optional_at(row, self::ml_array::number_index(8f64))).unwrap_or_else(|| -1f64);
                                                                                                             {
-                                                                                                                let remainder = if constructor_body < 0f64 {
+                                                                                                                let prologue = if constructor_body < 0f64 {
                                                                                                                     self::ml_string::Text::from_units(vec![])
                                                                                                                 } else {
-                                                                                                                    self::render_java_script_closed_class_range(source, values, starts, ends, self::read_java_script_closed_class_prefix_end(row), constructor_end, &(receiver), class_names, static_calls)
+                                                                                                                    self::render_java_script_closed_class_range(source, values, starts, ends, (constructor_body + 1f64), initialization, &(self::ml_string::Text::from_units(vec![])), class_names, static_calls)
                                                                                                                 };
                                                                                                                 {
-                                                                                                                    let constructor_name = (self::ml_array::optional_at(row, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64);
+                                                                                                                    let remainder = if constructor_body < 0f64 {
+                                                                                                                        self::ml_string::Text::from_units(vec![])
+                                                                                                                    } else {
+                                                                                                                        self::render_java_script_closed_class_range(source, values, starts, ends, self::read_java_script_closed_class_prefix_end(row), constructor_end, &(receiver), class_names, static_calls)
+                                                                                                                    };
                                                                                                                     {
-                                                                                                                        let documentation = if constructor_name < 0f64 {
-                                                                                                                            self::ml_string::Text::from_units(vec![])
-                                                                                                                        } else {
-                                                                                                                            {
-                                                                                                                                let source_ml_source1_string_range_operand33 = source.clone();
+                                                                                                                        let constructor_name = (self::ml_array::optional_at(row, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64);
+                                                                                                                        {
+                                                                                                                            let documentation = if constructor_name < 0f64 {
+                                                                                                                                self::ml_string::Text::from_units(vec![])
+                                                                                                                            } else {
                                                                                                                                 {
-                                                                                                                                    let source_ml_source1_string_range_operand34 = (self::ml_array::optional_at(ends, self::ml_array::number_index(constructor_name - 1f64))).unwrap_or_else(|| 0f64);
+                                                                                                                                    let source_ml_source1_string_range_operand35 = source.clone();
                                                                                                                                     {
-                                                                                                                                        let source_ml_source1_string_range_operand35 = (self::ml_array::optional_at(starts, self::ml_array::number_index(constructor_name))).unwrap_or_else(|| 0f64);
+                                                                                                                                        let source_ml_source1_string_range_operand36 = (self::ml_array::optional_at(ends, self::ml_array::number_index(constructor_name - 1f64))).unwrap_or_else(|| 0f64);
                                                                                                                                         {
-                                                                                                                                            let source_ml_source1_string_range_position36 = source_ml_source1_string_range_operand34;
+                                                                                                                                            let source_ml_source1_string_range_operand37 = (self::ml_array::optional_at(starts, self::ml_array::number_index(constructor_name))).unwrap_or_else(|| 0f64);
                                                                                                                                             {
-                                                                                                                                                let source_ml_source1_string_range_position37 = source_ml_source1_string_range_operand35;
-                                                                                                                                                source_ml_source1_string_range_operand33.slice(source_ml_source1_string_range_position36, source_ml_source1_string_range_position37)
-                                                                                                                                            }
-                                                                                                                                        }
-                                                                                                                                    }
-                                                                                                                                }
-                                                                                                                            }
-                                                                                                                        };
-                                                                                                                        ((((((((((((((((((((stubs_3.concat(&self::ml_string::Text::from_units(vec![10]))).concat(&documentation)).concat(&self::ml_string::Text::from_units(vec![10, 102, 117, 110, 99, 116, 105, 111, 110, 32]))).concat(&name)).concat(&self::ml_string::Text::from_units(vec![40]))).concat(&parameters)).concat(&self::ml_string::Text::from_units(vec![41, 32, 123, 10]))).concat(&initializations_2)).concat(&prologue)).concat(&self::ml_string::Text::from_units(vec![10]))).concat(&constructor_fields_2)).concat(&self::ml_string::Text::from_units(vec![99, 111, 110, 115, 116, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![32, 61, 32, 123, 32]))).concat(&fields_3)).concat(&self::ml_string::Text::from_units(vec![32, 125, 59, 10]))).concat(&assignments_2)).concat(&remainder)).concat(&self::ml_string::Text::from_units(vec![10, 114, 101, 116, 117, 114, 110, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![59, 10, 125, 10]))
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn lower_java_script_closed_class_source(
-    source: &self::ml_string::Text,
-    values: &[self::ml_string::Text],
-    kinds: &[self::ml_string::Text],
-    starts: &[f64],
-    ends: &[f64],
-    prefix: &self::ml_string::Text,
-) -> (
-    f64,
-    Vec<self::ml_string::Text>,
-    bool,
-    self::ml_string::Text,
-    Vec<f64>,
-    self::ml_string::Text,
-) {
-    if ((!(self::accept_java_script_closed_class_source_size(
-        source.length(),
-        (values.len() as f64),
-    )) || ((kinds.len() as f64) != (values.len() as f64)))
-        || ((starts.len() as f64) != (values.len() as f64)))
-        || ((ends.len() as f64) != (values.len() as f64))
-    {
-        {
-            let source_ml_source1_field38 = source.clone();
-            {
-                let source_ml_source1_field39 = Vec::<f64>::new();
-                {
-                    let source_ml_source1_field40 = Vec::<self::ml_string::Text>::new();
-                    {
-                        let source_ml_source1_field41 =
-                            self::read_java_script_closed_class_refusal(-8f64);
-                        {
-                            let source_ml_source1_field42 = 0f64;
-                            {
-                                let source_ml_source1_field43 = false;
-                                (
-                                    source_ml_source1_field42,
-                                    source_ml_source1_field40,
-                                    source_ml_source1_field43,
-                                    source_ml_source1_field41,
-                                    source_ml_source1_field39,
-                                    source_ml_source1_field38,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        {
-            let syntax = Vec::<self::ml_string::Text>::new();
-            {
-                let at = 0f64;
-                {
-                    let syntax_2 =
-                        self::source_ml_temporary_lower_java_script_closed_class_source_loop40(
-                            values, kinds, syntax, at,
-                        );
-                    {
-                        let values_2 = syntax_2;
-                        {
-                            let directory = Vec::<Vec<f64>>::new();
-                            {
-                                let names = Vec::<self::ml_string::Text>::new();
-                                {
-                                    let depth = 0f64;
-                                    {
-                                        let declarations_finished = false;
-                                        {
-                                            let error = 0f64;
-                                            {
-                                                let error_at = 0f64;
-                                                {
-                                                    let error_3 = if (((((source.length())
-                                                        > 131_072f64)
-                                                        || ((values_2.len() as f64) > 8192f64))
-                                                        || ((kinds.len() as f64)
-                                                            != (values_2.len() as f64)))
-                                                        || ((starts.len() as f64)
-                                                            != (values_2.len() as f64)))
-                                                        || ((ends.len() as f64)
-                                                            != (values_2.len() as f64))
-                                                    {
-                                                        { -8f64 }
-                                                    } else {
-                                                        error
-                                                    };
-                                                    {
-                                                        let at_2 = 0f64;
-                                                        {
-                                                            let source_ml_source1_s44 = self::source_ml_temporary_lower_java_script_closed_class_source_loop41(&(values_2), kinds, directory, names, depth, declarations_finished, error_3, error_at, at_2);
-                                                            match source_ml_source1_s44 {
-                                                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop41Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop41Done(directory_2, names_2, error_4, error_at_2) => {
-                                                                    {
-                                                                        let source_ml_source1_s46 = if (error_4 == 0f64) && ((directory_2.len() as f64) > 0f64) {
-                                                                            {
-                                                                                let at_3 = 0f64;
-                                                                                {
-                                                                                    let source_ml_source1_s47 = self::source_ml_temporary_lower_java_script_closed_class_source_loop46(source, &(values_2), kinds, starts, ends, &(names_2), error_4, error_at_2, at_3);
-                                                                                    match source_ml_source1_s47 {
-                                                                                        self::MlTemporaryLowerJavaScriptClosedClassSourceLoop46Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop46Done(error_5, error_at_3) => {
-                                                                                            self::MlTemporaryLowerJavaScriptClosedClassSourceJoin42::MlTemporaryLowerJavaScriptClosedClassSourceJoin42Next(error_5, error_at_3)
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            self::MlTemporaryLowerJavaScriptClosedClassSourceJoin42::MlTemporaryLowerJavaScriptClosedClassSourceJoin42Next(error_4, error_at_2)
-                                                                        };
-                                                                        match source_ml_source1_s46 {
-                                                                            self::MlTemporaryLowerJavaScriptClosedClassSourceJoin42::MlTemporaryLowerJavaScriptClosedClassSourceJoin42Next(error_6, error_at_4) => {
-                                                                                {
-                                                                                    let static_calls = self::read_java_script_closed_class_static_calls(&(values_2), &(directory_2), prefix);
-                                                                                    {
-                                                                                        let source_ml_source1_s48 = if (error_6 == 0f64) && ((directory_2.len() as f64) > 0f64) {
-                                                                                            {
-                                                                                                let observation = self::read_java_script_closed_class_observation_error(&(values_2), kinds, &(directory_2), &(static_calls));
-                                                                                                if observation >= 0f64 {
-                                                                                                    {
-                                                                                                        let error_7 = -7f64;
-                                                                                                        {
-                                                                                                            let error_at_5 = observation;
-                                                                                                            self::MlTemporaryLowerJavaScriptClosedClassSourceJoin43::MlTemporaryLowerJavaScriptClosedClassSourceJoin43Next(error_7, error_at_5)
-                                                                                                        }
-                                                                                                    }
-                                                                                                } else {
-                                                                                                    self::MlTemporaryLowerJavaScriptClosedClassSourceJoin43::MlTemporaryLowerJavaScriptClosedClassSourceJoin43Next(error_6, error_at_4)
-                                                                                                }
-                                                                                            }
-                                                                                        } else {
-                                                                                            self::MlTemporaryLowerJavaScriptClosedClassSourceJoin43::MlTemporaryLowerJavaScriptClosedClassSourceJoin43Next(error_6, error_at_4)
-                                                                                        };
-                                                                                        match source_ml_source1_s48 {
-                                                                                            self::MlTemporaryLowerJavaScriptClosedClassSourceJoin43::MlTemporaryLowerJavaScriptClosedClassSourceJoin43Next(error_8, error_at_6) => {
-                                                                                                {
-let ml_library_inequality_1 = error_8 != 0f64 ;
-if ml_library_inequality_1 {
-                                                                                                    {
-                                                                                                        let source_ml_source1_field49 = source.clone();
-                                                                                                        {
-                                                                                                            let source_ml_source1_field50 = Vec::<f64>::new();
-                                                                                                            {
-                                                                                                                let source_ml_source1_field51 = Vec::<self::ml_string::Text>::new();
-                                                                                                                {
-                                                                                                                    let source_ml_source1_field52 = self::read_java_script_closed_class_refusal(error_8);
-                                                                                                                    {
-                                                                                                                        let source_ml_source1_field53 = error_at_6;
-                                                                                                                        {
-                                                                                                                            let source_ml_source1_field54 = false;
-                                                                                                                            (source_ml_source1_field53, source_ml_source1_field51, source_ml_source1_field54, source_ml_source1_field52, source_ml_source1_field50, source_ml_source1_field49)
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }
-                                                                                                    }
-                                                                                                } else if (directory_2.len() as f64) == 0f64 {
-                                                                                                        {
-                                                                                                            let source_ml_source1_field55 = source.clone();
-                                                                                                            {
-                                                                                                                let source_ml_source1_field56 = Vec::<f64>::new();
-                                                                                                                {
-                                                                                                                    let source_ml_source1_field57 = Vec::<self::ml_string::Text>::new();
-                                                                                                                    {
-                                                                                                                        let source_ml_source1_field58 = self::ml_string::Text::from_units(vec![]);
-                                                                                                                        {
-                                                                                                                            let source_ml_source1_field59 = 0f64;
-                                                                                                                            {
-                                                                                                                                let source_ml_source1_field60 = false;
-                                                                                                                                (source_ml_source1_field59, source_ml_source1_field57, source_ml_source1_field60, source_ml_source1_field58, source_ml_source1_field56, source_ml_source1_field55)
-                                                                                                                            }
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }
-                                                                                                    } else {
-                                                                                                        {
-                                                                                                            let text = self::ml_string::Text::from_units(vec![]);
-                                                                                                            {
-                                                                                                                let intervals = Vec::<f64>::new();
-                                                                                                                {
-                                                                                                                    let previous = 0f64;
-                                                                                                                    {
-                                                                                                                        let ordinal = 0f64;
-                                                                                                                        {
-                                                                                                                            let brands = Vec::<self::ml_string::Text>::new();
-                                                                                                                            {
-                                                                                                                                let source_ml_temporary_values39 = directory_2;
-                                                                                                                                {
-                                                                                                                                    let source_ml_temporary_index39 = self::ml::Big::from_i128(0);
-                                                                                                                                    {
-                                                                                                                                        let source_ml_source1_s61 = self::source_ml_temporary_lower_java_script_closed_class_source_loop44(source, &(values_2), starts, ends, prefix, &(names_2), &(static_calls), text, intervals, previous, ordinal, brands, &(source_ml_temporary_values39), source_ml_temporary_index39);
-                                                                                                                                        match source_ml_source1_s61 {
-                                                                                                                                            self::MlTemporaryLowerJavaScriptClosedClassSourceLoop44Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop44Done(text_2, intervals_2, previous_2, brands_2) => {
+                                                                                                                                                let source_ml_source1_string_range_position38 = source_ml_source1_string_range_operand36;
                                                                                                                                                 {
-                                                                                                                                                    let first = 0f64;
-                                                                                                                                                    {
-                                                                                                                                                        let first_2 = self::source_ml_temporary_lower_java_script_closed_class_source_loop45(&(values_2), starts, previous_2, first);
-                                                                                                                                                        {
-                                                                                                                                                            let rest = if first_2 >= (values_2.len() as f64) {
-                                                                                                                                                                {
-                                                                                                                                                                    let source_ml_source1_string_range_operand62 = source.clone();
-                                                                                                                                                                    {
-                                                                                                                                                                        let source_ml_source1_string_range_operand63 = previous_2;
-                                                                                                                                                                        {
-                                                                                                                                                                            let source_ml_source1_string_range_position64 = source_ml_source1_string_range_operand63;
-                                                                                                                                                                            {
-                                                                                                                                                                                let source_ml_source1_string_range_position65 = f64::INFINITY;
-                                                                                                                                                                                source_ml_source1_string_range_operand62.slice(source_ml_source1_string_range_position64, source_ml_source1_string_range_position65)
-                                                                                                                                                                            }
-                                                                                                                                                                        }
-                                                                                                                                                                    }
-                                                                                                                                                                }
-                                                                                                                                                            } else {
-                                                                                                                                                                (({
-                                                                                                                                                                    let source_ml_source1_string_range_operand66 = source.clone();
-                                                                                                                                                                    {
-                                                                                                                                                                        let source_ml_source1_string_range_operand67 = previous_2;
-                                                                                                                                                                        {
-                                                                                                                                                                            let source_ml_source1_string_range_operand68 = (self::ml_array::optional_at(starts, self::ml_array::number_index(first_2))).unwrap_or_else(|| previous_2);
-                                                                                                                                                                            {
-                                                                                                                                                                                let source_ml_source1_string_range_position69 = source_ml_source1_string_range_operand67;
-                                                                                                                                                                                {
-                                                                                                                                                                                    let source_ml_source1_string_range_position70 = source_ml_source1_string_range_operand68;
-                                                                                                                                                                                    source_ml_source1_string_range_operand66.slice(source_ml_source1_string_range_position69, source_ml_source1_string_range_position70)
-                                                                                                                                                                                }
-                                                                                                                                                                            }
-                                                                                                                                                                        }
-                                                                                                                                                                    }
-                                                                                                                                                                }).concat(&self::render_java_script_closed_class_range(source, &(values_2), starts, ends, first_2, (values_2.len() as f64), &(self::ml_string::Text::from_units(vec![])), &(names_2), &(static_calls)))).concat(&{
-                                                                                                                                                                    let source_ml_source1_string_range_operand71 = source.clone();
-                                                                                                                                                                    {
-                                                                                                                                                                        let source_ml_source1_string_range_operand72 = (self::ml_array::optional_at(ends, self::ml_array::number_index((values_2.len() as f64) - 1f64))).unwrap_or_else(|| source.length());
-                                                                                                                                                                        {
-                                                                                                                                                                            let source_ml_source1_string_range_position73 = source_ml_source1_string_range_operand72;
-                                                                                                                                                                            {
-                                                                                                                                                                                let source_ml_source1_string_range_position74 = f64::INFINITY;
-                                                                                                                                                                                source_ml_source1_string_range_operand71.slice(source_ml_source1_string_range_position73, source_ml_source1_string_range_position74)
-                                                                                                                                                                            }
-                                                                                                                                                                        }
-                                                                                                                                                                    }
-                                                                                                                                                                })
-                                                                                                                                                            };
-                                                                                                                                                            {
-                                                                                                                                                                let intervals_3 = {
-                                                                                                                                                                    let source_ml_source1_concat_value75 = intervals_2;
-                                                                                                                                                                    {
-                                                                                                                                                                        let source_ml_source1_concat_value76 = vec![text_2.length(), (text_2.length() + rest.length()), previous_2, source.length()];
-                                                                                                                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value75), source_ml_source1_concat_value76)
-                                                                                                                                                                    }
-                                                                                                                                                                };
-                                                                                                                                                                {
-                                                                                                                                                                    let text_3 = text_2.concat(&rest);
-                                                                                                                                                                    if (text_3.length()) > 1_048_576f64 {
-                                                                                                                                                                        {
-                                                                                                                                                                            let source_ml_source1_field77 = source.clone();
-                                                                                                                                                                            {
-                                                                                                                                                                                let source_ml_source1_field78 = Vec::<f64>::new();
-                                                                                                                                                                                {
-                                                                                                                                                                                    let source_ml_source1_field79 = Vec::<self::ml_string::Text>::new();
-                                                                                                                                                                                    {
-                                                                                                                                                                                        let source_ml_source1_field80 = self::read_java_script_closed_class_refusal(-8f64);
-                                                                                                                                                                                        {
-                                                                                                                                                                                            let source_ml_source1_field81 = 0f64;
-                                                                                                                                                                                            {
-                                                                                                                                                                                                let source_ml_source1_field82 = false;
-                                                                                                                                                                                                (source_ml_source1_field81, source_ml_source1_field79, source_ml_source1_field82, source_ml_source1_field80, source_ml_source1_field78, source_ml_source1_field77)
-                                                                                                                                                                                            }
-                                                                                                                                                                                        }
-                                                                                                                                                                                    }
-                                                                                                                                                                                }
-                                                                                                                                                                            }
-                                                                                                                                                                        }
-                                                                                                                                                                    } else {
-                                                                                                                                                                        {
-                                                                                                                                                                            let source_ml_source1_field83 = text_3.clone();
-                                                                                                                                                                            {
-                                                                                                                                                                                let source_ml_source1_field84 = intervals_3;
-                                                                                                                                                                                {
-                                                                                                                                                                                    let source_ml_source1_field85 = brands_2;
-                                                                                                                                                                                    {
-                                                                                                                                                                                        let source_ml_source1_field86 = self::ml_string::Text::from_units(vec![]);
-                                                                                                                                                                                        {
-                                                                                                                                                                                            let source_ml_source1_field87 = 0f64;
-                                                                                                                                                                                            {
-                                                                                                                                                                                                let source_ml_source1_field88 = true;
-                                                                                                                                                                                                (source_ml_source1_field87, source_ml_source1_field85, source_ml_source1_field88, source_ml_source1_field86, source_ml_source1_field84, source_ml_source1_field83)
-                                                                                                                                                                                            }
-                                                                                                                                                                                        }
-                                                                                                                                                                                    }
-                                                                                                                                                                                }
-                                                                                                                                                                            }
-                                                                                                                                                                        }
-                                                                                                                                                                    }
-                                                                                                                                                                }
-                                                                                                                                                            }
-                                                                                                                                                        }
-                                                                                                                                                    }
+                                                                                                                                                    let source_ml_source1_string_range_position39 = source_ml_source1_string_range_operand37;
+                                                                                                                                                    source_ml_source1_string_range_operand35.slice(source_ml_source1_string_range_position38, source_ml_source1_string_range_position39)
                                                                                                                                                 }
                                                                                                                                             }
                                                                                                                                         }
                                                                                                                                     }
                                                                                                                                 }
-                                                                                                                            }
+                                                                                                                            };
+                                                                                                                            ((((((((((((((((((((stubs_3.concat(&self::ml_string::Text::from_units(vec![10]))).concat(&documentation)).concat(&self::ml_string::Text::from_units(vec![10, 102, 117, 110, 99, 116, 105, 111, 110, 32]))).concat(&name)).concat(&self::ml_string::Text::from_units(vec![40]))).concat(&parameters)).concat(&self::ml_string::Text::from_units(vec![41, 32, 123, 10]))).concat(&initializations_2)).concat(&prologue)).concat(&self::ml_string::Text::from_units(vec![10]))).concat(&constructor_fields_2)).concat(&self::ml_string::Text::from_units(vec![99, 111, 110, 115, 116, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![32, 61, 32, 123, 32]))).concat(&fields_3)).concat(&self::ml_string::Text::from_units(vec![32, 125, 59, 10]))).concat(&assignments_2)).concat(&remainder)).concat(&self::ml_string::Text::from_units(vec![10, 114, 101, 116, 117, 114, 110, 32]))).concat(&receiver)).concat(&self::ml_string::Text::from_units(vec![59, 10, 125, 10]))
                                                                                                                         }
                                                                                                                     }
                                                                                                                 }
                                                                                                             }
                                                                                                         }
                                                                                                     }
-}
+                                                                                                }
                                                                                             }
                                                                                         }
                                                                                     }
@@ -702,227 +569,235 @@ if ml_library_inequality_1 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_java_script_closed_class_source_size(units: f64, tokens: f64) -> bool {
-    ((((self::ml_math::is_safe_integer(units) && self::ml_math::is_safe_integer(tokens))
-        && (units >= 0f64))
-        && (units <= 131_072f64))
-        && (tokens >= 0f64))
-        && (tokens <= 8192f64)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_closed_class_context_error(
-    shared: bool,
-    externals: f64,
-    constants: f64,
-    bindings: f64,
-    known: bool,
-    module: bool,
-) -> self::ml_string::Text {
-    if ((((shared && (externals == 0f64)) && (constants == 0f64)) && (bindings == 0f64)) && known)
-        && !module
-    {
-        self::ml_string::Text::from_units(vec![])
-    } else {
-        self::ml_string::Text::from_units(vec![
-            116, 104, 101, 32, 99, 108, 111, 115, 101, 100, 32, 112, 114, 111, 102, 105, 108, 101,
-            32, 110, 101, 101, 100, 115, 32, 115, 104, 97, 114, 101, 100, 32, 114, 101, 102, 101,
-            114, 101, 110, 99, 101, 32, 115, 101, 109, 97, 110, 116, 105, 99, 115, 32, 97, 110,
-            100, 32, 116, 104, 101, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 108, 111, 99,
-            97, 108, 32, 109, 111, 100, 117, 108, 101, 32, 114, 97, 116, 104, 101, 114, 32, 116,
-            104, 97, 110, 32, 117, 110, 112, 114, 111, 118, 101, 100, 32, 101, 120, 116, 101, 114,
-            110, 97, 108, 32, 99, 111, 110, 115, 117, 109, 101, 114, 115,
-        ])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_closed_class_use_error(
-    kind: &self::ml_string::Text,
-    operation: &self::ml_string::Text,
-    instance: bool,
-    private_field: bool,
-    callable: bool,
-    direct: bool,
-) -> self::ml_string::Text {
-    if instance {
-        if (((*kind)
-            == (self::ml_string::Text::from_units(vec![
-                114, 101, 99, 111, 114, 100, 70, 105, 101, 108, 100,
-            ])))
-            && !private_field)
-            && (!callable || direct)
-        {
-            self::ml_string::Text::from_units(vec![])
-        } else if ((*kind)
-            == (self::ml_string::Text::from_units(vec![109, 101, 116, 104, 111, 100])))
-            && operation.starts_with(&self::ml_string::Text::from_units(vec![
-                119, 114, 105, 116, 101, 82, 101, 99, 111, 114, 100, 70, 105, 101, 108, 100,
-            ]))
-        {
-            self::ml_string::Text::from_units(vec![])
-        } else {
-            self::ml_string::Text::from_units(vec![
-                99, 108, 111, 115, 101, 100, 32, 99, 108, 97, 115, 115, 32, 105, 110, 115, 116, 97,
-                110, 99, 101, 115, 32, 114, 101, 113, 117, 105, 114, 101, 32, 100, 105, 114, 101,
-                99, 116, 32, 112, 117, 98, 108, 105, 99, 32, 102, 105, 101, 108, 100, 32, 111, 112,
-                101, 114, 97, 116, 105, 111, 110, 115, 32, 97, 110, 100, 32, 114, 101, 99, 101,
-                105, 118, 101, 114, 45, 114, 101, 116, 97, 105, 110, 105, 110, 103, 32, 109, 101,
-                116, 104, 111, 100, 32, 99, 97, 108, 108, 115, 59, 32, 112, 114, 105, 118, 97, 116,
-                101, 32, 115, 108, 111, 116, 115, 44, 32, 100, 101, 116, 97, 99, 104, 101, 100, 32,
-                99, 97, 108, 108, 97, 98, 108, 101, 115, 32, 97, 110, 100, 32, 105, 110, 100, 105,
-                114, 101, 99, 116, 32, 114, 101, 102, 108, 101, 99, 116, 105, 118, 101, 32, 108,
-                111, 111, 107, 117, 112, 115, 32, 110, 101, 101, 100, 32, 116, 104, 101, 32, 102,
-                117, 108, 108, 32, 111, 98, 106, 101, 99, 116, 32, 109, 111, 100, 101, 108,
-            ])
-        }
-    } else {
-        self::ml_string::Text::from_units(vec![])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn project_java_script_class_source_interval(
-    intervals: &[f64],
-    first: f64,
-    last: f64,
-) -> Vec<f64> {
-    {
-        let low = -1f64;
-        {
-            let high = -1f64;
-            {
-                let at = 0f64;
-                {
-                    let source_ml_source1_s89 =
-                        self::source_ml_temporary_project_java_script_class_source_interval_loop48(
-                            intervals, first, last, low, high, at,
-                        );
-                    match source_ml_source1_s89 {
-                        self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop48Result::MlTemporaryProjectJavaScriptClassSourceIntervalLoop48Done(low_2, high_2) => {
-                            if low_2 < 0f64 {
-                                Vec::<f64>::new()
-                            } else {
-                                vec![low_2, high_2]
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryFindJavaScriptClassGroupEndLoop1Result {
-    MlTemporaryFindJavaScriptClassGroupEndLoop1Done,
-    MlTemporaryFindJavaScriptClassGroupEndLoop1Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_find_java_script_class_group_end_loop1(
+pub fn require_java_script_closed_class_prototype_methods(
     values: &[self::ml_string::Text],
-    mut open: f64,
-    mut expected: Vec<self::ml_string::Text>,
-    mut at: f64,
-) -> self::MlTemporaryFindJavaScriptClassGroupEndLoop1Result {
-    loop {
-        return if (at < (values.len() as f64)) && ((at - open) <= 8192f64) {
+    directory: &[Vec<f64>],
+) -> bool {
+    {
+        let names = Vec::<self::ml_string::Text>::new();
+        {
+            let source_ml_temporary_values47 = directory.to_vec();
             {
-                let value = (self::ml_array::optional_at(values, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]));
+                let source_ml_temporary_index47 = self::ml::Big::from_i128(0);
                 {
-                    let closing = if value == (self::ml_string::Text::from_units(vec![40])) {
-                        self::ml_string::Text::from_units(vec![41])
-                    } else if value == (self::ml_string::Text::from_units(vec![91])) {
-                        self::ml_string::Text::from_units(vec![93])
-                    } else if value == (self::ml_string::Text::from_units(vec![123])) {
-                        self::ml_string::Text::from_units(vec![125])
-                    } else {
-                        self::ml_string::Text::from_units(vec![])
-                    };
+                    let names_2 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop49(values, names, &(source_ml_temporary_values47), source_ml_temporary_index47);
                     {
-                        let ml_library_inequality_2 =
-                            closing != (self::ml_string::Text::from_units(vec![]));
-                        if ml_library_inequality_2 {
-                            if (expected.len() as f64) >= 128f64 {
-                                self::MlTemporaryFindJavaScriptClassGroupEndLoop1Result::MlTemporaryFindJavaScriptClassGroupEndLoop1Return(-1f64)
-                            } else {
-                                {
-                                    let expected_2 = {
-                                        let source_ml_source1_concat_value90 = expected;
-                                        {
-                                            let source_ml_source1_concat_value91 =
-                                                vec![closing.clone()];
-                                            self::ml_array::append(
-                                                self::ml_array::append(
-                                                    Vec::<self::ml_string::Text>::new(),
-                                                    source_ml_source1_concat_value90,
-                                                ),
-                                                source_ml_source1_concat_value91,
-                                            )
-                                        }
-                                    };
-                                    {
-                                        let at_2 = at + 1f64;
-                                        {
-                                            (expected, at) = (expected_2, at_2);
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                        } else if ((value == (self::ml_string::Text::from_units(vec![41])))
-                            || (value == (self::ml_string::Text::from_units(vec![93]))))
-                            || (value == (self::ml_string::Text::from_units(vec![125])))
+                        let source_ml_temporary_values48 = directory.to_vec();
                         {
+                            let source_ml_temporary_index48 = self::ml::Big::from_i128(0);
                             {
-                                let ml_library_inequality_1 = value
-                                    != ((self::ml_array::optional_at(
-                                        &expected,
-                                        self::ml_array::number_index(
-                                            (expected.len() as f64) - 1f64,
-                                        ),
-                                    ))
-                                    .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])));
-                                if ml_library_inequality_1 {
-                                    self::MlTemporaryFindJavaScriptClassGroupEndLoop1Result::MlTemporaryFindJavaScriptClassGroupEndLoop1Return(-1f64)
-                                } else {
-                                    {
-                                        let expected_3 =
-                                            self::ml_array::slice(&expected, 0f64, -1f64);
-                                        if (expected_3.len() as f64) == 0f64 {
-                                            self::MlTemporaryFindJavaScriptClassGroupEndLoop1Result::MlTemporaryFindJavaScriptClassGroupEndLoop1Return(at)
-                                        } else {
-                                            {
-                                                let at_3 = at + 1f64;
-                                                {
-                                                    (expected, at) = (expected_3, at_3);
-                                                    continue;
-                                                }
-                                            }
-                                        }
+                                let source_ml_source1_s40 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop50(values, &(names_2), &(source_ml_temporary_values48), source_ml_temporary_index48);
+                                match source_ml_source1_s40 {
+                                    self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Done => {
+                                        false
                                     }
-                                }
-                            }
-                        } else {
-                            {
-                                let at_4 = at + 1f64;
-                                {
-                                    at = at_4;
-                                    continue;
+                                    self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Return(source_ml_temporary_result50) => {
+                                        source_ml_temporary_result50
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_method_target(
+    methods: &[self::ml_string::Text],
+    receiver_fields: &[self::ml_string::Text],
+    method: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    {
+        let ml_library_inequality_1 = ((methods.len() as f64) % 3f64) != 0f64;
+        if ml_library_inequality_1 {
+            self::ml_string::Text::from_units(vec![])
         } else {
-            self::MlTemporaryFindJavaScriptClassGroupEndLoop1Result::MlTemporaryFindJavaScriptClassGroupEndLoop1Done
+            {
+                let target = self::ml_string::Text::from_units(vec![]);
+                {
+                    let at = 0f64;
+                    {
+                        let source_ml_source1_s41 = self::source_ml_temporary_read_java_script_closed_class_method_target_loop53(methods, receiver_fields, method, target, at);
+                        match source_ml_source1_s41 {
+                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Done(target_2) => {
+                            target_2
+                        }
+                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Return(source_ml_temporary_result53) => {
+                            source_ml_temporary_result53
+                        }
+                    }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_closed_class_method_definition(
+    brand: &self::ml_string::Text,
+    method: &self::ml_string::Text,
+    helper: &self::ml_string::Text,
+    parameter: &self::ml_string::Text,
+    receiver_fields: &[self::ml_string::Text],
+    constructor: bool,
+) -> bool {
+    {
+        let marker = {
+            let source_ml_source1_string_search_operand42 = brand.clone();
+            {
+                let source_ml_source1_string_search_operand43 =
+                    self::ml_string::Text::from_units(vec![
+                        99, 108, 97, 115, 115, 95, 105, 100, 101, 110, 116, 105, 116, 121, 95,
+                    ]);
+                {
+                    let source_ml_source1_string_search_text44 =
+                        source_ml_source1_string_search_operand43;
+                    {
+                        let source_ml_source1_string_search_position45 = f64::NAN;
+                        source_ml_source1_string_search_operand42.last_index_of(
+                            &source_ml_source1_string_search_text44,
+                            source_ml_source1_string_search_position45,
+                        )
+                    }
+                }
+            }
         };
+        if marker < 0f64 {
+            false
+        } else {
+            {
+                let prefix = {
+                    let source_ml_source1_string_range_operand46 = brand.clone();
+                    {
+                        let source_ml_source1_string_range_operand47 = 0f64;
+                        {
+                            let source_ml_source1_string_range_operand48 = marker;
+                            {
+                                let source_ml_source1_string_range_position49 =
+                                    source_ml_source1_string_range_operand47;
+                                {
+                                    let source_ml_source1_string_range_position50 =
+                                        source_ml_source1_string_range_operand48;
+                                    source_ml_source1_string_range_operand46.slice(
+                                        source_ml_source1_string_range_position49,
+                                        source_ml_source1_string_range_position50,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                };
+                {
+                    let ordinal = {
+                        let source_ml_source1_string_range_operand51 = brand.clone();
+                        {
+                            let source_ml_source1_string_range_operand52 = marker + 15f64;
+                            {
+                                let source_ml_source1_string_range_position53 =
+                                    source_ml_source1_string_range_operand52;
+                                {
+                                    let source_ml_source1_string_range_position54 = f64::INFINITY;
+                                    source_ml_source1_string_range_operand51.slice(
+                                        source_ml_source1_string_range_position53,
+                                        source_ml_source1_string_range_position54,
+                                    )
+                                }
+                            }
+                        }
+                    };
+                    ((((((ordinal != (self::ml_string::Text::from_units(vec![])))
+                        && ((*method) != (self::ml_string::Text::from_units(vec![]))))
+                        && helper.starts_with(
+                            &((prefix.concat(&self::ml_string::Text::from_units(vec![
+                                99, 108, 97, 115, 115, 95, 109, 101, 116, 104, 111, 100, 95,
+                            ])))
+                            .concat(&ordinal))
+                            .concat(&self::ml_string::Text::from_units(vec![95])),
+                        ))
+                        && ((*parameter)
+                            == ((prefix.concat(&self::ml_string::Text::from_units(vec![
+                                99, 108, 97, 115, 115, 95, 114, 101, 99, 101, 105, 118, 101, 114,
+                                95,
+                            ])))
+                            .concat(&ordinal))))
+                        && self::ml_array::includes(
+                            receiver_fields,
+                            brand,
+                            0f64,
+                            false,
+                            |a, b| a == b,
+                        ))
+                        && constructor)
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_closed_class_owner_row(row: &[self::ml_string::Text]) -> Vec<f64> {
+    if (row.len() as f64) < 5f64 {
+        vec![-1f64]
+    } else {
+        {
+            let fields = self::ml_string_number::convert_java_script_string_number_units(
+                &((self::ml_array::optional_at(row, self::ml_array::number_index(3f64)))
+                    .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+                .0
+                .iter()
+                .copied()
+                .map(f64::from)
+                .collect::<Vec<f64>>(),
+            );
+            {
+                let methods = self::ml_string_number::convert_java_script_string_number_units(
+                    &((self::ml_array::optional_at(row, self::ml_array::number_index(4f64)))
+                        .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+                    .0
+                    .iter()
+                    .copied()
+                    .map(f64::from)
+                    .collect::<Vec<f64>>(),
+                );
+                if (((((((!(self::ml_math::is_safe_integer(fields)) || (fields < 0f64))
+                    || (fields > 8192f64))
+                    || (({
+                        let source_ml_source1_string_argument56 = fields;
+                        self::ml_string::Text::from_text(&self::ml_number::js_number(
+                            source_ml_source1_string_argument56,
+                        ))
+                    }) != ((self::ml_array::optional_at(
+                        row,
+                        self::ml_array::number_index(3f64),
+                    ))
+                    .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))))
+                    || !(self::ml_math::is_safe_integer(methods)))
+                    || (methods < 0f64))
+                    || (methods > 8192f64))
+                    || (({
+                        let source_ml_source1_string_argument58 = methods;
+                        self::ml_string::Text::from_text(&self::ml_number::js_number(
+                            source_ml_source1_string_argument58,
+                        ))
+                    }) != ((self::ml_array::optional_at(
+                        row,
+                        self::ml_array::number_index(4f64),
+                    ))
+                    .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))))
+                    || ((row.len() as f64) != ((5f64 + fields) + (2f64 * methods)))
+                {
+                    vec![-1f64]
+                } else {
+                    vec![0f64, 5f64, fields, (5f64 + fields), methods]
+                }
+            }
+        }
     }
 }

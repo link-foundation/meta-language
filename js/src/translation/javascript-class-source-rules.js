@@ -323,6 +323,23 @@ export function readJavaScriptClosedClassCollectionDefaultClassOwnerError(values
  }return -1;
 }
 
+/** @param {string[]} values @param {string[]} kinds @param {number} at @returns {boolean} */
+function acceptJavaScriptClosedClassFunctionExport(values,kinds,at) {
+  const previous = values[at - 1] ?? '';
+  return (values[at] ?? '') === 'export' && previous !== '.' && previous !== '?.'
+    && (values[at + 1] ?? '') === 'function' && (kinds[at + 2] ?? '') === 'identifier'
+    && (values[at + 3] ?? '') === '(';
+}
+
+/** @param {string[]} values @param {string[]} kinds @returns {string[]} */
+export function readJavaScriptClosedClassFunctionExports(values,kinds) {
+  let result = [];
+  for (let at = 0; at < values.length; at += 1)
+    if ((kinds[at] ?? '') === 'identifier' && acceptJavaScriptClosedClassFunctionExport(values,kinds,at))
+      result = result.concat([values[at + 2] ?? '']);
+  return result;
+}
+
 /** The profile is deliberately closed: its synthetic method slots cannot be
  * observed as own enumerable fields or as bound detached function objects.
  * Calls and shared state retain ordinary source receiver/argument order.
@@ -345,7 +362,8 @@ export function readJavaScriptClosedClassObservationError(values, kinds, directo
     const previous = values[at - 1] ?? '';
     const next = values[at + 1] ?? '';
     if (kind === 'identifier' && ['Object', 'Reflect', 'JSON', 'Symbol', 'Proxy', 'Function', 'eval',
-      'arguments', 'super', 'export', 'deepEqual', 'notDeepEqual', 'deepStrictEqual', 'notDeepStrictEqual'].includes(value)) return at;
+      'arguments', 'super', 'deepEqual', 'notDeepEqual', 'deepStrictEqual', 'notDeepStrictEqual'].includes(value)) return at;
+    if (kind === 'identifier' && value === 'export' && !acceptJavaScriptClosedClassFunctionExport(values,kinds,at)) return at;
     if (value === '...' || value === '__proto__' || value === 'prototype') return at;
     if (value === 'function') {
       for (const row of directory) if (at > (row[0] ?? 0) && at < (row[1] ?? 0)) return at;
@@ -367,13 +385,16 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
   const name = values[(row[0] ?? 0) + 1] ?? '';
   const receiver = prefix + 'class_receiver_' + String(ordinal);
   const brand = prefix + 'class_identity_' + String(ordinal);
+  const brandValue = prefix + 'class_brand_value_' + String(ordinal);
   const fieldCount = row[7] ?? 0;
   const methods = 9 + fieldCount * 3;
   const parameterFirst = (row[3] ?? -1) + 1;
   const parameterLast = row[4] ?? -1;
   const parameters = parameterLast < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends, parameterFirst, parameterLast, '', classNames, staticCalls);
-  let stubs = '', initializations='', constructorFields='', fieldNames=[];
-  let fields = brand + ': (void 0)';
+  // A bare function return is the checked Unit source form. JavaScript
+  // still stores undefined in the unobservable instance brand slot.
+  let stubs = '\nfunction ' + brandValue + '() { return; }\n', initializations='', constructorFields='', fieldNames=[];
+  let fields = brand + ': ' + brandValue + '()';
   for (let at = 9; at < methods; at += 3) {
     const position=row[at]??0,field=values[position<0?-position-1:position]??'';
     let value=(row[at+1]??0)===(row[at+2]??0)?'(void 0)':renderJavaScriptClosedClassRange(source, values, starts, ends, row[at + 1] ?? 0, row[at + 2] ?? 0, '', classNames, staticCalls);

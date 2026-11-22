@@ -1,5 +1,343 @@
 // Generated from complete js/src/translation/javascript-class-observation-rules.js. Do not edit by hand.
-use super::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop2;
+use super::MlSource1TemporaryDependencyFunction1Loop1Result;
+use super::source_ml_source1_temporary_dependency_function1_loop1;
+
+/// Unbounded integers for the portable core's naturals and integers.
+pub mod ml {
+    use std::cmp::Ordering;
+    use std::fmt;
+
+    /// Sign and magnitude; the magnitude is little-endian base 2^32 without
+    /// leading zero limbs, and zero is never negative.
+    #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+    pub struct Big {
+        negative: bool,
+        magnitude: Vec<u32>,
+    }
+
+    fn trim(mut magnitude: Vec<u32>) -> Vec<u32> {
+        while magnitude.last() == Some(&0) {
+            magnitude.pop();
+        }
+        magnitude
+    }
+
+    fn compare_magnitude(a: &[u32], b: &[u32]) -> Ordering {
+        a.len()
+            .cmp(&b.len())
+            .then_with(|| a.iter().rev().cmp(b.iter().rev()))
+    }
+
+    fn add_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = Vec::with_capacity(a.len().max(b.len()) + 1);
+        let mut carry = 0u64;
+        for index in 0..a.len().max(b.len()) {
+            let sum = u64::from(*a.get(index).unwrap_or(&0))
+                + u64::from(*b.get(index).unwrap_or(&0))
+                + carry;
+            out.push(sum as u32);
+            carry = sum >> 32;
+        }
+        if carry > 0 {
+            out.push(carry as u32);
+        }
+        out
+    }
+
+    /// |a| - |b| where |a| >= |b|.
+    fn sub_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = Vec::with_capacity(a.len());
+        let mut borrow = 0i64;
+        for (index, limb) in a.iter().enumerate() {
+            let mut difference = i64::from(*limb) - i64::from(*b.get(index).unwrap_or(&0)) - borrow;
+            borrow = 0;
+            if difference < 0 {
+                difference += 1 << 32;
+                borrow = 1;
+            }
+            out.push(difference as u32);
+        }
+        trim(out)
+    }
+
+    fn mul_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = vec![0u32; a.len() + b.len()];
+        for (i, x) in a.iter().enumerate() {
+            let mut carry = 0u64;
+            for (j, y) in b.iter().enumerate() {
+                let product = u64::from(out[i + j]) + u64::from(*x) * u64::from(*y) + carry;
+                out[i + j] = product as u32;
+                carry = product >> 32;
+            }
+            let mut index = i + b.len();
+            while carry > 0 {
+                let sum = u64::from(out[index]) + carry;
+                out[index] = sum as u32;
+                carry = sum >> 32;
+                index += 1;
+            }
+        }
+        trim(out)
+    }
+
+    /// Quotient and remainder of magnitudes; the divisor is not zero.
+    fn divmod_magnitude(a: &[u32], b: &[u32]) -> (Vec<u32>, Vec<u32>) {
+        let mut quotient = vec![0u32; a.len()];
+        if b.len() == 1 {
+            let divisor = u64::from(b[0]);
+            let mut remainder = 0u64;
+            for index in (0..a.len()).rev() {
+                let current = (remainder << 32) | u64::from(a[index]);
+                quotient[index] = (current / divisor) as u32;
+                remainder = current % divisor;
+            }
+            return (trim(quotient), trim(vec![remainder as u32]));
+        }
+        let mut remainder: Vec<u32> = Vec::new();
+        for bit in (0..a.len() * 32).rev() {
+            let mut carry = (a[bit / 32] >> (bit % 32)) & 1;
+            for limb in &mut remainder {
+                let next = *limb >> 31;
+                *limb = (*limb << 1) | carry;
+                carry = next;
+            }
+            if carry != 0 {
+                remainder.push(carry);
+            }
+            if compare_magnitude(&remainder, b) != Ordering::Less {
+                remainder = sub_magnitude(&remainder, b);
+                quotient[bit / 32] |= 1 << (bit % 32);
+            }
+        }
+        (trim(quotient), remainder)
+    }
+
+    impl Big {
+        fn from_parts(negative: bool, magnitude: Vec<u32>) -> Self {
+            let magnitude = trim(magnitude);
+            Self {
+                negative: negative && !magnitude.is_empty(),
+                magnitude,
+            }
+        }
+
+        #[must_use]
+        pub fn zero() -> Self {
+            Self::from_parts(false, Vec::new())
+        }
+
+        #[must_use]
+        pub fn from_i128(value: i128) -> Self {
+            let mut big = Self::from_u128(value.unsigned_abs());
+            big.negative = value < 0;
+            big
+        }
+
+        #[must_use]
+        pub fn from_u128(mut value: u128) -> Self {
+            let mut magnitude = Vec::new();
+            while value > 0 {
+                magnitude.push(value as u32);
+                value >>= 32;
+            }
+            Self::from_parts(false, magnitude)
+        }
+
+        /// A decimal literal with an optional leading minus sign.
+        #[must_use]
+        pub fn parse(text: &str) -> Self {
+            let (negative, digits) = text
+                .strip_prefix('-')
+                .map_or((false, text), |rest| (true, rest));
+            let ten = Self::from_i128(10);
+            let mut value = Self::zero();
+            for digit in digits.chars() {
+                let digit = digit.to_digit(10).expect("decimal literal");
+                value = value.mul(&ten).add(&Self::from_i128(i128::from(digit)));
+            }
+            if negative { value.neg() } else { value }
+        }
+
+        #[must_use]
+        pub const fn is_zero(&self) -> bool {
+            self.magnitude.is_empty()
+        }
+
+        #[must_use]
+        pub const fn is_negative(&self) -> bool {
+            self.negative
+        }
+
+        /// The array index this names, if it is one.
+        #[must_use]
+        pub fn to_index(&self) -> Option<usize> {
+            if self.negative || self.magnitude.len() > 2 {
+                return None;
+            }
+            let value = self
+                .magnitude
+                .iter()
+                .rev()
+                .fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
+            usize::try_from(value).ok()
+        }
+
+        #[must_use]
+        pub fn neg(&self) -> Self {
+            Self::from_parts(!self.negative, self.magnitude.clone())
+        }
+
+        #[must_use]
+        pub fn add(&self, other: &Self) -> Self {
+            if self.negative == other.negative {
+                return Self::from_parts(
+                    self.negative,
+                    add_magnitude(&self.magnitude, &other.magnitude),
+                );
+            }
+            match compare_magnitude(&self.magnitude, &other.magnitude) {
+                Ordering::Less => Self::from_parts(
+                    other.negative,
+                    sub_magnitude(&other.magnitude, &self.magnitude),
+                ),
+                _ => Self::from_parts(
+                    self.negative,
+                    sub_magnitude(&self.magnitude, &other.magnitude),
+                ),
+            }
+        }
+
+        #[must_use]
+        pub fn sub(&self, other: &Self) -> Self {
+            self.add(&other.neg())
+        }
+
+        #[must_use]
+        pub fn mul(&self, other: &Self) -> Self {
+            Self::from_parts(
+                self.negative != other.negative,
+                mul_magnitude(&self.magnitude, &other.magnitude),
+            )
+        }
+
+        /// Division rounding toward zero; the divisor is not zero.
+        #[must_use]
+        pub fn divmod_trunc(&self, other: &Self) -> (Self, Self) {
+            let (quotient, remainder) = divmod_magnitude(&self.magnitude, &other.magnitude);
+            (
+                Self::from_parts(self.negative != other.negative, quotient),
+                Self::from_parts(self.negative, remainder),
+            )
+        }
+    }
+
+    impl Ord for Big {
+        fn cmp(&self, other: &Self) -> Ordering {
+            match (self.negative, other.negative) {
+                (false, true) => Ordering::Greater,
+                (true, false) => Ordering::Less,
+                (false, false) => compare_magnitude(&self.magnitude, &other.magnitude),
+                (true, true) => compare_magnitude(&other.magnitude, &self.magnitude),
+            }
+        }
+    }
+
+    impl PartialOrd for Big {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl fmt::Display for Big {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            if self.is_zero() {
+                return formatter.write_str("0");
+            }
+            let billion = [1_000_000_000u32];
+            let mut chunks = Vec::new();
+            let mut rest = self.magnitude.clone();
+            while !rest.is_empty() {
+                let (quotient, remainder) = divmod_magnitude(&rest, &billion);
+                chunks.push(remainder.first().copied().unwrap_or(0));
+                rest = quotient;
+            }
+            let mut text = String::new();
+            if self.negative {
+                text.push('-');
+            }
+            text.push_str(&chunks.pop().unwrap_or(0).to_string());
+            for chunk in chunks.iter().rev() {
+                std::fmt::Write::write_fmt(&mut text, format_args!("{chunk:09}"))
+                    .expect("writing to a String cannot fail");
+            }
+            formatter.write_str(&text)
+        }
+    }
+
+    /// Natural subtraction: truncated at zero.
+    #[must_use]
+    pub fn nat_sub(a: &Big, b: &Big) -> Big {
+        if a > b { a.sub(b) } else { Big::zero() }
+    }
+
+    #[must_use]
+    pub fn pred(a: &Big) -> Big {
+        a.sub(&Big::from_i128(1))
+    }
+
+    /// Integer division with the source's rounding ("trunc", "floor" or
+    /// "euclid"); by zero it aborts with the source's message or is total
+    /// (x / 0 = 0, x % 0 = x).
+    #[must_use]
+    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {
+        if b.is_zero() {
+            if let Some(message) = by_zero {
+                panic!("{message}");
+            }
+            return if remainder { a.clone() } else { Big::zero() };
+        }
+        let one = Big::from_i128(1);
+        let (mut quotient, rest) = a.divmod_trunc(b);
+        if !rest.is_zero() {
+            if rounding == "floor" && rest.is_negative() != b.is_negative() {
+                quotient = quotient.sub(&one);
+            }
+            if rounding == "euclid" && rest.is_negative() {
+                quotient = if b.is_negative() {
+                    quotient.add(&one)
+                } else {
+                    quotient.sub(&one)
+                };
+            }
+        }
+        if remainder {
+            a.sub(&quotient.mul(b))
+        } else {
+            quotient
+        }
+    }
+
+    #[must_use]
+    pub fn to_nat_checked(value: Big, message: &str) -> Big {
+        assert!(!value.is_negative(), "{message}");
+        value
+    }
+
+    #[must_use]
+    pub fn clamp_nat(value: Big) -> Big {
+        if value.is_negative() {
+            Big::zero()
+        } else {
+            value
+        }
+    }
+
+    /// Bounded domains for executable theorem checks.
+    #[must_use]
+    pub fn range(low: i128, high: i128) -> Vec<Big> {
+        (low..=high).map(Big::from_i128).collect()
+    }
+}
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
@@ -503,365 +841,5 @@ pub fn render_collection_construction_type(
         }
     } else {
         String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_collection_construction(
-    target: &str,
-    kind: &str,
-    key_kind: &str,
-    values: &str,
-    collection_type: &str,
-    element_type: &str,
-    comparison: &str,
-) -> String {
-    {
-        let set = kind == "set";
-        if target == "JavaScript" {
-            format!(
-                "new {}({})",
-                if set {
-                    String::from("Set")
-                } else {
-                    String::from("Map")
-                },
-                values.to_owned()
-            )
-        } else if target == "Rust" {
-            {
-                let comparator = if key_kind == "float" {
-                    String::from("|a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan())")
-                } else {
-                    String::from("|a, b| a == b")
-                };
-                {
-                    let values_3 = if key_kind == "float" {
-                        {
-                            format!(
-                                "({}).into_iter().map(|ml_value| {}).collect::<Vec<_>>()",
-                                values.to_owned(),
-                                if set {
-                                    String::from("if ml_value == 0f64 { 0f64 } else { ml_value }")
-                                } else {
-                                    String::from(
-                                        "(if ml_value.0 == 0f64 { 0f64 } else { ml_value.0 }, ml_value.1)",
-                                    )
-                                }
-                            )
-                        }
-                    } else {
-                        values.to_owned()
-                    };
-                    format!(
-                        "crate::ml_array::{}({values_3}, {comparator})",
-                        kind.to_owned()
-                    )
-                }
-            }
-        } else {
-            {
-                let value = self::read_collection_construction_binding(target, kind, "value");
-                {
-                    let previous =
-                        self::read_collection_construction_binding(target, kind, "previous");
-                    if target == "Lean" {
-                        {
-                            let equal = if key_kind == "float" {
-                                format!(
-                                    "({previous} == {value} || ({previous}.isNaN && {value}.isNaN))"
-                                )
-                            } else {
-                                format!("({previous} == {value})")
-                            };
-                            {
-                                let normalized = if key_kind == "float" {
-                                    if set {
-                                        String::from(
-                                            "(if ml_original == (0 : Float) then (0 : Float) else ml_original)",
-                                        )
-                                    } else {
-                                        String::from(
-                                            "((if ml_original.1 == (0 : Float) then (0 : Float) else ml_original.1), ml_original.2)",
-                                        )
-                                    }
-                                } else {
-                                    String::from("ml_original")
-                                };
-                                {
-                                    let existing = if set {
-                                        String::from("ml_accumulator")
-                                    } else {
-                                        format!(
-                                            "(ml_accumulator.map (fun ml_previous => if {equal} then (ml_previous.1, ml_value.2) else ml_previous))"
-                                        )
-                                    };
-                                    format!(
-                                        "({}.foldl (fun ml_accumulator ml_original => let ml_value := {normalized}; if ml_accumulator.any (fun ml_previous => {equal}) then {existing} else ml_accumulator.push ml_value) (#[] : {}))",
-                                        values.to_owned(),
-                                        collection_type.to_owned()
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        {
-                            let equal_2 = comparison.to_owned();
-                            {
-                                let equal_4 = if key_kind == "float" {
-                                    {
-                                        format!(
-                                            "(orb {equal_2} (andb (PrimFloat.is_nan {previous}) (PrimFloat.is_nan {value})))"
-                                        )
-                                    }
-                                } else {
-                                    equal_2
-                                };
-                                {
-                                    let normalized_2 = if key_kind == "float" {
-                                        if set {
-                                            String::from(
-                                                "(if PrimFloat.eqb ml_original 0%float then 0%float else ml_original)",
-                                            )
-                                        } else {
-                                            String::from(
-                                                "((if PrimFloat.eqb (fst ml_original) 0%float then 0%float else fst ml_original), snd ml_original)",
-                                            )
-                                        }
-                                    } else {
-                                        String::from("ml_original")
-                                    };
-                                    {
-                                        let existing_2 = if set {
-                                            String::from("ml_accumulator")
-                                        } else {
-                                            format!(
-                                                "(List.map (fun ml_previous => if {equal_4} then (fst ml_previous, snd ml_value) else ml_previous) ml_accumulator)"
-                                            )
-                                        };
-                                        format!(
-                                            "(List.fold_left (fun ml_accumulator ml_original => let ml_value := {normalized_2} in if List.existsb (fun ml_previous => {equal_4}) ml_accumulator then {existing_2} else List.app ml_accumulator (ml_value :: nil)) {} (@nil {}))",
-                                            values.to_owned(),
-                                            element_type.to_owned()
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_closed_class_observation_operands(kind: &str, proof: &str) -> String {
-    if self::ml_array::includes(
-        &vec![
-            String::from("eq"),
-            String::from("ne"),
-            String::from("lt"),
-            String::from("le"),
-            String::from("gt"),
-            String::from("ge"),
-        ],
-        &proof.to_owned(),
-        0f64,
-        false,
-        |a, b| a == b,
-    ) {
-        String::from("left right")
-    } else if proof == "forall" {
-        String::from("binders")
-    } else if (kind == "toString") || (kind == "optionalText") {
-        String::from("arg")
-    } else if kind == "strictEqual" {
-        String::from("left right")
-    } else if (kind == "print") || (kind == "output") {
-        String::from("expr")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_closed_class_observation_operation_operands(
-    kind: &str,
-    proof: &str,
-    operation: &str,
-) -> String {
-    if (kind == "binary")
-        && self::ml_array::includes(
-            &vec![String::from("eq"), String::from("ne")],
-            &operation.to_owned(),
-            0f64,
-            false,
-            |a, b| a == b,
-        )
-    {
-        String::from("left right")
-    } else {
-        self::read_java_script_closed_class_observation_operands(kind, proof)
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn contains_java_script_closed_class_brand(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    root: f64,
-    declarations: f64,
-    brands: &[String],
-) -> bool {
-    if (brands.len() as f64) == 0f64 {
-        false
-    } else {
-        {
-            let pending = vec![root];
-            {
-                let seen = Vec::<f64>::new();
-                {
-                    let source_ml_source2_s2 = self::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop2(texts, starts, counts, labels, targets, declarations, brands, pending, seen);
-                    match source_ml_source2_s2 {
-                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Done => {
-                            false
-                        }
-                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(source_ml_source1_temporary_result2) => {
-                            source_ml_source1_temporary_result2
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryDependencyFunction1Loop1Result {
-    MlSource1TemporaryDependencyFunction1Loop1Done,
-    MlSource1TemporaryDependencyFunction1Loop1Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_dependency_function1_loop1(
-    labels: &[String],
-    targets: &[f64],
-    field: &str,
-    mut start: f64,
-    mut count: f64,
-    mut at: f64,
-) -> self::MlSource1TemporaryDependencyFunction1Loop1Result {
-    loop {
-        return if at < (start + count) {
-            if (self::read_required_text_fact(labels, at)) == field {
-                self::MlSource1TemporaryDependencyFunction1Loop1Result::MlSource1TemporaryDependencyFunction1Loop1Return(self::read_required_number_fact(targets, at))
-            } else {
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        at = at_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryDependencyFunction1Loop1Result::MlSource1TemporaryDependencyFunction1Loop1Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result {
-    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Done,
-    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Return(bool),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result {
-    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Done(Vec<f64>),
-    MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn source_ml_source1_temporary_contains_java_script_closed_class_brand_loop3(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    brands: &[String],
-    mut pending: Vec<f64>,
-    mut fields: f64,
-    mut at: f64,
-) -> self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result {
-    loop {
-        return if at < (self::read_required_number_fact(counts, fields)) {
-            {
-                let row = self::dependency_function2(starts, counts, targets, fields, at);
-                {
-                    let name =
-                        self::dependency_function1(starts, counts, labels, targets, row, "name");
-                    if (name < 0f64)
-                        || (self::ml_array::includes(
-                            brands,
-                            &self::read_required_text_fact(texts, name),
-                            0f64,
-                            false,
-                            |a, b| a == b,
-                        ))
-                    {
-                        self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Return(true)
-                    } else {
-                        {
-                            let pending_2 = {
-                                let source_ml_source2_concat_value3 = pending;
-                                {
-                                    let source_ml_source2_concat_value4 =
-                                        vec![self::dependency_function1(
-                                            starts, counts, labels, targets, row, "type",
-                                        )];
-                                    self::ml_array::append(
-                                        self::ml_array::append(
-                                            Vec::<f64>::new(),
-                                            source_ml_source2_concat_value3,
-                                        ),
-                                        source_ml_source2_concat_value4,
-                                    )
-                                }
-                            };
-                            {
-                                let at_2 = at + 1f64;
-                                {
-                                    (pending, at) = (pending_2, at_2);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Result::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop3Done(pending)
-        };
     }
 }

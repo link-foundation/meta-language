@@ -1,12 +1,12 @@
 // Token/span ownership stays in the frontend. The translated shared source
 // owns admission, transformation, resource limits and interval projection.
-import {lowerJavaScriptClosedClassSource,projectJavaScriptClassSourceInterval,acceptJavaScriptClosedClassSourceSize,readJavaScriptClosedClassRefusal,readJavaScriptClosedClassContextError,readJavaScriptClosedClassOwnFieldUseError,acceptJavaScriptClosedClassOwnField} from './javascript-class-source-rules.js';
+import {lowerJavaScriptClosedClassSource,projectJavaScriptClassSourceInterval,acceptJavaScriptClosedClassSourceSize,readJavaScriptClosedClassRefusal,readJavaScriptClosedClassContextError,readJavaScriptClosedClassOwnFieldUseError,acceptJavaScriptClosedClassOwnField,readJavaScriptClosedClassFunctionExports} from './javascript-class-source-rules.js';
 import {readSourceParserIdentifierSupply} from './source-identifiers.js';
 import {unsupported,TranslationError} from './diagnostics.js';
 import {checkProgram} from './check.js';
 import {createSurfaceReferenceFacts} from './surface-reference-facts.js';
 import {readCollectionConstructionField} from './collection-construction-rules.js';
-import {readJavaScriptClosedClassObservationOperationOperands,containsJavaScriptClosedClassBrand} from './javascript-class-observation-rules.js';
+import {readJavaScriptClosedClassObservationOperationOperands,containsJavaScriptClosedClassBrand,hasJavaScriptClosedClassExportedBrand} from './javascript-class-observation-rules.js';
 import {decodeJavaScriptClassOwnerRows} from './javascript-class-owners.js';
 
 export function readJavaScriptClosedClassSource(source,tokens,context) {
@@ -15,14 +15,15 @@ export function readJavaScriptClosedClassSource(source,tokens,context) {
     && (tokens[index+1]?.kind==='identifier'||tokens[index+1]?.value==='{'));
   if(!hasClass)return null;
   if(!acceptJavaScriptClosedClassSourceSize(source.length,tokens.length))throw unsupported('JavaScript closed class source',readJavaScriptClosedClassRefusal(-8),tokens[0]);
-  const plan=lowerJavaScriptClosedClassSource(source,tokens.map(token=>token.value),tokens.map(token=>token.kind),
+  const values=tokens.map(token=>token.value),kinds=tokens.map(token=>token.kind);
+  const plan=lowerJavaScriptClosedClassSource(source,values,kinds,
     tokens.map(token=>token.start),tokens.map(token=>token.end),readSourceParserIdentifierSupply(source,tokens));
   if(plan.error){const token=tokens[plan.at]??tokens[0];throw unsupported('JavaScript closed class source',plan.error,token);}
   if(!plan.changed)return null;
   const contextError=readJavaScriptClosedClassContextError(context.referenceSemantics!==false,context.externals?.length??0,context.literalBindings?.size??0,
     context.moduleBindingNames?.length??0,context.moduleScopeKnown!==false,context.moduleDirectory!==undefined&&context.moduleDirectory!==null);
   if(contextError)throw unsupported('JavaScript closed class context',contextError,{start:0,end:source.length});
-  return {...plan,owners:decodeJavaScriptClassOwnerRows(plan.ownerRows)};
+  return {...plan,owners:decodeJavaScriptClassOwnerRows(plan.ownerRows),exports:readJavaScriptClosedClassFunctionExports(values,kinds)};
 }
 
 export function validateJavaScriptClosedClassUses(surface,plan) {
@@ -30,6 +31,8 @@ export function validateJavaScriptClosedClassUses(surface,plan) {
   const facts=createSurfaceReferenceFacts({declarations:[...program.declarations.values()],main:program.main},{retainValues:true}),identities=new WeakMap();
   facts.values.forEach((value,index)=>{if(value&&typeof value==='object')identities.set(value,index);});
   const declarations=readCollectionConstructionField(facts.starts,facts.counts,facts.labels,facts.targets,facts.root,'declarations');
+  if(hasJavaScriptClosedClassExportedBrand(facts.texts,facts.starts,facts.counts,facts.labels,facts.targets,declarations,plan.exports,plan.brands))
+    throw unsupported('JavaScript closed class observation','an exported function needs a complete public signature without private class values',{start:0,end:plan.text.length});
   const pending=[{node:program,direct:false}];
   while(pending.length){
     const {node,direct}=pending.pop();if(!node||typeof node!=='object')continue;
