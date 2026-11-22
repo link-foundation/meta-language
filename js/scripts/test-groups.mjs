@@ -20,16 +20,20 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
+const translationSchedulingFile = new URL('../../parity/fixtures/ci-45042220137-translation-workload-costs.lino', import.meta.url);
+const translationSchedulingRevision = '38b367159fbe5a20cbcc19a8d75741875113a4b5';
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
 /** Largest observed workload first; source changes use a byte-size estimate.
  * Timing samples only choose owners. They never establish test completion. */
-export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
+export function partitionMeasuredWorkloads(files,count,{readSource,costs,group}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
- const measured=costs??readProjectData(schedulingFile);
+ const translation = group === 'translation';
+ const measured=costs??readProjectData(translation ? translationSchedulingFile : schedulingFile);
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
- assert.equal(measured.run,39615628279);assert.equal(measured.revision,schedulingRevision);
+ assert.equal(measured.run,translation ? 45042220137 : 39615628279);
+ assert.equal(measured.revision,translation ? translationSchedulingRevision : schedulingRevision);
  assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
  const known=new Map();
  for(const row of measured.entries){
@@ -151,9 +155,14 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
-  // historical modulo cohorts retain their independent exact partition rules.
-  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  // Use measured costs for the six-way grammar and translation cohorts.
+  // The original three-way translation scopes and all other groups keep their owners.
+  if (count === 6) {
+    const group = files.includes('translation-scheduling-source-history.test.js') ? 'translation' : 'grammar';
+    if (group === 'translation' || files.includes('issue-195-interchange-api-cli.test.js')) {
+      return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { group })[index - 1].map(file => file.slice(9));
+    }
+  }
   return files.filter((_, offset) => offset % count === index - 1);
 }
 

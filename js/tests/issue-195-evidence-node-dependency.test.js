@@ -63,7 +63,7 @@ test('original Node dependency test discovery preserves all draft source and the
   assert.equal(original.worktreeBaseRevision,location.revision);
   assert.equal(Buffer.byteLength(original.sourceText),original.bytes);
   assert.equal(createHash('sha256').update(original.sourceText).digest('hex'),original.sha256);
-  assert.equal(restoreNodeDependencyGeneratorTestHistory(readFileSync(new URL(import.meta.url),'utf8')),original.sourceText+location.additions);
+  assert.equal(restoreNodeDependencyGeneratorTestHistory(restoreIntegrationSource(readFileSync(new URL(import.meta.url),'utf8'),'js/tests/issue-195-evidence-node-dependency.test.js')),original.sourceText+location.additions);
   const classifier=restoreOwnCodebaseTestRegistrationClassifier(readFileSync(new URL('../../'+location.classifier.file,import.meta.url)));
   assert.equal(classifier.length,location.classifier.bytes);
   assert.equal(createHash('sha256').update(classifier).digest('hex'),location.classifier.sha256);
@@ -74,7 +74,7 @@ test('original Node dependency test discovery preserves all draft source and the
   const registrationHistory=readOwnCodebaseTestRegistrationHistory();
   assert.equal(registrationHistory.revision,'52132727d7ce158762a4499b7032a42a9f16f3c3');
   for(const row of registrationHistory.sources){
-    const current=readFileSync(new URL('../../'+row.file,import.meta.url));
+    const current=Buffer.from(restoreIntegrationSource(readFileSync(new URL('../../'+row.file,import.meta.url),'utf8'),row.file));
     assert.equal(current.length,row.current.bytes);
     assert.equal(createHash('sha256').update(current).digest('hex'),row.current.sha256);
   }
@@ -92,6 +92,7 @@ import {readNodeDependencyGeneratorRegistrationHistory,restoreNodeDependencyGene
 import {checkInventory} from '../scripts/dependency-inventory.mjs';
 import {readNodeDependencyInventoryOriginalView} from '../scripts/dependency-inventory-append-history.mjs';
 import {readOwnCodebaseTestRegistrationHistory,restoreOwnCodebaseTestRegistrationClassifier} from '../scripts/own-codebase-test-registration-history.mjs';
+import {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';
 
 test('the new source placement generator is independently inventoried with every preceding entry intact',()=>{
   const history=readNodeDependencyGeneratorRegistrationHistory();

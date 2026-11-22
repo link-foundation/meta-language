@@ -12,10 +12,28 @@ const revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;
 
+let integrationSources;
+
+/** Return the certified predecessor only for a complete integration successor. */
+export function restoreIntegrationSource(source,path) {
+  if(!integrationSources){
+    const bytes=readFileSync(new URL('parity/self-translation/integration-source-history.lino',root));
+    assert.equal(pin(bytes).sha256,'a2d10962c2cd03ddfb97807d62cc343863acb7634558fb508fae2d307ac4fd98');
+    const archive=readBootstrapStructuredDataLino(bytes.toString('utf8'));
+    assert.equal(archive.schemaVersion,1);
+    integrationSources=new Map(archive.sources.map(row=>[row.path,row]));
+  }
+  const row=integrationSources.get(path);
+  if(!row||!row.current.includes(pin(source).sha256))return source;
+  verifyGitArtifactCertificate(row.certificate,Buffer.from(row.source),{revision:row.revision,path});
+  return row.source;
+}
+
 /** Unknown bytes remain visible to the original historical validator. Only a
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreIntegrationSource(source,path);
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
   source=restoreRawPlanningWorkflowHistory(source,path);

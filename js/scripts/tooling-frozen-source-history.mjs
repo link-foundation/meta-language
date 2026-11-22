@@ -6,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {tokenize} from '../src/translation/lexer.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreIntegrationSource} from './current-ci-repair-source-history.mjs';
 import {readOwnCodebaseTestRegistrationHistory,restoreOwnCodebaseTestRegistrationClassifier} from './own-codebase-test-registration-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const TOOLING_FROZEN_SOURCE_REVISION='7881e1e6f83818e0b25b77e1b3ab15c2d51ca9f3';
@@ -138,7 +139,8 @@ export function verifyToolingFrozenSourceHistory(packet){
 export function readToolingFrozenSourceHistory(){
   const bytes=readFileSync(new URL(policyPath,root));assert.equal(toolingFrozenSourcePin(bytes).sha256,policySha256);
   const packet=readBootstrapStructuredDataLino(bytes.toString('utf8'));
-  for(const row of verifyToolingFrozenSourceHistory(packet))assert.equal(readFileSync(new URL(row.path,root),'utf8'),row.current);
+  for(const row of verifyToolingFrozenSourceHistory(packet))
+    assert.equal(restoreIntegrationSource(readFileSync(new URL(row.path,root),'utf8'),row.path),row.current);
   return packet;
 }
 
@@ -147,6 +149,7 @@ export function readToolingFrozenSourceHistory(){
 export function restoreToolingFrozenHostSource(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
   if(!TOOLING_FROZEN_HOSTS.some(row=>row.path===file))return source;
+  source=restoreIntegrationSource(source,file);
   const packet=readToolingFrozenSourceHistory(),row=packet.hosts.find(candidate=>candidate.path===file);
   assert.ok(row);if(source===row.source)return source;
   assert.deepEqual(toolingFrozenSourcePin(source),row.current,'an unknown tooling host successor has no complete historical source authority');

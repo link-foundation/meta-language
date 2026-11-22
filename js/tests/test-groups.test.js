@@ -54,6 +54,19 @@ test('six measured grammar cells retain the entire catalog exactly once under th
   assert.ok(costs.entries.find(row=>row.file==='js/tests/issue-195-interchange-api-cli.test.js').milliseconds>=262000);
 });
 
+test('six measured translation shards share the recorded workload and preserve every file', () => {
+  const files = partitionTests(testFiles()).groups.translation;
+  const shards = Array.from({ length: 6 }, (_, index) => partitionGroupFiles(files, `${index + 1}/6`));
+  assert.deepEqual(shards.flat().sort(), files);
+  assert.ok(shards.every(shard => shard.length > 0));
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45042220137-translation-workload-costs.lino', import.meta.url));
+  assert.deepEqual(costs.logs.map(log => log.shard), ['1/6', '2/6', '3/6', '4/6', '5/6', '6/6']);
+  const measurements = new Map(costs.entries.map(row => [row.file.slice(9), row.milliseconds]));
+  const measuredLoad = shard => shard.reduce((total, file) => total + (measurements.get(file) ?? 0), 0);
+  const moduloLoads = shards.map((_, index) => measuredLoad(files.filter((_, offset) => offset % 6 === index)));
+  assert.ok(Math.max(...shards.map(measuredLoad)) < Math.max(...moduloLoads) * 0.85);
+});
+
 test('six JavaScript native grammar partitions conserve each historical partition after the recorded automatic deadline', async () => {
   const path = 'parity/fixtures/javascript-native-grammar-deadline-2026-10-18.lino';
   const bytes = await readFile(new URL('../../' + path, import.meta.url));

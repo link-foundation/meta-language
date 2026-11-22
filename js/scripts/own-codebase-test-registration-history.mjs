@@ -137,12 +137,15 @@ export function readOwnCodebaseTestRegistrationHistory(){
 
 function restoreSource(source,file){
   assert.equal(typeof source,'string');
+  source=restoreIntegrationSource(source,file);
   const history=readOwnCodebaseTestRegistrationHistory();
   const row=history.sources.find(row=>row.file===file);assert.ok(row);
   const current=replay(row.predecessor.source,row.edits);
   assert.ok(source===row.predecessor.source||source===current,'unknown complete sources cannot acquire historical test authority');
   return row.predecessor.source;
 }
+
+import {restoreIntegrationSource} from './current-ci-repair-source-history.mjs';
 
 /** The existing classifier byte count and digest assertions still see every original byte. */
 export function restoreOwnCodebaseTestRegistrationClassifier(source){

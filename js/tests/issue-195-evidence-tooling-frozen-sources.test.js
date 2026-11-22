@@ -9,6 +9,7 @@ import {CRITICAL_CONVERSATION_REQUIREMENTS} from '../scripts/issue-195-conversat
 import {buildIssue195Manifest} from '../scripts/issue-195-acceptance-lib.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {generateToolingFrozenSourceHistory} from '../scripts/generate-tooling-frozen-source-history.mjs';
+import {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';
 import {CRITICAL_DELIVERY_SOURCE_HISTORY,CURRENT_CONVERSATION_SOURCE,readFrozenToolingTestGroups,
   readCriticalDeliveryFrozenSource,readCriticalDeliveryAppend,readToolingFrozenSourceHistory,
   verifyToolingFrozenSourceHistory,restoreCriticalDeliveryConversationSource,restoreToolingFrozenHostSource,toolingFrozenSourcePin} from '../scripts/tooling-frozen-source-history.mjs';
@@ -108,7 +109,7 @@ test('complete certified tooling host predecessors compose with old guards while
   for(const row of history.hosts){
     const current=read(row.path).toString('utf8'),previous=row.source;
     assert.notEqual(current,previous);
-    assert.deepEqual(toolingFrozenSourcePin(current),row.current);
+    assert.deepEqual(toolingFrozenSourcePin(restoreIntegrationSource(current,row.path)),row.current);
     assert.equal(restoreToolingFrozenHostSource(current,row.path),previous);
     assert.equal(restoreToolingFrozenHostSource(previous,row.path),previous);
     for(const source of [current+'\n',previous+'\n',current.replace('import assert','import alteredAssert')]){
