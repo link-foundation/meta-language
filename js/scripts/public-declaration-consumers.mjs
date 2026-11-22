@@ -728,6 +728,7 @@ export function createWrongLanguagePacket() {
     },
     {
       name: 'reject-unregistered-explicit-const-predicate-signature-model', expectedDiagnostics: ['TS2322'],
+      assertionPolicy: 'typescript-const-signature-rejection-diagnostic',
       source: `import { createTypedProgramLinks } from ${module};
 createTypedProgramLinks(${JSON.stringify(constFunctionFixture.cases[0].source)},'Rust',
   {rustConstFunctionModel:${JSON.stringify(constFunctionFixture.model)},rustSourceSignatureModel:'Rust source function signature 99'});

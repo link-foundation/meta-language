@@ -56,6 +56,21 @@ export function assertionVersionPolicy() {
         evidence: 'js/package.json and js/package-lock.json pin TypeScript 7.0.2. This singleton specifies the required CI diagnostic for the same unchanged closed pure Rust const predicates 99 consumer; it is not a local TypeScript 7 execution observation.',
       }],
     }, {
+      id: 'typescript-const-signature-rejection-diagnostic',
+      subject: 'TypeScript public declaration compiler',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'typescript-5-9-2-const-signature-rejection',
+        minimum: '5.9.2', maximum: '5.9.2', includeMinimum: true, includeMaximum: true,
+        expected: ['TS2322'],
+        evidence: 'Retains the exact TypeScript 5.9.2 assertion for the unchanged reject-unregistered-explicit-const-predicate-signature-model consumer.',
+      }, {
+        id: 'typescript-7-0-2-const-signature-rejection',
+        minimum: '7.0.2', maximum: '7.0.2', includeMinimum: true, includeMaximum: true,
+        expected: ['TS2820'],
+        evidence: 'CI run 42129692629 job 127602873736 reported TS2820 for the unchanged Rust source function signature 99 literal and suggested Rust source function signature 1. The committed lock pins TypeScript 7.0.2.',
+      }],
+    }, {
       id: 'agda-corrected-layout-oracle',
       subject: 'Agda complete scanner layout source oracle',
       comparison: { kind: 'release', precision: 3 },
