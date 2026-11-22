@@ -41,12 +41,14 @@ test('the public identifier ranks Cyrillic languages and retains mixed-script UT
   for (const minimumConfidence of [-1, 1.1, NaN]) {
     assert.throws(() => rankLanguage('text', { minimumConfidence }), RangeError);
   }
-  recordIssue195Observations(context, [{
+  recordIssue195Observations({
     requirementId: 'I195-NATURAL-LANGUAGE-IDENTIFICATION-RANKING',
+    suffix: 'behavior',
     fixtureId: 'i195-natural-language-identification-ranking',
     fixtureFile: rankedFixture,
     assertions: ['rankedCyrillicModels', 'explicitUnknownThreshold', 'shortTextEvidence', 'utf8ScriptSpans'],
-  }]);
+    testName: context.name,
+  });
 });
 
 function semanticTerms(network) {
