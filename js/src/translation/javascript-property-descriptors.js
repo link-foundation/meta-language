@@ -14,6 +14,15 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,testJav
  * @typedef {{$:'ordinaryProperty',key:JavaScriptSemanticValue,descriptor:JavaScriptPropertyDescriptor}} JavaScriptOrdinaryProperty
  */
 
+/** @param {JavaScriptOrdinaryProperty[]} properties @param {JavaScriptSemanticValue} key @returns {number} */
+export function findJavaScriptPropertyDescriptorEntry(properties, key) {
+  for (let at = 0; at < properties.length; at += 1) {
+    const property = properties[at];
+    if (property !== undefined && testJavaScriptSemanticSameValue(property.key, key)) return at;
+  }
+  return -1;
+}
+
 /** @param {JavaScriptPropertyDescriptor} descriptor @returns {string} */
 export function readJavaScriptPropertyDescriptorKind(descriptor) {
   const data = descriptor.valuePresent || descriptor.writablePresent;

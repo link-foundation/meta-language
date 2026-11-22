@@ -4,7 +4,7 @@
 import {createJavaScriptPropertyDescriptor,planJavaScriptPropertyDefinition} from './javascript-property-descriptors.js';
 import {testJavaScriptSemanticSameValue,readJavaScriptSemanticTextLength,constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-rules.js';
-/** @typedef {{$:'arrayObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,callable:boolean,properties:JavaScriptOrdinaryProperty[]}} JavaScriptArrayObject */
+import {findJavaScriptHeapDirectoryProperty} from './javascript-ordinary-heap-directory.js';
 /** @typedef {{$:'arrayPropertyPlan',object:JavaScriptArrayObject,success:boolean,error:string,errorClass:string,writes:string[]}} JavaScriptArrayPropertyPlan */
 /** @returns {JavaScriptSemanticValue} */
 export function readJavaScriptArrayLengthKey(){return {$:'text',units:[108,101,110,103,116,104]};}
@@ -13,7 +13,7 @@ export function testJavaScriptArrayLengthKey(key){return testJavaScriptSemanticS
 /** @param {JavaScriptSemanticValue} key @returns {number} */
 export function readJavaScriptArrayIndex(key){const length=readJavaScriptSemanticTextLength(key);return length<0||length>10?-1:readJavaScriptLiteralPropertyIndex(constructJavaScriptSemanticTextUnits(key,10));}
 /** @param {JavaScriptOrdinaryProperty[]} properties @param {JavaScriptSemanticValue} key @returns {number} */
-export function findJavaScriptArrayProperty(properties,key){for(let at=0;at<properties.length;at++){const property=properties[at];if(property!==undefined&&testJavaScriptSemanticSameValue(property.key,key))return at;}return -1;}
+export function findJavaScriptArrayProperty(properties,key){return findJavaScriptHeapDirectoryProperty(properties,key);}
 /** @param {JavaScriptArrayObject} object @returns {number} */
 export function readJavaScriptArrayLength(object){
  const property=object.properties[findJavaScriptArrayProperty(object.properties,readJavaScriptArrayLengthKey())];

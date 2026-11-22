@@ -1,6 +1,6 @@
 // Source text is compiler-supplied CST metadata, never a reconstructed body or
 // an execution certificate. Native representations require an independent port.
-import {findJavaScriptOrdinaryObject,readJavaScriptOrdinaryValueError} from './javascript-ordinary-heap.js';
+import {findJavaScriptHeapDirectoryObject,readJavaScriptHeapDirectoryValueError} from './javascript-ordinary-heap-directory.js';
 import {readJavaScriptSemanticValueError,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit,constructJavaScriptSourceText} from './javascript-semantic-values.js';
 import {findJavaScriptCallCodeFunction} from './javascript-call-code.js';
 import {findJavaScriptCallTemplate} from './javascript-call-templates.js';
@@ -28,9 +28,9 @@ export function projectJavaScriptFunctionSourceText(sources,span){
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} input @returns {JavaScriptFunctionTextResult} */
 export function readJavaScriptFunctionText(program,heap,input){
- const error=readJavaScriptOrdinaryValueError(heap,input)||readJavaScriptFunctionSourceDirectoryError(program);if(error!=='')return {$:'functionTextInvalid',reason:error};
+ const error=readJavaScriptHeapDirectoryValueError(heap,input)||readJavaScriptFunctionSourceDirectoryError(program);if(error!=='')return {$:'functionTextInvalid',reason:error};
  if(input.$!=='object'||!input.callable)return {$:'functionTextError',errorClass:'TypeError',reason:'Function.prototype.toString requires a callable receiver'};
- const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)];if(object?.$==='boundFunctionObject')return {$:'functionTextNeedAuthority',kind:'bound'};
+ const object=heap.objects[findJavaScriptHeapDirectoryObject(heap.objects,input.identity)];if(object?.$==='boundFunctionObject')return {$:'functionTextNeedAuthority',kind:'bound'};
  if(object?.$==='closureObject'){const template=(program.templates??[])[findJavaScriptCallTemplate(program,object.owner,object.ordinal)];return template?.source===undefined?{$:'functionTextNeedAuthority',kind:'source'}:{$:'functionTextValue',value:projectJavaScriptFunctionSourceText(program.sources??[],template.source)};}
  const fn=program.functions[findJavaScriptCallCodeFunction(program,input.identity)];return fn?.source!==undefined?{$:'functionTextValue',value:projectJavaScriptFunctionSourceText(program.sources??[],fn.source)}:{$:'functionTextNeedAuthority',kind:fn!==undefined&&['strict','ordinary class','derived Error'].includes(fn.receiverMode)?'source':'external'};
 }

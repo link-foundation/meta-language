@@ -1,4 +1,4 @@
-import {findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty} from './javascript-ordinary-heap.js';
+import {findJavaScriptHeapDirectoryObject,findJavaScriptHeapDirectoryProperty} from './javascript-ordinary-heap-directory.js';
 /** ToLength after the actual ToNumber continuation has completed.
  * @param {number} value @returns {number} */
 export function readJavaScriptArrayLikeLength(value){return Number.isNaN(value)||value<=0?0:Math.min(Math.floor(value),9007199254740991);}
@@ -19,9 +19,9 @@ export function readJavaScriptArraySearchIndex(operation,length,present,value){
  * @returns {{present:boolean,error:string}} */
 export function readJavaScriptIndexedPropertyPresence(heap,identity,key){
  let current=identity;for(let depth=0;depth<heap.objects.length;depth++){
-  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,current)];if(object===undefined)return {present:false,error:'Array callback property lookup retains its actual global Object'};
+  const object=heap.objects[findJavaScriptHeapDirectoryObject(heap.objects,current)];if(object===undefined)return {present:false,error:'Array callback property lookup retains its actual global Object'};
   if(!['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','collectionIteratorObject'].includes(object.$))return {present:false,error:'Array callback HasProperty requires the actual opaque host protocol'};
-  if(findJavaScriptOrdinaryProperty(object.properties,key)>=0)return {present:true,error:''};
+  if(findJavaScriptHeapDirectoryProperty(object.properties,key)>=0)return {present:true,error:''};
   if(object.prototype.$!=='object')return {present:false,error:''};current=object.prototype.identity;
  }return {present:false,error:'Array callback property lookup exceeds its actual prototype directory'};
 }
