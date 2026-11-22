@@ -47,6 +47,12 @@ export function selectSourceDefinitionCatalogEntry(identifiers,identifier){
 export function acceptSourceDefinitionCatalogLimits(byteLimit,nodeLimit,depthLimit){
  return byteLimit>=1&&byteLimit<=134217728&&byteLimit%1===0&&nodeLimit>=1&&nodeLimit<=1000000&&nodeLimit%1===0&&depthLimit>=1&&depthLimit<=1024&&depthLimit%1===0;
 }
+/** @param {boolean} ordinarySourceArchive @returns {number} */
+export function readSourceDefinitionCatalogByteLimit(ordinarySourceArchive){return ordinarySourceArchive?100663296:16777216;}
+/** @param {boolean} ordinarySourceArchive @returns {number} */
+export function readSourceDefinitionCatalogNodeLimit(ordinarySourceArchive){return ordinarySourceArchive?1000000:100000;}
+/** @returns {string} */
+export function readOrdinarySourceArchiveField(){return 'ordinary source archive';}
 /** @param {string} identifier @param {string} digest @returns {string} */
 export function readSourceDefinitionCatalogIdentity(identifier,digest){return identifier+'@sha256:'+digest;}
 /** @param {string} command @returns {number} */

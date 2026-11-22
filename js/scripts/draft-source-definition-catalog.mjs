@@ -4,6 +4,7 @@ import {readFileSync,readdirSync,lstatSync,writeFileSync,mkdirSync,existsSync} f
 import {readSourceDefinitionCatalogAuthorCache,readSourceDefinitionCatalogAuthorEntry} from './source-definition-catalog-authoring.mjs';
 import {writeProjectData,checkProjectData} from './project-data.mjs';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
+import {ordinarySourceArchiveByteLimit} from '../src/typed-program-source-owners.js';
 const mode=process.argv.slice(2).join(' '),check=mode==='--check',reuse=mode==='--draft --reuse-roots';
 if(!check&&mode!=='--draft'&&!reuse)throw new TypeError('use --draft or --check');
 const root=new URL('../../',import.meta.url),directory=new URL('js/src/data/',root),entries=[];
@@ -17,7 +18,7 @@ for(const asset of readdirSync(directory).filter(name=>/^[a-z][a-z0-9-]*-program
  if(!existsSync(nativeFile)&&!check)writeFileSync(nativeFile,bytes,{flag:'wx'});
  if(!lstatSync(nativeFile).isFile()||lstatSync(nativeFile).isSymbolicLink())throw new TypeError('a native source program must be a regular paired package asset: '+asset);
  const native=readFileSync(nativeFile);
- if(bytes.length>16*1024*1024||!bytes.equals(native))throw new TypeError('a source program exceeds the author bound or its package twin differs: '+asset);
+ if(bytes.length>ordinarySourceArchiveByteLimit||!bytes.equals(native))throw new TypeError('a source program exceeds the author bound or its package twin differs: '+asset);
  entries.push(readSourceDefinitionCatalogAuthorEntry(asset,bytes,{previous:previous.get(asset),complete:check}));
  if(globalThis.gc)globalThis.gc();
 }

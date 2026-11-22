@@ -12,8 +12,7 @@ use crate::{
 };
 
 mod assets;
-#[cfg(test)]
-mod tests;
+include!("../tests/internal/source_definition_catalog.rs");
 
 /// One exact complete source artifact, with a root local to that artifact.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -29,9 +28,28 @@ pub struct SourceDefinitionEntry {
     pub sha256: String,
     /// Exact decimal root in the present safe-number graph profile.
     pub root: String,
+    /// Select the reloadable directory of actual source modules.
+    #[serde(
+        default,
+        deserialize_with = "deserialize_source_archive_flag",
+        skip_serializing_if = "std::ops::Not::not"
+    )]
+    pub ordinary_source_archive: bool,
     /// Artifact-qualified identity, distinct from concept meaning.
     #[serde(default)]
     pub definition_identity: String,
+}
+
+fn deserialize_source_archive_flag<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<bool, D::Error> {
+    if bool::deserialize(deserializer)? {
+        Ok(true)
+    } else {
+        Err(serde::de::Error::custom(
+            "ordinarySourceArchive must be true when present",
+        ))
+    }
 }
 
 #[derive(Deserialize)]
@@ -104,6 +122,11 @@ pub fn source_definition_catalog() -> Result<Vec<SourceDefinitionEntry>, String>
         return Err(fail(format!("invalid catalog entries (reason {code})")));
     }
     for entry in &mut catalog.entries {
+        if entry.ordinary_source_archive
+            && number(entry.bytes)? > rules::read_source_definition_catalog_byte_limit(true)
+        {
+            return Err(fail("invalid ordinary source archive entry"));
+        }
         entry.definition_identity = rules::read_source_definition_catalog_identity(
             &Text::from_text(&entry.identifier),
             &Text::from_text(&entry.sha256),
@@ -138,10 +161,18 @@ pub fn source_definition_entry(identifier: &str) -> Result<Option<SourceDefiniti
 pub fn create_source_definition_program_links(
     identifier: &str,
 ) -> Result<TypedProgramLinks, String> {
-    create_source_definition_program_links_with_limits(
-        identifier,
-        SourceDefinitionCatalogLimits::default(),
-    )
+    let entry = source_definition_entry(identifier)?
+        .ok_or_else(|| fail("unknown qualified program identity"))?;
+    let archive = entry.ordinary_source_archive;
+    let index = crate::translation::frontend_rules::ml_array::number_index;
+    let limits = SourceDefinitionCatalogLimits {
+        byte_limit: index(rules::read_source_definition_catalog_byte_limit(archive))
+            .ok_or_else(|| fail("invalid default byte budget"))?,
+        node_limit: index(rules::read_source_definition_catalog_node_limit(archive))
+            .ok_or_else(|| fail("invalid default node budget"))?,
+        ..SourceDefinitionCatalogLimits::default()
+    };
+    load_source_definition_program_links(&entry, limits)
 }
 
 /// As the default constructor, with explicit graph bounds.
@@ -152,6 +183,15 @@ pub fn create_source_definition_program_links_with_limits(
     identifier: &str,
     limits: SourceDefinitionCatalogLimits,
 ) -> Result<TypedProgramLinks, String> {
+    let entry = source_definition_entry(identifier)?
+        .ok_or_else(|| fail("unknown qualified program identity"))?;
+    load_source_definition_program_links(&entry, limits)
+}
+
+fn load_source_definition_program_links(
+    entry: &SourceDefinitionEntry,
+    limits: SourceDefinitionCatalogLimits,
+) -> Result<TypedProgramLinks, String> {
     if !rules::accept_source_definition_catalog_limits(
         number(limits.byte_limit)?,
         number(limits.node_limit)?,
@@ -159,8 +199,6 @@ pub fn create_source_definition_program_links_with_limits(
     ) {
         return Err(fail("invalid resource limit"));
     }
-    let entry = source_definition_entry(identifier)?
-        .ok_or_else(|| fail("unknown qualified program identity"))?;
     if entry.bytes > limits.byte_limit {
         return Err(fail("program byte limit exceeded"));
     }
@@ -170,7 +208,12 @@ pub fn create_source_definition_program_links_with_limits(
     {
         return Err(fail("program asset identity changed"));
     }
-    let network = LinkNetwork::from_lino(source).map_err(fail)?;
+    let network = if entry.ordinary_source_archive {
+        LinkNetwork::from_bounded_lino(source, limits.byte_limit, limits.node_limit, 4_000_000)
+    } else {
+        LinkNetwork::from_lino(source)
+    }
+    .map_err(fail)?;
     if network.links().count() > limits.node_limit {
         return Err(fail("program node limit exceeded"));
     }
@@ -186,6 +229,17 @@ pub fn create_source_definition_program_links_with_limits(
     let root = LinkId::from_u64(entry.root.parse::<u64>().map_err(fail)?);
     if roots != [root] {
         return Err(fail("program root identity changed"));
+    }
+    if entry.ordinary_source_archive {
+        let label = rules::read_ordinary_source_archive_field().to_string();
+        if !network.links().any(|relation| {
+            relation.metadata().link_type() == Some(crate::LinkType::Field)
+                && matches!(relation.references(), [parent, field, _]
+                    if *parent == root
+                        && network.link(*field).and_then(|link| link.metadata().term()) == Some(label.as_str()))
+        }) {
+            return Err(fail("ordinary source archive directory is missing"));
+        }
     }
     decode_typed_program_links_with_limits(
         &network,

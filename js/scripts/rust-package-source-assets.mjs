@@ -57,7 +57,9 @@ export function draftRustPackageSourceAssets({check=false}={}){
   const patterns=[...retained.matchAll(/^\s*("[^"\n]+")\s*,?\s*$/gmu)].map(match=>JSON.parse(match[1]));
   if(!patterns.includes('src/**/*.rs'))throw new TypeError('the package needs its complete Rust source glob');
   const inputs=[],owners=new Map();
-  for(const file of files(path.join(crate,'src'))){
+  const pending=files(path.join(crate,'src'));
+  const scheduled=new Set(pending);
+  for(const file of pending){
     const source=readFileSync(file,'utf8');
     if(Buffer.byteLength(source)>4*1024*1024)throw new TypeError('one Rust source exceeds the authoring byte bound');
     const sourcePath=path.relative(root,file).split(path.sep).join('/');
@@ -71,8 +73,13 @@ export function draftRustPackageSourceAssets({check=false}={}){
       const absolute=path.resolve(path.dirname(file),include.path);
       const relative=path.relative(crate,absolute).split(path.sep).join('/');
       if(relative==='..'||relative.startsWith('../')||path.isAbsolute(relative))throw new TypeError('a shipped source references an asset outside the crate: '+sourcePath+' -> '+include.path);
-      if(!relative.startsWith('src/'))throw new TypeError('a shipped source asset is outside its source directory: '+relative);
+      const internalControl=include.macro==='include'&&relative.startsWith('tests/internal/')&&relative.endsWith('.rs');
+      if(!relative.startsWith('src/')&&!internalControl)throw new TypeError('a shipped source asset is outside its source or internal control directory: '+relative);
       if(!lstatSync(absolute).isFile())throw new TypeError('source include is not a regular file: '+relative);
+      if(internalControl&&!scheduled.has(absolute)){
+        scheduled.add(absolute);
+        pending.push(absolute);
+      }
       const row=owners.get(relative)??{path:relative,owners:[]};
       row.owners.push({source:sourcePath,...include});owners.set(relative,row);
     }

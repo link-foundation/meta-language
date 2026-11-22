@@ -3,8 +3,18 @@
 import {StreamParser} from 'links-notation';
 import {decodeCanonicalStatements} from '../src/lino-serialization.js';
 import {LinkNetwork} from '../src/network.js';
+import {readBoundedCanonicalNetwork} from '../src/canonical-network-reader.js';
+import {ordinarySourceArchiveByteLimit, ordinarySourceArchiveField, ordinarySourceArchiveNodeLimit} from '../src/typed-program-source-owners.js';
 
 function acceptSourceDefinitionRootMetadata(metadata){return metadata.language==='meta-language typed program'&&metadata.term==='typed program'&&metadata.definition==='1';}
+export function readLargeOrdinarySourceDefinitionRoot(source){
+ const network=readBoundedCanonicalNetwork(source,{byteLimit:ordinarySourceArchiveByteLimit,nodeLimit:ordinarySourceArchiveNodeLimit});
+ const roots=network.links().filter(link=>acceptSourceDefinitionRootMetadata(link.metadata()));
+ if(roots.length!==1)throw new TypeError('an ordinary source archive needs one actual existing schema root');
+ const root=roots[0].id(),directories=network.fieldRelations().filter(relation=>relation.parent.equals(root)&&relation.label===ordinarySourceArchiveField);
+ if(directories.length!==1)throw new TypeError('large source definitions need an actual ordinary source archive directory');
+ return String(root.asU64());
+}
 /** The later gate retains its original complete-network reader. Authoring
  * streams every original statement through the same metadata decoder, and
  * checks identities/references rather than trusting a cached root or digest. */

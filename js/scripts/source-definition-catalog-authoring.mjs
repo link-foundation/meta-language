@@ -3,7 +3,8 @@
 import {existsSync,lstatSync,readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
-import {readAuthoredSourceDefinitionRoot} from './source-definition-catalog-roots.mjs';
+import {readAuthoredSourceDefinitionRoot, readLargeOrdinarySourceDefinitionRoot} from './source-definition-catalog-roots.mjs';
+import {ordinarySourceArchiveByteLimit} from '../src/typed-program-source-owners.js';
 const model='complete qualified typed source programs 1';
 export function readSourceDefinitionCatalogAuthorCache(file,enabled=false){
  if(!enabled||!existsSync(file))return new Map();
@@ -23,11 +24,12 @@ export function readSourceDefinitionCatalogAuthorCache(file,enabled=false){
 }
 export function readSourceDefinitionCatalogAuthorEntry(asset,bytes,{previous,complete=false}={}){
  if(typeof asset!=='string'||!/^[a-z][a-z0-9-]*-program\.lino$/u.test(asset))throw new TypeError('a source program needs its actual asset name');
- if(!Buffer.isBuffer(bytes)||bytes.length>16*1024*1024)throw new TypeError('a source program exceeds the author bound');
+ if(!Buffer.isBuffer(bytes)||bytes.length>ordinarySourceArchiveByteLimit)throw new TypeError('a source program exceeds the author bound');
  const sha256=createHash('sha256').update(bytes).digest('hex'),identifier='meta-language/source-program/'+asset.slice(0,-5);
- const reusable=!complete&&previous?.asset===asset&&previous.identifier===identifier&&previous.bytes===bytes.length&&previous.sha256===sha256&&typeof previous.root==='string'&&/^[1-9][0-9]*$/u.test(previous.root)&&Number.isSafeInteger(Number(previous.root));
+ const large=bytes.length>16*1024*1024;
+ const reusable=!complete&&previous?.asset===asset&&previous.identifier===identifier&&previous.bytes===bytes.length&&previous.sha256===sha256&&(!large||previous.ordinarySourceArchive===true)&&typeof previous.root==='string'&&/^[1-9][0-9]*$/u.test(previous.root)&&Number.isSafeInteger(Number(previous.root));
  let root;
- try{root=reusable?previous.root:readAuthoredSourceDefinitionRoot(bytes.toString('utf8'),{complete});}
+ try{root=reusable?previous.root:large?readLargeOrdinarySourceDefinitionRoot(bytes.toString('utf8')):readAuthoredSourceDefinitionRoot(bytes.toString('utf8'),{complete});}
  catch(error){error.message=asset+': '+error.message;throw error;}
- return {identifier,asset,bytes:bytes.length,sha256,root};
+ return {identifier,asset,bytes:bytes.length,sha256,root,...(large?{ordinarySourceArchive:true}:{})};
 }

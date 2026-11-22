@@ -14,10 +14,7 @@ use super::source_type_origins::sanitize_source_type_origin;
 
 pub(super) const DEFERRED_PATTERN: &str = "#rust-standard-sum-source";
 
-#[cfg(test)]
-#[path="standard_sum_source_qualification_tests.rs"]
-mod qualification_controls;
-
+include!("../../../tests/internal/translation/rust/standard_sum_source.rs");
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct StandardSumSource {
@@ -631,4 +628,3 @@ impl RustParser {
         Ok(())
     }
 }
-

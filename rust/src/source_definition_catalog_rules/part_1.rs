@@ -714,6 +714,35 @@ pub fn accept_source_definition_catalog_limits(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_source_definition_catalog_byte_limit(ordinary_source_archive: bool) -> f64 {
+    if ordinary_source_archive {
+        100_663_296f64
+    } else {
+        16_777_216f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_source_definition_catalog_node_limit(ordinary_source_archive: bool) -> f64 {
+    if ordinary_source_archive {
+        1_000_000f64
+    } else {
+        100_000f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_ordinary_source_archive_field() -> self::ml_string::Text {
+    self::ml_string::Text::from_units(vec![
+        111, 114, 100, 105, 110, 97, 114, 121, 32, 115, 111, 117, 114, 99, 101, 32, 97, 114, 99,
+        104, 105, 118, 101,
+    ])
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_source_definition_catalog_identity(
     identifier: &self::ml_string::Text,
     digest: &self::ml_string::Text,
