@@ -325,8 +325,12 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
         .unwrap()
         .iter()
         .chain(policy["originalDeclarations"].as_array().unwrap())
+        .chain(policy["historicalDeclarations"].as_array().unwrap())
     {
-        let source = fs::read(root().join(owner["path"].as_str().unwrap())).unwrap();
+        let source = owner.get("revision").map_or_else(
+            || fs::read(root().join(owner["path"].as_str().unwrap())).unwrap(),
+            |_| owner["context"].as_str().unwrap().as_bytes().to_vec(),
+        );
         assert_eq!(source.len() as u64, owner["bytes"].as_u64().unwrap());
         assert_eq!(
             format!("{:x}", Sha256::digest(&source)),
