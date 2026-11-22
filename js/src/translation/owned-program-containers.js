@@ -41,7 +41,11 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
     const owner = Number.isSafeInteger(start) && Number.isSafeInteger(end) && start <= end
       && directory.ranges.find(range => range.start <= start && start < range.end && end <= range.end);
     if (!owner) fail('a source library declaration has no complete original module interval');
-    if (!ownedStates.has(owner)) ownedStates.set(owner, createState());
+    if (!ownedStates.has(owner)) {
+      const state = createState();
+      state.path = directory.inputs.find(input => input.closureRange === owner)?.path;
+      ownedStates.set(owner, state);
+    }
     return ownedStates.get(owner);
   }
   function inspectPrototypes(value, state) {
@@ -63,7 +67,7 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
     const { visited } = state;
     if (!value || typeof value !== 'object' && typeof value !== 'function' || visited.has(value)) return;
     if (depth > 256 || ++state.visits > 100_000) {
-      fail('the owned container graph exceeds its resource limit (depth ' + depth + ', visited ' + state.visits + ')');
+      fail('the owned container graph exceeds its resource limit (depth ' + depth + ', visited ' + state.visits + (state.path ? ', source ' + state.path : '') + ')');
     }
     visited.add(value);
     const keys = Reflect.ownKeys(value);
