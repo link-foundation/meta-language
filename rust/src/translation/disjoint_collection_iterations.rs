@@ -1,6 +1,8 @@
 //! Structural transport to the shared checked allocation/effect proof.
 //! No native source-name alias decisions or replacement iterator semantics.
 use super::{diagnostics::{Result,unsupported},ir::Program};
+use super::disjoint_collection_iteration_rules::{self as rules, ml_string::Text};
+use super::disjoint_collection_projection_rules::{self as projection, ml_string::Text as ProjectionText};
 use serde_json::Value;
 use std::collections::BTreeSet;
 
@@ -10,26 +12,54 @@ fn refused(error:u8)->Proof{Proof{error,array_callbacks:false,collection_mappers
 fn position(value:f64)->Option<usize>{if value.is_finite()&&value>=0.0&&value.fract()==0.0{value.to_string().parse().ok()}else{None}}
 fn number(value:usize)->f64{serde_json::Number::from(value).as_f64().expect("bounded graph position")}
 
+pub(crate) fn read_disjoint_collection_iteration_source_operation() -> String {
+ rules::read_disjoint_collection_iteration_source_operation().to_string()
+}
+
+pub(crate) fn read_disjoint_collection_spread_source_operation() -> String {
+ rules::read_disjoint_collection_spread_source_operation().to_string()
+}
+
+pub(crate) fn read_disjoint_collection_iteration_marker(ordinal: f64, operation: &str) -> String {
+ rules::read_disjoint_collection_iteration_marker(ordinal, &Text::from_text(operation)).to_string()
+}
+
+pub(crate) fn read_disjoint_collection_spread_marker(ordinal: f64, operation: &str) -> String {
+ rules::read_disjoint_collection_spread_marker(ordinal, &Text::from_text(operation)).to_string()
+}
+
+pub(crate) fn has_disjoint_collection_iteration_item_form(kind: &str, operation: &str) -> bool {
+ !rules::read_disjoint_collection_iteration_item_form(&Text::from_text(kind), &Text::from_text(operation)).0.is_empty()
+}
+
+pub(crate) fn accept_disjoint_collection_spread_receiver(shape: &str) -> bool {
+ rules::accept_disjoint_collection_spread_receiver(&Text::from_text(shape))
+}
+
 pub(crate) fn read_program_proof(program:&Program,markers:&[String])->Proof{
  let Ok(value)=serde_json::to_value(program)else{return refused(1)};
  let facts=super::surface_reference_facts::create_surface_reference_facts(&value);
- let plan=super::disjoint_collection_projection_rules::project_disjoint_collection_iteration_facts(&facts.texts,&facts.starts,&facts.counts,&facts.labels,&facts.targets,facts.root,markers);
+ let texts:Vec<_>=facts.texts.iter().map(|text|ProjectionText::from_text(text)).collect();
+ let labels:Vec<_>=facts.labels.iter().map(|label|ProjectionText::from_text(label)).collect();
+ let markers:Vec<_>=markers.iter().map(|marker|ProjectionText::from_text(marker)).collect();
+ let plan=projection::project_disjoint_collection_iteration_facts(&texts,&facts.starts,&facts.counts,&labels,&facts.targets,facts.root,&markers);
  if plan.first()!=Some(&0.0)||plan.len()<8{return refused(1);}
  let Some(header)=plan[1..8].iter().map(|value|position(*value)).collect::<Option<Vec<_>>>()else{return refused(1)};
  let [size,edge_count,function_count,parameter_count,main,snapshot_count,callback_count]=header[..]else{return refused(1)};
  let mut at=8;let mut next=||{let value=plan.get(at).copied();at+=1;value};
  let mut roles=Vec::new();let mut operations=Vec::new();let mut kinds=Vec::new();let mut owners=Vec::new();
- let text=|identity:f64|position(identity).and_then(|at|facts.texts.get(at)).map_or("",String::as_str);
+ let empty=ProjectionText::from_text("");
+ let text=|identity:f64|position(identity).and_then(|at|texts.get(at)).unwrap_or(&empty);
  for _ in 0..size{
   let (Some(role),Some(operation),Some(kind),Some(owner))=(next(),next(),next(),next())else{return refused(1)};
-  roles.push(super::disjoint_collection_projection_rules::read_disjoint_collection_projection_role(role));
-  operations.push(super::disjoint_collection_projection_rules::read_disjoint_collection_projection_operation(role,operation,text(operation)));
-  kinds.push(super::disjoint_collection_projection_rules::read_disjoint_collection_projection_kind(role,text(kind)));owners.push(owner);
+  roles.push(Text(projection::read_disjoint_collection_projection_role(role).0));
+  operations.push(Text(projection::read_disjoint_collection_projection_operation(role,operation,text(operation)).0));
+  kinds.push(Text(projection::read_disjoint_collection_projection_kind(role,text(kind)).0));owners.push(owner);
  }
  let mut edge_rows=Vec::new();
  for _ in 0..edge_count{
   let (Some(source),Some(label),Some(auxiliary),Some(target))=(next(),next(),next(),next())else{return refused(1)};
-  edge_rows.push((source,super::disjoint_collection_projection_rules::read_disjoint_collection_projection_edge(label,auxiliary,text(auxiliary)),target));
+  edge_rows.push((source,Text(projection::read_disjoint_collection_projection_edge(label,auxiliary,text(auxiliary)).0),target));
  }
  let mut functions=Vec::new();let mut bodies=Vec::new();
  for _ in 0..function_count{let (Some(root),Some(body))=(next(),next())else{return refused(1)};functions.push(root);bodies.push(body);}
@@ -40,12 +70,13 @@ pub(crate) fn read_program_proof(program:&Program,markers:&[String])->Proof{
  for node in 0..size{starts.push(number(labels.len()));for(source,label,target)in &edge_rows{if *source==number(node){labels.push(label.clone());targets.push(*target);}}counts.push(number(labels.len())-starts[node]);}
  let mut parameter_starts=Vec::new();let mut parameter_counts=Vec::new();let mut parameters=Vec::new();
  for owner in &functions{let start=number(parameters.len());parameter_starts.push(start);for(actual,slot)in &parameter_rows{if owner==actual{parameters.push(*slot);}}parameter_counts.push(number(parameters.len())-start);}
- let result=super::disjoint_collection_iteration_rules::prove_disjoint_collection_iterations(&roles,&operations,&kinds,&owners,&starts,&counts,&labels,&targets,&functions,&parameter_starts,&parameter_counts,&parameters,&bodies,number(main),&snapshots,&callbacks);
+ let result=rules::prove_disjoint_collection_iterations(&roles,&operations,&kinds,&owners,&starts,&counts,&labels,&targets,&functions,&parameter_starts,&parameter_counts,&parameters,&bodies,number(main),&snapshots,&callbacks);
  if result.first()!=Some(&0.0){return refused(if result.first()==Some(&2.0){2}else{1});}
  let Some(accepted)=result.get(1).and_then(|value|position(*value))else{return refused(1)};
  let Some(safe)=result.get(3+accepted..)else{return refused(1)};
  let mut proof=Proof{error:0,array_callbacks:true,collection_mappers:true};
- for pair in callbacks.chunks_exact(2){if !safe.contains(&pair[0]){if position(pair[1]).and_then(|at|kinds.get(at)).is_some_and(|kind|kind=="array"){proof.array_callbacks=false;}else{proof.collection_mappers=false;}}}
+ let array_kind=Text::from_text("array");
+ for pair in callbacks.chunks_exact(2){if !safe.contains(&pair[0]){if position(pair[1]).and_then(|at|kinds.get(at))==Some(&array_kind){proof.array_callbacks=false;}else{proof.collection_mappers=false;}}}
  proof
 }
 
@@ -57,7 +88,7 @@ pub(crate) fn check_program_markers(program:&mut Program,markers:&[(String,Strin
  fn normalize(value:&mut Value,markers:&[(String,String)],found:&mut BTreeSet<String>)->Result<()>{
   match value{
    Value::Object(fields)=>{
-    if fields.get("k").and_then(Value::as_str)==Some("collectionItems")&&let Some(op)=fields.get("op").and_then(Value::as_str)&&!super::disjoint_collection_iteration_rules::read_disjoint_collection_iteration_marker_role(op).is_empty(){
+    if fields.get("k").and_then(Value::as_str)==Some("collectionItems")&&let Some(op)=fields.get("op").and_then(Value::as_str)&&!rules::read_disjoint_collection_iteration_marker_role(&Text::from_text(op)).0.is_empty(){
      let Some((name,operation))=markers.iter().find(|(name,_)|name==op)else{return Err(unsupported("closed collection iteration","an unregistered private collection marker cannot escape checking",None));};
      found.insert(name.clone());fields.insert("op".into(),Value::String(operation.clone()));
     }

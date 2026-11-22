@@ -152,9 +152,9 @@ impl JavaScriptParser {
                 value
             };
             if spread&&self.closed_collection_iteration_scope&&self.reference_state.enabled
-                &&matches!(&value.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{object:receiver,op,args}if !crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_iteration_item_form("map",op).is_empty()&&args.is_empty()&&crate::translation::disjoint_collection_iteration_rules::accept_disjoint_collection_spread_receiver(receiver.node.kind()))){
+                &&matches!(&value.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{object:receiver,op,args}if crate::translation::disjoint_collection_iterations::has_disjoint_collection_iteration_item_form("map",op)&&args.is_empty()&&crate::translation::disjoint_collection_iterations::accept_disjoint_collection_spread_receiver(receiver.node.kind()))){
                 value=SExpr::new(SNode::Math{
-                    op:crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_spread_source_operation(),name:"closed standard collection spread".to_owned(),
+                    op:crate::translation::disjoint_collection_iterations::read_disjoint_collection_spread_source_operation(),name:"closed standard collection spread".to_owned(),
                     args:vec![SArrayItem::new(value,false)],
                 },place);
             }

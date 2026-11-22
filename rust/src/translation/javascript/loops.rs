@@ -364,9 +364,9 @@ impl JavaScriptParser {
             iterable_span,
         );
         if self.closed_collection_iteration_scope&&self.reference_state.enabled
-            &&matches!(&iterable.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{op,args,..}if !crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_iteration_item_form("map",op).is_empty()&&args.is_empty())){
+            &&matches!(&iterable.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{op,args,..}if crate::translation::disjoint_collection_iterations::has_disjoint_collection_iteration_item_form("map",op)&&args.is_empty())){
             iterable=SExpr::new(SNode::Math{
-                op:crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_iteration_source_operation(),name:"closed standard collection iteration".to_owned(),
+                op:crate::translation::disjoint_collection_iterations::read_disjoint_collection_iteration_source_operation(),name:"closed standard collection iteration".to_owned(),
                 args:vec![crate::translation::surface::SArrayItem::new(iterable,false)],
             },iterable_span);
         }
