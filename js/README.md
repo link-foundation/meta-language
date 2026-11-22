@@ -63,6 +63,59 @@ Each entry has `language`, `available` and `missingGrammarAssets`. For example,
 lists standalone parsers that need additional assets. A document with embedded
 languages may also need the corresponding child parsers.
 
+### Read an HTML syntax tree
+
+`LinkNetwork.parse(html, 'HTML')` returns a lossless network. Find the `document`
+link of type `LinkType.Syntax` to start at the root of the HTML concrete syntax
+tree. `Link.references()` gives the child links in source order. Follow the
+references of type `LinkType.Syntax` to visit the tree.
+
+```js
+import { LinkNetwork, LinkType } from 'meta-language';
+
+const html = '<article lang="en">Café <em>au lait</em></article>';
+const network = LinkNetwork.parse(html, 'HTML');
+const bytes = new TextEncoder().encode(html);
+const decoder = new TextDecoder('utf-8', { ignoreBOM: true });
+const isSyntax = (link) => link.metadata().linkType === LinkType.Syntax;
+const document = network.links().find((link) =>
+  isSyntax(link) && link.metadata().language === 'HTML' &&
+  link.metadata().term === 'document');
+
+function readNode(link) {
+  const { term, span, flags } = link.metadata();
+  const { start, end } = span.byteRange;
+  return {
+    term,
+    span,
+    flags,
+    source: decoder.decode(bytes.subarray(start, end)),
+    children: link.references().map((id) => network.link(id)).filter(isSyntax).map(readNode),
+  };
+}
+
+const tree = readNode(document);
+```
+
+In this example `tree.children[0]` is an `element`. Its `start_tag` has a
+`tag_name` (`article`) and an `attribute` with an `attribute_name` (`lang`) and
+an `attribute_value` (`en`) inside `quoted_attribute_value`. The `text` and
+nested `element` links occur before the `end_tag`. Explicit self-closing tags
+use `self_closing_tag` and also retain their attributes. Delimiters appear as syntax
+nodes, and the network keeps source tokens for spacing. Use `flags` to inspect
+missing or recovered nodes.
+
+`span.byteRange` has an inclusive `start` and exclusive `end` in UTF-8 bytes.
+`span.start` and `span.end` are zero-based row and byte-column pairs. For a
+JavaScript string offset, decode the UTF-8 prefix up to the boundary and take
+its `.length`, which counts UTF-16 code units.
+
+```js
+const stringOffset = (byteOffset) => decoder.decode(bytes.subarray(0, byteOffset)).length;
+```
+
+### Query and edit source
+
 ```js
 import {
   LinkNetwork,
