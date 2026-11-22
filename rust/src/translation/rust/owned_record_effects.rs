@@ -14,7 +14,13 @@ use crate::translation::rust_owned_record_loop_rules as loops;
 use crate::translation::source_place_transforms::SourcePlaceOperation;
 
 #[derive(Default)]
-pub(super) struct OwnedRecordEffects{reads:Vec<Slot>,writes:Vec<Write>,packets:Vec<(CollectionPlace,Type)>,pub(super) loops:super::owned_record_loops::FiniteRecordLoopState,pub(super) loop_scope:Option<usize>}
+pub(super) struct OwnedRecordEffects{reads:Vec<Slot>,writes:Vec<Write>,packets:Vec<CollectionPacket>,vector_helpers:Vec<super::SItem>,pub(super) loops:super::owned_record_loops::FiniteRecordLoopState,pub(super) loop_scope:Option<usize>}
+#[derive(Clone)]
+struct CollectionPacket {
+ place: CollectionPlace,
+ ty: Type,
+ helper_publishes_revision: bool,
+}
 struct Write{slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,intrinsic:Option<Replacement>}
 #[derive(Clone)]
 struct Replacement {
@@ -68,7 +74,7 @@ impl Transport<'_>{
  fn collection_packet(&mut self,mut node:Value,environment:Environment,depth:usize)->Result<Lowered>{
   let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state packet"))?;
   if index.to_string()!=text(&node,"name")||!node["args"].as_array().is_some_and(|args|args.len()==1&&args[0]["spread"]==false){return Err(fail("a private state packet needs its actual single evaluated operand"));}
-  let (CollectionPlace{slot,layouts,..},ty)=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.packets.get(index)).cloned().ok_or_else(||fail("unknown actual state packet"))?;
+  let CollectionPacket{place:CollectionPlace{slot,layouts,..},ty,helper_publishes_revision}=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.packets.get(index)).cloned().ok_or_else(||fail("unknown actual state packet"))?;
   let expected=encode(&ty)?;
   let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,Some(&expected))?;
   let (_,current)=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable state packet cannot leave its actual lexical declaration scope"))?;
@@ -85,7 +91,7 @@ impl Transport<'_>{
    let rebuilt=self.parser.rebuild_record_state(&layouts,0,decode(name(current))?,decode(updated)?,None)?;
    updated=encode(&rebuilt)?;
   }
-  if layouts.is_empty(){updated=self.state_transition(updated,Some(&slot),"write")?;}
+  if layouts.is_empty()&&!helper_publishes_revision{updated=self.state_transition(updated,Some(&slot),"write")?;}
   result.bindings.push(json!({"k":"let","name":root,"value":updated}));
   result.environment.insert(slot.lexical.clone(),(slot,root));
   result.value=position("result")?;
@@ -319,11 +325,24 @@ impl RustParser{
   Ok(())
  }
  fn charge_owned_record_effect(&self)->Result<()>{if self.owned_record_state.effects.as_ref().is_some_and(|effects|effects.reads.len()+effects.writes.len()+effects.packets.len()>=rules::read_rust_owned_record_effect_limit("work") as usize){return Err(fail("the actual state operations exceed their source budget"));}Ok(())}
+ pub(super) fn retain_owned_vector_mutation_helper(&mut self,declaration:super::SItem)->Result<()>{
+  let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("Vec helper transport is not active"))?;
+  if effects.vector_helpers.len()>=65_536{return Err(fail("the actual Vec helper declarations exceed their finite budget"));}
+  effects.vector_helpers.push(declaration);
+  Ok(())
+ }
  pub(super) fn owned_record_effect_collection_packet(&mut self,place:CollectionPlace,ty:Type,packet:SExpr,origin:SourceOrigin)->Result<SExpr>{
+  self.record_collection_packet(CollectionPacket{place,ty,helper_publishes_revision:false},packet,origin)
+ }
+ pub(super) fn owned_vector_mutation_packet(&mut self,place:CollectionPlace,ty:Type,packet:SExpr,origin:SourceOrigin)->Result<SExpr>{
+  let helper_publishes_revision=self.source_regions_composed&&!self.origins.collecting;
+  self.record_collection_packet(CollectionPacket{place,ty,helper_publishes_revision},packet,origin)
+ }
+ fn record_collection_packet(&mut self,record:CollectionPacket,packet:SExpr,origin:SourceOrigin)->Result<SExpr>{
   self.charge_owned_record_effect()?;
   let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("state packet transport is not active"))?;
   let ordinal=effects.packets.len();
-  effects.packets.push((place,ty));
+  effects.packets.push(record);
   let mut node=decode(json!({"k":"math","op":rules::read_rust_owned_record_effect_operation("packet"),"name":ordinal.to_string(),"args":[{"value":encode(&packet)?,"spread":false}]}))?;
   node.span=packet.span;
   self.origins.mark(&node,origin);
@@ -376,6 +395,7 @@ impl RustParser{
   if self.owned_record_state.effects.is_none(){return Ok(());}if self.origins.collecting&&self.owned_record_state.effects.as_ref().is_some_and(|effects|effects.loops.entries.iter().any(|entry|entry.admission.is_none()&&entry.ordered.is_none())){return Ok(());}
   let mut value=encode(program)?;if !contains(&value,true,&mut 0,Some(&self.owned_record_state.declarations))?{return Ok(());}let mut data=Vec::new();data_inventory(&value["items"],&[],&mut data);let mut transport=Transport{parser:self,path:Vec::new(),declarations:HashMap::new(),data,work:0,inspection:0,loop_helpers:Vec::new(),loop_names:HashMap::new()};transport.items(&mut value["items"],&[])?;transport.path.clear();if value["main"].is_object(){value["main"]=transport.main(value["main"].take())?;}if contains(&value,true,&mut 0,None)?{return Err(fail("a private record state operation escaped its ordered consumer"));}
   let helpers=std::mem::take(&mut transport.loop_helpers);drop(transport);*program=serde_json::from_value(value).map_err(|_|fail("ordered program reconstruction failed"))?;
+  if let Some(effects)=self.owned_record_state.effects.as_mut(){program.items.append(&mut effects.vector_helpers);}
   // Seal only the final pure helper, after all JSON structural transport. The
   // opaque Arc witness is never expected to survive a serde round trip.
   for(ordinal,path,value)in helpers{let source=self.owned_record_state.effects.as_ref().and_then(|effects|effects.loops.entries.get(ordinal)).and_then(|entry|entry.admission.as_ref()).ok_or_else(||fail("the finite loop helper lost its authentic source admission"))?;let mut function=serde_json::from_value::<crate::translation::surface::SFn>(value).map_err(|_|fail("complete finite loop helper reconstruction failed"))?;crate::translation::finite_record_loop_helpers::seal(&mut function,source)?;append_loop_helper(&mut program.items,&path,function)?;}

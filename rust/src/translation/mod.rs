@@ -108,6 +108,7 @@ pub(crate) mod source_expression_positions;
 pub mod source_loop_folds;
 pub mod source_state_transforms;
 pub mod source_vector_mutations;
+mod rust_vector_mutation_helper_surfaces;
 pub mod source_place_transforms;
 pub mod source_record_places;
 pub(crate) mod source_expression_regions;

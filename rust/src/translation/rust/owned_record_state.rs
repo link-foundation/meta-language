@@ -6,6 +6,7 @@ use super::owned_record_policy::state as rules;
 use super::owned_record_policy::fields as field_rules;
 mod exclusive_owned_string;
 mod exclusive_owned_vector;
+mod exclusive_vector_mutations;
 #[derive(Clone)]
 pub(super) struct Slot{pub(super) lexical:String,pub(super) root:String,pub(super) origin:SourceOrigin,pub(super) current_name:String,pub(super) source_binder:Option<super::super::source_loop_folds::SourceStateBinder>,frame:usize,callable:usize,sequence:usize,site:Option<Span>}
 #[derive(Clone)]

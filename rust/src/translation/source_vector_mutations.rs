@@ -134,7 +134,7 @@ fn check_interface<'data>(
     let vector = &parameters[0];
     let Type::Array {
         element: element_type,
-        ..
+        reference: false,
     } = &vector.ty
     else {
         return Err(fail(

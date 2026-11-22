@@ -468,6 +468,10 @@ impl RustParser {
                     value = result;
                     continue;
                 }
+                if let Some(result) = self.read_exclusive_owned_vector_mutation(&value, &method, path)? {
+                    value = result;
+                    continue;
+                }
                 if let Some(result) = self.read_owned_vector_iteration_method(&value, &method, path)? {
                     value = result;
                     continue;

@@ -360,6 +360,34 @@ mod tests {
     }
 
     #[test]
+    fn direct_vector_mutations_keep_the_current_source_revision() {
+        let source = r#"fn main() {
+            let mut values = vec![1u8, 2u8, 3u8];
+            values.truncate(2usize);
+            let last: Option<u8> = values.pop();
+            let number = match last { Some(value) => value, None => 0u8 };
+            values.clear();
+            println!("{} {}", number, values.len());
+        }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        for operation in ["truncate", "pop", "clear"] {
+            assert_eq!(
+                wire.matches(&format!(r#""operation":"{operation}""#)).count(),
+                1
+            );
+        }
+    }
+
+    #[test]
     fn projected_vector_append_keeps_the_actual_selected_field_and_element() {
         let source = r#"struct Buffer { values: Vec<u8>, tag: u8 }
             fn main() {
