@@ -3,7 +3,7 @@
 use super::arrays::{array_text, immutable_product_value};
 use super::expectation::ExpectedType;
 use super::{
-    BOOL, BinaryOp, Checker, Decimal, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result,
+    BOOL, BinaryOp, Checker, Decl, Decimal, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result,
     Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp, arithmetic_semantics,
     binary_node, cast_to_in_language, coerce, comparison, fixed_bounds, negate_number, op_name,
     plain_binary, text_lit, type_error, unsupported,
@@ -172,6 +172,10 @@ impl Checker {
                 super::super::source_place_transforms::check_place_transform(
                     facet, &result, self.language.as_str(),
                     |ty| self.resolve_type(Some(ty), path, node.span), resolve_data,
+                    |name| match self.decls.get(name) {
+                        Some(Decl::Fn(function)) => Some(function),
+                        _ => None,
+                    },
                 )?,
             ));
         }

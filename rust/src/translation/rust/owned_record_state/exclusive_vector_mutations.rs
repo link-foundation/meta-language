@@ -1,9 +1,9 @@
 //! Bind an actual Vec place to the shared pop, clear and truncate surfaces.
 use serde_json::{Value, json};
 
+use super::super::owned_record_effects::VectorMutationPacket;
 use super::{
-    CollectionPlace, Result, RustParser, SExpr, SNode, SourceOrigin, Span, Token, Type, fail, name,
-    rules,
+    CollectionPlace, Result, RustParser, SExpr, SNode, SourceOrigin, Span, Token, Type, fail, rules,
 };
 use crate::translation::{
     rust_exclusive_source_vector_rules as vector_rules,
@@ -57,17 +57,21 @@ impl RustParser {
         else {
             return Ok(None);
         };
-        let owner = actual
+        let referent = (!actual.wrappers.is_empty())
+            .then(|| self.origins.peel_closed_owned_box_state(&actual))
+            .flatten();
+        let receiver_origin = referent.as_ref().unwrap_or(&actual);
+        let owner = receiver_origin
             .expanded_source_owner
             .as_ref()
-            .or(actual.source_owner.as_ref());
+            .or(receiver_origin.source_owner.as_ref());
         let child = owner
             .filter(|owner| {
                 vector_rules::accept_rust_exclusive_source_vector_receiver(
                     "array",
-                    actual.array_source_model.unwrap_or(""),
-                    actual.wrappers.len() as f64,
-                    actual.proven || self.origins.collecting,
+                    receiver_origin.array_source_model.unwrap_or(""),
+                    receiver_origin.wrappers.len() as f64,
+                    receiver_origin.proven || self.origins.collecting,
                     &owner.kind,
                     &owner.path.join("::"),
                     owner.arguments.len() as f64,
@@ -263,7 +267,8 @@ impl RustParser {
             ));
         };
         if !self.origins.collecting && self.source_regions_composed {
-            let mut parameters = vec![self.retain_source_region_position(&actual, Some(span))?];
+            let mut parameters =
+                vec![self.retain_source_region_position(receiver_origin, Some(span))?];
             if operand.is_some() {
                 parameters.push(self.retain_source_region_position(&bound, Some(span))?);
             }
@@ -281,34 +286,8 @@ impl RustParser {
         }
         self.retain_owned_vector_mutation_helper(declaration)?;
 
-        let read = self.owned_record_effect_read(slot.clone(), Some(span))?;
-        let selected = self.project_record_state(&layouts, read, Some(span));
-        let argument = operand.as_ref().map(|_| self.fresh_product_binding());
-        let mut args = vec![selected];
-        args.extend(argument.as_deref().map(name));
-        let mut packet = SExpr::new(
-            SNode::App {
-                func: Box::new(SExpr::new(
-                    SNode::Name {
-                        path: vec!["crate".into(), helper],
-                    },
-                    None,
-                )),
-                args,
-            },
-            Some(span),
-        );
-        if let (Some(operand), Some(argument)) = (operand, argument) {
-            packet = SExpr::new(
-                SNode::Let {
-                    name: argument,
-                    ty: bound.ty.map(Into::into),
-                    value: Box::new(operand),
-                    body: Box::new(packet),
-                },
-                Some(span),
-            );
-        }
+        let bound = operand.as_ref().and(bound.ty);
+        let operand = operand.unwrap_or_else(|| SExpr::new(SNode::Unit, Some(span)));
         self.owned_vector_mutation_packet(
             CollectionPlace {
                 slot,
@@ -316,7 +295,12 @@ impl RustParser {
                 target,
             },
             packet_type,
-            packet,
+            VectorMutationPacket {
+                helper,
+                bound,
+                referent,
+            },
+            operand,
             completion,
         )
         .map(Some)

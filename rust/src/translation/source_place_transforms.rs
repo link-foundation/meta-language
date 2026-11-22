@@ -3,9 +3,12 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
+mod calls;
+use calls::check_call;
+
 use super::{
     diagnostics::{Result, type_error},
-    ir::{DataDecl, Expr, LitValue, Node, Pattern},
+    ir::{DataDecl, Expr, FnDecl, LitValue, Node, Pattern},
     rust_exclusive_source_string_rules as string_rules,
     source_expression_positions::check_position,
     source_loop_folds::{SourceFoldSpan, SourceStateBinder, check_slot},
@@ -18,6 +21,12 @@ use super::{
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "model", deny_unknown_fields)]
 pub enum RustSourcePlaceTransform {
+    #[serde(rename = "Rust source place transformation 1")]
+    Call {
+        slots: Vec<SourcePlaceSlot>,
+        places: Vec<SourceCallPlace>,
+        span: SourceFoldSpan,
+    },
     #[serde(rename = "Rust source place replacement 1")]
     Replacement {
         operation: SourcePlaceOperation,
@@ -51,6 +60,14 @@ pub struct SourcePlaceSlot {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourcePlacePath {
+    pub slot: usize,
+    pub fields: Vec<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourceCallPlace {
+    pub parameter: usize,
     pub slot: usize,
     pub fields: Vec<usize>,
 }
@@ -105,10 +122,38 @@ pub(super) fn fields_for<'data>(
     (fields.fields.len() == constructor.fields.len()).then_some((data, &fields.fields[..]))
 }
 
+enum ReplacementValue<'a> {
+    Local(&'a str, &'a Type),
+    PacketField {
+        name: &'a str,
+        packet_type: &'a Type,
+        index: usize,
+        field_type: &'a Type,
+    },
+}
+
+impl ReplacementValue<'_> {
+    fn matches(&self, node: &Expr) -> bool {
+        match self {
+            Self::Local(name, ty) => variable(node, name, ty),
+            Self::PacketField {
+                name,
+                packet_type,
+                index,
+                field_type,
+            } => {
+                plain(node)
+                    && node.ty == **field_type
+                    && matches!(&node.node, Node::TupleIndex { object, index: actual }
+                        if actual == index && variable(object, name, packet_type))
+            }
+        }
+    }
+}
+
 struct Reconstruction<'a, 'data, D> {
     resolve_data: &'a mut D,
-    replacement: &'a str,
-    replacement_type: &'a Type,
+    replacement: ReplacementValue<'a>,
     seen: HashSet<&'a str>,
     work: usize,
     lifetime: std::marker::PhantomData<&'data DataDecl>,
@@ -121,6 +166,7 @@ impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, '
         root: &SourceTypeSignature,
         selected: &[usize],
         input: &str,
+        allow_qualified_root: bool,
     ) -> Option<()> {
         let mut position = root;
         let mut fields = Vec::with_capacity(selected.len());
@@ -133,6 +179,7 @@ impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, '
             position = positions.get(index)?;
             fields.push((index, data, positions));
         }
+        let mut allow_qualified = allow_qualified_root;
         for (index, data, positions) in fields.into_iter().rev() {
             let Node::Match { scrutinee, cases } = &node.node else {
                 return None;
@@ -149,7 +196,8 @@ impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, '
                 return None;
             };
             let chosen = binds.get(index)?.as_deref()?;
-            if !plain(node)
+            if !plain_place_operation(node)
+                || (!allow_qualified && node.source_position.is_some())
                 || owner != &data.full_name
                 || ctor != &data.ctors[0].name
                 || binds.len() != positions.len()
@@ -164,8 +212,13 @@ impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, '
                 return None;
             }
             node = scrutinee;
+            allow_qualified = false;
         }
-        variable(node, input, &root.ty).then_some(())
+        (plain_place_operation(node)
+            && (allow_qualified || node.source_position.is_none())
+            && node.var_name() == Some(input)
+            && node.ty == root.ty)
+            .then_some(())
     }
 
     fn field(
@@ -182,7 +235,9 @@ impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, '
             )
         };
         let Some((&index, rest)) = selected.split_first() else {
-            return variable(node, self.replacement, self.replacement_type)
+            return self
+                .replacement
+                .matches(node)
                 .then(|| root.clone())
                 .ok_or_else(fail);
         };
@@ -241,9 +296,7 @@ impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, '
             }
         }
         if rest.is_empty() {
-            if binds[index].is_some()
-                || !variable(&args[index], self.replacement, self.replacement_type)
-            {
+            if binds[index].is_some() || !self.replacement.matches(&args[index]) {
                 return Err(fail());
             }
             Ok(positions[index].clone())
@@ -254,12 +307,13 @@ impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, '
     }
 }
 
-pub(super) fn check_place_transform<'data>(
+pub(super) fn check_place_transform<'data, 'function>(
     facet: &RustSourcePlaceTransform,
     node: &Expr,
     language: &str,
     mut resolve_type: impl FnMut(&Type) -> Result<Type>,
     mut resolve_data: impl FnMut(&Type) -> Option<&'data DataDecl>,
+    resolve_function: impl FnMut(&str) -> Option<&'function FnDecl>,
 ) -> Result<RustSourcePlaceTransform> {
     let fail = || {
         type_error(
@@ -273,7 +327,17 @@ pub(super) fn check_place_transform<'data>(
         places,
         operands,
         span,
-    } = facet;
+    } = facet
+    else {
+        return check_call(
+            facet,
+            node,
+            language,
+            resolve_type,
+            resolve_data,
+            resolve_function,
+        );
+    };
     let [root] = slots.as_slice() else {
         return Err(fail());
     };
@@ -440,8 +504,7 @@ pub(super) fn check_place_transform<'data>(
     };
     let mut reconstruction = Reconstruction {
         resolve_data: &mut resolve_data,
-        replacement: name,
-        replacement_type: &value.ty,
+        replacement: ReplacementValue::Local(name, &value.ty),
         work: 0,
         seen: names,
         lifetime: std::marker::PhantomData,
@@ -522,7 +585,7 @@ pub(super) fn check_place_transform<'data>(
     }
     if let Some(projection) = projection {
         reconstruction
-            .projection(projection, &position, &selected.fields, &root.input)
+            .projection(projection, &position, &selected.fields, &root.input, false)
             .ok_or_else(fail)?;
     }
     Ok(RustSourcePlaceTransform::Replacement {

@@ -381,10 +381,44 @@ mod tests {
         let wire = serde_json::to_string(&checked).unwrap();
         for operation in ["truncate", "pop", "clear"] {
             assert_eq!(
-                wire.matches(&format!(r#""operation":"{operation}""#)).count(),
+                wire.matches(&format!(r#""operation":"{operation}""#))
+                    .count(),
                 1
             );
         }
+    }
+
+    #[test]
+    fn projected_vector_mutations_keep_the_slot_and_unchanged_sibling() {
+        let source = r#"struct Buffer { values: Box<Vec<u8>>, tag: u8 }
+            fn main() {
+                let mut buffer = Buffer { values: Box::new(vec![1u8, 2u8]), tag: 3u8 };
+                buffer.values.truncate(1usize);
+                let last: Option<u8> = buffer.values.pop();
+                buffer.values.clear();
+                let number = match last { Some(value) => value, None => 0u8 };
+                println!("{} {}", number, buffer.tag);
+            }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        let selected = r#""parameter":0,"slot":0,"fields":[0]"#;
+        assert_eq!(wire.matches(selected).count(), 3);
+        let forged = wire.replacen(selected, r#""parameter":0,"slot":0,"fields":[1]"#, 1);
+        let forged: crate::translation::ir::Program = serde_json::from_str(&forged).unwrap();
+        assert!(
+            crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(
+                &forged
+            )
+            .is_err()
+        );
     }
 
     #[test]

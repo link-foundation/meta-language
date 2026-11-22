@@ -19,7 +19,13 @@ pub(super) struct OwnedRecordEffects{reads:Vec<Slot>,writes:Vec<Write>,packets:V
 struct CollectionPacket {
  place: CollectionPlace,
  ty: Type,
- helper_publishes_revision: bool,
+ vector: Option<VectorMutationPacket>,
+}
+#[derive(Clone)]
+pub(super) struct VectorMutationPacket {
+ pub(super) helper: String,
+ pub(super) bound: Option<Type>,
+ pub(super) referent: Option<SourceOrigin>,
 }
 struct Write{slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,intrinsic:Option<Replacement>}
 #[derive(Clone)]
@@ -74,10 +80,16 @@ impl Transport<'_>{
  fn collection_packet(&mut self,mut node:Value,environment:Environment,depth:usize)->Result<Lowered>{
   let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state packet"))?;
   if index.to_string()!=text(&node,"name")||!node["args"].as_array().is_some_and(|args|args.len()==1&&args[0]["spread"]==false){return Err(fail("a private state packet needs its actual single evaluated operand"));}
-  let CollectionPacket{place:CollectionPlace{slot,layouts,..},ty,helper_publishes_revision}=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.packets.get(index)).cloned().ok_or_else(||fail("unknown actual state packet"))?;
+  let CollectionPacket{place:CollectionPlace{slot,layouts,..},ty,vector}=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.packets.get(index)).cloned().ok_or_else(||fail("unknown actual state packet"))?;
   let expected=encode(&ty)?;
-  let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,Some(&expected))?;
-  let (_,current)=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable state packet cannot leave its actual lexical declaration scope"))?;
+  let span=node.get("span").cloned().map(serde_json::from_value::<Span>).transpose().map_err(|_|fail("a mutation packet needs its actual source span"))?;
+  let operand_type=vector.as_ref().and_then(|vector|vector.bound.as_ref()).map(encode).transpose()?;
+  let mut result=match &vector{
+   Some(_) if operand_type.is_none()=>Lowered::plain(json!({"k":"unit"}),environment),
+   Some(_)=>self.visit(node["args"][0]["value"].take(),environment,depth+1,operand_type.as_ref())?,
+   None=>self.visit(node["args"][0]["value"].take(),environment,depth+1,Some(&expected))?,
+  };
+  let current=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable state packet cannot leave its actual lexical declaration scope"))?.1.clone();
   let packet=self.parser.fresh_product_binding();
   let root=self.parser.fresh_product_binding();
   let position=|role|match rules::read_rust_owned_record_effect_packet_position(role){
@@ -85,13 +97,55 @@ impl Transport<'_>{
    1.0=>Ok(json!({"k":"tupleIndex","object":name(&packet),"index":1})),
    _=>Err(fail("a write packet lost its actual result and state positions")),
   };
-  result.bindings.push(json!({"k":"let","name":packet,"type":expected,"value":result.value}));
-  let mut updated=position("state")?;
-  if !layouts.is_empty(){
-   let rebuilt=self.parser.rebuild_record_state(&layouts,0,decode(name(current))?,decode(updated)?,None)?;
-   updated=encode(&rebuilt)?;
+  let mut projected=false;
+  if let Some(vector)=&vector{
+   let mut receiver=encode(&self.parser.project_record_state(&layouts,decode(name(&current))?,span))?;
+   projected=slot.source_binder.is_some()&&(!layouts.is_empty()||vector.referent.is_some());
+   if projected && let Some(referent)=&vector.referent{
+    use crate::translation::source_signatures::RustSourceExpressionPosition;
+    let position=self.parser.retain_source_region_position(referent,span)?;
+    receiver["sourcePosition"]=encode(&RustSourceExpressionPosition{model:"Rust borrowed expression source position 1".into(),position})?;
+   }
+   let mut args=vec![receiver];
+   if let Some(ty)=operand_type{
+    let name_of_bound=self.parser.fresh_product_binding();
+    result.bindings.push(json!({"k":"let","name":name_of_bound,"type":ty,"value":result.value}));
+    args.push(name(&name_of_bound));
+   }
+   result.value=json!({"k":"app","fn":{"k":"name","path":["crate",vector.helper]},"args":args,"span":span});
   }
-  if layouts.is_empty()&&!helper_publishes_revision{updated=self.state_transition(updated,Some(&slot),"write")?;}
+  let mut updated=position("state")?;
+  if projected{
+   use crate::translation::{
+    source_loop_folds::SourceFoldSpan,
+    source_place_transforms::{RustSourcePlaceTransform,SourceCallPlace,SourcePlaceSlot},
+   };
+   let span=span.ok_or_else(||fail("a projected Vec mutation needs its actual complete source span"))?;
+   let input=self.parser.retain_source_fold_slot(&slot)?;
+   let call=self.parser.fresh_product_binding();
+   let rebuilt=self.parser.fresh_product_binding();
+   let projection=|index|json!({"k":"tupleIndex","object":name(&call),"index":index});
+   let state=self.parser.rebuild_record_state(&layouts,0,decode(name(&current))?,decode(projection(1))?,Some(span))?;
+   let facet=RustSourcePlaceTransform::Call{
+    slots:vec![SourcePlaceSlot{binder:input.binder,position:input.position,input:current}],
+    places:vec![SourceCallPlace{parameter:0,slot:0,fields:layouts.iter().map(|layout|layout.index).collect()}],
+    span:SourceFoldSpan{start:span.start,end:span.end},
+   };
+   let root_type=self.parser.record_source_type(slot.origin.ty.as_ref().ok_or_else(||fail("a mutable root lost its actual type"))?,&slot.origin.path);
+   let value=json!({"k":"let","name":call,"value":result.value,"span":span,
+    "body":{"k":"let","name":rebuilt,"type":root_type,"value":encode(&state)?,
+     "body":{"k":"tuple","items":[projection(0),name(&rebuilt)]}},
+    "sourcePlaceTransform":encode(&facet)?});
+   result.bindings.push(json!({"k":"let","name":packet,"value":value}));
+  }else{
+   result.bindings.push(json!({"k":"let","name":packet,"type":expected,"value":result.value}));
+   if layouts.is_empty(){
+    if vector.is_none(){updated=self.state_transition(updated,Some(&slot),"write")?;}
+   }else{
+    let rebuilt=self.parser.rebuild_record_state(&layouts,0,decode(name(&current))?,decode(updated)?,span)?;
+    updated=encode(&rebuilt)?;
+   }
+  }
   result.bindings.push(json!({"k":"let","name":root,"value":updated}));
   result.environment.insert(slot.lexical.clone(),(slot,root));
   result.value=position("result")?;
@@ -332,11 +386,10 @@ impl RustParser{
   Ok(())
  }
  pub(super) fn owned_record_effect_collection_packet(&mut self,place:CollectionPlace,ty:Type,packet:SExpr,origin:SourceOrigin)->Result<SExpr>{
-  self.record_collection_packet(CollectionPacket{place,ty,helper_publishes_revision:false},packet,origin)
+  self.record_collection_packet(CollectionPacket{place,ty,vector:None},packet,origin)
  }
- pub(super) fn owned_vector_mutation_packet(&mut self,place:CollectionPlace,ty:Type,packet:SExpr,origin:SourceOrigin)->Result<SExpr>{
-  let helper_publishes_revision=self.source_regions_composed&&!self.origins.collecting;
-  self.record_collection_packet(CollectionPacket{place,ty,helper_publishes_revision},packet,origin)
+ pub(super) fn owned_vector_mutation_packet(&mut self,place:CollectionPlace,ty:Type,vector:VectorMutationPacket,operand:SExpr,origin:SourceOrigin)->Result<SExpr>{
+  self.record_collection_packet(CollectionPacket{place,ty,vector:Some(vector)},operand,origin)
  }
  fn record_collection_packet(&mut self,record:CollectionPacket,packet:SExpr,origin:SourceOrigin)->Result<SExpr>{
   self.charge_owned_record_effect()?;
