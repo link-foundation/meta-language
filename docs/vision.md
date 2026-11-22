@@ -3880,7 +3880,7 @@ Native compilation and expensive workloads remain exclusive to CI.
 CI 39615628279 supplied source-bound timings from eight report jobs and six
 general grammar jobs. The general grammar suite still uses six jobs. Both report
 workflows now assign the complete 342-module inventory to twelve required jobs
-using updated timings from CI 45060692627. Unmeasured or changed sources use
+using timings from CI 45060692627 and 45065716925. Unmeasured or changed sources use
 earlier matching measurements or a size estimate. The report verifier requires
 each module exactly once at the current commit. Report deadlines remain thirty
 minutes, and the commands, coverage assertions and historical partitions are

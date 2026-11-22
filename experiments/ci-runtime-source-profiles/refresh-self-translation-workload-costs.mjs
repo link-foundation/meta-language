@@ -31,6 +31,13 @@ const captures = {
     previousRun: 45055131879,
     nextCount: 12,
   },
+  45065716925: {
+    revision: '6c872ba2c01a8b73109cc69bd4f478f5f28fcf50',
+    mergeCommit: '363fd4456ffd8d4e9e20e2583e855aed3b41b0e7',
+    jobs: [137341284960, 137341284886, 137341285000, 137341284947, 137341284923, 137341285073, 137341285055, 137341284929, 137341284974, 137341284692, 137341284891, 137341284900],
+    unfinished: [137341284900],
+    previousRun: 45060692627,
+  },
 };
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const git = (...args) => execFileSync('git', ['--no-replace-objects', ...args], { cwd: root });
@@ -43,9 +50,9 @@ const costPath = costRun => new URL(`../../parity/fixtures/ci-${costRun}-${costR
 const files = git('ls-tree', '-r', '--name-only', revision, '--', 'js/src').toString().trimEnd().split('\n').filter(file => file.endsWith('.js'));
 const sources = new Map(files.map(file => [file, git('show', `${revision}:${file}`)]));
 const previous = readProjectData(costPath(previousRun));
-const group = 'self-translation-report';
+const reportGroup = count => count === 8 ? 'self-translation-report' : `self-translation-report-${count}`;
 const readSource = file => sources.get(file);
-const initialOwners = partitionMeasuredWorkloads(files, jobs.length, { group, costs: previous, readSource });
+const initialOwners = partitionMeasuredWorkloads(files, jobs.length, { group: reportGroup(jobs.length), costs: previous, readSource });
 const entries = new Map(previous.entries.filter(row => sources.has(row.file)).map(row => [row.file, row]));
 const observed = new Set();
 const logs = [];
@@ -80,8 +87,7 @@ const packet = { schemaVersion: 1, model: 'observed CI workload scheduling costs
   logs, entries: [...entries.values()].sort((left, right) => left.file.localeCompare(right.file)),
   boundary: 'Advisory time between recorded modules includes the time spent on overlapping imports. Unfinished modules retain older source-bound measurements or the scheduler estimate. Every module retains mandatory measurement under the same report deadline.' };
 const output = costPath(run);
-const updatedGroup = nextCount === jobs.length ? group : `${group}-${nextCount}`;
-const updatedOwners = partitionMeasuredWorkloads(files, nextCount, { group: updatedGroup, costs: packet, readSource });
+const updatedOwners = partitionMeasuredWorkloads(files, nextCount, { group: reportGroup(nextCount), costs: packet, readSource });
 const elapsed = owners => owners.map(shard => Math.round(shard.reduce((sum, file) => sum + (entries.get(file)?.milliseconds ?? 0), 0) / 1000));
 console.log(`Refreshed ${observed.size} of ${files.length} module timings. Previous owners ${elapsed(initialOwners).join(', ')} seconds. Updated owners ${elapsed(updatedOwners).join(', ')} seconds.`);
 if (mode === '--check') checkProjectData(output, packet);

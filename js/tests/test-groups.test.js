@@ -123,10 +123,21 @@ test('twelve self-translation reports reserve time for setup and upload while me
   const timing = new Map(observed.entries.map(row => [row.file, row.milliseconds]));
   const load = shard => shard.reduce((total, file) => total + (timing.get(file) ?? 0), 0);
   const previous = partitionMeasuredWorkloads(modules, 8);
+  const original = partitionMeasuredWorkloads(modules, 12, { costs: observed });
+  assert.deepEqual(original.flat().sort(), modules);
+  assert.ok(original.every(shard => shard.length > 0));
+  assert.ok(Math.max(...original.map(load)) < Math.max(...previous.map(load)) * 0.75);
+
+  const latest = readProjectData(new URL('../../parity/fixtures/ci-45065716925-self-translation-workload-costs.lino', import.meta.url));
+  assert.deepEqual(latest.logs.map(log => log.shard), Array.from({ length: 12 }, (_, index) => `${index + 1}/12`));
+  assert.equal(latest.logs.reduce((count, log) => count + log.observedCount, 0), 331);
+  const latestTiming = new Map(latest.entries.map(row => [row.file, row.milliseconds]));
+  const latestLoad = shard => shard.reduce((total, file) => total + (latestTiming.get(file) ?? 0), 0);
   const current = partitionMeasuredWorkloads(modules, 12);
+  assert.deepEqual(current, partitionMeasuredWorkloads(modules, 12, { costs: latest }));
   assert.deepEqual(current.flat().sort(), modules);
   assert.ok(current.every(shard => shard.length > 0));
-  assert.ok(Math.max(...current.map(load)) < Math.max(...previous.map(load)) * 0.75);
+  assert.ok(Math.max(...current.map(latestLoad)) < Math.max(...original.map(latestLoad)) * 0.75);
 });
 
 test('six JavaScript native grammar partitions conserve each historical partition after the recorded automatic deadline', async () => {

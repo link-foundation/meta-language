@@ -38,8 +38,11 @@ const schedulingProfiles = {
     ]),
   },
   'self-translation-report-12': {
-    file: new URL('../../parity/fixtures/ci-45060692627-self-translation-workload-costs.lino', import.meta.url),
-    revisions: new Map([[45060692627, 'f1c7cb555e37b9ddf09c10f772b0adebf4f6e587']]),
+    file: new URL('../../parity/fixtures/ci-45065716925-self-translation-workload-costs.lino', import.meta.url),
+    revisions: new Map([
+      [45060692627, 'f1c7cb555e37b9ddf09c10f772b0adebf4f6e587'],
+      [45065716925, '6c872ba2c01a8b73109cc69bd4f478f5f28fcf50'],
+    ]),
   },
 };
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
