@@ -36,6 +36,8 @@ const require = createRequire(import.meta.url);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const inventoryPath = join(root, 'parity/language-grammar-inventory.json');
 const expectedPath = join(root, 'parity/fixtures/builtin-cst-expected.json');
+const receiptPath = join(root, 'parity/fixtures/builtin-cst-text-grammar-receipt.lino');
+const originalTextGrammarSha256 = '708b38ec2a34398ac8e86bfe7397af6e87a17b2d77d3bcbf51e445e4991621b8';
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const byteLength = (text) => Buffer.byteLength(text, 'utf8');
 
@@ -353,14 +355,25 @@ async function builtinRows(language, source, positive) {
 async function generate() {
   const inventory = readProjectData(inventoryPath);
   const result = {};
+  const textGrammarReceipts = {};
   for (const language of inventory.languages) {
     if (!language.builtinGrammar) continue;
     const grammar = inventory.builtinGrammars[language.builtinGrammar];
+    const parserSha256 = sha256(await readFile(join(root, grammar.specification)));
+    const usesTextGrammar = language.builtinGrammar === 'plain-text' || language.builtinGrammar === 'natural-language';
+    if (usesTextGrammar) {
+      for (const asset of ['js/src/data/native-text-grammar.lino', 'rust/src/data/native-text-grammar.lino']) {
+        if (sha256(await readFile(join(root, asset))) !== parserSha256) {
+          throw new Error(`text grammar bytes differ from the inventoried specification in ${asset}`);
+        }
+      }
+      textGrammarReceipts[language.builtinGrammar] = { version: grammar.version, parserSha256 };
+    }
     result[language.name] = {
       grammars: {
         [language.builtinGrammar]: {
-          version: grammar.version,
-          parserSha256: sha256(await readFile(join(root, grammar.specification))),
+          version: usesTextGrammar ? '1.1.0' : grammar.version,
+          parserSha256: usesTextGrammar ? originalTextGrammarSha256 : parserSha256,
         },
       },
       sourceSha256: sha256(language.source),
@@ -370,7 +383,7 @@ async function generate() {
       embedded: [],
     };
   }
-  return {
+  const expected = {
     description:
       'Built-in grammar concrete syntax trees for the inventory sources, derived without the meta-language parsers: plain text and natural languages from ICU word and sentence segmentation (Intl.Segmenter) grouped by the lexical classes of the grammar, LiNo and PDF from hand-written trees that tile the source and project to what links-notation and pdf-lib read (both reject the recovery sources). Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
     generator: {
@@ -380,18 +393,21 @@ async function generate() {
     },
     languages: result,
   };
+  return { expected, textGrammarReceipts };
 }
 
-const expected = await generate();
+const { expected, textGrammarReceipts } = await generate();
 if (process.argv.includes('--check')) {
   try {
     checkProjectData(expectedPath, expected);
+    checkProjectData(receiptPath, textGrammarReceipts);
   } catch {
-    console.error('parity/fixtures/builtin-cst-expected.json is stale; run node js/scripts/generate-builtin-cst-expectations.mjs');
+    console.error('built-in CST expectations or text grammar receipt are stale; run node js/scripts/generate-builtin-cst-expectations.mjs');
     process.exit(1);
   }
   console.log('builtin CST expectations match');
 } else {
   writeProjectData(expectedPath, expected);
-  console.log('wrote parity/fixtures/builtin-cst-expected.json');
+  writeProjectData(receiptPath, textGrammarReceipts);
+  console.log('wrote built-in CST expectations and text grammar receipt');
 }

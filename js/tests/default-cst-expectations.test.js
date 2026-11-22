@@ -26,10 +26,17 @@ const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 // expectation, whose positive trees are its tree-sitter oracle's.
 const oracleExpected = await parityJson('fixtures/default-cst-expected.json');
 const nativeExpected = await parityJson('fixtures/native-default-cst-expected.json');
+const builtinExpected = await parityJson('fixtures/builtin-cst-expected.json');
+const textGrammarReceipts = await parityJson('fixtures/builtin-cst-text-grammar-receipt.lino');
+for (const { grammars } of Object.values(builtinExpected.languages)) {
+  for (const name of Object.keys(grammars)) {
+    if (Object.hasOwn(textGrammarReceipts, name)) grammars[name] = textGrammarReceipts[name];
+  }
+}
 const expected = {
   languages: {
     ...oracleExpected.languages,
-    ...(await parityJson('fixtures/builtin-cst-expected.json')).languages,
+    ...builtinExpected.languages,
     ...nativeExpected.languages,
   },
 };

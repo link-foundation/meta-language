@@ -35,17 +35,34 @@ fn expected_languages() -> serde_json::Map<String, Value> {
         .as_object()
         .expect("default CST languages")
         .clone();
-    for fixture in [
-        "fixtures/builtin-cst-expected.json",
-        "fixtures/native-default-cst-expected.json",
-    ] {
-        languages.extend(
-            parity_json(fixture)["languages"]
-                .as_object()
-                .expect("CST languages")
-                .clone(),
-        );
+    let mut builtin = parity_json("fixtures/builtin-cst-expected.json");
+    let receipts = parity_json("fixtures/builtin-cst-text-grammar-receipt.lino");
+    for row in builtin["languages"]
+        .as_object_mut()
+        .expect("built-in CST languages")
+        .values_mut()
+    {
+        for (name, grammar) in row["grammars"]
+            .as_object_mut()
+            .expect("built-in CST grammars")
+        {
+            if let Some(receipt) = receipts.get(name) {
+                *grammar = receipt.clone();
+            }
+        }
     }
+    languages.extend(
+        builtin["languages"]
+            .as_object()
+            .expect("built-in CST languages")
+            .clone(),
+    );
+    languages.extend(
+        parity_json("fixtures/native-default-cst-expected.json")["languages"]
+            .as_object()
+            .expect("native CST languages")
+            .clone(),
+    );
     languages
 }
 

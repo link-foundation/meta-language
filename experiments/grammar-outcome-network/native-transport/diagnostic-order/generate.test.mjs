@@ -3,6 +3,7 @@ import test from 'node:test';
 import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-repair-source-history.mjs';
 import {outcomeCrateRootPath,readOutcomeCrateRootSourcePair} from './crate-root-source-view.mjs';
 import {restoreGlobalGrammarContextSource} from '../../../global-grammar-context-reuse/current-source.mjs';
+import {runtimeSourceFiles,restoreIssue245Source} from '../../../issue-245/source-history.mjs';
 import {readOutcomeInventory} from '../wire/generate.mjs';
 import {authorWireSourceViewEdits,authorBridgeSourceViewEdits,authorRunnerPlanSourceViewEdits,authorRunnerOverlaySourceViewEdits,appendWirePublicationEdits} from './publication-edits.mjs';
 import {captureOutcomeSourceViews,finalizeOutcomeSourceViews,checkOutcomeSourceViews,applyFrozenOutcomeProducerCorrection} from './source-view.mjs';
@@ -140,7 +141,9 @@ test('original and current owners are separately authenticated and all selected 
     for(const file of Object.keys(decorator.baselinePins)) {
       // This original permutation fixture retains its complete original crate root.
       const bytes=file===outcomeCrateRootPath?Buffer.from(readOutcomeCrateRootSourcePair().predecessor.source):
-        [javascriptPath,nativePath].includes(file)?Buffer.from(decorator.inputs.find(input=>input.path===file).source):readFileSync(join(repository,file));
+        [javascriptPath,nativePath].includes(file)?Buffer.from(decorator.inputs.find(input=>input.path===file).source):
+        runtimeSourceFiles.includes(file)?Buffer.from(restoreIssue245Source(file,readFileSync(join(repository,file),'utf8'))):
+        readFileSync(join(repository,file));
       total+=bytes.length;assert.ok(total<=2*1024*1024,'small selected source closure only');
       mkdirSync(dirname(join(scratch,file)),{recursive:true});writeFileSync(join(scratch,file),bytes);
     }
