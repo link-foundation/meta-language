@@ -346,7 +346,7 @@ class Checker {
     checkRustBorrowedVectorSourceRegions(program);
     checkDisjointCollectionIterations(program,this.closedCollectionIterationMarkers);
     checkCollectionCopySnapshotCallbacks(program);
-    checkJavaScriptClassOwners(program);
+    checkJavaScriptClassOwners(program, reportDeclarationErrors);
     if(Object.hasOwn(surface,'sourceRuntimeShell'))captureRustRuntimeShell(program,surface.sourceRuntimeShell);
     return program;
   }

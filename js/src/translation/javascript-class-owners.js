@@ -26,10 +26,27 @@ export function decodeJavaScriptClassOwnerRows(rows){
 }
 export function readJavaScriptSourceClassOwner(value,fields){const owners=readJavaScriptClassOwnerRecords(value),owner=readJavaScriptClassRecordOwner(owners.map(owner=>owner.constructor),owners.map(owner=>owner.brand),fields);if(owner==='#ambiguous')fail('a record cannot combine different actual class brands');return owner||undefined;}
 export function acceptJavaScriptClassOwnerTypeObservation(type,witness,operation){if(type.kind!=='record'||type.reference!==true||typeof type.sourceClassOwner!=='string')return false;const owner=readJavaScriptClassOwnerRecords(witness).find(owner=>owner.constructor===type.sourceClassOwner);return Boolean(owner)&&acceptJavaScriptClassOwnerObservation(owner.representation,operation==='comparison'?'identity':operation);}
-export function checkJavaScriptClassOwners(program){
+export function checkJavaScriptClassOwners(program, reportGraphSize=false){
  if(Object.hasOwn(program,'sourceClassOwners'))readJavaScriptClassOwnerRecords(program.sourceClassOwners);
- // Text leaves carry spelling, while constructor allocations keep their graph identity.
- const normalized={...program,declarations:[...program.declarations.values()]},facts=createSurfaceReferenceFacts(normalized,{retainValues:true,shareText:true});
+ // Scalar leaves carry exact values, while constructor allocations keep their graph identity.
+ const normalized={...program,declarations:[...program.declarations.values()]},facts=createSurfaceReferenceFacts(normalized,{retainValues:true,shareScalars:true});
+ if(reportGraphSize&&facts.forms.length>1048576){
+  const sizes=new Map();
+  for(const form of facts.forms)sizes.set(form,(sizes.get(form)??0)+1);
+  const positions=new WeakMap();
+  for(let at=0;at<facts.values.length;at+=1){const value=facts.values[at];if(value&&typeof value==='object')positions.set(value,at);}
+  const largest=normalized.declarations.map(declaration=>{
+   const visited=new Set(),pending=[positions.get(declaration)];
+   while(pending.length){
+    const node=pending.pop();
+    if(visited.has(node))continue;
+    visited.add(node);
+    for(let edge=facts.starts[node],end=edge+facts.counts[node];edge<end;edge+=1)pending.push(facts.targets[edge]);
+   }
+   return [declaration.fullName,visited.size];
+  }).sort((left,right)=>right[1]-left[1]).slice(0,15);
+  console.error('class ownership fact counts', JSON.stringify({forms:Object.fromEntries(sizes),edges:facts.labels.length,largest}));
+ }
  const keys=facts.values.map(value=>value&&typeof value==='object'&&typeof value.kind==='string'?typeKey(value):'');
  const error=readJavaScriptClassOwnerError(facts.forms,facts.texts,facts.starts,facts.counts,facts.labels,facts.targets,keys,facts.root);if(error)fail(error);
 }

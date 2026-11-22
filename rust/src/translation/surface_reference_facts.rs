@@ -38,14 +38,21 @@ pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_
     create_facts(value, false)
 }
 
-/// Share exact text leaves and retain all object identities and labeled edges.
-pub(super) fn create_surface_reference_facts_with_shared_text(
+/// Share exact scalar leaves and retain all object identities and labeled edges.
+pub(super) fn create_surface_reference_facts_with_shared_scalars(
     value: &Value,
 ) -> SurfaceReferenceFacts<'_> {
     create_facts(value, true)
 }
 
-fn create_facts(value: &Value, share_text: bool) -> SurfaceReferenceFacts<'_> {
+fn create_facts(value: &Value, share_scalars: bool) -> SurfaceReferenceFacts<'_> {
+    #[derive(PartialEq, Eq, Hash)]
+    enum Scalar<'a> {
+        Null,
+        Bool(bool),
+        Number(u64),
+        Text(&'a str),
+    }
     #[derive(Default)]
     struct Columns<'a> {
         forms: Vec<String>,
@@ -55,15 +62,24 @@ fn create_facts(value: &Value, share_text: bool) -> SurfaceReferenceFacts<'_> {
         labels: Vec<String>,
         targets: Vec<f64>,
         values: Vec<&'a Value>,
-        text_identities: Option<HashMap<&'a str, f64>>,
+        scalar_identities: Option<HashMap<Scalar<'a>, f64>>,
     }
     fn insert<'a>(value: &'a Value, into: &mut Columns<'a>) -> f64 {
         let identity = into.forms.len();
-        if let (Value::String(text), Some(identities)) = (value, &mut into.text_identities) {
-            if let Some(identity) = identities.get(text.as_str()) {
-                return *identity;
+        if let Some(identities) = &mut into.scalar_identities {
+            let key = match value {
+                Value::Null => Some(Scalar::Null),
+                Value::Bool(value) => Some(Scalar::Bool(*value)),
+                Value::Number(value) => value.as_f64().map(|value| Scalar::Number(value.to_bits())),
+                Value::String(value) => Some(Scalar::Text(value)),
+                Value::Array(_) | Value::Object(_) => None,
+            };
+            if let Some(key) = key {
+                if let Some(identity) = identities.get(&key) {
+                    return *identity;
+                }
+                identities.insert(key, number(identity));
             }
-            identities.insert(text, number(identity));
         }
         let (form, text) = match value {
             Value::Null => ("null", String::new()),
@@ -108,7 +124,7 @@ fn create_facts(value: &Value, share_text: bool) -> SurfaceReferenceFacts<'_> {
         number(identity)
     }
     let mut data = Columns {
-        text_identities: share_text.then(HashMap::new),
+        scalar_identities: share_scalars.then(HashMap::new),
         ..Columns::default()
     };
     let root = insert(value, &mut data);
@@ -137,13 +153,24 @@ fn create_facts(value: &Value, share_text: bool) -> SurfaceReferenceFacts<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::create_surface_reference_facts_with_shared_text;
+    use super::create_surface_reference_facts_with_shared_scalars;
 
     #[test]
-    fn shared_text_keeps_distinct_allocation_facts() {
-        let graph = serde_json::json!([{"k": "referenceAllocate"}, {"k": "referenceAllocate"}]);
-        let facts = create_surface_reference_facts_with_shared_text(&graph);
-        assert_eq!(facts.forms, ["array", "object", "string", "object"]);
-        assert_eq!(facts.targets, [2.0, 2.0, 1.0, 3.0]);
+    fn shared_scalars_keep_distinct_allocation_facts() {
+        let graph = serde_json::json!([
+            ["referenceAllocate", null, true, -0.0, 0.0],
+            ["referenceAllocate", null, true, -0.0, 0.0]
+        ]);
+        let facts = create_surface_reference_facts_with_shared_scalars(&graph);
+        assert_eq!(
+            facts.forms,
+            [
+                "array", "array", "string", "null", "boolean", "number", "number", "array"
+            ]
+        );
+        assert_eq!(
+            facts.targets,
+            [2.0, 3.0, 4.0, 5.0, 6.0, 2.0, 3.0, 4.0, 5.0, 6.0, 1.0, 7.0]
+        );
     }
 }

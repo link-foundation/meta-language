@@ -12134,8 +12134,8 @@ forms reduce repeated constructor/continuation expansion for automatic Rust and
 editable Links generation; they neither raise the 100,000 semantic-visit gate
 nor establish execution evidence or a completed equivalence certificate.
 
-The class ownership fact transport represents exact text values once per
-distinct text. Every labeled edge is retained, and allocation and expression
+The class ownership fact transport represents identical scalar values once per
+form and value, including distinct positive and negative zeros. Every labeled edge is retained, and allocation and expression
 nodes keep their actual identities. Both runtimes apply the same complete
 class-graph limit and the same ownership checks to these facts.
 
