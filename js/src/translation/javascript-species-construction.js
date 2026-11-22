@@ -2,7 +2,7 @@
 // States preceding that explicit model retain their exact saved interpretation.
 import {readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,insertJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {allocateJavaScriptArray} from './javascript-arrays.js';
-import {readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact,classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
+import {readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact} from './javascript-array-species.js';
 import {readJavaScriptExecutableCallFunction} from './javascript-call-templates.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {beginJavaScriptConstruction,stepJavaScriptConstruction,resumeJavaScriptConstructionAllocation,resumeJavaScriptConstructionCall,continueJavaScriptConstructionPrototype,readJavaScriptConstructionStateError} from './javascript-construction.js';
@@ -84,7 +84,14 @@ export function resumeJavaScriptSpeciesConstructionAllocation(program,heap,direc
  if(state.operation!==undefined){const error=readJavaScriptSpeciesConstructionStateError(program,heap,directory,state);return error!==''?{$:'speciesConstructionInvalid',heap,reason:error}:adaptJavaScriptSpeciesConstruction(state,resumeJavaScriptConstructionAllocation(program,heap,directory,state.operation,identity));}
  const error=readJavaScriptSpeciesConstructionStateError(program,heap,directory,state);if(error!=='')return {$:'speciesConstructionInvalid',heap,reason:error};if(state.phase!=='allocate')return {$:'speciesConstructionInvalid',heap,reason:'species constructor allocation retains its actual pending request'};
  if(state.mode==='Array intrinsic'){
-  const created=allocateJavaScriptArray(heap,identity,state.prototype,state.length);if(created.$==='arrayNormal')return {$:'speciesConstructionCompleted',heap:created.heap,value:created.value};if(created.$==='arrayResourceLimit')return {$:'speciesConstructionResourceLimit',heap:created.heap,state,reason:created.reason};if(created.$==='arrayError')return {$:'speciesConstructionError',heap:created.heap,errorClass:created.errorClass,reason:created.reason};return {$:'speciesConstructionInvalid',heap:created.heap,reason:created.$==='arrayInvalid'?created.reason:'Array construction cannot use a property definition completion'};
+  const created=allocateJavaScriptArray(heap,identity,state.prototype,state.length);
+  switch(created.$){
+   case 'arrayNormal':return {$:'speciesConstructionCompleted',heap:created.heap,value:created.value};
+   case 'arrayResourceLimit':return {$:'speciesConstructionResourceLimit',heap:created.heap,state,reason:created.reason};
+   case 'arrayError':return {$:'speciesConstructionError',heap:created.heap,errorClass:created.errorClass,reason:created.reason};
+   case 'arrayInvalid':return {$:'speciesConstructionInvalid',heap:created.heap,reason:created.reason};
+   default:return {$:'speciesConstructionInvalid',heap:created.heap,reason:'Array construction cannot use a property definition completion'};
+  }
  }
  const created=insertJavaScriptOrdinaryObject(heap,identity,state.prototype);if(!created.success)return {$:'speciesConstructionInvalid',heap:created.heap,reason:created.error};
  const receiver={$:'object',identity,callable:false},call={$:'speciesConstructionCall',callee:state.constructor,receiver,arguments:[{$:'number',value:state.length}]};return {$:'speciesConstructionContinue',heap:created.heap,state:{...state,phase:'body',receiver,call}};
@@ -104,15 +111,21 @@ export function resumeJavaScriptSpeciesConstructionCall(program,heap,directory,s
 /** @param {JavaScriptSpeciesConstructionState} previous @param {JavaScriptConstructionState} operation @returns {JavaScriptSpeciesConstructionState} */
 export function retainJavaScriptSharedSpeciesConstruction(previous,operation){
  const {call:prior,...base}=previous;
- return {...base,model:'shared Construct species continuation 1',operation,phase:operation.phase,mode:operation.mode,prototype:operation.prototype,receiver:operation.receiver,...(operation.call===undefined?{}:{call:{$:'speciesConstructionCall',callee:operation.call.callee,receiver:operation.call.receiver,arguments:operation.call.arguments.slice()}})};
+ const state={...base,model:'shared Construct species continuation 1',operation,phase:operation.phase,mode:operation.mode,prototype:operation.prototype,receiver:operation.receiver},call=operation.call;
+ return call===undefined?state:{...state,call:{$:'speciesConstructionCall',callee:call.callee,receiver:call.receiver,arguments:call.arguments.slice()}};
+}
+/** @param {JavaScriptSpeciesConstructionCall} selected @param {JavaScriptConstructionCall} actual @returns {boolean} */
+function testJavaScriptSharedSpeciesChildCall(selected,actual){
+ if(selected.$!=='speciesConstructionCall')return false;
+ return testJavaScriptSemanticSameValue(selected.callee,actual.callee)&&testJavaScriptSemanticSameValue(selected.receiver,actual.receiver)&&selected.arguments.length===actual.arguments.length&&selected.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,actual.arguments[index]??{$:'undefined'}));
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptSpeciesConstructionState} state @returns {string} */
 export function readJavaScriptSharedSpeciesConstructionStateError(program,heap,directory,state){
- const operation=state.operation,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor),fact=classification.$==='arrayConstructorKnown'?classification.fact:undefined;
+ const operation=state.operation,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor),fact=readJavaScriptKnownArrayConstructorFact(classification);
  if(state.model!=='shared Construct species continuation 1'||operation===undefined||fact===undefined||!fact.constructable||fact.realm!==state.fact.realm||fact.constructable!==state.fact.constructable||fact.intrinsicArray!==state.fact.intrinsicArray||fact.intrinsicKind!==state.fact.intrinsicKind||state.constructor.$!=='object'||!state.constructor.callable||state.constructor.identity!==fact.identity||!Number.isSafeInteger(state.length)||state.length<0||Object.is(state.length,-0))return 'shared species construction retains its actual immutable constructor classification and nonnegative length';
  if(!testJavaScriptSemanticSameValue(operation.target,state.constructor)||!testJavaScriptSemanticSameValue(operation.newTarget,state.constructor)||operation.arguments.length!==1||!testJavaScriptSemanticSameValue(operation.arguments[0]??{$:'undefined'},{$:'number',value:state.length})||state.phase!==operation.phase||state.mode!==operation.mode||!testJavaScriptSemanticSameValue(state.prototype,operation.prototype)||!testJavaScriptSemanticSameValue(state.receiver,operation.receiver))return 'species construction retains the exact selected target newTarget length and shared operation';
  const call=state.call,actual=operation.call;if((call===undefined)!==(actual===undefined))return 'species construction retains its actual shared child call';
- if(call!==undefined&&actual!==undefined&&(call.$!=='speciesConstructionCall'||!testJavaScriptSemanticSameValue(call.callee,actual.callee)||!testJavaScriptSemanticSameValue(call.receiver,actual.receiver)||call.arguments.length!==actual.arguments.length||call.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,actual.arguments[index]??{$:'undefined'}))))return 'species child selection retains its actual shared callee receiver and ordered operands';
+ if(call!==undefined&&actual!==undefined&&!testJavaScriptSharedSpeciesChildCall(call,actual))return 'species child selection retains its actual shared callee receiver and ordered operands';
  return readJavaScriptConstructionStateError(program,heap,directory,operation);
 }
 /** @param {JavaScriptSpeciesConstructionState} state @param {JavaScriptConstructionTransition} transition @returns {JavaScriptSpeciesConstructionTransition} */

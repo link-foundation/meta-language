@@ -26,7 +26,7 @@ export function allocateJavaScriptArrayIterator(heap,identity,prototype,receiver
  if(heap.objects.length>=4096)return {$:'arrayIteratorAllocationResourceLimit',heap,reason:'Array iterator allocation exceeds the actual shared Object budget'};
  const allocated=insertJavaScriptOrdinaryObject(heap,identity,prototype);if(!allocated.success)return {$:'arrayIteratorInvalid',heap,reason:allocated.error};
  const index=findJavaScriptOrdinaryObject(allocated.heap.objects,identity),row=allocated.heap.objects[index];if(row===undefined||row.$!=='ordinaryObject')return {$:'arrayIteratorInvalid',heap,reason:'Array iterator allocation retains its actual fresh Object'};
- const iterator={...row,$:'collectionIteratorObject',collection:receiver.identity,cursor:0,kind,collectionKind:'Array',executing:false},updated=replaceJavaScriptOrdinaryObject(allocated.heap,iterator),validation=readJavaScriptOrdinaryHeapError(updated);
+ const iterator={$:'collectionIteratorObject',identity:row.identity,prototype:row.prototype,extensible:row.extensible,callable:row.callable,properties:row.properties,collection:receiver.identity,cursor:0,kind,collectionKind:'Array',executing:false},updated=replaceJavaScriptOrdinaryObject(allocated.heap,iterator),validation=readJavaScriptOrdinaryHeapError(updated);
  return validation===''?{$:'arrayIteratorAllocated',heap:updated,value:{$:'object',identity,callable:false}}:{$:'arrayIteratorInvalid',heap,reason:validation};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayIteratorState} state @returns {string} */
@@ -34,7 +34,8 @@ export function readJavaScriptArrayIteratorStateError(heap,state){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;
  for(const value of [state.receiver,state.source,state.exoticKey,state.input]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
  const iterator=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;
- if(state.$!=='arrayIteratorState'||iterator?.$!=='collectionIteratorObject'||iterator.collectionKind!=='Array'||iterator.executing!==true||state.source.$!=='object'||iterator.collection!==state.source.identity||iterator.cursor!==state.index||iterator.kind!==state.kind||state.exoticKey.$!=='symbol'||!['length','length getter','conversion','primitive','value','value getter'].includes(state.phase))return 'Array next retains its actual executing iterator, source, index and phase';
+ if(iterator===undefined||iterator.$!=='collectionIteratorObject')return 'Array next retains its actual executing iterator, source, index and phase';
+ if(state.$!=='arrayIteratorState'||iterator.collectionKind!=='Array'||iterator.executing!==true||state.source.$!=='object'||iterator.collection!==state.source.identity||iterator.cursor!==state.index||iterator.kind!==state.kind||state.exoticKey.$!=='symbol'||!['length','length getter','conversion','primitive','value','value getter'].includes(state.phase))return 'Array next retains its actual executing iterator, source, index and phase';
  if(state.phase==='conversion'){
   if(state.conversion===undefined||state.conversion.hint!=='number'||!testJavaScriptSemanticSameValue(state.conversion.receiver,state.input)||!testJavaScriptSemanticSameValue(state.conversion.exoticKey,state.exoticKey))return 'Array iterator length conversion retains its actual input, hint and Symbol';
   const invalid=readJavaScriptPrimitiveConversionStateError(heap,state.conversion);if(invalid!=='')return invalid;
@@ -42,21 +43,31 @@ export function readJavaScriptArrayIteratorStateError(heap,state){
  if(state.call!==undefined){if(!['length getter','conversion','value getter'].includes(state.phase)||state.call.callee.$!=='object'||!state.call.callee.callable)return 'Array iterator callbacks retain their actual selected getter/conversion call';for(const value of [state.call.callee,state.call.receiver,...state.call.arguments]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}}
  else if(state.phase.endsWith('getter'))return 'Array iterator getter phases retain their actual selected child';return '';
 }
+/** @param {JavaScriptOrdinaryObject} iterator @param {bigint} collection
+ * @param {number} cursor @param {boolean} executing @returns {JavaScriptOrdinaryObject} */
+function replaceJavaScriptArrayIteratorSlots(iterator,collection,cursor,executing){
+ if(iterator.$!=='collectionIteratorObject')return iterator;
+ return {$:'collectionIteratorObject',identity:iterator.identity,prototype:iterator.prototype,
+  extensible:iterator.extensible,callable:iterator.callable,properties:iterator.properties,
+  collection,cursor,kind:iterator.kind,collectionKind:iterator.collectionKind,
+  ...(Object.hasOwn(iterator,'iteratedText')?{iteratedText:iterator.iteratedText}:{}),executing};
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue} exoticKey @returns {JavaScriptArrayIterationTransition} */
 export function beginJavaScriptArrayIteratorNext(heap,receiver,exoticKey){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'arrayIteratorInvalid',heap,reason:error};for(const value of [receiver,exoticKey]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {$:'arrayIteratorInvalid',heap,reason:invalid};}if(exoticKey.$!=='symbol')return {$:'arrayIteratorInvalid',heap,reason:'Array next retains its actual primitive conversion Symbol'};
  const iterator=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
- if(iterator?.$!=='collectionIteratorObject'||iterator.collectionKind!=='Array')return {$:'arrayIteratorError',heap,errorClass:'TypeError',reason:'Array Iterator next requires its actual internal-slot receiver'};
+ if(iterator===undefined||iterator.$!=='collectionIteratorObject')return {$:'arrayIteratorError',heap,errorClass:'TypeError',reason:'Array Iterator next requires its actual internal-slot receiver'};
+ if(iterator.collectionKind!=='Array')return {$:'arrayIteratorError',heap,errorClass:'TypeError',reason:'Array Iterator next requires its actual internal-slot receiver'};
  if(iterator.executing)return {$:'arrayIteratorError',heap,errorClass:'TypeError',reason:'Generator is already running'};
  if(iterator.collection===0n)return {$:'arrayIteratorComponents',heap,receiver,done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
  const source=heap.objects[findJavaScriptOrdinaryObject(heap.objects,iterator.collection)];if(source===undefined)return {$:'arrayIteratorInvalid',heap,reason:'Array iterator source remains in the common heap'};
- return {$:'arrayIteratorContinue',heap:replaceJavaScriptOrdinaryObject(heap,{...iterator,executing:true}),state:{$:'arrayIteratorState',receiver,source:{$:'object',identity:source.identity,callable:source.callable},exoticKey,index:iterator.cursor,kind:iterator.kind,phase:'length',input:{$:'undefined'}}};
+ return {$:'arrayIteratorContinue',heap:replaceJavaScriptOrdinaryObject(heap,replaceJavaScriptArrayIteratorSlots(iterator,iterator.collection,iterator.cursor,true)),state:{$:'arrayIteratorState',receiver,source:{$:'object',identity:source.identity,callable:source.callable},exoticKey,index:iterator.cursor,kind:iterator.kind,phase:'length',input:{$:'undefined'}}};
 }
 /** Release or advance only after the selected next operation has completed.
  * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayIteratorState} state @param {boolean} done @returns {JavaScriptOrdinaryHeap} */
 export function finishJavaScriptArrayIteratorCursor(heap,state,done){
- const iterator=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;if(iterator?.$!=='collectionIteratorObject')return heap;
- return replaceJavaScriptOrdinaryObject(heap,{...iterator,collection:done?0n:iterator.collection,cursor:done?0:state.index+1,executing:false});
+ const iterator=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;if(iterator===undefined||iterator.$!=='collectionIteratorObject')return heap;
+ return replaceJavaScriptOrdinaryObject(heap,replaceJavaScriptArrayIteratorSlots(iterator,done?0n:iterator.collection,done?0:state.index+1,false));
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayIteratorState} state @param {JavaScriptScalarConversionTransition} transition @returns {JavaScriptArrayIterationTransition} */
 export function continueJavaScriptArrayIteratorLength(heap,state,transition){
@@ -65,8 +76,9 @@ export function continueJavaScriptArrayIteratorLength(heap,state,transition){
   case 'scalarContinuation':return {$:'arrayIteratorContinue',heap,state:{...base,phase:'conversion',conversion:transition.state}};
   case 'scalarCall':{const call={$:'arrayIteratorCall',callee:transition.callee,receiver:transition.receiver,arguments:transition.arguments};return {$:'arrayIteratorCall',heap,state:{...base,phase:'conversion',conversion:transition.state,call},callee:call.callee,receiver:call.receiver,arguments:call.arguments};}
   case 'scalarCompleted':{
-   if(transition.value.$!=='number')return {$:'arrayIteratorInvalid',heap,reason:'Array iterator length retains its actual ToNumber result'};
-   if(state.index>=readJavaScriptArrayLikeLength(transition.value.value))return {$:'arrayIteratorComponents',heap:finishJavaScriptArrayIteratorCursor(heap,state,true),receiver:state.receiver,done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
+   const primitive=transition.value;
+   if(primitive.$!=='number')return {$:'arrayIteratorInvalid',heap,reason:'Array iterator length retains its actual ToNumber result'};
+   if(state.index>=readJavaScriptArrayLikeLength(primitive.value))return {$:'arrayIteratorComponents',heap:finishJavaScriptArrayIteratorCursor(heap,state,true),receiver:state.receiver,done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
    if(state.kind==='keys')return {$:'arrayIteratorComponents',heap:finishJavaScriptArrayIteratorCursor(heap,state,false),receiver:state.receiver,done:false,key:{$:'number',value:state.index},value:{$:'number',value:state.index},entry:false};
    return {$:'arrayIteratorContinue',heap,state:{...base,phase:'value',input:{$:'undefined'}}};
   }

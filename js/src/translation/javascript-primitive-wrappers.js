@@ -64,7 +64,13 @@ export function resumeJavaScriptPrimitiveWrapper(heap,state,identity){
   properties.push(constructJavaScriptWrapperStringProperty({$:'text',units:[108,101,110,103,116,104]},{$:'number',value:length},false));
  }
  const allocated=insertJavaScriptOrdinaryObject(heap,identity,state.prototype);if(allocated.error!=='')return {$:'primitiveWrapperInvalid',heap,reason:allocated.error};
- const input=state.input,objects=allocated.heap.objects.map(object=>object.identity!==identity||object.$!=='ordinaryObject'?object:length>=0?{...object,properties,stringData:input}:input.$==='null'||input.$==='undefined'?object:{...object,primitiveData:input});
+ const input=state.input,prototype=state.prototype;
+ // The inserted object is fresh, so its wrapper data comes only from this input.
+ const objects=allocated.heap.objects.map(object=>{
+  if(object.identity!==identity||input.$==='null'||input.$==='undefined')return object;
+  if(length>=0)return {$:'ordinaryObject',identity,prototype,extensible:true,callable:false,properties,stringData:input};
+  return {$:'ordinaryObject',identity,prototype,extensible:true,callable:false,properties:[],primitiveData:input};
+ });
  const next={...allocated.heap,objects},error=readJavaScriptOrdinaryHeapError(next);if(error!=='')return {$:'primitiveWrapperInvalid',heap,reason:error};
  return {$:'primitiveWrapperCompleted',heap:next,value:{$:'object',identity,callable:false}};
 }

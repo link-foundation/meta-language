@@ -32,24 +32,112 @@ export function projectJavaScriptPropertyKeyCompletion(completion){
   return {$:'throwCompletion',value:completion.value};
 }
 
+/** @param {JavaScriptArrayAssignmentState} assignment @returns {JavaScriptPrimitiveConversionState|undefined} */
+function readJavaScriptDefinitionArrayConversion(assignment) {
+  if (assignment.$ === 'arrayAssignmentNumber') return assignment.conversion;
+  return undefined;
+}
+
+/** @param {JavaScriptPropertyDefinitionState} state @returns {JavaScriptPrimitiveConversionState|undefined} */
+function readJavaScriptDefinitionPrimitiveConversion(state) {
+  switch (state.$) {
+    case 'propertyDefinitionKey': return state.conversion;
+    case 'propertyDefinitionArray': return readJavaScriptDefinitionArrayConversion(state.assignment);
+    default: return undefined;
+  }
+}
+
+/**
+ * @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptPropertyDefinitionCall} call
+ * @param {JavaScriptPrimitiveConversionState|undefined} conversion
+ * @returns {string}
+ */
+function readJavaScriptDefinitionPrimitiveCallError(heap, call, conversion) {
+  if (conversion === undefined || !testJavaScriptSemanticSameValue(call.receiver, conversion.receiver) ||
+      !['exoticGetter', 'firstGetter', 'secondGetter', 'exoticCall', 'firstCall', 'secondCall'].includes(conversion.phase)) {
+    return 'definition child calls retain their actual pending primitive conversion and receiver';
+  }
+  if (conversion.phase === 'exoticCall') {
+    if (call.arguments.length !== 1 || !testJavaScriptSemanticSameValue(
+      call.arguments[0] ?? {$:'undefined'}, readJavaScriptPrimitiveConversionSpelling(conversion.hint)
+    )) return 'definition exotic conversion calls retain their actual preferred-type hint';
+    return '';
+  }
+  if (conversion.phase === 'firstCall' || conversion.phase === 'secondCall') {
+    return call.arguments.length === 0 ? '' : 'definition ordinary conversion methods retain their empty argument List';
+  }
+  const first = conversion.phase === 'firstGetter';
+  const name = conversion.hint === 'string' ? (first ? 'toString' : 'valueOf') : (first ? 'valueOf' : 'toString');
+  const key = conversion.phase === 'exoticGetter' ? conversion.exoticKey : readJavaScriptPrimitiveConversionSpelling(name);
+  return readJavaScriptDefinitionGetterArguments(heap, call, key);
+}
+
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPropertyDefinitionState} state @returns {string} */
 export function readJavaScriptPropertyDefinitionStateError(heap,state){
  if(!['propertyDefinitionKey','propertyDefinitionDescriptor','propertyDefinitionArray','propertyDefinitionReady'].includes(state.$))return 'property definition retains its actual typed continuation';
- const error=readJavaScriptOrdinaryHeapError(heap)||readJavaScriptOrdinaryValueError(heap,state.target);if(error!=='')return error;if(state.target.$!=='object')return 'property definition retains its actual Object target';
+ const target = state.target;
+ const error=readJavaScriptOrdinaryHeapError(heap)||readJavaScriptOrdinaryValueError(heap,target);if(error!=='')return error;if(target.$!=='object')return 'property definition retains its actual Object target';
  if(state.operation!==undefined&&!['Object.defineProperty','Reflect.defineProperty'].includes(state.operation))return 'property definition retains its actual Object or Reflect result policy';
  if(state.call!==undefined){
   const call=state.call;if(call.$!=='propertyDefinitionCallRecord'||call.callee.$!=='object'||!call.callee.callable||call.arguments.length>2||state.$==='propertyDefinitionReady')return 'property definitions retain only their actual selected bounded child call';for(const value of [call.callee,call.receiver,...call.arguments]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
   if(state.$==='propertyDefinitionDescriptor'){if(!state.conversion.pending||!testJavaScriptSemanticSameValue(call.receiver,state.conversion.receiver))return 'definition child calls retain their actual pending descriptor receiver';const invalid=readJavaScriptDefinitionGetterArguments(heap,call,{$:'text',units:readJavaScriptDescriptorField(state.conversion.next).units});if(invalid!=='')return invalid;}
-  else{const conversion=state.$==='propertyDefinitionKey'?state.conversion:state.$==='propertyDefinitionArray'&&state.assignment.$==='arrayAssignmentNumber'?state.assignment.conversion:undefined;if(conversion===undefined||!testJavaScriptSemanticSameValue(call.receiver,conversion.receiver)||!['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(conversion.phase))return 'definition child calls retain their actual pending primitive conversion and receiver';if(conversion.phase==='exoticCall'){if(call.arguments.length!==1||!testJavaScriptSemanticSameValue(call.arguments[0]??{$:'undefined'},readJavaScriptPrimitiveConversionSpelling(conversion.hint)))return 'definition exotic conversion calls retain their actual preferred-type hint';}else if(conversion.phase==='firstCall'||conversion.phase==='secondCall'){if(call.arguments.length!==0)return 'definition ordinary conversion methods retain their empty argument List';}else{const first=conversion.phase==='firstGetter',name=conversion.hint==='string'?(first?'toString':'valueOf'):(first?'valueOf':'toString'),key=conversion.phase==='exoticGetter'?conversion.exoticKey:readJavaScriptPrimitiveConversionSpelling(name),invalid=readJavaScriptDefinitionGetterArguments(heap,call,key);if(invalid!=='')return invalid;}}
+  else {
+    const invalid = readJavaScriptDefinitionPrimitiveCallError(heap, call, readJavaScriptDefinitionPrimitiveConversion(state));
+    if (invalid !== '') return invalid;
+  }
  }
- if(state.$==='propertyDefinitionKey'){const invalid=readJavaScriptOrdinaryValueError(heap,state.attributes)||readJavaScriptPrimitiveConversionStateError(heap,state.conversion);return invalid|| (state.conversion.hint==='string'?'':'property key conversion retains its actual string hint');}
- const keyError=readJavaScriptOrdinaryKeyError(heap,state.key);if(keyError!=='')return keyError;
- if(state.$==='propertyDefinitionArray'){
-  if(state.assignment.definition.identity!==state.target.identity||!testJavaScriptSemanticSameValue(state.assignment.definition.key,state.key))return 'Array definition retains its actual target key and completed descriptor';return readJavaScriptArrayAssignmentStateError(heap,state.assignment);
- }
- if(state.exoticKey!==undefined){const invalid=readJavaScriptOrdinaryValueError(heap,state.exoticKey);if(invalid!==''||state.exoticKey.$!=='symbol')return invalid||'property definition retains its actual primitive conversion Symbol';}
- if(state.$==='propertyDefinitionReady'){const error=readJavaScriptPropertyDescriptorError(state.descriptor);if(error!=='')return error;for(const value of [state.descriptor.value,state.descriptor.getter,state.descriptor.setter]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}return '';}
- return readJavaScriptDescriptorConversionStateError(heap,state.conversion);
+ return readJavaScriptPropertyDefinitionContinuationError(heap, state, target.identity);
+}
+
+/**
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} key
+ * @param {JavaScriptSemanticValue|undefined} exoticKey @returns {string}
+ */
+function readJavaScriptPropertyDefinitionKeysError(heap, key, exoticKey) {
+  const keyError = readJavaScriptOrdinaryKeyError(heap, key);
+  if (keyError !== '' || exoticKey === undefined) return keyError;
+  const invalid = readJavaScriptOrdinaryValueError(heap, exoticKey);
+  if (invalid !== '') return invalid;
+  return exoticKey.$ === 'symbol' ? '' : 'property definition retains its actual primitive conversion Symbol';
+}
+
+/**
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPropertyDefinitionState} state
+ * @param {bigint} identity @returns {string}
+ */
+function readJavaScriptPropertyDefinitionContinuationError(heap, state, identity) {
+  switch (state.$) {
+    case 'propertyDefinitionKey': {
+      const invalid = readJavaScriptOrdinaryValueError(heap, state.attributes) ||
+        readJavaScriptPrimitiveConversionStateError(heap, state.conversion);
+      return invalid || (state.conversion.hint === 'string' ? '' : 'property key conversion retains its actual string hint');
+    }
+    case 'propertyDefinitionArray': {
+      const keyError = readJavaScriptOrdinaryKeyError(heap, state.key);
+      if (keyError !== '') return keyError;
+      if (state.assignment.definition.identity !== identity ||
+          !testJavaScriptSemanticSameValue(state.assignment.definition.key, state.key)) {
+        return 'Array definition retains its actual target key and completed descriptor';
+      }
+      return readJavaScriptArrayAssignmentStateError(heap, state.assignment);
+    }
+    case 'propertyDefinitionReady': {
+      const keyError = readJavaScriptPropertyDefinitionKeysError(heap, state.key, state.exoticKey);
+      if (keyError !== '') return keyError;
+      const error = readJavaScriptPropertyDescriptorError(state.descriptor);
+      if (error !== '') return error;
+      for (const value of [state.descriptor.value, state.descriptor.getter, state.descriptor.setter]) {
+        const invalid = readJavaScriptOrdinaryValueError(heap, value);
+        if (invalid !== '') return invalid;
+      }
+      return '';
+    }
+    case 'propertyDefinitionDescriptor': {
+      const keyError = readJavaScriptPropertyDefinitionKeysError(heap, state.key, state.exoticKey);
+      return keyError || readJavaScriptDescriptorConversionStateError(heap, state.conversion);
+    }
+  }
 }
 
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPropertyDefinitionCall} call @param {JavaScriptSemanticValue} key @returns {string} */
@@ -60,7 +148,10 @@ export function readJavaScriptDefinitionGetterArguments(heap,call,key){
 }
 
 /** @param {JavaScriptPropertyDefinitionState} state @param {string|undefined} operation @param {JavaScriptPropertyDefinitionCall|undefined} [call] @returns {JavaScriptPropertyDefinitionState} */
-export function retainJavaScriptPropertyDefinitionContext(state,operation,call=undefined){return {...state,...(operation===undefined?{}:{operation}),...(call===undefined?{}:{call})};}
+export function retainJavaScriptPropertyDefinitionContext(state,operation,call=undefined){
+ const selected=operation===undefined?state:{...state,operation};
+ return call===undefined?{...selected}:{...selected,call};
+}
 /** @param {JavaScriptSemanticValue} callee @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue[]} arguments_ @returns {JavaScriptPropertyDefinitionCall} */
 export function createJavaScriptPropertyDefinitionCall(callee,receiver,arguments_){return {$:'propertyDefinitionCallRecord',callee,receiver,arguments:arguments_.slice()};}
 
@@ -168,6 +259,6 @@ export function resumeJavaScriptPropertyDefinition(heap,state,completion){
   if(state.target.$!=='object')return {$:'definitionInvalid',reason:'a property definition continuation retains its actual Object target'};
   if(state.$==='propertyDefinitionReady')return {$:'definitionInvalid',heap,reason:'a completed descriptor storage suspension cannot accept a child completion'};
   if(state.$==='propertyDefinitionKey')return continueJavaScriptPropertyKeyDefinitionWithSymbol(heap,state.target,state.attributes,resumeJavaScriptPropertyKeyConversion(heap,state.conversion,projectJavaScriptPropertyKeyCompletion(completion)),state.conversion.exoticKey,state.operation);
-  if(state.$==='propertyDefinitionArray')return continueJavaScriptPropertyArrayDefinition(state.target,state.key,resumeJavaScriptArrayAssignment(heap,state.assignment,completion),state.operation);
+  if(state.$==='propertyDefinitionArray')return continueJavaScriptPropertyArrayDefinition(state.target,state.key,resumeJavaScriptArrayAssignment(heap,state.assignment,projectJavaScriptPropertyKeyCompletion(completion)),state.operation);
   return continueJavaScriptPropertyDescriptorDefinitionWithSymbol(heap,state.target,state.key,resumeJavaScriptDescriptorConversion(heap,state.conversion,completion),state.exoticKey,state.operation);
 }

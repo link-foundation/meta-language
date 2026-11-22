@@ -1,4 +1,4 @@
-import {readJavaScriptWeakCollectionOperationKind} from './javascript-weak-collection-operation-rules.js';
+import {readJavaScriptWeakCollectionMethodOwner} from './javascript-weak-collection-operation-rules.js';
 import {testJavaScriptSemanticSameValue,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit} from './javascript-semantic-values.js';
 /** @param {JavaScriptSemanticValue} left @param {JavaScriptSemanticValue} right @returns {boolean} */
 export function testJavaScriptCollectionKey(left,right){
@@ -16,7 +16,7 @@ export function normalizeJavaScriptCollectionKey(key){
  return key;
 }
 /** @param {string} operation @returns {string} */
-export function readJavaScriptCollectionOperationKind(operation){return ['Map.get','Map.set','Map.has','Map.delete','Map.clear','Map.size'].includes(operation)?'Map':['Set.add','Set.has','Set.delete','Set.clear','Set.size'].includes(operation)?'Set':readJavaScriptWeakCollectionOperationKind(operation);}
+export function readJavaScriptCollectionOperationKind(operation){return ['Map.get','Map.set','Map.has','Map.delete','Map.clear','Map.size'].includes(operation)?'Map':['Set.add','Set.has','Set.delete','Set.clear','Set.size'].includes(operation)?'Set':readJavaScriptWeakCollectionMethodOwner(operation);}
 /** @param {JavaScriptSemanticValue} value @returns {number} */
 export function readJavaScriptCollectionKeyRank(value){
  switch(value.$){

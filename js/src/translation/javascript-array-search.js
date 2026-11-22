@@ -47,14 +47,15 @@ export function continueJavaScriptArraySearchNumber(heap,state,transition){
   case 'scalarContinuation':return {$:'arraySearchContinue',heap,state:{...base,phase:lengthPhase?'length conversion':'index conversion',conversion:transition.state}};
   case 'scalarCall':return requestJavaScriptArraySearchCall(heap,{...base,phase:lengthPhase?'length conversion':'index conversion',conversion:transition.state},transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':{
-   if(transition.value.$!=='number')return {$:'arraySearchInvalid',heap,reason:'Array search numeric conversion retains its actual ToNumber result'};
+   const primitive=transition.value;
+   if(primitive.$!=='number')return {$:'arraySearchInvalid',heap,reason:'Array search numeric conversion retains its actual ToNumber result'};
    if(lengthPhase){
-    const length=readJavaScriptArrayLikeLength(transition.value.value),next={...base,length,input:state.fromIndex,phase:'index primitive'};
+    const length=readJavaScriptArrayLikeLength(primitive.value),next={...base,length,input:state.fromIndex,phase:'index primitive'};
     if(length===0&&state.operation!=='Array.at')return {$:'arraySearchCompleted',heap,value:readJavaScriptArraySearchMissingValue(state)};
     if(!state.fromPresent&&state.operation!=='Array.at')return {$:'arraySearchContinue',heap,state:{...next,input:{$:'undefined'},phase:'ready',index:readJavaScriptArraySearchIndex(state.operation,length,false,0)}};
     return continueJavaScriptArraySearchNumber(heap,next,beginJavaScriptScalarProtocol(heap,state.fromIndex,state.exoticKey,'coerce primitive number'));
    }
-   return {$:'arraySearchContinue',heap,state:{...base,phase:'ready',input:{$:'undefined'},index:readJavaScriptArraySearchIndex(state.operation,state.length,state.fromPresent,transition.value.value)}};
+   return {$:'arraySearchContinue',heap,state:{...base,phase:'ready',input:{$:'undefined'},index:readJavaScriptArraySearchIndex(state.operation,state.length,state.fromPresent,primitive.value)}};
   }
   case 'scalarThrow':return {$:'arraySearchThrow',heap,value:transition.value};
   case 'scalarIntrinsicError':return {$:'arraySearchError',heap,errorClass:transition.errorClass,reason:transition.reason};

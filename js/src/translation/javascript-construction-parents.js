@@ -3,8 +3,15 @@
 import {readJavaScriptActiveConstruction} from './javascript-construction.js';
 /** @param {JavaScriptCallPending} pending @returns {JavaScriptConstructionState|undefined} */
 export function readJavaScriptPendingConstruction(pending){
- if(pending.$==='waitConstruction')return readJavaScriptActiveConstruction(pending.state);
- if(pending.$==='waitArrayCreation')return pending.construction===undefined?undefined:readJavaScriptActiveConstruction(pending.construction);
- if(pending.$==='waitArrayTransform'||pending.$==='waitArraySlice'||pending.$==='waitArrayConcatenation')return pending.construction?.operation===undefined?undefined:readJavaScriptActiveConstruction(pending.construction.operation);
- return undefined;
+ switch(pending.$){
+  case 'waitConstruction':return readJavaScriptActiveConstruction(pending.state);
+  case 'waitArrayCreation':return pending.construction===undefined?undefined:readJavaScriptActiveConstruction(pending.construction);
+  case 'waitArrayTransform':
+  case 'waitArraySlice':
+  case 'waitArrayConcatenation':{
+   const operation=pending.construction?.operation;
+   return operation===undefined?undefined:readJavaScriptActiveConstruction(operation);
+  }
+  default:return undefined;
+ }
 }

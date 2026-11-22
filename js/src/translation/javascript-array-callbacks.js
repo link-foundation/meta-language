@@ -58,8 +58,9 @@ export function continueJavaScriptArrayCallbackLength(heap,state,transition){
   case 'scalarContinuation':return {$:'arrayCallbackContinue',heap,state:{...base,phase:'length conversion',conversion:transition.state}};
   case 'scalarCall':return requestJavaScriptArrayCallbackCall(heap,{...base,phase:'length conversion',conversion:transition.state},transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':{
-   if(transition.value.$!=='number')return {$:'arrayCallbackInvalid',heap,reason:'Array LengthOfArrayLike retains its actual ToNumber result'};
-   const length=readJavaScriptArrayLikeLength(transition.value.value);
+   const primitive=transition.value;
+   if(primitive.$!=='number')return {$:'arrayCallbackInvalid',heap,reason:'Array LengthOfArrayLike retains its actual ToNumber result'};
+   const length=readJavaScriptArrayLikeLength(primitive.value);
    if(state.callback.$!=='object'||!state.callback.callable)return {$:'arrayCallbackError',heap,errorClass:'TypeError',reason:'Array callback must be callable'};
    return {$:'arrayCallbackContinue',heap,state:{...base,phase:'ready',length,index:testJavaScriptArrayCallbackReverse(state.operation)?length-1:0,element:{$:'undefined'}}};
   }

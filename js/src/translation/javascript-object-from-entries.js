@@ -64,10 +64,11 @@ export function failJavaScriptObjectFromEntries(heap,state,errorClass,reason){
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectFromEntriesState} state @param {JavaScriptIteratorProtocolTransition} transition @returns {JavaScriptObjectFromEntriesTransition} */
 export function acceptJavaScriptObjectFromEntriesIterator(heap,state,transition){
- const base={...clearJavaScriptObjectFromEntriesChild(state),...(state.phase==='close'&&state.abrupt!==undefined?{abrupt:state.abrupt}:{})};
+ const cleared=clearJavaScriptObjectFromEntriesChild(state),abrupt=state.abrupt;
+ const base=state.phase==='close'&&abrupt!==undefined?{...cleared,abrupt}:cleared;
  switch(transition.$){
   case 'iteratorProtocolContinue':return {$:'objectFromEntriesContinue',heap:transition.heap,state:{...base,iterator:transition.state}};
-  case 'iteratorProtocolCall':{const call={$:'objectFromEntriesCallRecord',callee:transition.callee,receiver:transition.receiver,arguments:transition.arguments};return {$:'objectFromEntriesCall',heap:transition.heap,state:{...base,...(state.abrupt===undefined?{}:{abrupt:state.abrupt}),iterator:transition.state,call},callee:call.callee,receiver:call.receiver,arguments:call.arguments};}
+  case 'iteratorProtocolCall':{const call={$:'objectFromEntriesCallRecord',callee:transition.callee,receiver:transition.receiver,arguments:transition.arguments};return {$:'objectFromEntriesCall',heap:transition.heap,state:abrupt===undefined?{...base,iterator:transition.state,call}:{...base,abrupt,iterator:transition.state,call},callee:call.callee,receiver:call.receiver,arguments:call.arguments};}
   case 'iteratorProtocolPrimitiveGet':return {$:'objectFromEntriesPrimitiveGet',heap:transition.heap,state:{...base,iterator:transition.state},receiver:transition.receiver,key:transition.key};
   case 'iteratorProtocolAcquired':return {$:'objectFromEntriesContinue',heap:transition.heap,state:{...base,record:transition.record,phase:'step'}};
   case 'iteratorProtocolStep':{
@@ -75,8 +76,8 @@ export function acceptJavaScriptObjectFromEntriesIterator(heap,state,transition)
    const next={...base,record:transition.record,phase:'entry key',entry:transition.value,keyInput:{$:'undefined'},value:{$:'undefined'},key:{$:'undefined'}};return transition.value.$==='object'?{$:'objectFromEntriesContinue',heap:transition.heap,state:next}:failJavaScriptObjectFromEntries(transition.heap,next,'TypeError','Iterator value is not an entry Object');
   }
   case 'iteratorProtocolClosed':return transition.completion.kind==='throw'?{$:'objectFromEntriesThrow',heap:transition.heap,value:transition.completion.value}:{$:'objectFromEntriesInvalid',heap:transition.heap,reason:'Object.fromEntries cleanup retains its original abrupt completion'};
-  case 'iteratorProtocolThrow':return state.phase==='close'&&state.abrupt!==undefined?{$:'objectFromEntriesThrow',heap:transition.heap,value:state.abrupt}:throwJavaScriptObjectFromEntries(transition.heap,{...base,...(state.phase==='step'?{record:transition.state.record}:{})},transition.value);
-  case 'iteratorProtocolError':return state.phase==='close'&&state.abrupt!==undefined?{$:'objectFromEntriesThrow',heap:transition.heap,value:state.abrupt}:failJavaScriptObjectFromEntries(transition.heap,{...base,...(state.phase==='step'?{record:transition.state.record}:{})},transition.errorClass,transition.reason);
+  case 'iteratorProtocolThrow':return state.phase==='close'&&state.abrupt!==undefined?{$:'objectFromEntriesThrow',heap:transition.heap,value:state.abrupt}:throwJavaScriptObjectFromEntries(transition.heap,state.phase==='step'?{...base,record:transition.state.record}:base,transition.value);
+  case 'iteratorProtocolError':return state.phase==='close'&&state.abrupt!==undefined?{$:'objectFromEntriesThrow',heap:transition.heap,value:state.abrupt}:failJavaScriptObjectFromEntries(transition.heap,state.phase==='step'?{...base,record:transition.state.record}:base,transition.errorClass,transition.reason);
   case 'iteratorProtocolInvalid':return {$:'objectFromEntriesInvalid',heap:transition.heap,reason:transition.reason};
  }
 }

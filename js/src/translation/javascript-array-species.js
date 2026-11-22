@@ -64,6 +64,11 @@ export function classifyJavaScriptArraySpeciesConstructor(heap,directory,candida
  const fact=directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,target.identity)];if(fact===undefined)return {$:'arrayConstructorUnknown',constructor:target};
  return {$:'arrayConstructorKnown',fact:target.identity===candidate.identity?fact:{$:'arrayConstructorFact',identity:candidate.identity,constructable:fact.constructable,realm:fact.realm,intrinsicArray:false}};
 }
+/** @param {JavaScriptArrayConstructorClassification} classification @returns {JavaScriptArrayConstructorFact|undefined} */
+export function readJavaScriptKnownArrayConstructorFact(classification){
+ if(classification.$==='arrayConstructorKnown')return classification.fact;
+ return undefined;
+}
 /** Bound constructor realm/classification authority belongs to its actual leaf,
  * independently of mutable prototypes and names. Proxy needs its own protocol.
  * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} candidate @returns {JavaScriptSemanticValue|undefined} */
@@ -86,7 +91,11 @@ export function beginJavaScriptArraySpeciesSelection(heap,directory,original,len
 export function requestJavaScriptArraySpeciesDefault(heap,state){return {$:'arraySpeciesAllocate',heap,state,prototype:state.arrayPrototype,length:state.length};}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesState} state
  * @param {JavaScriptSemanticValue} value @returns {JavaScriptArraySpeciesTransition} */
-export function continueJavaScriptArraySpeciesGet(heap,state,value){const {call:priorCall,...base}=state;return {$:'arraySpeciesContinue',heap,state:{...base,candidate:state.phase==='species'&&value.$==='null'?{$:'undefined'}:value,phase:state.phase==='constructor'?'constructor classification':'species classification'}};}
+export function continueJavaScriptArraySpeciesGet(heap,state,value){
+ const candidate=state.phase==='species'&&value.$==='null'?{$:'undefined'}:value;
+ const phase=state.phase==='constructor'?'constructor classification':'species classification';
+ return {$:'arraySpeciesContinue',heap,state:{$:'arraySpeciesState',original:state.original,length:state.length,realm:state.realm,arrayConstructor:state.arrayConstructor,arrayPrototype:state.arrayPrototype,speciesKey:state.speciesKey,candidate,phase}};
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory
  * @param {JavaScriptArraySpeciesState} state @returns {JavaScriptArraySpeciesTransition} */
 export function stepJavaScriptArraySpeciesSelection(heap,directory,state){
@@ -107,14 +116,15 @@ export function stepJavaScriptArraySpeciesSelection(heap,directory,state){
  if(state.candidate.$==='undefined')return requestJavaScriptArraySpeciesDefault(heap,state);
  const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.candidate);
  if(classification.$==='arrayConstructorUnknown')return {$:'arraySpeciesNeedAuthority',heap,state,constructor:classification.constructor??state.candidate};
+ const fact=readJavaScriptKnownArrayConstructorFact(classification);
  if(state.phase==='constructor classification'){
-  if(classification.$==='arrayConstructorKnown'&&classification.fact.constructable&&classification.fact.intrinsicArray&&classification.fact.realm!==state.realm)return requestJavaScriptArraySpeciesDefault(heap,state);
+  if(fact!==undefined&&fact.constructable&&fact.intrinsicArray&&fact.realm!==state.realm)return requestJavaScriptArraySpeciesDefault(heap,state);
   // A nonconstructor Object can supply a valid constructor through @@species.
   if(state.candidate.$==='object')return {$:'arraySpeciesContinue',heap,state:{...state,phase:'species'}};
   return {$:'arraySpeciesError',heap,errorClass:'TypeError',reason:'Array species constructor is not a constructor'};
  }
- if(classification.$!=='arrayConstructorKnown'||!classification.fact.constructable)return {$:'arraySpeciesError',heap,errorClass:'TypeError',reason:'Array species constructor is not a constructor'};
- return {$:'arraySpeciesConstruct',heap,state,constructor:state.candidate,arguments:[{$:'number',value:state.length}],fact:{...classification.fact}};
+ if(fact===undefined||!fact.constructable)return {$:'arraySpeciesError',heap,errorClass:'TypeError',reason:'Array species constructor is not a constructor'};
+ return {$:'arraySpeciesConstruct',heap,state,constructor:state.candidate,arguments:[{$:'number',value:state.length}],fact:{...fact}};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory
  * @param {JavaScriptArraySpeciesState} state @param {JavaScriptPrimitiveConversionCompletion} completion @returns {JavaScriptArraySpeciesTransition} */

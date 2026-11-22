@@ -13,11 +13,37 @@ export function projectJavaScriptDescriptorOperands(descriptor){return [
 /** @param {JavaScriptSemanticValue[]} operands @returns {{descriptor:JavaScriptPropertyDescriptor,error:string}} */
 export function readJavaScriptDescriptorOperands(operands){
  const descriptor=createJavaScriptEmptyDescriptor();if(operands.length!==12)return {descriptor,error:'an internal property descriptor retains six actual presence and payload pairs'};
- const fields=['configurable','enumerable','value','writable','getter','setter'];
- for(let index=0;index<fields.length;index++){
-  const field=fields[index],presence=operands[index*2],value=operands[index*2+1];if(field===undefined||presence?.$!=='boolean'||value===undefined)return {descriptor,error:'descriptor operand presence retains its actual Boolean and complete semantic payload'};
-  descriptor[field+'Present']=presence.value;if(!presence.value)continue;
-  if(index===0||index===1||index===3){if(value.$!=='boolean')return {descriptor,error:'present descriptor attribute operands are actual Booleans'};descriptor[field]=value.value;}else descriptor[field]=value;
+ for(let index=0;index<6;index++){
+  const presence=operands[index*2],value=operands[index*2+1];
+  if(presence?.$!=='boolean'||value===undefined)return {descriptor,error:'descriptor operand presence retains its actual Boolean and complete semantic payload'};
+  const present=presence.value;
+  switch(index){
+   case 0:
+    descriptor.configurablePresent=present;
+    if(present&&value.$==='boolean')descriptor.configurable=value.value;
+    break;
+   case 1:
+    descriptor.enumerablePresent=present;
+    if(present&&value.$==='boolean')descriptor.enumerable=value.value;
+    break;
+   case 2:
+    descriptor.valuePresent=present;
+    if(present)descriptor.value=value;
+    break;
+   case 3:
+    descriptor.writablePresent=present;
+    if(present&&value.$==='boolean')descriptor.writable=value.value;
+    break;
+   case 4:
+    descriptor.getterPresent=present;
+    if(present)descriptor.getter=value;
+    break;
+   case 5:
+    descriptor.setterPresent=present;
+    if(present)descriptor.setter=value;
+    break;
+  }
+  if(present&&(index===0||index===1||index===3)&&value.$!=='boolean')return {descriptor,error:'present descriptor attribute operands are actual Booleans'};
  }
  return {descriptor,error:readJavaScriptPropertyDescriptorError(descriptor)};
 }

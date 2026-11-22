@@ -82,8 +82,20 @@ export function stepJavaScriptObjectEnumeration(heap,state){
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectEnumerationState} state @param {bigint} identity @returns {JavaScriptObjectEnumerationTransition} */
 export function resumeJavaScriptObjectEnumerationAllocation(heap,state,identity){
  const error=readJavaScriptObjectEnumerationStateError(heap,state);if(error!==''||state.phase!=='allocate'&&state.phase!=='pair allocation')return {$:'objectEnumerationInvalid',heap,reason:error||'Object enumeration allocation retains its actual pending phase'};
- const allocated=allocateJavaScriptArray(heap,identity,state.prototype,state.phase==='allocate'?state.values.length:2);if(allocated.$==='arrayResourceLimit')return {$:'objectEnumerationResourceLimit',heap:allocated.heap,state,reason:allocated.reason};if(allocated.$!=='arrayNormal')return {$:'objectEnumerationInvalid',heap:allocated.heap,reason:allocated.$==='arrayInvalid'||allocated.$==='arrayError'?allocated.reason:'Object enumeration allocation requires its actual fresh Array'};
- return {$:'objectEnumerationContinue',heap:allocated.heap,state:state.phase==='allocate'?{...state,phase:'output write',target:allocated.value}:{...state,phase:'pair write',pair:allocated.value}};
+ const allocated = allocateJavaScriptArray(heap, identity, state.prototype, state.phase === 'allocate' ? state.values.length : 2);
+ switch (allocated.$) {
+  case 'arrayResourceLimit':
+   return {$:'objectEnumerationResourceLimit', heap:allocated.heap, state, reason:allocated.reason};
+  case 'arrayInvalid':
+  case 'arrayError':
+   return {$:'objectEnumerationInvalid', heap:allocated.heap, reason:allocated.reason};
+  case 'arrayNormal':
+   return {$:'objectEnumerationContinue', heap:allocated.heap, state:state.phase === 'allocate'
+    ? {...state, phase:'output write', target:allocated.value}
+    : {...state, phase:'pair write', pair:allocated.value}};
+  default:
+   return {$:'objectEnumerationInvalid', heap:allocated.heap, reason:'Object enumeration allocation requires its actual fresh Array'};
+ }
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectEnumerationState} state @param {JavaScriptSemanticCompletion} completion @returns {JavaScriptObjectEnumerationTransition} */
 export function resumeJavaScriptObjectEnumerationGetter(heap,state,completion){

@@ -53,7 +53,8 @@ export function beginJavaScriptSynchronousIterator(heap,input,iteratorKey){
 export function beginJavaScriptSynchronousIteratorStep(heap,record,readValue=true){
  const error=readJavaScriptSynchronousIteratorRecordError(heap,record);if(error!=='')return {$:'iteratorProtocolInvalid',heap,reason:error};
  if(typeof readValue!=='boolean')return {$:'iteratorProtocolInvalid',heap,reason:'iterator advancement retains its actual value-versus-elision choice'};
- const state={...createJavaScriptIteratorProtocolState('step','next call',record.iterator,{$:'undefined'},record,{$:'iteratorCompletion',kind:'normal',value:{$:'undefined'},target:-1}),...(readValue?{}:{readValue:false})};
+ const base=createJavaScriptIteratorProtocolState('step','next call',record.iterator,{$:'undefined'},record,{$:'iteratorCompletion',kind:'normal',value:{$:'undefined'},target:-1});
+ const state=readValue?base:{...base,readValue:false};
  return record.done?{$:'iteratorProtocolStep',heap,record:{...record},done:true,value:{$:'undefined'}}:{$:'iteratorProtocolContinue',heap,state};
 }
 /** The caller decides whether an unfinished record needs closing. This exact

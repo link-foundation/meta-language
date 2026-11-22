@@ -4,7 +4,7 @@ import {readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet} from './java
 import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
-import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
+import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact} from './javascript-array-species.js';
 import {allocateJavaScriptArray,testJavaScriptArrayValue} from './javascript-arrays.js';
 import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.js';
 import {readJavaScriptObjectSpreadStateError,stepJavaScriptObjectSpread,resumeJavaScriptObjectSpread} from './javascript-object-spread.js';
@@ -22,9 +22,8 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
  * {$:'arrayConcatenationError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'arrayConcatenationInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'arrayConcatenationResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptArrayConcatenationState,reason:string}} JavaScriptArrayConcatenationTransition */
-const absent={$:'undefined'},lengthKey={$:'text',units:[108,101,110,103,116,104]},maximumIndex=9007199254740991;
 /** @param {JavaScriptArrayConcatenationCall} actual @param {{callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}|undefined} expected @returns {boolean} */
-function testJavaScriptArrayConcatenationCall(actual,expected){return expected!==undefined&&testJavaScriptSemanticSameValue(actual.callee,expected.callee)&&testJavaScriptSemanticSameValue(actual.receiver,expected.receiver)&&actual.arguments.length===expected.arguments.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,expected.arguments[index]??absent));}
+function testJavaScriptArrayConcatenationCall(actual,expected){return expected!==undefined&&testJavaScriptSemanticSameValue(actual.callee,expected.callee)&&testJavaScriptSemanticSameValue(actual.receiver,expected.receiver)&&actual.arguments.length===expected.arguments.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,expected.arguments[index]??{$:'undefined'}));}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptArrayConcatenationState} state @returns {string} */
 export function readJavaScriptArrayConcatenationStateError(heap,directory,state){
  const directoryError=readJavaScriptArraySpeciesDirectoryError(heap,directory);if(directoryError!=='')return directoryError;
@@ -35,12 +34,12 @@ export function readJavaScriptArrayConcatenationStateError(heap,directory,state)
  if(!['initialize','species','allocate','construct','select','spreadability','spreadability getter','length','length getter','conversion','primitive','ready','element getter','write','finish'].includes(state.phase))return 'concatenation retains its actual continuation phase';
  const creation=['initialize','species','allocate','construct'].includes(state.phase),active=!creation&&!['select','finish'].includes(state.phase);
  if(creation&&(state.itemPosition!==0||state.outputIndex!==0||state.item.$!=='undefined'||state.target.$!=='undefined'))return 'concatenation completes species creation before selecting any input';
- if(active&&(state.itemPosition>state.arguments.length||!testJavaScriptSemanticSameValue(state.item,state.itemPosition===0?state.receiver:state.arguments[state.itemPosition-1]??absent)))return 'concatenation retains the actual selected receiver or argument';
+ if(active&&(state.itemPosition>state.arguments.length||!testJavaScriptSemanticSameValue(state.item,state.itemPosition===0?state.receiver:state.arguments[state.itemPosition-1]??{$:'undefined'})))return 'concatenation retains the actual selected receiver or argument';
  if(active&&state.item.$!=='object'&&!(state.phase==='write'&&!state.spread))return 'only a scalar concatenation write accepts a primitive item';
  if(['length','length getter','conversion','primitive','ready','element getter'].includes(state.phase)&&!state.spread)return 'concatenation spread work retains its completed spreadability decision';
- if(['ready','element getter','write'].includes(state.phase)&&state.spread&&(state.length>maximumIndex-state.itemStart||state.outputIndex!==state.itemStart+state.index))return 'concatenation checks the full saved spread length before indexed work';
+ if(['ready','element getter','write'].includes(state.phase)&&state.spread&&(state.length>9007199254740991-state.itemStart||state.outputIndex!==state.itemStart+state.index))return 'concatenation checks the full saved spread length before indexed work';
  if(['element getter','write'].includes(state.phase)&&state.spread&&state.index>=state.length)return 'concatenation spread work retains an in-range input coordinate';
- if(state.phase==='write'&&!state.spread&&(state.outputIndex!==state.itemStart||state.outputIndex>=maximumIndex||!testJavaScriptSemanticSameValue(state.value,state.item)))return 'concatenation scalar writes retain the selected item and checked output coordinate';
+ if(state.phase==='write'&&!state.spread&&(state.outputIndex!==state.itemStart||state.outputIndex>=9007199254740991||!testJavaScriptSemanticSameValue(state.value,state.item)))return 'concatenation scalar writes retain the selected item and checked output coordinate';
  if(state.phase==='conversion'){
   if(state.conversion===undefined||state.conversion.hint!=='number'||!testJavaScriptSemanticSameValue(state.conversion.receiver,state.input)||!testJavaScriptSemanticSameValue(state.conversion.exoticKey,state.exoticKey))return 'concatenation length conversion retains the actual input and number hint';
   const error=readJavaScriptPrimitiveConversionStateError(heap,state.conversion);if(error!=='')return error;
@@ -51,19 +50,19 @@ export function readJavaScriptArrayConcatenationStateError(heap,directory,state)
  if(!creation&&state.target.$!=='object')return 'concatenation retains its actual constructed result Object';
  if(state.phase==='allocate'&&(state.allocationPrototype===undefined||!testJavaScriptSemanticSameValue(state.allocationPrototype,directory.arrayPrototype)))return 'concatenation fallback retains its actual realm Array prototype';
  if(state.phase==='construct'){
-  const fact=state.constructorFact,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor??absent),actual=classification.$==='arrayConstructorKnown'?classification.fact:undefined;
-  if(state.constructor?.$!=='object'||fact===undefined||!fact.constructable||actual===undefined||!testJavaScriptSemanticSameValue(state.constructor,state.species?.candidate??absent)||state.constructor.identity!==fact.identity||actual.constructable!==fact.constructable||actual.realm!==fact.realm||actual.intrinsicArray!==fact.intrinsicArray||actual.intrinsicKind!==fact.intrinsicKind)return 'concatenation construction retains the actual selected constructor fact';
+  const fact=state.constructorFact,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor??{$:'undefined'}),actual=readJavaScriptKnownArrayConstructorFact(classification);
+  if(state.constructor?.$!=='object'||fact===undefined||!fact.constructable||actual===undefined||!testJavaScriptSemanticSameValue(state.constructor,state.species?.candidate??{$:'undefined'})||state.constructor.identity!==fact.identity||actual.constructable!==fact.constructable||actual.realm!==fact.realm||actual.intrinsicArray!==fact.intrinsicArray||actual.intrinsicKind!==fact.intrinsicKind)return 'concatenation construction retains the actual selected constructor fact';
  }
  if((state.phase==='finish')!==(state.assignment!==undefined))return 'concatenation final Set retains only its actual assignment child';
  if(state.phase==='finish'&&state.itemPosition!==state.arguments.length+1)return 'concatenation final Set follows every actual input item';
- if(state.assignment!==undefined){const child=state.assignment,error=readJavaScriptObjectSpreadStateError(heap,child);if(error!=='')return error;if(child.operation!=='assignment'||!testJavaScriptSemanticSameValue(child.target,state.target)||!testJavaScriptSemanticSameValue(child.input,state.receiver)||!testJavaScriptSemanticSameValue(child.exoticKey??absent,state.exoticKey)||child.keys.length!==1||!testJavaScriptSemanticSameValue(child.keys[0]??absent,lengthKey)||child.excluded.length!==0||!(child.position===0&&['write','setter','array definition'].includes(child.phase)||child.position===1&&child.phase==='read')||child.position===0&&!testJavaScriptSemanticSameValue(child.value,{$:'number',value:state.outputIndex})||child.assignment!==undefined&&!testJavaScriptSemanticSameValue(child.assignment.definition.descriptor.value,{$:'number',value:state.outputIndex}))return 'concatenation final Set retains its actual result, length key and output count';}
+ if(state.assignment!==undefined){const child=state.assignment,error=readJavaScriptObjectSpreadStateError(heap,child);if(error!=='')return error;if(child.operation!=='assignment'||!testJavaScriptSemanticSameValue(child.target,state.target)||!testJavaScriptSemanticSameValue(child.input,state.receiver)||!testJavaScriptSemanticSameValue(child.exoticKey??{$:'undefined'},state.exoticKey)||child.keys.length!==1||!testJavaScriptSemanticSameValue(child.keys[0]??{$:'undefined'},{$:'text',units:[108,101,110,103,116,104]})||child.excluded.length!==0||!(child.position===0&&['write','setter','array definition'].includes(child.phase)||child.position===1&&child.phase==='read')||child.position===0&&!testJavaScriptSemanticSameValue(child.value,{$:'number',value:state.outputIndex})||child.assignment!==undefined&&!testJavaScriptSemanticSameValue(child.assignment.definition.descriptor.value,{$:'number',value:state.outputIndex}))return 'concatenation final Set retains its actual result, length key and output count';}
  if(state.call!==undefined){
   for(const value of [state.call.callee,state.call.receiver,...state.call.arguments]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
   if(state.call.callee.$!=='object'||!state.call.callee.callable)return 'concatenation child calls retain actual callable identities';
   if(['spreadability getter','length getter','element getter'].includes(state.phase)){if(!testJavaScriptSemanticSameValue(state.call.receiver,state.item)||state.call.arguments.length!==0)return 'concatenation getters retain the actual selected item receiver';}
   else if(state.phase==='species'){if(!testJavaScriptArrayConcatenationCall(state.call,state.species?.call))return 'concatenation species retains its selected nested getter';}
   else if(state.phase==='finish'){if(!testJavaScriptArrayConcatenationCall(state.call,state.assignment?.call))return 'concatenation final Set retains its selected nested setter';}
-  else if(state.phase==='conversion'&&state.conversion!==undefined){const child=state.conversion,exotic=child.phase==='exoticCall';if(!['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(child.phase)||!testJavaScriptSemanticSameValue(state.call.receiver,child.receiver)||state.call.arguments.length!==(exotic?1:0)||exotic&&!testJavaScriptSemanticSameValue(state.call.arguments[0]??absent,{$:'text',units:[110,117,109,98,101,114]}))return 'concatenation scalar calls retain their selected conversion operands';}
+  else if(state.phase==='conversion'&&state.conversion!==undefined){const child=state.conversion,exotic=child.phase==='exoticCall';if(!['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(child.phase)||!testJavaScriptSemanticSameValue(state.call.receiver,child.receiver)||state.call.arguments.length!==(exotic?1:0)||exotic&&!testJavaScriptSemanticSameValue(state.call.arguments[0]??{$:'undefined'},{$:'text',units:[110,117,109,98,101,114]}))return 'concatenation scalar calls retain their selected conversion operands';}
   else return 'concatenation retains child calls only in the actual suspended phase';
  }else if(['spreadability getter','length getter','element getter'].includes(state.phase)||state.phase==='conversion'&&state.conversion!==undefined&&['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(state.conversion.phase)||state.phase==='species'&&state.species?.call!==undefined||state.phase==='finish'&&state.assignment?.call!==undefined)return 'concatenation retains its actual selected child';
  return '';
@@ -74,7 +73,7 @@ function requestJavaScriptArrayConcatenationCall(heap,state,callee,receiver,argu
 function requestJavaScriptArrayConcatenationAllocation(heap,state){
  let properties=0;for(const object of heap.objects)properties+=object.properties.length;
  if(heap.objects.length>=4096||properties>=16384)return {$:'arrayConcatenationResourceLimit',heap,state,reason:'concatenation result allocation exceeds shared storage budget'};
- return {$:'arrayConcatenationAllocate',heap,state,prototype:state.allocationPrototype??absent,length:0};
+ return {$:'arrayConcatenationAllocate',heap,state,prototype:state.allocationPrototype??{$:'undefined'},length:0};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayConcatenationState} state @param {JavaScriptArraySpeciesTransition} transition @returns {JavaScriptArrayConcatenationTransition} */
 function continueJavaScriptArrayConcatenationSpecies(heap,state,transition){
@@ -101,10 +100,11 @@ function continueJavaScriptArrayConcatenationLength(heap,state,transition){
   case 'scalarContinuation':return {$:'arrayConcatenationContinue',heap,state:{...base,phase:'conversion',conversion:transition.state}};
   case 'scalarCall':return requestJavaScriptArrayConcatenationCall(heap,{...base,phase:'conversion',conversion:transition.state},transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':{
-   if(transition.value.$!=='number')return {$:'arrayConcatenationInvalid',heap,reason:'concatenation length retains its actual ToNumber result'};
-   const length=readJavaScriptArrayLikeLength(transition.value.value);
-   if(length>maximumIndex-state.outputIndex)return {$:'arrayConcatenationError',heap,errorClass:'TypeError',reason:'concat exceeds maximum safe output length'};
-   return {$:'arrayConcatenationContinue',heap,state:{...base,phase:'ready',length,input:absent}};
+   const primitive=transition.value;
+   if(primitive.$!=='number')return {$:'arrayConcatenationInvalid',heap,reason:'concatenation length retains its actual ToNumber result'};
+   const length=readJavaScriptArrayLikeLength(primitive.value);
+   if(length>9007199254740991-state.outputIndex)return {$:'arrayConcatenationError',heap,errorClass:'TypeError',reason:'concat exceeds maximum safe output length'};
+   return {$:'arrayConcatenationContinue',heap,state:{...base,phase:'ready',length,input:{$:'undefined'}}};
   }
   case 'scalarThrow':return {$:'arrayConcatenationThrow',heap,value:transition.value};
   case 'scalarIntrinsicError':return {$:'arrayConcatenationError',heap,errorClass:transition.errorClass,reason:transition.reason};
@@ -130,12 +130,12 @@ function continueJavaScriptArrayConcatenationSpreadability(heap,state,value){
  let spread;
  if(value.$==='undefined'){const brand=testJavaScriptArrayValue(heap,state.item);if(brand.error!=='')return {$:'arrayConcatenationInvalid',heap,reason:brand.error};spread=brand.array;}
  else spread=convertJavaScriptSemanticBoolean(value);
- if(!spread){if(state.outputIndex>=maximumIndex)return {$:'arrayConcatenationError',heap,errorClass:'TypeError',reason:'concat exceeds maximum safe output length'};return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'write',spread:false,value:state.item}};}
+ if(!spread){if(state.outputIndex>=9007199254740991)return {$:'arrayConcatenationError',heap,errorClass:'TypeError',reason:'concat exceeds maximum safe output length'};return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'write',spread:false,value:state.item}};}
  return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'length',spread:true}};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue[]} arguments_ @param {JavaScriptSemanticValue} spreadableKey @param {JavaScriptSemanticValue} exoticKey @returns {JavaScriptArrayConcatenationTransition} */
 export function beginJavaScriptArrayConcatenation(heap,directory,receiver,arguments_,spreadableKey,exoticKey){
- const state={$:'arrayConcatenationState',receiver,arguments:[...arguments_],spreadableKey,exoticKey,itemPosition:0,item:absent,itemStart:0,length:0,index:0,outputIndex:0,spread:false,target:absent,value:absent,input:absent,phase:'initialize'};
+ const state={$:'arrayConcatenationState',receiver,arguments:[...arguments_],spreadableKey,exoticKey,itemPosition:0,item:{$:'undefined'},itemStart:0,length:0,index:0,outputIndex:0,spread:false,target:{$:'undefined'},value:{$:'undefined'},input:{$:'undefined'},phase:'initialize'};
  const error=readJavaScriptArrayConcatenationStateError(heap,directory,state);return error===''?continueJavaScriptArrayConcatenationSpecies(heap,state,beginJavaScriptArraySpeciesSelection(heap,directory,receiver,0)):{$:'arrayConcatenationInvalid',heap,reason:error};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptArrayConcatenationState} state @returns {JavaScriptArrayConcatenationTransition} */
@@ -150,15 +150,15 @@ export function stepJavaScriptArrayConcatenation(heap,directory,state){
  if(state.phase==='primitive')return continueJavaScriptArrayConcatenationLength(heap,state,finishJavaScriptScalarPrimitive('coerce primitive number',state.input));
  if(state.phase==='finish')return state.assignment===undefined?{$:'arrayConcatenationInvalid',heap,reason:'concatenation retains final Set'}:continueJavaScriptArrayConcatenationFinalSet(state,stepJavaScriptObjectSpread(heap,state.assignment));
  if(state.phase==='select'){
-  if(state.itemPosition===state.arguments.length+1){const assignment={$:'objectSpreadState',target:state.target,input:state.receiver,excluded:[],keys:[lengthKey],position:0,phase:'write',value:{$:'number',value:state.outputIndex},callee:absent,operation:'assignment',exoticKey:state.exoticKey};return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'finish',assignment}};}
-  const item=state.itemPosition===0?state.receiver:state.arguments[state.itemPosition-1]??absent,selected={...state,item,itemStart:state.outputIndex,length:0,index:0,spread:false,value:absent,input:absent};
+  if(state.itemPosition===state.arguments.length+1){const assignment={$:'objectSpreadState',target:state.target,input:state.receiver,excluded:[],keys:[{$:'text',units:[108,101,110,103,116,104]}],position:0,phase:'write',value:{$:'number',value:state.outputIndex},callee:{$:'undefined'},operation:'assignment',exoticKey:state.exoticKey};return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'finish',assignment}};}
+  const item=state.itemPosition===0?state.receiver:state.arguments[state.itemPosition-1]??{$:'undefined'},selected={...state,item,itemStart:state.outputIndex,length:0,index:0,spread:false,value:{$:'undefined'},input:{$:'undefined'}};
   if(item.$==='object')return {$:'arrayConcatenationContinue',heap,state:{...selected,phase:'spreadability'}};
-  if(state.outputIndex>=maximumIndex)return {$:'arrayConcatenationError',heap,errorClass:'TypeError',reason:'concat exceeds maximum safe output length'};
+  if(state.outputIndex>=9007199254740991)return {$:'arrayConcatenationError',heap,errorClass:'TypeError',reason:'concat exceeds maximum safe output length'};
   return {$:'arrayConcatenationContinue',heap,state:{...selected,phase:'write',value:item}};
  }
  if(state.phase==='spreadability'||state.phase==='length'){
   if(state.item.$!=='object')return {$:'arrayConcatenationInvalid',heap,reason:'concatenation property reads retain actual Object items'};
-  const spreadability=state.phase==='spreadability',get=planJavaScriptOrdinaryGet(heap,state.item.identity,spreadability?state.spreadableKey:lengthKey,state.item);
+  const spreadability=state.phase==='spreadability',get=planJavaScriptOrdinaryGet(heap,state.item.identity,spreadability?state.spreadableKey:{$:'text',units:[108,101,110,103,116,104]},state.item);
   if(get.error!=='')return {$:'arrayConcatenationInvalid',heap,reason:get.error};
   if(get.action==='call')return requestJavaScriptArrayConcatenationCall(heap,{...state,phase:spreadability?'spreadability getter':'length getter'},get.callee,get.receiver,get.arguments);
   if(get.action!=='value')return {$:'arrayConcatenationInvalid',heap,reason:'concatenation retains actual spreadability or length Get completion'};
@@ -169,7 +169,7 @@ export function stepJavaScriptArrayConcatenation(heap,directory,state){
   if(written.$==='indexedPropertyResourceLimit')return {$:'arrayConcatenationResourceLimit',heap:written.heap,state,reason:written.reason};
   if(written.$==='indexedPropertyError')return {$:'arrayConcatenationError',heap:written.heap,errorClass:'TypeError',reason:written.reason};
   if(written.$==='indexedPropertyInvalid')return {$:'arrayConcatenationInvalid',heap:written.heap,reason:written.reason};
-  return {$:'arrayConcatenationContinue',heap:written.heap,state:{...state,phase:state.spread?'ready':'select',index:state.spread?state.index+1:0,itemPosition:state.itemPosition+(state.spread?0:1),outputIndex:state.outputIndex+1,value:absent}};
+  return {$:'arrayConcatenationContinue',heap:written.heap,state:{...state,phase:state.spread?'ready':'select',index:state.spread?state.index+1:0,itemPosition:state.itemPosition+(state.spread?0:1),outputIndex:state.outputIndex+1,value:{$:'undefined'}}};
  }
  if(state.phase!=='ready'||state.item.$!=='object')return {$:'arrayConcatenationInvalid',heap,reason:'concatenation resumes only its actual selected child'};
  if(state.index===state.length)return {$:'arrayConcatenationContinue',heap,state:{...state,phase:'select',itemPosition:state.itemPosition+1}};

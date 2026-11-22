@@ -74,7 +74,12 @@ export function stepJavaScriptPropertyReflection(heap,state){
  if(state.phase==='target allocation'||state.phase==='descriptor allocation')return {$:'propertyReflectionAllocate',heap,state,prototype:state.phase==='descriptor allocation'||plural?state.objectPrototype:state.arrayPrototype};
  if(state.phase==='array write'){
   if(state.position===state.keys.length)return {$:'propertyReflectionCompleted',heap,value:state.target};const key=state.keys[state.position];if(key===undefined)return {$:'propertyReflectionInvalid',heap,reason:'reflection retains its actual selected key'};
-  const write=createJavaScriptIndexedDataProperty(heap,state.target,state.position,key);if(write.$!=='indexedPropertyCreated')return write.$==='indexedPropertyResourceLimit'?{$:'propertyReflectionResourceLimit',heap:write.heap,state,reason:write.reason}:{$:'propertyReflectionInvalid',heap:write.heap,reason:write.reason};return {$:'propertyReflectionContinue',heap:write.heap,state:{...state,position:state.position+1}};
+  const write=createJavaScriptIndexedDataProperty(heap,state.target,state.position,key);
+  switch(write.$){
+   case 'indexedPropertyCreated':return {$:'propertyReflectionContinue',heap:write.heap,state:{...state,position:state.position+1}};
+   case 'indexedPropertyResourceLimit':return {$:'propertyReflectionResourceLimit',heap:write.heap,state,reason:write.reason};
+   default:return {$:'propertyReflectionInvalid',heap:write.heap,reason:write.reason};
+  }
  }
  if(state.phase==='select'){
   if(state.position===state.keys.length)return {$:'propertyReflectionCompleted',heap,value:single?{$:'undefined'}:state.target};

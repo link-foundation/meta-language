@@ -1,8 +1,8 @@
 // ECMAScript 2025, edition 16, CanBeHeldWeakly and WeakMap/WeakSet methods.
 // Symbol classification comes from actual registry authority, never spelling.
-import {readJavaScriptWeakCollectionOperationKind as classifyWeakCollectionOperation} from './javascript-weak-collection-operation-rules.js';
+import {readJavaScriptWeakCollectionMethodOwner} from './javascript-weak-collection-operation-rules.js';
 /** @param {string} operation @returns {string} */
-export function readJavaScriptWeakCollectionOperationKind(operation){return classifyWeakCollectionOperation(operation);}
+export function readJavaScriptWeakCollectionOperationKind(operation){return readJavaScriptWeakCollectionMethodOwner(operation);}
 /** Missing facts remain an implementation boundary for OLD heap profiles;
  * they never certify an unregistered Symbol or invent a native TypeError.
  * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} value @returns {string} */

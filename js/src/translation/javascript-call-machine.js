@@ -28,7 +28,7 @@ import {allocateJavaScriptStringIterator,beginJavaScriptStringIteratorResult} fr
 import {provideJavaScriptArraySpreadPrimitivePrototype,beginJavaScriptArraySpread,stepJavaScriptArraySpread,resumeJavaScriptArraySpread,readJavaScriptArraySpreadStateError} from './javascript-array-spread.js';
 import {allocateJavaScriptArrayIterator,beginJavaScriptArrayIteratorNext,stepJavaScriptArrayIteratorNext,resumeJavaScriptArrayIteratorCall,readJavaScriptArrayIteratorStateError,finishJavaScriptArrayIteratorCursor} from './javascript-array-iteration.js';
 import {beginJavaScriptSpeciesConstruction,stepJavaScriptSpeciesConstruction,resumeJavaScriptSpeciesConstructionAllocation,resumeJavaScriptSpeciesConstructionCall,readJavaScriptSpeciesConstructionStateError} from './javascript-species-construction.js';
-import {classifyJavaScriptArraySpeciesConstructor,readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
+import {readJavaScriptKnownArrayConstructorFact,classifyJavaScriptArraySpeciesConstructor,readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
 import {testJavaScriptArrayTransformOperation,beginJavaScriptArrayTransform,stepJavaScriptArrayTransform,resumeJavaScriptArrayTransformCall,resumeJavaScriptArrayTransformAllocation,resumeJavaScriptArrayTransformConstruction,readJavaScriptArrayTransformStateError} from './javascript-array-transform.js';
 import {testJavaScriptArraySearchOperation,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptArraySearch,stepJavaScriptArraySearch,resumeJavaScriptArraySearch,readJavaScriptArraySearchStateError} from './javascript-array-search.js';
@@ -68,7 +68,6 @@ import {testJavaScriptArrayLength} from './javascript-array-objects.js';
 /** @typedef {{$:'callCompletion',kind:string,value:JavaScriptSemanticValue,target:number,depth:number}} JavaScriptCallCompletion */
 /** @typedef {{$:'iteratorOperation',destination:number,done:number,slot:number,operation:string,realm:bigint}} JavaScriptCallIteratorOperation */
 /** @typedef {{$:'callHandler',target:number,destination:number} | {$:'callFinallyHandler',target:number} | {$:'callDeferredCompletion',completion:JavaScriptCallCompletion}} JavaScriptCallHandler */
-/** @typedef {JavaScriptCallMachineTransition | {$:'callReturn',machine:JavaScriptCallMachine,value:JavaScriptSemanticValue}} JavaScriptCallCompletionTransition */
 /** @typedef {{$:'callIdle'} | {$:'waitCall',destination:number} |
  * {$:'waitGet',destination:number} | {$:'waitSet',destination:number} | {$:'waitHostSet',destination:number} |
  * {$:'waitArgumentRest',destination:number,realm:bigint,state:JavaScriptArgumentRestState} |
@@ -137,6 +136,13 @@ import {testJavaScriptArrayLength} from './javascript-array-objects.js';
  * {$:'machineInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'machineResourceLimit',machine:JavaScriptCallMachine,reason:string}} JavaScriptCallMachineTransition
  */
+/**
+ * @typedef {{$:'machineContinue',machine:JavaScriptCallMachine} |
+ * {$:'machineThrow',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
+ * {$:'machineInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
+ * {$:'machineResourceLimit',machine:JavaScriptCallMachine,reason:string} |
+ * {$:'callReturn',machine:JavaScriptCallMachine,value:JavaScriptSemanticValue}} JavaScriptCallCompletionTransition
+ */
 /** @typedef {{$:'callExecution',transition:JavaScriptCallMachineTransition,steps:number,objectIdentitiesUsed:number}} JavaScriptCallExecution */
 
 /** Bounded, pure execution over the same machine. Identities are supplied by
@@ -154,19 +160,24 @@ export function runJavaScriptCallMachine(program,machine,limit,objectIdentities)
  let current={$:'machineContinue',machine};
  let steps=0,used=0;
  while(steps<limit){
-  if(current.$==='machineContinue')current=stepJavaScriptCallMachine(program,current.machine);
-  else if(current.$==='machineAllocateObject'){
+  const active=readJavaScriptCallExecutionTransition(current);
+  if(active.$==='machineContinue')current=stepJavaScriptCallMachine(program,active.machine);
+  else if(active.$==='machineAllocateObject'){
    const identity=objectIdentities[used];
    if(identity===undefined)return {$:'callExecution',transition:current,steps,objectIdentitiesUsed:used};
-   const next=resumeJavaScriptCallObjectAllocation(program,current.machine,identity);
+   const next=resumeJavaScriptCallObjectAllocation(program,active.machine,identity);
    if(next.$==='machineContinue')used+=1;
    current=next;
   }else return {$:'callExecution',transition:current,steps,objectIdentitiesUsed:used};
   steps+=1;
  }
- if(current.$==='machineContinue')current={$:'machineResourceLimit',machine:current.machine,reason:'execution exhausted its explicit transition budget'};
+ const final=readJavaScriptCallExecutionTransition(current);
+ if(final.$==='machineContinue')current={$:'machineResourceLimit',machine:final.machine,reason:'execution exhausted its explicit transition budget'};
  return {$:'callExecution',transition:current,steps,objectIdentitiesUsed:used};
 }
+
+/** @param {JavaScriptCallMachineTransition} transition @returns {JavaScriptCallMachineTransition} */
+function readJavaScriptCallExecutionTransition(transition){return transition;}
 
 /** @param {number} value @param {number} limit @returns {boolean} */
 export function testJavaScriptCallCoordinate(value,limit){return testJavaScriptCallCodeCoordinate(value,limit);}
@@ -264,7 +275,8 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'collectionIteratorAllocate':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind)||!['keys','values','entries'].includes(instruction.iterationKind)||instruction.kind==='String'&&(instruction.iterationKind!=='values'||instruction.input===undefined)||instruction.kind!=='String'&&instruction.input!==undefined)return 'iterator allocation retains its actual standard operation kind and owner';break;
         case 'argumentRest':if(instruction.realm!==fn.realm||!testJavaScriptCallCoordinate(instruction.from,1048577)||instruction.destination!==instruction.from+1||instruction.destination>fn.parameters)return 'argument rest retains its actual formal parameter coordinate and source realm';break;
         case 'iteratorProtocol':if(!['acquire','step','close'].includes(instruction.operation)||instruction.realm!==fn.realm||!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.destination===0||instruction.done===0||instruction.destination===instruction.done||instruction.readValue!==undefined&&(instruction.operation!=='step'||typeof instruction.readValue!=='boolean'))return 'iterator protocols retain actual source regions, realms and distinct private result coordinates';break;
-        case 'argumentListOpen':case 'argumentListAppend':case 'argumentListCall':if(!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.$==='argumentListCall'&&!['call','collection','error class','ordinary class','construct'].includes(instruction.mode))return 'Call argument Lists retain actual source slots and operation kinds';break;
+        case 'argumentListOpen':case 'argumentListAppend':if(!testJavaScriptIteratorRegionSlot(instruction.slot))return 'Call argument Lists retain actual source slots and operation kinds';break;
+        case 'argumentListCall':if(!testJavaScriptIteratorRegionSlot(instruction.slot)||!['call','collection','error class','ordinary class','construct'].includes(instruction.mode))return 'Call argument Lists retain actual source slots and operation kinds';break;
         case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
         case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String','WeakMap','WeakSet'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
         case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
@@ -372,47 +384,9 @@ export function readJavaScriptCallMachineError(program,machine){
     if(frameError!=='')return frameError;
     if(frame.activeJoin!==undefined&&machine.frames.slice(0,index).some(parent=>parent.activeJoin!==undefined&&readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity)?.realm===fn.realm&&testJavaScriptSemanticSameValue(parent.activeJoin,frame.activeJoin)))return 'join activations in the same realm cannot own the same receiver guard';
     const selectedParent=machine.frames[index-1];
-    if(selectedParent?.pending.$==='waitDefinition'&&selectedParent.pending.state.call!==undefined){const call=selectedParent.pending.state.call,error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;}
-    if(selectedParent?.pending.$==='waitPropertyDefinitions'){
-      const call=selectedParent.pending.state.call;if(call===undefined)return 'bulk definitions retain their actual selected child';const error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;
-    }
-    if(selectedParent?.pending.$==='waitInstanceOf'){
-      const call=selectedParent.pending.state.call;if(call===undefined)return 'instanceof child retains its actual selected call';const error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;
-    }
-    if(selectedParent?.pending.$==='waitObjectEnumeration'){
-      const state=selectedParent.pending.state;if(state.phase!=='getter')return 'Object enumeration child retains its actual selected getter';const error=readJavaScriptSelectedCallFrameError(fn,frame,state.callee,state.input,[]);if(error!=='')return error;
-    }
-    if(selectedParent?.pending.$==='waitIteratorProtocol'){
-      const call=selectedParent.pending.state.call;if(call===undefined)return 'iterator region child retains its actual selected callback';const error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;
-    }
-    if(selectedParent?.pending.$==='waitArraySpread'){
-      const call=selectedParent.pending.state.protocol?.call;if(call===undefined)return 'Array spread child retains its actual selected iterator callback';const error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;
-    }
-    if(selectedParent?.pending.$==='waitArrayCreation'){
-      const pending=selectedParent.pending,call=pending.construction?.call??pending.state.call;if(call===undefined)return 'an Array creation child retains its actual selected callback or constructor body';const invalid=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(invalid!=='')return invalid;
-      if(pending.construction?.call?.constructing&&!testJavaScriptSemanticSameValue(frame.newTarget??{$:'undefined'},pending.construction.call.newTarget))return 'an Array creation constructor retains its actual newTarget';
-    }
-    if(selectedParent?.pending.$==='waitConstruction'){
-      const call=selectedParent.pending.state.call;if(call===undefined)return 'a construction child retains its actual selected call';const invalid=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(invalid!=='')return invalid;
-      if(call.constructing&&!testJavaScriptSemanticSameValue(frame.newTarget??{$:'undefined'},call.newTarget))return 'a construction body retains its actual newTarget';
-    }
-    if(selectedParent?.pending.$==='waitFunctionBind'){
-      const call=selectedParent.pending.state.call;if(call===undefined)return 'a binding child retains its actual metadata getter';const error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;
-    }
-    if(selectedParent?.pending.$==='waitCall'){
-      const owner=readJavaScriptExecutableCallFunction(program,heap,selectedParent.identity),instruction=owner?.instructions[selectedParent.position-1];if(instruction?.$==='boundFunctionCall'){
-        const bound=heap.objects[findJavaScriptOrdinaryObject(heap.objects,selectedParent.identity)];if(bound?.$!=='boundFunctionObject'||bound.boundArguments.length+selectedParent.arguments.length>1048576)return 'a bound call child retains its actual complete stored and supplied argument Lists';const error=readJavaScriptSelectedCallFrameError(fn,frame,bound.boundTarget,bound.boundThis,bound.boundArguments.concat(selectedParent.arguments));if(error!=='')return error;
-      }
-    }
-    if(selectedParent!==undefined&&(selectedParent.pending.$==='waitObjectFromEntries'||selectedParent.pending.$==='waitCollectionForEach'||selectedParent.pending.$==='waitArrayCallback'||selectedParent.pending.$==='waitArraySearch'||selectedParent.pending.$==='waitArrayTransform'||selectedParent.pending.$==='waitArraySlice'||selectedParent.pending.$==='waitArrayConcatenation'||selectedParent.pending.$==='waitArrayIteratorNext')){
-      const call=(selectedParent.pending.$==='waitArrayTransform'||selectedParent.pending.$==='waitArraySlice'||selectedParent.pending.$==='waitArrayConcatenation')&&selectedParent.pending.construction!==undefined?selectedParent.pending.construction.call:selectedParent.pending.state.call;if(call===undefined)return 'an Array operation child retains its actual selected call';
-      const error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;
-    }
-    const spreadParent=machine.frames[index-1];
-    if(spreadParent!==undefined&&spreadParent.pending.$==='waitObjectSpread'){
-      const state=spreadParent.pending.state;
-      if(state.call!==undefined){const error=readJavaScriptSelectedCallFrameError(fn,frame,state.call.callee,state.call.receiver,state.call.arguments);if(error!=='')return error;}
-      else {const callee=state.callee,receiver=fn.receiverMode==='lexical'?fn.lexicalReceiver:state.input;if(state.phase!=='getter'||callee.$!=='object'||callee.identity!==frame.identity||frame.arguments.length!==0||!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},receiver))return 'an object spread child retains its actual getter, receiver and empty arguments';}
+    if(selectedParent!==undefined){
+      const selectedError=readJavaScriptSelectedParentCallError(program,machine.heap,selectedParent,fn,frame);
+      if(selectedError!=='')return selectedError;
     }
     if(frame.newTarget!==undefined&&fn.receiverMode!=='lexical'){
       const parent=machine.frames[index-1],caller=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity),instruction=caller===undefined||parent===undefined||parent.position===0?undefined:caller.instructions[parent.position-1];
@@ -428,13 +402,151 @@ export function readJavaScriptCallMachineError(program,machine){
       else if(parent!==undefined&&(parent.pending.$==='waitArrayTransform'||parent.pending.$==='waitArraySlice'||parent.pending.$==='waitArrayConcatenation')&&parent.pending.construction!==undefined){
         const state=parent.pending.construction;if(!testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)||state.phase!=='body'||state.constructor.$!=='object'||state.constructor.identity!==frame.identity||!testJavaScriptSemanticSameValue(state.receiver,frame.registers[0]??{$:'undefined'})||frame.arguments.length!==1||!testJavaScriptSemanticSameValue(frame.arguments[0]??{$:'undefined'},{$:'number',value:state.length}))return 'species source class construction retains its actual pending new operation';
       }else{
-      if(parent===undefined||parent.pending.$!=='waitCall'||instruction===undefined||(instruction.$!=='callClassConstructor'&&instruction.$!=='constructCollection'&&!(instruction.$==='argumentListCall'&&['ordinary class','collection'].includes(instruction.mode)))||instruction.destination!==parent.pending.destination)return 'a constructor frame retains its actual suspended source new operation';
-      const ordinary=instruction.$==='callClassConstructor'||instruction.$==='argumentListCall'&&instruction.mode==='ordinary class';if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)!==ordinary)return 'a constructor frame retains its actual class or standard collection operation';
-      const callee=parent.registers[instruction.callee]??{$:'undefined'},receiver=ordinary?(parent.registers[instruction.receiver]??{$:'undefined'}):{$:'undefined'};
-      if(callee.$!=='object'||callee.identity!==frame.identity||!testJavaScriptSemanticSameValue(receiver,frame.registers[0]??{$:'undefined'}))return 'an ordinary class frame retains its actual new callee and receiver';
-      if(instruction.$!=='argumentListCall'){if(instruction.arguments.length!==frame.arguments.length)return 'an ordinary class frame retains its actual argument list';for(let at=0;at<instruction.arguments.length;at++)if(!testJavaScriptSemanticSameValue(parent.registers[instruction.arguments[at]??-1]??{$:'undefined'},frame.arguments[at]??{$:'undefined'}))return 'ordinary class frames cannot substitute their actual ordered constructor arguments';}
+        if(parent===undefined||parent.pending.$!=='waitCall'||instruction===undefined)return 'a constructor frame retains its actual suspended source new operation';
+        const error=readJavaScriptSuspendedConstructorFrameError(parent,frame,fn,instruction,parent.pending.destination);
+        if(error!=='')return error;
       }
     }
+  }
+  return '';
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} parent @param {JavaScriptCallFunction} fn
+ * @param {JavaScriptCallFrame} frame @returns {string} */
+function readJavaScriptSelectedParentCallError(program,heap,parent,fn,frame){
+ const pending=parent.pending;
+ switch(pending.$){
+  case 'waitDefinition':{
+   const call=pending.state.call;
+   return call===undefined?'':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitPropertyDefinitions':{
+   const call=pending.state.call;
+   return call===undefined?'bulk definitions retain their actual selected child':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitInstanceOf':{
+   const call=pending.state.call;
+   return call===undefined?'instanceof child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitIteratorProtocol':{
+   const call=pending.state.call;
+   return call===undefined?'iterator region child retains its actual selected callback':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitArraySpread':{
+   const call=pending.state.protocol?.call;
+   return call===undefined?'Array spread child retains its actual selected iterator callback':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitFunctionBind':{
+   const call=pending.state.call;
+   return call===undefined?'a binding child retains its actual metadata getter':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitObjectFromEntries':{
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitCollectionForEach':{
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitArrayCallback':{
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitArraySearch':{
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitArrayIteratorNext':{
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitArrayTransform':{
+   const construction=pending.construction;
+   if(construction!==undefined){
+    const call=construction.call;
+    return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+   }
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitArraySlice':{
+   const construction=pending.construction;
+   if(construction!==undefined){
+    const call=construction.call;
+    return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+   }
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitArrayConcatenation':{
+   const construction=pending.construction;
+   if(construction!==undefined){
+    const call=construction.call;
+    return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+   }
+   const call=pending.state.call;
+   return call===undefined?'an Array operation child retains its actual selected call':readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+  }
+  case 'waitObjectEnumeration':{
+   const state=pending.state;
+   if(state.phase!=='getter')return 'Object enumeration child retains its actual selected getter';
+   return readJavaScriptSelectedCallFrameError(fn,frame,state.callee,state.input,[]);
+  }
+  case 'waitArrayCreation':{
+   const construction=pending.construction?.call,callback=pending.state.call;
+   if(construction===undefined)return callback===undefined?'an Array creation child retains its actual selected callback or constructor body':readJavaScriptSelectedCallFrameError(fn,frame,callback.callee,callback.receiver,callback.arguments);
+   const invalid=readJavaScriptSelectedCallFrameError(fn,frame,construction.callee,construction.receiver,construction.arguments);if(invalid!=='')return invalid;
+   return construction.constructing&&!testJavaScriptSemanticSameValue(frame.newTarget??{$:'undefined'},construction.newTarget)?'an Array creation constructor retains its actual newTarget':'';
+  }
+  case 'waitConstruction':{
+   const call=pending.state.call;if(call===undefined)return 'a construction child retains its actual selected call';
+   const invalid=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(invalid!=='')return invalid;
+   return call.constructing&&!testJavaScriptSemanticSameValue(frame.newTarget??{$:'undefined'},call.newTarget)?'a construction body retains its actual newTarget':'';
+  }
+  case 'waitCall':{
+   const owner=readJavaScriptExecutableCallFunction(program,heap,parent.identity),instruction=owner?.instructions[parent.position-1];
+   if(instruction?.$!=='boundFunctionCall')return '';
+   const bound=heap.objects[findJavaScriptOrdinaryObject(heap.objects,parent.identity)];
+   if(bound?.$!=='boundFunctionObject'||bound.boundArguments.length+parent.arguments.length>1048576)return 'a bound call child retains its actual complete stored and supplied argument Lists';
+   return readJavaScriptSelectedCallFrameError(fn,frame,bound.boundTarget,bound.boundThis,bound.boundArguments.concat(parent.arguments));
+  }
+  case 'waitObjectSpread':{
+   const state=pending.state,call=state.call;
+   if(call!==undefined)return readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);
+   const callee=state.callee,receiver=fn.receiverMode==='lexical'?fn.lexicalReceiver:state.input;
+   if(state.phase!=='getter'||callee.$!=='object'||callee.identity!==frame.identity||frame.arguments.length!==0||!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},receiver))return 'an object spread child retains its actual getter, receiver and empty arguments';
+   return '';
+  }
+  default:return '';
+ }
+}
+
+/** @param {JavaScriptCallFrame} parent @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {JavaScriptCallInstruction} instruction @param {number} destination @returns {string} */
+function readJavaScriptSuspendedConstructorFrameError(parent,frame,fn,instruction,destination){
+  switch(instruction.$){
+    case 'callClassConstructor':return readJavaScriptConstructorFrameOperandsError(parent,frame,fn,destination,instruction.destination,instruction.callee,true,instruction.receiver,instruction.arguments);
+    case 'constructCollection':return readJavaScriptConstructorFrameOperandsError(parent,frame,fn,destination,instruction.destination,instruction.callee,false,-1,instruction.arguments);
+    case 'argumentListCall':
+      if(instruction.mode==='ordinary class')return readJavaScriptConstructorFrameOperandsError(parent,frame,fn,destination,instruction.destination,instruction.callee,true,instruction.receiver,undefined);
+      if(instruction.mode==='collection')return readJavaScriptConstructorFrameOperandsError(parent,frame,fn,destination,instruction.destination,instruction.callee,false,-1,undefined);
+      return 'a constructor frame retains its actual suspended source new operation';
+    default:return 'a constructor frame retains its actual suspended source new operation';
+  }
+}
+
+/** @param {JavaScriptCallFrame} parent @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {number} destination @param {number} actualDestination @param {number} calleeRegister
+ * @param {boolean} ordinary @param {number} receiverRegister @param {number[]|undefined} argumentRegisters @returns {string} */
+function readJavaScriptConstructorFrameOperandsError(parent,frame,fn,destination,actualDestination,calleeRegister,ordinary,receiverRegister,argumentRegisters){
+  if(actualDestination!==destination)return 'a constructor frame retains its actual suspended source new operation';
+  if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)!==ordinary)return 'a constructor frame retains its actual class or standard collection operation';
+  const callee=parent.registers[calleeRegister]??{$:'undefined'},receiver=ordinary?(parent.registers[receiverRegister]??{$:'undefined'}):{$:'undefined'};
+  if(callee.$!=='object'||callee.identity!==frame.identity||!testJavaScriptSemanticSameValue(receiver,frame.registers[0]??{$:'undefined'}))return 'an ordinary class frame retains its actual new callee and receiver';
+  if(argumentRegisters!==undefined){
+    if(argumentRegisters.length!==frame.arguments.length)return 'an ordinary class frame retains its actual argument list';
+    for(let at=0;at<argumentRegisters.length;at++)if(!testJavaScriptSemanticSameValue(parent.registers[argumentRegisters[at]??-1]??{$:'undefined'},frame.arguments[at]??{$:'undefined'}))return 'ordinary class frames cannot substitute their actual ordered constructor arguments';
   }
   return '';
 }
@@ -479,41 +591,52 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       if(joinEntries.length!==1||joinEntry?.$!=='arrayJoinEnter'||!ownsJoin||!testJavaScriptSemanticSameValue(frame.registers[joinEntry.receiver]??{$:'undefined'},joined))return 'an active join guard retains its selected receiver and successful unfinished enter instruction';
     }
     if(frame.newTarget!==undefined&&(frame.newTarget.$!=='object'||!frame.newTarget.callable||readJavaScriptOrdinaryValueError(heap,frame.newTarget)!==''))return 'new.target retains its actual constructor identity';
-    if(frame.newTarget!==undefined&&program.constructorDirectory!==undefined){const actual=classifyJavaScriptArraySpeciesConstructor(heap,program.constructorDirectory,frame.newTarget);if(actual.$!=='arrayConstructorKnown'||!actual.fact.constructable)return 'new.target retains its independently registered constructor classification';}
+    if(frame.newTarget!==undefined&&program.constructorDirectory!==undefined){const actual=classifyJavaScriptArraySpeciesConstructor(heap,program.constructorDirectory,frame.newTarget);if(readJavaScriptKnownArrayConstructorFact(actual)?.constructable!==true)return 'new.target retains its independently registered constructor classification';}
     if(fn.receiverMode==='lexical'&&!testJavaScriptSemanticSameValue(frame.newTarget??{$:'undefined'},fn.lexicalNewTarget??{$:'undefined'}))return 'an arrow frame retains its captured lexical new.target';
     const pending=frame.pending;
     if(!testJavaScriptCallPendingDestination(pending,fn.registers))return 'pending calls retain their actual destination register';
+    const pendingError=readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending);
+    if(pendingError!=='')return pendingError;
+    if(suspended&&(pending.$==='waitConstructorCheck'||pending.$==='waitPrimitiveWrapper'||pending.$==='waitSymbolAllocation'||pending.$==='waitSymbolDescription'||pending.$==='waitFunctionNameSymbol'||pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'||pending.$==='waitErrorValue'||pending.$==='waitErrorIntrinsic'||pending.$==='waitHostCapability'))return 'a suspended parent frame retains its actual pending call';
+  return '';
+}
+
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending){
     switch(pending.$){
-      case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';break;
+      case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';return '';
       case 'waitObjectPrototype':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction?.$!=='objectObservation'||instruction.operation!=='Object.getPrototypeOf'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||pending.input.$==='object'||pending.input.$==='null'||pending.input.$==='undefined'||suspended)return 'primitive prototype metadata retains its actual source input operation and realm';
-        const invalid=readJavaScriptOrdinaryValueError(heap,pending.input);if(invalid!=='')return invalid;break;
+        const invalid=readJavaScriptOrdinaryValueError(heap,pending.input);if(invalid!=='')return invalid;return '';
       }
       case 'waitPropertyDefinitions':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,state=pending.state,selected=state.operation==='Object.create'?state.prototype:state.target;
         if(instruction?.$!=='propertyDefinitions'||instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.target]??{$:'undefined'},selected)||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},state.input)||!testJavaScriptSemanticSameValue(program.exoticKey,state.exoticKey)||suspended&&state.call===undefined)return 'bulk definitions retain actual source target attributes Symbol and selected child';
-        const error=readJavaScriptPropertyDefinitionsStateError(heap,state);if(error!=='')return error;break;
+        const error=readJavaScriptPropertyDefinitionsStateError(heap,state);if(error!=='')return error;return '';
       }
       case 'waitPropertyReflection':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,state=pending.state;
         if(instruction?.$!=='propertyReflection'||instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||!testJavaScriptSemanticSameValue(frame.registers[instruction.objectPrototype]??{$:'undefined'},state.objectPrototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.arrayPrototype]??{$:'undefined'},state.arrayPrototype)||suspended)return 'property reflection retains actual source input key realm prototypes and no invented child call';
-        const invalid=readJavaScriptPropertyReflectionStateError(heap,state);if(invalid!=='')return invalid;break;
+        const invalid=readJavaScriptPropertyReflectionStateError(heap,state);if(invalid!=='')return invalid;return '';
       }
       case 'waitInstanceOf':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,state=pending.state;
         if(instruction?.$!=='instanceOf'||instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.left]??{$:'undefined'},state.left)||!testJavaScriptSemanticSameValue(frame.registers[instruction.right]??{$:'undefined'},state.right)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||suspended&&state.call===undefined)return 'instanceof retains its actual selected source operands Symbol operation and realm';
-        const invalid=readJavaScriptInstanceOfStateError(heap,state);if(invalid!=='')return invalid;break;
+        const invalid=readJavaScriptInstanceOfStateError(heap,state);if(invalid!=='')return invalid;return '';
       }
       case 'waitObjectIntegrity':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction?.$!=='objectObservation'||instruction.destination!==pending.destination||instruction.operation!==pending.state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||suspended)return 'integrity changes retain actual source operation input and no invented child call';
-        const invalid=readJavaScriptObjectIntegrityStateError(heap,pending.state);if(invalid!=='')return invalid;break;
+        const invalid=readJavaScriptObjectIntegrityStateError(heap,pending.state);if(invalid!=='')return invalid;return '';
       }
       case 'waitObjectEnumeration':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction?.$!=='objectEnumeration'||instruction.destination!==pending.destination||instruction.operation!==pending.state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.arguments[0]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype))return 'Object enumeration retains its actual source operation input and realm Array prototype';
-        const invalid=readJavaScriptObjectEnumerationStateError(heap,pending.state);if(invalid!=='')return invalid;if(suspended&&pending.state.phase!=='getter')return 'Object enumeration child retains its actual getter phase';break;
+        const invalid=readJavaScriptObjectEnumerationStateError(heap,pending.state);if(invalid!=='')return invalid;if(suspended&&pending.state.phase!=='getter')return 'Object enumeration child retains its actual getter phase';return '';
       }
       case 'waitArrayCreation':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -521,56 +644,66 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         const invalid=readJavaScriptArrayCreationStateError(heap,pending.state);if(invalid!=='')return invalid;
         if(pending.construction!==undefined||pending.fallback!==undefined){const request=stepJavaScriptArrayCreation(heap,pending.state);if(request.$!=='arrayCreationConstruct'||pending.error!==undefined||pending.construction!==undefined&&pending.fallback!==undefined)return 'Array creation retains only its actual selected construction phase';
          if(pending.construction!==undefined){const directory=program.constructorDirectory;if(directory===undefined)return 'Array creation construction retains actual constructor authority';const invalid=readJavaScriptConstructionStateError(program,heap,directory,pending.construction);if(invalid!=='')return invalid;if(!testJavaScriptSemanticSameValue(pending.construction.target,request.constructor)||!testJavaScriptSemanticSameValue(pending.construction.newTarget,request.constructor)||pending.construction.arguments.length!==request.arguments.length||pending.construction.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,request.arguments[index]??{$:'undefined'})))return 'Array creation retains its actual constructor and complete arguments';}
-         else{const fallback=pending.fallback;if(fallback?.$!=='arrayCreationArrayFallback'||fallback.length!==request.fallback.length||!testJavaScriptSemanticSameValue(fallback.prototype,request.fallback.prototype)||suspended)return 'Array creation fallback retains its actual ArrayCreate length and prototype';const directory=program.constructorDirectory;if(directory===undefined)return 'Array creation fallback requires actual constructor authority';const classified=classifyJavaScriptArraySpeciesConstructor(heap,directory,request.constructor);if(classified.$==='arrayConstructorUnknown'||classified.$==='arrayConstructorKnown'&&classified.fact.constructable)return 'Array creation fallback cannot replace an actual constructor';}
+         else{const fallback=pending.fallback;if(fallback?.$!=='arrayCreationArrayFallback'||fallback.length!==request.fallback.length||!testJavaScriptSemanticSameValue(fallback.prototype,request.fallback.prototype)||suspended)return 'Array creation fallback retains its actual ArrayCreate length and prototype';const directory=program.constructorDirectory;if(directory===undefined)return 'Array creation fallback requires actual constructor authority';const classified=classifyJavaScriptArraySpeciesConstructor(heap,directory,request.constructor);if(classified.$==='arrayConstructorUnknown'||readJavaScriptKnownArrayConstructorFact(classified)?.constructable===true)return 'Array creation fallback cannot replace an actual constructor';}
         }
-        const call=pending.construction?.call??pending.state.call;if(suspended&&(call===undefined||pending.error!==undefined))return 'an Array creation child retains only its actual selected call';
-        if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(pending.construction!==undefined||pending.fallback!==undefined||actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Array creation setup failure retains its actual selected callee Error realm and reason';}break;
+        if(suspended&&(pending.construction?.call===undefined&&pending.state.call===undefined||pending.error!==undefined))return 'an Array creation child retains only its actual selected call';
+        if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(pending.construction!==undefined||pending.fallback!==undefined||actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Array creation setup failure retains its actual selected callee Error realm and reason';}return '';
       }
       case 'waitConstructorCheck':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction?.$!=='constructorCheck'||instruction.destination!==pending.destination||instruction.required!==pending.required||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||suspended)return 'constructor checks retain actual selected input predicate mode and instruction';break;
+        if(instruction?.$!=='constructorCheck'||instruction.destination!==pending.destination||instruction.required!==pending.required||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||suspended)return 'constructor checks retain actual selected input predicate mode and instruction';return '';
       }
       case 'waitConstruction':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,directory=program.constructorDirectory;
-        if(directory===undefined||instruction===undefined||instruction.$!=='construct'&&!(instruction.$==='argumentListCall'&&instruction.mode==='construct')||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.callee]??{$:'undefined'},pending.state.target)||!testJavaScriptSemanticSameValue(frame.registers[instruction.$==='construct'?instruction.newTarget:instruction.receiver]??{$:'undefined'},pending.state.newTarget))return 'construction retains its actual source target newTarget destination and authority';
-        if(instruction.$==='argumentListCall'&&(pending.heldArguments===undefined||pending.heldArguments.length!==pending.state.arguments.length||pending.heldArguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,pending.state.arguments[index]??{$:'undefined'}))))return 'variadic construction retains its consumed immutable argument List proof';
-        if(instruction.$==='construct'&&(instruction.arguments.length!==pending.state.arguments.length||instruction.arguments.some((coordinate,index)=>!testJavaScriptSemanticSameValue(frame.registers[coordinate]??{$:'undefined'},pending.state.arguments[index]??{$:'undefined'}))))return 'construction retains every actual held ordered argument';
+        const invalidSource='construction retains its actual source target newTarget destination and authority';
+        if(directory===undefined||instruction===undefined||pending.realm!==fn.realm)return invalidSource;
+        switch(instruction.$){
+          case 'construct':
+            if(instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.callee]??{$:'undefined'},pending.state.target)||!testJavaScriptSemanticSameValue(frame.registers[instruction.newTarget]??{$:'undefined'},pending.state.newTarget))return invalidSource;
+            if(instruction.arguments.length!==pending.state.arguments.length||instruction.arguments.some((coordinate,index)=>!testJavaScriptSemanticSameValue(frame.registers[coordinate]??{$:'undefined'},pending.state.arguments[index]??{$:'undefined'})))return 'construction retains every actual held ordered argument';
+            break;
+          case 'argumentListCall':
+            if(instruction.mode!=='construct'||instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.callee]??{$:'undefined'},pending.state.target)||!testJavaScriptSemanticSameValue(frame.registers[instruction.receiver]??{$:'undefined'},pending.state.newTarget))return invalidSource;
+            if(pending.heldArguments===undefined||pending.heldArguments.length!==pending.state.arguments.length||pending.heldArguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,pending.state.arguments[index]??{$:'undefined'})))return 'variadic construction retains its consumed immutable argument List proof';
+            break;
+          default:return invalidSource;
+        }
         const invalid=readJavaScriptConstructionStateError(program,heap,directory,pending.state);if(invalid!=='')return invalid;
-        if(suspended&&pending.state.call===undefined)return 'a construction child retains its actual selected getter conversion or body call';break;
+        if(suspended&&pending.state.call===undefined)return 'a construction child retains its actual selected getter conversion or body call';return '';
       }
       case 'waitFunctionBind':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||instruction?.$!=='functionBind'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.boundThis,frame.arguments[0]??{$:'undefined'})||pending.state.arguments.length!==Math.max(0,frame.arguments.length-1)||pending.state.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,frame.arguments[index+1]??{$:'undefined'})))return 'binding retains its actual intrinsic target receiver and complete argument prefix';
-        const error=readJavaScriptFunctionBindStateError(heap,pending.state);if(error!=='')return error;if(suspended&&pending.state.call===undefined)return 'binding child frames retain their actual selected metadata getter';break;
+        const error=readJavaScriptFunctionBindStateError(heap,pending.state);if(error!=='')return error;if(suspended&&pending.state.call===undefined)return 'binding child frames retain their actual selected metadata getter';return '';
       }
       case 'waitFunctionText':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,request=readJavaScriptFunctionText(program,heap,pending.input);if(instruction?.$!=='functionToString'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptSemanticSameValue(pending.input,frame.registers[0]??{$:'undefined'})||request.$!=='functionTextNeedAuthority'||request.kind!==pending.kind||suspended)return 'function text retains its actual intrinsic receiver realm source category and external metadata request';break;
+        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,request=readJavaScriptFunctionText(program,heap,pending.input);if(instruction?.$!=='functionToString'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptSemanticSameValue(pending.input,frame.registers[0]??{$:'undefined'})||request.$!=='functionTextNeedAuthority'||request.kind!==pending.kind||suspended)return 'function text retains its actual intrinsic receiver realm source category and external metadata request';return '';
       }
       case 'waitObjectFromEntries':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction?.$!=='objectFromEntries'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey))return 'Object.fromEntries retains its actual source input realm prototype and well-known Symbols';
         const invalid=readJavaScriptObjectFromEntriesStateError(heap,pending.state);if(invalid!=='')return invalid;
         if(suspended&&(pending.state.call===undefined||pending.error!==undefined))return 'Object.fromEntries child retains its actual selected call rather than an allocation request';
-        if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Object.fromEntries selected-call failure retains its actual callee constructor kind Error realm and reason';}break;
+        if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Object.fromEntries selected-call failure retains its actual callee constructor kind Error realm and reason';}return '';
       }
       case 'waitPrimitiveWrapper':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction?.$!=='primitiveWrapper'||instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||suspended)return 'primitive wrappers retain their actual selected input prototype and allocation instruction';
-        const invalid=readJavaScriptPrimitiveWrapperStateError(heap,pending.state);if(invalid!=='')return invalid;break;
+        const invalid=readJavaScriptPrimitiveWrapperStateError(heap,pending.state);if(invalid!=='')return invalid;return '';
       }
       case 'waitSymbolAllocation':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         const registry=instruction?.$==='symbolRegistry'&&instruction.operation==='for';
-        if(instruction?.$!=='symbolAllocate'&&!registry||registry&&(pending.registryKey===undefined||!['text','sourceText'].includes(pending.description.$)||!testJavaScriptSemanticSameValue(pending.registryKey,pending.description))||!registry&&pending.registryKey!==undefined||instruction.destination!==pending.destination||!['undefined','text','sourceText'].includes(pending.description.$)||readJavaScriptOrdinaryValueError(heap,pending.description)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description)||suspended)return 'Symbol allocation retains its actual converted optional description and selected instruction';break;
+        if(instruction?.$!=='symbolAllocate'&&!registry||registry&&(pending.registryKey===undefined||!['text','sourceText'].includes(pending.description.$)||!testJavaScriptSemanticSameValue(pending.registryKey,pending.description))||!registry&&pending.registryKey!==undefined||instruction.destination!==pending.destination||!['undefined','text','sourceText'].includes(pending.description.$)||readJavaScriptOrdinaryValueError(heap,pending.description)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description)||suspended)return 'Symbol allocation retains its actual converted optional description and selected instruction';return '';
       }
       case 'waitSymbolDescription':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction?.$!=='symbolDescription'||instruction.destination!==pending.destination||pending.symbol.$!=='symbol'||readJavaScriptOrdinaryValueError(heap,pending.symbol)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.symbol)||suspended)return 'Symbol description metadata retains its actual selected Symbol input and instruction';break;
+        if(instruction?.$!=='symbolDescription'||instruction.destination!==pending.destination||pending.symbol.$!=='symbol'||readJavaScriptOrdinaryValueError(heap,pending.symbol)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.symbol)||suspended)return 'Symbol description metadata retains its actual selected Symbol input and instruction';return '';
       }
       case 'waitFunctionNameSymbol':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction?.$!=='functionName'||instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.prefix!==pending.prefix||pending.key.$!=='symbol'||pending.object.$!=='object'||!pending.object.callable||!testJavaScriptSemanticSameValue(frame.registers[instruction.object]??{$:'undefined'},pending.object)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},pending.key))return 'Symbol name metadata retains its actual selected function property key prefix and instruction';
-        const invalid=readJavaScriptOrdinaryValueError(heap,pending.key)||readJavaScriptOrdinaryValueError(heap,pending.object);if(invalid!=='')return invalid;break;
+        const invalid=readJavaScriptOrdinaryValueError(heap,pending.key)||readJavaScriptOrdinaryValueError(heap,pending.object);if(invalid!=='')return invalid;return '';
       }
       case 'waitSourceError':{
         if(!program.realms.includes(pending.realm)||fn.realm!==pending.realm)return 'pending source Error allocation retains its actual source realm';
@@ -588,7 +721,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
           }
           default:return 'pending source Error retains its actual source instruction and arguments';
         }
-        break;
+        return '';
       }
       case 'waitErrorValue':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -599,18 +732,18 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         if(!testJavaScriptSemanticSameValue(constructor,pending.constructor)||!testJavaScriptSemanticSameValue(newTarget,pending.newTarget)||!testJavaScriptSemanticSameValue(prototype,pending.prototype)||!testJavaScriptSemanticSameValue(message,pending.message))return 'an Error allocation cannot substitute its actual constructor operands';
         if(present.$!=='boolean'||present.value!==pending.messagePresent)return 'an Error allocation retains actual source presence';
         const prior=readJavaScriptErrorPriorDirectoryError(heap,pending.beforeDirectory);if(prior!=='')return prior;
-        break;
+        return '';
       }
       case 'waitErrorIntrinsic':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode)||instruction===undefined||instruction.$!=='invokeErrorIntrinsic'||instruction.destination!==pending.destination)return 'an external Error callback retains its actual registered source instruction';
-        break;
+        return '';
       }
       case 'waitHostCapability':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(!testJavaScriptHostCapabilityMode(fn.receiverMode)||instruction===undefined||instruction.$!=='invokeHostCapability'||instruction.destination!==pending.destination)return 'an external capability retains its actual qualified source instruction';
         const prior=readJavaScriptErrorPriorDirectoryError(heap,pending.beforeDirectory);if(prior!=='')return prior;
-        break;
+        return '';
       }
       case 'waitArrayConcatenation':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -618,7 +751,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         const invalid=readJavaScriptArrayConcatenationStateError(heap,instruction.species,pending.state);if(invalid!=='')return invalid;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.spreadableKey,frame.registers[instruction.spreadableKey]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey)||pending.state.arguments.length!==frame.arguments.length||pending.state.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,frame.arguments[index]??{$:'undefined'})))return 'Array concatenation retains original receiver arguments and Symbols';
         if(pending.construction!==undefined){if(pending.state.phase!=='construct'||pending.state.constructor===undefined||!testJavaScriptSemanticSameValue(pending.construction.constructor,pending.state.constructor)||pending.construction.length!==0)return 'Array concatenation retains its actual zero-length species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,instruction.species,pending.construction);if(invalid!=='')return invalid;}
-        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array concatenation child retains its actual selected callback';break;
+        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array concatenation child retains its actual selected callback';return '';
       }
       case 'waitArraySlice':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -626,7 +759,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         const invalid=readJavaScriptArraySliceStateError(heap,instruction.species,pending.state);if(invalid!=='')return invalid;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.start,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.end,frame.arguments[1]??{$:'undefined'})||pending.state.endPresent!==(frame.arguments.length>1)||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'Array slice retains original receiver bounds argument presence and Symbol';
         if(pending.construction!==undefined){if(pending.state.phase!=='construct'||pending.state.constructor===undefined||!testJavaScriptSemanticSameValue(pending.construction.constructor,pending.state.constructor)||pending.construction.length!==pending.state.count)return 'Array slice retains its actual selected species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,instruction.species,pending.construction);if(invalid!=='')return invalid;}
-        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array slice child retains its actual selected callback';break;
+        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array slice child retains its actual selected callback';return '';
       }
       case 'waitArrayTransform':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -637,7 +770,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
           if(pending.state.phase!=='construct'||pending.state.constructor===undefined||pending.state.constructorFact===undefined||!testJavaScriptSemanticSameValue(pending.construction.constructor,pending.state.constructor)||pending.construction.length!==(pending.state.operation==='Array.map'?pending.state.length:0))return 'nested species construction retains its actual transform selection';
           const error=readJavaScriptSpeciesConstructionStateError(program,heap,instruction.species,pending.construction);if(error!=='')return error;
         }
-        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array transform child frames retain their actual selected call';break;
+        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array transform child frames retain their actual selected call';return '';
       }
       case 'waitArraySearch':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -646,14 +779,14 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         const at=instruction.operation==='Array.at',search=at?{$:'undefined'}:frame.arguments[0]??{$:'undefined'},from=frame.arguments[at?0:1]??{$:'undefined'},present=frame.arguments.length>=(at?1:2);
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.searchElement,search)||!testJavaScriptSemanticSameValue(pending.state.fromIndex,from)||pending.state.fromPresent!==present||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'Array search cannot substitute its actual receiver, search value, index argument, presence or Symbol';
         if(suspended&&pending.state.call===undefined)return 'only a selected Array search getter or conversion can retain a child frame';
-        break;
+        return '';
       }
       case 'waitCollectionForEach':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction?.$!=='collectionForEach'||instruction.destination!==pending.destination||pending.realm!==fn.realm||instruction.operation!==pending.state.operation)return 'collection callback continuation retains its actual operation destination and realm';
         const error=readJavaScriptCollectionForEachStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.callback,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.thisArgument,frame.arguments[1]??{$:'undefined'}))return 'collection callbacks retain their actual receiver callback and thisArgument';
-        if(suspended&&pending.state.call===undefined)return 'a collection callback child retains its actual selected call';break;
+        if(suspended&&pending.state.call===undefined)return 'a collection callback child retains its actual selected call';return '';
       }
       case 'waitArrayCallback':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -661,7 +794,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         const error=readJavaScriptArrayCallbackStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.callback,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.thisArgument,frame.arguments[1]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey)||pending.state.initialPresent!==(frame.arguments.length>=2))return 'Array callbacks cannot substitute their receiver, callback, thisArg or well-known Symbol';
         if(suspended&&pending.state.call===undefined)return 'only an actual Array getter, conversion or callback can retain a child frame';
-        break;
+        return '';
       }
       case 'waitObjectSpread':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -671,7 +804,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         if(!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[instruction.target]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.input,frame.registers[instruction.input]??{$:'undefined'}))return 'object spread cannot substitute its actual target or source input';
         const excluded=instruction.excluded??[];if(excluded.length!==pending.state.excluded.length)return 'object copy retains every actual excluded-key operand';for(let at=0;at<excluded.length;at++)if(!testJavaScriptSemanticSameValue(pending.state.excluded[at]??{$:'undefined'},frame.registers[excluded[at]??-1]??{$:'undefined'}))return 'object copy cannot substitute an excluded key';
         if(suspended&&pending.state.phase!=='getter'&&pending.state.call===undefined)return 'object copy retains only actual selected getters setters and numeric callbacks';
-        break;
+        return '';
       }
       case 'waitArrayAssignment':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -682,11 +815,11 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         const descriptor=definition.descriptor;
         if(!descriptor.valuePresent||descriptor.writablePresent||descriptor.enumerablePresent||descriptor.configurablePresent||descriptor.getterPresent||descriptor.setterPresent)return 'Array assignment retains its actual value-only ordinary Set descriptor';
         if(suspended&&pending.state.$!=='arrayAssignmentNumber')return 'only a pending Array numeric callback can have a suspended child call';
-        break;
+        return '';
       }
       case 'waitArgumentRest':{
         const instruction=frame.position===0?undefined:fn.instructions[frame.position-1];if(instruction?.$!=='argumentRest'||instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.from!==pending.state.from||!testJavaScriptSemanticSameValue(pending.state.prototype,frame.registers[instruction.prototype]??{$:'undefined'}))return 'argument rest retains its actual source instruction and prototype';
-        const error=readJavaScriptArgumentRestStateError(heap,frame.arguments,pending.state);if(error!=='')return error;if(suspended)return 'argument copying cannot hide a selected source callback';break;
+        const error=readJavaScriptArgumentRestStateError(heap,frame.arguments,pending.state);if(error!=='')return error;if(suspended)return 'argument copying cannot hide a selected source callback';return '';
       }
       case 'waitIteratorProtocol':{
         const instruction=frame.position===0?undefined:fn.instructions[frame.position-1];
@@ -698,7 +831,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
           const regions=frame.iterators??[],region=regions[findJavaScriptIteratorRegion(regions,pending.slot)];if(region===undefined||!testJavaScriptSemanticSameValue(region.record.iterator,pending.state.record.iterator)||!testJavaScriptSemanticSameValue(region.record.nextMethod,pending.state.record.nextMethod)||region.record.done!==pending.state.record.done)return 'iterator continuation retains its actual cached region record';
           if(pending.operation==='close'){const completion=readJavaScriptCallIteratorCloseCompletion(frame);if(completion.kind!==pending.state.completion.kind||!testJavaScriptSemanticSameValue(completion.value,pending.state.completion.value))return 'iterator cleanup retains the actual deferred completion';}
         }
-        if(suspended&&pending.state.call===undefined)return 'iterator child retains its actual selected getter or method';break;
+        if(suspended&&pending.state.call===undefined)return 'iterator child retains its actual selected getter or method';return '';
       }
       case 'waitArraySpread':{
         const instruction=frame.position===0?undefined:fn.instructions[frame.position-1];
@@ -706,14 +839,14 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         const error=readJavaScriptArraySpreadStateError(heap,pending.state);if(error!=='')return error;
         for(const [operand,value]of [[instruction.target,pending.state.target],[instruction.input,pending.state.input],[instruction.iteratorKey,pending.state.iteratorKey]])if(!testJavaScriptSemanticSameValue(frame.registers[operand]??{$:'undefined'},value))return 'Array spread retains its actual target, source and iterator key';
         const index=frame.registers[instruction.index]??{$:'undefined'};if(index.$!=='number'||!Number.isSafeInteger(index.value)||index.value<0||pending.state.index<index.value)return 'Array spread retains its original exact accumulation coordinate';
-        if(suspended&&pending.state.protocol?.call===undefined)return 'Array spread child retains its actual selected iterator call';break;
+        if(suspended&&pending.state.protocol?.call===undefined)return 'Array spread child retains its actual selected iterator call';return '';
       }
       case 'waitArrayIteratorNext':{
         const instruction=fn.instructions[frame.position];
         if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||fn.realm!==pending.realm||instruction?.$!=='collectionIteratorResult'||instruction.kind!=='Array'||instruction.destination!==pending.destination)return 'Array next continuation retains its actual instruction, operation and realm';
         const error=readJavaScriptArrayIteratorStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'Array next retains its actual receiver and conversion Symbol';
-        if(suspended&&pending.state.call===undefined)return 'Array next child retains its actual selected getter or conversion';break;
+        if(suspended&&pending.state.call===undefined)return 'Array next child retains its actual selected getter or conversion';return '';
       }
       case 'waitCollectionIteratorResult':{
         const instruction=fn.instructions[frame.position];
@@ -722,9 +855,9 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         if(pending.state.collectionKind!==instruction.kind||!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[0]??{$:'undefined'}))return 'iterator result continuation cannot replace its actual receiver or operation brand';
         if(!testJavaScriptSemanticSameValue(pending.state.arrayPrototype,frame.registers[instruction.arrayPrototype]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.objectPrototype,frame.registers[instruction.objectPrototype]??{$:'undefined'}))return 'iterator result continuation cannot substitute its actual realm prototypes';
         if(suspended)return 'iterator result allocation cannot hide a pending source child call';
-        break;
+        return '';
       }
-      case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';break;
+      case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';return '';
       case 'waitDefinition':{
         if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';const invalid=readJavaScriptPropertyDefinitionStateError(heap,pending.state);if(invalid!=='')return invalid;
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,target=instruction?.$==='propertyDefinition'||instruction?.$==='ordinaryDefine'?frame.registers[instruction.target]:instruction?.$==='ordinaryDataProperty'||instruction?.$==='literalAccessor'?frame.registers[instruction.object]:undefined;
@@ -734,7 +867,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         if(suspended&&(pending.state.$==='propertyDefinitionReady'||pending.state.operation==='Reflect.defineProperty'&&pending.state.call===undefined))return 'a definition suspension retains its actual selected child rather than a completed descriptor';
         if(pending.state.$==='propertyDefinitionArray'&&!testJavaScriptSemanticSameValue(pending.state.assignment.exoticKey,program.exoticKey))return 'Array definition retains its actual primitive conversion Symbol';
         if(pending.state.$==='propertyDefinitionKey'&&!testJavaScriptSemanticSameValue(pending.state.conversion.exoticKey,program.exoticKey)||pending.state.$==='propertyDefinitionDescriptor'&&pending.state.exoticKey!==undefined&&!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'property definition retains its actual primitive conversion authority';
-        if(suspended&&pending.state.$==='propertyDefinitionArray'&&pending.state.assignment.$!=='arrayAssignmentNumber')return 'Array definition child retains its actual numeric callback phase';break;
+        if(suspended&&pending.state.$==='propertyDefinitionArray'&&pending.state.assignment.$!=='arrayAssignmentNumber')return 'Array definition child retains its actual numeric callback phase';return '';
       }
       case 'waitNumber':{
         if(!program.realms.includes(pending.realm))return 'pending number conversion retains its actual intrinsic realm';
@@ -747,7 +880,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
             case 'numberProtocolState':break;
           }
         }
-        break;
+        return '';
       }
       case 'waitText':{
         if(!program.realms.includes(pending.realm))return 'pending text conversion retains its actual intrinsic realm';
@@ -760,14 +893,11 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
             case 'textProtocolState':break;
           }
         }
-        break;
+        return '';
       }
-      default:break;
+      default:return '';
     }
-    if(suspended&&(pending.$==='waitConstructorCheck'||pending.$==='waitPrimitiveWrapper'||pending.$==='waitSymbolAllocation'||pending.$==='waitSymbolDescription'||pending.$==='waitFunctionNameSymbol'||pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'||pending.$==='waitErrorValue'||pending.$==='waitErrorIntrinsic'||pending.$==='waitHostCapability'))return 'a suspended parent frame retains its actual pending call';
-  return '';
 }
-
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptNumberCallState} state @returns {string} */
 export function readJavaScriptNumberCallStateError(heap,state){
  switch(state.$){
@@ -800,7 +930,7 @@ export function readJavaScriptTextCallStateError(heap,state){
 
 /** @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function throwJavaScriptCallValue(machine,value){
- const transition=unwindJavaScriptCallCompletion(machine,{$:'callCompletion',kind:'throw',value,target:-1,depth:0});return transition.$==='callReturn'?{$:'machineInvalid',heap:transition.machine.heap,reason:'throw unwinding cannot become a return'}:transition;
+ const transition=unwindJavaScriptCallCompletion(machine,{$:'callCompletion',kind:'throw',value,target:-1,depth:0});return projectJavaScriptCallCompletionTransition(transition);
 }
 /** @param {JavaScriptCallMachine} machine @param {JavaScriptCallCompletion} completion @returns {JavaScriptCallCompletionTransition} */
 export function unwindJavaScriptCallCompletion(machine,completion){
@@ -808,36 +938,59 @@ export function unwindJavaScriptCallCompletion(machine,completion){
  let frames=machine.frames,heap=machine.heap;
  while(frames.length>0){
   let frame=frames[frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap,reason:'completion unwinding retains its complete actual stack'};
-  if(completion.kind==='throw'&&frame.pending.$==='waitArrayCreation'&&frame.pending.state.call!==undefined&&frame.pending.construction===undefined){
-   const pending=frame.pending,resumed=resumeJavaScriptArrayCreationCall(heap,pending.state,{$:'throwCompletion',value:completion.value});
-   if(resumed.$==='arrayCreationThrow'){heap=resumed.heap;frame={...frame,pending:{$:'callIdle'}};frames=frames.slice(0,-1).concat([frame]);completion={...completion,value:resumed.value};}
-   else if(resumed.$==='arrayCreationInvalid')return {$:'machineInvalid',heap:resumed.heap,reason:resumed.reason};
-   else if(resumed.$==='arrayCreationContinue'||resumed.$==='arrayCreationCall'||resumed.$==='arrayCreationNeedError'||resumed.$==='arrayCreationAllocate'||resumed.$==='arrayCreationPrimitiveGet'||resumed.$==='arrayCreationConstruct'||resumed.$==='arrayCreationResourceLimit'){const next=replaceJavaScriptCallFrame(resumed.heap,frames,replaceJavaScriptCallPending(frame,{$:'waitArrayCreation',destination:pending.destination,realm:pending.realm,state:resumed.state}));return resumed.$==='arrayCreationResourceLimit'?{$:'machineResourceLimit',machine:next,reason:resumed.reason}:{$:'machineContinue',machine:next};}
-   else return {$:'machineInvalid',heap:resumed.heap,reason:'Array creation throw retains actual cleanup or final completion'};
-  }
-  if(completion.kind==='throw'&&frame.pending.$==='waitObjectFromEntries'&&frame.pending.state.call!==undefined){
-   const pending=frame.pending,resumed=resumeJavaScriptObjectFromEntriesCall(heap,pending.state,{$:'throwCompletion',value:completion.value});
-   if(resumed.$==='objectFromEntriesThrow'){heap=resumed.heap;frame={...frame,pending:{$:'callIdle'}};frames=frames.slice(0,-1).concat([frame]);completion={...completion,value:resumed.value};}
-   else if(resumed.$==='objectFromEntriesInvalid')return {$:'machineInvalid',heap:resumed.heap,reason:resumed.reason};
-   else if(resumed.$==='objectFromEntriesContinue'||resumed.$==='objectFromEntriesCall'||resumed.$==='objectFromEntriesNeedError'||resumed.$==='objectFromEntriesAllocate'||resumed.$==='objectFromEntriesPrimitiveGet'||resumed.$==='objectFromEntriesResourceLimit'){
-    const next=replaceJavaScriptCallFrame(resumed.heap,frames,replaceJavaScriptCallPending(frame,{$:'waitObjectFromEntries',destination:pending.destination,realm:pending.realm,state:resumed.state}));return resumed.$==='objectFromEntriesResourceLimit'?{$:'machineResourceLimit',machine:next,reason:resumed.reason}:{$:'machineContinue',machine:next};
-   }else return {$:'machineInvalid',heap:resumed.heap,reason:'Object.fromEntries throw resumes its actual cleanup or final abrupt completion'};
-  }
-  if(completion.kind==='throw'&&frame.pending.$==='waitIteratorProtocol'&&frame.pending.state.call!==undefined){
-   const resolved=resumeJavaScriptCallIteratorThrow({$:'callMachine',heap,frames},completion.value);if(resolved.$==='iteratorThrowTransition')return resolved.transition;frames=resolved.machine.frames;heap=resolved.machine.heap;completion={...completion,value:resolved.value};frame=frames[frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap,reason:'iterator throw retains its actual caller frame'};
+  if(completion.kind==='throw'){
+   const pending=frame.pending;
+   switch(pending.$){
+    case 'waitArrayCreation':{
+     if(pending.state.call===undefined||pending.construction!==undefined)break;
+     const resumed=resumeJavaScriptArrayCreationCall(heap,pending.state,{$:'throwCompletion',value:completion.value});
+     switch(resumed.$){
+      case 'arrayCreationThrow':heap=resumed.heap;frame={...frame,pending:{$:'callIdle'}};frames=frames.slice(0,-1).concat([frame]);completion={...completion,value:resumed.value};break;
+      case 'arrayCreationInvalid':return {$:'machineInvalid',heap:resumed.heap,reason:resumed.reason};
+      case 'arrayCreationContinue':case 'arrayCreationCall':case 'arrayCreationNeedError':case 'arrayCreationAllocate':case 'arrayCreationPrimitiveGet':case 'arrayCreationConstruct':case 'arrayCreationResourceLimit':{
+       const next=replaceJavaScriptCallFrame(resumed.heap,frames,replaceJavaScriptCallPending(frame,{$:'waitArrayCreation',destination:pending.destination,realm:pending.realm,state:resumed.state}));
+       return resumed.$==='arrayCreationResourceLimit'?{$:'machineResourceLimit',machine:next,reason:resumed.reason}:{$:'machineContinue',machine:next};
+      }
+      default:return {$:'machineInvalid',heap:resumed.heap,reason:'Array creation throw retains actual cleanup or final completion'};
+     }
+     break;
+    }
+    case 'waitObjectFromEntries':{
+     if(pending.state.call===undefined)break;
+     const resumed=resumeJavaScriptObjectFromEntriesCall(heap,pending.state,{$:'throwCompletion',value:completion.value});
+     switch(resumed.$){
+      case 'objectFromEntriesThrow':heap=resumed.heap;frame={...frame,pending:{$:'callIdle'}};frames=frames.slice(0,-1).concat([frame]);completion={...completion,value:resumed.value};break;
+      case 'objectFromEntriesInvalid':return {$:'machineInvalid',heap:resumed.heap,reason:resumed.reason};
+      case 'objectFromEntriesContinue':case 'objectFromEntriesCall':case 'objectFromEntriesNeedError':case 'objectFromEntriesAllocate':case 'objectFromEntriesPrimitiveGet':case 'objectFromEntriesResourceLimit':{
+       const next=replaceJavaScriptCallFrame(resumed.heap,frames,replaceJavaScriptCallPending(frame,{$:'waitObjectFromEntries',destination:pending.destination,realm:pending.realm,state:resumed.state}));
+       return resumed.$==='objectFromEntriesResourceLimit'?{$:'machineResourceLimit',machine:next,reason:resumed.reason}:{$:'machineContinue',machine:next};
+      }
+      default:return {$:'machineInvalid',heap:resumed.heap,reason:'Object.fromEntries throw resumes its actual cleanup or final abrupt completion'};
+     }
+     break;
+    }
+    case 'waitIteratorProtocol':{
+     if(pending.state.call===undefined)break;
+     const resolved=resumeJavaScriptCallIteratorThrow({$:'callMachine',heap,frames},completion.value);if(resolved.$==='iteratorThrowTransition'){
+      const transition=resolved.transition;
+      return transition.$==='machineInvalid'?{$:'machineInvalid',heap:transition.heap,reason:transition.reason}:{$:'machineContinue',machine:transition.machine};
+     }frames=resolved.machine.frames;heap=resolved.machine.heap;completion={...completion,value:resolved.value};frame=frames[frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap,reason:'iterator throw retains its actual caller frame'};
+     break;
+    }
+   }
   }
   let handlers=frame.handlers;
   if(completion.kind==='jump'&&completion.depth>handlers.length)return {$:'machineInvalid',heap,reason:'completion jump cannot invent an enclosing handler depth'};
   while(handlers.length>(completion.kind==='jump'?completion.depth:0)){
    const handler=handlers[handlers.length-1];handlers=handlers.slice(0,-1);if(handler===undefined)return {$:'machineInvalid',heap,reason:'completion handler storage remains dense'};
-   if(handler.$==='callDeferredCompletion')continue;
    if(handler.$==='callFinallyHandler')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,argumentLists:retainJavaScriptCallArgumentLists(frame.argumentLists??[],handlers.length),position:handler.target,pending:{$:'callIdle'},handlers:handlers.concat([{$:'callDeferredCompletion',completion:{...completion}}])})};
-   if(completion.kind==='throw')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...writeJavaScriptCallRegister(frame,handler.destination,completion.value),argumentLists:retainJavaScriptCallArgumentLists(frame.argumentLists??[],handlers.length),position:handler.target,handlers})};
+   if(handler.$==='callHandler'){if(completion.kind==='throw')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...writeJavaScriptCallRegister(frame,handler.destination,completion.value),argumentLists:retainJavaScriptCallArgumentLists(frame.argumentLists??[],handlers.length),position:handler.target,handlers})};}
   }
   const argumentLists=retainJavaScriptCallArgumentLists(frame.argumentLists??[],handlers.length),current=replaceJavaScriptCallFrame(heap,frames,{...frame,handlers,argumentLists});
   if(completion.kind==='jump')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,position:completion.target,pending:{$:'callIdle'},handlers,argumentLists})};
   if(completion.kind==='return')return {$:'callReturn',machine:current,value:completion.value};
-  if(frame.pending.$==='waitArrayIteratorNext')heap=finishJavaScriptArrayIteratorCursor(heap,frame.pending.state,true);
+  const finalPending=frame.pending;
+  if(finalPending.$==='waitArrayIteratorNext')heap=finishJavaScriptArrayIteratorCursor(heap,finalPending.state,true);
   frames=frames.slice(0,-1);
  }
  return completion.kind==='throw'?{$:'machineThrow',heap,value:completion.value}:{$:'machineInvalid',heap,reason:'return/control completion requires its actual active frame'};
@@ -845,17 +998,31 @@ export function unwindJavaScriptCallCompletion(machine,completion){
 /** @param {JavaScriptCallMachine} machine @param {bigint} realm @param {string} errorClass @param {string} reason @returns {JavaScriptCallMachineTransition} */
 export function requestJavaScriptCallError(machine,realm,errorClass,reason){
   let frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Error allocation requires its actual active frame'};
-  if(frame.pending.$==='waitArrayCreation'&&frame.pending.construction===undefined&&frame.pending.state.call!==undefined){const pending={...frame.pending,error:{$:'objectFromEntriesErrorRequest',realm,errorClass,reason}},next=replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,pending));return {$:'machineAllocateError',machine:next,realm,errorClass,reason};}
-  if(frame.pending.$==='waitObjectFromEntries'&&frame.pending.state.call!==undefined){
-   const pending={...frame.pending,error:{$:'objectFromEntriesErrorRequest',realm,errorClass,reason}},next=replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,pending));return {$:'machineAllocateError',machine:next,realm,errorClass,reason};
-  }
-  if(frame.pending.$==='waitIteratorProtocol'){
-    const pending=frame.pending,regions=frame.iterators??[],update=pending.operation==='close'?removeJavaScriptIteratorRegion(machine.heap,regions,pending.slot):pending.operation==='step'?updateJavaScriptIteratorRegion(machine.heap,regions,pending.slot,{...pending.state.record,done:true}):{$:'iteratorRegionsUpdated',regions};
+  const initialPending=frame.pending;
+  switch(initialPending.$){
+   case 'waitArrayCreation':{
+    if(initialPending.construction!==undefined||initialPending.state.call===undefined)break;
+    const fallback=initialPending.fallback,error={$:'objectFromEntriesErrorRequest',realm,errorClass,reason};
+    const pending=fallback===undefined
+     ?{$:'waitArrayCreation',destination:initialPending.destination,realm:initialPending.realm,state:initialPending.state,error}
+     :{$:'waitArrayCreation',destination:initialPending.destination,realm:initialPending.realm,state:initialPending.state,error,fallback};
+    const next=replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,pending));return {$:'machineAllocateError',machine:next,realm,errorClass,reason};
+   }
+   case 'waitObjectFromEntries':{
+    if(initialPending.state.call===undefined)break;
+    const pending={$:'waitObjectFromEntries',destination:initialPending.destination,realm:initialPending.realm,state:initialPending.state,error:{$:'objectFromEntriesErrorRequest',realm,errorClass,reason}};
+    const next=replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,pending));return {$:'machineAllocateError',machine:next,realm,errorClass,reason};
+   }
+   case 'waitIteratorProtocol':{
+    const pending=initialPending,regions=frame.iterators??[],update=pending.operation==='close'?removeJavaScriptIteratorRegion(machine.heap,regions,pending.slot):pending.operation==='step'?updateJavaScriptIteratorRegion(machine.heap,regions,pending.slot,{...pending.state.record,done:true}):{$:'iteratorRegionsUpdated',regions};
     if(update.$!=='iteratorRegionsUpdated')return {$:'machineInvalid',heap:machine.heap,reason:'iterator intrinsic failure retains its actual source region'};
     frame={...frame,iterators:update.regions,pending:{$:'callIdle'}};machine=replaceJavaScriptCallFrame(machine.heap,machine.frames,frame);
     if(pending.operation==='close'&&pending.state.completion.kind==='throw')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallIteratorResult(frame,pending.destination,pending.done,{$:'undefined'},true))};
+    break;
+   }
   }
-  const heap=frame.pending.$==='waitArrayIteratorNext'?finishJavaScriptArrayIteratorCursor(machine.heap,frame.pending.state,true):machine.heap;
+  const currentPending=frame.pending;
+  const heap=currentPending.$==='waitArrayIteratorNext'?finishJavaScriptArrayIteratorCursor(machine.heap,currentPending.state,true):machine.heap;
   const next=replaceJavaScriptCallFrame(heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitError',realm,errorClass,reason}));
   return {$:'machineAllocateError',machine:next,realm,errorClass,reason};
 }
@@ -1030,7 +1197,7 @@ export function resumeJavaScriptCallText(program,machine,destination,realm,state
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function returnJavaScriptCallValue(program,machine,value){
- const transition=unwindJavaScriptCallCompletion(machine,{$:'callCompletion',kind:'return',value,target:-1,depth:0});return transition.$==='callReturn'?finishJavaScriptCallReturn(program,transition.machine,transition.value):transition;
+ const transition=unwindJavaScriptCallCompletion(machine,{$:'callCompletion',kind:'return',value,target:-1,depth:0});return acceptJavaScriptCallCompletion(program,transition);
 }
 /** Normalize constructor returns only after all active finalizers complete.
  * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
@@ -1051,7 +1218,7 @@ export function finishJavaScriptCallReturn(program,machine,value){
     case 'waitHostSet':if(value.$!=='boolean')return {$:'machineInvalid',heap:machine.heap,reason:'an opaque Error Set completion retains its actual Boolean result'};return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,frames,writeJavaScriptCallRegister(parent,pending.destination,value))};
     case 'waitKey':return acceptJavaScriptCallKey(program,current,pending.destination,pending.realm,resumeJavaScriptPropertyKeyConversion(machine.heap,pending.state,{$:'normalCompletion',value}));
     case 'waitDefinition':return acceptJavaScriptCallDefinition(program,current,pending.destination,pending.realm,resumeJavaScriptPropertyDefinition(machine.heap,pending.state,{$:'normalCompletion',value}));
-    case 'waitIteratorProtocol':return acceptJavaScriptCallIteratorProtocol(program,current,pending,resumeJavaScriptIteratorProtocolCall(machine.heap,pending.state,{$:'normalCompletion',value}));
+    case 'waitIteratorProtocol':return acceptJavaScriptCallIteratorProtocol(program,current,projectJavaScriptCallIteratorOperation(pending),resumeJavaScriptIteratorProtocolCall(machine.heap,pending.state,{$:'normalCompletion',value}));
     case 'waitArraySpread':return acceptJavaScriptCallArraySpread(program,current,pending.destination,pending.realm,resumeJavaScriptArraySpread(machine.heap,pending.state,{$:'normalCompletion',value},false));
     case 'waitArrayIteratorNext':return acceptJavaScriptCallArrayIteration(program,current,resumeJavaScriptArrayIteratorCall(machine.heap,pending.state,{$:'normalCompletion',value}));
     case 'waitArrayConcatenation':{const directory=readJavaScriptCallArrayTransformDirectory(program,current,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array concatenation return retains actual species authority'};return pending.construction!==undefined?acceptJavaScriptCallSpeciesConstruction(program,current,resumeJavaScriptSpeciesConstructionCall(program,machine.heap,directory,pending.construction,{$:'normalCompletion',value})):acceptJavaScriptCallArrayConcatenation(program,current,pending.destination,pending.realm,resumeJavaScriptArrayConcatenationCall(machine.heap,directory,pending.state,{$:'normalCompletion',value}));}
@@ -1088,20 +1255,21 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
     }
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':{
       const held=readJavaScriptCollectionConstructionReceiver(program,machine,frame,instruction);if(held.error!=='')return {$:'machineInvalid',heap:machine.heap,reason:held.error};if(held.receiver!==undefined)return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,held.receiver))};
-      if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='Array'){
-        const receiver=registers[0]??{$:'undefined'},owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
-        if(receiver.$==='null'||receiver.$==='undefined')return owner===undefined?{$:'machineInvalid',heap:machine.heap,reason:'Array iterator creation retains its actual realm'}:requestJavaScriptCallError(machine,owner.realm,'TypeError','Cannot convert undefined or null to object');
-        if(receiver.$!=='object')return {$:'machineNeedArrayIteratorBoxing',machine,receiver};
-      }
-      if(instruction.$==='collectionIteratorAllocate'&&instruction.kind!=='Array'&&instruction.kind!=='String'){
-        const receiver=readJavaScriptCollectionIteratorReceiverError(machine.heap,registers[0]??{$:'undefined'},instruction.kind);
-        if(receiver.error!==''){
-          const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
-          return receiver.typeError&&owner!==undefined?requestJavaScriptCallError(machine,owner.realm,'TypeError',receiver.error):{$:'machineInvalid',heap:machine.heap,reason:receiver.error};
+      if(instruction.$==='collectionIteratorAllocate'){
+        const kind=instruction.kind;
+        if(kind==='Array'){
+          const receiver=registers[0]??{$:'undefined'},owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
+          if(receiver.$==='null'||receiver.$==='undefined')return owner===undefined?{$:'machineInvalid',heap:machine.heap,reason:'Array iterator creation retains its actual realm'}:requestJavaScriptCallError(machine,owner.realm,'TypeError','Cannot convert undefined or null to object');
+          if(receiver.$!=='object')return {$:'machineNeedArrayIteratorBoxing',machine,receiver};
+        }else if(kind==='String'){
+          const value=registers[instruction.input??-1]??{$:'undefined'};if(value.$!=='text'&&value.$!=='sourceText')return {$:'machineInvalid',heap:machine.heap,reason:'String iterator allocation retains its actual completed text conversion'};
+        }else{
+          const receiver=readJavaScriptCollectionIteratorReceiverError(machine.heap,registers[0]??{$:'undefined'},kind);
+          if(receiver.error!==''){
+            const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
+            return receiver.typeError&&owner!==undefined?requestJavaScriptCallError(machine,owner.realm,'TypeError',receiver.error):{$:'machineInvalid',heap:machine.heap,reason:receiver.error};
+          }
         }
-      }
-      if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='String'){
-        const value=registers[instruction.input??-1]??{$:'undefined'};if(value.$!=='text'&&value.$!=='sourceText')return {$:'machineInvalid',heap:machine.heap,reason:'String iterator allocation retains its actual completed text conversion'};
       }
       const prototype=registers[instruction.prototype]??{$:'undefined'};
       if(prototype.$!=='null'&&prototype.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary allocation requires its actual null or Object prototype'};
@@ -1183,6 +1351,33 @@ export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,
  }
 }
 
+/** @param {JavaScriptCallMachine} machine @param {JavaScriptCallMachineTransition} transition
+ * @returns {JavaScriptCallMachineTransition} */
+function retainJavaScriptCallResourceLimitMachine(machine,transition){
+  if(transition.$==='machineResourceLimit')return {$:'machineResourceLimit',machine,reason:transition.reason};
+  return transition;
+}
+
+/** @param {JavaScriptCallMachine} machine @param {JavaScriptCallFrame} next
+ * @param {JavaScriptCallArgumentListsUpdate} update
+ * @returns {JavaScriptCallMachineTransition} */
+function acceptJavaScriptCallArgumentListsUpdate(machine,next,update){
+  switch(update.$){
+    case 'argumentListsInvalid':return {$:'machineInvalid',heap:machine.heap,reason:update.reason};
+    case 'argumentListsResourceLimit':return {$:'machineResourceLimit',machine,reason:update.reason};
+    case 'argumentListsUpdated':{
+      let count=0;
+      for(let position=0;position<machine.frames.length;position+=1){
+        const active=machine.frames[position];
+        count+=active.arguments.length;
+        for(const list of position===machine.frames.length-1?update.lists:active.argumentLists??[])count+=list.values.length;
+      }
+      if(count>1048576)return {$:'machineResourceLimit',machine,reason:'argument Lists share the complete actual stack argument storage budget'};
+      return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,argumentLists:update.lists})};
+    }
+  }
+}
+
 /** One instruction/continuation per step. Resource limits are explicit model
  * outcomes; no timeout is passed off as a language-level exception.
  * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @returns {JavaScriptCallMachineTransition} */
@@ -1221,7 +1416,7 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'waitObjectPrototype':return {$:'machineNeedObjectPrototype',machine,input:pending.input,realm:pending.realm};
     case 'waitArrayAssignment':return acceptJavaScriptCallArrayAssignment(program,machine,pending.destination,pending.realm,stepJavaScriptArrayAssignment(machine.heap,pending.state));
     case 'waitArgumentRest':return acceptJavaScriptCallArgumentRest(machine,pending.destination,pending.realm,stepJavaScriptArgumentRest(machine.heap,frame.arguments,pending.state));
-    case 'waitIteratorProtocol':return acceptJavaScriptCallIteratorProtocol(program,machine,pending,stepJavaScriptIteratorProtocol(machine.heap,pending.state));
+    case 'waitIteratorProtocol':return acceptJavaScriptCallIteratorProtocol(program,machine,projectJavaScriptCallIteratorOperation(pending),stepJavaScriptIteratorProtocol(machine.heap,pending.state));
     case 'waitArraySpread':return acceptJavaScriptCallArraySpread(program,machine,pending.destination,pending.realm,stepJavaScriptArraySpread(machine.heap,pending.state));
     case 'waitArrayIteratorNext':return acceptJavaScriptCallArrayIteration(program,machine,stepJavaScriptArrayIteratorNext(machine.heap,pending.state));
     case 'waitCollectionIteratorResult':return acceptJavaScriptCollectionIteratorResultCompletion(program,machine,frame,pending.destination,pending.realm,stepJavaScriptCollectionIteratorResult(machine.heap,pending.state));
@@ -1242,7 +1437,8 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'boundFunctionCall':{
       const bound=machine.heap.objects[findJavaScriptOrdinaryObject(machine.heap.objects,frame.identity)];if(bound?.$!=='boundFunctionObject')return {$:'machineInvalid',heap:machine.heap,reason:'a bound call retains its actual internal-slot owner'};
       if(bound.boundArguments.length+frame.arguments.length>1048576)return {$:'machineResourceLimit',machine,reason:'bound and supplied arguments exceed the shared call List budget'};
-      const nextMachine=replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(next,{$:'waitCall',destination:instruction.destination})),called=pushJavaScriptCall(program,nextMachine,bound.boundTarget,bound.boundThis,bound.boundArguments.concat(frame.arguments));return called.$==='machineResourceLimit'?{...called,machine}:called;
+      const nextMachine=replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(next,{$:'waitCall',destination:instruction.destination}));
+      return retainJavaScriptCallResourceLimitMachine(machine,pushJavaScriptCall(program,nextMachine,bound.boundTarget,bound.boundThis,bound.boundArguments.concat(frame.arguments)));
     }
     case 'constant':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,instruction.value))};
     case 'copy':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,registers[instruction.source]??{$:'undefined'}))};
@@ -1273,21 +1469,14 @@ export function stepJavaScriptCallMachine(program,machine){
       if(frame.handlers[frame.handlers.length-1]?.$!=='callHandler')return {$:'machineInvalid',heap:machine.heap,reason:'a handler pop requires its actual active catch handler'};
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,handlers:frame.handlers.slice(0,-1)})};
     }
-    case 'argumentListOpen':case 'argumentListAppend':{
-      const lists=frame.argumentLists??[];
-      const update=instruction.$==='argumentListOpen'?openJavaScriptCallArgumentList(machine.heap,lists,instruction.slot,frame.handlers.length):appendJavaScriptCallArgument(machine.heap,lists,instruction.slot,frame.handlers.length,registers[instruction.value]??{$:'undefined'});
-      if(update.$==='argumentListsInvalid')return {$:'machineInvalid',heap:machine.heap,reason:update.reason};
-      if(update.$==='argumentListsResourceLimit')return {$:'machineResourceLimit',machine,reason:update.reason};
-      let count=0;for(const active of machine.frames){count+=active.arguments.length;for(const list of active===frame?update.lists:active.argumentLists??[])count+=list.values.length;}
-      if(count>1048576)return {$:'machineResourceLimit',machine,reason:'argument Lists share the complete actual stack argument storage budget'};
-      return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,argumentLists:update.lists})};
-    }
+    case 'argumentListOpen':return acceptJavaScriptCallArgumentListsUpdate(machine,next,openJavaScriptCallArgumentList(machine.heap,frame.argumentLists??[],instruction.slot,frame.handlers.length));
+    case 'argumentListAppend':return acceptJavaScriptCallArgumentListsUpdate(machine,next,appendJavaScriptCallArgument(machine.heap,frame.argumentLists??[],instruction.slot,frame.handlers.length,registers[instruction.value]??{$:'undefined'}));
     case 'argumentListCall':{
       const lists=frame.argumentLists??[],at=findJavaScriptCallArgumentList(lists,instruction.slot),list=lists[at];if(list===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a variadic Call consumes its actual opened argument List exactly once'};
       const caller=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,argumentLists:lists.filter((row,index)=>index!==at),pending:{$:'waitCall',destination:instruction.destination}}),callee=registers[instruction.callee]??{$:'undefined'},receiver=registers[instruction.receiver]??{$:'undefined'};
       if(instruction.mode==='construct'){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'variadic construction requires actual constructor authority'};return acceptJavaScriptCallConstruction(program,caller,instruction.destination,fn.realm,beginJavaScriptConstruction(program,machine.heap,directory,callee,receiver,list.values),list.values);}
       const transition=instruction.mode==='collection'?pushJavaScriptCollectionConstructor(program,caller,callee,list.values):instruction.mode==='error class'?pushJavaScriptErrorConstructor(program,caller,callee,list.values):instruction.mode==='ordinary class'?pushJavaScriptOrdinaryClassConstructor(program,caller,callee,receiver,list.values):pushJavaScriptCall(program,caller,callee,receiver,list.values);
-      return transition.$==='machineResourceLimit'?{...transition,machine}:transition;
+      return retainJavaScriptCallResourceLimitMachine(machine,transition);
     }
     case 'call':{
       const arguments_=instruction.arguments.map(index=>registers[index]??{$:'undefined'});
@@ -1316,7 +1505,11 @@ export function stepJavaScriptCallMachine(program,machine){
       }
       return acceptJavaScriptCollectionIteratorResultCompletion(program,machine,frame,instruction.destination,fn.realm,beginJavaScriptCollectionIteratorResult(machine.heap,registers[0]??{$:'undefined'},instruction.kind,registers[instruction.arrayPrototype]??{$:'undefined'},registers[instruction.objectPrototype]??{$:'undefined'}));
     }
-    case 'collectionOperation':return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,(readJavaScriptWeakCollectionOperationKind(instruction.operation)!==''?executeJavaScriptWeakCollectionOperation:executeJavaScriptCollectionOperation)(machine.heap,registers[0]??{$:'undefined'},instruction.operation,frame.arguments));
+    case 'collectionOperation':{
+      const receiver=registers[0]??{$:'undefined'};
+      if(readJavaScriptWeakCollectionOperationKind(instruction.operation)!=='')return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,executeJavaScriptWeakCollectionOperation(machine.heap,receiver,instruction.operation,frame.arguments));
+      return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,executeJavaScriptCollectionOperation(machine.heap,receiver,instruction.operation,frame.arguments));
+    }
     case 'primitiveMethod':{
      if(testJavaScriptArrayIntrinsicOperation(instruction.operation)){
       const result=testJavaScriptArrayValue(machine.heap,frame.arguments[0]??{$:'undefined'});if(result.error!=='')return {$:'machineInvalid',heap:machine.heap,reason:result.error};
@@ -1447,25 +1640,42 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
  const error=readJavaScriptCallMachineError(program,machine);
  if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
  const frame=machine.frames[machine.frames.length-1];
- if(frame!==undefined&&(frame.pending.$==='waitArrayTransform'||frame.pending.$==='waitArraySlice'||frame.pending.$==='waitArrayConcatenation')){
-  const pending=frame.pending,directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array transform allocation retains its actual source directory'};return pending.construction!==undefined?acceptJavaScriptCallSpeciesConstruction(program,machine,resumeJavaScriptSpeciesConstructionAllocation(program,machine.heap,directory,pending.construction,identity)):pending.$==='waitArrayConcatenation'?acceptJavaScriptCallArrayConcatenation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayConcatenationAllocation(machine.heap,directory,pending.state,identity)):pending.$==='waitArraySlice'?acceptJavaScriptCallArraySlice(program,machine,pending.destination,pending.realm,resumeJavaScriptArraySliceAllocation(machine.heap,directory,pending.state,identity)):acceptJavaScriptCallArrayTransform(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayTransformAllocation(machine.heap,directory,pending.state,identity));
+ if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual active allocation instruction'};
+ const pending=frame.pending;
+ if(pending.$==='waitArrayTransform'){
+  const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);
+  if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array transform allocation retains its actual source directory'};
+  if(pending.construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,resumeJavaScriptSpeciesConstructionAllocation(program,machine.heap,directory,pending.construction,identity));
+  return acceptJavaScriptCallArrayTransform(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayTransformAllocation(machine.heap,directory,pending.state,identity));
  }
- if(frame!==undefined&&frame.pending.$==='waitArgumentRest')return acceptJavaScriptCallArgumentRest(machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptArgumentRestAllocation(machine.heap,frame.arguments,frame.pending.state,identity));
- if(frame?.pending.$==='waitArrayCreation'){
-  const pending=frame.pending,request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return request.$==='machineResourceLimit'?request:{$:'machineInvalid',heap:machine.heap,reason:'Array creation identity response retains its actual allocation request'};
+ if(pending.$==='waitArraySlice'){
+  const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);
+  if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array transform allocation retains its actual source directory'};
+  if(pending.construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,resumeJavaScriptSpeciesConstructionAllocation(program,machine.heap,directory,pending.construction,identity));
+  return acceptJavaScriptCallArraySlice(program,machine,pending.destination,pending.realm,resumeJavaScriptArraySliceAllocation(machine.heap,directory,pending.state,identity));
+ }
+ if(pending.$==='waitArrayConcatenation'){
+  const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);
+  if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array transform allocation retains its actual source directory'};
+  if(pending.construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,resumeJavaScriptSpeciesConstructionAllocation(program,machine.heap,directory,pending.construction,identity));
+  return acceptJavaScriptCallArrayConcatenation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayConcatenationAllocation(machine.heap,directory,pending.state,identity));
+ }
+ if(pending.$==='waitArgumentRest')return acceptJavaScriptCallArgumentRest(machine,pending.destination,pending.realm,resumeJavaScriptArgumentRestAllocation(machine.heap,frame.arguments,pending.state,identity));
+ if(pending.$==='waitArrayCreation'){
+  const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return request.$==='machineResourceLimit'?request:{$:'machineInvalid',heap:machine.heap,reason:'Array creation identity response retains its actual allocation request'};
   if(pending.construction!==undefined){const directory=program.constructorDirectory;return directory===undefined?{$:'machineInvalid',heap:machine.heap,reason:'Array construction requires actual authority'}:acceptJavaScriptCallArrayConstruction(program,machine,resumeJavaScriptConstructionAllocation(program,machine.heap,directory,pending.construction,identity));}
-  if(pending.fallback!==undefined){const made=allocateJavaScriptArray(machine.heap,identity,pending.fallback.prototype,pending.fallback.length);if(made.$==='arrayNormal')return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayCreationConstruction(made.heap,pending.state,{$:'normalCompletion',value:made.value}));if(made.$==='arrayResourceLimit')return {$:'machineResourceLimit',machine,reason:made.reason};return {$:'machineInvalid',heap:made.heap,reason:made.$==='arrayInvalid'||made.$==='arrayError'?made.reason:'ArrayCreate retains its actual allocation result'};}
+  if(pending.fallback!==undefined){const made=allocateJavaScriptArray(machine.heap,identity,pending.fallback.prototype,pending.fallback.length);if(made.$==='arrayNormal')return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayCreationConstruction(made.heap,pending.state,{$:'normalCompletion',value:made.value}));if(made.$==='arrayResourceLimit')return {$:'machineResourceLimit',machine,reason:made.reason};if(made.$==='arrayInvalid')return {$:'machineInvalid',heap:made.heap,reason:made.reason};if(made.$==='arrayError')return {$:'machineInvalid',heap:made.heap,reason:made.reason};return {$:'machineInvalid',heap:made.heap,reason:'ArrayCreate retains its actual allocation result'};}
   return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayCreationAllocation(machine.heap,pending.state,identity));
  }
- if(frame!==undefined&&frame.pending.$==='waitConstruction'){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'construction allocation requires actual constructor authority'};const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return {$:'machineInvalid',heap:machine.heap,reason:'construction allocation retains its actual fresh Object request'};return acceptJavaScriptCallConstruction(program,machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptConstructionAllocation(program,machine.heap,directory,frame.pending.state,identity));}
- if(frame?.pending.$==='waitFunctionBind')return acceptJavaScriptCallFunctionBind(program,machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptFunctionBindAllocation(machine.heap,frame.pending.state,identity));
- if(frame!==undefined&&frame.pending.$==='waitObjectFromEntries'){const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return request.$==='machineResourceLimit'?request:{$:'machineInvalid',heap:machine.heap,reason:'Object.fromEntries Object response retains its actual allocation request'};return acceptJavaScriptCallObjectFromEntries(program,machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptObjectFromEntriesAllocation(machine.heap,frame.pending.state,identity));}
- if(frame!==undefined&&frame.pending.$==='waitPrimitiveWrapper')return acceptJavaScriptCallPrimitiveWrapper(machine,frame.pending.destination,resumeJavaScriptPrimitiveWrapper(machine.heap,frame.pending.state,identity));
- if(frame!==undefined&&frame.pending.$==='waitPropertyDefinitions')return acceptJavaScriptCallPropertyDefinitions(program,machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptPropertyDefinitionsAllocation(machine.heap,frame.pending.state,identity));
- if(frame!==undefined&&frame.pending.$==='waitPropertyReflection')return acceptJavaScriptCallPropertyReflection(machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptPropertyReflectionAllocation(machine.heap,frame.pending.state,identity));
- if(frame!==undefined&&frame.pending.$==='waitObjectEnumeration')return acceptJavaScriptCallObjectEnumeration(program,machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptObjectEnumerationAllocation(machine.heap,frame.pending.state,identity));
- if(frame!==undefined&&frame.pending.$==='waitCollectionIteratorResult')return acceptJavaScriptCollectionIteratorResultCompletion(program,machine,frame,frame.pending.destination,frame.pending.realm,resumeJavaScriptCollectionIteratorResultAllocation(machine.heap,frame.pending.state,identity));
- if(frame===undefined||frame.pending.$!=='callIdle')return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual active allocation instruction'};
+ if(pending.$==='waitConstruction'){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'construction allocation requires actual constructor authority'};const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return {$:'machineInvalid',heap:machine.heap,reason:'construction allocation retains its actual fresh Object request'};return acceptJavaScriptCallConstruction(program,machine,pending.destination,pending.realm,resumeJavaScriptConstructionAllocation(program,machine.heap,directory,pending.state,identity));}
+ if(pending.$==='waitFunctionBind')return acceptJavaScriptCallFunctionBind(program,machine,pending.destination,pending.realm,resumeJavaScriptFunctionBindAllocation(machine.heap,pending.state,identity));
+ if(pending.$==='waitObjectFromEntries'){const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateObject')return request.$==='machineResourceLimit'?request:{$:'machineInvalid',heap:machine.heap,reason:'Object.fromEntries Object response retains its actual allocation request'};return acceptJavaScriptCallObjectFromEntries(program,machine,pending.destination,pending.realm,resumeJavaScriptObjectFromEntriesAllocation(machine.heap,pending.state,identity));}
+ if(pending.$==='waitPrimitiveWrapper')return acceptJavaScriptCallPrimitiveWrapper(machine,pending.destination,resumeJavaScriptPrimitiveWrapper(machine.heap,pending.state,identity));
+ if(pending.$==='waitPropertyDefinitions')return acceptJavaScriptCallPropertyDefinitions(program,machine,pending.destination,pending.realm,resumeJavaScriptPropertyDefinitionsAllocation(machine.heap,pending.state,identity));
+ if(pending.$==='waitPropertyReflection')return acceptJavaScriptCallPropertyReflection(machine,pending.destination,pending.realm,resumeJavaScriptPropertyReflectionAllocation(machine.heap,pending.state,identity));
+ if(pending.$==='waitObjectEnumeration')return acceptJavaScriptCallObjectEnumeration(program,machine,pending.destination,pending.realm,resumeJavaScriptObjectEnumerationAllocation(machine.heap,pending.state,identity));
+ if(pending.$==='waitCollectionIteratorResult')return acceptJavaScriptCollectionIteratorResultCompletion(program,machine,frame,pending.destination,pending.realm,resumeJavaScriptCollectionIteratorResultAllocation(machine.heap,pending.state,identity));
+ if(pending.$!=='callIdle')return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual active allocation instruction'};
  const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
  if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual source function'};
  const instruction=fn.instructions[frame.position];
@@ -1476,7 +1686,7 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
   if(allocation.$==='closureAllocationInvalid')return {$:'machineInvalid',heap:machine.heap,reason:allocation.reason};
   return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
  }
- const prototype=frame.registers[instruction.prototype]??{$:'undefined'};
+ const prototype=frame.registers[readJavaScriptCallAllocationPrototype(instruction)]??{$:'undefined'};
  if(prototype.$!=='null'&&prototype.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary allocation requires its actual null or Object prototype'};
  if(machine.heap.objects.length>=4096)return {$:'machineResourceLimit',machine,reason:'ordinary heap identity directory exceeds its explicit resource budget'};
  if(instruction.$==='arrayAllocate'){
@@ -1485,22 +1695,21 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
   if(allocation.$!=='arrayNormal')return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='arrayError'?'literal Array length must have been validated before allocation':allocation.$==='arrayInvalid'?allocation.reason:'Array allocation requires its actual normal completion'};
   const next=writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value);return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,next)};
  }
- if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='String'){
-  const allocation=allocateJavaScriptStringIterator(machine.heap,identity,prototype,frame.registers[instruction.input??-1]??{$:'undefined'});
-  if(allocation.$==='stringIteratorAllocated')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
-  if(allocation.$==='stringIteratorResourceLimit')return {$:'machineResourceLimit',machine,reason:allocation.reason};
-  return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='stringIteratorInvalid'?allocation.reason:'String iterator creation retains its actual allocation result'};
- }
-
- if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='Array'){
-  const allocation=allocateJavaScriptArrayIterator(machine.heap,identity,prototype,frame.registers[0]??{$:'undefined'},instruction.iterationKind);
-  if(allocation.$==='arrayIteratorAllocated')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
-  if(allocation.$==='arrayIteratorAllocationResourceLimit')return {$:'machineResourceLimit',machine,reason:allocation.reason};
-  if(allocation.$==='arrayIteratorNeedBoxing')return {$:'machineNeedArrayIteratorBoxing',machine,receiver:allocation.receiver};
-  if(allocation.$==='arrayIteratorError')return requestJavaScriptCallError(machine,fn.realm,allocation.errorClass,allocation.reason);
-  return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='arrayIteratorInvalid'?allocation.reason:'Array iterator creation retains its actual allocation result'};
- }
  if(instruction.$==='collectionIteratorAllocate'){
+  if(instruction.kind==='String'){
+   const allocation=allocateJavaScriptStringIterator(machine.heap,identity,prototype,frame.registers[instruction.input??-1]??{$:'undefined'});
+   if(allocation.$==='stringIteratorAllocated')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
+   if(allocation.$==='stringIteratorResourceLimit')return {$:'machineResourceLimit',machine,reason:allocation.reason};
+   return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='stringIteratorInvalid'?allocation.reason:'String iterator creation retains its actual allocation result'};
+  }
+  if(instruction.kind==='Array'){
+   const allocation=allocateJavaScriptArrayIterator(machine.heap,identity,prototype,frame.registers[0]??{$:'undefined'},instruction.iterationKind);
+   if(allocation.$==='arrayIteratorAllocated')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
+   if(allocation.$==='arrayIteratorAllocationResourceLimit')return {$:'machineResourceLimit',machine,reason:allocation.reason};
+   if(allocation.$==='arrayIteratorNeedBoxing')return {$:'machineNeedArrayIteratorBoxing',machine,receiver:allocation.receiver};
+   if(allocation.$==='arrayIteratorError')return requestJavaScriptCallError(machine,fn.realm,allocation.errorClass,allocation.reason);
+   return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='arrayIteratorInvalid'?allocation.reason:'Array iterator creation retains its actual allocation result'};
+  }
   const allocation=allocateJavaScriptCollectionIterator(machine.heap,identity,prototype,frame.registers[0]??{$:'undefined'},instruction.kind,instruction.iterationKind);
   if(allocation.$==='collectionIteratorAllocated')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
   if(allocation.$==='collectionIterationResourceLimit')return {$:'machineResourceLimit',machine,reason:allocation.reason};
@@ -1508,13 +1717,30 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
   return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='collectionIterationInvalid'?allocation.reason:'iterator allocation needs its actual completed creation'};
  }
  if(instruction.$==='collectionAllocate'){
-  const allocation=(['WeakMap','WeakSet'].includes(instruction.kind)?allocateJavaScriptWeakCollection:allocateJavaScriptCollection)(machine.heap,identity,prototype,instruction.kind);if(allocation.$!=='collectionNormal')return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,allocation);
+  const allocation=['WeakMap','WeakSet'].includes(instruction.kind)
+   ?allocateJavaScriptWeakCollection(machine.heap,identity,prototype,instruction.kind)
+   :allocateJavaScriptCollection(machine.heap,identity,prototype,instruction.kind);
+  if(allocation.$!=='collectionNormal')return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,allocation);
   const next=writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value);return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,next)};
  }
- const allocation=insertJavaScriptOrdinaryObject(machine.heap,identity,prototype);
- if(!allocation.success)return {$:'machineInvalid',heap:machine.heap,reason:allocation.error};
- const next=writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,{$:'object',identity,callable:false});
- return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,next)};
+ if(instruction.$==='ordinaryAllocate'){
+  const allocation=insertJavaScriptOrdinaryObject(machine.heap,identity,prototype);
+  if(!allocation.success)return {$:'machineInvalid',heap:machine.heap,reason:allocation.error};
+  const next=writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,{$:'object',identity,callable:false});
+  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,next)};
+ }
+ return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual allocation instruction'};
+}
+
+/** @param {JavaScriptCallInstruction} instruction @returns {number} */
+function readJavaScriptCallAllocationPrototype(instruction){
+ switch(instruction.$){
+  case 'ordinaryAllocate':
+  case 'arrayAllocate':
+  case 'collectionAllocate':
+  case 'collectionIteratorAllocate':return instruction.prototype;
+  default:return -1;
+ }
 }
 
 /** The allocator must create the actual Error in the requested realm and
@@ -1525,17 +1751,18 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
 export function resumeJavaScriptCallErrorAllocation(program,machine,realm,value){
   const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
   const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Error resumption needs its actual active frame'};
-  if(frame.pending.$==='waitArrayCreation'){
-   const pending=frame.pending,request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||value.$!=='object'||value.callable||readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return {$:'machineInvalid',heap:machine.heap,reason:'Array creation retains actual Error allocation before cleanup'};
+  const pending=frame.pending;
+  if(pending.$==='waitArrayCreation'){
+   const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||value.$!=='object'||value.callable||readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return {$:'machineInvalid',heap:machine.heap,reason:'Array creation retains actual Error allocation before cleanup'};
    const resumed=pending.error!==undefined?resumeJavaScriptArrayCreationCall(machine.heap,pending.state,{$:'throwCompletion',value}):resumeJavaScriptArrayCreationError(machine.heap,pending.state,value),{error:discarded,...base}=pending;return acceptJavaScriptCallArrayCreation(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,base)),pending.destination,pending.realm,resumed);
   }
-  if(frame.pending.$==='waitObjectFromEntries'){
-   const pending=frame.pending,request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||readJavaScriptOrdinaryValueError(machine.heap,value)!==''||value.$!=='object'||value.callable)return {$:'machineInvalid',heap:machine.heap,reason:'Object.fromEntries retains its actual realm Error allocation before cleanup'};
+  if(pending.$==='waitObjectFromEntries'){
+   const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||readJavaScriptOrdinaryValueError(machine.heap,value)!==''||value.$!=='object'||value.callable)return {$:'machineInvalid',heap:machine.heap,reason:'Object.fromEntries retains its actual realm Error allocation before cleanup'};
    const resumed=pending.error!==undefined?resumeJavaScriptObjectFromEntriesCall(machine.heap,pending.state,{$:'throwCompletion',value}):resumeJavaScriptObjectFromEntriesError(machine.heap,pending.state,value);
    const {error:discarded,...base}=pending;return acceptJavaScriptCallObjectFromEntries(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,base)),pending.destination,pending.realm,resumed);
   }
-  if(frame.pending.$!=='waitError')return {$:'machineInvalid',heap:machine.heap,reason:'Error resumption requires its actual pending allocation'};
-  if(frame.pending.realm!==realm)return {$:'machineInvalid',heap:machine.heap,reason:'Error resumption retains its actual requested realm'};
+  if(pending.$!=='waitError')return {$:'machineInvalid',heap:machine.heap,reason:'Error resumption requires its actual pending allocation'};
+  if(pending.realm!==realm)return {$:'machineInvalid',heap:machine.heap,reason:'Error resumption retains its actual requested realm'};
   const valueError=readJavaScriptOrdinaryValueError(machine.heap,value);if(valueError!=='')return {$:'machineInvalid',heap:machine.heap,reason:valueError};
   if(value.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'an intrinsic Error allocation supplies its actual noncallable Object'};
   if(value.callable)return {$:'machineInvalid',heap:machine.heap,reason:'an intrinsic Error allocation supplies its actual noncallable Object'};
@@ -1672,19 +1899,24 @@ export function resumeJavaScriptErrorValueAllocation(program,machine,realm,value
 export function resumeJavaScriptErrorAllocationAbrupt(program,machine,realm,value){
  const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'an abrupt allocator result needs its actual suspended frame'};
- if(frame.pending.$==='waitArrayCreation'){
-  const pending=frame.pending,request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return {$:'machineInvalid',heap:machine.heap,reason:'Array creation abrupt Error allocation retains its actual request'};
+ const pending=frame.pending;
+ if(pending.$==='waitArrayCreation'){
+  const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return {$:'machineInvalid',heap:machine.heap,reason:'Array creation abrupt Error allocation retains its actual request'};
   const resumed=pending.error!==undefined?resumeJavaScriptArrayCreationCall(machine.heap,pending.state,{$:'throwCompletion',value}):throwJavaScriptArrayCreation(machine.heap,pending.state,value),{error:discarded,...base}=pending;return acceptJavaScriptCallArrayCreation(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,base)),pending.destination,pending.realm,resumed);
  }
- if(frame.pending.$==='waitObjectFromEntries'){
-  const pending=frame.pending,request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return {$:'machineInvalid',heap:machine.heap,reason:'Object.fromEntries abrupt Error allocation retains its actual request and thrown value'};
+ if(pending.$==='waitObjectFromEntries'){
+  const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineAllocateError'||request.realm!==realm||readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return {$:'machineInvalid',heap:machine.heap,reason:'Object.fromEntries abrupt Error allocation retains its actual request and thrown value'};
   const resumed=pending.error!==undefined?resumeJavaScriptObjectFromEntriesCall(machine.heap,pending.state,{$:'throwCompletion',value}):throwJavaScriptObjectFromEntries(machine.heap,pending.state,value),{error:discarded,...base}=pending;
   return acceptJavaScriptCallObjectFromEntries(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,base)),pending.destination,pending.realm,resumed);
  }
- const pending=frame.pending;if(pending.$!=='waitErrorValue'&&pending.$!=='waitError'&&pending.$!=='waitSourceError')return {$:'machineInvalid',heap:machine.heap,reason:'an abrupt allocator result needs its actual Error allocation request'};
- if(pending.realm!==realm)return {$:'machineInvalid',heap:machine.heap,reason:'an abrupt allocator retains its requested realm'};
- const invalid=readJavaScriptOrdinaryValueError(machine.heap,value);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
- return throwJavaScriptCallValue(machine,value);
+ switch(pending.$){
+  case 'waitErrorValue':case 'waitError':case 'waitSourceError':{
+   if(pending.realm!==realm)return {$:'machineInvalid',heap:machine.heap,reason:'an abrupt allocator retains its requested realm'};
+   const invalid=readJavaScriptOrdinaryValueError(machine.heap,value);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
+   return throwJavaScriptCallValue(machine,value);
+  }
+  default:return {$:'machineInvalid',heap:machine.heap,reason:'an abrupt allocator result needs its actual Error allocation request'};
+ }
 }
 /** Intrinsic accessors/methods (including engine-specific lazy stack access)
  * execute only through their actual externally registered callable identity.
@@ -1878,7 +2110,52 @@ export function resumeJavaScriptCallArrayConstruction(program,machine,completion
  const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitArrayTransform'&&frame.pending.$!=='waitArraySlice'&&frame.pending.$!=='waitArrayConcatenation')return {$:'machineInvalid',heap:machine.heap,reason:'species construction resumption retains its actual pending transform'};
  const pending=frame.pending,directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'species construction retains its actual source directory'};
  if(pending.construction===undefined||stepJavaScriptSpeciesConstruction(program,machine.heap,directory,pending.construction).$!=='speciesConstructionNeedImplementation')return {$:'machineInvalid',heap:machine.heap,reason:'external species construction completion requires its actual specialization request'};
- return pending.$==='waitArrayConcatenation'?acceptJavaScriptCallArrayConcatenation(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayConcatenationConstruction(machine.heap,directory,pending.state,completion)):pending.$==='waitArraySlice'?acceptJavaScriptCallArraySlice(program,machine,pending.destination,pending.realm,resumeJavaScriptArraySliceConstruction(machine.heap,directory,pending.state,completion)):acceptJavaScriptCallArrayTransform(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayTransformConstruction(machine.heap,directory,pending.state,completion));
+ return resumeJavaScriptCallArraySpeciesOperation(program,machine,frame,directory,completion,false);
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptArraySpeciesDirectory} directory
+ * @param {JavaScriptPrimitiveConversionCompletion} completion @param {boolean} clearConstruction
+ * @returns {JavaScriptCallMachineTransition} */
+function resumeJavaScriptCallArraySpeciesOperation(program,machine,frame,directory,completion,clearConstruction){
+ const pending=frame.pending;
+ switch(pending.$){
+  case 'waitArrayConcatenation':{
+   const next=clearConstruction?replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitArrayConcatenation',destination:pending.destination,realm:pending.realm,state:pending.state})):machine;
+   return acceptJavaScriptCallArrayConcatenation(program,next,pending.destination,pending.realm,resumeJavaScriptArrayConcatenationConstruction(machine.heap,directory,pending.state,completion));
+  }
+  case 'waitArraySlice':{
+   const next=clearConstruction?replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitArraySlice',destination:pending.destination,realm:pending.realm,state:pending.state})):machine;
+   return acceptJavaScriptCallArraySlice(program,next,pending.destination,pending.realm,resumeJavaScriptArraySliceConstruction(machine.heap,directory,pending.state,completion));
+  }
+  case 'waitArrayTransform':{
+   const next=clearConstruction?replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitArrayTransform',destination:pending.destination,realm:pending.realm,state:pending.state})):machine;
+   return acceptJavaScriptCallArrayTransform(program,next,pending.destination,pending.realm,resumeJavaScriptArrayTransformConstruction(machine.heap,directory,pending.state,completion));
+  }
+  default:return {$:'machineInvalid',heap:machine.heap,reason:'species construction resumption retains its actual pending transform'};
+ }
+}
+
+/** @param {JavaScriptCallInstruction} instruction @param {JavaScriptArraySpeciesDirectory} species @returns {JavaScriptCallInstruction} */
+function replaceJavaScriptInstructionSpecies(instruction,species){
+ switch(instruction.$){
+  case 'arrayTransform':{
+   const next={$:'arrayTransform',destination:instruction.destination,operation:instruction.operation,species};
+   if(instruction.input!==undefined)next.input=instruction.input;
+   return next;
+  }
+  case 'arraySlice':{
+   const next={$:'arraySlice',destination:instruction.destination,species};
+   if(instruction.input!==undefined)next.input=instruction.input;
+   return next;
+  }
+  case 'arrayConcatenation':{
+   const next={$:'arrayConcatenation',destination:instruction.destination,spreadableKey:instruction.spreadableKey,species};
+   if(instruction.input!==undefined)next.input=instruction.input;
+   return next;
+  }
+  default:return instruction;
+ }
 }
 
 /** Metadata extension is explicit and preserves every prior owner/root fact.
@@ -1901,26 +2178,46 @@ export function extendJavaScriptCallArrayAuthority(program,machine,directory){
   for(const root of retained.constructorRealms??[]){const next=(directory.constructorRealms??[]).find(row=>row.realm===root.realm);if(next===undefined)return {$:'arrayAuthorityUpdate',program,machine,error:'constructor authority extension preserves every established realm root'};const before=[root.objectPrototype,root.arrayPrototype,root.arrayConstructor,root.numberPrototype,root.booleanPrototype,root.stringPrototype,root.integerPrototype,root.symbolPrototype,root.mapPrototype,root.setPrototype,root.weakMapPrototype,root.weakSetPrototype],after=[next.objectPrototype,next.arrayPrototype,next.arrayConstructor,next.numberPrototype,next.booleanPrototype,next.stringPrototype,next.integerPrototype,next.symbolPrototype,next.mapPrototype,next.setPrototype,next.weakMapPrototype,next.weakSetPrototype];for(let at=0;at<before.length;at++){const value=before[at],updated=after[at];if(value!==undefined&&(updated===undefined||!testJavaScriptSemanticSameValue(updated,value)))return {$:'arrayAuthorityUpdate',program,machine,error:'constructor authority extension preserves every established realm root'};}}
  }
 
- const functions=global?program.functions:program.functions.map(fn=>fn.identity!==frame.identity?fn:{...fn,instructions:fn.instructions.map((instruction,index)=>index===frame.position-1&&(instruction.$==='arrayTransform'||instruction.$==='arraySlice'||instruction.$==='arrayConcatenation')?{...instruction,species:directory}:instruction)}),next={...program,functions,...(program.constructorDirectory===undefined?{}:{constructorDirectory:directory})},stateError=readJavaScriptCallMachineError(next,machine);
+ const functions=global?program.functions:program.functions.map(fn=>fn.identity!==frame.identity?fn:{...fn,instructions:fn.instructions.map((instruction,index)=>index===frame.position-1?replaceJavaScriptInstructionSpecies(instruction,directory):instruction)});
+ const next=program.constructorDirectory===undefined?{...program,functions}:{...program,functions,constructorDirectory:directory};
+ const stateError=readJavaScriptCallMachineError(next,machine);
  return stateError===''?{$:'arrayAuthorityUpdate',program:next,machine,error:''}:{$:'arrayAuthorityUpdate',program,machine,error:stateError};
 }
 
+/** @param {JavaScriptCallPending} pending @param {JavaScriptSpeciesConstructionState} construction @returns {JavaScriptCallPending} */
+function replaceJavaScriptPendingSpeciesConstruction(pending,construction){
+ switch(pending.$){
+  case 'waitArrayTransform':return {$:'waitArrayTransform',destination:pending.destination,realm:pending.realm,state:pending.state,construction};
+  case 'waitArraySlice':return {$:'waitArraySlice',destination:pending.destination,realm:pending.realm,state:pending.state,construction};
+  case 'waitArrayConcatenation':return {$:'waitArrayConcatenation',destination:pending.destination,realm:pending.realm,state:pending.state,construction};
+  default:return pending;
+ }
+}
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
  * @param {JavaScriptSpeciesConstructionTransition} transition @returns {JavaScriptCallMachineTransition} */
 export function acceptJavaScriptCallSpeciesConstruction(program,machine,transition){
  const current={$:'callMachine',heap:transition.heap,frames:machine.frames},frame=current.frames[current.frames.length-1];if(frame===undefined||frame.pending.$!=='waitArrayTransform'&&frame.pending.$!=='waitArraySlice'&&frame.pending.$!=='waitArrayConcatenation')return {$:'machineInvalid',heap:transition.heap,reason:'species constructor continuation retains its actual pending transformation'};
  const pending=frame.pending,directory=readJavaScriptCallArrayTransformDirectory(program,current,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:transition.heap,reason:'species constructor retains its actual source directory'};
  switch(transition.$){
-  case 'speciesConstructionContinue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{...pending,construction:transition.state}))};
-  case 'speciesConstructionAllocate':return {$:'machineAllocateObject',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{...pending,construction:transition.state})),prototype:transition.prototype};
-  case 'speciesConstructionCall':{const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{...pending,construction:transition.state}));return transition.constructing?pushJavaScriptSpeciesConstructorBody(program,next,transition.callee,transition.receiver,transition.arguments):pushJavaScriptCall(program,next,transition.callee,transition.receiver,transition.arguments);}
-  case 'speciesConstructionNeedAuthority':return {$:'machineNeedConstructorAuthority',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{...pending,construction:transition.state})),constructor:transition.constructor};
-  case 'speciesConstructionNeedImplementation':{const actual=classifyJavaScriptArraySpeciesConstructor(transition.heap,directory,transition.constructor);if(actual.$!=='arrayConstructorKnown')return {$:'machineInvalid',heap:transition.heap,reason:'species specialization retains its actual delegated target authority'};return {$:'machineConstructArraySpecies',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{...pending,construction:transition.state})),constructor:transition.constructor,arguments:transition.arguments??[{$:'number',value:transition.state.length}],fact:{...actual.fact},...(transition.newTarget===undefined?{}:{newTarget:transition.newTarget}),...(transition.operation===undefined?{}:{operation:transition.operation}),...(transition.reason===undefined?{}:{reason:transition.reason})};}
-  case 'speciesConstructionCompleted':{const {construction:previous,...base}=pending,next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,base));return pending.$==='waitArrayConcatenation'?acceptJavaScriptCallArrayConcatenation(program,next,pending.destination,pending.realm,resumeJavaScriptArrayConcatenationConstruction(transition.heap,directory,pending.state,{$:'normalCompletion',value:transition.value})):pending.$==='waitArraySlice'?acceptJavaScriptCallArraySlice(program,next,pending.destination,pending.realm,resumeJavaScriptArraySliceConstruction(transition.heap,directory,pending.state,{$:'normalCompletion',value:transition.value})):acceptJavaScriptCallArrayTransform(program,next,pending.destination,pending.realm,resumeJavaScriptArrayTransformConstruction(transition.heap,directory,pending.state,{$:'normalCompletion',value:transition.value}));}
+  case 'speciesConstructionContinue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,replaceJavaScriptPendingSpeciesConstruction(pending,transition.state)))};
+  case 'speciesConstructionAllocate':return {$:'machineAllocateObject',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,replaceJavaScriptPendingSpeciesConstruction(pending,transition.state))),prototype:transition.prototype};
+  case 'speciesConstructionCall':{const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,replaceJavaScriptPendingSpeciesConstruction(pending,transition.state)));return transition.constructing?pushJavaScriptSpeciesConstructorBody(program,next,transition.callee,transition.receiver,transition.arguments):pushJavaScriptCall(program,next,transition.callee,transition.receiver,transition.arguments);}
+  case 'speciesConstructionNeedAuthority':return {$:'machineNeedConstructorAuthority',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,replaceJavaScriptPendingSpeciesConstruction(pending,transition.state))),constructor:transition.constructor};
+  case 'speciesConstructionNeedImplementation':{
+   const actual=readJavaScriptKnownArrayConstructorFact(classifyJavaScriptArraySpeciesConstructor(transition.heap,directory,transition.constructor));
+   if(actual===undefined)return {$:'machineInvalid',heap:transition.heap,reason:'species specialization retains its actual delegated target authority'};
+   const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,replaceJavaScriptPendingSpeciesConstruction(pending,transition.state)));
+   const result={$:'machineConstructArraySpecies',machine:next,constructor:transition.constructor,arguments:transition.arguments??[{$:'number',value:transition.state.length}],fact:{...actual}};
+   if(transition.newTarget!==undefined)result.newTarget=transition.newTarget;
+   if(transition.operation!==undefined)result.operation=transition.operation;
+   if(transition.reason!==undefined)result.reason=transition.reason;
+   return result;
+  }
+  case 'speciesConstructionCompleted':return resumeJavaScriptCallArraySpeciesOperation(program,current,frame,directory,{$:'normalCompletion',value:transition.value},true);
   case 'speciesConstructionThrow':return throwJavaScriptCallValue(current,transition.value);
   case 'speciesConstructionError':return requestJavaScriptCallError(current,transition.realm??pending.realm,transition.errorClass,transition.reason);
   case 'speciesConstructionInvalid':return {$:'machineInvalid',heap:transition.heap,reason:transition.reason};
-  case 'speciesConstructionResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{...pending,construction:transition.state})),reason:transition.reason};
+  case 'speciesConstructionResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,replaceJavaScriptPendingSpeciesConstruction(pending,transition.state))),reason:transition.reason};
  }
 }
 /** Execute actual checked base class/ordinary function code under Construct.
@@ -1973,26 +2270,46 @@ export function acceptJavaScriptCallArraySpread(program,machine,destination,real
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
  * @param {JavaScriptPrimitiveConversionCompletion} completion @returns {JavaScriptCallMachineTransition} */
 export function resumeJavaScriptCallPrimitiveIteratorGet(program,machine,completion){
- const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];if(frame?.pending.$!=='waitArraySpread')return {$:'machineInvalid',heap:machine.heap,reason:'primitive iterator response retains its actual suspended source operation'};
+ const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];
+ if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'primitive iterator response retains its actual suspended source operation'};
+ const pending=frame.pending;
+ if(pending.$!=='waitArraySpread')return {$:'machineInvalid',heap:machine.heap,reason:'primitive iterator response retains its actual suspended source operation'};
  const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineNeedPrimitiveIteratorGet')return {$:'machineInvalid',heap:machine.heap,reason:'primitive iterator response cannot replace a live iterator call'};
- return acceptJavaScriptCallArraySpread(program,machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptArraySpread(machine.heap,frame.pending.state,completion,true));
+ return acceptJavaScriptCallArraySpread(program,machine,pending.destination,pending.realm,resumeJavaScriptArraySpread(machine.heap,pending.state,completion,true));
 }
 
 
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
  * @param {JavaScriptSemanticValue} prototype @returns {JavaScriptCallMachineTransition} */
 export function resumeJavaScriptCallPrimitiveIteratorPrototype(program,machine,prototype){
- const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitArraySpread'&&frame.pending.$!=='waitIteratorProtocol'&&frame.pending.$!=='waitObjectFromEntries'&&frame.pending.$!=='waitArrayCreation')return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response retains its actual suspended iterator acquisition'};
+ const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];
+ if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response retains its actual suspended iterator acquisition'};
+ const pending=frame.pending;
+ if(pending.$!=='waitArraySpread'&&pending.$!=='waitIteratorProtocol'&&pending.$!=='waitObjectFromEntries'&&pending.$!=='waitArrayCreation')return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response retains its actual suspended iterator acquisition'};
  const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineNeedPrimitiveIteratorGet')return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response cannot replace a live getter or iterator call'};
- if(frame.pending.$==='waitArrayCreation')return acceptJavaScriptCallArrayCreation(program,machine,frame.pending.destination,frame.pending.realm,provideJavaScriptArrayCreationPrimitivePrototype(machine.heap,frame.pending.state,prototype));
- if(frame.pending.$==='waitObjectFromEntries')return acceptJavaScriptCallObjectFromEntries(program,machine,frame.pending.destination,frame.pending.realm,provideJavaScriptObjectFromEntriesPrimitivePrototype(machine.heap,frame.pending.state,prototype));
- if(frame.pending.$==='waitIteratorProtocol')return acceptJavaScriptCallIteratorProtocol(program,machine,frame.pending,provideJavaScriptIteratorPrimitivePrototype(machine.heap,frame.pending.state,prototype));
- return acceptJavaScriptCallArraySpread(program,machine,frame.pending.destination,frame.pending.realm,provideJavaScriptArraySpreadPrimitivePrototype(machine.heap,frame.pending.state,prototype));
+ switch(pending.$){
+  case 'waitArrayCreation':return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,provideJavaScriptArrayCreationPrimitivePrototype(machine.heap,pending.state,prototype));
+  case 'waitObjectFromEntries':return acceptJavaScriptCallObjectFromEntries(program,machine,pending.destination,pending.realm,provideJavaScriptObjectFromEntriesPrimitivePrototype(machine.heap,pending.state,prototype));
+  case 'waitIteratorProtocol':return acceptJavaScriptCallIteratorProtocol(program,machine,projectJavaScriptCallIteratorOperation(pending),provideJavaScriptIteratorPrimitivePrototype(machine.heap,pending.state,prototype));
+  case 'waitArraySpread':return acceptJavaScriptCallArraySpread(program,machine,pending.destination,pending.realm,provideJavaScriptArraySpreadPrimitivePrototype(machine.heap,pending.state,prototype));
+  default:return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response retains its actual suspended iterator acquisition'};
+ }
 }
 
 
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallCompletionTransition} transition @returns {JavaScriptCallMachineTransition} */
-export function acceptJavaScriptCallCompletion(program,transition){return transition.$==='callReturn'?finishJavaScriptCallReturn(program,transition.machine,transition.value):transition;}
+export function acceptJavaScriptCallCompletion(program,transition){return transition.$==='callReturn'?finishJavaScriptCallReturn(program,transition.machine,transition.value):projectJavaScriptCallCompletionTransition(transition);}
+
+/** @param {JavaScriptCallCompletionTransition} transition @returns {JavaScriptCallMachineTransition} */
+function projectJavaScriptCallCompletionTransition(transition){
+ switch(transition.$){
+  case 'machineContinue':return {$:'machineContinue',machine:transition.machine};
+  case 'machineThrow':return {$:'machineThrow',heap:transition.heap,value:transition.value};
+  case 'machineInvalid':return {$:'machineInvalid',heap:transition.heap,reason:transition.reason};
+  case 'machineResourceLimit':return {$:'machineResourceLimit',machine:transition.machine,reason:transition.reason};
+  case 'callReturn':return {$:'machineInvalid',heap:transition.machine.heap,reason:'throw unwinding cannot become a return'};
+ }
+}
 
 
 /** @param {JavaScriptCallFrame} frame @returns {JavaScriptIteratorCompletion} */
@@ -2002,10 +2319,28 @@ export function readJavaScriptCallIteratorCloseCompletion(frame){
 }
 /** @param {JavaScriptCallFrame} frame @param {number} destination @param {number} done @param {JavaScriptSemanticValue} value @param {boolean} finished @returns {JavaScriptCallFrame} */
 export function writeJavaScriptCallIteratorResult(frame,destination,done,value,finished){return writeJavaScriptCallRegister(writeJavaScriptCallRegister(frame,destination,value),done,{$:'boolean',value:finished});}
+/** @param {JavaScriptCallIteratorRegion[]} regions @param {number} slot
+ * @param {string} operation @param {JavaScriptIteratorProtocolTransition} transition
+ * @returns {JavaScriptIteratorRegionsUpdate} */
+function updateJavaScriptCallIteratorProtocolRegions(regions,slot,operation,transition){
+ if(transition.$==='iteratorProtocolAcquired')return insertJavaScriptIteratorRegion(transition.heap,regions,slot,transition.record);
+ if(operation==='close')return removeJavaScriptIteratorRegion(transition.heap,regions,slot);
+ switch(transition.$){
+  case 'iteratorProtocolStep':return updateJavaScriptIteratorRegion(transition.heap,regions,slot,transition.record);
+  case 'iteratorProtocolError':
+  case 'iteratorProtocolThrow':return operation==='step'?updateJavaScriptIteratorRegion(transition.heap,regions,slot,transition.state.record):{$:'iteratorRegionsUpdated',regions};
+  default:return {$:'iteratorRegionsUpdated',regions};
+ }
+}
+/** @param {JavaScriptCallPending} pending @returns {JavaScriptCallIteratorOperation|undefined} */
+function projectJavaScriptCallIteratorOperation(pending){
+ if(pending.$!=='waitIteratorProtocol')return undefined;
+ return {$:'iteratorOperation',destination:pending.destination,done:pending.done,slot:pending.slot,operation:pending.operation,realm:pending.realm};
+}
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
- * @param {JavaScriptCallIteratorOperation|JavaScriptCallPending} pending @param {JavaScriptIteratorProtocolTransition} transition @returns {JavaScriptCallMachineTransition} */
+ * @param {JavaScriptCallIteratorOperation|undefined} pending @param {JavaScriptIteratorProtocolTransition} transition @returns {JavaScriptCallMachineTransition} */
 export function acceptJavaScriptCallIteratorProtocol(program,machine,pending,transition){
- const frame=machine.frames[machine.frames.length-1];if(frame===undefined||pending.$!=='waitIteratorProtocol'&&pending.$!=='iteratorOperation')return {$:'machineInvalid',heap:transition.heap,reason:'iterator protocol retains its actual suspended source operation'};
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined||pending===undefined||pending.$!=='iteratorOperation')return {$:'machineInvalid',heap:transition.heap,reason:'iterator protocol retains its actual suspended source operation'};
  const current={$:'callMachine',heap:transition.heap,frames:machine.frames},regions=frame.iterators??[];
  if(transition.$==='iteratorProtocolContinue'||transition.$==='iteratorProtocolCall'||transition.$==='iteratorProtocolPrimitiveGet'){
   const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitIteratorProtocol',destination:pending.destination,done:pending.done,slot:pending.slot,operation:pending.operation,realm:pending.realm,state:transition.state}));
@@ -2013,7 +2348,7 @@ export function acceptJavaScriptCallIteratorProtocol(program,machine,pending,tra
   return transition.$==='iteratorProtocolPrimitiveGet'?{$:'machineNeedPrimitiveIteratorGet',machine:next,receiver:transition.receiver,key:transition.key}:{$:'machineContinue',machine:next};
  }
  if(transition.$==='iteratorProtocolInvalid')return {$:'machineInvalid',heap:transition.heap,reason:transition.reason};
- const update=transition.$==='iteratorProtocolAcquired'?insertJavaScriptIteratorRegion(transition.heap,regions,pending.slot,transition.record):pending.operation==='close'?removeJavaScriptIteratorRegion(transition.heap,regions,pending.slot):transition.$==='iteratorProtocolStep'?updateJavaScriptIteratorRegion(transition.heap,regions,pending.slot,transition.record):pending.operation==='step'&&(transition.$==='iteratorProtocolError'||transition.$==='iteratorProtocolThrow')?updateJavaScriptIteratorRegion(transition.heap,regions,pending.slot,transition.state.record):{$:'iteratorRegionsUpdated',regions};
+ const update=updateJavaScriptCallIteratorProtocolRegions(regions,pending.slot,pending.operation,transition);
  if(update.$==='iteratorRegionsInvalid')return {$:'machineInvalid',heap:transition.heap,reason:update.reason};if(update.$==='iteratorRegionsResourceLimit')return {$:'machineResourceLimit',machine:current,reason:update.reason};
  const next=replaceJavaScriptCallFrame(transition.heap,current.frames,{...frame,iterators:update.regions,pending:{$:'callIdle'}});
  if(transition.$==='iteratorProtocolError')return requestJavaScriptCallError(next,pending.realm,transition.errorClass,transition.reason);
@@ -2022,17 +2357,24 @@ export function acceptJavaScriptCallIteratorProtocol(program,machine,pending,tra
 }
 
 
-/** @typedef {{$:'iteratorThrowContinue',machine:JavaScriptCallMachine,value:JavaScriptSemanticValue} | {$:'iteratorThrowTransition',transition:JavaScriptCallMachineTransition}} JavaScriptIteratorThrowResolution */
+/**
+ * @typedef {{$:'machineInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
+ * {$:'machineContinue',machine:JavaScriptCallMachine}} JavaScriptIteratorThrowTransition
+ */
+/** @typedef {{$:'iteratorThrowContinue',machine:JavaScriptCallMachine,value:JavaScriptSemanticValue} | {$:'iteratorThrowTransition',transition:JavaScriptIteratorThrowTransition}} JavaScriptIteratorThrowResolution */
 /** Resume the selected getter/method throw before crossing source finalizers.
  * @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptIteratorThrowResolution} */
 export function resumeJavaScriptCallIteratorThrow(machine,value){
- const frame=machine.frames[machine.frames.length-1];if(frame?.pending.$!=='waitIteratorProtocol')return {$:'iteratorThrowTransition',transition:{$:'machineInvalid',heap:machine.heap,reason:'iterator throw retains its actual suspended source operation'}};
- const pending=frame.pending,transition=resumeJavaScriptIteratorProtocolCall(machine.heap,pending.state,{$:'throwCompletion',value}),regions=frame.iterators??[];
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'iteratorThrowTransition',transition:{$:'machineInvalid',heap:machine.heap,reason:'iterator throw retains its actual suspended source operation'}};
+ const pending=frame.pending;if(pending.$!=='waitIteratorProtocol')return {$:'iteratorThrowTransition',transition:{$:'machineInvalid',heap:machine.heap,reason:'iterator throw retains its actual suspended source operation'}};
+ const transition=resumeJavaScriptIteratorProtocolCall(machine.heap,pending.state,{$:'throwCompletion',value}),regions=frame.iterators??[];
  if(transition.$!=='iteratorProtocolClosed'&&transition.$!=='iteratorProtocolThrow')return {$:'iteratorThrowTransition',transition:{$:'machineInvalid',heap:transition.heap,reason:transition.$==='iteratorProtocolInvalid'?transition.reason:'selected iterator throw retains its actual abrupt or suppressed completion'}};
  const update=pending.operation==='close'?removeJavaScriptIteratorRegion(transition.heap,regions,pending.slot):pending.operation==='step'?updateJavaScriptIteratorRegion(transition.heap,regions,pending.slot,transition.$==='iteratorProtocolThrow'?transition.state.record:pending.state.record):{$:'iteratorRegionsUpdated',regions};
  if(update.$!=='iteratorRegionsUpdated')return {$:'iteratorThrowTransition',transition:{$:'machineInvalid',heap:transition.heap,reason:'iterator throw retains its actual region update'}};
  const next={...frame,iterators:update.regions,pending:{$:'callIdle'}},current=replaceJavaScriptCallFrame(transition.heap,machine.frames,next);
- return transition.$==='iteratorProtocolClosed'?{$:'iteratorThrowTransition',transition:{$:'machineContinue',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,writeJavaScriptCallIteratorResult(next,pending.destination,pending.done,{$:'undefined'},true))}}:{$:'iteratorThrowContinue',machine:current,value:transition.value};
+ if(transition.$==='iteratorProtocolClosed')return {$:'iteratorThrowTransition',transition:{$:'machineContinue',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,writeJavaScriptCallIteratorResult(next,pending.destination,pending.done,{$:'undefined'},true))}};
+ if(transition.$==='iteratorProtocolThrow')return {$:'iteratorThrowContinue',machine:current,value:transition.value};
+ return {$:'iteratorThrowTransition',transition:{$:'machineInvalid',heap:transition.heap,reason:'selected iterator throw retains its actual abrupt or suppressed completion'}};
 }
 
 
@@ -2172,7 +2514,16 @@ export function resumeJavaScriptCallSymbolAllocation(program,machine,identity){
  const frame=machine.frames[machine.frames.length-1],pending=frame?.pending;if(frame===undefined||pending?.$!=='waitSymbolAllocation')return {$:'machineInvalid',heap:machine.heap,reason:'Symbol allocation requires its actual suspended source instruction'};
  if(typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n||machine.heap.symbols.includes(identity)||machine.heap.objects.some(object=>object.identity===identity))return {$:'machineInvalid',heap:machine.heap,reason:'Symbol allocation requires an unused actual positive unsigned64 global identity'};
  if(machine.heap.symbols.length>=16384)return {$:'machineResourceLimit',machine,reason:'Symbol allocation exceeds the selected 16384 identity profile'};
- if(pending.registryKey!==undefined){const registered=allocateJavaScriptRegisteredSymbol(machine.heap,identity,pending.registryKey);if(registered.$==='symbolRegistryValue')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(registered.heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,registered.value))};if(registered.$==='symbolRegistryResourceLimit')return {$:'machineResourceLimit',machine,reason:registered.reason};return {$:'machineInvalid',heap:machine.heap,reason:registered.reason};}
+ if(pending.registryKey!==undefined){
+  const registered=allocateJavaScriptRegisteredSymbol(machine.heap,identity,pending.registryKey);
+  switch(registered.$){
+   case 'symbolRegistryValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(registered.heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,registered.value))};
+   case 'symbolRegistryResourceLimit':return {$:'machineResourceLimit',machine,reason:registered.reason};
+   case 'symbolRegistryError':
+   case 'symbolRegistryInvalid':return {$:'machineInvalid',heap:machine.heap,reason:registered.reason};
+   case 'symbolRegistryAllocate':return {$:'machineInvalid',heap:machine.heap,reason:'Symbol registry allocation retains its actual completion'};
+  }
+ }
  const heap={...machine.heap,symbols:machine.heap.symbols.concat([identity]).toSorted((left,right)=>left<right?-1:left>right?1:0),symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:(machine.heap.symbolRegistrations??[]).concat([{$:'symbolRegistrationFact',identity,registered:false}]).toSorted((left,right)=>left.identity<right.identity?-1:left.identity>right.identity?1:0)};
  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,{$:'symbol',identity}))};
 }
@@ -2230,7 +2581,7 @@ export function acceptJavaScriptCallConstructorCheck(program,machine,destination
  const frame=machine.frames[machine.frames.length-1],directory=program.constructorDirectory;if(frame===undefined||directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'constructor checks require an actual active owner and authority'};
  const checked=classifyJavaScriptArraySpeciesConstructor(machine.heap,directory,input);
  if(checked.$==='arrayConstructorUnknown')return {$:'machineNeedConstructorAuthority',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitConstructorCheck',destination,input,required})),constructor:checked.constructor??input};
- const constructable=checked.$==='arrayConstructorKnown'&&checked.fact.constructable;
+ const constructable=readJavaScriptKnownArrayConstructorFact(checked)?.constructable===true;
  if(!constructable&&required){const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);return owner===undefined?{$:'machineInvalid',heap:machine.heap,reason:'constructor checks retain their actual source realm'}:requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected value is not a constructor');}
  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,destination,required?input:{$:'boolean',value:constructable}))};
 }
@@ -2284,7 +2635,7 @@ export function acceptJavaScriptCallArrayCreation(program,machine,destination,re
   case 'arrayCreationContinue':case 'arrayCreationCall':case 'arrayCreationConstruct':case 'arrayCreationAllocate':case 'arrayCreationPrimitiveGet':case 'arrayCreationNeedError':case 'arrayCreationResourceLimit':{
    const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitArrayCreation',destination,realm,state:transition.state}));
    if(transition.$==='arrayCreationCall')return pushJavaScriptCall(program,next,transition.callee,transition.receiver,transition.arguments);
-   if(transition.$==='arrayCreationConstruct'){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:transition.heap,reason:'Array creation requires actual constructor authority'};const selected=classifyJavaScriptArraySpeciesConstructor(transition.heap,directory,transition.constructor);if(selected.$==='arrayConstructorUnknown')return {$:'machineNeedConstructorAuthority',machine:next,constructor:selected.constructor??transition.constructor};if(selected.$==='arrayConstructorKnown'&&selected.fact.constructable)return acceptJavaScriptCallArrayConstruction(program,next,beginJavaScriptConstruction(program,transition.heap,directory,transition.constructor,transition.constructor,transition.arguments));return requestJavaScriptCallArrayFallback(program,next,destination,realm,transition.state,transition.fallback);}
+   if(transition.$==='arrayCreationConstruct'){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:transition.heap,reason:'Array creation requires actual constructor authority'};const selected=classifyJavaScriptArraySpeciesConstructor(transition.heap,directory,transition.constructor);if(selected.$==='arrayConstructorUnknown')return {$:'machineNeedConstructorAuthority',machine:next,constructor:selected.constructor??transition.constructor};if(readJavaScriptKnownArrayConstructorFact(selected)?.constructable===true)return acceptJavaScriptCallArrayConstruction(program,next,beginJavaScriptConstruction(program,transition.heap,directory,transition.constructor,transition.constructor,transition.arguments));return requestJavaScriptCallArrayFallback(program,next,destination,realm,transition.state,transition.fallback);}
    if(transition.$==='arrayCreationAllocate')return {$:'machineAllocateObject',machine:next,prototype:transition.prototype};
    if(transition.$==='arrayCreationPrimitiveGet')return {$:'machineNeedPrimitiveIteratorGet',machine:next,receiver:transition.receiver,key:transition.key};
    if(transition.$==='arrayCreationNeedError')return {$:'machineAllocateError',machine:next,realm,errorClass:transition.errorClass,reason:transition.reason};
@@ -2300,10 +2651,12 @@ export function acceptJavaScriptCallArrayCreation(program,machine,destination,re
  * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
  * @param {JavaScriptConstructionTransition} transition @returns {JavaScriptCallMachineTransition} */
 export function acceptJavaScriptCallArrayConstruction(program,machine,transition){
- const frame=machine.frames[machine.frames.length-1];if(frame?.pending.$!=='waitArrayCreation')return {$:'machineInvalid',heap:transition.heap,reason:'Array construction retains its actual outer continuation'};const pending=frame.pending,current={$:'callMachine',heap:transition.heap,frames:machine.frames};
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:transition.heap,reason:'Array construction retains its actual outer continuation'};
+ const pending=frame.pending;if(pending.$!=='waitArrayCreation')return {$:'machineInvalid',heap:transition.heap,reason:'Array construction retains its actual outer continuation'};
+ const current={$:'callMachine',heap:transition.heap,frames:machine.frames};
  switch(transition.$){
   case 'constructionContinue':case 'constructionCall':case 'constructionAllocate':case 'constructionNeedAuthority':case 'constructionNeedImplementation':case 'constructionResourceLimit':{
-   const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{...pending,construction:transition.state}));
+   const next=replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitArrayCreation',destination:pending.destination,realm:pending.realm,state:pending.state,construction:transition.state}));
    if(transition.$==='constructionCall')return transition.constructing?pushJavaScriptConstructionBody(program,next,transition.callee,transition.receiver,transition.arguments,transition.newTarget):pushJavaScriptCall(program,next,transition.callee,transition.receiver,transition.arguments);
    if(transition.$==='constructionAllocate')return {$:'machineAllocateObject',machine:next,prototype:transition.prototype};
    if(transition.$==='constructionNeedAuthority')return {$:'machineNeedConstructorAuthority',machine:next,constructor:transition.constructor};

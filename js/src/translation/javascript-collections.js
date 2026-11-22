@@ -22,6 +22,16 @@ export function allocateJavaScriptCollection(heap,identity,prototype,kind){
  if(invalidPrototype!=='')return {$:'collectionInvalid',heap,reason:invalidPrototype};
  return {$:'collectionNormal',heap:updated,value:{$:'object',identity,callable:false}};
 }
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptOrdinaryObject} object
+ * @param {JavaScriptCollectionEntry[]} entries @returns {JavaScriptOrdinaryHeap} */
+function replaceJavaScriptCollectionEntries(heap, object, entries) {
+ if (object.$!=='mapObject' && object.$!=='setObject') return heap;
+ const identity=object.identity,prototype=object.prototype,extensible=object.extensible,callable=object.callable,properties=object.properties;
+ const replacement=object.$==='mapObject'
+   ? {$:'mapObject',identity,prototype,extensible,callable,properties,entries}
+   : {$:'setObject',identity,prototype,extensible,callable,properties,entries};
+ return replaceJavaScriptOrdinaryObject(heap,replacement);
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} receiver @param {string} operation @param {JavaScriptSemanticValue[]} args @returns {JavaScriptCollectionCompletion} */
 export function executeJavaScriptCollectionOperation(heap,receiver,operation,args){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'collectionInvalid',heap,reason:error};
@@ -34,12 +44,12 @@ export function executeJavaScriptCollectionOperation(heap,receiver,operation,arg
  if(operation==='Map.get')return {$:'collectionNormal',heap,value:entry===undefined?{$:'undefined'}:entry.value};
  if(operation==='Map.has'||operation==='Set.has')return {$:'collectionNormal',heap,value:{$:'boolean',value:at>=0}};
  if(operation==='Map.size'||operation==='Set.size')return {$:'collectionNormal',heap,value:{$:'number',value:object.entries.filter(entry=>entry.present).length}};
- if(operation==='Map.clear'||operation==='Set.clear')return {$:'collectionNormal',heap:replaceJavaScriptOrdinaryObject(heap,{...object,entries:object.entries.map(entry=>({...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}))}),value:{$:'undefined'}};
- if(operation==='Map.delete'||operation==='Set.delete')return {$:'collectionNormal',heap:at<0?heap:replaceJavaScriptOrdinaryObject(heap,{...object,entries:object.entries.map((entry,index)=>index===at?{...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}:entry)}),value:{$:'boolean',value:at>=0}};
+ if(operation==='Map.clear'||operation==='Set.clear')return {$:'collectionNormal',heap:replaceJavaScriptCollectionEntries(heap,object,object.entries.map(entry=>({...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}))),value:{$:'undefined'}};
+ if(operation==='Map.delete'||operation==='Set.delete')return {$:'collectionNormal',heap:at<0?heap:replaceJavaScriptCollectionEntries(heap,object,object.entries.map((entry,index)=>index===at?{...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}:entry)),value:{$:'boolean',value:at>=0}};
  if(at<0&&object.entries.length>=65536)return {$:'collectionResourceLimit',heap,reason:'collection insertion history exceeds its explicit ordinal budget'};
  const value=kind==='Set'?key:args[1]??{$:'undefined'},next={$:'collectionEntry',key,value,present:true};
  const entries=at<0?object.entries.concat([next]):object.entries.map((current,index)=>index===at?{...current,value}:current);
- const updated=replaceJavaScriptOrdinaryObject(heap,{...object,entries}),limit=readJavaScriptOrdinaryHeapError(updated);
+ const updated=replaceJavaScriptCollectionEntries(heap,object,entries),limit=readJavaScriptOrdinaryHeapError(updated);
  if(limit!=='')return {$:'collectionResourceLimit',heap,reason:limit};
  return {$:'collectionNormal',heap:updated,value:receiver};
 }
@@ -57,12 +67,12 @@ export function copyJavaScriptCollection(heap,target,input,adder,iteratorKey,ite
  if(object===undefined||object.$!=='mapObject'&&object.$!=='setObject'||object.entries.length!==0)return {$:'collectionInvalid',heap,reason:'constructor copying needs its actual fresh empty collection'};
  if(input.$==='undefined'||input.$==='null')return {$:'collectionNormal',heap,value:target};
  const source=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;
- if(source===undefined||source.$!==object.$||iteratorKey.$!=='symbol'||iteratorPrototype.$!=='object'||adder.$!=='object'||!adder.callable||iteratorMethod.$!=='object'||!iteratorMethod.callable||nextMethod.$!=='object'||!nextMethod.callable)return {$:'collectionNeedIterable',heap,target,input};
+ if(source===undefined||source.$!=='mapObject'&&source.$!=='setObject'||source.$!==object.$||iteratorKey.$!=='symbol'||iteratorPrototype.$!=='object'||adder.$!=='object'||!adder.callable||iteratorMethod.$!=='object'||!iteratorMethod.callable||nextMethod.$!=='object'||!nextMethod.callable)return {$:'collectionNeedIterable',heap,target,input};
  const addKey=object.$==='setObject'?{$:'text',units:[97,100,100]}:{$:'text',units:[115,101,116]},nextKey={$:'text',units:[110,101,120,116]};
  const actualAdder=planJavaScriptOrdinaryGet(heap,object.identity,addKey,target),actualIterator=planJavaScriptOrdinaryGet(heap,source.identity,iteratorKey,input),actualNext=planJavaScriptOrdinaryGet(heap,iteratorPrototype.identity,nextKey,iteratorPrototype);
  if(actualAdder.action!=='value'||actualIterator.action!=='value'||actualNext.action!=='value'||!testJavaScriptSemanticSameValue(actualAdder.value,adder)||!testJavaScriptSemanticSameValue(actualIterator.value,iteratorMethod)||!testJavaScriptSemanticSameValue(actualNext.value,nextMethod))return {$:'collectionNeedIterable',heap,target,input};
  const entries=source.entries.filter(entry=>entry.present).map(entry=>({...entry}));
- const updated=replaceJavaScriptOrdinaryObject(heap,{...object,entries}),limit=readJavaScriptOrdinaryHeapError(updated);
+ const updated=replaceJavaScriptCollectionEntries(heap,object,entries),limit=readJavaScriptOrdinaryHeapError(updated);
  if(limit!=='')return {$:'collectionResourceLimit',heap,reason:limit};
  return {$:'collectionNormal',heap:updated,value:target};
 }

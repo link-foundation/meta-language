@@ -4,7 +4,7 @@ import {readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet} from './java
 import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
-import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
+import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact} from './javascript-array-species.js';
 import {allocateJavaScriptArray} from './javascript-arrays.js';
 import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.js';
 import {readJavaScriptObjectSpreadStateError,stepJavaScriptObjectSpread,resumeJavaScriptObjectSpread} from './javascript-object-spread.js';
@@ -21,14 +21,13 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
  * {$:'arraySliceError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'arraySliceInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'arraySliceResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptArraySliceState,reason:string}} JavaScriptArraySliceTransition */
-const absent={$:'undefined'},lengthKey={$:'text',units:[108,101,110,103,116,104]};
 /** @param {number} value @param {number} length @returns {number} */
 export function readJavaScriptArraySliceRelativeIndex(value,length){
  const integer=Number.isNaN(value)||value===0?0:Math.trunc(value);
  return integer<0?Math.max(length+integer,0):Math.min(integer,length);
 }
 /** @param {JavaScriptArraySliceCall} actual @param {{callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}|undefined} expected @returns {boolean} */
-function sameCall(actual,expected){return expected!==undefined&&testJavaScriptSemanticSameValue(actual.callee,expected.callee)&&testJavaScriptSemanticSameValue(actual.receiver,expected.receiver)&&actual.arguments.length===expected.arguments.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,expected.arguments[index]??absent));}
+function sameCall(actual,expected){return expected!==undefined&&testJavaScriptSemanticSameValue(actual.callee,expected.callee)&&testJavaScriptSemanticSameValue(actual.receiver,expected.receiver)&&actual.arguments.length===expected.arguments.length&&actual.arguments.every((value,index)=>testJavaScriptSemanticSameValue(value,expected.arguments[index]??{$:'undefined'}));}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptArraySliceState} state @returns {string} */
 export function readJavaScriptArraySliceStateError(heap,directory,state){
  const directoryError=readJavaScriptArraySpeciesDirectoryError(heap,directory);if(directoryError!=='')return directoryError;
@@ -53,18 +52,18 @@ export function readJavaScriptArraySliceStateError(heap,directory,state){
  if(['ready','element getter','write','finish'].includes(state.phase)&&state.target.$!=='object')return 'slice retains its actual constructed result Object';
  if(state.phase==='allocate'&&(state.allocationPrototype===undefined||!testJavaScriptSemanticSameValue(state.allocationPrototype,directory.arrayPrototype)))return 'slice fallback allocation retains its actual realm Array prototype';
  if(state.phase==='construct'){
-  const fact=state.constructorFact,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor??absent),actual=classification.$==='arrayConstructorKnown'?classification.fact:undefined;
-  if(state.constructor?.$!=='object'||fact===undefined||!fact.constructable||actual===undefined||!testJavaScriptSemanticSameValue(state.constructor,state.species?.candidate??absent)||state.constructor.identity!==fact.identity||actual.constructable!==fact.constructable||actual.realm!==fact.realm||actual.intrinsicArray!==fact.intrinsicArray||actual.intrinsicKind!==fact.intrinsicKind)return 'slice construction retains the actual selected constructor fact';
+  const fact=state.constructorFact,classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor??{$:'undefined'}),actual=readJavaScriptKnownArrayConstructorFact(classification);
+  if(state.constructor?.$!=='object'||fact===undefined||!fact.constructable||actual===undefined||!testJavaScriptSemanticSameValue(state.constructor,state.species?.candidate??{$:'undefined'})||state.constructor.identity!==fact.identity||actual.constructable!==fact.constructable||actual.realm!==fact.realm||actual.intrinsicArray!==fact.intrinsicArray||actual.intrinsicKind!==fact.intrinsicKind)return 'slice construction retains the actual selected constructor fact';
  }
  if((state.phase==='finish')!==(state.assignment!==undefined))return 'slice final Set retains only its actual assignment child';
- if(state.assignment!==undefined){const child=state.assignment,error=readJavaScriptObjectSpreadStateError(heap,child);if(error!=='')return error;if(child.operation!=='assignment'||!testJavaScriptSemanticSameValue(child.target,state.target)||!testJavaScriptSemanticSameValue(child.input,state.receiver)||!testJavaScriptSemanticSameValue(child.exoticKey??absent,state.exoticKey)||child.keys.length!==1||!testJavaScriptSemanticSameValue(child.keys[0]??absent,lengthKey)||child.excluded.length!==0||!(child.position===0&&['write','setter','array definition'].includes(child.phase)||child.position===1&&child.phase==='read')||child.position===0&&!testJavaScriptSemanticSameValue(child.value,{$:'number',value:state.count})||child.assignment!==undefined&&!testJavaScriptSemanticSameValue(child.assignment.definition.descriptor.value,{$:'number',value:state.count}))return 'slice final Set retains its actual target, length key and count';}
+ if(state.assignment!==undefined){const child=state.assignment,error=readJavaScriptObjectSpreadStateError(heap,child);if(error!=='')return error;if(child.operation!=='assignment'||!testJavaScriptSemanticSameValue(child.target,state.target)||!testJavaScriptSemanticSameValue(child.input,state.receiver)||!testJavaScriptSemanticSameValue(child.exoticKey??{$:'undefined'},state.exoticKey)||child.keys.length!==1||!testJavaScriptSemanticSameValue(child.keys[0]??{$:'undefined'},{$:'text',units:[108,101,110,103,116,104]})||child.excluded.length!==0||!(child.position===0&&['write','setter','array definition'].includes(child.phase)||child.position===1&&child.phase==='read')||child.position===0&&!testJavaScriptSemanticSameValue(child.value,{$:'number',value:state.count})||child.assignment!==undefined&&!testJavaScriptSemanticSameValue(child.assignment.definition.descriptor.value,{$:'number',value:state.count}))return 'slice final Set retains its actual target, length key and count';}
  if(state.call!==undefined){
   for(const value of [state.call.callee,state.call.receiver,...state.call.arguments]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
   if(state.call.callee.$!=='object'||!state.call.callee.callable)return 'slice child calls retain an actual callable';
   if(['length getter','element getter'].includes(state.phase)){if(!testJavaScriptSemanticSameValue(state.call.receiver,state.receiver)||state.call.arguments.length!==0)return 'slice getters retain the original boxed receiver and no arguments';}
   else if(state.phase==='species'){if(!sameCall(state.call,state.species?.call))return 'slice species retains its selected nested getter';}
   else if(state.phase==='finish'){if(!sameCall(state.call,state.assignment?.call))return 'slice final Set retains its selected nested setter';}
-  else if(state.phase==='conversion'&&state.conversion!==undefined){const child=state.conversion,exotic=child.phase==='exoticCall';if(!['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(child.phase)||!testJavaScriptSemanticSameValue(state.call.receiver,child.receiver)||state.call.arguments.length!==(exotic?1:0)||exotic&&!testJavaScriptSemanticSameValue(state.call.arguments[0]??absent,{$:'text',units:[110,117,109,98,101,114]}))return 'slice scalar calls retain the selected conversion operands';}
+  else if(state.phase==='conversion'&&state.conversion!==undefined){const child=state.conversion,exotic=child.phase==='exoticCall';if(!['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(child.phase)||!testJavaScriptSemanticSameValue(state.call.receiver,child.receiver)||state.call.arguments.length!==(exotic?1:0)||exotic&&!testJavaScriptSemanticSameValue(state.call.arguments[0]??{$:'undefined'},{$:'text',units:[110,117,109,98,101,114]}))return 'slice scalar calls retain the selected conversion operands';}
   else return 'slice retains child calls only in their actual suspended phase';
  }else if(['length getter','element getter'].includes(state.phase)||state.phase==='conversion'&&state.conversion!==undefined&&['exoticGetter','firstGetter','secondGetter','exoticCall','firstCall','secondCall'].includes(state.conversion.phase)||state.phase==='species'&&state.species?.call!==undefined||state.phase==='finish'&&state.assignment?.call!==undefined)return 'slice retains its actual selected child';
  return '';
@@ -76,7 +75,7 @@ function allocationRequest(heap,state){
  if(state.count>4294967295)return {$:'arraySliceError',heap,errorClass:'RangeError',reason:'Invalid array length'};
  let properties=0;for(const object of heap.objects)properties+=object.properties.length;
  if(heap.objects.length>=4096||properties>=16384)return {$:'arraySliceResourceLimit',heap,state,reason:'slice result allocation exceeds its shared storage budget'};
- return {$:'arraySliceAllocate',heap,state,prototype:state.allocationPrototype??absent,length:state.count};
+ return {$:'arraySliceAllocate',heap,state,prototype:state.allocationPrototype??{$:'undefined'},length:state.count};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySliceState} state @param {JavaScriptArraySpeciesTransition} transition @returns {JavaScriptArraySliceTransition} */
 function acceptSpecies(heap,state,transition){
@@ -103,14 +102,15 @@ function acceptScalar(heap,directory,state,transition){
   case 'scalarContinuation':return {$:'arraySliceContinue',heap,state:{...base,phase:'conversion',conversion:transition.state}};
   case 'scalarCall':return requestCall(heap,{...base,phase:'conversion',conversion:transition.state},transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':{
-   if(transition.value.$!=='number')return {$:'arraySliceInvalid',heap,reason:'slice scalar conversion retains its actual ToNumber result'};
-   if(state.conversionKind==='length'){const next={...base,length:readJavaScriptArrayLikeLength(transition.value.value),conversionKind:'start',input:state.start};return acceptScalar(heap,directory,next,beginJavaScriptScalarProtocol(heap,state.start,state.exoticKey,'coerce primitive number'));}
+   const primitive=transition.value;
+   if(primitive.$!=='number')return {$:'arraySliceInvalid',heap,reason:'slice scalar conversion retains its actual ToNumber result'};
+   if(state.conversionKind==='length'){const next={...base,length:readJavaScriptArrayLikeLength(primitive.value),conversionKind:'start',input:state.start};return acceptScalar(heap,directory,next,beginJavaScriptScalarProtocol(heap,state.start,state.exoticKey,'coerce primitive number'));}
    if(state.conversionKind==='start'){
-    const startIndex=readJavaScriptArraySliceRelativeIndex(transition.value.value,state.length),next={...base,startIndex,index:startIndex,conversionKind:'end',input:state.end};
+    const startIndex=readJavaScriptArraySliceRelativeIndex(primitive.value,state.length),next={...base,startIndex,index:startIndex,conversionKind:'end',input:state.end};
     if(state.endPresent&&state.end.$!=='undefined')return acceptScalar(heap,directory,next,beginJavaScriptScalarProtocol(heap,state.end,state.exoticKey,'coerce primitive number'));
-    const count=Math.max(state.length-startIndex,0),selected={...next,endIndex:state.length,count,input:absent,phase:'species'};return acceptSpecies(heap,selected,beginJavaScriptArraySpeciesSelection(heap,directory,state.receiver,count));
+    const count=Math.max(state.length-startIndex,0),selected={...next,endIndex:state.length,count,input:{$:'undefined'},phase:'species'};return acceptSpecies(heap,selected,beginJavaScriptArraySpeciesSelection(heap,directory,state.receiver,count));
    }
-   const endIndex=readJavaScriptArraySliceRelativeIndex(transition.value.value,state.length),count=Math.max(endIndex-state.startIndex,0),selected={...base,endIndex,count,input:absent,phase:'species'};return acceptSpecies(heap,selected,beginJavaScriptArraySpeciesSelection(heap,directory,state.receiver,count));
+   const endIndex=readJavaScriptArraySliceRelativeIndex(primitive.value,state.length),count=Math.max(endIndex-state.startIndex,0),selected={...base,endIndex,count,input:{$:'undefined'},phase:'species'};return acceptSpecies(heap,selected,beginJavaScriptArraySpeciesSelection(heap,directory,state.receiver,count));
   }
   case 'scalarThrow':return {$:'arraySliceThrow',heap,value:transition.value};
   case 'scalarIntrinsicError':return {$:'arraySliceError',heap,errorClass:transition.errorClass,reason:transition.reason};
@@ -133,7 +133,7 @@ function acceptFinalSet(state,transition){
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue} start @param {JavaScriptSemanticValue} end @param {boolean} endPresent @param {JavaScriptSemanticValue} exoticKey @returns {JavaScriptArraySliceTransition} */
 export function beginJavaScriptArraySlice(heap,directory,receiver,start,end,endPresent,exoticKey){
- const state={$:'arraySliceState',receiver,start,end,endPresent,exoticKey,length:0,startIndex:0,endIndex:0,count:0,index:0,outputIndex:0,target:absent,value:absent,input:absent,phase:'length',conversionKind:'length'};
+ const state={$:'arraySliceState',receiver,start,end,endPresent,exoticKey,length:0,startIndex:0,endIndex:0,count:0,index:0,outputIndex:0,target:{$:'undefined'},value:{$:'undefined'},input:{$:'undefined'},phase:'length',conversionKind:'length'};
  const error=readJavaScriptArraySliceStateError(heap,directory,state);return error===''?{$:'arraySliceContinue',heap,state}:{$:'arraySliceInvalid',heap,reason:error};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @param {JavaScriptArraySliceState} state @returns {JavaScriptArraySliceTransition} */
@@ -148,7 +148,7 @@ export function stepJavaScriptArraySlice(heap,directory,state){
  if(state.phase==='finish')return state.assignment===undefined?{$:'arraySliceInvalid',heap,reason:'slice retains final Set'}:acceptFinalSet(state,stepJavaScriptObjectSpread(heap,state.assignment));
  if(state.receiver.$!=='object')return {$:'arraySliceInvalid',heap,reason:'slice requires its actual ToObject receiver'};
  if(state.phase==='length'){
-  const get=planJavaScriptOrdinaryGet(heap,state.receiver.identity,lengthKey,state.receiver);if(get.error!=='')return {$:'arraySliceInvalid',heap,reason:get.error};
+  const get=planJavaScriptOrdinaryGet(heap,state.receiver.identity,{$:'text',units:[108,101,110,103,116,104]},state.receiver);if(get.error!=='')return {$:'arraySliceInvalid',heap,reason:get.error};
   if(get.action==='call')return requestCall(heap,{...state,phase:'length getter'},get.callee,get.receiver,get.arguments);
   if(get.action!=='value')return {$:'arraySliceInvalid',heap,reason:'slice length retains its actual Get result'};
   return acceptScalar(heap,directory,{...state,input:get.value},beginJavaScriptScalarProtocol(heap,get.value,state.exoticKey,'coerce primitive number'));
@@ -158,11 +158,11 @@ export function stepJavaScriptArraySlice(heap,directory,state){
   if(written.$==='indexedPropertyResourceLimit')return {$:'arraySliceResourceLimit',heap:written.heap,state,reason:written.reason};
   if(written.$==='indexedPropertyError')return {$:'arraySliceError',heap:written.heap,errorClass:'TypeError',reason:written.reason};
   if(written.$==='indexedPropertyInvalid')return {$:'arraySliceInvalid',heap:written.heap,reason:written.reason};
-  return {$:'arraySliceContinue',heap:written.heap,state:{...state,phase:'ready',index:state.index+1,outputIndex:state.outputIndex+1,value:absent}};
+  return {$:'arraySliceContinue',heap:written.heap,state:{...state,phase:'ready',index:state.index+1,outputIndex:state.outputIndex+1,value:{$:'undefined'}}};
  }
  if(state.phase!=='ready')return {$:'arraySliceInvalid',heap,reason:'slice retains its actual child completion'};
  if(state.outputIndex===state.count){
-  const assignment={$:'objectSpreadState',target:state.target,input:state.receiver,excluded:[],keys:[lengthKey],position:0,phase:'write',value:{$:'number',value:state.count},callee:absent,operation:'assignment',exoticKey:state.exoticKey};
+  const assignment={$:'objectSpreadState',target:state.target,input:state.receiver,excluded:[],keys:[{$:'text',units:[108,101,110,103,116,104]}],position:0,phase:'write',value:{$:'number',value:state.count},callee:{$:'undefined'},operation:'assignment',exoticKey:state.exoticKey};
   return {$:'arraySliceContinue',heap,state:{...state,phase:'finish',assignment}};
  }
  const name=String(state.index),units=[];for(let at=0;at<name.length;at++)units.push(name.charCodeAt(at));const key={$:'text',units},presence=readJavaScriptIndexedPropertyPresence(heap,state.receiver.identity,key);

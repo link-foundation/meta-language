@@ -89,7 +89,8 @@ export function failJavaScriptArrayCreation(heap,state,errorClass,reason){
 export function requestJavaScriptArrayCreationCall(heap,state,callee,receiver,arguments_){const call={$:'arrayCreationCallRecord',callee,receiver,arguments:arguments_};return {$:'arrayCreationCall',heap,state:{...state,call},callee,receiver,arguments:arguments_};}
 /** @param {JavaScriptArrayCreationState} state @param {JavaScriptIteratorProtocolTransition} transition @returns {JavaScriptArrayCreationTransition} */
 export function acceptJavaScriptArrayCreationIterator(state,transition){
- const base={...clearJavaScriptArrayCreationChild(state),...(state.phase==='close'&&state.abrupt!==undefined?{abrupt:state.abrupt}:{})};
+ const cleared=clearJavaScriptArrayCreationChild(state),abrupt=state.abrupt;
+ const base=state.phase==='close'&&abrupt!==undefined?{...cleared,abrupt}:cleared;
  switch(transition.$){
   case 'iteratorProtocolContinue':return {$:'arrayCreationContinue',heap:transition.heap,state:{...base,iterator:transition.state}};
   case 'iteratorProtocolCall':return requestJavaScriptArrayCreationCall(transition.heap,{...base,iterator:transition.state},transition.callee,transition.receiver,transition.arguments);
@@ -97,8 +98,8 @@ export function acceptJavaScriptArrayCreationIterator(state,transition){
   case 'iteratorProtocolAcquired':return {$:'arrayCreationContinue',heap:transition.heap,state:{...base,record:transition.record,phase:'iterate'}};
   case 'iteratorProtocolStep':return transition.done?{$:'arrayCreationContinue',heap:transition.heap,state:{...base,record:transition.record,phase:'length set'}}:selectJavaScriptArrayCreationValue(transition.heap,{...base,record:transition.record},transition.value);
   case 'iteratorProtocolClosed':return transition.completion.kind==='throw'?{$:'arrayCreationThrow',heap:transition.heap,value:transition.completion.value}:{$:'arrayCreationInvalid',heap:transition.heap,reason:'Array.from cleanup retains its actual original throw'};
-  case 'iteratorProtocolThrow':return state.phase==='close'&&state.abrupt!==undefined?{$:'arrayCreationThrow',heap:transition.heap,value:state.abrupt}:throwJavaScriptArrayCreation(transition.heap,{...base,...(state.phase==='iterate'?{record:transition.state.record}:{})},transition.value);
-  case 'iteratorProtocolError':return state.phase==='close'&&state.abrupt!==undefined?{$:'arrayCreationThrow',heap:transition.heap,value:state.abrupt}:failJavaScriptArrayCreation(transition.heap,{...base,...(state.phase==='iterate'?{record:transition.state.record}:{})},transition.errorClass,transition.reason);
+  case 'iteratorProtocolThrow':return state.phase==='close'&&state.abrupt!==undefined?{$:'arrayCreationThrow',heap:transition.heap,value:state.abrupt}:throwJavaScriptArrayCreation(transition.heap,state.phase==='iterate'?{...base,record:transition.state.record}:base,transition.value);
+  case 'iteratorProtocolError':return state.phase==='close'&&state.abrupt!==undefined?{$:'arrayCreationThrow',heap:transition.heap,value:state.abrupt}:failJavaScriptArrayCreation(transition.heap,state.phase==='iterate'?{...base,record:transition.state.record}:base,transition.errorClass,transition.reason);
   case 'iteratorProtocolInvalid':return {$:'arrayCreationInvalid',heap:transition.heap,reason:transition.reason};
  }
 }
@@ -133,7 +134,11 @@ export function acceptJavaScriptArrayCreationLength(heap,state,transition){
  const base=clearJavaScriptArrayCreationChild(state);switch(transition.$){
   case 'scalarContinuation':return {$:'arrayCreationContinue',heap,state:{...base,phase:'length conversion',conversion:transition.state}};
   case 'scalarCall':return requestJavaScriptArrayCreationCall(heap,{...base,phase:'length conversion',conversion:transition.state},transition.callee,transition.receiver,transition.arguments);
-  case 'scalarCompleted':return transition.value.$==='number'?{$:'arrayCreationContinue',heap,state:{...base,length:readJavaScriptArrayLikeLength(transition.value.value),lengthInput:{$:'undefined'},phase:'construct'}}:{$:'arrayCreationInvalid',heap,reason:'Array.from ToLength retains its actual completed Number'};
+  case 'scalarCompleted':{
+   const primitive=transition.value;
+   if(primitive.$!=='number')return {$:'arrayCreationInvalid',heap,reason:'Array.from ToLength retains its actual completed Number'};
+   return {$:'arrayCreationContinue',heap,state:{...base,length:readJavaScriptArrayLikeLength(primitive.value),lengthInput:{$:'undefined'},phase:'construct'}};
+  }
   case 'scalarThrow':return throwJavaScriptArrayCreation(heap,base,transition.value);
   case 'scalarIntrinsicError':return failJavaScriptArrayCreation(heap,base,transition.errorClass,transition.reason);
   case 'scalarInvalid':return {$:'arrayCreationInvalid',heap,reason:transition.reason};

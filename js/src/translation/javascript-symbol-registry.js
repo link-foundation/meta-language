@@ -3,8 +3,20 @@
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,registerJavaScriptOrdinarySymbol} from './javascript-ordinary-heap.js';
 import {compareJavaScriptCollectionKeys} from './javascript-collection-rules.js';
 import {readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-const model='represented global Symbol registry 1';
-function initializeJavaScriptSymbolRegistryDirectory(heap){return heap.symbolRegistryModel===undefined?{...heap,symbolRegistryModel:model,symbolRegistry:(heap.symbolRegistrations??[]).filter(fact=>fact.key!==undefined).map(fact=>({$:'symbolRegistryEntry',identity:fact.identity,key:fact.key})).toSorted((first,second)=>compareJavaScriptCollectionKeys(first.key,second.key))}:heap;}
+/** @typedef {{$:'symbolRegistryValue',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
+ * {$:'symbolRegistryError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
+ * {$:'symbolRegistryInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
+ * {$:'symbolRegistryResourceLimit',heap:JavaScriptOrdinaryHeap,reason:string} |
+ * {$:'symbolRegistryAllocate',heap:JavaScriptOrdinaryHeap,key:JavaScriptSemanticValue}} JavaScriptSymbolRegistryTransition */
+/** @returns {string} */
+function readJavaScriptSymbolRegistryModel(){return 'represented global Symbol registry 1';}
+/** @param {JavaScriptOrdinaryHeap} heap @returns {JavaScriptOrdinaryHeap} */
+function initializeJavaScriptSymbolRegistryDirectory(heap){
+ if(heap.symbolRegistryModel!==undefined)return heap;
+ /** @type {JavaScriptSymbolRegistryEntry[]} */const entries=[];
+ for(const fact of (heap.symbolRegistrations??[])){const key=fact.key;if(key!==undefined)entries.push({$:'symbolRegistryEntry',identity:fact.identity,key});}
+ return {...heap,symbolRegistryModel:readJavaScriptSymbolRegistryModel(),symbolRegistry:entries.toSorted((first,second)=>compareJavaScriptCollectionKeys(first.key,second.key))};
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} key @returns {number} */
 export function findJavaScriptSymbolRegistryKey(heap,key){
  const entries=heap.symbolRegistry??[];let low=0,high=entries.length;
@@ -14,7 +26,7 @@ export function findJavaScriptSymbolRegistryKey(heap,key){
 export function readJavaScriptSymbolRegistrationFact(heap,identity){const facts=heap.symbolRegistrations??[];let low=0,high=facts.length;while(low<high){const middle=Math.floor((low+high)/2),fact=facts[middle];if(fact!==undefined&&fact.identity<identity)low=middle+1;else high=middle;}return facts[low]?.identity===identity?facts[low]:undefined;}
 /** Input for `for` is already its actual implicit ToString result. `keyFor`
  * accepts the original value and never invokes an object coercion hook.
- * @param {JavaScriptOrdinaryHeap} heap @param {string} operation @param {JavaScriptSemanticValue} input @returns {object} */
+ * @param {JavaScriptOrdinaryHeap} heap @param {string} operation @param {JavaScriptSemanticValue} input @returns {JavaScriptSymbolRegistryTransition} */
 export function executeJavaScriptSymbolRegistryOperation(heap,operation,input){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'symbolRegistryInvalid',heap,reason:error};const invalid=readJavaScriptOrdinaryValueError(heap,input);if(invalid!=='')return {$:'symbolRegistryInvalid',heap,reason:invalid};
  if(operation==='keyFor'){
@@ -29,27 +41,27 @@ export function executeJavaScriptSymbolRegistryOperation(heap,operation,input){
  heap=initializeJavaScriptSymbolRegistryDirectory(heap);
  const at=findJavaScriptSymbolRegistryKey(heap,input),entry=heap.symbolRegistry?.[at];if(entry!==undefined)return {$:'symbolRegistryValue',heap,value:{$:'symbol',identity:entry.identity}};
  for(const identity of heap.symbols){const fact=readJavaScriptSymbolRegistrationFact(heap,identity);if(fact===undefined||fact.registered&&fact.key===undefined)return {$:'symbolRegistryInvalid',heap,reason:'new registry keys require complete actual imported Symbol registration/key authority'};}
- if(heap.symbolRegistryModel!==undefined&&heap.symbolRegistryModel!==model)return {$:'symbolRegistryInvalid',heap,reason:'Symbol registry operations retain their actual shared agent directory model'};
+ if(heap.symbolRegistryModel!==undefined&&heap.symbolRegistryModel!==readJavaScriptSymbolRegistryModel())return {$:'symbolRegistryInvalid',heap,reason:'Symbol registry operations retain their actual shared agent directory model'};
  if(heap.symbols.length>=16384)return {$:'symbolRegistryResourceLimit',heap,reason:'Symbol registry allocation exceeds the shared 16384 global identity budget'};
- return {$:'symbolRegistryAllocate',heap:heap.symbolRegistryModel===undefined?{...heap,symbolRegistryModel:model,symbolRegistry:[]}:heap,key:input};
+ return {$:'symbolRegistryAllocate',heap:heap.symbolRegistryModel===undefined?{...heap,symbolRegistryModel:readJavaScriptSymbolRegistryModel(),symbolRegistry:[]}:heap,key:input};
 }
 /** Actual boundary witnesses import only keys/classification for a supplied
  * native Symbol identity. All represented allocation/membership stays here.
  * Undefined key means the supplied actual Symbol is nonregistered.
- * @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @param {JavaScriptSemanticValue} key @returns {object} */
+ * @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @param {JavaScriptSemanticValue} key @returns {JavaScriptSymbolRegistryTransition} */
 export function importJavaScriptSymbolRegistryWitness(heap,identity,key){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'symbolRegistryInvalid',heap,reason:error};
  if(key.$!=='undefined'&&key.$!=='text'&&key.$!=='sourceText')return {$:'symbolRegistryInvalid',heap,reason:'a Symbol registration witness retains its actual optional primitive text key'};
  const invalid=readJavaScriptOrdinaryValueError(heap,key);if(invalid!=='')return {$:'symbolRegistryInvalid',heap,reason:invalid};
  heap=initializeJavaScriptSymbolRegistryDirectory(heap);
- const registered=key.$!=='undefined',prior=readJavaScriptSymbolRegistrationFact(heap,identity);if(prior&&(prior.registered!==registered||prior.key!==undefined&&(!registered||!testJavaScriptSemanticSameValue(prior.key,key))))return {$:'symbolRegistryInvalid',heap,reason:'Symbol registry witnesses preserve actual prior classification and exact key'};
- const at=registered?findJavaScriptSymbolRegistryKey(heap,key):-1,entry=heap.symbolRegistry?.[at];if(entry&&entry.identity!==identity)return {$:'symbolRegistryInvalid',heap,reason:'one actual global registry key has one canonical Symbol identity'};
- if(prior&&prior.registered===registered&&(!registered||prior.key!==undefined&&testJavaScriptSemanticSameValue(prior.key,key)&&entry?.identity===identity))return {$:'symbolRegistryValue',heap,value:{$:'symbol',identity}};
+ const registered=key.$!=='undefined',prior=readJavaScriptSymbolRegistrationFact(heap,identity);if(prior!==undefined&&(prior.registered!==registered||prior.key!==undefined&&(!registered||!testJavaScriptSemanticSameValue(prior.key,key))))return {$:'symbolRegistryInvalid',heap,reason:'Symbol registry witnesses preserve actual prior classification and exact key'};
+ const at=registered?findJavaScriptSymbolRegistryKey(heap,key):-1,entry=heap.symbolRegistry?.[at];if(entry!==undefined&&entry.identity!==identity)return {$:'symbolRegistryInvalid',heap,reason:'one actual global registry key has one canonical Symbol identity'};
+ if(prior!==undefined&&prior.registered===registered&&(!registered||prior.key!==undefined&&testJavaScriptSemanticSameValue(prior.key,key)&&entry?.identity===identity))return {$:'symbolRegistryValue',heap,value:{$:'symbol',identity}};
  let next=heap;if(!heap.symbols.includes(identity)){const added=registerJavaScriptOrdinarySymbol(heap,identity);if(!added.success)return {$:'symbolRegistryInvalid',heap,reason:added.error};next=added.heap;}
- const fact={$:'symbolRegistrationFact',identity,registered,...(registered?{key}:{})},facts=(next.symbolRegistrations??[]).filter(row=>row.identity!==identity).concat([fact]).toSorted((first,second)=>first.identity<second.identity?-1:first.identity>second.identity?1:0),entries=next.symbolRegistry??[],insert=-at-1,registry=registered&&!entry?entries.slice(0,insert).concat([{$:'symbolRegistryEntry',identity,key}],entries.slice(insert)):entries;
- const updated={...next,symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:facts,symbolRegistryModel:model,symbolRegistry:registry},failure=readJavaScriptOrdinaryHeapError(updated);return failure===''?{$:'symbolRegistryValue',heap:updated,value:{$:'symbol',identity}}:{$:'symbolRegistryInvalid',heap,reason:failure};
+ const fact=registered?{$:'symbolRegistrationFact',identity,registered,key}:{$:'symbolRegistrationFact',identity,registered},facts=(next.symbolRegistrations??[]).filter(row=>row.identity!==identity).concat([fact]).toSorted((first,second)=>first.identity<second.identity?-1:first.identity>second.identity?1:0),entries=next.symbolRegistry??[],insert=-at-1,registry=registered&&entry===undefined?entries.slice(0,insert).concat([{$:'symbolRegistryEntry',identity,key}],entries.slice(insert)):entries;
+ const updated={...next,symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:facts,symbolRegistryModel:readJavaScriptSymbolRegistryModel(),symbolRegistry:registry},failure=readJavaScriptOrdinaryHeapError(updated);return failure===''?{$:'symbolRegistryValue',heap:updated,value:{$:'symbol',identity}}:{$:'symbolRegistryInvalid',heap,reason:failure};
 }
-/** @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @param {JavaScriptSemanticValue} key @returns {object} */
+/** @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @param {JavaScriptSemanticValue} key @returns {JavaScriptSymbolRegistryTransition} */
 export function allocateJavaScriptRegisteredSymbol(heap,identity,key){
  const request=executeJavaScriptSymbolRegistryOperation(heap,'for',key);if(request.$!=='symbolRegistryAllocate')return request;return importJavaScriptSymbolRegistryWitness(request.heap,identity,key);
 }

@@ -14,7 +14,12 @@ import {testJavaScriptReflectionPropertyBudget} from './javascript-property-refl
  * {$:'functionBindError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'functionBindInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'functionBindResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptFunctionBindState,reason:string}} JavaScriptFunctionBindTransition */
-const lengthKey={$:'text',units:[108,101,110,103,116,104]},nameKey={$:'text',units:[110,97,109,101]};
+/** @param {boolean} length @returns {JavaScriptSemanticValue} */
+function readJavaScriptBoundFunctionMetadataKey(length){return length?{$:'text',units:[108,101,110,103,116,104]}:{$:'text',units:[110,97,109,101]};}
+/** @param {JavaScriptFunctionBindCall} call @param {JavaScriptSemanticValue} target @returns {boolean} */
+function testJavaScriptFunctionBindMetadataCall(call,target){
+ return call.$==='functionBindCall'&&call.arguments.length===0&&testJavaScriptSemanticSameValue(call.receiver,target)&&call.callee.$==='object'&&call.callee.callable;
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptFunctionBindState} state @returns {string} */
 export function readJavaScriptFunctionBindStateError(heap,state){
  const invalid=readJavaScriptOrdinaryHeapError(heap);if(invalid!=='')return invalid;
@@ -27,7 +32,7 @@ export function readJavaScriptFunctionBindStateError(heap,state){
   const object=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;
   if(object?.$!=='boundFunctionObject'||!testJavaScriptSemanticSameValue(object.boundTarget,state.target)||!testJavaScriptSemanticSameValue(object.boundThis,state.boundThis)||!testJavaScriptSemanticSameValue(object.prototype,state.prototype)||object.boundArguments.length!==state.arguments.length||object.boundArguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,state.arguments[index]??{$:'undefined'})))return 'binding metadata retains its actual fresh receiver and immutable internal slots';
  }
- if(state.call!==undefined){if(!['length getter','name getter'].includes(state.phase)||state.call.$!=='functionBindCall'||state.call.arguments.length!==0||!testJavaScriptSemanticSameValue(state.call.receiver,state.target)||state.call.callee.$!=='object'||!state.call.callee.callable)return 'binding retains its actual selected metadata getter and receiver';}
+ if(state.call!==undefined){if(!['length getter','name getter'].includes(state.phase)||!testJavaScriptFunctionBindMetadataCall(state.call,state.target))return 'binding retains its actual selected metadata getter and receiver';}
  else if(['length getter','name getter'].includes(state.phase))return 'binding getter phases retain their actual suspended call';
  return '';
 }
@@ -53,15 +58,15 @@ export function stepJavaScriptFunctionBind(heap,state){
  if(state.phase==='name value')return retainJavaScriptFunctionBindMetadata(heap,state,state.name);
  if(state.phase==='prototype'){const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];if(target===undefined)return {$:'functionBindInvalid',heap,reason:'binding prototype selection retains its actual callable Object'};return {$:'functionBindContinue',heap,state:{...state,phase:'allocate',prototype:target.prototype}};}
  if(state.phase==='allocate')return heap.objects.length>=4096?{$:'functionBindResourceLimit',heap,state,reason:'bound Function allocation exceeds the shared heap identity budget'}:{$:'functionBindAllocate',heap,state,prototype:state.prototype};
- if(state.phase==='length own'){const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];return target===undefined?{$:'functionBindInvalid',heap,reason:'binding retains its actual target own-property inventory'}:{$:'functionBindContinue',heap,state:{...state,phase:findJavaScriptOrdinaryProperty(target.properties,lengthKey)<0?'define length':'length'}};}
+ if(state.phase==='length own'){const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.target.identity)];return target===undefined?{$:'functionBindInvalid',heap,reason:'binding retains its actual target own-property inventory'}:{$:'functionBindContinue',heap,state:{...state,phase:findJavaScriptOrdinaryProperty(target.properties,readJavaScriptBoundFunctionMetadataKey(true))<0?'define length':'length'}};}
  if(state.phase==='length'||state.phase==='name'){
-  const get=planJavaScriptOrdinaryGet(heap,state.target.identity,state.phase==='length'?lengthKey:nameKey,state.target);if(get.error!=='')return {$:'functionBindInvalid',heap,reason:get.error};if(get.action==='value')return retainJavaScriptFunctionBindMetadata(heap,state,get.value);if(get.action!=='call')return {$:'functionBindInvalid',heap,reason:'binding metadata Get retains its actual value or getter'};
+  const get=planJavaScriptOrdinaryGet(heap,state.target.identity,readJavaScriptBoundFunctionMetadataKey(state.phase==='length'),state.target);if(get.error!=='')return {$:'functionBindInvalid',heap,reason:get.error};if(get.action==='value')return retainJavaScriptFunctionBindMetadata(heap,state,get.value);if(get.action!=='call')return {$:'functionBindInvalid',heap,reason:'binding metadata Get retains its actual value or getter'};
   const call={$:'functionBindCall',callee:get.callee,receiver:get.receiver,arguments:get.arguments};return {$:'functionBindCall',heap,state:{...state,phase:state.phase==='length'?'length getter':'name getter',call},callee:call.callee,receiver:call.receiver,arguments:call.arguments};
  }
  if(state.receiver.$!=='object')return {$:'functionBindInvalid',heap,reason:'binding metadata definitions retain their actual allocated Function'};
  if(state.phase==='define name'&&readJavaScriptSemanticTextLength(state.name)>65536)return {$:'functionBindResourceLimit',heap,state,reason:'bound Function name exceeds the selected UTF16 metadata work profile'};
- if(!testJavaScriptReflectionPropertyBudget(heap,state.receiver,state.phase==='define length'?lengthKey:nameKey))return {$:'functionBindResourceLimit',heap,state,reason:'bound Function metadata exceeds the shared property budget'};
- const length=state.phase==='define length',descriptor=createJavaScriptBoundFunctionMetadataDescriptor(length?{$:'number',value:state.length}:state.name),defined=defineJavaScriptOrdinaryProperty(heap,state.receiver.identity,length?lengthKey:nameKey,descriptor);if(defined.error!==''||!defined.success)return {$:'functionBindInvalid',heap,reason:defined.error||'fresh bound Function metadata definition succeeds'};
+ if(!testJavaScriptReflectionPropertyBudget(heap,state.receiver,readJavaScriptBoundFunctionMetadataKey(state.phase==='define length')))return {$:'functionBindResourceLimit',heap,state,reason:'bound Function metadata exceeds the shared property budget'};
+ const length=state.phase==='define length',descriptor=createJavaScriptBoundFunctionMetadataDescriptor(length?{$:'number',value:state.length}:state.name),defined=defineJavaScriptOrdinaryProperty(heap,state.receiver.identity,readJavaScriptBoundFunctionMetadataKey(length),descriptor);if(defined.error!==''||!defined.success)return {$:'functionBindInvalid',heap,reason:defined.error||'fresh bound Function metadata definition succeeds'};
  return length?{$:'functionBindContinue',heap:defined.heap,state:{...state,phase:'name'}}:{$:'functionBindCompleted',heap:defined.heap,value:state.receiver};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptFunctionBindState} state @param {bigint} identity @returns {JavaScriptFunctionBindTransition} */

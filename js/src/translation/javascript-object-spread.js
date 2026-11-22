@@ -86,7 +86,7 @@ export function stepJavaScriptObjectSpread(heap,state){
   // original snapshot; a recreated snapshotted key uses its latest descriptor.
   if(property===undefined||!property.descriptor.enumerable)return {$:'objectSpreadContinue',heap,state:{...state,position:state.position+1}};
   const get=planJavaScriptOrdinaryGet(heap,state.input.identity,key,state.input);if(get.error!=='')return {$:'objectSpreadInvalid',heap,reason:get.error};
-  if(get.action==='call'){const call={$:'objectCopyCall',callee:get.callee,receiver:get.receiver,arguments:get.arguments};return {$:'objectSpreadCall',heap,state:{...state,phase:'getter',callee:get.callee,...(state.operation==='assignment'?{call}:{})},callee:get.callee,receiver:get.receiver,arguments:get.arguments};}
+  if(get.action==='call'){const call={$:'objectCopyCall',callee:get.callee,receiver:get.receiver,arguments:get.arguments};return {$:'objectSpreadCall',heap,state:state.operation==='assignment'?{...state,phase:'getter',callee:get.callee,call}:{...state,phase:'getter',callee:get.callee},callee:get.callee,receiver:get.receiver,arguments:get.arguments};}
   if(get.action!=='value')return {$:'objectSpreadInvalid',heap,reason:'object spread Get requires its actual value or accessor continuation'};
   return {$:'objectSpreadContinue',heap,state:{...state,phase:'write',value:get.value}};
  }

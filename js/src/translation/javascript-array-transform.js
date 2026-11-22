@@ -7,7 +7,7 @@ import {allocateJavaScriptArray} from './javascript-arrays.js';
 import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
-import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor} from './javascript-array-species.js';
+import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact} from './javascript-array-species.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversion.js';
 /** @typedef {{$:'arrayTransformSelectedCall',callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}} JavaScriptArrayTransformCall */
@@ -41,7 +41,7 @@ export function readJavaScriptArrayTransformStateError(heap,directory,state){
  if(['element getter','callback','write'].includes(state.phase)&&state.index>=state.length)return 'Array transformation work retains its actual in-range source index';
  if(state.phase==='allocate'&&(state.allocationPrototype===undefined||state.allocationPrototype.$!=='object'||!testJavaScriptSemanticSameValue(state.allocationPrototype,directory.arrayPrototype)||readJavaScriptOrdinaryValueError(heap,state.allocationPrototype)!==''))return 'Array result allocation retains its actual prototype';
  if(state.phase==='construct'&&(state.constructor===undefined||state.constructorFact===undefined||state.constructor.$!=='object'||state.constructor.identity!==state.constructorFact.identity||!state.constructorFact.constructable||!testJavaScriptSemanticSameValue(state.constructor,state.species?.candidate??{$:'undefined'})))return 'Array custom construction retains its actual selected constructor and fact';
- if(state.phase==='construct'&&state.constructorFact!==undefined){const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor??{$:'undefined'}),fact=classification.$==='arrayConstructorKnown'?classification.fact:undefined;if(fact===undefined||fact.constructable!==state.constructorFact.constructable||fact.realm!==state.constructorFact.realm||fact.intrinsicArray!==state.constructorFact.intrinsicArray||fact.intrinsicKind!==state.constructorFact.intrinsicKind)return 'Array custom construction retains its actual registered constructor classification';}
+ if(state.phase==='construct'&&state.constructorFact!==undefined){const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,state.constructor??{$:'undefined'}),fact=readJavaScriptKnownArrayConstructorFact(classification);if(fact===undefined||fact.constructable!==state.constructorFact.constructable||fact.realm!==state.constructorFact.realm||fact.intrinsicArray!==state.constructorFact.intrinsicArray||fact.intrinsicKind!==state.constructorFact.intrinsicKind)return 'Array custom construction retains its actual registered constructor classification';}
  if(state.phase==='write'&&state.operation==='Array.filter'&&!testJavaScriptSemanticSameValue(state.value,state.element))return 'filter writes its retained original element rather than its predicate result';
  if(state.call!==undefined){
   if(!['length getter','length conversion','species','element getter','callback'].includes(state.phase)||state.call.callee.$!=='object'||!state.call.callee.callable||state.call.arguments.length>3)return 'Array transformation retains its actual selected getter or callback';
@@ -82,9 +82,10 @@ export function continueJavaScriptArrayTransformLength(heap,directory,state,tran
   case 'scalarContinuation':return {$:'arrayTransformContinue',heap,state:{...base,phase:'length conversion',conversion:transition.state}};
   case 'scalarCall':return requestJavaScriptArrayTransformCall(heap,{...base,phase:'length conversion',conversion:transition.state},transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':{
-   if(transition.value.$!=='number')return {$:'arrayTransformInvalid',heap,reason:'Array transform length retains its actual ToNumber result'};
+   const primitive=transition.value;
+   if(primitive.$!=='number')return {$:'arrayTransformInvalid',heap,reason:'Array transform length retains its actual ToNumber result'};
    if(state.callback.$!=='object'||!state.callback.callable)return {$:'arrayTransformError',heap,errorClass:'TypeError',reason:'Array callback must be callable'};
-   const length=readJavaScriptArrayLikeLength(transition.value.value),next={...base,length,input:{$:'undefined'},phase:'species'};
+   const length=readJavaScriptArrayLikeLength(primitive.value),next={...base,length,input:{$:'undefined'},phase:'species'};
    return continueJavaScriptArrayTransformSpecies(heap,next,beginJavaScriptArraySpeciesSelection(heap,directory,state.receiver,state.operation==='Array.map'?length:0));
   }
   case 'scalarThrow':return {$:'arrayTransformThrow',heap,value:transition.value};
