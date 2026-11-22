@@ -15,15 +15,28 @@ export function readJavaScriptArrayIndex(key){const length=readJavaScriptSemanti
 /** @param {JavaScriptOrdinaryProperty[]} properties @param {JavaScriptSemanticValue} key @returns {number} */
 export function findJavaScriptArrayProperty(properties,key){for(let at=0;at<properties.length;at++){const property=properties[at];if(property!==undefined&&testJavaScriptSemanticSameValue(property.key,key))return at;}return -1;}
 /** @param {JavaScriptArrayObject} object @returns {number} */
-export function readJavaScriptArrayLength(object){const property=object.properties[findJavaScriptArrayProperty(object.properties,readJavaScriptArrayLengthKey())];return property?.descriptor.value.$==='number'?property.descriptor.value.value:-1;}
+export function readJavaScriptArrayLength(object){
+ const property=object.properties[findJavaScriptArrayProperty(object.properties,readJavaScriptArrayLengthKey())];
+ return property===undefined?-1:readJavaScriptArrayLengthValue(property.descriptor.value);
+}
+/** @param {JavaScriptSemanticValue} value @returns {number} */
+function readJavaScriptArrayLengthValue(value){
+ switch(value.$){
+  case 'number':return value.value;
+  default:return -1;
+ }
+}
 /** @param {number} length @returns {boolean} */
 export function testJavaScriptArrayLength(length){return Number.isInteger(length)&&length>=0&&length<=4294967295&&!Object.is(length,-0);}
 /** @param {JavaScriptArrayObject} object @returns {string} */
 export function readJavaScriptArrayObjectError(object){
  if(object.callable)return 'an Array exotic object is not callable';
  const property=object.properties[findJavaScriptArrayProperty(object.properties,readJavaScriptArrayLengthKey())];
- if(property===undefined||!property.descriptor.valuePresent||property.descriptor.getterPresent||property.descriptor.setterPresent||property.descriptor.enumerable||property.descriptor.configurable||property.descriptor.value.$!=='number'||!testJavaScriptArrayLength(property.descriptor.value.value))return 'an Array retains its actual nonenumerable nonconfigurable integral length data property';
- for(const entry of object.properties){const index=readJavaScriptArrayIndex(entry.key);if(index>=property.descriptor.value.value)return 'an Array index must remain below its actual length';}
+ const invalid='an Array retains its actual nonenumerable nonconfigurable integral length data property';
+ if(property===undefined||!property.descriptor.valuePresent||property.descriptor.getterPresent||property.descriptor.setterPresent||property.descriptor.enumerable||property.descriptor.configurable)return invalid;
+ const length=readJavaScriptArrayLengthValue(property.descriptor.value);
+ if(!testJavaScriptArrayLength(length))return invalid;
+ for(const entry of object.properties){const index=readJavaScriptArrayIndex(entry.key);if(index>=length)return 'an Array index must remain below its actual length';}
  return '';
 }
 /** @param {bigint} identity @param {JavaScriptSemanticValue} prototype @param {number} length @returns {JavaScriptArrayObject} */
@@ -38,7 +51,13 @@ export function planJavaScriptArrayOrdinaryDefinition(object,key,proposed){
  if(plan.disposition==='reject')return {$:'arrayPropertyPlan',object,success:false,error:plan.error,errorClass:'',writes:[]};
  if(plan.disposition==='keep')return {$:'arrayPropertyPlan',object,success:true,error:'',errorClass:'',writes:[]};
  if(at<0&&object.properties.length>=4096)return {$:'arrayPropertyPlan',object,success:false,error:'Array properties exceed their explicit ordered storage budget',errorClass:'resource',writes:[]};
- const replacement={$:'ordinaryProperty',key,descriptor:plan.descriptor},properties=at<0?object.properties.concat([replacement]):object.properties.map((entry,index)=>index===at?replacement:entry);
+ /** @type {JavaScriptOrdinaryProperty} */
+ const replacement={$:'ordinaryProperty',key,descriptor:plan.descriptor};
+ /** @type {JavaScriptOrdinaryProperty[]} */
+ const properties=[];
+ let index=0;
+ for(const entry of object.properties){properties.push(index===at?replacement:entry);index+=1;}
+ if(at<0)properties.push(replacement);
  return {$:'arrayPropertyPlan',object:{...object,properties},success:true,error:'',errorClass:'',writes:plan.writes};
 }
 /** Define an already converted numeric length. This runs against the ACTUAL
@@ -61,20 +80,34 @@ export function planJavaScriptArrayLengthDefinition(object,proposed,unsignedLeng
  let blocked=-1;
  for(const property of object.properties){const index=readJavaScriptArrayIndex(property.key);if(index>=unsignedLength&&!property.descriptor.configurable&&index>blocked)blocked=index;}
  const finalLength=blocked<0?unsignedLength:blocked+1;
- const properties=initial.object.properties.filter(property=>{const index=readJavaScriptArrayIndex(property.key);return index<0||index<finalLength;}).map(property=>testJavaScriptArrayLengthKey(property.key)?{...property,descriptor:{...property.descriptor,value:{$:'number',value:finalLength},writable:newWritable}}:property);
+ /** @type {JavaScriptOrdinaryProperty[]} */
+ const properties=[];
+ for(const property of initial.object.properties){
+  const index=readJavaScriptArrayIndex(property.key);
+  if(index<0||index<finalLength){
+   properties.push(testJavaScriptArrayLengthKey(property.key)?{...property,descriptor:{...property.descriptor,value:{$:'number',value:finalLength},writable:newWritable}}:property);
+  }
+ }
  return {$:'arrayPropertyPlan',object:{...initial.object,properties},success:blocked<0,error:'',errorClass:'',writes:initial.writes.concat(['array indices','array length'],!newWritable&&!initial.writes.includes('writable')?['writable']:[])};
 }
 /** @param {JavaScriptArrayObject} object @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed @returns {JavaScriptArrayPropertyPlan} */
 export function planJavaScriptArrayPropertyDefinition(object,key,proposed){
  if(testJavaScriptArrayLengthKey(key)){
   if(!proposed.valuePresent)return planJavaScriptArrayOrdinaryDefinition(object,key,proposed);
-  if(proposed.value.$!=='number')return {$:'arrayPropertyPlan',object,success:false,error:'array length requires its actual two numeric conversion continuations',errorClass:'conversion',writes:[]};
-  return planJavaScriptArrayLengthDefinition(object,proposed,convertJavaScriptArrayUnsignedLength(proposed.value.value),proposed.value.value);
+  const value=proposed.value;
+  switch(value.$){
+   case 'number':return planJavaScriptArrayLengthDefinition(object,proposed,convertJavaScriptArrayUnsignedLength(value.value),value.value);
+   default:return {$:'arrayPropertyPlan',object,success:false,error:'array length requires its actual two numeric conversion continuations',errorClass:'conversion',writes:[]};
+  }
  }
  const index=readJavaScriptArrayIndex(key),length=readJavaScriptArrayLength(object),lengthProperty=object.properties[findJavaScriptArrayProperty(object.properties,readJavaScriptArrayLengthKey())];
  if(index>=length&&(lengthProperty===undefined||!lengthProperty.descriptor.writable))return {$:'arrayPropertyPlan',object,success:false,error:'',errorClass:'',writes:[]};
  const plan=planJavaScriptArrayOrdinaryDefinition(object,key,proposed);if(!plan.success||index<length||index<0)return plan;
- const properties=plan.object.properties.map(property=>testJavaScriptArrayLengthKey(property.key)?{...property,descriptor:{...property.descriptor,value:{$:'number',value:index+1}}}:property);
+ /** @type {JavaScriptOrdinaryProperty[]} */
+ const properties=[];
+ for(const property of plan.object.properties){
+  properties.push(testJavaScriptArrayLengthKey(property.key)?{...property,descriptor:{...property.descriptor,value:{$:'number',value:index+1}}}:property);
+ }
  return {...plan,object:{...plan.object,properties},writes:plan.writes.concat(['array length'])};
 }
 /** @param {number} value @returns {number} */

@@ -71,6 +71,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "inert-module-binding-program.lino" => {
             Some(include_str!("../data/inert-module-binding-program.lino"))
         }
+        "javascript-array-objects-program.lino" => Some(include_str!(
+            "../data/javascript-array-objects-program.lino"
+        )),
         "javascript-call-machine-program.lino" => {
             Some(include_str!("../data/javascript-call-machine-program.lino"))
         }
