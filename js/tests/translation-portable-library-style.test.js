@@ -22,6 +22,9 @@ test('a generated function borrows its own parameters when a helper shares its n
   const styled = readPortableSourceParameterStyles(nativeHelper + '\n' + declaration);
   assert.equal(styled.source, nativeHelper + '\npub fn read(value: &[f64]) -> Vec<f64> { value.to_vec() }');
   assert.deepEqual(styled.actions.map(action => action.from), [declaration]);
+  const linted = readPortableSourceLintStyles(styled.source).source;
+  assert.ok(linted.includes(nativeHelper));
+  assert.ok(linted.includes('#[must_use]\npub fn read('));
 });
 
 test('borrowed call arguments keep their positions after a generic shared tuple', () => {

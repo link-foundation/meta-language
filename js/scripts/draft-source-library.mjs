@@ -81,7 +81,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   // Retain complete unstylized output when the existing style producer cannot
   // distinguish its generated contexts. Its guard and every CI gate stay exact;
   // authoring this source does not report the deferred style as repaired.
-  const styles = sourceLints === 'preserve' ? { source: loans.source, actions: [] } : readPortableSourceLintStyles(loans.source);
+  const styles = sourceLints === 'preserve' ? { source: loans.source, actions: [] } : readPortableSourceLintStyles(loans.source, {trace: traceEnabled ? trace : undefined});
   trace('selected Rust lint styles');
   if (!['rustfmt', 'preserve'].includes(sourceFormatting)) throw new TypeError('unknown source formatting selection');
   let output;
