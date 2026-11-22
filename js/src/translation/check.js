@@ -1088,7 +1088,7 @@ class Checker {
           let policy=firstAbsence?absence(then):absence(otherwise);
           if(firstAbsence&&secondAbsence)policy=mergeOptionalAbsence(policy,absence(otherwise));
           else if(value.type.kind==='option')policy=mergeOptionalAbsence(policy,value.type.absence);
-          const type=option(owner,policy);
+          const type={kind:'option',element:owner,absence:policy};
           return {k:'if',cond,then:coerce(then,type,this.language,node.span),else:coerce(otherwise,type,this.language,node.span),type};
         }
         const emptyArray=node=>node.k==='array'&&node.items.length===0;
