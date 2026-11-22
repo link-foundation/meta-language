@@ -24,7 +24,11 @@ impl Regions<'_> {
         let packet = value.packet.as_ref().expect("selected state packet");
         if matches!(mode, "move" | "transport") || packet.loop_frame.is_some() {
             for field in &packet.fields {
-                self.read(field.clone(), "read")?;
+                if field.storage.as_ref().is_some_and(|slot| slot.transport) {
+                    self.read_lifetime(field.clone())?;
+                } else {
+                    self.read(field.clone(), "read")?;
+                }
             }
         }
         if !matches!(mode, "move" | "transport") {
@@ -72,7 +76,11 @@ impl Regions<'_> {
         let mut fields = Vec::with_capacity(items.len());
         let mut identities = HashSet::new();
         for (index, item) in items.iter().enumerate() {
-            let actual = self.expression(item, environment, bindings, None, depth + 1)?;
+            let actual = if index == 0 {
+                self.expression(item, environment, bindings, None, depth + 1)?
+            } else {
+                self.state_expression(item, environment, bindings, None, depth + 1)?
+            };
             if actual.packet.is_some() || item.ty != elements[index] {
                 return Err(fail(
                     "a direct state packet retains only its actual scalar or nominal slot types",
@@ -288,9 +296,8 @@ impl Regions<'_> {
             if a.revision == b.revision {
                 original.revision = a.revision;
             } else {
-                let joined_revision = self.root(String::new(), false)?;
-                self.prepare_record_image(joined_revision, &original.position)?;
-                let mut components = HashMap::<usize, Vec<&str>>::new();
+                let joined_revision = self.join_record_images([a.revision, b.revision])?;
+                let mut components = HashMap::<usize, [Option<String>; 2]>::new();
                 for (index, (source, states)) in
                     [(a.revision, left_states), (b.revision, right_states)]
                         .into_iter()
@@ -302,21 +309,22 @@ impl Regions<'_> {
                         let state = states.get(prior).ok_or_else(|| {
                             fail("a joined field image retains its actual branch snapshot")
                         })?;
-                        components.entry(current).or_default().push(state);
+                        let alternative = &mut components.entry(current).or_default()[index];
+                        *alternative = Some(match alternative.take() {
+                            Some(prior) => rules::merge_rust_borrowed_source_region(&prior, state),
+                            None => state.clone(),
+                        });
                     }
                     mappings[index].extend(mapping);
                 }
-                for (root, states) in components {
-                    let [left, right] = states.as_slice() else {
-                        self.states[root] =
-                            rules::merge_rust_borrowed_source_region(states[0], "moved");
-                        continue;
-                    };
-                    self.states[root] = rules::merge_rust_borrowed_source_region(left, right);
+                for (root, [left, right]) in components {
+                    self.states[root] = rules::merge_rust_borrowed_source_region(
+                        left.as_deref().unwrap_or("moved"),
+                        right.as_deref().unwrap_or("moved"),
+                    );
                 }
                 original.revision = joined_revision;
                 for old in [a.revision, b.revision] {
-                    self.retire_field_lifetime(old, "move");
                     self.states[old] =
                         rules::consume_rust_borrowed_source_region(&self.states[old]);
                 }
@@ -435,7 +443,11 @@ impl Regions<'_> {
                         ));
                     }
                 }
-                self.read(result, "read")
+                if result.storage.as_ref().is_some_and(|slot| slot.transport) {
+                    self.read_lifetime(result)
+                } else {
+                    self.read(result, "read")
+                }
             }
             _ => Err(fail("state branch joins retain their exact packet slots")),
         }

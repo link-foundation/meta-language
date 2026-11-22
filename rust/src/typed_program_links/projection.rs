@@ -24,6 +24,7 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
         "sourceStateTransition",
         "sourceLoopFold",
         "sourceRecordPlace",
+        "sourcePlaceTransform",
     ] {
         if let Some(facet) = value.get(field) {
             projected

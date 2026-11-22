@@ -157,7 +157,7 @@ impl Transport<'_>{
   if form=="proposition comparison"{let tuple=json!({"k":"tuple","items":[node["prop"]["left"].take(),node["prop"]["right"].take()]});let mut result=self.ordered(tuple,&["items".to_owned()],environment,depth+1)?;node["prop"]["left"]=result.value["items"][0].take();node["prop"]["right"]=result.value["items"][1].take();result.value=node;return Ok(result);}
   if form=="read state"{let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state read"))?;let slot=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.reads.get(index)).ok_or_else(||fail("unknown actual state read"))?;let (_,current)=environment.get(&slot.lexical).ok_or_else(||fail("a mutable read needs its actual initialized lexical state in this callable"))?;return Ok(Lowered::plain(source_state_reference(&node,current),environment));}
   if form=="write state packet"{return self.collection_packet(node,environment,depth);}
-  if form=="write state"{let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state write"))?;let (slot,layouts,field)={let write=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.writes.get(index)).ok_or_else(||fail("unknown actual state write"))?;(write.slot.clone(),write.layouts.clone(),write.field.clone())};let expected=field.ty.as_ref().map(|ty|encode(&self.parser.record_source_type(ty,&field.path))).transpose()?;let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,expected.as_ref())?;let previous=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable write cannot leave its actual lexical declaration scope"))?.1.clone();let rhs=self.parser.fresh_product_binding();let fresh=self.parser.fresh_product_binding();let rebuilt=self.parser.rebuild_record_state(&layouts,0,decode(name(&previous))?,decode(name(&rhs))?,None)?;let mut binding=json!({"k":"let","name":rhs,"value":result.value});if let Some(ty)=expected{binding["type"]=ty;}result.bindings.push(binding);let rebuilt=encode(&rebuilt)?;let rebuilt=self.state_transition(rebuilt,layouts.is_empty().then_some(&slot),"write")?;result.bindings.push(json!({"k":"let","name":fresh,"type":encode(&self.parser.record_source_type(slot.origin.ty.as_ref().ok_or_else(||fail("a mutable root lost its actual type"))?,&slot.origin.path))?,"value":rebuilt}));result.environment.insert(slot.lexical.clone(),(slot,fresh));result.value=json!({"k":"unit"});return Ok(result);}
+  if form=="write state"{return self.write_state(node,environment,depth);}
   if form=="binding"{let annotation=node.get("type").cloned();let mut first=self.visit(node["value"].take(),environment,depth+1,annotation.as_ref())?;let binding_name=text(&node,"name").to_owned();let mut binding=node.clone();binding.as_object_mut().expect("actual binding").remove("body");let slot=self.declarations.get(&binding_name).cloned();binding["value"]=self.state_transition(first.value,slot.as_ref(),"initialize")?;first.bindings.push(binding);if let Some(slot)=slot.as_ref(){first.environment.insert(slot.lexical.clone(),(slot.clone(),binding_name));}let body=self.visit(node["body"].take(),first.environment,depth+1,want)?;first.bindings.extend(body.bindings);let mut environment=body.environment;if let Some(slot)=slot{environment.remove(&slot.lexical);}return Ok(Lowered{bindings:first.bindings,value:body.value,environment});}
   if form=="print"{let mut first=self.visit(node["expr"].take(),environment,depth+1,None)?;node["expr"]=first.value;let body=node["body"].take();node["body"]=json!({"k":"unit"});first.bindings.push(json!({"k":"let","name":self.parser.fresh_product_binding(),"value":node}));let result=self.visit(body,first.environment,depth+1,want)?;first.bindings.extend(result.bindings);return Ok(Lowered{bindings:first.bindings,value:result.value,environment:result.environment});}
   if form=="conditional"{let mut condition=self.visit(node["cond"].take(),environment,depth+1,Some(&json!({"kind":"bool"})))?;node["cond"]=condition.value;let result=self.branches(node,condition.environment,depth+1,want)?;condition.bindings.extend(result.bindings);return Ok(Lowered{bindings:condition.bindings,value:result.value,environment:result.environment});}
@@ -165,6 +165,56 @@ impl Transport<'_>{
   if form=="match"{let roles=vec![if kind=="match"{"scrutinees".into()}else{"scrutinee".into()}];let mut selected=self.ordered(node,&roles,environment,depth+1)?;let result=self.branches(selected.value,selected.environment,depth+1,want)?;selected.bindings.extend(result.bindings);return Ok(Lowered{bindings:selected.bindings,value:result.value,environment:result.environment});}
   if form=="packet"{let operation=completion::read_rust_expression_completion_packet_operation(text(&node,"op"));if operation=="result"{let failed=PacketFailure::Expression(node["args"][1]["value"].take());return self.packet_visit(node["args"][0]["value"].take(),1,environment,failed,depth+1,want);}if operation=="success"{let mut value=self.visit(node["args"][0]["value"].take(),environment,depth+1,None)?;node["args"][0]["value"]=value.value;value.value=node;return Ok(value);}}
   let roles=rules::read_rust_owned_record_effect_children(&kind);if !roles.is_empty(){return self.ordered(node,&roles,environment,depth+1);}Err(fail("the actual source expression form needs its complete ordered state roles"))
+ }
+ fn write_state(&mut self,mut node:Value,environment:Environment,depth:usize)->Result<Lowered>{
+  use crate::translation::{
+   source_loop_folds::SourceFoldSpan,
+   source_place_transforms::{RustSourcePlaceTransform,SourcePlaceOperation,SourcePlaceOperand,SourcePlacePath,SourcePlaceSlot},
+   source_signatures::RustSourceExpressionPosition,
+  };
+  let ordinal=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state write"))?;
+  let write=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.writes.get(ordinal)).ok_or_else(||fail("unknown actual state write"))?;
+  let (slot,layouts,field)=(write.slot.clone(),write.layouts.clone(),write.field.clone());
+  let expected=field.ty.as_ref().map(|ty|encode(&self.parser.record_source_type(ty,&field.path))).transpose()?;
+  let span=node.get("span").cloned().map(serde_json::from_value::<Span>).transpose().map_err(|_|fail("a field assignment needs its actual source span"))?;
+  let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,expected.as_ref())?;
+  let previous=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable write cannot leave its actual lexical declaration scope"))?.1.clone();
+  let rhs=self.parser.fresh_product_binding();
+  let mut binding=json!({"k":"let","name":rhs,"value":result.value});
+  if let Some(ty)=expected{binding["type"]=ty;}
+  result.bindings.push(binding);
+  let fresh=self.parser.fresh_product_binding();
+  let root_type=encode(&self.parser.record_source_type(slot.origin.ty.as_ref().ok_or_else(||fail("a mutable root lost its actual type"))?,&slot.origin.path))?;
+  if !layouts.is_empty()&&slot.source_binder.is_some(){
+   let span=span.ok_or_else(||fail("a field assignment needs its actual complete source span"))?;
+   let root=self.parser.retain_source_fold_slot(&slot)?;
+   let position=self.parser.retain_source_region_position(&field,Some(span))?;
+   let replacement=self.parser.fresh_product_binding();
+   let rebuilt=self.parser.fresh_product_binding();
+   let state=self.parser.rebuild_record_state(&layouts,0,decode(name(&previous))?,decode(name(&replacement))?,Some(span))?;
+   let mut operand=name(&rhs);
+   operand["sourcePosition"]=encode(&RustSourceExpressionPosition{model:"Rust borrowed expression source position 1".into(),position:position.clone()})?;
+   let facet=RustSourcePlaceTransform::Replacement{
+    operation:SourcePlaceOperation::AssignField,
+    slots:vec![SourcePlaceSlot{binder:root.binder,position:root.position,input:previous}],
+    places:vec![SourcePlacePath{slot:0,fields:layouts.iter().map(|layout|layout.index).collect()}],
+    operands:vec![SourcePlaceOperand{input:rhs,position}],
+    span:SourceFoldSpan{start:span.start,end:span.end},
+   };
+   let packet=self.parser.fresh_product_binding();
+   let value=json!({"k":"let","name":replacement,"value":operand,"span":span,
+     "body":{"k":"let","name":rebuilt,"value":encode(&state)?,"body":{"k":"tuple","items":[{"k":"unit"},name(&rebuilt)]}},
+     "sourcePlaceTransform":encode(&facet)?});
+   result.bindings.push(json!({"k":"let","name":packet,"value":value}));
+   result.bindings.push(json!({"k":"let","name":fresh,"type":root_type,"value":{"k":"tupleIndex","object":name(&packet),"index":1}}));
+  }else{
+   let rebuilt=self.parser.rebuild_record_state(&layouts,0,decode(name(&previous))?,decode(name(&rhs))?,None)?;
+   let value=self.state_transition(encode(&rebuilt)?,layouts.is_empty().then_some(&slot),"write")?;
+   result.bindings.push(json!({"k":"let","name":fresh,"type":root_type,"value":value}));
+  }
+  result.environment.insert(slot.lexical.clone(),(slot,fresh));
+  result.value=json!({"k":"unit"});
+  Ok(result)
  }
  fn loop_packet(&self,environment:&Environment,keys:&[String],owner:Option<&[String]>,value:Option<Value>)->Result<Value>{let mut items=vec![value.unwrap_or_else(||owner.map_or_else(||json!({"k":"unit"}),|owner|loop_control(owner,"StatementContinuation",Vec::new())))];for key in keys{items.push(name(&environment.get(key).ok_or_else(||fail("the finite loop lost an actual initialized state root"))?.1));}Ok(json!({"k":"tuple","items":items}))}
  fn loop_step(&mut self,guard:&Value,body:&Value,index:usize,count:usize,environment:Environment,keys:&[String],following:Option<&[String]>,owner:Option<&[String]>)->Result<Value>{

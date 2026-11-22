@@ -80,6 +80,7 @@ pub struct Expr {
     pub source_state_transition: Option<Box<super::source_loop_folds::RustSourceStateTransition>>,
     pub source_loop_fold: Option<Box<super::source_loop_folds::RustSourceLoopFold>>,
     pub source_record_place: Option<Box<super::source_record_places::RustSourceRecordPlace>>,
+    pub source_place_transform: Option<Box<super::source_place_transforms::RustSourcePlaceTransform>>,
 }
 
 impl Expr {
@@ -93,6 +94,7 @@ impl Expr {
             source_state_transition: None,
             source_loop_fold: None,
             source_record_place: None,
+            source_place_transform: None,
         }
     }
 
@@ -535,6 +537,7 @@ impl Expr {
             source_state_transition: self.source_state_transition.clone(),
             source_loop_fold: self.source_loop_fold.clone(),
             source_record_place: self.source_record_place.clone(),
+            source_place_transform: self.source_place_transform.clone(),
         }
     }
 }

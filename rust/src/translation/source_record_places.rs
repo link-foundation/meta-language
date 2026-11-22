@@ -89,12 +89,7 @@ pub(super) fn box_projection_depth(
     Some(depth)
 }
 
-fn plain(node: &Expr) -> bool {
-    node.source_position.is_none()
-        && node.source_state_transition.is_none()
-        && node.source_loop_fold.is_none()
-        && node.source_record_place.is_none()
-}
+use super::source_place_transforms::plain;
 
 pub(super) fn check_record_place<'node, 'data>(
     facet: &RustSourceRecordPlace,
@@ -114,6 +109,7 @@ pub(super) fn check_record_place<'node, 'data>(
         .is_some_and(|span| span.start == facet.span.start && span.end == facet.span.end)
         || node.source_state_transition.is_some()
         || node.source_loop_fold.is_some()
+        || node.source_place_transform.is_some()
     {
         return Err(type_error(
             "a source record place retains its exact model, original field span and actual declaration index",

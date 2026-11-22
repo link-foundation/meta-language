@@ -20,6 +20,7 @@ impl Threader<'_> {
             source_state_transition: None,
             source_loop_fold: None,
             source_record_place: None,
+            source_place_transform: None,
         };
         match &e.node {
             Node::Print { text, body } => {
@@ -65,6 +66,7 @@ impl Threader<'_> {
                         source_state_transition: e.source_state_transition.clone(),
                         source_loop_fold: e.source_loop_fold.clone(),
                         source_record_place: e.source_record_place.clone(),
+                        source_place_transform: e.source_place_transform.clone(),
                     };
                     self.make(after, call)
                 };

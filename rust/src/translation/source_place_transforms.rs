@@ -1,0 +1,334 @@
+//! Check original source places against their actual extraction and rebuild terms.
+use std::collections::HashSet;
+
+use serde::{Deserialize, Serialize};
+
+use super::{
+    diagnostics::{Result, type_error},
+    ir::{DataDecl, Expr, Node, Pattern},
+    source_expression_positions::check_position,
+    source_loop_folds::{SourceFoldSpan, SourceStateBinder, check_slot},
+    source_record_places::{box_projection_depth, owner_view},
+    source_signatures::SourceTypeSignature,
+    types::Type,
+};
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "model", deny_unknown_fields)]
+pub enum RustSourcePlaceTransform {
+    #[serde(rename = "Rust source place replacement 1")]
+    Replacement {
+        operation: SourcePlaceOperation,
+        slots: Vec<SourcePlaceSlot>,
+        places: Vec<SourcePlacePath>,
+        operands: Vec<SourcePlaceOperand>,
+        span: SourceFoldSpan,
+    },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SourcePlaceOperation {
+    #[serde(rename = "assign field")]
+    AssignField,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourcePlaceSlot {
+    pub binder: SourceStateBinder,
+    pub position: SourceTypeSignature,
+    pub input: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourcePlacePath {
+    pub slot: usize,
+    pub fields: Vec<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourcePlaceOperand {
+    pub input: String,
+    pub position: SourceTypeSignature,
+}
+
+pub(super) fn plain(node: &Expr) -> bool {
+    node.source_position.is_none()
+        && node.source_state_transition.is_none()
+        && node.source_loop_fold.is_none()
+        && node.source_record_place.is_none()
+        && node.source_place_transform.is_none()
+}
+
+fn variable(node: &Expr, name: &str, ty: &Type) -> bool {
+    plain(node) && node.var_name() == Some(name) && &node.ty == ty
+}
+
+pub(super) fn fields_for<'data>(
+    position: &SourceTypeSignature,
+    resolve_data: &mut impl FnMut(&Type) -> Option<&'data DataDecl>,
+) -> Option<(&'data DataDecl, &'data [SourceTypeSignature])> {
+    let (owner, _) = owner_view(position, false)?;
+    let Type::Data { name } = &position.ty else {
+        return None;
+    };
+    if owner.kind != "declaration"
+        || !owner.path.iter().map(String::as_str).eq(name.split('.'))
+        || position.array_element_position.is_some()
+    {
+        return None;
+    }
+    let data = resolve_data(&position.ty)?;
+    let [constructor] = data.ctors.as_slice() else {
+        return None;
+    };
+    let signature = data
+        .source_field_signatures
+        .as_ref()
+        .filter(|view| view.model == "Rust data type field signatures 1")?;
+    let [fields] = signature.ctors.as_slice() else {
+        return None;
+    };
+    (fields.fields.len() == constructor.fields.len()).then_some((data, &fields.fields[..]))
+}
+
+struct Reconstruction<'a, 'data, D> {
+    resolve_data: &'a mut D,
+    replacement: &'a str,
+    replacement_type: &'a Type,
+    seen: HashSet<&'a str>,
+    work: usize,
+    lifetime: std::marker::PhantomData<&'data DataDecl>,
+}
+
+impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, 'data, D> {
+    fn field(
+        &mut self,
+        node: &'a Expr,
+        root: &SourceTypeSignature,
+        selected: &[usize],
+        input: &str,
+    ) -> Result<SourceTypeSignature> {
+        let fail = || {
+            type_error(
+                "a field assignment retains its actual selected declaration path and every unchanged sibling",
+                node.span,
+            )
+        };
+        let Some((&index, rest)) = selected.split_first() else {
+            return variable(node, self.replacement, self.replacement_type)
+                .then(|| root.clone())
+                .ok_or_else(fail);
+        };
+        let (data, positions) = fields_for(root, self.resolve_data).ok_or_else(fail)?;
+        self.work += 1 + positions.len();
+        if self.work > 100_000 || !plain(node) || node.ty != root.ty || index >= positions.len() {
+            return Err(fail());
+        }
+        let Node::Match { scrutinee, cases } = &node.node else {
+            return Err(fail());
+        };
+        let [case] = cases.as_slice() else {
+            return Err(fail());
+        };
+        let Pattern::Ctor {
+            data: owner,
+            ctor,
+            binds,
+        } = &case.pattern
+        else {
+            return Err(fail());
+        };
+        let Node::Ctor {
+            data: rebuilt_owner,
+            ctor: rebuilt,
+            args,
+            ..
+        } = &case.body.node
+        else {
+            return Err(fail());
+        };
+        if !variable(scrutinee, input, &root.ty)
+            || !plain(&case.body)
+            || case.body.ty != root.ty
+            || owner != &data.full_name
+            || rebuilt_owner != owner
+            || ctor != &data.ctors[0].name
+            || rebuilt != ctor
+            || binds.len() != positions.len()
+            || args.len() != positions.len()
+        {
+            return Err(fail());
+        }
+        for name in binds.iter().flatten() {
+            if name.is_empty() || !self.seen.insert(name.as_str()) {
+                return Err(fail());
+            }
+        }
+        for (at, (arg, position)) in args.iter().zip(positions).enumerate() {
+            if at != index
+                && !binds[at]
+                    .as_deref()
+                    .is_some_and(|binding| variable(arg, binding, &position.ty))
+            {
+                return Err(fail());
+            }
+        }
+        if rest.is_empty() {
+            if binds[index].is_some()
+                || !variable(&args[index], self.replacement, self.replacement_type)
+            {
+                return Err(fail());
+            }
+            Ok(positions[index].clone())
+        } else {
+            let binding = binds[index].as_deref().ok_or_else(fail)?;
+            self.field(&args[index], &positions[index], rest, binding)
+        }
+    }
+}
+
+pub(super) fn check_place_transform<'data>(
+    facet: &RustSourcePlaceTransform,
+    node: &Expr,
+    language: &str,
+    mut resolve_type: impl FnMut(&Type) -> Result<Type>,
+    mut resolve_data: impl FnMut(&Type) -> Option<&'data DataDecl>,
+) -> Result<RustSourcePlaceTransform> {
+    let fail = || {
+        type_error(
+            "a field assignment retains its exact complete source place and Unit writeback packet",
+            node.span,
+        )
+    };
+    let RustSourcePlaceTransform::Replacement {
+        operation,
+        slots,
+        places,
+        operands,
+        span,
+    } = facet;
+    let [root] = slots.as_slice() else {
+        return Err(fail());
+    };
+    let [selected] = places.as_slice() else {
+        return Err(fail());
+    };
+    let [operand] = operands.as_slice() else {
+        return Err(fail());
+    };
+    let Node::Let { name, value, body } = &node.node else {
+        return Err(fail());
+    };
+    let Node::Let {
+        name: rebuilt,
+        value: state,
+        body: output,
+    } = &body.node
+    else {
+        return Err(fail());
+    };
+    let Node::Tuple { items, .. } = &output.node else {
+        return Err(fail());
+    };
+    let [unit, result] = items.as_slice() else {
+        return Err(fail());
+    };
+    let expected = Type::Tuple {
+        elements: vec![Type::Unit, state.ty.clone()],
+    };
+    if language != "Rust"
+        || span.start >= span.end
+        || span.end as u64 > 9_007_199_254_740_991
+        || !node
+            .span
+            .is_some_and(|actual| actual.start == span.start && actual.end == span.end)
+        || node.source_position.is_some()
+        || node.source_state_transition.is_some()
+        || node.source_loop_fold.is_some()
+        || node.source_record_place.is_some()
+        || selected.slot != 0
+        || selected.fields.is_empty()
+        || selected.fields.len() > 128
+        || root.input.is_empty()
+        || root.input.len() > 4096
+        || operand.input.is_empty()
+        || operand.input.len() > 4096
+        || HashSet::from([
+            root.input.as_str(),
+            operand.input.as_str(),
+            name.as_str(),
+            rebuilt.as_str(),
+        ])
+        .len()
+            != 4
+        || !plain(body)
+        || !plain(output)
+        || !plain(unit)
+        || !matches!(unit.node, Node::Unit)
+        || unit.ty != Type::Unit
+        || node.ty != expected
+        || body.ty != expected
+        || output.ty != expected
+        || !variable(result, rebuilt, &state.ty)
+    {
+        return Err(fail());
+    }
+    let position = check_slot(
+        &root.binder,
+        &root.position,
+        &state.ty,
+        &mut resolve_type,
+        &mut resolve_data,
+    )?;
+    let operand_position = check_position(
+        &operand.position,
+        &value.ty,
+        language,
+        &mut resolve_type,
+        &mut resolve_data,
+    )?;
+    let qualified = value.source_position.as_ref().ok_or_else(fail)?;
+    if value.var_name() != Some(operand.input.as_str())
+        || value.source_state_transition.is_some()
+        || value.source_loop_fold.is_some()
+        || value.source_record_place.is_some()
+        || value.source_place_transform.is_some()
+        || qualified.position != operand_position
+    {
+        return Err(fail());
+    }
+    let mut reconstruction = Reconstruction {
+        resolve_data: &mut resolve_data,
+        replacement: name,
+        replacement_type: &value.ty,
+        work: 0,
+        seen: HashSet::from([
+            root.input.as_str(),
+            operand.input.as_str(),
+            name.as_str(),
+            rebuilt.as_str(),
+        ]),
+        lifetime: std::marker::PhantomData,
+    };
+    let target = reconstruction.field(state, &position, &selected.fields, &root.input)?;
+    if target.ty != value.ty || box_projection_depth(&operand_position, &target) != Some(0) {
+        return Err(fail());
+    }
+    Ok(RustSourcePlaceTransform::Replacement {
+        operation: *operation,
+        slots: vec![SourcePlaceSlot {
+            binder: root.binder.clone(),
+            position,
+            input: root.input.clone(),
+        }],
+        places: places.clone(),
+        operands: vec![SourcePlaceOperand {
+            position: operand_position,
+            input: operand.input.clone(),
+        }],
+        span: span.clone(),
+    })
+}

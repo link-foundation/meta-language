@@ -329,6 +329,47 @@ mod tests {
     }
 
     #[test]
+    fn field_writeback_reinitializes_only_its_selected_moved_subtree() {
+        let source = r#"struct Pair { first: String, second: u8 }
+            fn refs<'a>(referent: &'a u8) -> Vec<&'a u8> { vec![referent] }
+            fn main() {
+                let mut pair = Pair { first: String::from("before"), second: 7u8 };
+                let view = refs(&pair.second);
+                let first = pair.first;
+                pair.first = String::from("after");
+                println!("{}", view.len() == 1 && pair.second == 7u8);
+                println!("{}", pair.first);
+                println!("{}", first);
+            }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        assert_eq!(
+            wire.matches("\"model\":\"Rust source place replacement 1\"")
+                .count(),
+            1
+        );
+        let edited = wire.replacen(
+            "\"places\":[{\"slot\":0,\"fields\":[0]",
+            "\"places\":[{\"slot\":0,\"fields\":[1]",
+            1,
+        );
+        assert_ne!(wire, edited);
+        let edited = serde_json::from_str(&edited).unwrap();
+        crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(
+            &edited,
+        )
+        .expect_err("same-shaped writeback metadata cannot redirect the selected source field");
+    }
+
+    #[test]
     fn finite_loop_helpers_publish_only_their_actual_storage_revisions() {
         let source = r#"struct State { count: u8, text: String }
             fn refs<'a>(referent: &'a u8) -> Vec<&'a u8> { vec![referent] }

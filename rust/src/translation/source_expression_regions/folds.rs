@@ -156,7 +156,11 @@ impl Regions<'_> {
                 .slots
                 .get(index.wrapping_sub(2))
                 .map(|slot| &slot.position);
-            let actual = self.expression(item, env, bindings, position, depth + 1)?;
+            let actual = if index >= 2 {
+                self.state_expression(item, env, bindings, position, depth + 1)?
+            } else {
+                self.expression(item, env, bindings, position, depth + 1)?
+            };
             if index == 1 {
                 let control = actual
                     .control

@@ -15,7 +15,7 @@ pub(super) struct OwnedRecordState{slots:Vec<Slot>,frames:Vec<Frame>,next:usize,
 pub(super) struct OwnedRecordStateStatement{pub(super) bindings:Vec<Binding>,pub(super) value:SExpr}
 struct StateRead{node:SExpr,origin:SourceOrigin,slots:Vec<Slot>}
 #[derive(Clone)]
-pub(super) struct Layout{record:NamedRecord,fields:Vec<SourceOrigin>,index:usize}
+pub(super) struct Layout{record:NamedRecord,fields:Vec<SourceOrigin>,pub(super) index:usize}
 #[derive(Clone)]
 pub(super) struct CollectionPlace{pub(super) slot:Slot,pub(super) layouts:Vec<Layout>,pub(super) target:String}
 fn fail(reason:&str,span:Option<Span>)->super::TranslationError{unsupported("Rust owned record state",reason,span)}

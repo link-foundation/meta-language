@@ -106,6 +106,7 @@ pub(crate) mod source_position_transport;
 pub(crate) mod source_expression_positions;
 pub mod source_loop_folds;
 pub mod source_state_transforms;
+pub mod source_place_transforms;
 pub mod source_record_places;
 pub(crate) mod source_expression_regions;
 pub(crate) mod rust_record_place_owner_rules;

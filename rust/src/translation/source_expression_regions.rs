@@ -6,6 +6,7 @@ use super::{diagnostics::{TranslationError,type_error},ir::{Program,Decl,FnDecl,
 mod folds;
 mod matching;
 mod packets;
+mod place_transforms;
 mod record_fields;
 mod storage;
 mod state_transforms;
@@ -85,7 +86,7 @@ impl<'p> Regions<'p>{
  }
  fn read(&mut self, v: Value, mode: &str) -> Result<Value> {
      let mut v = self.read_lifetime(v)?;
-     if self.composed {
+     if self.composed && !(mode == "transport" && v.storage.is_some()) {
          self.check_place_image(&v)?;
      }
      if v.packet.is_some() { return self.read_state_packet(v, mode); }
@@ -215,7 +216,11 @@ impl<'p> Regions<'p>{
          self.states[id]=rules::expire_rust_borrowed_source_region(&self.states[id]);
          self.retire_field_lifetime(id,"expire");
      }
-     self.read(v,"read")
+     if v.storage.is_some() {
+         self.read_lifetime(v)
+     } else {
+         self.read(v, "read")
+     }
  }
  fn sources(result:&Position,parameters:&[Position])->Vec<f64>{let r=role(result);if r!="reference"&&r!="borrowed vector"{return Vec::new();}borrowed::plan_rust_borrowed_vector_result_parameters(&lifetime(result),&parameters.iter().map(|p|matches!(role(p).as_str(),"reference"|"borrowed vector")).collect::<Vec<_>>(),&parameters.iter().map(lifetime).collect::<Vec<_>>())}
  fn iterator_item(&mut self,source:&Value)->Result<Rc<Position>>{let p=source.position.as_deref().ok_or_else(||fail("a readonly source method needs its actual borrowed vector receiver position"))?;let Type::Array{element,..}=&p.ty else{return Err(fail("a readonly source method needs its actual borrowed vector receiver position"))};if p.owner.kind!="library"||p.owner.path.join("::")!="std::vec::Vec"||p.owner.arguments.len()!=1||!matches!(source.role.as_str(),"reference"|"borrowed vector"){return Err(fail("a readonly source method needs its actual borrowed vector receiver position"));}if let Some(child)=p.array_element_position.as_deref(){return self.position(child);}let mut owner=&p.owner.arguments[0];let mut wrappers=vec!["reference".into()];while super::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(source_policy_column(&["box".into()]),&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64){wrappers.push("box".into());owner=&owner.arguments[0];if wrappers.len()>129{return Err(fail("readonly iterator element nesting exceeds its finite position profile"));}}self.position(&Position{ty:element.as_ref().clone(),wrappers,lifetimes:vec![p.lifetimes.first().cloned().flatten()],owner:p.owner.arguments[0].clone(),array_element_position:None})}
@@ -239,10 +244,14 @@ impl<'p> Regions<'p>{
          return Err(fail("initializing source storage requires its actual lexical binding and value"));
      }
      if matches!(&node.node, Node::Abort { .. }) {
-         if node.source_position.is_some() || node.source_state_transition.is_some() || node.source_loop_fold.is_some() || node.source_record_place.is_some() {
+         if node.source_position.is_some() || node.source_state_transition.is_some() || node.source_loop_fold.is_some() || node.source_record_place.is_some() || node.source_place_transform.is_some() {
              return Err(fail("a diverging source term cannot publish a value or storage position"));
          }
          return Err(RegionError::Diverged);
+     }
+     if let Some(facet) = node.source_place_transform.as_deref() {
+         let value = self.place_transform(node, facet, env, bindings, depth)?;
+         return self.compatible(value, expected);
      }
 if let Some(facet)=node.source_loop_fold.as_deref(){return self.loop_expression(node,facet,env,bindings,expected,depth);}let mut operation=rules::read_rust_borrowed_source_operation(node.node.kind());if self.composed&&matches!(&node.node,Node::Tuple{..}|Node::TupleIndex{..}|Node::If{..}|Node::Append{..}){operation=node.node.kind().into();}if operation.is_empty(){operation=rules::read_rust_borrowed_source_match_operation(node.node.kind());}if operation.is_empty(){let op=match &node.node{Node::Method{op,..}=>op.as_str(),_=>""};operation=rules::read_rust_borrowed_source_iterator_operation(node.node.kind(),op);}if operation.is_empty(){return Err(fail("this checked expression needs its actual source binder operation adapter"));}let qualifier=node.source_position.as_deref().map(|v|&v.position);let transition=node.source_state_transition.as_deref();let position=qualifier.or_else(||transition.map(|facet|&facet.position));if let Some(p)=position{self.scope(p,bindings)?;}let mut value=if let Some(facet)=node.source_record_place.as_deref(){self.project_record_place(node,facet,env,bindings,depth)?}else{match &node.node{
  Node::Var{name}=>self.read(env.get(name).cloned().ok_or_else(||fail("the source variable needs its actual lexical binder"))?,"read")?,
@@ -367,7 +376,7 @@ if let Some(facet)=node.source_loop_fold.as_deref(){return self.loop_expression(
      let mut pending=vec![(root,0)];let mut selected=false;
      while let Some((node,depth))=pending.pop(){
          self.visits+=1;self.budget(depth)?;
-         if node.source_state_transition.is_some()||node.source_loop_fold.is_some()||node.source_record_place.is_some(){self.composed=true;selected=true;}
+         if node.source_state_transition.is_some()||node.source_loop_fold.is_some()||node.source_record_place.is_some()||node.source_place_transform.is_some(){self.composed=true;selected=true;}
          if node.source_position.is_some(){selected=true;}
          for child in node.children(){pending.push((child,depth+1));}
      }

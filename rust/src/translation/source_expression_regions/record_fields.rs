@@ -8,6 +8,7 @@ use super::{Environment, Position, Regions, Result, Value, accept, fail, rules};
 use crate::translation::{
     ir::{Expr, Node},
     rust_owned_record_state_rules::read_rust_owned_record_state_storage_error as storage_budget,
+    source_place_transforms::fields_for,
     source_record_places::{
         RustSourceRecordPlace, box_projection_depth, check_record_place, owner_view,
     },
@@ -212,6 +213,109 @@ impl Regions<'_> {
             ))?;
         }
         Ok(())
+    }
+
+    pub(super) fn revise_record_field(
+        &mut self,
+        prior: usize,
+        position: &Position,
+        path: &[usize],
+        depth: usize,
+    ) -> Result<usize> {
+        accept(storage_budget((depth + 1) as f64, depth as f64).to_string())?;
+        let root = self.root(self.lifetimes[prior].clone(), false)?;
+        if let Some((&index, rest)) = path.split_first() {
+            accept(rules::read_rust_borrowed_source_read_error(
+                &self.states[prior],
+                &[],
+            ))?;
+            let (view, mut children) = self
+                .field_images
+                .get(&prior)
+                .map(|image| (image.position.clone(), image.fields.clone()))
+                .ok_or_else(|| {
+                    fail("a changed source ancestor retains its actual declaration image")
+                })?;
+            let (_, positions) = fields_for(&view, &mut |ty| match ty {
+                Type::Data { name } => self.data(name),
+                _ => None,
+            })
+            .ok_or_else(|| fail("a changed source ancestor retains its actual typed fields"))?;
+            if children.len() != positions.len() || index >= children.len() {
+                return Err(fail(
+                    "a field write retains its actual declaration-order coordinate",
+                ));
+            }
+            let lifetime = self.field_lifetime(prior)?;
+            self.field_lifetimes.insert(root, lifetime);
+            children[index] =
+                self.revise_record_field(children[index], &positions[index], rest, depth + 1)?;
+            self.field_images.insert(
+                root,
+                RecordImage {
+                    position: view,
+                    fields: children,
+                },
+            );
+        } else {
+            self.prepare_record_image(root, position)?;
+            self.retire_field_lifetime(prior, "move");
+        }
+        self.states[prior] = rules::consume_rust_borrowed_source_region(&self.states[prior]);
+        Ok(root)
+    }
+
+    pub(super) fn join_record_images(&mut self, sources: [usize; 2]) -> Result<usize> {
+        self.join_record_image_pair(sources, 0, &mut 0)
+    }
+
+    fn join_record_image_pair(
+        &mut self,
+        [left, right]: [usize; 2],
+        depth: usize,
+        visits: &mut usize,
+    ) -> Result<usize> {
+        *visits += 3;
+        accept(storage_budget(*visits as f64, depth as f64).to_string())?;
+        if left == right {
+            return Ok(left);
+        }
+        let root = self.root(self.lifetimes[left].clone(), false)?;
+        match (
+            self.field_lifetimes.get(&left).copied(),
+            self.field_lifetimes.get(&right).copied(),
+        ) {
+            (Some(a), Some(b)) if a == b => {
+                self.field_lifetimes.insert(root, a);
+            }
+            _ => {
+                self.field_lifetime(root)?;
+            }
+        }
+        match (self.field_images.get(&left), self.field_images.get(&right)) {
+            (None, None) => {}
+            (Some(a), Some(b)) if a.position == b.position && a.fields.len() == b.fields.len() => {
+                let position = a.position.clone();
+                let coordinates: Vec<_> = a
+                    .fields
+                    .iter()
+                    .copied()
+                    .zip(b.fields.iter().copied())
+                    .collect();
+                let fields = coordinates
+                    .into_iter()
+                    .map(|(a, b)| self.join_record_image_pair([a, b], depth + 1, visits))
+                    .collect::<Result<_>>()?;
+                self.field_images
+                    .insert(root, RecordImage { position, fields });
+            }
+            _ => {
+                return Err(fail(
+                    "joined source fields retain their actual declaration and order",
+                ));
+            }
+        }
+        Ok(root)
     }
 
     pub(super) fn map_record_image(
