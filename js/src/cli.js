@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import {TranslationError} from './translation/diagnostics.js';
 import { runGrammarCommand } from './grammar-interchange.js';
 import { SelfTranslationError, selfTranslate, selfTranslationLanguage } from './self-translation.js';
-import { runMetaLanguageArchiveCommand } from './meta-language-archive-cli.js';
+import { runLinkCliArchiveCommand } from './link-cli-archive-command.js';
 import { runDynamicLanguageCommand } from './dynamic-language-cli.js';
 import {runSourceDefinitionCommand} from './source-definition-cli.js';
 import {runSourceModuleRequestCommand} from './source-module-request-cli.js';
@@ -70,7 +70,7 @@ export function runCommandLine(args, { readFile = (file) => readFileSync(file, '
   const [group, ...rest] = args;
   if (group === 'grammar') return runGrammarCommand(rest, { readFile });
   if (group === 'translate') return runTranslateCommand(rest, { readFile });
-  if (group === 'archive') return runMetaLanguageArchiveCommand(rest, { readFile, readBytes });
+  if (group === 'archive') return runLinkCliArchiveCommand(rest, { readFile, readBytes });
   if (group === 'language') return runDynamicLanguageCommand(rest, { readFile, readBytes });
   if (group === 'definition') return runSourceDefinitionCommand(rest);
   if(group==='module-requests')return runSourceModuleRequestCommand(rest,{readFile});

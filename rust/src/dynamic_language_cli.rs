@@ -6,7 +6,8 @@ use crate::{
     DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, GlobalConceptSource,
     MetaLanguageArchive, MetaLanguageArchiveLimits, RegularGrammarInferenceOptions,
     create_dynamic_meta_language, infer_regular_grammar, meta_language_archive_to_binary,
-    meta_language_archive_to_text, parse_grammar_links, read_meta_language_archive_binary,
+    meta_language_archive_to_link_cli_store, meta_language_archive_to_text, parse_grammar_links,
+    read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
     read_meta_language_archive_text, read_refined_regular_grammar_inference_links,
     read_structured_data_lino, refine_regular_grammar_inference, render_grammar_links,
     structured_data_to_lino,
@@ -56,7 +57,9 @@ where
         .file
         .as_deref()
         .ok_or("a language archive input is required")?;
-    if args.options.contains_key("--input-binary") {
+    if args.options.contains_key("--input-link-cli-store") {
+        Ok(read_meta_language_archive_link_cli_store(&read_bytes(file)?, limits)?.archive)
+    } else if args.options.contains_key("--input-binary") {
         Ok(read_meta_language_archive_binary(&read_bytes(file)?, limits)?.archive)
     } else {
         Ok(read_meta_language_archive_text(&read_text(file)?, limits)?.archive)
@@ -68,7 +71,9 @@ fn archive_output(
     args: &Arguments,
     limits: MetaLanguageArchiveLimits,
 ) -> Result<Vec<u8>, String> {
-    if args.options.contains_key("--binary") {
+    if args.options.contains_key("--link-cli-store") {
+        meta_language_archive_to_link_cli_store(archive, limits)
+    } else if args.options.contains_key("--binary") {
         meta_language_archive_to_binary(archive, limits)
     } else {
         Ok(meta_language_archive_to_text(archive, limits)?.into_bytes())

@@ -3513,8 +3513,14 @@ source network retain shared identities; independent networks keep separate
 identities. Text and binary operations reload the whole graph eagerly, and
 extensions select replacements and removals explicitly. Canonical text loading
 is streamed under node, reference and byte limits and retains exact supported
-parse flags. The public archive CLI packs, lists, selects and
-extends these graphs. The dynamic session draft uses archived discovered
+parse flags. A native link-cli store projection uses the two-packet Links
+Notation 0.31.8 envelope accepted by link-cli 3.1.1. Store addresses 1 and 2
+select the archive root and its linked allocator, term and syntax state.
+The store's doublets carry each reference occurrence in order, including
+duplicates and cycles. Named records carry the original identity and canonical
+metadata. The reader checks ownership, address bounds and the complete graph
+before restoring the archive. The public archive CLI packs, lists, selects,
+extends and converts these graphs. The dynamic session draft uses archived discovered
 grammars and formal premises with the existing native compiler and common
 concept verifier. Its default parse product is the complete concrete tree,
 including mapped source planes and recursive grammar provenance. An optional
@@ -3529,9 +3535,8 @@ replacement is explicit, and structured encoders use the caller's finite budgets
 Shared archive and snapshot policies are generated automatically from JavaScript;
 native adapters copy actual graph structures and invoke the existing compiler
 and concept verifier. Formal definitions for the remaining concepts, language
-specific semantic abstractions, link-cli workload integration and reconstruction
-measurements remain implementation obligations. These drafts have no execution
-evidence.
+specific semantic abstractions, full link-cli workload coverage and reconstruction
+measurements remain implementation obligations. These drafts have no execution evidence.
 The dynamic `language` CLI delegates preparation, extension, parsing, inventory
 and native grammar export to these same library operations in both packages.
 Source grammars carry explicit source identity, language and edition; configuration
@@ -3542,8 +3547,13 @@ retain the pinned contexts of earlier documents. Shared source definitions own
 option admission and projection selection; generated native adapters only transport
 files, arguments and graph values. Rejections retain their diagnostics and a
 nonzero exit code, including when a recovered concrete archive is available.
-This command draft and its deferred controls do not establish catalog completeness,
-reconstruction performance, link-cli integration or execution evidence.
+The dynamic command also transports native link-cli stores through
+`--link-cli-store` and `--input-link-cli-store`. Its shared command replay
+persists each store with Link CLI, removes the import file, and exports from a
+separate process. It compares the reconstructed archive against the canonical
+text and binary paths and records input identity, elapsed time and peak resident
+memory for eager decoding. Catalog completeness and reconstruction across the
+required workloads remain open.
 The current binary graph primitive writes a versioned meta-language archive of
 actual link identities, references, supported metadata, exact term-map keys,
 selected syntax and the next allocation identity. Shared framing rules are

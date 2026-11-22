@@ -9,8 +9,8 @@ export function acceptDynamicLanguageCommand(command) {
  * @param {string} command @param {string} option @returns {number} */
 export function readDynamicLanguageArgumentArity(command, option) {
   if (!acceptDynamicLanguageCommand(command)) return -1;
-  if (option === '--binary') return command === 'list' || command === 'grammar' ? -1 : 0;
-  if (option === '--input-binary') return command === 'prepare' || command === 'discover' ? -1 : 0;
+  if (option === '--binary' || option === '--link-cli-store') return command === 'list' || command === 'grammar' ? -1 : 0;
+  if (option === '--input-binary' || option === '--input-link-cli-store') return command === 'prepare' || command === 'discover' ? -1 : 0;
   if (command === 'discover') return option === '--identifier' || option === '--language' || option === '--edition' ? 1 : -1;
   if (command === 'refine') return option === '--examples' || option === '--identifier' ? 1 : -1;
   if (command === 'install') return -1;
@@ -55,5 +55,6 @@ export function readDynamicLanguageCommandUsage() {
     + '       meta-language language discover <examples.lino> [--identifier <id>] [--language <name>] [--edition <edition>] [--binary]\n'
     + '       meta-language language refine <checkpoint> --examples <examples.lino> [--identifier <id>] [--input-binary] [--binary]\n'
     + '       meta-language language install <checkpoint> [--input-binary] [--binary]\n'
+    + 'Use --link-cli-store or --input-link-cli-store in place of the corresponding binary option for native link-cli stores.\n'
     + 'Parse writes the complete extended archive; CST is the default. AST retains its original CST. Configuration is structured Links data.\n';
 }

@@ -2212,6 +2212,8 @@ export function readMetaLanguageArchiveNetworkText(text: string, options?: MetaL
 export function readMetaLanguageArchiveText(text: string, options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
 export function metaLanguageArchiveToBinary(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): Uint8Array;
 export function readMetaLanguageArchiveBinary(bytes: Uint8Array | readonly number[], options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
+export function metaLanguageArchiveToLinkCliStore(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): Uint8Array;
+export function readMetaLanguageArchiveLinkCliStore(bytes: Uint8Array, options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
 export function extendMetaLanguageArchive(archive: MetaLanguageArchive, additions: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits & { replace?: boolean; remove?: string[] }): MetaLanguageArchive;
 
 export interface DynamicMetaLanguageOptions extends MetaLanguageArchiveLimits {

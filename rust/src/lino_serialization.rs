@@ -74,7 +74,13 @@ impl LinkNetwork {
             self.terms.values().map(|id| id.0).collect();
         let mut output = String::new();
         for link in self.links.values() {
-            encode_link(link, registered.contains(&link.id.0), &mut output);
+            encode_link(
+                link.id,
+                &link.references,
+                &link.metadata,
+                registered.contains(&link.id.0),
+                &mut output,
+            );
             output.push('\n');
         }
         output
@@ -141,13 +147,18 @@ impl LinkNetwork {
 }
 
 /// Writes one `(<id>: <refs> (meta: ...))` statement into `output`.
-fn encode_link(link: &Link, registered: bool, output: &mut String) {
-    write!(output, "({}:", link.id.0).expect("writing to a String never fails");
-    for reference in link.references.iter() {
+pub(crate) fn encode_link(
+    id: LinkId,
+    references: &[LinkId],
+    metadata: &LinkMetadata,
+    registered: bool,
+    output: &mut String,
+) {
+    write!(output, "({}:", id.0).expect("writing to a String never fails");
+    for reference in references {
         write!(output, " {}", reference.0).expect("writing to a String never fails");
     }
     output.push_str(" (meta:");
-    let metadata = &link.metadata;
     if let Some(link_type) = metadata.link_type() {
         write!(output, " (t: {link_type})").expect("writing to a String never fails");
     }

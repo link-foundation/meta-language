@@ -20,7 +20,7 @@ use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-fn restore(
+pub(super) fn restore(
     network: &LinkNetwork,
     inventory: &[LinkId],
     state: &Value,

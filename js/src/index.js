@@ -34,6 +34,7 @@ export {rebaseUnsignedTypedProgramLinks,createUnsignedTypedProgramLinks,createUn
 export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchiveToText,
   readMetaLanguageArchiveNetworkText,
   readMetaLanguageArchiveText, metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary,
+  metaLanguageArchiveToLinkCliStore, readMetaLanguageArchiveLinkCliStore,
   extendMetaLanguageArchive } from './meta-language-archive.js';
 export { DynamicMetaLanguage, createDynamicMetaLanguage } from './dynamic-meta-language.js';
 export { runDynamicLanguageCommand } from './dynamic-language-cli.js';

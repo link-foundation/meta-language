@@ -1,12 +1,81 @@
 //! Deferred shared controls; do not run until the complete code draft is ready.
 use meta_language::{
     DynamicMetaLanguage, DynamicMetaLanguageOptions, LinkId, LinkNetwork, MetaLanguageArchiveEntry,
-    MetaLanguageArchiveLimits, decode_structured_data_links, parse_grammar_links,
-    read_meta_language_archive_binary, read_meta_language_archive_text, read_structured_data_lino,
-    render_grammar_links, run_dynamic_language_command,
+    MetaLanguageArchiveLimits, create_meta_language_archive, decode_structured_data_links,
+    meta_language_archive_to_binary, meta_language_archive_to_link_cli_store, parse_grammar_links,
+    read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
+    read_meta_language_archive_network_text, read_meta_language_archive_text,
+    read_structured_data_lino, render_grammar_links, run_dynamic_language_command,
 };
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
+
+#[test]
+fn link_cli_store_preserves_ordered_cycles_and_disconnected_links() {
+    let limits = MetaLanguageArchiveLimits::default();
+    let [root, target, detached] = [1, 2, 3].map(LinkId::from_u64);
+    let network = Arc::new(
+        read_meta_language_archive_network_text(
+            concat!(
+                "(1: 2 1 2 (meta: (n: 1) (term: %CF%80) (reg: 1)))\n",
+                "(2: 1 (meta: (n: 0)))\n",
+                "(3: (meta: (n: 0)))\n",
+            ),
+            limits,
+        )
+        .unwrap(),
+    );
+    let archive = create_meta_language_archive(
+        &[
+            MetaLanguageArchiveEntry {
+                identifier: "cyclic graph".to_owned(),
+                kind: "ontology".to_owned(),
+                network: Arc::clone(&network),
+                root,
+            },
+            MetaLanguageArchiveEntry {
+                identifier: "selected target".to_owned(),
+                kind: "ontology".to_owned(),
+                network,
+                root: target,
+            },
+        ],
+        limits,
+    )
+    .unwrap();
+    let packet = meta_language_archive_to_link_cli_store(&archive, limits).unwrap();
+    let restored = read_meta_language_archive_link_cli_store(&packet, limits).unwrap();
+    assert_eq!(
+        meta_language_archive_to_binary(&restored.archive, limits).unwrap(),
+        meta_language_archive_to_binary(&archive, limits).unwrap()
+    );
+    assert_eq!(restored.archive.root, archive.root);
+    assert!(Arc::ptr_eq(
+        &restored.entries[0].network,
+        &restored.entries[1].network
+    ));
+    let restored = &restored.entries[0].network;
+    assert_eq!(
+        restored.link(root).unwrap().references(),
+        &[target, root, target]
+    );
+    assert!(restored.link(detached).unwrap().references().is_empty());
+    assert!(
+        read_meta_language_archive_link_cli_store(&packet[..packet.len() - 1], limits).is_err()
+    );
+    assert!(
+        read_meta_language_archive_link_cli_store(
+            &packet,
+            MetaLanguageArchiveLimits {
+                byte_limit: packet.len() - 1,
+                ..limits
+            }
+        )
+        .unwrap_err()
+        .contains("oversized link-cli store")
+    );
+}
 
 fn concrete(entry: &MetaLanguageArchiveEntry) -> Value {
     let mut network = LinkNetwork::new();

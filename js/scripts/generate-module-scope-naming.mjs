@@ -35,19 +35,43 @@ sources.push('js/src/translation/rust-primitive-bitwise-rules.js', 'js/src/trans
 sources.push('js/src/translation/array-state-method-rules.js', 'js/src/translation/array-state-methods.js', 'js/scripts/generate-array-state-method-rules.mjs', 'js/scripts/generate-array-state-method-fixtures.mjs');
 sources.push('js/src/translation/rust-shift-rules.js', 'js/src/translation/rust-shifts.js', 'js/scripts/generate-rust-shift-rules.mjs', 'js/scripts/generate-rust-shift-fixtures.mjs');
 sources.push('js/src/resource-description-address-rules.js', 'js/src/resource-description-identifiers.js', 'js/scripts/generate-resource-description-address-rules.mjs', 'js/scripts/generate-resource-description-address-fixtures.mjs');
+sources.push('js/src/link-cli-archive-topology-rules.js', 'js/src/link-cli-archive-command.js');
+const archiveOperationNames = {
+ readLinkCliArchiveStoreName: 'read link command line interface archive store name',
+ readLinkCliArchiveStateName: 'read link command line interface archive state name',
+ acceptLinkCliArchiveDirectory: 'accept link command line interface archive directory',
+ planLinkCliArchiveDoublets: 'plan link command line interface archive endpoint pairs',
+ readLinkCliArchiveDoublets: 'read link command line interface archive endpoint pairs',
+ linkCliPacketLimits: 'limit link command line interface packet size',
+ metaLanguageArchiveToLinkCliStore: 'encode meta language archive as link command line interface store',
+ readMetaLanguageArchiveLinkCliStore: 'read meta language archive from link command line interface store',
+ readArchiveCommandEncodings: 'read archive command formats',
+ runLinkCliArchiveCommand: 'run link command line interface archive command',
+};
+const qualifiedOperationNames = {
+ 'js/src/dynamic-meta-language.js': { configuration: 'configure dynamic meta language' },
+ 'js/src/grammar-inference.js': { configuration: 'configure grammar inference' },
+};
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
+ const retainedReaderReceipt='parity/naming/module-scope-bindings-registration.lino';
+ const prior=readBootstrapStructuredDataLino(readFileSync(new URL(retainedReaderReceipt,root),'utf8'));
+ const previousHistoricalReader=prior.additions.find(row=>row.id==='translation.read-historical-naming-document-text');
+ assert.equal(previousHistoricalReader.source,'js/scripts/historical-naming-inventory-storage.mjs');
+ assert.equal(previousHistoricalReader.name,'readHistoricalNamingDocumentText');
+ assert.equal(pin(previousHistoricalReader.sourceText).sha256,'4ee313872b26368fbb19ebdc134e2b017f9caee9d9e0af86531f025a3f436499');
  return sources.flatMap(source=>{
   const text=readFileSync(new URL(source,root),'utf8'),tokens=tokenize(text,'JavaScript').tokens,kinds=tokens.map(token=>token.kind),values=tokens.map(token=>token.value),rows=[];
   for(let at=0;at<tokens.length;at++){
    if(tokens[at].kind!=='identifier'||tokens[at].value!=='function'||tokens[at+1]?.kind!=='identifier')continue;
    const name=tokens[at+1].value,range=findCompleteModuleScopeDeclaration(kinds,values,at);assert.equal(range.length,2,'every named operation has its complete formal list and body');
    const end=range[1];let declaration=at;if(tokens[declaration-1]?.value==='async')declaration--;if(tokens[declaration-1]?.value==='export')declaration--;const start=tokens[declaration].start;
-   const sourceText=text.slice(start,tokens[end-1].end),phrase=name.replace(/([a-z])([A-Z])/gu,'$1 $2').toLowerCase();
-   const selected=source==='experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs'?['runOriginalLinkRawArchivePreparationJobs','prepareOriginalLinkRawSourceArchives'].includes(name):source!=='js/scripts/historical-naming-inventory-storage.mjs'||name==='readHistoricalNamingDocumentText';
+   const sourceText=text.slice(start,tokens[end-1].end),phrase=qualifiedOperationNames[source]?.[name]??archiveOperationNames[name]??name.replace(/([a-z])([A-Z])/gu,'$1 $2').toLowerCase();
+   const selected=source==='experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs'?['runOriginalLinkRawArchivePreparationJobs','prepareOriginalLinkRawSourceArchives'].includes(name):source!==previousHistoricalReader.source||name==='readBoundedHistoricalNamingDocumentText';
    if(selected)rows.push({id:'translation.'+phrase.split(' ').join('-'),source,name,inventoryName:phrase,sourceText});at=end-1;
   }
-  assert.ok(rows.length>0);return rows;
+  if(source===previousHistoricalReader.source)rows.push(previousHistoricalReader);
+  return rows;
  });
 }
 function records(rows){return rows.map(row=>({id:row.id,phrase:row.inventoryName,role:'operation',
@@ -60,6 +84,7 @@ function records(rows){return rows.map(row=>({id:row.id,phrase:row.inventoryName
  * same process. Complete original bytes and ordered rows survive the inverse. */
 export function generateModuleScopeNaming({section,check=false}={}){
  assert.ok(['canonical','bindings'].includes(section));const rows=operations();
+ assert.ok(rows.length>0);
  const file=section==='canonical'?'parity/naming/canonical-concepts.lino':'parity/naming/source-bindings.lino';
  const receiptFile='parity/naming/module-scope-'+section+'-registration.lino';
  // A new declaration in an existing module must append after all registered
@@ -102,7 +127,7 @@ export function generateModuleScopeNaming({section,check=false}={}){
  }
  const oldCount=list.length;assert.deepEqual(pin(serializeProjectData(document,file)),original.expected,'every preceding register byte and ordered row stays exact');
  const ids=new Set(list.map(row=>section==='canonical'?row.id:JSON.stringify([row.source,row.name])));
- for(const row of additions){const key=section==='canonical'?row.id:JSON.stringify([row.source,row.name]);assert.ok(!ids.has(key),'one distinct source identity');ids.add(key);}
+ for(const row of additions){const key=section==='canonical'?row.id:JSON.stringify([row.source,row.name]);assert.ok(!ids.has(key),'duplicate source identity '+key+' in '+(row.source??row.sourceAliases[0].source));ids.add(key);}
  list.push(...additions);global.gc?.();
  if(check)assert.deepEqual(pin(serializeProjectData(document,file)),pin(text),'the complete current register must equal the normal author output');else writeProjectData(new URL(file,root),document);
  const receipt={schemaVersion:1,model:'complete source operation registration 1',revision,file,

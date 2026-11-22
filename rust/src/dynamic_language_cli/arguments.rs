@@ -60,6 +60,13 @@ pub(super) fn parse(args: &[String]) -> Result<Arguments, String> {
         }
         index += count + 1;
     }
+    if (result.options.contains_key("--input-binary")
+        && result.options.contains_key("--input-link-cli-store"))
+        || (result.options.contains_key("--binary")
+            && result.options.contains_key("--link-cli-store"))
+    {
+        return Err("select one archive encoding per input or output".to_owned());
+    }
     if command != "prepare" && result.file.is_none() {
         let required = if command == "discover" {
             "a labelled examples input is required"

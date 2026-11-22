@@ -22,7 +22,7 @@ let documentSnapshot;
 
 /** Read every actual byte before reusing an equal immutable scalar string.
  * One actual root and its registered paths bound retained storage. */
-function readHistoricalNamingDocumentText(base,file,expectedBytes){
+function readBoundedHistoricalNamingDocumentText(base,file,expectedBytes){
   assert.ok(documentPaths.has(file));
   const directory=resolve(base),path=resolve(directory,file),size=statSync(path).size;
   if(expectedBytes===undefined)assert.ok(size<=2*maximumDocumentBytes,'bounded historical naming index');
@@ -120,7 +120,7 @@ export function storeHistoricalNamingInventories(history,{check=false,base=root}
 /** Read all complete document bytes before cache selection. No page can hide
  * behind an unchanged index, and no decoded graph gets a larger node budget. */
 export function readHistoricalNamingInventoryBundle({base=root}={}){
-  const text=readHistoricalNamingDocumentText(base,HISTORICAL_NAMING_INVENTORY_INDEX);
+  const text=readBoundedHistoricalNamingDocumentText(base,HISTORICAL_NAMING_INVENTORY_INDEX);
   const index=readBootstrapStructuredDataLino(text),documents=[{file:HISTORICAL_NAMING_INVENTORY_INDEX,text}];
   if(index.model==='array identity historical naming inventories 1')return{legacy:index,documents};
   exactKeys(index,['schemaVersion','model','revision','boundary','partitions']);
@@ -155,7 +155,7 @@ export function readHistoricalNamingInventoryBundle({base=root}={}){
   const knownFiles=new Set([HISTORICAL_NAMING_INVENTORY_INDEX,...index.partitions.map(row=>row.file)]);
   for(const file of documentSnapshot.texts.keys())if(!knownFiles.has(file))documentSnapshot.texts.delete(file);
   for(const row of index.partitions){
-    const text=readHistoricalNamingDocumentText(base,row.file,row.bytes);
+    const text=readBoundedHistoricalNamingDocumentText(base,row.file,row.bytes);
     assert.deepEqual(pin(text),{bytes:row.bytes,sha256:row.sha256});
     documents.push({file:row.file,text});
   }

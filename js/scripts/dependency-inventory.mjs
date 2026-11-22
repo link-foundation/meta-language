@@ -192,7 +192,7 @@ function collectNpm(root, items) {
       declaredIn: declared ? [manifestFile, lockFile] : lockFile,
       pinned: entry.version,
       compare: 'version',
-      source: { type: 'npm', package: name },
+      source: { type: 'npm', package: entry.name ?? name },
       role: declared ? 'direct' : 'transitive',
       kind: entry.dev ? 'development' : entry.optional ? 'optional' : entry.peer ? 'peer' : 'runtime',
       ...(declared ? { requirement: declared.range } : {}),
@@ -238,28 +238,33 @@ function collectCargo(root, items, manifestFile, lockFile = manifestFile.replace
   }
   const packages = parseCargoLock(readText(root, lockFile));
   const rootPackage = packages.find((entry) => entry.name === settings.name && entry.source === null);
-  const directNames = new Set((rootPackage?.dependencies ?? []).map((dependency) => dependency.split(' ')[0]));
+  const directPackages = new Set(rootPackage?.dependencies ?? []);
   const declared = new Map();
   for (const dependency of dependencies) {
-    const entry = declared.get(dependency.name) ?? { requirements: [], kinds: [], optional: dependency.optional };
-    entry.requirements.push(dependency.requirement);
-    entry.kinds.push(dependency.kind);
+    const entry = declared.get(dependency.name) ?? [];
+    entry.push(dependency);
     declared.set(dependency.name, entry);
   }
   for (const entry of packages) {
     if (!entry.source?.startsWith('registry+')) continue;
-    const direct = directNames.has(entry.name) ? declared.get(entry.name) : undefined;
+    const unversioned = directPackages.has(entry.name);
+    const selected = [`${entry.name} ${entry.version}`, `${entry.name} ${entry.version} (${entry.source})`]
+      .some(identity => directPackages.has(identity));
+    const declarations = declared.get(entry.name) ?? [];
+    const direct = unversioned ? declarations : selected
+      ? declarations.filter(({ requirement }) => requirement && satisfies(entry.version, requirement, 'cargo')) : [];
     addItem(items, {
       category: 'crate',
       scope: lockFile,
       name: entry.name,
-      declaredIn: direct ? [manifestFile, lockFile] : lockFile,
+      declaredIn: direct.length ? [manifestFile, lockFile] : lockFile,
       pinned: entry.version,
       compare: 'version',
       source: { type: 'crate', crate: entry.name },
-      role: direct ? 'direct' : 'transitive',
-      ...(direct
-        ? { requirement: unique(direct.requirements).join('; '), kind: unique(direct.kinds).join(', ') + (direct.optional ? ' (optional)' : '') }
+      role: direct.length ? 'direct' : 'transitive',
+      ...(direct.length
+        ? { requirement: unique(direct.map(({ requirement }) => requirement)).join('; '),
+          kind: unique(direct.map(({ kind }) => kind)).join(', ') + (direct[0].optional ? ' (optional)' : '') }
         : {}),
     });
   }
@@ -792,12 +797,12 @@ export function checkDeliveredDependencies(inventory, collected, options = {}) {
         }
       }
       for (const name of versions.keys()) {
-        if (!runtimePackages.some((item) => item.source.package === name)) {
+        if (!runtimePackages.some((item) => item.name === name)) {
           problems.push({ kind: 'uninventoried-consumer-dependency', message: `${name}: installed runtime dependency has no audited current release` });
         }
       }
       for (const item of runtimePackages) {
-        const installed = versions.get(item.source.package) ?? [];
+        const installed = versions.get(item.name) ?? [];
         const target = effective.get(item.id).status === 'compatible' ? item.compatible : item.current;
         let stale = installed.length === 0;
         try {
@@ -806,7 +811,7 @@ export function checkDeliveredDependencies(inventory, collected, options = {}) {
           stale = true;
         }
         if (stale) {
-          problems.push({ kind: 'stale-consumer-resolution', message: `${item.source.package}: clean consumer resolves ${installed.join(', ') || 'no installed version'}, audited current release is ${target}` });
+          problems.push({ kind: 'stale-consumer-resolution', message: `${item.name}: clean consumer resolves ${installed.join(', ') || 'no installed version'}, audited current release is ${target}` });
         }
       }
     }
@@ -1147,7 +1152,9 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
   const priorByName = new Map((previous?.items ?? []).map((item) => [nameKey(item), item]));
   // A generator names the tools it runs by id, and an id carries the pin: follow a tool to its new pin.
   const collectedByName = new Map(collected.map((item) => [nameKey(item), item]));
-  const followPin = (id) => relocations.get(id) ?? (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
+  const collectedIdentities = new Set(collected.map(({ id }) => id));
+  const followPin = (id) => collectedIdentities.has(id) ? id
+    : relocations.get(id) ?? (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
   let done = 0;
   const releases = new Map();
   const items = await mapLimit(collected, 16, async (item) => {
@@ -1181,7 +1188,7 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
     let holders = [];
     let syntax = 'npm';
     if (item.category === 'npm') {
-      holders = (npmHolders.get(item.source.package) ?? []).filter(({ requirement }) => satisfies(item.pinned, requirement, 'npm'));
+      holders = (npmHolders.get(item.name) ?? []).filter(({ requirement }) => satisfies(item.pinned, requirement, 'npm'));
       reason = heldReason(item, holders, { syntax, rootName: manifests['js/package-lock.json'].lock.name });
     } else if (item.category === 'crate') {
       syntax = 'cargo';

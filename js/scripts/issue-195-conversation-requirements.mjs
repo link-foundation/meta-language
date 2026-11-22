@@ -1,4 +1,5 @@
 import { grammarSelectionMappingObservationSections } from '../tests/support/grammar-selection-mapping-cases.js';
+import { linkCliArchiveReconstructionFixture, linkCliReconstruction } from './link-cli-archive-reconstruction-assertions.mjs';
 
 // Critical conversation obligations. Captures are requirements, not behavioral
 // fixtures or successful execution evidence. Missing implementations stay null.
@@ -86,6 +87,12 @@ const sourceToolingFixtures = {
 // Each concrete version assertion has its own fixture. Appending its cell
 // preserves the original conversation behavior cell and all its obligations.
 const sourceToolingVerificationCells = {
+  [linkCliReconstruction.requirementId]: ['javascript', 'rust'].map(runtime => ({
+    runtime, suffix: linkCliReconstruction.suffix,
+    fixtures: [{ id: linkCliArchiveReconstructionFixture(runtime), path: linkCliReconstruction.fixtureFile,
+      selector: 'The full shared command sequence through the installed Link CLI 3.1.1 store with Links Notation 0.31.8, removing original inputs during replay and comparing the eager archive graph with both canonical text and versioned binary transport.',
+    }], assertions: linkCliReconstruction.assertions,
+  })),
   'I195-ASSERTION-EXPLICIT-VERSION-RANGES': [{
     runtime: 'tooling', suffix: 'antlr-command-order',
     fixtures: [{
@@ -199,6 +206,10 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  [linkCliReconstruction.requirementId]: {
+    javascript: ['js/src/meta-language-archive.js', 'js/src/dynamic-language-cli.js', 'experiments/link-cli-archive-reconstruction.mjs'],
+    rust: ['rust/src/meta_language_archive/link_cli_store.rs', 'rust/src/dynamic_language_cli.rs', 'experiments/link-cli-archive-reconstruction.mjs'],
+  },
   'I195-LINK-FOUNDATION-OPTIONAL-TYPE-ROOT': {
     javascript: ['js/src/network.js', 'js/src/primitives.js', 'js/src/link-network-binary.js',
       'js/tests/issue-195-evidence-root-types.test.js'],

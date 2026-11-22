@@ -37,6 +37,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("DECORATOR_LEVELS", "DECORATOR_LEVELS", "constant"),
     ("DecoratorError", "DecoratorError", "type"),
     ("DecoratorSet", "DecoratorSet", "type"),
+    ("DynamicMetaLanguage", "DynamicMetaLanguage", "type"),
     ("EmbeddedRegion", "EmbeddedRegion", "type"),
     ("EngineNetwork", "EngineNetwork", "type"),
     ("ExprBuilder", "ExprBuilder", "type"),
@@ -227,6 +228,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("VerificationIssue", "VerificationIssue", "type"),
     ("VerificationReport", "VerificationReport", "type"),
     (
+        "acceptInferredGrammarSymbols",
+        "accept_inferred_grammar_symbols",
+        "function",
+    ),
+    (
         "acceptIntrinsicModuleInitializerScope",
         "accept_intrinsic_module_initializer_scope",
         "function",
@@ -312,6 +318,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createDynamicMetaLanguage",
+        "create_dynamic_meta_language",
+        "function",
+    ),
+    (
         "createGlobalConceptSpace",
         "create_global_concept_space",
         "function",
@@ -343,9 +354,19 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createMetaLanguageArchive",
+        "create_meta_language_archive",
+        "function",
+    ),
+    (
         "createProgramSnapshot",
         "ProgramRepresentation::serialize_snapshot",
         "method",
+    ),
+    (
+        "createRegularGrammarInferenceProgramLinks",
+        "create_regular_grammar_inference_program_links",
+        "function",
     ),
     (
         "createRustByteStringProgramLinks",
@@ -493,6 +514,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("eraseTypeScript", "erase_type_script", "function"),
+    (
+        "extendMetaLanguageArchive",
+        "extend_meta_language_archive",
+        "function",
+    ),
     ("fourLanguageSupport", "FOUR_LANGUAGE_SUPPORT", "constant"),
     ("freeze", "LinkNetwork::freeze", "method"),
     (
@@ -554,6 +580,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "import_tree_sitter_json",
         "function",
     ),
+    ("inferRegularGrammar", "infer_regular_grammar", "function"),
     (
         "insertConceptRecord",
         "LinkNetwork::insert_concept_record",
@@ -578,6 +605,21 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "mergeResourceDescriptionGraphs",
         "merge_resource_description_graphs",
+        "function",
+    ),
+    (
+        "metaLanguageArchiveToBinary",
+        "meta_language_archive_to_binary",
+        "function",
+    ),
+    (
+        "metaLanguageArchiveToLinkCliStore",
+        "meta_language_archive_to_link_cli_store",
+        "function",
+    ),
+    (
+        "metaLanguageArchiveToText",
+        "meta_language_archive_to_text",
         "function",
     ),
     (
@@ -673,6 +715,31 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "readMetaLanguageArchive",
+        "read_meta_language_archive",
+        "function",
+    ),
+    (
+        "readMetaLanguageArchiveBinary",
+        "read_meta_language_archive_binary",
+        "function",
+    ),
+    (
+        "readMetaLanguageArchiveLinkCliStore",
+        "read_meta_language_archive_link_cli_store",
+        "function",
+    ),
+    (
+        "readMetaLanguageArchiveNetworkText",
+        "read_meta_language_archive_network_text",
+        "function",
+    ),
+    (
+        "readMetaLanguageArchiveText",
+        "read_meta_language_archive_text",
+        "function",
+    ),
+    (
         "readProgramSnapshot",
         "ProgramRepresentation::from_snapshot",
         "method",
@@ -680,6 +747,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "readRefinedRegularGrammarInferenceLinks",
         "read_refined_regular_grammar_inference_links",
+        "function",
+    ),
+    (
+        "readRegularGrammarInferenceLinks",
+        "read_regular_grammar_inference_links",
         "function",
     ),
     (

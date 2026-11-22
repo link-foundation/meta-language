@@ -6,6 +6,10 @@ import { encodeStructuredDataLinks, decodeStructuredDataLinks } from './structur
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
 import { StreamParser } from 'links-notation';
 import { decodeCanonicalStatements } from './lino-serialization.js';
+import { encodeLinkStatement } from './lino-serialization-write.js';
+import { DecodeLimits, External, LinksPacket, PacketReader } from 'link-cli-links-notation';
+import { planLinkCliArchiveDoublets, readLinkCliArchiveDoublets,
+  readLinkCliArchiveStateName, readLinkCliArchiveStoreName } from './link-cli-archive-topology-rules.js';
 import { readMetaLanguageArchiveLanguage, readMetaLanguageArchiveTerm,
   readMetaLanguageArchiveRecordFields,
   acceptMetaLanguageArchiveKind, acceptMetaLanguageArchiveVersion,
@@ -323,6 +327,132 @@ export function readMetaLanguageArchiveBinary(bytes, options = {}) {
   const network = decodeLinkNetworkBinary(bytes, { ...options, recordLimit: bounds(options).nodeLimit });
   const root = findRoot(network);
   return { network, root, ...readMetaLanguageArchive(network, root, options) };
+}
+
+function linkCliPacketLimits(limits) {
+  const recordLimit = Math.min(4294967293, limits.nodeLimit * 2);
+  const storeLimit = Math.min(4294967295, recordLimit + 2 + limits.referenceLimit * 2);
+  return { storeLimit,
+    topology: new DecodeLimits({ maxLinks: storeLimit, maxReferences: storeLimit * 2 }),
+    names: new DecodeLimits({ maxLinks: recordLimit + 2,
+      maxReferences: Math.min(Number.MAX_SAFE_INTEGER,
+        limits.byteLimit + Math.min(recordLimit + 2, limits.byteLimit)) }) };
+}
+
+/** Write the native link-cli pair of store-link and name packets. */
+export function metaLanguageArchiveToLinkCliStore(archive, options = {}) {
+  const limits = bounds(options), packetLimits = linkCliPacketLimits(limits);
+  readMetaLanguageArchive(archive.network, archive.root, options);
+  const { links, state } = inspect(archive.network, limits);
+  const descriptor = encodeStructuredDataLinks(state, limits);
+  const stateLinks = [descriptor.network.link(descriptor.root), ...descriptor.network.links()
+    .filter(link => identity(link.id()) !== identity(descriptor.root))];
+  const stateAddress = links.length + 3, ends = [], targets = [];
+  const names = [readLinkCliArchiveStoreName(), readLinkCliArchiveStateName()];
+  const appendRecords = (records, first, prefix) => {
+    const addresses = new Map(records.map((link, index) => [identity(link.id()), first + index]));
+    const start = targets.length;
+    for (const link of records) {
+      if (targets.length - start + link.references().length > limits.referenceLimit) fail('reference resource limit exceeded');
+      for (const reference of link.references()) targets.push(addresses.get(identity(reference)));
+      ends.push(targets.length);
+      names.push(prefix + encodeLinkStatement(link.id(), [], link.metadata()));
+    }
+    return addresses;
+  };
+  const addresses = appendRecords(links, 3, 'link ');
+  appendRecords(stateLinks, stateAddress, 'state ');
+  const layout = planLinkCliArchiveDoublets(ends, targets, addresses.get(identity(archive.root)),
+    stateAddress, packetLimits.storeLimit);
+  if (layout.$ !== 'archiveDoublets') fail(layout.reason ?? 'invalid archive doublets');
+  let nameBytes = 0;
+  const nameRows = names.map((name, index) => {
+    nameBytes += encoder.encode(name).length;
+    if (nameBytes > limits.byteLimit) fail('byte resource limit exceeded');
+    return [BigInt(index + 1), [new External(BigInt(index + 1)),
+      ...Array.from(name, character => new External(BigInt(character.codePointAt(0))))]];
+  });
+  const rows = Array.from({length: layout.doublets.length / 2}, (_, index) =>
+    [BigInt(index + 1), layout.doublets.slice(index * 2, index * 2 + 2).map(value => BigInt(value))]);
+  const content = LinksPacket.pack(false, rows, true).toBytes(packetLimits.topology);
+  const directory = LinksPacket.pack(true, nameRows, true).toBytes(packetLimits.names);
+  if (content.length + directory.length > limits.byteLimit) fail('byte resource limit exceeded');
+  const bytes = new Uint8Array(content.length + directory.length);
+  bytes.set(content);
+  bytes.set(directory, content.length);
+  return bytes;
+}
+
+/** Restore a complete archive from a native link-cli store export. */
+export function readMetaLanguageArchiveLinkCliStore(bytes, options = {}) {
+  const limits = bounds(options), packetLimits = linkCliPacketLimits(limits);
+  if (!(bytes instanceof Uint8Array) || bytes.length > limits.byteLimit) fail('invalid or oversized link-cli store');
+  const reader = new PacketReader(bytes), content = reader.read(packetLimits.topology);
+  const directory = reader.read(packetLimits.names);
+  if (!content || !directory || content.externalReferences || !directory.externalReferences
+    || reader.offset !== bytes.length) fail('invalid link-cli store packet sequence');
+  const doublets = [];
+  for (const [address, references] of content.links()) {
+    if (address !== BigInt(doublets.length / 2 + 1) || references.length !== 2
+      || references.some(reference => typeof reference !== 'bigint' || reference > 4294967295n))
+      fail('invalid link-cli store doublet');
+    doublets.push(Number(references[0]), Number(references[1]));
+  }
+  const names = [];
+  for (const [address, references] of directory.links()) {
+    const expected = BigInt(names.length + 1), [target, ...characters] = references;
+    if (address !== expected || !(target instanceof External) || target.value !== expected || characters.length === 0)
+      fail('invalid link-cli store name');
+    names.push(characters.map(character => {
+      if (!(character instanceof External) || character.value > 127n) fail('invalid archive name character');
+      return String.fromCharCode(Number(character.value));
+    }).join(''));
+  }
+  if (names[0] !== readLinkCliArchiveStoreName() || names[1] !== readLinkCliArchiveStateName())
+    fail('unknown link-cli archive version');
+  const layout = readLinkCliArchiveDoublets(doublets, names.length - 2, packetLimits.storeLimit);
+  if (layout.$ !== 'archiveDirectory') fail(layout.reason ?? 'invalid archive record directory');
+  if (layout.state - 3 > limits.nodeLimit || names.length + 1 - layout.state > limits.nodeLimit)
+    fail('node resource limit exceeded');
+  const records = names.slice(2).map((name, index) => {
+    const prefix = index + 3 < layout.state ? 'link ' : 'state ';
+    const match = /^\(([1-9][0-9]*):( \(meta: [^\r\n]*\)\))$/u.exec(name.slice(prefix.length));
+    if (!name.startsWith(prefix) || !match || !Number.isSafeInteger(Number(match[1])))
+      fail('invalid archive record name');
+    return { id: Number(match[1]), metadata: match[2], name: name.slice(prefix.length) };
+  });
+  const restoreRecords = (first, end) => {
+    const statements = [];
+    let bytes = 0;
+    if (layout.ends[end - 1] - (layout.ends[first - 1] ?? 0) > limits.referenceLimit)
+      fail('reference resource limit exceeded');
+    for (let index = first; index < end; index += 1) {
+      const record = records[index];
+      const targets = layout.targets.slice(layout.ends[index - 1] ?? 0, layout.ends[index]);
+      const references = targets.map(address => ' ' + records[address - 3].id).join('');
+      const statement = '(' + record.id + ':' + references + record.metadata + '\n';
+      bytes += statement.length;
+      if (bytes > limits.byteLimit) fail('byte resource limit exceeded');
+      statements.push(statement);
+    }
+    const network = readMetaLanguageArchiveNetworkText(statements.join(''), limits);
+    for (let index = first; index < end; index += 1) {
+      const record = records[index], link = network.link(record.id);
+      if (!link || encodeLinkStatement(record.id, [], link.metadata()) !== record.name)
+        fail('noncanonical archive record name');
+    }
+    return network;
+  };
+  const firstState = layout.state - 3;
+  const physical = restoreRecords(0, firstState), descriptor = restoreRecords(firstState, records.length);
+  const state = decodeStructuredDataLinks(descriptor, LinkId.from(records[firstState].id), limits);
+  const inventory = physical.links().map(link => link.id());
+  if (!Array.isArray(state?.identities) || inventory.length !== state.identities.length
+    || inventory.some((id, index) => identity(id) !== state.identities[index]))
+    fail('archive identity directory disagrees with its state');
+  const network = restore(physical, inventory, state, new Set(), limits);
+  const root = LinkId.from(records[layout.root - 3].id);
+  return { network, root, ...readMetaLanguageArchive(network, root, limits) };
 }
 
 /** Persistent extension: previous roots survive unless explicitly replaced or

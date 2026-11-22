@@ -33,21 +33,48 @@ remaining default-branch checks still need CI evidence.
 | TypeScript 7.0.2 reports `TS2820` for the unchanged unknown const signature literal | Select the exact observed diagnostic by compiler version, retain the existing `TS2322` expectation for 5.9.2 and require uncovered versions to report the missing policy. The public declaration control exercises all three selections. [Generated package job](https://github.com/link-foundation/meta-language/actions/runs/42129692629/job/127602873736) |
 | Dependency Refresh on `main` completes the audit but fails to publish its automation branch | Publish a forward-only commit that preserves the refreshed tree and prior branch history. The regression control uses a Git remote configured to reject non-fast-forward pushes. The retained log records `GH013` at line 928. [Dependency Refresh run](https://github.com/link-foundation/meta-language/actions/runs/43868840534) |
 | The binary-buffer author refuses the current emitted function before applying the four reviewed compiler corrections | Recover the complete previous function from the exact emitter successor by reversing 51 generated name changes and one call's formatting. The normal source author generated all 74 owners and reproduced identical source through both typed archives. Native compilation and runtime checks remain CI work. |
+| The module-initialization source author pulls in an unrelated call machine for one coordinate check | Share the original coordinate check directly. The normal authors produced both module-initialization libraries, their checked source assets and codecs, and the standalone literal fixture. The Rust source author applies formatting and the native assertion now passes the generated UTF-16 text input type. Logs `ci-logs/module-initialization-source-author-selected.log`, `ci-logs/module-initialization-companion-source.log` and `ci-logs/module-initialization-source-formatted.log` record the successful source commands. |
+| Native test declarations include baseline fixture files and the Rust standard-sum method policy that were absent from the tree | Run the existing authors for the standard-sum method policy and 22 literal fixture files. The primitive-wrapper author preserves the exact allocation descriptors for NaN, Infinity, BigInt and unpaired UTF-16. The package allowlist and checked program catalogs include the generated policy. Log `ci-logs/baseline-dependent-source-publication.log` records the successful source command. |
+| The Rust generic alias policy is missing its native source and checked Links program | Compose the complete source with lexical dependency aliases and append the existing template parameters in order. The author emitted the Rust source and paired Links assets. Log `ci-logs/baseline-alias-source-publication.log` records successful catalog publication. |
+| The property descriptor author inferred a plain record in a tagged declaration | Register the referenced record alias before the tagged declaration and compare request flags in their original order. The source author produced the exact UTF-16 native type and paired Links assets. The existing native control now uses the generated type. Logs `ci-logs/javascript-property-descriptor-author.log` and `ci-logs/property-descriptor-source-publication.log` retain the source results. |
+| The Array object source was refused during type checking, graph publication and Rust emission | Use the shared array projection for the lowered `for…of` length read, attach the IEEE semantics required by the typed Links archive to signed-zero SameValue divisions, and retain ordered Array property traversal in explicit source loops. The normal source author generated 14 Rust files and the paired Links assets. Logs `ci-logs/baseline-array-source-ordered-traversal-dependencies.log` and `ci-logs/dynamic-discovery-and-array-source-publication.log` record the output. |
+| Mutable loan, owned record loop and update, and callable witness assets were absent | Retain the original value and work checks in source forms the translator can lower. The regular authors produced the native libraries and paired program assets. Logs `ci-logs/baseline-array-and-record-source-publication.log` and `ci-logs/baseline-callable-source-author-conditioned-whitespace.log` record authoring outcomes. Native compilation and control execution remain outstanding. |
+| The Rust frontend declared missing baseline policy libraries | At the initial source inventory, 60 module declarations had no file. The normal authors produced 50 of those libraries and the matching JavaScript and Rust Links assets. Source logs include `ci-logs/baseline-recursion-and-disjoint-source-retry.log` and `ci-logs/baseline-class-loans-and-projection-sharing.log`. Rust compilation remains outstanding. |
+| Closed source class composition and its supporting libraries were missing | The checked source provides the hidden class brand through the existing Unit-returning form, retains the closed export boundary, and preserves borrowed call arguments after nested generic parameter types. The authors produced the class lowerer, its observation and Error classifiers, and the two native Scope composition files. The class controls retain 72 positive and 45 refusal cases. Source generation completed. The controls still need execution. |
+| The collection projection author exhausted its JavaScript heap | The optional memory trace located the failure after Rust emission. An inspector sample located repeated full-library scans in the equality lint proof. Shared token spans, detached action strings, and lazy contextual proof selection let the author progress without changing lint admission. The exact replacement pass now visits each identical generated block once. The source log is `ci-logs/baseline-collection-projection-exact-context.log`. |
+| The first complete collection projection archive exceeded the catalog's 100,000-node limit | The existing ordered record-field encoding shares field layouts and retains each record occurrence. The resulting 41,704-line archive produces identical Rust source. The catalog publisher registered the projection, the iteration rules, the closed class composition, the Error class rules and the owned recursive datatype rules in both packages. Source logs `ci-logs/baseline-collection-projection-record-shapes.log` and `ci-logs/baseline-class-and-projection-catalog-ordered-records.log` retain those outcomes. |
 
 ## Open work
 
 - A source syntax scan found an extra parenthesis in the ordinary class
-  closure control. After that repair, static linking reaches the missing
-  class, collection and module initialization codecs. A static import scan
-  identified seven references to those three missing files. The Rust test
-  modules also require the corresponding generated native codecs.
+  closure control. After that repair, static linking reached missing class,
+  collection and module initialization codecs. The module initialization
+  author has since produced its part. The Rust tests still refer to absent
+  Error class and collection call libraries and their codecs. The collection
+  key policy has generated Rust and paired Links sources. Its author uses
+  constructor-specific field types and explicitly guarded merge ordering to
+  retain the original comparison and storage order.
   The existing `draft-javascript-error-source-kernels.mjs --draft` recipe on
   supported Node 24.14.0 fails in `JavaScriptParser.typedefs` with
   `expected : in object type but found "?" at 264..265`. Complete optional
   field translation through the source checker, native emitter, and wire
-  transport before generating class, collection and module-initialization
-  codecs from their actual checked declarations. The initializer's separate
-  author hits the same translator error at `1589..1590`.
+  transport before generating the remaining codecs from their actual checked
+  declarations. The same closure contains tagged unions composed from named
+  alternatives, including `JavaScriptClosureObject` and
+  `JavaScriptBoundFunctionObject` inside `JavaScriptOrdinaryObject`. The
+  frontends currently require each alternative to start with a literal object
+  type. A field-presence representation must retain omitted fields from older
+  snapshot editions, own fields whose value is JavaScript `undefined`, and the
+  distinction between an absent field on one union alternative and an optional
+  field declared on that alternative.
+- Exact fixture templates can now substitute initialized text and retain its
+  source and UTF-16 units. The native assertion author translated all 54
+  borrowed-iterator assertions and all 15 array-object assertions from their
+  actual sources. Generation of the mutable loan and callable rule libraries
+  removes the initial authoring failures. The full native assertion author
+  still needs to translate every group before the aggregate can run.
+  See `ci-logs/baseline-native-policy-all-groups-autodetect.log` for the
+  per-group source trace. Native compilation and execution remain outstanding.
 - The compact naming author refreshed the current callables pin with both
   historical inventories intact. With bounded Git object reuse, the
   additional author captured all 1,202 selected epochs in 23 seconds. The
@@ -78,6 +105,44 @@ remaining default-branch checks still need CI evidence.
   downstream workloads and acceptance observations remain outstanding.
 
 ## Grammar discovery research inputs
+
+The source draft adds `language discover`, `language refine` and `language
+install` in both command-line packages. They use the existing regular learner,
+checkpoint journal and dynamic parser, with versioned text and binary archive
+transport. The shared control deletes source example files as it goes and
+checks both CST byte reconstruction and rejection after installation. The
+command vocabulary and fixture authors completed without running the controls.
+Scanner state, attributed inference, installed-language semantic translation
+and executed held-out benchmark comparisons remain open.
+
+The pinned upstream link-cli importer reads one two-endpoint row per line.
+Its native binary store archive also stores doublets, with exact addresses and
+names. Both packages now draft a reversible projection of ordered n-ary links
+and separate roots into that format. The shared command replay checks the full
+26-step fixture in each package, with real Link CLI 3.1.1 import and export in
+separate processes. It deletes the import packet before export, removes the
+original grammar inputs after preparation and compares the canonical archive
+bytes after eager restoration from all three formats. The preparation and
+archive controls have yet to execute. The replay records elapsed time and
+peak resident memory for the selected fixture. Catalog-wide workloads and
+their measurements are still required.
+[Pinned link-cli binary archive format](https://github.com/link-foundation/link-cli/blob/fbc90908772dd8117c4d1be05bc16defd1cb9540/docs/protocol/binary-links-notation.md#10-store-archive)
+
+The source generator now handles 50 of the 60 previously ungenerated Rust
+baseline modules. An independent native lint-policy draft resolved 39 policy
+groups and produced 1,199 declaration checks. Six groups still refuse optional
+JavaScript constructor fields during source generation. These counts describe
+authored source and generation only. Native compilation and the lint-policy
+assertions remain pending.
+
+The draft JSON holdout measures RPNI, EDSM or ALERGIA in a separate process
+against the same pinned JSONTestSuite corpus and budgets. It keeps training
+examples out of scoring, reports resource refusals and oracle disagreements
+per file, and compares corpus labels with Node and Python parsing. It also
+measures byte reconstruction, leaf spans, grammar rules and bytes, query
+counts, process peak memory and elapsed time. The experiment source has been
+committed and awaits execution. Its regular learners are one baseline for
+the requested comparison. [Pinned JSONTestSuite corpus](https://github.com/nst/JSONTestSuite/tree/1ef36fa01286573e846ac449e8683f8833c5b26a)
 
 Reviewed the four exact paper revisions named by #224. The public artifact
 commits below were resolved independently on November 22, 2026. They identify

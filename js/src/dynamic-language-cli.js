@@ -3,7 +3,8 @@
 import {DynamicMetaLanguage, createDynamicMetaLanguage} from './dynamic-meta-language.js';
 import {parseGrammarLinks, renderGrammarLinks} from './grammar-links.js';
 import {readMetaLanguageArchiveText, readMetaLanguageArchiveBinary,
-  metaLanguageArchiveToText, metaLanguageArchiveToBinary} from './meta-language-archive.js';
+  metaLanguageArchiveToText, metaLanguageArchiveToBinary,
+  metaLanguageArchiveToLinkCliStore, readMetaLanguageArchiveLinkCliStore} from './meta-language-archive.js';
 import {readStructuredDataLino, structuredDataToLino} from './structured-data-links.js';
 import {inferRegularGrammar} from './grammar-inference.js';
 import {readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference,regularGrammarRefinementArchiveLimits} from './grammar-inference-refinement.js';
@@ -29,6 +30,9 @@ function argumentsOf(args) {
       result.options.set(option,values[0]??true);
     }
   }
+  if ((result.options.has('--input-binary') && result.options.has('--input-link-cli-store'))
+    || (result.options.has('--binary') && result.options.has('--link-cli-store')))
+    throw new TypeError('select one archive encoding per input or output');
   if(command!=='prepare' && result.file===undefined) throw new TypeError(command==='discover'?'a labelled examples input is required':'a language archive input is required');
   return result;
 }
@@ -44,10 +48,12 @@ function labelledExamples(path,readFile) {
 }
 
 function archiveInput(file,options,readFile,readBytes,limits) {
+  if(options.has('--input-link-cli-store'))return readMetaLanguageArchiveLinkCliStore(readBytes(file),limits);
   return options.has('--input-binary')?readMetaLanguageArchiveBinary(readBytes(file),limits):readMetaLanguageArchiveText(readFile(file),limits);
 }
 
 function archiveOutput(archive,options,limits) {
+  if(options.has('--link-cli-store'))return metaLanguageArchiveToLinkCliStore(archive,limits);
   return options.has('--binary')?metaLanguageArchiveToBinary(archive,limits):metaLanguageArchiveToText(archive,limits);
 }
 

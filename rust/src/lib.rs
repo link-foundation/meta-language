@@ -54,6 +54,7 @@ pub mod language_support;
 mod line_index;
 mod link_allocation_program;
 mod link_allocation_rules;
+mod link_cli_archive_topology_rules;
 pub mod link_flags;
 pub mod link_network;
 mod link_network_binary;
@@ -358,9 +359,11 @@ pub use lino_serialization::LinoSerializationError;
 pub use meta_language_archive::{
     LoadedMetaLanguageArchive, MetaLanguageArchive, MetaLanguageArchiveEntry,
     MetaLanguageArchiveLimits, ReconstructedMetaLanguageArchive, create_meta_language_archive,
-    extend_meta_language_archive, meta_language_archive_to_binary, meta_language_archive_to_text,
+    extend_meta_language_archive, meta_language_archive_to_binary,
+    meta_language_archive_to_link_cli_store, meta_language_archive_to_text,
     read_meta_language_archive, read_meta_language_archive_binary,
-    read_meta_language_archive_network_text, read_meta_language_archive_text,
+    read_meta_language_archive_link_cli_store, read_meta_language_archive_network_text,
+    read_meta_language_archive_text,
 };
 pub use mixed_regions::{
     EmbeddedRegion, detect_embedded_regions, detect_embedded_regions_in_tree, script_language,

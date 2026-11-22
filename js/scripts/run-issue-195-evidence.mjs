@@ -11,6 +11,7 @@ import {
   readFile,
   readdir,
   rm,
+  stat,
   writeFile,
 } from 'node:fs/promises';
 import path from 'node:path';
@@ -185,8 +186,22 @@ async function produceStage(stage, failures) {
       path.join(root, 'js/scripts/check-issue-195-runtime-parity.mjs'),
       '--artifacts-dir',
       parityDirectory,
-    ]);
-    return new Map([['runtime-parity', bundle(runtimeParity, parityArtifacts())]]);
+    ], { allowFailure: true });
+    if (!runtimeParity.ok) failures.push('runtime-parity failed; see logs/runtime-parity.log');
+    const report = path.join(logsDirectory, 'link-cli-archive-reconstruction.lino');
+    const linkCli = await runCommand('link-cli-archive-reconstruction', 'node', [
+      path.join(root, 'experiments/link-cli-archive-reconstruction.mjs'),
+      path.join(workDirectory, 'link-cli-reconstruction'),
+      report,
+    ], { allowFailure: true });
+    if (!linkCli.ok) failures.push('link-cli archive reconstruction failed; see logs/link-cli-archive-reconstruction.log');
+    const measurement = await stat(report).catch(error => {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    });
+    return new Map([['runtime-parity', bundle(runtimeParity, linkCli, parityArtifacts(), {
+      commands: [], artifacts: measurement?.isFile() ? [relative(report)] : [],
+    })]]);
   }
   if (stage.target) return validateNativeTranslations(stage.target);
   if (stage.name === 'delivery') {
