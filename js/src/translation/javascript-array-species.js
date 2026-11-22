@@ -4,6 +4,7 @@ import {testJavaScriptStandardArraySpeciesGetterOperation} from './javascript-st
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {testJavaScriptArrayValue} from './javascript-arrays.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
+import {orderJavaScriptCollectionKeys} from './javascript-collection-rules.js';
 import {findJavaScriptCallConstructorFact} from './javascript-call-code.js';
 /** @typedef {{$:'arraySpeciesSelectedCall',callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}} JavaScriptArraySpeciesCall */
 /** @typedef {{$:'arraySpeciesState',original:JavaScriptSemanticValue,length:number,realm:bigint,arrayConstructor:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,speciesKey:JavaScriptSemanticValue,candidate:JavaScriptSemanticValue,phase:string,call?:JavaScriptArraySpeciesCall}} JavaScriptArraySpeciesState */
@@ -26,12 +27,21 @@ export function readJavaScriptArraySpeciesDirectoryError(heap,directory){
  if(typeof directory.realm!=='bigint'||directory.realm<=0n||directory.realm>18446744073709551615n||directory.constructors.length>4096)return 'species authority retains its actual unsigned64 realm and bounded constructor directory';
  for(const value of [directory.arrayConstructor,directory.arrayPrototype,directory.speciesKey]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
  if(directory.arrayConstructor.$!=='object'||!directory.arrayConstructor.callable||directory.arrayPrototype.$!=='object'||directory.arrayPrototype.callable||directory.speciesKey.$!=='symbol')return 'species authority retains actual Array constructor/prototype and well-known Symbol identities';
+ /** @type {JavaScriptSemanticValue[]} */
+ const intrinsicRealms=[];
  let prior=0n;for(const fact of directory.constructors){
   if(typeof fact.identity!=='bigint'||fact.identity<=prior||fact.identity>18446744073709551615n||typeof fact.constructable!=='boolean'||typeof fact.intrinsicArray!=='boolean'||typeof fact.realm!=='bigint'||fact.realm<=0n||fact.realm>18446744073709551615n||fact.intrinsicArray&&!fact.constructable)return 'constructor facts retain ordered unique actual identities, realms and classifications';prior=fact.identity;
   if(fact.intrinsicKind!==undefined&&(typeof fact.intrinsicKind!=='string'||fact.intrinsicKind.length===0||fact.intrinsicKind.length>128||!fact.constructable||fact.intrinsicArray&&fact.intrinsicKind!=='Array'||fact.intrinsicKind==='Array'&&!fact.intrinsicArray))return 'intrinsic constructor kinds retain their actual independently supplied constructible owner';
   const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,fact.identity)];if(object===undefined||!object.callable||object.$==='closureObject'&&fact.constructable||object.$==='boundFunctionObject')return 'constructor facts cannot invent callable identities, constructable arrow closures or independent bound constructor authority';
+  if(fact.intrinsicArray)intrinsicRealms.push({$:'integer',value:fact.realm});
  }
- const intrinsicRealms=directory.constructors.filter(fact=>fact.intrinsicArray).map(fact=>fact.realm).toSorted((a,b)=>a<b?-1:a>b?1:0);for(let at=1;at<intrinsicRealms.length;at++)if(intrinsicRealms[at]===intrinsicRealms[at-1])return 'a realm has one actual intrinsic Array constructor identity';
+ let previousIntrinsicRealm=0n;
+ for(const realm of orderJavaScriptCollectionKeys(intrinsicRealms)){
+  if(realm.$==='integer'){
+   if(realm.value===previousIntrinsicRealm)return 'a realm has one actual intrinsic Array constructor identity';
+   previousIntrinsicRealm=realm.value;
+  }
+ }
  let previousRealm=0n;for(const root of directory.constructorRealms??[]){
   if(typeof root.realm!=='bigint'||root.realm<=previousRealm||root.realm>18446744073709551615n)return 'constructor realm roots retain ordered unique unsigned64 identities';previousRealm=root.realm;
   for(const value of [root.objectPrototype,root.arrayPrototype,root.arrayConstructor])if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'constructor realm roots belong to the actual shared heap';
@@ -126,7 +136,7 @@ export function stepJavaScriptArraySpeciesSelection(heap,directory,state){
   return {$:'arraySpeciesError',heap,errorClass:'TypeError',reason:'Array species constructor is not a constructor'};
  }
  if(fact===undefined||!fact.constructable)return {$:'arraySpeciesError',heap,errorClass:'TypeError',reason:'Array species constructor is not a constructor'};
- return {$:'arraySpeciesConstruct',heap,state,constructor:state.candidate,arguments:[{$:'number',value:state.length}],fact:{...fact}};
+ return {$:'arraySpeciesConstruct',heap,state,constructor:state.candidate,arguments:[{$:'number',value:state.length}],fact:copyJavaScriptArrayConstructorFact(fact)};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory
  * @param {JavaScriptArraySpeciesState} state @param {JavaScriptPrimitiveConversionCompletion} completion @returns {JavaScriptArraySpeciesTransition} */
