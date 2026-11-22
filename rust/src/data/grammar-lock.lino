@@ -84,7 +84,7 @@
 (84: (meta: (t: semantic) (n: 1) (term: string%20value) (def: patch) (lang: meta-language%20structured%20data)))
 (85: (meta: (t: semantic) (n: 1) (term: string%20value) (def: rust%2Fvendor%2Ftree-sitter-cmake%2Fscanner-state.patch) (lang: meta-language%20structured%20data)))
 (86: 84 85 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(87: (meta: (t: semantic) (n: 1) (term: string%20value) (def: v0.7.5) (lang: meta-language%20structured%20data)))
+(87: (meta: (t: semantic) (n: 1) (term: string%20value) (def: v0.7.6) (lang: meta-language%20structured%20data)))
 (88: 28 87 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (89: (meta: (t: semantic) (n: 1) (term: string%20value) (def: ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2) (lang: meta-language%20structured%20data)))
 (90: 31 89 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))

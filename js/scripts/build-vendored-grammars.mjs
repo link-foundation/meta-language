@@ -54,8 +54,8 @@ export const GRAMMAR_SOURCES = Object.freeze({
     oracle: true,
     vendored: 'rust/vendor/tree-sitter-cmake',
     upstream: 'uyha/tree-sitter-cmake',
-    version: 'v0.7.5',
-    revision: 'e997bd0b275ca525ce9befecedf5299031183661',
+    version: 'v0.7.6',
+    revision: 'a3ec2b2144daf7132e7ee824d8cab9610523d10f',
     // The external scanner starts with no bracket open instead of reading
     // uninitialised memory, so error recovery is the same on every platform.
     patch: 'rust/vendor/tree-sitter-cmake/scanner-state.patch',

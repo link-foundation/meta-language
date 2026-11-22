@@ -234,12 +234,22 @@ async function downloadBytesWithRetries(url, limit, options) {
 
 function storeAcquired(path, bytes, context, options) {
   const target = options.materialize ? safeFile(context.root, path) : null;
-  const existing = target !== null && existsSync(target);
-  if (existing) verify(readFileSync(target), record(path, context), path);
+  const existing = target !== null && existsSync(target) && currentCopy(readFileSync(target), path, context);
   save(context.cacheRoot, path, bytes);
-  // Existing authenticated materialized files need no replacement, and a
-  // modified file must never be overwritten by a valid cache hit.
+  // Replace a predecessor only after the new bytes verify. Edited copies
+  // are still rejected by currentCopy before any write.
   if (options.materialize && !existing) save(context.root, path, bytes);
+}
+
+function currentCopy(bytes, path, context) {
+  const current = record(path, context);
+  if (bytes.length === current.bytes && digest(bytes) === current.sha256) {
+    verify(bytes, current, path);
+    return true;
+  }
+  const previous = context.manifest.previousAssets?.[path]?.find((asset) => bytes.length === asset.bytes && digest(bytes) === asset.sha256);
+  verify(bytes, previous ?? current, path);
+  return false;
 }
 
 function treeSitterCommand(version) {
@@ -285,7 +295,8 @@ async function acquire(path, context, options) {
   for (const base of [context.cacheRoot, context.root]) {
     const target = safeFile(base, path);
     if (!existsSync(target)) continue;
-    const bytes = verify(readFileSync(target), asset, path);
+    const bytes = readFileSync(target);
+    if (!currentCopy(bytes, path, context)) continue;
     storeAcquired(path, bytes, context, options);
     return { path, reused: true };
   }

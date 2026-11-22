@@ -37,6 +37,33 @@ test('failed receipts never write a cache or materialized file', async context =
   assert.equal(existsSync(join(options.root, 'source/grammar.txt')), false);
 });
 
+test('a refresh replaces an authenticated predecessor after verifying its replacement', async context => {
+  const name = 'source/grammar.txt';
+  const old = Buffer.from('pinned predecessor');
+  const bytes = Buffer.from('pinned successor');
+  const options = workspace(context, { [name]: receipt(old) });
+  await downloadExternalGrammarAssets({ ...options, all: true, materialize: true, fetchImpl: async () => new Response(old) });
+  options.manifest.previousAssets = { [name]: [options.manifest.assets[name]] };
+  options.manifest.assets[name] = receipt(bytes);
+  await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true, materialize: true, fetchImpl: async () => new Response('wrong') }), /checksum mismatch/);
+  assert.deepEqual(readFileSync(join(options.root, name)), old);
+  await downloadExternalGrammarAssets({ ...options, all: true, materialize: true, fetchImpl: async () => new Response(bytes) });
+  assert.deepEqual(readExternalGrammarAsset(name, options), bytes);
+  assert.deepEqual(readFileSync(join(options.cacheRoot, name)), bytes);
+});
+
+test('registry builds reject an altered crate before extracting it', async context => {
+  const bytes = Buffer.from('correct');
+  const asset = { ...receipt(bytes), downloads: [], build: {
+    crate: 'tree-sitter-example-1.0.0', directory: '.', id: 'example', cli: '0.27.2',
+    url: 'https://static.crates.io/crates/tree-sitter-example/tree-sitter-example-1.0.0.crate',
+    bytes: bytes.length, sha256: digest(bytes),
+  } };
+  const options = workspace(context, { 'oracle/example.wasm.gz': asset });
+  await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true, fetchImpl: async () => new Response('changed') }), /external grammar crate checksum mismatch/);
+  assert.equal(existsSync(options.cacheRoot), false);
+});
+
 test('a valid cache hit refuses to overwrite a modified materialized download', async context => {
   const bytes = Buffer.from('pinned source');
   const options = workspace(context, { 'source/grammar.txt': receipt(bytes) });
