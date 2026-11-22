@@ -2215,6 +2215,7 @@ class Checker {
     // reject valid callbacks or carry a missing return into checked IR.
     const partialCallable = requirePartialCallableResultInference(expected?.kind ?? '', expected?.ret !== undefined);
     let resultType = partialCallable ? undefined : expected;
+    let untypedAbsence;
     const pending = [];
     for (const kase of node.cases) {
       const inner = new Map(env);
@@ -2226,10 +2227,22 @@ class Checker {
     }
     for (const kase of pending) {
       const body = this.expr(kase.body, kase.env, path, partialCallable ? expected : resultType, true);
-      if (body.type.kind !== 'literal' && !resultType) resultType = body.type;
+      if (body.type.kind !== 'literal' && !resultType) {
+        if (this.language === 'JavaScript' && body.k === 'none' && body.type.element.kind === 'unit') {
+          untypedAbsence = untypedAbsence ? mergeOptionalAbsence(untypedAbsence, body.absence) : body.absence;
+        } else if (untypedAbsence) {
+          resultType = body.type.kind === 'option'
+            ? { ...body.type, absence: mergeOptionalAbsence(body.type.absence, untypedAbsence) }
+            : { kind: 'option', element: body.type, absence: untypedAbsence };
+        } else {
+          resultType = body.type;
+        }
+      }
       cases.push({ pattern: kase.pattern, body, surface: kase.body, env: kase.env });
     }
-    if (!resultType) resultType = this.defaultNumber();
+    if (!resultType) resultType = untypedAbsence
+      ? { kind: 'option', element: UNIT, absence: untypedAbsence }
+      : this.defaultNumber();
     const finalCases = cases.map((kase) => {
       let body = kase.body.type.kind === 'literal' ? this.expr(kase.surface, kase.env, path, resultType) : kase.body;
       body = coerce(body, resultType, this.language, kase.surface.span ?? node.span);

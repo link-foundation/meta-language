@@ -21,6 +21,22 @@ const number = { kind: 'float' };
 const text = { kind: 'string' };
 const unit = { kind: 'unit' };
 
+test('an absent constructor case retains the payload of an optional lookup in another case', () => {
+  const source = `
+    /** @typedef {{$:'indexed', index:number} | {$:'absent'}} Selection */
+    /** @param {Selection} input @param {string[]} values @returns {string} */
+    function select(input, values) {
+      const selected = input.$ === 'indexed' ? values[input.index] : undefined;
+      return selected ?? 'missing';
+    }
+    console.log(select({$:'indexed', index:0}, ['found']));
+    console.log(select({$:'indexed', index:1}, ['found']));
+    console.log(select({$:'absent'}, ['found']));
+  `;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), 'found\nmissing\nmissing\n');
+});
+
 function observations(source) {
   const lines = [];
   runInNewContext(source, { console: { log: (...values) => lines.push(format(...values)) } }, { timeout: 1000 });

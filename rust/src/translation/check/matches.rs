@@ -1,6 +1,7 @@
 //! Pattern-match compilation and exhaustiveness.
 
 use super::expectation::ExpectedType;
+use crate::translation::structured_type_rules::merge_optional_absence;
 
 use super::{
     BinaryOp, Case, Checker, Column, Ctor, Decimal, Entry, Env, Expr, Fact, Field, HashSet,
@@ -68,7 +69,9 @@ impl Checker {
             } else {
                 source
             };
-            let checked = if column == 0 && let Some(receiver) = checked_tag_receiver.take() {
+            let checked = if column == 0
+                && let Some(receiver) = checked_tag_receiver.take()
+            {
                 receiver
             } else {
                 self.expr(scrutinee, env, path, None, false)?
@@ -743,6 +746,7 @@ impl Checker {
                 expected.result().is_some(),
             );
         let mut result_type = expected.concrete().cloned();
+        let mut untyped_absence: Option<String> = None;
         let mut checked = Vec::new();
         for (pattern, surface, inner) in pending {
             let context = if partial_callable {
@@ -754,11 +758,41 @@ impl Checker {
             };
             let body = self.expr_with_context(surface, &inner, path, context, true)?;
             if !body.ty.is_literal() && result_type.is_none() {
-                result_type = Some(body.ty.clone());
+                if self.language == Language::JavaScript
+                    && let Node::None { absence } = &body.node
+                    && matches!(&body.ty, Type::Option { element, .. } if **element == Type::Unit)
+                {
+                    untyped_absence = Some(match untyped_absence {
+                        Some(previous) => merge_optional_absence(&previous, absence),
+                        None => absence.clone(),
+                    });
+                } else if let Some(absence) = untyped_absence.take() {
+                    result_type = Some(match &body.ty {
+                        Type::Option {
+                            element,
+                            absence: present_absence,
+                        } => Type::Option {
+                            element: element.clone(),
+                            absence: merge_optional_absence(present_absence, &absence),
+                        },
+                        ty => Type::Option {
+                            element: Box::new(ty.clone()),
+                            absence,
+                        },
+                    });
+                } else {
+                    result_type = Some(body.ty.clone());
+                }
             }
             checked.push((pattern, body, surface, inner));
         }
-        let result_type = result_type.unwrap_or_else(|| self.default_number());
+        let result_type = result_type.unwrap_or_else(|| match untyped_absence {
+            Some(absence) => Type::Option {
+                element: Box::new(Type::Unit),
+                absence,
+            },
+            None => self.default_number(),
+        });
         let mut final_cases = Vec::new();
         for (pattern, body, surface, inner) in checked {
             let body = if body.ty.is_literal() {

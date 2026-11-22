@@ -236,6 +236,28 @@ console.log(JSON.stringify({surface,javascript,rust,archives,observations:[obser
 }
 
 #[test]
+fn absent_constructor_arm_retains_the_payload_of_an_optional_lookup() {
+    let source = r#"
+        /** @typedef {{$:'indexed', index:number} | {$:'absent'}} Selection */
+        /** @param {Selection} input @param {string[]} values @returns {string} */
+        function select(input, values) {
+          const selected = input.$ === 'indexed' ? values[input.index] : undefined;
+          return selected ?? 'missing';
+        }
+        console.log(select({$:'indexed', index:0}, ['found']));
+        console.log(select({$:'indexed', index:1}, ['found']));
+        console.log(select({$:'absent'}, ['found']));
+    "#;
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&program).unwrap();
+    for text in [source, emitted.text.as_str()] {
+        let result = run(Command::new("node").args(["--input-type=module", "-e", text]));
+        assert!(result.ok, "{}", result.stderr);
+        assert_eq!(result.stdout, "found\nmissing\nmissing\n");
+    }
+}
+
+#[test]
 fn optional_tagged_fields_keep_own_presence_through_execution_and_typed_archives() {
     use meta_language::translation::emit_rust::emit_rust;
     use meta_language::{
