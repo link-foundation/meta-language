@@ -33,6 +33,12 @@ pub(super) struct FnMutSourceHeaderRead {
     pub(super) resolved: Option<ResolvedFnMutSourceHeader>,
 }
 
+pub(super) struct ReplayedFnMutSourceHeader {
+    pub(super) function: SFn,
+    pub(super) callback: CheckedCallbackHeader,
+    pub(super) resolved: ResolvedFnMutSourceHeader,
+}
+
 pub(super) struct FnMutSourceInstance {
     pub(super) owner: Vec<String>,
     pub(super) declaration: Range<usize>,
@@ -136,7 +142,7 @@ impl RustParser {
         &mut self,
         declaration: &FnMutSourceDeclaration,
         bindings: Vec<(String, SourceOrigin)>,
-    ) -> Result<(CheckedCallbackHeader, ResolvedFnMutSourceHeader)> {
+    ) -> Result<ReplayedFnMutSourceHeader> {
         let directory = Rc::clone(self.fn_mut_source_declarations.as_ref().ok_or_else(|| {
             unsupported(
                 "Rust source FnMut function",
@@ -192,11 +198,19 @@ impl RustParser {
                     resolved: None,
                 });
             let parsed = self.function(&declaration.owner);
+            let complete = self.cursor.at_end();
             let read = std::mem::replace(&mut self.fn_mut_source_header_read, old_read)
                 .expect("the actual declaration replay keeps its header context");
             self.fn_mut_source_type_bindings = old_bindings;
             self.cursor = old_cursor;
-            parsed?;
+            let function = parsed?;
+            if !complete {
+                return Err(unsupported(
+                    "Rust source FnMut function",
+                    "the actual declaration replay must finish its complete original interval",
+                    function.span,
+                ));
+            }
             let header = read.resolved.ok_or_else(|| {
                 unsupported(
                     "Rust source FnMut function",
@@ -204,7 +218,11 @@ impl RustParser {
                     None,
                 )
             })?;
-            Ok((read.callback, header))
+            Ok(ReplayedFnMutSourceHeader {
+                function,
+                callback: read.callback,
+                resolved: header,
+            })
         })();
         self.origins.current_type = old_origin;
         self.module_path = old_module;
@@ -608,7 +626,11 @@ mod tests {
             .read_fn_mut_source_type_range(&directory, &(value..value + 1))
             .unwrap();
         parser.fn_mut_source_declarations = Some(Rc::clone(&directory));
-        let (admitted, header) = parser
+        let ReplayedFnMutSourceHeader {
+            function,
+            callback: admitted,
+            resolved: header,
+        } = parser
             .preview_fn_mut_source_header(&declaration, vec![("T".into(), argument)])
             .unwrap();
         let expected = Type::Fixed {
@@ -616,6 +638,8 @@ mod tests {
             signed: false,
         };
         assert_eq!(admitted.owner.path, ["apply"]);
+        assert_eq!(function.params[1].name, "map");
+        assert_eq!(function.span.unwrap().end, source.len());
         assert_eq!(admitted.parameters[0].ty.as_ref(), Some(&expected));
         assert_eq!(admitted.parameters[0].wrappers, ["reference"]);
         assert_eq!(admitted.parameters[1].ty, Some(Type::Bool));
@@ -656,7 +680,11 @@ mod tests {
         parser.cursor.index = tokens.iter().position(|token| token.value == "::").unwrap();
         let bindings = parser.read_fn_mut_source_type_arguments(&template).unwrap();
         assert_eq!(parser.cursor.peek().value, "(");
-        let (callback, concrete) = parser
+        let ReplayedFnMutSourceHeader {
+            callback,
+            resolved: concrete,
+            ..
+        } = parser
             .preview_fn_mut_source_header(&template, bindings)
             .unwrap();
         assert_eq!(callback.owner.callback.name, "map");
