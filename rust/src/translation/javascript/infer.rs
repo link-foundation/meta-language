@@ -194,6 +194,7 @@ struct Join {
     left: Term,
     right: Term,
     result: Term,
+    guarded: bool,
     place: Option<Span>,
 }
 struct Arithmetic {
@@ -277,8 +278,8 @@ struct Inference {
     recursive_binding_iterables: Vec<IterableOf>,
     computed_calls: Vec<ComputedCall>,
     collections: HashMap<*const SExpr, (Term, Option<Span>)>,
-    collection_copies:HashMap<*const SExpr,Term>,
-    collection_construction_inputs:Vec<collections::CollectionConstructionInput>,
+    collection_copies: HashMap<*const SExpr, Term>,
+    collection_construction_inputs: Vec<collections::CollectionConstructionInput>,
     signatures: HashMap<String, Signature>,
     source_class_methods: Vec<String>,
     source_class_owners: Option<serde_json::Value>,
@@ -340,8 +341,8 @@ impl Inference {
             recursive_binding_iterables: Vec::new(),
             computed_calls: Vec::new(),
             collections: HashMap::new(),
-            collection_copies:HashMap::new(),
-            collection_construction_inputs:Vec::new(),
+            collection_copies: HashMap::new(),
+            collection_construction_inputs: Vec::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],
             field_terms: HashMap::new(),
@@ -618,7 +619,11 @@ impl Inference {
             {
                 let field = &ctor.fields[index];
                 let declared = if field.optional {
-                    self.declared(crate::translation::javascript_constructor_presence::field_value_type(&field.ty))
+                    self.declared(
+                        crate::translation::javascript_constructor_presence::field_value_type(
+                            &field.ty,
+                        ),
+                    )
                 } else {
                     self.field(name, tag, index)
                 };

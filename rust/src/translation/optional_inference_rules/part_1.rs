@@ -1,19 +1,20 @@
 // Generated from the complete checked optional kernel and its recorded source dependencies.
 // Do not edit by hand.
-use super::MlOptionalFactFieldLoop1Result;
-use super::MlPlanInferenceTermIdentityJoin8;
-use super::MlPlanInferenceTermIdentityJoin9;
-use super::MlPlanInferenceTermIdentityLoop6Result;
-use super::MlPlanInferenceTermIdentityLoop7Result;
-use super::MlPlanInferenceTermIdentityLoop10Result;
-use super::ml_optional_fact_field_loop1;
-use super::ml_plan_inference_term_identity_loop6;
-use super::ml_plan_inference_term_identity_loop7;
-use super::ml_plan_inference_term_identity_loop10;
-use super::ml_plan_inference_term_identity_loop14;
-use super::ml_plan_optional_additional_absence_loop2;
-use super::ml_plan_optional_additional_absence_loop3;
+use super::MlTemporaryOptionalFactFieldLoop1Result;
+use super::MlTemporaryPlanInferenceTermIdentityJoin8;
+use super::MlTemporaryPlanInferenceTermIdentityJoin9;
+use super::MlTemporaryPlanInferenceTermIdentityLoop6Result;
+use super::MlTemporaryPlanInferenceTermIdentityLoop7Result;
+use super::MlTemporaryPlanInferenceTermIdentityLoop10Result;
+use super::read_required_number_fact;
 use super::read_required_text_fact;
+use super::source_ml_temporary_optional_fact_field_loop1;
+use super::source_ml_temporary_plan_inference_term_identity_loop6;
+use super::source_ml_temporary_plan_inference_term_identity_loop7;
+use super::source_ml_temporary_plan_inference_term_identity_loop10;
+use super::source_ml_temporary_plan_inference_term_identity_loop14;
+use super::source_ml_temporary_plan_optional_additional_absence_loop2;
+use super::source_ml_temporary_plan_optional_additional_absence_loop3;
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
@@ -132,6 +133,35 @@ pub mod ml_array {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn optional_fact_field(
@@ -150,12 +180,16 @@ pub fn optional_fact_field(
             {
                 let end = at + self::read_required_number_fact(counts, node);
                 {
-                    let ml_s1 = self::ml_optional_fact_field_loop1(labels, targets, field, at, end);
-                    match ml_s1 {
-                        self::MlOptionalFactFieldLoop1Result::MlOptionalFactFieldLoop1Done => -1f64,
-                        self::MlOptionalFactFieldLoop1Result::MlOptionalFactFieldLoop1Return(
-                            ml_result1,
-                        ) => ml_result1,
+                    let source_ml_source1_s1 = self::source_ml_temporary_optional_fact_field_loop1(
+                        labels, targets, field, at, end,
+                    );
+                    match source_ml_source1_s1 {
+                        self::MlTemporaryOptionalFactFieldLoop1Result::MlTemporaryOptionalFactFieldLoop1Done => {
+                            -1f64
+                        }
+                        self::MlTemporaryOptionalFactFieldLoop1Result::MlTemporaryOptionalFactFieldLoop1Return(source_ml_temporary_result1) => {
+                            source_ml_temporary_result1
+                        }
                     }
                 }
             }
@@ -188,6 +222,29 @@ pub fn optional_fact_tag(
         texts,
         self::optional_fact_field(starts, counts, labels, targets, node, field),
     )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_optional_guarded_result(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    term: f64,
+    resolved: f64,
+) -> Vec<f64> {
+    if (self::optional_fact_tag(texts, starts, counts, labels, targets, resolved, "kind"))
+        == "option"
+    {
+        vec![
+            self::optional_fact_field(starts, counts, labels, targets, resolved, "element"),
+            resolved,
+        ]
+    } else {
+        vec![term, -1f64]
+    }
 }
 
 /// Execute the checked shared source algorithm.
@@ -499,10 +556,7 @@ pub fn plan_optional_additional_absence(
                                         {
                                             let at = 0f64;
                                             {
-                                                self::ml_plan_optional_additional_absence_loop2(
-                                                    texts, starts, counts, labels, targets, pairs,
-                                                    values, expected, at,
-                                                )
+                                                self::source_ml_temporary_plan_optional_additional_absence_loop2(texts, starts, counts, labels, targets, pairs, values, expected, at)
                                             }
                                         }
                                     }
@@ -523,10 +577,7 @@ pub fn plan_optional_additional_absence(
                                             {
                                                 let at_2 = 0f64;
                                                 {
-                                                    self::ml_plan_optional_additional_absence_loop3(
-                                                        texts, starts, counts, labels, targets,
-                                                        pairs_3, fields, expected_2, at_2,
-                                                    )
+                                                    self::source_ml_temporary_plan_optional_additional_absence_loop3(texts, starts, counts, labels, targets, pairs_3, fields, expected_2, at_2)
                                                 }
                                             }
                                         }
@@ -558,8 +609,26 @@ pub fn plan_inference_term_identity(
 ) -> Vec<f64> {
     {
         let kind = self::optional_fact_tag(texts, starts, counts, labels, targets, left, "kind");
-        if ((((kind
+        if (((((kind
             != (self::optional_fact_tag(texts, starts, counts, labels, targets, right, "kind")))
+            || ((kind == "record")
+                && ((self::optional_fact_tag(
+                    texts,
+                    starts,
+                    counts,
+                    labels,
+                    targets,
+                    left,
+                    "sourceClassOwner",
+                )) != (self::optional_fact_tag(
+                    texts,
+                    starts,
+                    counts,
+                    labels,
+                    targets,
+                    right,
+                    "sourceClassOwner",
+                )))))
             || ((kind == "var")
                 && ((self::optional_fact_tag(
                     texts, starts, counts, labels, targets, left, "id",
@@ -637,32 +706,23 @@ pub fn plan_inference_term_identity(
                                                 starts, counts, labels, targets, second, "element",
                                             );
                                             {
-                                                let ml_s2 =
-                                                    self::ml_plan_inference_term_identity_loop6(
-                                                        texts,
-                                                        starts,
-                                                        counts,
-                                                        labels,
-                                                        targets,
-                                                        first_2,
-                                                        first_absence_3,
-                                                    );
-                                                match ml_s2 {
-                                                                        self::MlPlanInferenceTermIdentityLoop6Result::MlPlanInferenceTermIdentityLoop6Done(first_3, first_absence_4) => {
-                                                                            {
-                                                                                let ml_s3 = self::ml_plan_inference_term_identity_loop7(texts, starts, counts, labels, targets, second_2, second_absence_3);
-                                                                                match ml_s3 {
-                                                                                    self::MlPlanInferenceTermIdentityLoop7Result::MlPlanInferenceTermIdentityLoop7Done(second_3, second_absence_4) => {
-                                                                                        if first_absence_4 == second_absence_4 {
-                                                                                            vec![1f64, first_3, second_3]
-                                                                                        } else {
-                                                                                            Vec::<f64>::new()
+                                                let source_ml_source1_s2 = self::source_ml_temporary_plan_inference_term_identity_loop6(texts, starts, counts, labels, targets, first_2, first_absence_3);
+                                                match source_ml_source1_s2 {
+                                                                            self::MlTemporaryPlanInferenceTermIdentityLoop6Result::MlTemporaryPlanInferenceTermIdentityLoop6Done(first_3, first_absence_4) => {
+                                                                                {
+                                                                                    let source_ml_source1_s3 = self::source_ml_temporary_plan_inference_term_identity_loop7(texts, starts, counts, labels, targets, second_2, second_absence_3);
+                                                                                    match source_ml_source1_s3 {
+                                                                                        self::MlTemporaryPlanInferenceTermIdentityLoop7Result::MlTemporaryPlanInferenceTermIdentityLoop7Done(second_3, second_absence_4) => {
+                                                                                            if first_absence_4 == second_absence_4 {
+                                                                                                vec![1f64, first_3, second_3]
+                                                                                            } else {
+                                                                                                Vec::<f64>::new()
+                                                                                            }
                                                                                         }
                                                                                     }
                                                                                 }
                                                                             }
                                                                         }
-                                                                    }
                                             }
                                         }
                                     }
@@ -690,7 +750,8 @@ pub fn plan_inference_term_identity(
             {
                 let pairs = vec![1f64];
                 {
-                    let ml_s4 = if ((kind == "tuple") || (kind == "union")) || (kind == "function")
+                    let source_ml_source1_s6 = if ((kind == "tuple") || (kind == "union"))
+                        || (kind == "function")
                     {
                         {
                             let field = if kind == "tuple" {
@@ -727,25 +788,26 @@ pub fn plan_inference_term_identity(
                                                     counts, second_4,
                                                 ));
                                             if ml_library_inequality_3 {
-                                                self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Return(Vec::<f64>::new())
+                                                self::MlTemporaryPlanInferenceTermIdentityJoin8::MlTemporaryPlanInferenceTermIdentityJoin8Return(Vec::<f64>::new())
                                             } else {
                                                 {
                                                     let at = 0f64;
                                                     {
-                                                        let pairs_2 = self::ml_plan_inference_term_identity_loop14(starts, counts, targets, pairs, first_4, second_4, length, at);
+                                                        let pairs_2 = self::source_ml_temporary_plan_inference_term_identity_loop14(starts, counts, targets, pairs, first_4, second_4, length, at);
                                                         if kind == "function" {
                                                             {
                                                                 let pairs_3 = {
-                                                                    let (ml_append_right, ml_append_left) = (vec![self::optional_fact_field(starts, counts, labels, targets, left, "ret"), self::optional_fact_field(starts, counts, labels, targets, right, "ret")], pairs_2);
-                                                                    self::ml_array::append(
-                                                                        ml_append_left,
-                                                                        ml_append_right,
-                                                                    )
+                                                                    let source_ml_source1_concat_value7 =
+                                                                        pairs_2;
+                                                                    {
+                                                                        let source_ml_source1_concat_value8 = vec![self::optional_fact_field(starts, counts, labels, targets, left, "ret"), self::optional_fact_field(starts, counts, labels, targets, right, "ret")];
+                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value7), source_ml_source1_concat_value8)
+                                                                    }
                                                                 };
-                                                                self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_3)
+                                                                self::MlTemporaryPlanInferenceTermIdentityJoin8::MlTemporaryPlanInferenceTermIdentityJoin8Next(pairs_3)
                                                             }
                                                         } else {
-                                                            self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_2)
+                                                            self::MlTemporaryPlanInferenceTermIdentityJoin8::MlTemporaryPlanInferenceTermIdentityJoin8Next(pairs_2)
                                                         }
                                                     }
                                                 }
@@ -756,147 +818,68 @@ pub fn plan_inference_term_identity(
                             }
                         }
                     } else {
-                        self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(
-                            pairs,
-                        )
+                        self::MlTemporaryPlanInferenceTermIdentityJoin8::MlTemporaryPlanInferenceTermIdentityJoin8Next(pairs)
                     };
-                    match ml_s4 {
-                                                    self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_4) => {
-                                                        {
-                                                            let ml_s6 = if kind == "record" {
-                                                                {
+                    match source_ml_source1_s6 {
+                                                        self::MlTemporaryPlanInferenceTermIdentityJoin8::MlTemporaryPlanInferenceTermIdentityJoin8Next(pairs_4) => {
+                                                            {
+                                                                let source_ml_source1_s10 = if kind == "record" {
+                                                                    {
 let ml_library_inequality_2 = ((self::optional_fact_tag(texts, starts, counts, labels, targets, left, "open")) == "true") != ((self::optional_fact_tag(texts, starts, counts, labels, targets, right, "open")) == "true") ;
 if ml_library_inequality_2 {
-                                                                    self::MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Return(Vec::<f64>::new())
-                                                                } else {
-                                                                    {
-                                                                        let first_5 = self::optional_fact_field(starts, counts, labels, targets, left, "fields");
+                                                                        self::MlTemporaryPlanInferenceTermIdentityJoin9::MlTemporaryPlanInferenceTermIdentityJoin9Return(Vec::<f64>::new())
+                                                                    } else {
                                                                         {
-                                                                            let second_5 = self::optional_fact_field(starts, counts, labels, targets, right, "fields");
+                                                                            let first_5 = self::optional_fact_field(starts, counts, labels, targets, left, "fields");
                                                                             {
-                                                                                let length_2 = self::read_required_number_fact(counts, first_5);
+                                                                                let second_5 = self::optional_fact_field(starts, counts, labels, targets, right, "fields");
                                                                                 {
+                                                                                    let length_2 = self::read_required_number_fact(counts, first_5);
+                                                                                    {
 let ml_library_inequality_1 = length_2 != (self::read_required_number_fact(counts, second_5)) ;
 if ml_library_inequality_1 {
-                                                                                    self::MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Return(Vec::<f64>::new())
-                                                                                } else {
-                                                                                    {
-                                                                                        let at_2 = 0f64;
+                                                                                        self::MlTemporaryPlanInferenceTermIdentityJoin9::MlTemporaryPlanInferenceTermIdentityJoin9Return(Vec::<f64>::new())
+                                                                                    } else {
                                                                                         {
-                                                                                            let ml_s7 = self::ml_plan_inference_term_identity_loop10(texts, starts, counts, labels, targets, pairs_4, first_5, second_5, length_2, at_2);
-                                                                                            match ml_s7 {
-                                                                                                self::MlPlanInferenceTermIdentityLoop10Result::MlPlanInferenceTermIdentityLoop10Done(pairs_5) => {
-                                                                                                    self::MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Next(pairs_5)
-                                                                                                }
-                                                                                                self::MlPlanInferenceTermIdentityLoop10Result::MlPlanInferenceTermIdentityLoop10Return(ml_result10) => {
-                                                                                                    self::MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Return(ml_result10)
+                                                                                            let at_2 = 0f64;
+                                                                                            {
+                                                                                                let source_ml_source1_s11 = self::source_ml_temporary_plan_inference_term_identity_loop10(texts, starts, counts, labels, targets, pairs_4, first_5, second_5, length_2, at_2);
+                                                                                                match source_ml_source1_s11 {
+                                                                                                    self::MlTemporaryPlanInferenceTermIdentityLoop10Result::MlTemporaryPlanInferenceTermIdentityLoop10Done(pairs_5) => {
+                                                                                                        self::MlTemporaryPlanInferenceTermIdentityJoin9::MlTemporaryPlanInferenceTermIdentityJoin9Next(pairs_5)
+                                                                                                    }
+                                                                                                    self::MlTemporaryPlanInferenceTermIdentityLoop10Result::MlTemporaryPlanInferenceTermIdentityLoop10Return(source_ml_temporary_result10) => {
+                                                                                                        self::MlTemporaryPlanInferenceTermIdentityJoin9::MlTemporaryPlanInferenceTermIdentityJoin9Return(source_ml_temporary_result10)
+                                                                                                    }
                                                                                                 }
                                                                                             }
                                                                                         }
                                                                                     }
-                                                                                }
 }
+                                                                                }
                                                                             }
                                                                         }
                                                                     }
-                                                                }
 }
-                                                            } else {
-                                                                self::MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Next(pairs_4)
-                                                            };
-                                                            match ml_s6 {
-                                                                self::MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Next(pairs_6) => {
-                                                                    pairs_6
-                                                                }
-                                                                self::MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Return(ml_result9) => {
-                                                                    ml_result9
+                                                                } else {
+                                                                    self::MlTemporaryPlanInferenceTermIdentityJoin9::MlTemporaryPlanInferenceTermIdentityJoin9Next(pairs_4)
+                                                                };
+                                                                match source_ml_source1_s10 {
+                                                                    self::MlTemporaryPlanInferenceTermIdentityJoin9::MlTemporaryPlanInferenceTermIdentityJoin9Next(pairs_6) => {
+                                                                        pairs_6
+                                                                    }
+                                                                    self::MlTemporaryPlanInferenceTermIdentityJoin9::MlTemporaryPlanInferenceTermIdentityJoin9Return(source_ml_temporary_result9) => {
+                                                                        source_ml_temporary_result9
+                                                                    }
                                                                 }
                                                             }
                                                         }
+                                                        self::MlTemporaryPlanInferenceTermIdentityJoin8::MlTemporaryPlanInferenceTermIdentityJoin8Return(source_ml_temporary_result13) => {
+                                                            source_ml_temporary_result13
+                                                        }
                                                     }
-                                                    self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Return(ml_result13) => {
-                                                        ml_result13
-                                                    }
-                                                }
                 }
             }
         }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_optional_annotation_constraints(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    actual: f64,
-    declared: f64,
-) -> Vec<f64> {
-    {
-        let optional = self::plan_optional_type_constraints(
-            texts, starts, counts, labels, targets, actual, declared,
-        );
-        if (optional.len() as f64) > 0f64 {
-            vec![
-                1f64,
-                self::read_required_number_fact(&(optional), 0f64),
-                self::read_required_number_fact(&(optional), 1f64),
-            ]
-        } else {
-            {
-                let first =
-                    self::optional_fact_tag(texts, starts, counts, labels, targets, actual, "kind");
-                {
-                    let second = self::optional_fact_tag(
-                        texts, starts, counts, labels, targets, declared, "kind",
-                    );
-                    if (((first == "int") || (first == "nat")) || (first == "fixed"))
-                        && (((second == "int") || (second == "nat")) || (second == "fixed"))
-                    {
-                        vec![1f64]
-                    } else {
-                        self::plan_inference_term_identity(
-                            texts, starts, counts, labels, targets, actual, declared,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_text_fact() -> String {
-    panic!("{}", "missing required text fact column value")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
-        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }

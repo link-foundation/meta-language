@@ -10707,6 +10707,12 @@ and full editable definitions. Native and JavaScript hosts adapt actual source
 and type operands to the existing algebra. The complete original native
 expression dispatcher moved intact into its own bounded module.
 
+Guarded result inference joins the continuation's existing value and absence
+alternatives with the skipped path's undefined alternative. It uses a shared
+selection rule in the same deferred queue as ordinary result joins. A Unit
+continuation still contributes the skipped undefined alternative, and an
+already optional continuation retains its existing absence alternatives.
+
 The two earlier lexical-chain refusal inputs now have positive source/value,
 AST, codec, complete definition and native controls, together with their full
 preceding source/fixture/assertion history. Their corrected domain is ECMAScript

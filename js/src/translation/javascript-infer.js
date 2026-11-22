@@ -755,17 +755,17 @@ class Inference {
     return true;
   }
 
-  join(left, right, where) {
+  join(left, right, where, guarded = false) {
     const result = this.fresh();
-    this.joins.push({ left, right, result, where });
+    this.joins.push({ left, right, result, where, guarded });
     return result;
   }
 
-  joinStep({ left, right, result, where }) {
+  joinStep({ left, right, result, where, guarded }) {
     const a = this.resolve(left);
     const b = this.resolve(right);
     const before = this.unificationChanges;
-    const constraints = readOptionalJoinConstraints(left, right, a, b, this.resolve(result));
+    const constraints = readOptionalJoinConstraints(left, right, a, b, this.resolve(result), guarded);
     if (constraints.pair) this.unify(...constraints.pair, where);
     const value = this.resolve(constraints.value);
     const current = this.resolve(result);
@@ -1224,7 +1224,7 @@ class Inference {
     if(form==='unknown')this.unify(receiver,{kind:'option',element:present,absence:'both'},node.span);
     const scope=new Map(env);scope.set(source.name,present);
     const result=this.expr(source.body,scope);
-    return form==='direct'?result:this.join(result,{kind:'option',element:UNIT,absence:'undefined'},node.span);
+    return form==='direct'?result:this.join(result,UNIT,node.span,true);
   }
 
   optionalCall(node,env){
@@ -1236,7 +1236,7 @@ class Inference {
     const candidate=constructCallableFunctionType(args.map(type=>({type})),ret);
     if(resolved.kind==='var')this.unify(receiver,{kind:'option',element:candidate,absence:'both'},node.span);
     else this.unify(resolved.kind==='option'?resolved.element:receiver,candidate,node.span);
-    return resolved.kind==='function'?ret:this.join(ret,{kind:'option',element:UNIT,absence:'undefined'},node.span);
+    return resolved.kind==='function'?ret:this.join(ret,UNIT,node.span,true);
   }
 
   completeCallableArgumentTerms(parameters,args,where){

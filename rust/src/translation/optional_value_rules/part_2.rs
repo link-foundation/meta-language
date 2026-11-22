@@ -1,4 +1,5 @@
-// Generated from complete js/src/translation/optional-value-rules.js. Do not edit by hand.
+// Generated from the complete checked optional kernel and its recorded source dependencies.
+// Do not edit by hand.
 use super::read_optional_equality_absence;
 use super::render_optional_equality_absent;
 use super::render_optional_equality_present;

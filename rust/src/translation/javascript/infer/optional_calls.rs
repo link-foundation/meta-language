@@ -1,5 +1,5 @@
 //! Actual terms into the existing callable unifier and deferred optional joins.
-use super::{Env, Inference, Result, Span, Term, UNIT, type_error};
+use super::{Env, Inference, Result, Span, Term, UNIT, optional_values::optional, type_error};
 use crate::translation::surface::SArrayItem;
 impl Inference {
     pub(super) fn optional_call_term(
@@ -21,10 +21,7 @@ impl Inference {
             Term::Known(crate::translation::types::Type::Unit)
         ) || matches!(&resolved,Term::Option{element,..}if matches!(self.resolve(element),Term::Known(crate::translation::types::Type::Unit)))
         {
-            return Ok(Term::Option {
-                element: Box::new(Term::Known(UNIT)),
-                absence: "undefined".to_owned(),
-            });
+            return Ok(optional(Term::Known(UNIT), "undefined"));
         }
         let parameters = args[1..]
             .iter()
@@ -36,14 +33,7 @@ impl Inference {
             ret: Box::new(ret.clone()),
         };
         if matches!(resolved, Term::Var(_)) {
-            self.unify(
-                &receiver,
-                &Term::Option {
-                    element: Box::new(candidate),
-                    absence: "both".to_owned(),
-                },
-                place,
-            )?;
+            self.unify(&receiver, &optional(candidate, "both"), place)?;
         } else {
             let callable = match &resolved {
                 Term::Option { element, .. } => element.as_ref(),
@@ -54,14 +44,7 @@ impl Inference {
         Ok(if matches!(resolved, Term::Function { .. }) {
             ret
         } else {
-            self.join(
-                ret,
-                Term::Option {
-                    element: Box::new(Term::Known(UNIT)),
-                    absence: "undefined".to_owned(),
-                },
-                place,
-            )
+            self.join_optional_guard(ret, place)
         })
     }
 }

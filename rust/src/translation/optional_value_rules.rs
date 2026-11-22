@@ -1,4 +1,5 @@
-// Generated from complete js/src/translation/optional-value-rules.js. Do not edit by hand.
+// Generated from the complete checked optional kernel and its recorded source dependencies.
+// Do not edit by hand.
 // JavaScript Number equality and separate arithmetic rounding are preserved.
 // Array index casts retain the existing checked runtime guards.
 #![allow(

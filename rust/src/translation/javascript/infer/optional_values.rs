@@ -252,11 +252,20 @@ impl Inference {
     }
 
     pub(super) fn join(&mut self, left: Term, right: Term, place: Option<Span>) -> Term {
+        self.defer_join(left, right, false, place)
+    }
+
+    pub(super) fn join_optional_guard(&mut self, value: Term, place: Option<Span>) -> Term {
+        self.defer_join(value, Term::Known(super::UNIT), true, place)
+    }
+
+    fn defer_join(&mut self, left: Term, right: Term, guarded: bool, place: Option<Span>) -> Term {
         let result = self.fresh(false);
         self.joins.push(Join {
             left,
             right,
             result: result.clone(),
+            guarded,
             place,
         });
         result
@@ -270,6 +279,31 @@ impl Inference {
             Some(self.resolve(&constraint.right)),
             Some(self.resolve(&constraint.result)),
         ]);
+        let before = self.unification_changes;
+        let value = if constraint.guarded {
+            let plan = plans::plan_optional_guarded_result(
+                &facts.texts,
+                &facts.starts,
+                &facts.counts,
+                &facts.labels,
+                &facts.targets,
+                facts.position(0),
+                facts.position(2),
+            );
+            let absence = match facts.term(plan[1]) {
+                Some(Term::Option { absence, .. }) => {
+                    merge_optional_absence(&absence.borrow(), "undefined")
+                }
+                _ => "undefined".to_owned(),
+            };
+            optional(endpoint(&facts, plan[0]), &absence)
+        } else {
+            self.apply_join_plan(&facts, constraint.place)?
+        };
+        self.bind_join_result(constraint, value, before)
+    }
+
+    fn apply_join_plan(&mut self, facts: &TermFacts, place: Option<Span>) -> Result<Term> {
         let plan = plans::plan_optional_join_constraints(
             &facts.texts,
             &facts.starts,
@@ -282,20 +316,18 @@ impl Inference {
             facts.position(3),
             facts.position(4),
         );
-        let before = self.unification_changes;
         if plan[0] == 0.0 {
-            self.unify(
-                &endpoint(&facts, plan[2]),
-                &endpoint(&facts, plan[3]),
-                constraint.place,
-            )?;
+            self.unify(&endpoint(facts, plan[2]), &endpoint(facts, plan[3]), place)?;
         }
-        let selected = endpoint(&facts, plan[1]);
-        let value = if number_index(plan[0]) == Some(2) {
+        let selected = endpoint(facts, plan[1]);
+        Ok(if number_index(plan[0]) == Some(2) {
             optional(selected, "undefined")
         } else {
             self.resolve(&selected)
-        };
+        })
+    }
+
+    fn bind_join_result(&mut self, constraint: &Join, value: Term, before: usize) -> Result<bool> {
         let Term::Var(variable) = constraint.result else {
             unreachable!("a deferred join owns a result variable");
         };

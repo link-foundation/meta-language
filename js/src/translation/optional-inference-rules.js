@@ -25,6 +25,21 @@ function optionalFactTag(texts, starts, counts, labels, targets, node, field) {
   return optionalFactText(texts, optionalFactField(starts, counts, labels, targets, node, field));
 }
 
+/**
+ * Select the term carried by a guarded result. An existing optional result
+ * contributes its original present term and absence owner. The skipped
+ * path also contributes undefined, including when the continuation is Unit.
+ * @param {string[]} texts @param {number[]} starts @param {number[]} counts
+ * @param {string[]} labels @param {number[]} targets @param {number} term
+ * @param {number} resolved @returns {number[]}
+ */
+export function planOptionalGuardedResult(texts, starts, counts, labels, targets, term, resolved) {
+  if (optionalFactTag(texts, starts, counts, labels, targets, resolved, 'kind') === 'option') {
+    return [optionalFactField(starts, counts, labels, targets, resolved, 'element'), resolved];
+  }
+  return [term, -1];
+}
+
 /** @param {number[]} starts @param {number[]} counts @param {number[]} targets @param {number} node @param {number} index @returns {number} */
 function optionalFactElement(starts, counts, targets, node, index) {
   if (node < 0 || index < 0 || index >= readRequiredNumberFact(counts, node)) return -1;

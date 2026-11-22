@@ -54,6 +54,16 @@ inputs.push(
 const cases=inputs.map(([name,source,value],index)=>({name,source,entry:'optionalChainCase'+index,value,abort:null}));
 const message='chain argument';
 for(const[present,value,abort]of[[false,'7',null],[true,null,message]])cases.push({name:'guarded chain '+(present?'executes':'skips')+' abrupt argument',source:'/** @returns {number} */function failChainArgument(){throw new RangeError("'+message+'");} export function compute(){const callback='+present+'?(value=>({value})):null;return callback?.(failChainArgument()).value??7;}',entry:'optionalChainError'+cases.length,value,abort,errorClass:'RangeError',messagePresent:true,messageUnits:Array.from(message,letter=>letter.charCodeAt(0))});
+for(const [name, argument, result, value] of [
+ ['guarded nominal projection keeps the present BigInt', '{$:"present",identity:9n}', '??7n', '9'],
+ ['guarded nominal projection adds undefined only', 'undefined', '===undefined', 'true'],
+ ['guarded nominal projection keeps a returned null', '{$:"present",identity:null}', '===null', 'true'],
+]) {
+ const type='GuardedNominalValue'+cases.length;
+ const nameOfProjection='guardedNominalProjection'+cases.length;
+ const source='/** @typedef {{$:"present",identity:bigint|null}} '+type+' */ /** @param {'+type+'|null|undefined} receiver */ function '+nameOfProjection+'(receiver){return receiver?.identity;} export function compute(){return '+nameOfProjection+'('+argument+')'+result+';}';
+ cases.push({name,source,entry:'optionalChainCase'+cases.length,value,abort:null});
+}
 const source=cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(').replaceAll('failChainArgument','failChainArgument'+row.entry)).join('\n');
 const revision='b3ca8297';
 const history=['js/scripts/generate-javascript-optional-call-fixtures.mjs','js/tests/translation-javascript-optional-calls.test.js','parity/fixtures/javascript-optional-calls.lino','js/src/translation/javascript.js','js/src/translation/javascript-infer.js','rust/src/translation/javascript/expressions.rs','rust/src/translation/javascript/infer.rs'].map(path=>{

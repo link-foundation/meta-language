@@ -1,4 +1,5 @@
-// Generated from complete js/src/translation/optional-value-rules.js. Do not edit by hand.
+// Generated from the complete checked optional kernel and its recorded source dependencies.
+// Do not edit by hand.
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn require_optional_flattening(kind: &str, element: &str) -> bool {

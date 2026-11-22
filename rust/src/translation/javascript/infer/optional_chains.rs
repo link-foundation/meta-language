@@ -1,5 +1,5 @@
 //! Infer the receiver's present term before its complete lexical continuation.
-use super::{Env, Inference, Result, Span, Term, UNIT, type_error};
+use super::{Env, Inference, Result, Span, Term, UNIT, optional_values::optional, type_error};
 use crate::translation::surface::SArrayItem;
 impl Inference {
     pub(super) fn optional_chain_term(
@@ -53,10 +53,7 @@ impl Inference {
         };
         let form=crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_inference_form(kind,element);
         if form == "absent" {
-            return Ok(Term::Option {
-                element: Box::new(Term::Known(UNIT)),
-                absence: "undefined".to_owned(),
-            });
+            return Ok(optional(Term::Known(UNIT), "undefined"));
         }
         let present = match &resolved {
             Term::Option { element, .. } => element.as_ref().clone(),
@@ -64,27 +61,13 @@ impl Inference {
             _ => receiver.clone(),
         };
         if form == "unknown" {
-            self.unify(
-                &receiver,
-                &Term::Option {
-                    element: Box::new(present.clone()),
-                    absence: "both".to_owned(),
-                },
-                place,
-            )?;
+            self.unify(&receiver, &optional(present.clone(), "both"), place)?;
         }
         let mut scope = env.clone();
         scope.insert(name.to_owned(), present);
         let result = self.expr(body, &scope)?;
         Ok(if form != "direct" {
-            self.join(
-                result,
-                Term::Option {
-                    element: Box::new(Term::Known(UNIT)),
-                    absence: "undefined".to_owned(),
-                },
-                place,
-            )
+            self.join_optional_guard(result, place)
         } else {
             result
         })
