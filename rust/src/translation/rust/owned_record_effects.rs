@@ -189,7 +189,9 @@ impl Transport<'_>{
    let params=types.iter().map(|ty|json!({"name":self.parser.fresh_product_binding(),"type":ty})).collect::<Vec<_>>();let initial=keys.iter().enumerate().map(|(index,key)|(key.clone(),(slots[index].clone(),text(&params[index],"name").to_owned()))).collect::<Environment>();
    let following=if chunk+1<chunks{Some(std::iter::once("crate".to_owned()).chain(source.path.iter().cloned()).chain(std::iter::once(names[chunk+1].clone())).collect::<Vec<_>>())}else{None};let count=width.min(iterations.len()-chunk*width);
    let body=self.loop_step(&node["args"][0]["value"],&node["args"][1]["value"],0,count,initial,&keys,following.as_deref(),control_owner.as_deref())?;
-   self.loop_helpers.push((ordinal,source.path.clone(),json!({"k":"fn","name":names[chunk],"params":params,"ret":ret,"body":body,"generated":true,"sourceFiniteRecordLoopHelper":true,"span":source.source_span()})));
+   let mut helper=json!({"k":"fn","name":names[chunk],"params":params,"ret":ret,"body":body,"generated":true,"sourceFiniteRecordLoopHelper":true,"span":source.source_span()});
+   if let Some(facet)=&source.state_transform{helper["sourceStateTransform"]=encode(facet)?;}
+   self.loop_helpers.push((ordinal,source.path.clone(),helper));
   }}
   let packet=self.parser.fresh_product_binding();let args=keys.iter().map(|key|environment.get(key).map(|(_,value)|name(value)).ok_or_else(||fail("the finite loop lost an actual initialized state root"))).collect::<Result<Vec<_>>>()?;let mut path=vec!["crate".to_owned()];path.extend(source.path.iter().cloned());path.push(names[0].clone());let mut bindings=vec![json!({"k":"let","name":packet,"type":ret,"value":{"k":"app","fn":{"k":"name","path":path},"args":args}})];let mut after=environment;
   for(index,key)in keys.iter().enumerate(){let fresh=self.parser.fresh_product_binding();bindings.push(json!({"k":"let","name":fresh,"value":{"k":"tupleIndex","object":name(&packet),"index":index+1}}));after.insert(key.clone(),(slots[index].clone(),fresh));}

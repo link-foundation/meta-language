@@ -122,6 +122,9 @@ pub struct FnDecl {
     /// A function the translator made up, such as a lifted loop.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub generated: bool,
+    /// Exact checked interface of a generated finite source state helper.
+    #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    pub source_state_transform: Option<Box<crate::translation::source_state_transforms::RustFiniteLoopStateTransform>>,
     /// Optional owned source-header facts, checked against this signature.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_signature: Option<crate::translation::source_signatures::SourceSignature>,

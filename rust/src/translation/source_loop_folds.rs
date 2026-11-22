@@ -65,7 +65,7 @@ fn fail(message: &str) -> super::diagnostics::TranslationError {
     type_error(message, None)
 }
 
-fn check_slot<'data>(
+pub(super) fn check_slot<'data>(
     binder: &SourceStateBinder,
     position: &SourceTypeSignature,
     expected: &Type,

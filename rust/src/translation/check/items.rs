@@ -108,6 +108,7 @@ impl Checker {
                     decreasing: None,
                     mutual: false,
                     source_signature: None,
+                    source_state_transform: None,
                     source_primitive_owners: function.source_primitive_owners.clone(),
                     source_empty_option: function.source_empty_option.as_deref().cloned(),
                     source_type_namespace: function.source_type_namespace.as_deref().cloned(),
@@ -282,6 +283,19 @@ impl Checker {
                     |ty|match ty {Type::Data {name} => match self.decls.get(name) {Some(Decl::Data(data))=>Some(data),_=>None},_=>None},
                 )?;
             }
+            let source_state_transform = item.source_state_transform.as_deref().map(|facet| {
+                super::super::source_state_transforms::check_state_transform(
+                    facet, item, &params, &ret, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, item.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                ).map(Box::new)
+            }).transpose()?;
             if let Some(annotation) = &annotated_ret
                 && !super::optional_values::annotation_compatible(&ret, annotation)
             {
@@ -293,6 +307,7 @@ impl Checker {
             let name = full(path, &item.name);
             if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                 entry.source_signature = source_signature;
+                entry.source_state_transform = source_state_transform;
                 entry.params = params;
                 entry.ret = ret;
                 entry.semantic_ret.clone_from(&item.semantic_ret);

@@ -6,7 +6,9 @@ use crate::translation::{
         RustSourceFoldSlot, RustSourceStateTransition, SourceFoldSpan, SourceStateBinder,
     },
     source_record_places::{RustSourceRecordPlace, owner_view},
-    source_signatures::SourceTypeSignature,
+    source_signatures::{SourceOwner, SourceTypeSignature},
+    source_state_transforms::{MODEL as FINITE_LOOP_MODEL, RustFiniteLoopStateTransform},
+    types::Type,
 };
 
 fn fail(reason: &str, span: Option<Span>) -> super::TranslationError {
@@ -168,6 +170,57 @@ impl RustParser {
         Ok(RustSourceFoldSlot { binder, position })
     }
 
+    pub(super) fn retain_finite_loop_state_transform(
+        &self,
+        slots: &[super::owned_record_state::Slot],
+        control_owner: Option<&[String]>,
+        path: &[String],
+        span: Span,
+    ) -> Result<Option<RustFiniteLoopStateTransform>> {
+        if !self.retain_source_region_state() {
+            return Ok(None);
+        }
+        let mut unit = SourceOrigin::with_type(super::UNIT, path, Vec::new());
+        unit.source_owner = Some(SourceOwner {
+            kind: "unit".into(),
+            path: Vec::new(),
+            arguments: Vec::new(),
+        });
+        let source_result = if control_owner.is_some() {
+            self.standard_sum_source
+                .return_origin
+                .as_ref()
+                .ok_or_else(|| {
+                    fail(
+                        "a returning loop needs its actual enclosing source result",
+                        Some(span),
+                    )
+                })?
+        } else {
+            &unit
+        };
+        let slots = slots
+            .iter()
+            .map(|slot| self.retain_source_fold_slot(slot))
+            .collect::<Result<_>>()?;
+        let control = control_owner.map(|owner| Type::Named {
+            path: std::iter::once("crate".to_owned())
+                .chain(owner.iter().cloned())
+                .collect(),
+            span: None,
+        });
+        Ok(Some(RustFiniteLoopStateTransform {
+            model: FINITE_LOOP_MODEL.into(),
+            slots,
+            control,
+            result: self.retain_source_region_position(source_result, Some(span))?,
+            span: SourceFoldSpan {
+                start: span.start,
+                end: span.end,
+            },
+        }))
+    }
+
     pub(super) fn retain_source_state_transition(
         &self,
         slot: &super::owned_record_state::Slot,
@@ -273,5 +326,58 @@ mod tests {
             )
             .expect_err("the actual bound field must agree with the retained ordinal");
         assert!(error.reason.contains("actual one-constructor projection"));
+    }
+
+    #[test]
+    fn finite_loop_helpers_publish_only_their_actual_storage_revisions() {
+        let source = r#"struct State { count: u8, text: String }
+            fn refs<'a>(referent: &'a u8) -> Vec<&'a u8> { vec![referent] }
+            fn main() {
+                let mut state = State { count: 2u8, text: String::from("kept") };
+                while state.count > 0u8 { state.count = state.count - 1u8; }
+                let referent = 3u8;
+                let view = refs(&referent);
+                println!("{}", state.count == 0u8 && view.len() == 1);
+            }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let mut checked = check_program(&surface).unwrap();
+        let transforms: Vec<_> = checked
+            .declarations
+            .iter_mut()
+            .filter_map(|declaration| match declaration {
+                crate::translation::ir::Decl::Fn(function) => {
+                    function.source_state_transform.as_deref_mut()
+                }
+                _ => None,
+            })
+            .collect();
+        assert_eq!(transforms.len(), 32);
+        for transform in &transforms {
+            assert!(transform.control.is_none());
+            assert_eq!(
+                &source[transform.span.start..transform.span.start + 5],
+                "while"
+            );
+            let [slot] = transform.slots.as_slice() else {
+                panic!("one actual state slot")
+            };
+            assert_eq!(&source[slot.binder.start..slot.binder.end], "state");
+        }
+        let mut transforms = transforms;
+        transforms[0].slots[0]
+            .binder
+            .identity
+            .push_str("_different");
+        crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(
+            &checked,
+        )
+        .expect_err("an otherwise same-typed compiler slot must keep its actual storage identity");
     }
 }

@@ -97,6 +97,12 @@ export function acceptRustOwnedVectorSourceFoldModel(language,model,slots,start,
  return language==='Rust'&&model==='Rust owned vector source fold 1'&&slots>=0&&slots<=512&&acceptRustSourceRegionSpan(start,end);
 }
 
+/** @param {string} language @param {string} model @param {string} name
+ * @param {boolean} generated @param {number} slots @param {number} start @param {number} end @returns {boolean} */
+export function acceptRustFiniteLoopStateTransform(language,model,name,generated,slots,start,end){
+ return language==='Rust'&&model==='Rust finite loop state transformation 1'&&generated&&testRustOwnedRecordLoopChunkName(name)&&slots>=1&&slots<=512&&acceptRustSourceRegionSpan(start,end);
+}
+
 /** @returns {string[]} */
 export function readRustOwnedVectorSourceFoldControlVariants(){
  return ['FunctionResult','StatementContinuation','LoopBreak','LoopContinue'];

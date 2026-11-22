@@ -3,7 +3,7 @@
 import {typeError,unsupported} from './diagnostics.js';
 import {sameType} from './types.js';
 import {assertRustOwnedRecordLoopAdmission} from './rust-owned-record-loops.js';
-import {testRustOwnedRecordLoopChunkName} from './rust-owned-record-loop-rules.js';
+import {acceptRustFiniteLoopStateTransform} from './rust-owned-record-loop-rules.js';
 import {hasRustSourceRegionComposition,retainRustSourceRegionState} from './rust-source-region-composition.js';
 import {qualifyRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
 import {createRustBorrowedVectorElementPosition} from './rust-borrowed-vectors.js';
@@ -22,7 +22,7 @@ export function attachRustFiniteLoopStateTransform(parser,fn,source,control){
 }
 export function checkRustFiniteLoopStateTransform(facet,entry,language,resolveType=value=>value,resolveData=()=>null){
  checkOwnedProgramContainers({sourceStateTransform:facet},{selectedFields:['sourceStateTransform'],acceptContainer:acceptRustDataTypeFieldSignatureContainer,fail});
- if(language!=='Rust'||!exact(facet,['model','slots','control','result','span'])||facet.model!==model||entry.k!=='fn'||entry.generated!==true||!testRustOwnedRecordLoopChunkName(entry.name)||!Array.isArray(facet.slots)||facet.slots.length<1||facet.slots.length>512||entry.params.length!==facet.slots.length||entry.ret.kind!=='tuple'||entry.ret.elements.length!==facet.slots.length+1||!exact(facet.span,['start','end'])||!Number.isSafeInteger(facet.span.start)||!Number.isSafeInteger(facet.span.end)||facet.span.start<0||facet.span.end<=facet.span.start||entry.span?.start!==facet.span.start||entry.span?.end!==facet.span.end)fail('a finite state transformation retains its actual generated function, bounded state slots and original loop span');
+ if(!exact(facet,['model','slots','control','result','span'])||entry.k!=='fn'||!Array.isArray(facet.slots)||!exact(facet.span,['start','end'])||!Number.isSafeInteger(facet.span.start)||!Number.isSafeInteger(facet.span.end)||!acceptRustFiniteLoopStateTransform(language,facet.model,entry.name,entry.generated===true,facet.slots.length,facet.span.start,facet.span.end)||entry.params.length!==facet.slots.length||entry.ret.kind!=='tuple'||entry.ret.elements.length!==facet.slots.length+1||entry.span?.start!==facet.span.start||entry.span?.end!==facet.span.end)fail('a finite state transformation retains its actual generated function, bounded state slots and original loop span');
  if(entry.sourceSignature!==undefined||entry.sourceExclusiveSignature!==undefined||entry.sourceFnMutSpecialization!==undefined)fail('compiler state functions retain their own interface rather than a Rust source signature');
  const identities=new Set(),slots=facet.slots.map((slot,index)=>{if(!exact(slot,['binder','position'])||!sameType(entry.params[index].type,entry.ret.elements[index+1]))fail('a compiler state function retains every ordered input/output state type');const checked=checkRustSourceStateTransition({model:'Rust source state transition 1',operation:'initialize',...slot},entry.params[index].type,language,resolveType,resolveData);if(identities.has(checked.binder.identity))fail('compiler state formals retain distinct actual source binders');identities.add(checked.binder.identity);return {binder:checked.binder,position:checked.position};});
  if(facet.control!==null&&!(facet.control?.kind==='named'&&exact(facet.control,['kind','path'])||facet.control?.kind==='data'&&exact(facet.control,['kind','name'])))fail('a compiler state completion is explicit Unit or its actual nominal type');

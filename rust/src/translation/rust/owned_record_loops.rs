@@ -5,6 +5,7 @@ use super::owned_record_state::Slot;
 use super::owned_record_effects::EffectSource;
 use crate::translation::surface::SArrayItem;
 use crate::translation::rust_owned_record_loop_rules as rules;
+use crate::translation::source_state_transforms::RustFiniteLoopStateTransform;
 use super::owned_record_policy::{fields, state};
 use crate::translation::rust_owned_record_effect_rules as effects;
 use std::collections::{HashSet,HashMap};
@@ -15,7 +16,7 @@ mod ordered_collections;
 pub(super) use ordered_collections::AdmittedOrderedCollectionLoop;
 use expression_paths::{ExpressionPath,expression_paths};
 /// Opaque inside the source reader; source JSON cannot manufacture admission.
-pub(crate) struct AdmittedFiniteRecordLoop{span:Option<Span>,counter_type:Type,pub(super) slots:Vec<Slot>,pub(super) path:Vec<String>,pub(super) control_owner:Option<Vec<String>>,pub(super) returns:usize,writes:Vec<String>}
+pub(crate) struct AdmittedFiniteRecordLoop{span:Option<Span>,counter_type:Type,pub(super) slots:Vec<Slot>,pub(super) path:Vec<String>,pub(super) control_owner:Option<Vec<String>>,pub(super) returns:usize,pub(super) state_transform:Option<RustFiniteLoopStateTransform>,writes:Vec<String>}
 pub(super) fn loop_operation(operation: &str) -> bool {
     operation == rules::read_rust_owned_record_loop_operation()
         || operation == rules::read_rust_ordered_collection_loop_operation()
@@ -155,8 +156,10 @@ impl RustParser{
    let exits=if let Some(completion)=completion.as_mut(){std::mem::take(&mut completion.paths)}else{let mut result=Vec::new();for count in counts(self,&value["body"],&selected,&mut 0)?{result.push(LoopPath{kind:"value".to_owned(),count,origin:SourceOrigin::with_type(super::UNIT,path,Vec::new()),ownership:self.ordinary_completion_snapshot()?});}closed(self,&value["body"],path,&HashSet::new(),&mut 0)?;result};
    let error=rules::read_rust_owned_record_loop_progress_error(&exits.iter().map(|exit|exit.kind.clone()).collect::<Vec<_>>(),&exits.iter().map(|exit|exit.count as f64).collect::<Vec<_>>());if !error.is_empty(){return Err(fail(&error,span));}closed(self,&value["guard"],path,&HashSet::new(),&mut 0)?;for exit in &exits{if rules::test_rust_owned_record_loop_continuing_exit(&exit.kind){invariant(&before,&exit.ownership,&slots,span)?;}}
    self.origins.restore_owned_bindings(before);for exit in &exits{if exit.kind=="break"{let current=self.ordinary_completion_snapshot()?;self.origins.join_owned_bindings(&current,&exit.ownership,true,true);}}return_paths=exits.into_iter().filter(|exit|exit.kind=="return").collect();self.owned_record_state.effects.get_or_insert_with(Default::default).loops.nodes+=reservation[0] as usize*255;
+   let control_owner=completion.as_ref().map(|completion|completion.owner.clone());
+   let state_transform=self.retain_finite_loop_state_transform(&slots,control_owner.as_deref(),path,Span::new(start.start,end))?;
    let writes=write_footprint(self,&value["body"])?;let inventory=&mut self.owned_record_state.effects.as_mut().expect("actual loop inventory").loops;inventory.footprint_nodes+=writes.len();inventory.footprint_units+=writes.iter().map(String::len).sum::<usize>();
-   Some(Arc::new(AdmittedFiniteRecordLoop{span,counter_type:selected.ty,slots,path:path.to_vec(),control_owner:completion.as_ref().map(|completion|completion.owner.clone()),returns:completion.as_ref().map_or(0,|completion|completion.returns),writes}))
+   Some(Arc::new(AdmittedFiniteRecordLoop{span,counter_type:selected.ty,slots,path:path.to_vec(),control_owner,returns:completion.as_ref().map_or(0,|completion|completion.returns),state_transform,writes}))
   };
   self.owned_record_state.effects.get_or_insert_with(Default::default).loops.entries.push(LoopEntry{admission,ordered:None,destination:None,return_paths});let mut node=SExpr::new(SNode::Math{op:rules::read_rust_owned_record_loop_operation(),name:ordinal.to_string(),args:vec![SArrayItem::new(guard,false),SArrayItem::new(body,false)]},span);node.block=true;self.origins.mark(&node,SourceOrigin::with_type(super::UNIT,path,Vec::new()));Ok(Some(node))
  }

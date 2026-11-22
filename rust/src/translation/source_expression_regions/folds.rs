@@ -4,19 +4,34 @@ use std::{collections::HashSet, rc::Rc};
 use super::{Environment, Expr, Node, Position, RegionError, Regions, Result, Value, fail, rules};
 use crate::translation::{
     ir::{Case, LitValue, Pattern},
-    source_loop_folds::RustSourceLoopFold,
+    source_loop_folds::{RustSourceFoldSlot, RustSourceLoopFold},
     types::Type,
 };
 
 #[derive(PartialEq, Eq)]
 pub(super) struct FoldFrame {
-    facet: RustSourceLoopFold,
+    pub(super) control: Type,
+    pub(super) result: Position,
+    slots: Vec<RustSourceFoldSlot>,
     packet_type: Type,
+}
+
+impl FoldFrame {
+    pub(super) fn finite(control: &Type, result: &Position) -> Self {
+        Self {
+            control: control.clone(),
+            result: result.clone(),
+            slots: Vec::new(),
+            packet_type: Type::Tuple {
+                elements: vec![Type::Bool, control.clone()],
+            },
+        }
+    }
 }
 
 #[derive(Clone)]
 pub(super) struct FoldControl {
-    frame: Rc<FoldFrame>,
+    pub(super) frame: Rc<FoldFrame>,
     pub(super) variants: Vec<(String, Option<Value>)>,
 }
 
@@ -35,7 +50,7 @@ impl Regions<'_> {
             .control
             .take()
             .ok_or_else(|| fail("a source loop match needs its actual compiler control"))?;
-        let Type::Data { name } = &control.frame.facet.control else {
+        let Type::Data { name } = &control.frame.control else {
             return Err(fail(
                 "a source loop match needs its actual compiler declaration",
             ));
@@ -106,7 +121,7 @@ impl Regions<'_> {
     pub(super) fn packet_frame(&self, ty: &Type) -> Option<Rc<FoldFrame>> {
         self.folds
             .iter()
-            .rfind(|frame| frame.packet_type == *ty)
+            .rfind(|frame| &frame.packet_type == ty)
             .cloned()
     }
 
@@ -121,7 +136,7 @@ impl Regions<'_> {
     ) -> Result<Value> {
         if node.source_position.is_some()
             || node.source_state_transition.is_some()
-            || items.len() != frame.facet.slots.len() + 2
+            || items.len() != frame.slots.len() + 2
         {
             return Err(fail(
                 "a loop packet retains every actual compiler control and state slot",
@@ -138,7 +153,6 @@ impl Regions<'_> {
         let mut fields = Vec::with_capacity(items.len());
         for (index, item) in items.iter().enumerate() {
             let position = frame
-                .facet
                 .slots
                 .get(index.wrapping_sub(2))
                 .map(|slot| &slot.position);
@@ -169,7 +183,7 @@ impl Regions<'_> {
             }
             fields.push(held);
         }
-        let value = self.create_packet(frame.packet_type.clone(), fields, Some(frame.clone()))?;
+        let value = self.create_packet(node.ty.clone(), fields, Some(frame.clone()))?;
         self.verify_loop_slots(&frame, &value)?;
         Ok(value)
     }
@@ -186,7 +200,7 @@ impl Regions<'_> {
         let Some(frame) = self
             .folds
             .iter()
-            .rfind(|frame| frame.facet.control == node.ty)
+            .rfind(|frame| frame.control == node.ty)
             .cloned()
         else {
             return Ok(None);
@@ -198,24 +212,31 @@ impl Regions<'_> {
         }
         let payload = match (name, args) {
             ("FunctionResult", [value]) => {
-                let actual = self.expression(value, env, bindings, Some(&frame.facet.result), depth + 1)?;
+                let actual = self.expression(value, env, bindings, Some(&frame.result), depth + 1)?;
                 Some(self.read(actual, "move")?)
             }
             (_, []) if name != "FunctionResult" && super::super::rust_owned_record_loop_rules::read_rust_owned_vector_source_fold_control_variants().iter().any(|variant| variant == name) => None,
             _ => return Err(fail("a loop control retains its actual compiler variant and payload")),
         };
-        let regions = payload
-            .as_ref()
-            .map(|value| value.regions.clone())
-            .unwrap_or_default();
+        self.make_loop_control(frame, vec![(name.into(), payload)])
+            .map(Some)
+    }
+
+    pub(super) fn make_loop_control(
+        &mut self,
+        frame: Rc<FoldFrame>,
+        variants: Vec<(String, Option<Value>)>,
+    ) -> Result<Value> {
+        let regions = self.union(
+            variants
+                .iter()
+                .filter_map(|(_, value)| value.as_ref().map(|value| value.regions.clone())),
+        )?;
         let root = self.root(String::new(), true)?;
         let mut value = Value::new(None, Some(root), regions, true, None);
         value.role = "source loop control".into();
-        value.control = Some(FoldControl {
-            frame,
-            variants: vec![(name.into(), payload)],
-        });
-        Ok(Some(value))
+        value.control = Some(FoldControl { frame, variants });
+        Ok(value)
     }
 
     pub(super) fn read_loop_control(&mut self, mut value: Value, mode: &str) -> Result<Value> {
@@ -280,11 +301,11 @@ impl Regions<'_> {
             .as_ref()
             .filter(|packet| packet.loop_frame.as_ref() == Some(frame))
             .ok_or_else(|| fail("a source fold publishes its actual state packet"))?;
-        if packet.fields.len() != frame.facet.slots.len() + 2 {
+        if packet.fields.len() != frame.slots.len() + 2 {
             return Err(fail("a source fold publishes every actual state slot"));
         }
         self.read(value.clone(), "read")?;
-        for (slot, field) in frame.facet.slots.iter().zip(&packet.fields[2..]) {
+        for (slot, field) in frame.slots.iter().zip(&packet.fields[2..]) {
             let storage = self
                 .storages
                 .get(&slot.binder.identity)
@@ -369,7 +390,9 @@ impl Regions<'_> {
         let input = self.expression(object, env, bindings, Some(&facet.input), depth + 1)?;
         self.read(input, "move")?;
         let frame = Rc::new(FoldFrame {
-            facet: facet.clone(),
+            control: facet.control.clone(),
+            result: facet.result.clone(),
+            slots: facet.slots.clone(),
             packet_type: node.ty.clone(),
         });
         self.folds.push(frame.clone());

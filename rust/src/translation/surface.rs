@@ -640,6 +640,9 @@ pub struct SFn {
     /// Source owner of a projected standard collection library declaration.
     #[serde(default, rename = "sourceStandardCollectionLibraryOwner", skip_serializing_if = "Option::is_none")]
     pub source_standard_collection_library_owner: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionLibraryOwner>>,
+    /// Exact checked interface of a generated finite source state helper.
+    #[serde(rename = "sourceStateTransform", default, deserialize_with = "crate::translation::source_position_transport::read_present_box", skip_serializing_if = "Option::is_none")]
+    pub source_state_transform: Option<Box<super::source_state_transforms::RustFiniteLoopStateTransform>>,
     /// Restriction selector; only an opaque admitted-loop witness authenticates it.
     #[serde(default,rename="sourceFiniteRecordLoopHelper",skip_serializing_if="is_false")]
     pub source_finite_record_loop_helper: bool,
