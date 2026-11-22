@@ -1176,7 +1176,7 @@ export class LinkNetwork {
     language: string,
     configuration?: ParseConfiguration,
   ): LinkNetwork;
-  static parseBytes(bytes: Uint8Array | ArrayLike<number>, format: string): LinkNetwork;
+  static parseBytes(bytes: Uint8Array | ArrayLike<number>, format: string, configuration?: ParseConfiguration): LinkNetwork;
   static parseFluent(
     text: string,
     language: string,
@@ -1229,6 +1229,14 @@ export class LinkNetwork {
   reconstructText(): string;
   visibleText(options?: VisibleDocumentTextOptions): VisibleDocumentText;
   visible_text(options?: VisibleDocumentTextOptions): VisibleDocumentText;
+  derivedDocuments(): Array<{
+    name: string;
+    language: string;
+    sourceRange: ByteRange;
+    encoding: 'bytes' | 'binary-string';
+    compression: 'stored' | 'deflate';
+    network: LinkNetwork;
+  }>;
   embeddedRegions(): EmbeddedRegion[];
   parseGrammars(): ParseGrammar[];
   embedded_regions(): EmbeddedRegion[];

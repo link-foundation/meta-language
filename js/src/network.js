@@ -47,6 +47,8 @@ import {
 import { acceptNetworkProjection, acceptNetworkProjectionLink } from './network-projection-rules.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 import { projectVisibleDocumentText } from './visible-document-text.js';
+import { hasZipHeader, readBinaryString, readWordprocessingPackage } from './open-packaging-conventions.js';
+import { binaryStringCoordinates } from './binary-string-source.js';
 import {
   CONCEPT_RECORDS,
   FORMER_CONCEPT_ID_VOCABULARY,
@@ -102,6 +104,21 @@ export class LinkNetwork {
   }
 
   static parse(text, language, configuration = ParseConfiguration.default()) {
+    if (canonicalLanguageName(language) === 'DOCX' && (text.startsWith('PK\x03\x04') || text.startsWith('PK\x05\x06'))) {
+      const network = new LinkNetwork();
+      network.insertTypedPoint(LinkType.Language, language);
+      const bytes = readBinaryString(text);
+      if (!bytes) {
+        const span = new SourceSpan(new ByteRange(0, encoder.encode(text).length));
+        network.insertSourceToken(language, text, span);
+        network.insertSyntaxNode(language, 'ERROR', [], { span, flags: LinkFlags.error() });
+        return network;
+      }
+      const coordinates = binaryStringCoordinates(bytes);
+      network.insertSourceToken(language, text, coordinates(0, bytes.length));
+      network._insertWordprocessingPackage(bytes, language, coordinates, configuration, 'binary-string');
+      return network;
+    }
     return LinkNetwork._parseWithLinks(text, language, configuration).network;
   }
 
@@ -136,7 +153,7 @@ export class LinkNetwork {
   }
 
   /** Stores arbitrary file bytes without requiring UTF-8 decoding. */
-  static parseBytes(bytes, format) {
+  static parseBytes(bytes, format, configuration = ParseConfiguration.default()) {
     const network = new LinkNetwork();
     network.insertTypedPoint(LinkType.Language, format);
     const source = Uint8Array.from(bytes);
@@ -151,7 +168,51 @@ export class LinkNetwork {
       const encoded = [...chunk].map((byte) => byte.toString(16).padStart(2, '0')).join('');
       network.insertSourceToken(format, `bytes:${encoded}`, span);
     }
+    if (canonicalLanguageName(format) === 'DOCX' && hasZipHeader(source)) {
+      const coordinates = (start, end) => new SourceSpan(new ByteRange(start, end), new Point(0, start), new Point(0, end));
+      network._insertWordprocessingPackage(source, format, coordinates, configuration, 'bytes');
+    }
     return network;
+  }
+
+  _insertWordprocessingPackage(bytes, language, coordinates, configuration, encoding) {
+    const { parts, errors } = readWordprocessingPackage(bytes);
+    const recovery = errors.map(diagnostic => {
+      const span = coordinates(diagnostic.offset, diagnostic.end ?? Math.min(bytes.length, diagnostic.offset + 1));
+      return this.insertLink([], new LinkMetadata({ linkType: LinkType.Syntax, term: 'ERROR', language,
+        named: true, span, definition: diagnostic.error, flags: LinkFlags.error() }));
+    });
+    const parsedParts = parts.map(part => {
+      const network = LinkNetwork.parse(part.text, 'DOCX', configuration);
+      return { ...part, network, clean: network.verifyFullMatch().isClean() };
+    });
+    const hasError = recovery.length > 0 || parsedParts.some(part => !part.clean);
+    const container = this.insertSyntaxNode(language, 'docx_package', recovery, {
+      span: coordinates(0, bytes.length), flags: new LinkFlags({ hasError }),
+    });
+    for (const part of parsedParts) {
+      this.insertLink([container], new LinkMetadata({ linkType: LinkType.Document, term: part.name,
+        language: 'DOCX', named: true, span: coordinates(part.start, part.end),
+        flags: part.clean ? LinkFlags.clean() : LinkFlags.error(),
+        definition: `derived document\n${encoding}\n${part.compression}\n${part.network.toLino()}` }));
+    }
+  }
+
+  /** Returns decoded documents and their encoded source ranges. */
+  derivedDocuments() {
+    const documents = [];
+    for (const link of this.links()) {
+      const { linkType, term, language, span, definition } = link.metadata();
+      if (linkType !== LinkType.Document || !span || !definition?.startsWith('derived document\n')) continue;
+      const encodingEnd = definition.indexOf('\n', 'derived document\n'.length);
+      const compressionEnd = definition.indexOf('\n', encodingEnd + 1);
+      if (encodingEnd === -1 || compressionEnd === -1) continue;
+      const encoding = definition.slice('derived document\n'.length, encodingEnd);
+      const compression = definition.slice(encodingEnd + 1, compressionEnd);
+      documents.push({ name: term, language, sourceRange: span.byteRange, encoding, compression,
+        network: LinkNetwork.fromLino(definition.slice(compressionEnd + 1)) });
+    }
+    return documents;
   }
 
   static parseFluent(text, language, configuration = ParseConfiguration.default()) {

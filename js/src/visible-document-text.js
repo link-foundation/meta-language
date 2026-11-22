@@ -3,6 +3,8 @@ import { documentProjectionRules } from './document-projection-rules.js';
 import { canonicalLanguageName } from './language-catalog.js';
 import { LinkType } from './primitives.js';
 import { documentScalarIsWhitespace } from './document-text-policy.js';
+import { binaryStringCoordinates } from './binary-string-source.js';
+import { readBinaryString } from './open-packaging-conventions.js';
 
 const utf8 = new TextEncoder();
 const readUtf8 = new TextDecoder('utf-8', { ignoreBOM: true });
@@ -141,18 +143,51 @@ function markdownSelections(records, embeddedHtml, read) {
 
 function docxSelections(records, read) {
   const chunks = [];
+  const namespaceBindings = new Map([['w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main']]);
+  const elementScopes = [];
   for (const record of records) {
     if (record.term !== 'element') continue;
-    const open = record.children.find(child => child.term === 'STag' || child.term === 'EmptyElemTag');
-    const name = markupName(open, read, ['Name']);
-    if (name === 'w:p') chunks.push({ kind: 'separator', start: open.start, end: open.end });
-    if (name === 'w:tab') chunks.push({ kind: 'replace', text: '\t', start: open.start, end: open.end });
-    if (name === 'w:br' || name === 'w:cr') chunks.push({ kind: 'break', start: open.start, end: open.end });
-    if (name !== 'w:t') continue;
-    const close = record.children.find(child => child.term === 'ETag');
-    if (close && open.end < close.start) {
-      chunks.push({ kind: 'text', syntax: 'xml', start: open.end, end: close.start, preserve: true });
+    while (elementScopes.length && elementScopes.at(-1).end <= record.start) {
+      for (const [prefix, previous] of elementScopes.pop().bindings) {
+        if (previous === undefined) namespaceBindings.delete(prefix);
+        else namespaceBindings.set(prefix, previous);
+      }
     }
+    const open = record.children.find(child => child.term === 'STag' || child.term === 'EmptyElemTag');
+    if (!open) continue;
+    const bindings = new Map();
+    for (const attribute of open.children.filter(child => child.term === 'Attribute')) {
+      const externalName = markupName(attribute, read, ['Name']);
+      if (externalName !== 'xmlns' && !externalName.startsWith('xmlns:')) continue;
+      const value = attribute.children.find(child => child.term === 'AttValue');
+      if (!value) continue;
+      const prefix = externalName.slice(6);
+      if (!bindings.has(prefix)) bindings.set(prefix, namespaceBindings.get(prefix));
+      namespaceBindings.set(prefix, read(value.start + 1, value.end - 1));
+    }
+    if (bindings.size) elementScopes.push({ end: record.end, bindings });
+    const qualified = markupName(open, read, ['Name']);
+    const separator = qualified.indexOf(':');
+    const namespace = namespaceBindings.get(separator === -1 ? '' : qualified.slice(0, separator));
+    if (namespace !== 'http://schemas.openxmlformats.org/wordprocessingml/2006/main' &&
+        namespace !== 'http://purl.oclc.org/ooxml/wordprocessingml/main') continue;
+    const name = qualified.slice(separator + 1);
+    if (name === 'p') chunks.push({ kind: 'separator', start: open.start, end: open.end });
+    if (name === 'tab') chunks.push({ kind: 'replace', text: '\t', start: open.start, end: open.end });
+    if (name === 'br' || name === 'cr') chunks.push({ kind: 'break', start: open.start, end: open.end });
+    if (name !== 't') continue;
+    const close = record.children.find(child => child.term === 'ETag');
+    if (!close || open.end >= close.start) continue;
+    const content = record.children.find(child => child.term === 'content');
+    let start = open.end;
+    for (const child of content?.children ?? []) {
+      if (!['CDSect', 'Comment', 'PI', 'element'].includes(child.term)) continue;
+      if (start < child.start) chunks.push({ kind: 'text', syntax: 'xml', start, end: child.start, preserve: true });
+      const literal = child.children.find(part => part.term === 'CData');
+      if (literal) chunks.push({ kind: 'text', start: literal.start, end: literal.end, preserve: true });
+      start = child.end;
+    }
+    if (start < close.start) chunks.push({ kind: 'text', syntax: 'xml', start, end: close.start, preserve: true });
   }
   return chunks.sort(rangeOrder);
 }
@@ -259,15 +294,27 @@ function projectChunks(chunks, read, options) {
 }
 
 class VisibleDocumentText {
-  constructor(text, map) {
+  constructor(text, map, sourceOrdered = true) {
     this.text = text;
     this.map = map;
+    Object.defineProperty(this, 'sourceOrdered', { value: sourceOrdered });
   }
 
   sourceRange(start, end) {
     if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end <= start || end > this.text.length) return null;
     const first = spanAt(this.map, start);
     const last = spanAt(this.map, end - 1);
+    if (!this.sourceOrdered && first !== last) {
+      let sourceStart = Infinity;
+      let sourceEnd = 0;
+      for (const span of this.map) {
+        if (span.textEnd <= start) continue;
+        if (span.textStart >= end) break;
+        sourceStart = Math.min(sourceStart, sourceOffset(span, Math.max(start, span.textStart), false));
+        sourceEnd = Math.max(sourceEnd, sourceOffset(span, Math.min(end, span.textEnd), true));
+      }
+      return { start: sourceStart, end: sourceEnd };
+    }
     return { start: sourceOffset(first, start, false), end: sourceOffset(last, end, true) };
   }
 }
@@ -297,6 +344,39 @@ function sourceOffset(span, offset, end) {
   return end ? span.sourceEnd : span.sourceStart;
 }
 
+function projectPackagedText(documents, read, options) {
+  const parts = [];
+  const map = [];
+  let textEnd = 0;
+  for (const document of documents) {
+    const projection = document.network.visibleText(options);
+    if (!projection.text) continue;
+    const { start, end } = document.sourceRange;
+    if (textEnd && options.blockSeparator) {
+      parts.push(options.blockSeparator);
+      map.push({ textStart: textEnd, textEnd: textEnd + options.blockSeparator.length,
+        sourceStart: start, sourceEnd: start, kind: 'separator' });
+      textEnd += options.blockSeparator.length;
+    }
+    if (document.compression === 'stored') {
+      const coordinates = document.encoding === 'binary-string'
+        ? binaryStringCoordinates(readBinaryString(read(start, end))) : null;
+      for (const span of projection.map) {
+        const range = coordinates?.(span.sourceStart, span.sourceEnd).byteRange;
+        const sourceStart = start + (range?.start ?? span.sourceStart);
+        const sourceEnd = start + (range?.end ?? span.sourceEnd);
+        map.push({ ...span, textStart: span.textStart + textEnd, textEnd: span.textEnd + textEnd, sourceStart, sourceEnd });
+      }
+    } else {
+      map.push({ textStart: textEnd, textEnd: textEnd + projection.text.length,
+        sourceStart: start, sourceEnd: end, kind: 'replacement' });
+    }
+    parts.push(projection.text);
+    textEnd += projection.text.length;
+  }
+  return new VisibleDocumentText(parts.join(''), map, false);
+}
+
 /** Projects container syntax into text, keeping the original UTF-8 source ranges. */
 export function projectVisibleDocumentText(network, {
   blockSeparator = '\n', decodeEntities = true, collapseWhitespace = true, nbsp = 'space', listBullet = '',
@@ -304,8 +384,13 @@ export function projectVisibleDocumentText(network, {
   if (nbsp !== 'space' && nbsp !== 'keep') throw new TypeError('nbsp must be space or keep');
   const sourceLanguage = network.links().find(link => link.metadata().linkType === LinkType.Language);
   const language = canonicalLanguageName(sourceLanguage?.metadata().term ?? '');
-  const source = utf8.encode(network.reconstructText());
+  const packaged = language === 'DOCX' && network.links().some(link => link.metadata().term === 'docx_package');
+  const documents = packaged ? network.derivedDocuments() : [];
+  const source = !packaged || documents.some(document => document.encoding === 'binary-string')
+    ? utf8.encode(network.reconstructText()) : new Uint8Array();
   const read = (start, end) => readUtf8.decode(source.subarray(start, end));
+  const options = { blockSeparator, decodeEntities, collapseWhitespace, nbsp, listBullet };
+  if (packaged) return projectPackagedText(documents, read, options);
   const records = ['HTML', 'Markdown', 'DOCX'].includes(language) ? syntaxLinks(network) : [];
   const ownRecords = records.filter(record => record.language === language);
   let chunks = [];
@@ -319,5 +404,5 @@ export function projectVisibleDocumentText(network, {
   } else {
     chunks.push({ kind: 'text', start: 0, end: source.length, preserve: true });
   }
-  return projectChunks(chunks, read, { blockSeparator, decodeEntities, collapseWhitespace, nbsp, listBullet });
+  return projectChunks(chunks, read, options);
 }
