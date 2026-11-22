@@ -13,6 +13,7 @@ import {typeError,unsupported} from './diagnostics.js';
 import {readFormalDatatypeConstructiveProfiles} from './callable-data.js';
 import {readRustBorrowedExpressionLifetimeScopeError,readRustBorrowedVectorObservationError,planRustBorrowedVectorResultParameters} from './rust-borrowed-vector-rules.js';
 import * as rules from './rust-borrowed-source-region-rules.js';
+import {acceptRustSourceOwnedStringConcatenation} from './rust-exclusive-source-string-rules.js';
 import {measureRustSourcePositionMetadata} from './rust-standard-sum-source-metadata.js';
 import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
 import {sameType} from './types.js';
@@ -195,6 +196,12 @@ class SourceRegions{
    // remove the normal path which short-circuits before evaluating it.
    const boolean={type:{kind:'bool'},wrappers:[],lifetimes:[],owner:{kind:'primitive',path:['bool'],arguments:[]}},short={k:'lit',value:node.op==='or',type:{kind:'bool'}};
    value=this.expression({k:'if',cond:node.left,then:node.op==='and'?node.right:short,else:node.op==='and'?short:node.right,type:node.type},env,bindings,boolean,depth+1);
+  }else if(this.composed&&operation==='binary'&&node.op==='concat'&&role(wanted)==='string'){
+   const current=this.read(this.expression(node.left,env,bindings,null,depth+1),'read',node.left);
+   const suffix=this.read(this.expression(node.right,env,bindings,null,depth+1),'read',node.right);
+   if(!acceptRustSourceOwnedStringConcatenation(current.role,observationRole(suffix)))fail('owned String concatenation retains its actual owned input and shared text operand',node);
+   this.compatible(current,wanted,node.left);this.closedOutput(wanted,node);
+   value=this.value(this.position(wanted),this.root('',true),[],true);
   }else if(operation==='owned append'){
    const operands=[node.left,node.right].map(child=>this.read(this.expression(child,env,bindings,wanted,depth+1),'move',child));for(const operand of operands)this.compatible(operand,wanted,node);this.closedOutput(wanted,node);value=this.value(this.position(wanted),this.root('',true),[],true);
   }else if(operation==='let'){

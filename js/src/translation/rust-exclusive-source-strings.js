@@ -5,6 +5,7 @@ import {STRING} from './types.js';
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {readRustSourceTypeOwner} from './rust-source-signatures.js';
 import {projectRustOwnedRecordStatePlace} from './rust-owned-record-state.js';
+import {noteRustBorrowedExpressionSourcePosition} from './rust-borrowed-expression-positions.js';
 import {readRustExclusiveSourceStringMethodArity,acceptRustExclusiveSourceStringReceiver,acceptRustExclusiveSourceStringSuffix} from './rust-exclusive-source-string-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive String source mutation',reason,span);};
 export function readRustExclusiveSourceStringMethod(parser,origin,method,path){
@@ -23,8 +24,8 @@ export function createRustExclusiveSourceStringMutation(parser,place,selected,ar
   checkRustOwnedOrigin(parser.origins,suffix,span);
  }
  const result={...place.field,wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceBorrowedPlace:false,sourceExclusiveParameter:false,sourceOwnedResultProof:true,copyEvidence:false,textSourceModel:'owned string'};
- if(selected.method==='clear')return parser.origins.markOwnedStringConstructor({k:'str',value:'',span},result);
+ if(selected.method==='clear')return noteRustBorrowedExpressionSourcePosition(parser,parser.origins.markOwnedStringConstructor({k:'str',value:'',span},result),path);
  const transport=parser.ownedRecordState?.effectTransport;if(typeof transport?.read!=='function')fail('String mutation requires its actual ordered caller state continuation',span);
  const root=transport.read(place.slot,{k:'name',path:[place.slot.name],span}),left=parser.origins.mark(projectRustOwnedRecordStatePlace(parser,place.layouts,root,span),place.field);
- return parser.origins.markOwnedStringConstructor({k:'binary',op:'concat',left,right:args[0],span},result);
+ return noteRustBorrowedExpressionSourcePosition(parser,parser.origins.markOwnedStringConstructor({k:'binary',op:'concat',left,right:args[0],span},result),path);
 }

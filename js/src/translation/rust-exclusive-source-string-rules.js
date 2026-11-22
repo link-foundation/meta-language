@@ -11,3 +11,5 @@ export function acceptRustExclusiveSourceStringReceiver(kind,model,layers,proven
  * @param {boolean} proven @param {boolean} references @param {string} owner
  * @param {string} path @param {number} children @returns {boolean} */
 export function acceptRustExclusiveSourceStringSuffix(kind,model,layers,proven,references,owner,path,children){return acceptRustStringAdditionOperand('right',kind,model,layers,proven,references,acceptRustStringAdditionOwner('right',owner,path,children));}
+/** @param {string} current @param {string} suffix @returns {boolean} */
+export function acceptRustSourceOwnedStringConcatenation(current,suffix){return current==='string'&&suffix==='text';}
