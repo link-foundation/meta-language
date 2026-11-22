@@ -28,7 +28,8 @@ export function readJavaScriptSourceClassOwner(value,fields){const owners=readJa
 export function acceptJavaScriptClassOwnerTypeObservation(type,witness,operation){if(type.kind!=='record'||type.reference!==true||typeof type.sourceClassOwner!=='string')return false;const owner=readJavaScriptClassOwnerRecords(witness).find(owner=>owner.constructor===type.sourceClassOwner);return Boolean(owner)&&acceptJavaScriptClassOwnerObservation(owner.representation,operation==='comparison'?'identity':operation);}
 export function checkJavaScriptClassOwners(program){
  if(Object.hasOwn(program,'sourceClassOwners'))readJavaScriptClassOwnerRecords(program.sourceClassOwners);
- const normalized={...program,declarations:[...program.declarations.values()]},facts=createSurfaceReferenceFacts(normalized,{retainValues:true});
+ // Text leaves carry spelling, while constructor allocations keep their graph identity.
+ const normalized={...program,declarations:[...program.declarations.values()]},facts=createSurfaceReferenceFacts(normalized,{retainValues:true,shareText:true});
  const keys=facts.values.map(value=>value&&typeof value==='object'&&typeof value.kind==='string'?typeKey(value):'');
  const error=readJavaScriptClassOwnerError(facts.forms,facts.texts,facts.starts,facts.counts,facts.labels,facts.targets,keys,facts.root);if(error)fail(error);
 }

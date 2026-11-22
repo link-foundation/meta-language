@@ -40,7 +40,7 @@ pub(crate) fn source_record_owner(witness:Option<&Value>,fields:&[String])->Resu
  if owner=="#ambiguous"{return Err(fail("a record cannot combine different actual class brands"));}Ok(if owner.is_empty(){None}else{Some(owner)})
 }
 pub(crate) fn validate_records(value:&Value)->Result<()>{
- let facts=super::surface_reference_facts::create_surface_reference_facts(value);
+ let facts=super::surface_reference_facts::create_surface_reference_facts_with_shared_text(value);
  let keys=facts.values.iter().map(|value|if value.get("kind").is_some(){serde_json::from_value::<Type>((*value).clone()).map(|ty|ty.key()).unwrap_or_default()}else{String::new()}).collect::<Vec<_>>();
  let error=decode_policy_text(&rules::read_java_script_class_owner_error(
   &policy_text(&facts.forms),&policy_text(&facts.texts),&facts.starts,&facts.counts,

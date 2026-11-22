@@ -12130,6 +12130,11 @@ forms reduce repeated constructor/continuation expansion for automatic Rust and
 editable Links generation; they neither raise the 100,000 semantic-visit gate
 nor establish execution evidence or a completed equivalence certificate.
 
+The class ownership fact transport represents exact text values once per
+distinct text. Every labeled edge is retained, and allocation and expression
+nodes keep their actual identities. Both runtimes apply the same complete
+class-graph limit and the same ownership checks to these facts.
+
 Source authoring may select the separate `closed value constructor selection 1`
 profile. It resolves every candidate through the actual checked declaration,
 then captures the original condition tree once as a bounded alternative ordinal.

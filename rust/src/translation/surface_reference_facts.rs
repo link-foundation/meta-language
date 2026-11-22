@@ -1,5 +1,7 @@
 //! Mechanical JSON transport for the generated surface reference rules.
 
+use std::collections::HashMap;
+
 use serde_json::Value;
 
 /// Packed primitive columns; the JavaScript transport defines their order.
@@ -33,6 +35,17 @@ fn number(value: usize) -> f64 {
 
 /// Serialize only field labels, primitive spellings and ordered graph edges.
 pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_> {
+    create_facts(value, false)
+}
+
+/// Share exact text leaves and retain all object identities and labeled edges.
+pub(super) fn create_surface_reference_facts_with_shared_text(
+    value: &Value,
+) -> SurfaceReferenceFacts<'_> {
+    create_facts(value, true)
+}
+
+fn create_facts(value: &Value, share_text: bool) -> SurfaceReferenceFacts<'_> {
     #[derive(Default)]
     struct Columns<'a> {
         forms: Vec<String>,
@@ -42,9 +55,16 @@ pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_
         labels: Vec<String>,
         targets: Vec<f64>,
         values: Vec<&'a Value>,
+        text_identities: Option<HashMap<&'a str, f64>>,
     }
     fn insert<'a>(value: &'a Value, into: &mut Columns<'a>) -> f64 {
         let identity = into.forms.len();
+        if let (Value::String(text), Some(identities)) = (value, &mut into.text_identities) {
+            if let Some(identity) = identities.get(text.as_str()) {
+                return *identity;
+            }
+            identities.insert(text, number(identity));
+        }
         let (form, text) = match value {
             Value::Null => ("null", String::new()),
             Value::Bool(value) => ("boolean", value.to_string()),
@@ -87,7 +107,10 @@ pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_
         }
         number(identity)
     }
-    let mut data = Columns::default();
+    let mut data = Columns {
+        text_identities: share_text.then(HashMap::new),
+        ..Columns::default()
+    };
     let root = insert(value, &mut data);
     let size = number(data.forms.len());
     let columns = [data.forms.clone(), data.texts.clone(), data.labels.clone()].concat();
@@ -109,5 +132,18 @@ pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_
         labels: data.labels,
         targets: data.targets,
         values: data.values,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::create_surface_reference_facts_with_shared_text;
+
+    #[test]
+    fn shared_text_keeps_distinct_allocation_facts() {
+        let graph = serde_json::json!([{"k": "referenceAllocate"}, {"k": "referenceAllocate"}]);
+        let facts = create_surface_reference_facts_with_shared_text(&graph);
+        assert_eq!(facts.forms, ["array", "object", "string", "object"]);
+        assert_eq!(facts.targets, [2.0, 2.0, 1.0, 3.0]);
     }
 }
