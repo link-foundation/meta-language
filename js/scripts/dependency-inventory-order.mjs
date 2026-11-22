@@ -1,6 +1,30 @@
 // Declaration refreshes replace facts by identity and append new identities.
 import assert from 'node:assert/strict';
 
+const directRuntimeRequirements = new Map([
+  ['crate rust/Cargo.lock base64@0.23.1', '0.23.1'],
+  ['crate rust/Cargo.lock crc32fast@1.5.2', '1.5.2'],
+  ['crate rust/Cargo.lock miniz_oxide@0.9.1', '0.9.1'],
+]);
+
+/** Restore the three transitive declarations in the certified PDF predecessors. */
+export function restoreTransitivePdfDependency(current, historical) {
+  assert.equal(current.id, historical.id);
+  const requirement = directRuntimeRequirements.get(historical.id);
+  if (requirement === undefined || current.role === 'transitive') return current;
+  const { declaredIn, role, kind, requirement: actualRequirement, ...facts } = current;
+  assert.deepEqual({ declaredIn, role, kind, requirement: actualRequirement }, {
+    declaredIn: ['rust/Cargo.lock', 'rust/Cargo.toml'], role: 'direct', kind: 'runtime', requirement,
+  });
+  assert.deepEqual(historical.declaredIn, ['rust/Cargo.lock']);
+  assert.equal(historical.role, 'transitive');
+  assert.equal(historical.kind, undefined);
+  assert.equal(historical.requirement, undefined);
+  const restored = { ...facts, declaredIn: historical.declaredIn, role: historical.role };
+  assert.deepEqual(restored, historical);
+  return Object.fromEntries(Object.keys(historical).map(key => [key, restored[key]]));
+}
+
 /** Preserve existing record order without retaining absent or obsolete facts. */
 export function retainDependencyInventoryOrder(previous,current) {
   const before=new Set(previous.items.map(row=>row.id));

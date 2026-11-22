@@ -7,7 +7,7 @@ import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {readOwnCodebaseTestRegistrationPolicy,verifyOwnCodebaseTestRegistrationHistory} from './own-codebase-test-registration-history.mjs';
 const root=new URL('../../',import.meta.url);
 
-/** Reproduce the complete authenticated sources, three current assignments and exact inverse. */
+/** Reproduce the complete authenticated sources, current assignments and exact inverse. */
 export function generateOwnCodebaseTestRegistrationSources({check=false}={}){
   const policy=readOwnCodebaseTestRegistrationPolicy();
   const history={...policy,sources:policy.sources.map(row=>{
@@ -29,6 +29,6 @@ export function generateOwnCodebaseTestRegistrationSources({check=false}={}){
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   const args=process.argv.slice(2);assert.ok(args.length<=1&&args.every(arg=>arg==='--check'));
-  generateOwnCodebaseTestRegistrationSources({check:args.includes('--check')});
-  console.log('Three current tests are classified; complete original classifier and every dependency assertion remain exact.');
+  const history=generateOwnCodebaseTestRegistrationSources({check:args.includes('--check')});
+  console.log(`${history.registrations.length} current tests are classified, with the complete original classifier and dependency assertions preserved.`);
 }

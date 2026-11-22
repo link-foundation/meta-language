@@ -60,6 +60,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'js/src/translation/emit-rust.js',
       'rust/src/translation/check/expressions/branches.rs',
       'experiments/binary-metadata-buffer/native-observations.mjs',
+      'js/scripts/test-groups.mjs','js/scripts/generate-own-codebase-test-registration-sources.mjs',
     ].map(path=>({path,revision:baseline})),
     {path:'js/scripts/scheduling-source-history.mjs',revision:'231c6610fc93225fccb1682ab2943729e0c0e52e'}];
     const additions=selections.filter(({path,revision})=>!sources.some(row=>row.file===path&&row.predecessor.revision===revision));

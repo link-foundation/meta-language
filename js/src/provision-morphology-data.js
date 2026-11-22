@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
-import { openRussianMorphology, russianMorphologySource } from '../src/morphology-dictionary.js';
-import { readNamedZipEntries } from '../src/open-packaging-conventions.js';
+import { openRussianMorphology, russianMorphologySource } from './morphology-dictionary.js';
+import { readNamedZipEntries } from './open-packaging-conventions.js';
 
 const [directory, source] = process.argv.slice(2);
 if (!directory) throw new Error('usage: npm run morphology:provision -- DIRECTORY [PINNED_WHEEL]');
@@ -43,7 +43,7 @@ if (existsSync(destination)) {
       if (digest(content) !== specification.files.get(file).digest) throw new Error(`invalid digest for ${file}`);
       writeFileSync(join(temporary, file), content, { flag: 'wx' });
     }
-    const license = new URL('../src/data/morphology/OPEN-CORPORA-LICENSE.txt', import.meta.url);
+    const license = new URL('./data/morphology/OPEN-CORPORA-LICENSE.txt', import.meta.url);
     writeFileSync(join(temporary, 'LICENSE.txt'), readFileSync(license), { flag: 'wx' });
     openRussianMorphology(temporary);
     renameSync(temporary, destination);

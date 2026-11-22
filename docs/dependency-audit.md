@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 255 | 254 | 1 | 0 |
+| Generators | 267 | 266 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 91 | 0 | 0 | 91 |
+| Published artifact contents | 102 | 0 | 0 | 102 |
 
 ## JavaScript engines
 
@@ -153,7 +153,7 @@ they are.
 | `anstyle` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.14` | transitive |  | 1.0.14 (crates.io, anstyle) | version | current |  |
 | `anyhow` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.104` | transitive |  | 1.0.104 (crates.io, anyhow) | version | current |  |
 | `autocfg` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.1` | transitive |  | 1.5.1 (crates.io, autocfg) | version | current |  |
-| `base64` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.23.1` | transitive |  | 0.23.1 (crates.io, base64) | version | current |  |
+| `base64` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.1` | direct, runtime | `0.23.1` | 0.23.1 (crates.io, base64) | version | current |  |
 | `beef` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.2` | transitive |  | 0.5.2 (crates.io, beef) | version | current |  |
 | `bitflags` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.13.2` | transitive |  | 2.13.2 (crates.io, bitflags) | version | current |  |
 | `block-buffer` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.12.1` | transitive |  | 0.12.1 (crates.io, block-buffer) | version | current |  |
@@ -174,7 +174,7 @@ they are.
 | `counter` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.7.1` | transitive |  | 0.7.1 (crates.io, counter) | version | current |  |
 | `cpufeatures` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.1` | transitive |  | 0.3.1 (crates.io, cpufeatures) | version | current |  |
 | `crawdad` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.1` | transitive |  | 0.4.1 (crates.io, crawdad) | version | current |  |
-| `crc32fast` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.2` | transitive |  | 1.5.2 (crates.io, crc32fast) | version | current |  |
+| `crc32fast` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.5.2` | direct, runtime | `1.5.2` | 1.5.2 (crates.io, crc32fast) | version | current |  |
 | `crossbeam-deque` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.8` | transitive |  | 0.8.8 (crates.io, crossbeam-deque) | version | current |  |
 | `crossbeam-epoch` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.21` | transitive |  | 0.9.21 (crates.io, crossbeam-epoch) | version | current |  |
 | `crossbeam-utils` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.23` | transitive |  | 0.8.23 (crates.io, crossbeam-utils) | version | current |  |
@@ -252,7 +252,7 @@ they are.
 | `md5` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.1` | transitive |  | 0.8.1 (crates.io, md5) | version | current |  |
 | `memchr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.8.3` | transitive |  | 2.8.3 (crates.io, memchr) | version | current |  |
 | `memmap2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.11` | transitive |  | 0.9.11 (crates.io, memmap2) | version | current |  |
-| `miniz_oxide` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.1` | transitive |  | 0.9.1 (crates.io, miniz_oxide) | version | current |  |
+| `miniz_oxide` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.9.1` | direct, runtime | `0.9.1` | 0.9.1 (crates.io, miniz_oxide) | version | current |  |
 | `multiversion_no_op` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, multiversion_no_op) | version | current |  |
 | `munge_macro` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, munge_macro) | version | current |  |
 | `munge` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, munge) | version | current |  |
@@ -803,6 +803,18 @@ they are.
 | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-language-identification-confidence.mjs` | `js/scripts/build-language-identification-confidence.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-document-character-references.mjs` | `js/scripts/build-document-character-references.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-document-container-policy.mjs` | `js/scripts/build-document-container-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-document-text-policy.mjs` | `js/scripts/build-document-text-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-grammar-search-policy.mjs` | `js/scripts/build-grammar-search-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-json-decoder-grammar.mjs` | `js/scripts/build-json-decoder-grammar.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-lark-regex-policy.mjs` | `js/scripts/build-lark-regex-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-morphology-vocabulary.mjs` | `js/scripts/build-morphology-vocabulary.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-natural-language-value-policy.mjs` | `js/scripts/build-natural-language-value-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-natural-language-values.mjs` | `js/scripts/build-natural-language-values.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-pdf-font-maps.mjs` | `js/scripts/build-pdf-font-maps.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-pest-builtin-grammar.mjs` | `js/scripts/build-pest-builtin-grammar.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-text-location-policy.mjs` | `js/scripts/build-text-location-policy.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -962,6 +974,17 @@ they are.
 | `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/document-character-references.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/document-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/json-document/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/morphology/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/morphology/OPEN-CORPORA-LICENSE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/natural-language-values/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/pdf-font-encodings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/pdf-glyph-map-license.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/pdf-glyph-map.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/pest-built-ins-license.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/pest-built-ins.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 
