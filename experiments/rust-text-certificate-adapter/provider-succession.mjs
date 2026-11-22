@@ -123,9 +123,16 @@ export function verifyReviewedOverlayProviderSuccessionHistory(packet){
   return packet;
 }
 
+function reviewedOverlayProviderHistory(){
+  if(!cached){
+    const file=new URL(OVERLAY_PROVIDER_SUCCESSOR_OUTPUT,root),bytes=readFileSync(file);
+    assert.equal(hash(bytes),packetSha256);
+    cached=verifyReviewedOverlayProviderSuccessionHistory(readProjectData(file));
+  }
+  return cached;
+}
 export function readReviewedOverlayProviderSuccessionHistory(){
-  if(!cached){const bytes=readFileSync(new URL(OVERLAY_PROVIDER_SUCCESSOR_OUTPUT,root));assert.equal(hash(bytes),packetSha256);cached=verifyReviewedOverlayProviderSuccessionHistory(readProjectData(new URL(OVERLAY_PROVIDER_SUCCESSOR_OUTPUT,root)));}
-  return structuredClone(cached);
+  return structuredClone(reviewedOverlayProviderHistory());
 }
 export function verifyCurrentReviewedOverlayProviderSources(packet){
   for(const row of packet.profiles.at(-1).certificates)assert.equal(row.current.source,readFileSync(new URL('js/src/'+row.module,root),'utf8'),
@@ -136,7 +143,10 @@ export function verifyReviewedOverlayProviderSuccession(packet){
   return verifyCurrentReviewedOverlayProviderSources(verifyReviewedOverlayProviderSuccessionHistory(packet));
 }
 export function readReviewedOverlayProviderSuccession(){
-  return verifyCurrentReviewedOverlayProviderSources(readReviewedOverlayProviderSuccessionHistory());
+  return structuredClone(currentReviewedOverlayProviderHistory());
+}
+function currentReviewedOverlayProviderHistory(){
+  return verifyCurrentReviewedOverlayProviderSources(reviewedOverlayProviderHistory());
 }
 
 export function readReviewedOverlayProviderSuccessors(previous){
@@ -176,7 +186,9 @@ export function restoreReviewedOverlayProviderHostSource(source,file){
 /** Only an explicitly historical caller uses this exact checkpoint→8d view. */
 export function restoreReviewedOverlayProviderModuleSource(source,file,sourceCommit=null){
   if(!file.startsWith('js/src/'))return source;
-  const module=file.slice('js/src/'.length),packet=readReviewedOverlayProviderSuccession();
+  // The inverse returns a string. Check all physical owners, sharing only the
+  // private certificate packet instead of cloning it for each module read.
+  const module=file.slice('js/src/'.length),packet=currentReviewedOverlayProviderHistory();
   const target=sourceCommit===null?0:packet.profiles.findIndex(row=>row.sourceCommit===sourceCommit);
   assert.ok(target>=0,'one actual certified source epoch selects the historical view');
   let historical=source;
