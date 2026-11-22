@@ -1,6 +1,20 @@
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {testJavaScriptSourceCoordinate} from './javascript-source-coordinate-rules.js';
 
+/** Construction authority comes from the protected builtin or source registry.
+ * @typedef {{$:'arrayConstructorFact',identity:bigint,constructable:boolean,realm:bigint,intrinsicArray:boolean,intrinsicKind?:string}} JavaScriptArrayConstructorFact */
+/** @typedef {{$:'constructorRealm',realm:bigint,objectPrototype:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,arrayConstructor:JavaScriptSemanticValue,numberPrototype?:JavaScriptSemanticValue,booleanPrototype?:JavaScriptSemanticValue,stringPrototype?:JavaScriptSemanticValue,integerPrototype?:JavaScriptSemanticValue,symbolPrototype?:JavaScriptSemanticValue,mapPrototype?:JavaScriptSemanticValue,setPrototype?:JavaScriptSemanticValue,weakMapPrototype?:JavaScriptSemanticValue,weakSetPrototype?:JavaScriptSemanticValue}} JavaScriptConstructorRealm */
+/** @typedef {{$:'arraySpeciesDirectory',realm:bigint,arrayConstructor:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,speciesKey:JavaScriptSemanticValue,constructors:JavaScriptArrayConstructorFact[],constructorRealms?:JavaScriptConstructorRealm[]}} JavaScriptArraySpeciesDirectory */
+/** @typedef {{$:'callSourceUnit',identifier:string,text:JavaScriptSemanticValue}} JavaScriptCallSourceUnit */
+/** @typedef {{$:'callSourceSpan',unit:string,start:number,end:number}} JavaScriptCallSourceSpan */
+
+/** @param {JavaScriptArrayConstructorFact[]} facts @param {bigint} identity @returns {number} */
+export function findJavaScriptCallConstructorFact(facts,identity){
+  let low=0,high=facts.length;
+  while(low<high){const middle=Math.floor((low+high)/2),fact=facts[middle];if(fact===undefined)return -1;if(fact.identity===identity)return middle;if(fact.identity<identity)low=middle+1;else high=middle;}
+  return -1;
+}
+
 /** Registers are coordinates in checked executable Links data, not language
  * property keys. Coercions belong to explicit operations before typed opcodes.
  * @typedef {{$:'constant',destination:number,value:JavaScriptSemanticValue} |
@@ -94,6 +108,38 @@ export function findJavaScriptCallCodeFunction(program,identity){
   while(low<high){const middle=Math.floor((low+high)/2),entry=program.functions[middle];if(entry===undefined)return -1;if(entry.identity===identity)return middle;if(entry.identity<identity)low=middle+1;else high=middle;}
   return -1;
 }
+/** Order a dense callable directory by exact identity, preserving input order
+ * when identities compare equal. Merge adjacent runs in successive passes.
+ * @param {JavaScriptCallFunction[]} functions @returns {JavaScriptCallFunction[]} */
+export function orderJavaScriptCallCodeFunctions(functions){
+  let ordered=functions.slice();
+  for(let width=1;width<ordered.length;width*=2){
+    /** @type {JavaScriptCallFunction[]} */const merged=[];
+    for(let start=0;start<ordered.length;start+=2*width){
+      const middle=Math.min(start+width,ordered.length),end=Math.min(start+2*width,ordered.length);
+      let left=start,right=middle;
+      while(left<middle&&right<end){
+        const first=ordered[left],second=ordered[right];
+        if(first===undefined)return functions.slice();
+        if(second===undefined)return functions.slice();
+        if(first.identity<=second.identity){merged.push(first);left+=1;}
+        else{merged.push(second);right+=1;}
+      }
+      for(let index=left;index<middle;index+=1){
+        const value=ordered[index];
+        if(value===undefined)return functions.slice();
+        merged.push(value);
+      }
+      for(let index=right;index<end;index+=1){
+        const value=ordered[index];
+        if(value===undefined)return functions.slice();
+        merged.push(value);
+      }
+    }
+    ordered=merged;
+  }
+  return ordered;
+}
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
@@ -126,7 +172,11 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'literalPrototype':return [instruction.destination,instruction.object,instruction.value];
     case 'functionName':return [instruction.destination,instruction.object,instruction.key];
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'argumentRest':case 'objectEnumeration':return [instruction.destination,instruction.prototype];
-    case 'collectionIteratorAllocate':return [instruction.destination,instruction.prototype].concat(instruction.input===undefined?[]:[instruction.input]);
+    case 'collectionIteratorAllocate':{
+      const input=instruction.input;
+      if(input===undefined)return [instruction.destination,instruction.prototype];
+      return [instruction.destination,instruction.prototype,input];
+    }
     case 'iteratorProtocol':return [instruction.destination,instruction.done,instruction.input,instruction.iteratorKey];
     case 'collectionIteratorResult':return [instruction.destination,instruction.arrayPrototype,instruction.objectPrototype];
     case 'closureAllocate':return [instruction.destination,instruction.receiver].concat(instruction.captures);

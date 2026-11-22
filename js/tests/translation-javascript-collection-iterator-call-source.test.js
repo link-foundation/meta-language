@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {compileJavaScriptCollectionIteratorCallDirectory} from '../src/translation/javascript-collection-iterator-call-source.js';
+import {orderJavaScriptCallCodeFunctions} from '../src/translation/javascript-call-code.js';
 import {readJavaScriptCallProgramError} from '../src/translation/javascript-call-machine.js';
 const object=identity=>({$:'object',identity,callable:false});
 const owner=(identity,operation)=>({$:'collectionIteratorMethodOwner',identity,realm:1n,operation,iteratorPrototype:object(2n),arrayPrototype:object(3n),objectPrototype:object(4n)});
@@ -21,4 +22,18 @@ test('a source spelling cannot assign one real identity incompatible iterator se
 test('next aliases retain the actual allocation prototypes and source realm',()=>{
  for(const replacement of [{arrayPrototype:object(99n)},{objectPrototype:object(99n)},{realm:2n}])assert.notEqual(compileJavaScriptCollectionIteratorCallDirectory(directory([owner(9n,'MapIterator.next'),{...owner(9n,'MapIterator.next'),...replacement}])).error,'');
  assert.notEqual(compileJavaScriptCollectionIteratorCallDirectory(directory([owner(9n,'Map.clear')])).error,'');
+});
+
+test('callable ordering is stable across uneven runs and compares full unsigned identities',()=>{
+ const method=(identity,realm)=>({$:'callFunction',identity,realm,receiverMode:'strict',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[]});
+ const low=method(9007199254740992n,1n), high=method(18446744073709551615n,1n);
+ const first=method(9007199254740993n,1n), second=method(first.identity,2n);
+ const smallest=method(1n,1n), beforeHigh=method(high.identity-1n,1n), another=method(6n,1n);
+ const original=[high,first,low,second,beforeHigh,smallest,another];
+ const input=Object.freeze(original.slice());
+ const ordered=orderJavaScriptCallCodeFunctions(input);
+ assert.deepEqual(ordered,[smallest,another,low,first,second,beforeHigh,high]);
+ assert.equal(ordered[3],first);
+ assert.equal(ordered[4],second);
+ assert.deepEqual(input,original);
 });

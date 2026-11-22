@@ -145,7 +145,7 @@ peak resident memory for the selected fixture. Catalog-wide workloads and
 their measurements are still required.
 [Pinned link-cli binary archive format](https://github.com/link-foundation/link-cli/blob/fbc90908772dd8117c4d1be05bc16defd1cb9540/docs/protocol/binary-links-notation.md#10-store-archive)
 
-The source generator now handles 52 of the 60 previously ungenerated Rust
+The source generator now handles 53 of the 60 previously ungenerated Rust
 baseline modules. An independent native lint-policy draft resolved 39 policy
 groups and produced 1,199 declaration checks. Six groups refused optional
 JavaScript constructor fields at the last full authoring attempt. Since that
@@ -155,11 +155,16 @@ authors generated native source. The Error class compiler passed its earlier
 tagged object spread after both frontends learned to preserve optional-field
 presence and evaluation order across finite literal choices. The JavaScript
 frontend emitted the shared regression fixture to JavaScript and Rust.
-The next Error class diagnostic concerns the `sourceLet` and `sourceLocalLet`
-switch case. The inner tag guard projects `body` as though `sourceConstant`
-could reach that case. The source author stopped at `242502..242927` with the
-diagnostic in `ci-logs/javascript-error-kernels-literal-spread-source.log`.
-Native compilation and the lint-policy assertions remain pending.
+The collection iterator callable source author produced its native code,
+typed program and source receipt in
+`ci-logs/javascript-collection-iterator-append-source.log`. The callable
+directory shares its construction authority and source-span schema with the
+call-code module. Its stable merge orders exact unsigned64 identities, and
+the draft regression checks ties, wide identities and input preservation.
+The Error class closure progressed past the grouped `sourceLet` and
+`sourceLocalLet` field projection. It still needs the complete call-source
+closure to regenerate. Native compilation, regression execution and the
+lint-policy assertions remain pending.
 
 The draft JSON holdout measures RPNI, EDSM or ALERGIA in a separate process
 against the same pinned JSONTestSuite corpus and budgets. It keeps training

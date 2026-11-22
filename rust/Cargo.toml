@@ -153,6 +153,7 @@ include = [
     "src/data/javascript-class-observation-program.lino",
     "src/data/javascript-class-owner-program.lino",
     "src/data/javascript-class-source-program.lino",
+    "src/data/javascript-collection-iterator-call-source-program.lino",
     "src/data/javascript-collection-rules-program.lino",
     "src/data/javascript-comparison-program.lino",
     "src/data/javascript-data-field-program.lino",

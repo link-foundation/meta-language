@@ -3,11 +3,7 @@
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {testJavaScriptArrayValue} from './javascript-arrays.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-/** Facts come from the actual protected builtin/source declaration registry.
- * Their validation establishes shape/context, not an execution certificate.
- * @typedef {{$:'arrayConstructorFact',identity:bigint,constructable:boolean,realm:bigint,intrinsicArray:boolean,intrinsicKind?:string}} JavaScriptArrayConstructorFact */
-/** @typedef {{$:'constructorRealm',realm:bigint,objectPrototype:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,arrayConstructor:JavaScriptSemanticValue,numberPrototype?:JavaScriptSemanticValue,booleanPrototype?:JavaScriptSemanticValue,stringPrototype?:JavaScriptSemanticValue,integerPrototype?:JavaScriptSemanticValue,symbolPrototype?:JavaScriptSemanticValue,mapPrototype?:JavaScriptSemanticValue,setPrototype?:JavaScriptSemanticValue,weakMapPrototype?:JavaScriptSemanticValue,weakSetPrototype?:JavaScriptSemanticValue}} JavaScriptConstructorRealm */
-/** @typedef {{$:'arraySpeciesDirectory',realm:bigint,arrayConstructor:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,speciesKey:JavaScriptSemanticValue,constructors:JavaScriptArrayConstructorFact[],constructorRealms?:JavaScriptConstructorRealm[]}} JavaScriptArraySpeciesDirectory */
+import {findJavaScriptCallConstructorFact} from './javascript-call-code.js';
 /** @typedef {{$:'arraySpeciesSelectedCall',callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}} JavaScriptArraySpeciesCall */
 /** @typedef {{$:'arraySpeciesState',original:JavaScriptSemanticValue,length:number,realm:bigint,arrayConstructor:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,speciesKey:JavaScriptSemanticValue,candidate:JavaScriptSemanticValue,phase:string,call?:JavaScriptArraySpeciesCall}} JavaScriptArraySpeciesState */
 /** @typedef {{$:'arrayConstructorNotConstructable'} | {$:'arrayConstructorKnown',fact:JavaScriptArrayConstructorFact} | {$:'arrayConstructorUnknown',constructor?:JavaScriptSemanticValue}} JavaScriptArrayConstructorClassification */
@@ -20,7 +16,7 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
  * {$:'arraySpeciesError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'arraySpeciesInvalid',heap:JavaScriptOrdinaryHeap,reason:string}} JavaScriptArraySpeciesTransition */
 /** @param {JavaScriptArrayConstructorFact[]} facts @param {bigint} identity @returns {number} */
-export function findJavaScriptArrayConstructorFact(facts,identity){let low=0,high=facts.length;while(low<high){const middle=Math.floor((low+high)/2),fact=facts[middle];if(fact===undefined)return -1;if(fact.identity===identity)return middle;if(fact.identity<identity)low=middle+1;else high=middle;}return -1;}
+export function findJavaScriptArrayConstructorFact(facts,identity){return findJavaScriptCallConstructorFact(facts,identity);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @returns {string} */
 export function readJavaScriptArraySpeciesDirectoryError(heap,directory){
  const heapError=readJavaScriptOrdinaryHeapError(heap);if(heapError!=='')return heapError;

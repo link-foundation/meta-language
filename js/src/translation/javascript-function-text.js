@@ -4,8 +4,6 @@ import {findJavaScriptHeapDirectoryObject,readJavaScriptHeapDirectoryValueError}
 import {readJavaScriptSemanticValueError,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit,constructJavaScriptSourceText} from './javascript-semantic-values.js';
 import {findJavaScriptCallCodeFunction} from './javascript-call-code.js';
 import {findJavaScriptCallTemplate} from './javascript-call-templates.js';
-/** @typedef {{$:'callSourceUnit',identifier:string,text:JavaScriptSemanticValue}} JavaScriptCallSourceUnit */
-/** @typedef {{$:'callSourceSpan',unit:string,start:number,end:number}} JavaScriptCallSourceSpan */
 /** @typedef {{$:'functionTextValue',value:JavaScriptSemanticValue} | {$:'functionTextNeedAuthority',kind:string} | {$:'functionTextError',errorClass:string,reason:string} | {$:'functionTextInvalid',reason:string}} JavaScriptFunctionTextResult */
 /** @param {JavaScriptCallSourceUnit[]} sources @param {JavaScriptCallSourceSpan} span @returns {string} */
 export function readJavaScriptFunctionSourceSpanError(sources,span){
