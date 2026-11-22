@@ -3,6 +3,7 @@ use super::{
     FiniteRecordLoopState, LoopEntry, Options, Result, RustParser, SArrayItem, SExpr, SNode, Slot,
     SourceDeclaration, SourceOrigin, Span, invariant, rules,
 };
+use crate::translation::source_loop_folds::{RustSourceLoopFold, SourceFoldSpan};
 use serde_json::Value;
 use std::{collections::HashSet, sync::Arc};
 
@@ -12,13 +13,14 @@ pub(in super::super) struct AdmittedOrderedCollectionLoop {
     pub(in super::super) element: String,
     pub(in super::super) slots: Vec<Slot>,
     pub(in super::super) control_owner: Vec<String>,
+    pub(in super::super) source_fold: Option<RustSourceLoopFold>,
     pub(in super::super) returns: usize,
     pub(super) writes: Vec<String>,
 }
 
 enum Pattern {
     Wildcard,
-    Name(String, bool, Option<Span>),
+    Name(String, bool, Option<Span>, Span),
     Tuple(Vec<Pattern>, Option<Span>),
     Reference(Box<Pattern>, Option<Span>),
 }
@@ -93,7 +95,8 @@ fn pattern(parser: &mut RustParser, path: &[String], depth: usize) -> Result<Pat
             Some(binder.span()),
         ));
     }
-    Ok(Pattern::Name(binder.value, mutable, span))
+    let binder_span = binder.span();
+    Ok(Pattern::Name(binder.value, mutable, span, binder_span))
 }
 
 struct Binding {
@@ -166,7 +169,7 @@ fn bind(
             }
             Ok(())
         }
-        Pattern::Name(name, mutable, span) => {
+        Pattern::Name(name, mutable, span, binder_span) => {
             if !names.insert(name.clone()) {
                 return Err(fail("ordered item pattern bindings must be distinct", span));
             }
@@ -179,7 +182,7 @@ fn bind(
                         span,
                     ));
                 }
-                parser.register_owned_record_mutable_binding(&name, span)?
+                parser.register_owned_record_mutable_binding(&name, span, binder_span)?
             } else {
                 name
             };
@@ -296,17 +299,19 @@ impl RustParser {
         let heads = std::mem::replace(&mut self.ordered_iteration_head, previous)
             .expect("actual ordered head inventory");
         let receiver = receiver?;
-        let (input, item) = match heads.as_slice() {
+        let (input, item, owned_vector) = match heads.as_slice() {
             [] => {
-                if let Some(iteration) = self.owned_vector_source_iteration(&receiver, path)? {
-                    iteration
+                if let Some((input, item, actual)) =
+                    self.owned_vector_source_iteration(&receiver, path)?
+                {
+                    (input, item, Some(actual))
                 } else {
                     let method = if self.origins.origin(&receiver, path).wrappers.is_empty() {
                         "into_iter"
                     } else {
                         "iter"
                     };
-                    self.standard_collection_iteration(&receiver, method, path)?.ok_or_else(|| {
+                    let (input, item) = self.standard_collection_iteration(&receiver, method, path)?.ok_or_else(|| {
                         fail(
                             if self.exclusive_source_enabled {
                                 "for requires its actual selected standard collection or owned Vec receiver"
@@ -315,7 +320,8 @@ impl RustParser {
                             },
                             receiver.span,
                         )
-                    })?
+                    })?;
+                    (input, item, None)
                 }
             }
             [head]
@@ -329,7 +335,11 @@ impl RustParser {
                         })
                     && self.origins.origin(&receiver, path).wrappers.is_empty() =>
             {
-                (head.expression.clone(), head.item.clone())
+                (
+                    head.expression.clone(),
+                    head.item.clone(),
+                    head.owned_vector.clone(),
+                )
             }
             _ => {
                 return Err(fail(
@@ -368,18 +378,18 @@ impl RustParser {
             self,
             selected,
             value,
-            item,
+            item.clone(),
             path,
             &mut bindings,
             &mut HashSet::new(),
         )?;
         if !callable_result {
-            self.standard_sum_source.return_origin = Some(SourceOrigin::with_type(
-                super::super::UNIT,
-                path,
-                Vec::new(),
-            ));
+            self.standard_sum_source.return_origin = Some(
+                self.origins
+                    .origin(&SExpr::new(SNode::Unit, location), path),
+            );
         }
+        let result_origin = self.standard_sum_source.return_origin.clone();
         let completion = self.ordinary_loop_completion(path, None, location)?;
         if !callable_result && completion.returns != 0 {
             return Err(fail(
@@ -468,10 +478,48 @@ impl RustParser {
                 .map_err(|_| fail("ordered loop source transport failed", span))?;
             let used = self.ordered_collection_loop_state_roots(&surface, span)?;
             let writes = super::write_footprint(self, &Value::Array(vec![input_surface, surface]))?;
-            let slots = slots
+            let slots: Vec<_> = slots
                 .into_iter()
                 .filter(|slot| used.contains(&slot.lexical))
                 .collect();
+            let mut control_owner = vec!["crate".to_owned()];
+            control_owner.extend(completion.owner);
+            let source_fold = if self.retain_source_region_state() {
+                let actual = owned_vector.as_ref().ok_or_else(|| {
+                    fail(
+                        "shared collection loops require their actual collection region interface",
+                        span,
+                    )
+                })?;
+                let span = span
+                    .ok_or_else(|| fail("a source fold needs its complete original span", None))?;
+                let result = result_origin.as_ref().ok_or_else(|| {
+                    fail(
+                        "a source fold needs its actual enclosing result",
+                        Some(span),
+                    )
+                })?;
+                Some(RustSourceLoopFold {
+                    model: "Rust owned vector source fold 1".into(),
+                    input: self.retain_source_region_position(actual, Some(span))?,
+                    item: self.retain_source_region_position(&item, Some(span))?,
+                    result: self.retain_source_region_position(result, Some(span))?,
+                    control: super::Type::Named {
+                        path: control_owner.clone(),
+                        span: None,
+                    },
+                    slots: slots
+                        .iter()
+                        .map(|slot| self.retain_source_fold_slot(slot))
+                        .collect::<Result<_>>()?,
+                    span: SourceFoldSpan {
+                        start: span.start,
+                        end: span.end,
+                    },
+                })
+            } else {
+                None
+            };
             let inventory = &mut self
                 .owned_record_state
                 .effects
@@ -480,14 +528,13 @@ impl RustParser {
                 .loops;
             inventory.footprint_nodes += writes.len();
             inventory.footprint_units += writes.iter().map(String::len).sum::<usize>();
-            let mut control_owner = vec!["crate".to_owned()];
-            control_owner.extend(completion.owner);
             Some(Arc::new(AdmittedOrderedCollectionLoop {
                 input_type,
                 item_type,
                 element,
                 slots,
                 control_owner,
+                source_fold,
                 returns: completion.returns,
                 writes,
             }))

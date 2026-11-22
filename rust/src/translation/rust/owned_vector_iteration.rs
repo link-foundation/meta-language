@@ -70,7 +70,7 @@ impl RustParser {
         &mut self,
         receiver: &SExpr,
         path: &[String],
-    ) -> Result<Option<(SExpr, SourceOrigin)>> {
+    ) -> Result<Option<(SExpr, SourceOrigin, SourceOrigin)>> {
         if !self.exclusive_source_enabled {
             return Ok(None);
         }
@@ -156,7 +156,7 @@ impl RustParser {
         if self.origins.collecting {
             self.origins.standard_sum_source_needs_final_admission = true;
         }
-        Ok(Some((receiver.clone(), item)))
+        Ok(Some((receiver.clone(), item, actual)))
     }
 
     pub(super) fn read_owned_vector_iteration_method(
@@ -179,7 +179,8 @@ impl RustParser {
         let end = self
             .cursor
             .expect(")", Some("zero-argument owned Vec IntoIterator"))?;
-        let Some((mut expression, item)) = self.owned_vector_source_iteration(receiver, path)?
+        let Some((mut expression, item, actual)) =
+            self.owned_vector_source_iteration(receiver, path)?
         else {
             return Ok(None);
         };
@@ -192,6 +193,7 @@ impl RustParser {
             .push(OrderedIterationHead {
                 expression: expression.clone(),
                 item,
+                owned_vector: Some(actual),
                 end_token: self.cursor.index,
             });
         Ok(Some(expression))

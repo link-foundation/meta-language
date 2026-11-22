@@ -1,4 +1,6 @@
 //! State and completion transport for a single evaluation of an ordered head.
+use crate::translation::source_signatures::RustSourceExpressionPosition;
+
 use super::{
     Environment, Lowered, Result, Transport, Value, encode, fail, json, loop_control, loops, name,
     text, wrap,
@@ -123,12 +125,20 @@ impl Transport<'_> {
             item_bindings,
             json!({"k":"match1","scrutinee":lowered.value,"cases":cases}),
         );
-        let fold = json!({
+        let mut fold = json!({
             "k":"method", "object":name(&collection), "op":"reduce",
             "args":[{"k":"lambda","params":[{"name":accumulator,"type":ret},{"name":source.element,"type":item_type}],
                 "ret":ret,"body":{"k":"if","cond":project(&accumulator,0),"then":name(&accumulator),"else":step}},
                 initial],
         });
+        if let Some(facet) = &source.source_fold {
+            fold["span"] = encode(&facet.span)?;
+            fold["sourceLoopFold"] = encode(facet)?;
+            input.value["sourcePosition"] = encode(&RustSourceExpressionPosition {
+                model: "Rust borrowed expression source position 1".into(),
+                position: facet.input.clone(),
+            })?;
+        }
         input
             .bindings
             .push(json!({"k":"let","name":collection,"type":input_type,"value":input.value}));

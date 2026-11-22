@@ -43,6 +43,10 @@ impl Serialize for Expr {
             span: Option<Span>,
             #[serde(rename="sourcePosition",skip_serializing_if="Option::is_none")]
             source_position: Option<&'a crate::translation::source_signatures::RustSourceExpressionPosition>,
+            #[serde(rename = "sourceStateTransition", skip_serializing_if = "Option::is_none")]
+            source_state_transition: Option<&'a crate::translation::source_loop_folds::RustSourceStateTransition>,
+            #[serde(rename = "sourceLoopFold", skip_serializing_if = "Option::is_none")]
+            source_loop_fold: Option<&'a crate::translation::source_loop_folds::RustSourceLoopFold>,
         }
         ExpressionWire {
             node: &self.node,
@@ -59,6 +63,8 @@ impl Serialize for Expr {
             },
             span: self.span,
             source_position: self.source_position.as_deref(),
+            source_state_transition: self.source_state_transition.as_deref(),
+            source_loop_fold: self.source_loop_fold.as_deref(),
         }
         .serialize(serializer)
     }
@@ -78,6 +84,10 @@ impl<'de> Deserialize<'de> for Expr {
             span: Option<Span>,
             #[serde(rename="sourcePosition",default,deserialize_with="crate::translation::source_position_transport::read_present_source_position")]
             source_position: Option<Box<crate::translation::source_signatures::RustSourceExpressionPosition>>,
+            #[serde(rename = "sourceStateTransition", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+            source_state_transition: Option<Box<crate::translation::source_loop_folds::RustSourceStateTransition>>,
+            #[serde(rename = "sourceLoopFold", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+            source_loop_fold: Option<Box<crate::translation::source_loop_folds::RustSourceLoopFold>>,
         }
         let wire = ExpressionWire::deserialize(deserializer)?;
         let operation =
@@ -99,6 +109,8 @@ impl<'de> Deserialize<'de> for Expr {
             ty: serde_json::from_value(wire.ty).map_err(<D::Error as serde::de::Error>::custom)?,
             span: wire.span,
             source_position: wire.source_position,
+            source_state_transition: wire.source_state_transition,
+            source_loop_fold: wire.source_loop_fold,
         })
     }
 }

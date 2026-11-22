@@ -54,6 +54,10 @@ pub struct SExpr {
     pub span: Option<Span>,
     #[serde(rename="sourcePosition",skip_serializing_if="Option::is_none")]
     pub source_position: Option<Box<super::source_signatures::RustSourceExpressionPosition>>,
+    #[serde(rename = "sourceStateTransition", skip_serializing_if = "Option::is_none")]
+    pub source_state_transition: Option<Box<super::source_loop_folds::RustSourceStateTransition>>,
+    #[serde(rename = "sourceLoopFold", skip_serializing_if = "Option::is_none")]
+    pub source_loop_fold: Option<Box<super::source_loop_folds::RustSourceLoopFold>>,
     /// Grouping is raw source metadata, with absence independent of its value.
     #[serde(
         default,
@@ -90,6 +94,8 @@ impl SExpr {
             block: false,
             tag_test: None,
             source_position: None,
+            source_state_transition: None,
+            source_loop_fold: None,
         }
     }
 

@@ -19,11 +19,13 @@ mod number_projection;
 
 fn expression(value: &Value, program: &Program) -> Result<Value> {
     let mut projected = expression_value(value, program)?;
-    if let Some(position) = value.get("sourcePosition") {
-        projected
-            .as_object_mut()
-            .ok_or_else(|| error("a source position needs its actual projected expression"))?
-            .insert("sourcePosition".to_owned(), position.clone());
+    for field in ["sourcePosition", "sourceStateTransition", "sourceLoopFold"] {
+        if let Some(facet) = value.get(field) {
+            projected
+                .as_object_mut()
+                .ok_or_else(|| error("a source facet needs its actual projected expression"))?
+                .insert(field.to_owned(), facet.clone());
+        }
     }
     Ok(projected)
 }

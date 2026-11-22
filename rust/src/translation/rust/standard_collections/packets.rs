@@ -905,6 +905,7 @@ impl RustParser {
                 .push(super::OrderedIterationHead {
                     expression: node.clone(),
                     item,
+                    owned_vector: None,
                     end_token: self.cursor.index,
                 });
             return Ok(Some(node));

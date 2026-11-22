@@ -293,12 +293,16 @@ impl RustParser {
             });
         }
         let const_header_end = self.cursor.peek().start;
-        let source_signature = self.capture_source_signature(
+        let source_region_body_closed = self.read_source_region_body_closed(&source_params, &source_result)?;
+        let mut source_signature = self.capture_source_signature(
             &source_params,
             &source_result,
             source_lifetime_bindings,
             scalar_loop,
         )?;
+        if source_region_body_closed && let Some(signature) = &mut source_signature {
+            signature.model = "Rust source function signature 2".to_owned();
+        }
         self.lifetime_header = false;
         let scope = params
             .iter()
@@ -315,6 +319,8 @@ impl RustParser {
         let temporary_frame = self.origins.owned_temporary_frame();
         let previous_sum_return=std::mem::replace(&mut self.standard_sum_source.return_origin,Some(source_result.clone()));
         let previous_sum_expected=std::mem::replace(&mut self.standard_sum_source.expected_origin,Some(source_result.clone()));
+        let previous_source_region_body_closed =
+            std::mem::replace(&mut self.source_region_body_closed, source_region_body_closed);
         let body_read:Result<SExpr>=(|| {
         let body = if scalar_loop {
             if !path.is_empty() {
@@ -353,6 +359,7 @@ impl RustParser {
         };
         Ok(body)
         })();
+        self.source_region_body_closed = previous_source_region_body_closed;
         self.standard_sum_source.return_origin=previous_sum_return;
         self.standard_sum_source.expected_origin=previous_sum_expected;
         let body=body_read?;

@@ -77,6 +77,8 @@ pub struct Expr {
     pub ty: Type,
     pub span: Option<Span>,
     pub source_position: Option<Box<super::source_signatures::RustSourceExpressionPosition>>,
+    pub source_state_transition: Option<Box<super::source_loop_folds::RustSourceStateTransition>>,
+    pub source_loop_fold: Option<Box<super::source_loop_folds::RustSourceLoopFold>>,
 }
 
 impl Expr {
@@ -87,6 +89,8 @@ impl Expr {
             ty,
             span: None,
             source_position: None,
+            source_state_transition: None,
+            source_loop_fold: None,
         }
     }
 
@@ -526,6 +530,8 @@ impl Expr {
             ty: self.ty.clone(),
             span: self.span,
             source_position: self.source_position.clone(),
+            source_state_transition: self.source_state_transition.clone(),
+            source_loop_fold: self.source_loop_fold.clone(),
         }
     }
 }

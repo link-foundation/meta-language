@@ -6,7 +6,7 @@ use super::owned_record_policy::state as rules;
 use super::owned_record_policy::fields as field_rules;
 mod exclusive_owned_string;
 #[derive(Clone)]
-pub(super) struct Slot{pub(super) lexical:String,pub(super) root:String,pub(super) origin:SourceOrigin,pub(super) current_name:String,frame:usize,callable:usize,sequence:usize,site:Option<Span>}
+pub(super) struct Slot{pub(super) lexical:String,pub(super) root:String,pub(super) origin:SourceOrigin,pub(super) current_name:String,pub(super) source_binder:Option<super::super::source_loop_folds::SourceStateBinder>,frame:usize,callable:usize,sequence:usize,site:Option<Span>}
 #[derive(Clone)]
 struct Request{slots:Vec<Slot>}
 struct Frame{id:usize,before:Vec<Slot>,callable_before:usize,request:Option<Request>}
@@ -62,24 +62,24 @@ impl RustParser{
    }
   }Ok(())
  }
- pub(super) fn register_owned_record_mutable_binding(&mut self,source:&str,span:Option<Span>)->Result<String>{
+ pub(super) fn register_owned_record_mutable_binding(&mut self,source:&str,span:Option<Span>,binder_span:Span)->Result<String>{
   if self.exclusive_source_enabled {
-   return self.register_exclusive_owned_state_binding(source, span);
+   return self.register_exclusive_owned_state_binding(source, span, binder_span);
   }
   let mut origin=self.origins.scope.get(source).cloned().ok_or_else(||fail("a mutable record needs its actual source binding",span))?;let frame=self.owned_record_state.frames.last().map(|frame|frame.id).ok_or_else(||fail("a mutable record needs its actual source block state frame",span))?;
   let profile=self.origins.nominal_ownership_facts(&origin).profile;
   let collection=self.standard_collection_origin(&origin).is_some();
   if self.origins.collecting{
    if (!collection&&self.record_state_layout(&origin).is_none())||!origin.wrappers.is_empty(){return Err(unsupported("mutable binding","mutation is outside the portable core",span));}
-   self.origins.standard_sum_source_needs_final_admission=true;let sequence=self.owned_record_state.next;self.owned_record_state.next+=2;let lexical=format!("private collecting record slot {sequence}");let current_name=self.fresh_product_binding();origin.source_record_state_collecting_site=span;self.origins.scope.insert(source.to_owned(),origin.clone());let slot=Slot{lexical,root:String::new(),origin,current_name:current_name.clone(),frame,callable:self.owned_record_state.current_callable,sequence:sequence+1,site:span};self.owned_record_state.declarations.insert(current_name.clone(),slot.clone());self.owned_record_state.slots.push(slot);return Ok(current_name);
+   self.origins.standard_sum_source_needs_final_admission=true;let sequence=self.owned_record_state.next;self.owned_record_state.next+=2;let lexical=format!("private collecting record slot {sequence}");let current_name=self.fresh_product_binding();origin.source_record_state_collecting_site=span;self.origins.scope.insert(source.to_owned(),origin.clone());let slot=Slot{lexical,root:String::new(),origin,current_name:current_name.clone(),source_binder:None,frame,callable:self.owned_record_state.current_callable,sequence:sequence+1,site:span};self.owned_record_state.declarations.insert(current_name.clone(),slot.clone());self.owned_record_state.slots.push(slot);return Ok(current_name);
   }
   if profile!="owned"{return Err(unsupported("mutable binding","mutation is outside the portable core",span));}
   let error=rules::read_rust_owned_record_mutable_binding_error(self.ordinary_completion_context(),true,&profile,origin.source_binding_identity.is_some(),origin.source_lexical_binding_identity.is_some(),origin.wrappers.len() as f64);if !error.is_empty(){return Err(fail(&error,span));}
   let version=field_rules::read_rust_owned_record_update_version_error(self.source_version_minor);if !version.is_empty(){return Err(fail(&version,span));}if !collection{self.require_record_state_storage(&origin,span)?;}if self.origins.standard_sum_source_identity(&origin).is_none(){return Err(fail("mutable storage needs its actual complete source identity",span));}
   self.origins.register_mutable_record_loan_root(&origin,span,false)?;
-  let sequence=self.owned_record_state.next;self.owned_record_state.next+=1;let current_name=self.fresh_product_binding();let slot=Slot{lexical:origin.source_lexical_binding_identity.clone().expect("actual lexical mutable root"),root:origin.source_binding_identity.clone().expect("actual owned mutable root"),origin,current_name:current_name.clone(),frame,callable:self.owned_record_state.current_callable,sequence,site:None};self.owned_record_state.declarations.insert(current_name.clone(),slot.clone());self.owned_record_state.slots.push(slot);Ok(current_name)
+  let sequence=self.owned_record_state.next;self.owned_record_state.next+=1;let current_name=self.fresh_product_binding();let slot=Slot{lexical:origin.source_lexical_binding_identity.clone().expect("actual lexical mutable root"),root:origin.source_binding_identity.clone().expect("actual owned mutable root"),origin,current_name:current_name.clone(),source_binder:None,frame,callable:self.owned_record_state.current_callable,sequence,site:None};self.owned_record_state.declarations.insert(current_name.clone(),slot.clone());self.owned_record_state.slots.push(slot);Ok(current_name)
  }
- fn register_exclusive_owned_state_binding(&mut self, source: &str, span: Option<Span>) -> Result<String> {
+ fn register_exclusive_owned_state_binding(&mut self, source: &str, span: Option<Span>, binder_span: Span) -> Result<String> {
   let mut origin = self.origins.scope.get(source).cloned().ok_or_else(|| fail("mutable state needs its actual source binding", span))?;
   let frame = self.owned_record_state.frames.last().map(|frame| frame.id).ok_or_else(|| fail("mutable state needs its actual source block frame", span))?;
   if origin.source_borrowed_place || (!origin.wrappers.is_empty() && self.origins.peel_closed_owned_box_state(&origin).is_none()) {
@@ -102,7 +102,12 @@ impl RustParser{
   }
   self.origins.scope.insert(source.to_owned(), origin.clone());
   let current_name = self.fresh_product_binding();
-  let slot = Slot { lexical, root, origin, current_name: current_name.clone(), frame, callable: self.owned_record_state.current_callable, sequence, site: span };
+  let source_binder = if self.retain_source_region_state() && !self.origins.collecting {
+   Some(self.retain_source_state_binder(source, &lexical, binder_span)?)
+  } else {
+   None
+  };
+  let slot = Slot { lexical, root, origin, current_name: current_name.clone(), source_binder, frame, callable: self.owned_record_state.current_callable, sequence, site: span };
   self.owned_record_state.declarations.insert(current_name.clone(), slot.clone());
   self.owned_record_state.slots.push(slot);
   Ok(current_name)

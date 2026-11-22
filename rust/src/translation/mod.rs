@@ -104,6 +104,7 @@ pub(crate) mod javascript_collection_iterator_call_source;
 pub(crate) mod javascript_collection_call_source;
 pub(crate) mod source_position_transport;
 pub(crate) mod source_expression_positions;
+pub mod source_loop_folds;
 pub(crate) mod source_expression_regions;
 pub(crate) mod rust_borrowed_source_region_rules;
 pub(crate) mod rust_borrowed_iterator_rules;

@@ -24,6 +24,7 @@ pub(super) struct StandardCollectionSource {
 pub(super) struct OrderedIterationHead {
     pub(super) expression: SExpr,
     pub(super) item: SourceOrigin,
+    pub(super) owned_vector: Option<SourceOrigin>,
     pub(super) end_token: usize,
 }
 

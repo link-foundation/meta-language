@@ -84,7 +84,7 @@ impl RustParser {
             self.require_nonconstant_binding(&token.value, path, Some(token.span()))?;
             self.origins
                 .bind(&token.value, &value, path, source_type.as_ref())?;
-            let name=if let Some(mutable)=mutable_token.as_ref(){self.register_owned_record_mutable_binding(&token.value,span(&start,mutable))?}else{token.value};
+            let name=if let Some(mutable)=mutable_token.as_ref(){self.register_owned_record_mutable_binding(&token.value,span(&start,mutable),token.span())?}else{token.value};
             return Ok(vec![Binding {
                 name,
                 ty,

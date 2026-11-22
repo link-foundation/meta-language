@@ -77,6 +77,8 @@ impl Checker {
                 || node.tag_test.is_some()
                 || node.parenthesized.is_some()
                 || node.source_position.is_some()
+                || node.source_state_transition.is_some()
+                || node.source_loop_fold.is_some()
                 || matches!(value.node, SNode::ReferencePayload { .. })
             {
                 return Err(type_error(
@@ -127,6 +129,29 @@ impl Checker {
                         },
                         _ => None,
                     },
+                )?,
+            ));
+        }
+        let resolve_data = |ty: &Type| match ty {
+            Type::Data { name } => match self.decls.get(name) {
+                Some(super::Decl::Data(data)) => Some(data),
+                _ => None,
+            },
+            _ => None,
+        };
+        if let Some(facet) = node.source_state_transition.as_deref() {
+            result.source_state_transition = Some(Box::new(
+                super::super::source_loop_folds::check_state_transition(
+                    facet, &result.ty, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, node.span), resolve_data,
+                )?,
+            ));
+        }
+        if let Some(facet) = node.source_loop_fold.as_deref() {
+            result.source_loop_fold = Some(Box::new(
+                super::super::source_loop_folds::check_loop_fold(
+                    facet, &result, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, node.span), resolve_data,
                 )?,
             ));
         }
@@ -318,6 +343,8 @@ impl Checker {
                         block: arg.block,
                         tag_test: None,
                         source_position: arg.source_position.clone(),
+                        source_state_transition: arg.source_state_transition.clone(),
+                        source_loop_fold: arg.source_loop_fold.clone(),
                     };
                     let literal = self.expr(&flipped, env, path, expected, allow_literal)?;
                     if !accept_rust_numeric_literal_negation(

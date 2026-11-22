@@ -375,6 +375,8 @@ pub(super) fn split_natural(
             ty: expr.ty.clone(),
             span: expr.span,
             source_position: expr.source_position.clone(),
+            source_state_transition: expr.source_state_transition.clone(),
+            source_loop_fold: expr.source_loop_fold.clone(),
         });
     }
     match &expr.node {
@@ -443,6 +445,8 @@ impl Predecessor<'_> {
             ty: self.ty.clone(),
             span: like.span,
             source_position: like.source_position.clone(),
+            source_state_transition: like.source_state_transition.clone(),
+            source_loop_fold: like.source_loop_fold.clone(),
         }
     }
 
@@ -515,6 +519,8 @@ impl Predecessor<'_> {
                 ty: self.ty.clone(),
                 span: node.span,
                 source_position: node.source_position.clone(),
+                source_state_transition: node.source_state_transition.clone(),
+                source_loop_fold: node.source_loop_fold.clone(),
             };
             return self.minus(&k, &like);
         }

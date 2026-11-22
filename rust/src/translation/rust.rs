@@ -104,6 +104,7 @@ mod shared_array_handles;
 mod source_constant_evaluation;
 mod source_constants;
 mod source_origins;
+mod retained_source_storage;
 pub(crate) mod source_versions;
 mod string_byte_lengths;
 mod type_aliases;
@@ -224,6 +225,7 @@ pub fn parse_rust_with_const_function_model(
 struct SourceProfiles<'a> {
     source_version: &'a str,
     exclusive_source: &'a str,
+    fn_mut_source: &'a str,
     retain_source_type_owners: bool,
     shared_array_handle_source: &'a str,
     const_function: &'a str,
@@ -248,6 +250,7 @@ fn parse_rust_with_selected_profiles(
     let SourceProfiles {
         source_version: _,
         exclusive_source: _,
+        fn_mut_source: _,
         shared_array_handle_source: shared_array_handle_source_model,
         const_function: const_function_model,
         array_result: array_result_model,
@@ -581,6 +584,8 @@ struct Binding {
 struct RustParser {
     source_version_minor: f64,
     exclusive_source_enabled: bool,
+    source_regions_composed: bool,
+    source_region_body_closed: bool,
     ordered_iteration_head: Option<Vec<standard_collections::OrderedIterationHead>>,
     retain_source_type_owners: bool,
     source_type_aliases: type_aliases::SourceTypeAliases,
@@ -690,6 +695,12 @@ impl RustParser {
             source_constant_tokens,
             source_version_minor: 0.0,
             exclusive_source_enabled: !profiles.exclusive_source.is_empty(),
+            source_regions_composed: super::rust_owned_record_loop_rules::accept_rust_source_region_composition(
+                profiles.source_signature,
+                profiles.exclusive_source,
+                profiles.fn_mut_source,
+            ),
+            source_region_body_closed: false,
             ordered_iteration_head: None,
             retain_source_type_owners: profiles.retain_source_type_owners,
             source_type_aliases: type_aliases::SourceTypeAliases::default(),
