@@ -242,7 +242,8 @@ fn optional_tagged_fields_keep_own_presence_through_execution_and_typed_archives
         BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
         encode_link_network_binary, encode_typed_program_links,
     };
-    let source = include_str!("../../../parity/fixtures/translation-optional-constructor-fields.js");
+    let source =
+        include_str!("../../../parity/fixtures/translation-optional-constructor-fields.js");
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
     let javascript = emit_javascript(&program).unwrap().text;
     let native = emit_rust(&program).unwrap().text;
@@ -266,9 +267,15 @@ fn optional_tagged_fields_keep_own_presence_through_execution_and_typed_archives
     }
     let directory = TemporaryDirectory::new("optional-constructor-fields");
     let file = directory.0.join("program.rs");
-    let executable = directory.0.join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    let executable = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
     std::fs::write(&file, native).unwrap();
-    let compiled = run(Command::new("rustc").arg("--edition=2024").arg(&file).arg("-o").arg(&executable));
+    let compiled = run(Command::new("rustc")
+        .arg("--edition=2024")
+        .arg(&file)
+        .arg("-o")
+        .arg(&executable));
     assert!(compiled.ok, "{}", compiled.stderr);
     let actual = run(&mut Command::new(&executable));
     assert!(actual.ok, "{}", actual.stderr);
@@ -683,5 +690,36 @@ fn speculative_tag_headers_preserve_ambiguity_and_ordinary_declaration_error_pre
             tag_receiver_refusal(&source),
             serde_json::json!({"kind":kind,"reason":reason,"span":{"start":types.len(),"end":types.len()+maker.find("*/").unwrap()+2}})
         );
+    }
+}
+
+#[test]
+fn named_union_alternatives_keep_their_fields_and_declared_tag_owner() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-named-constructor-alternatives.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    for script in [source, emitted.text.as_str()] {
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(output.stdout, b"9\n7\n2\n0\n");
+    }
+    for (replacement, diagnostic) in [
+        ("Sample | { $: 'sample' }", "duplicate tag sample"),
+        (
+            "Unknown | { $: 'empty' }",
+            "Unknown needs its declared constructor layout",
+        ),
+    ] {
+        let error =
+            parse_javascript(&source.replace("Sample | { $: 'empty' }", replacement)).unwrap_err();
+        assert!(error.to_string().contains(diagnostic), "{error}");
     }
 }

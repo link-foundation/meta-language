@@ -450,7 +450,7 @@ impl JavaScriptParser {
         let (scrutinee, tag) = match tag_object {
             Some(object) => {
                 let subject = object.simple_name().unwrap_or_default().to_owned();
-                let data = self.switch_data(&clauses, whole)?;
+                let data = self.switch_data(&object, &clauses, whole)?;
                 (object, Some((subject, data)))
             }
             None => (discriminant, None),
@@ -544,7 +544,12 @@ impl JavaScriptParser {
     }
 
     /// The @typedef whose tags a tag switch names.
-    pub(super) fn switch_data(&self, clauses: &[Clause], place: Span) -> Result<SData> {
+    pub(super) fn switch_data(
+        &self,
+        object: &SExpr,
+        clauses: &[Clause],
+        place: Span,
+    ) -> Result<SData> {
         let tags: Vec<&str> = clauses
             .iter()
             .flat_map(|clause| &clause.tests)
@@ -558,9 +563,24 @@ impl JavaScriptParser {
             .iter()
             .filter(|data| tags.iter().all(|tag| has_ctor(data, tag)))
             .collect();
-        match candidates.as_slice() {
-            [data] => Ok((*data).clone()),
-            [] => Err(type_error(
+        let receiver = if candidates.len() > 1 {
+            self.read_tag_receiver_owner(object)
+        } else {
+            String::new()
+        };
+        let owners = candidates
+            .iter()
+            .map(|data| data.name.clone())
+            .collect::<Vec<_>>();
+        let position =
+            crate::translation::javascript_tag_context_rules::read_java_script_tag_owner_position(
+                &owners, &receiver,
+            );
+        match crate::translation::frontend_rules::ml_array::number_index(position)
+            .and_then(|index| candidates.get(index))
+        {
+            Some(data) => Ok((**data).clone()),
+            None if candidates.is_empty() => Err(type_error(
                 format!("no @typedef has tags {}", tags.join(", ")),
                 Some(place),
             )),

@@ -355,6 +355,14 @@ impl JavaScriptParser {
         } else {
             self.expr()?
         };
+        let element_type = if name.is_some() && !mutable {
+            match self.read_tag_receiver_type(&value) {
+                Some(crate::translation::types::Type::Array { element, .. }) => Some(*element),
+                _ => None,
+            }
+        } else {
+            None
+        };
         let iterable_span = value.span;
         let mut iterable = SExpr::new(
             SNode::ForOfIterable {
@@ -363,8 +371,10 @@ impl JavaScriptParser {
             },
             iterable_span,
         );
-        if self.closed_collection_iteration_scope&&self.reference_state.enabled
-            &&matches!(&iterable.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{op,args,..}if crate::translation::disjoint_collection_iterations::has_disjoint_collection_iteration_item_form("map",op)&&args.is_empty())){
+        if self.closed_collection_iteration_scope
+            && self.reference_state.enabled
+            && matches!(&iterable.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{op,args,..}if crate::translation::disjoint_collection_iterations::has_disjoint_collection_iteration_item_form("map",op)&&args.is_empty()))
+        {
             iterable=SExpr::new(SNode::Math{
                 op:crate::translation::disjoint_collection_iterations::read_disjoint_collection_iteration_source_operation(),name:"closed standard collection iteration".to_owned(),
                 args:vec![crate::translation::surface::SArrayItem::new(iterable,false)],
@@ -393,6 +403,12 @@ impl JavaScriptParser {
             self.declare_local(&name.value, mutable);
             self.lexical
                 .binding(&name.value, Some(self.cursor.peek().start));
+            if let Some(ty) = element_type {
+                self.lexical.tag_binding(
+                    &name.value,
+                    super::tag_context::TagReceiverFact::Declared(Some(ty)),
+                );
+            }
         }
         let body = self.loop_body();
         self.scope = outer;

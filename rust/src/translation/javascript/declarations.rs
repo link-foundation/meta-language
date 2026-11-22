@@ -120,11 +120,29 @@ impl JavaScriptParser {
         let mut ctors: Vec<SCtor> = Vec::new();
         loop {
             if !c.is("{") {
-                return Err(unsupported(
-                    &format!("@typedef {name}"),
-                    "a portable data type is a union of { $: 'tag', … } object types",
-                    Some(range),
-                ));
+                let reference = c.identifier(Some("tagged object type alternative"))?;
+                let alternatives = self
+                    .data_types
+                    .iter()
+                    .find(|data| data.name == reference.value)
+                    .ok_or_else(|| unsupported(
+                        &format!("@typedef {name}"),
+                        &format!("tagged object alternative {} needs its declared constructor layout", reference.value),
+                        Some(range),
+                    ))?;
+                for constructor in &alternatives.ctors {
+                    if ctors.iter().any(|ctor| ctor.name == constructor.name) {
+                        return Err(type_error(
+                            format!("duplicate tag {} in {name}", constructor.name),
+                            Some(range),
+                        ));
+                    }
+                    ctors.push(constructor.clone());
+                }
+                if c.eat("|").is_none() {
+                    break;
+                }
+                continue;
             }
             c.advance();
             let mut tag = None;
@@ -177,7 +195,11 @@ impl JavaScriptParser {
                     fields.push(SField {
                         optional,
                         name: Some(key.value),
-                        ty: if optional { crate::translation::javascript_constructor_presence::field_type(ty) } else { ty },
+                        ty: if optional {
+                            crate::translation::javascript_constructor_presence::field_type(ty)
+                        } else {
+                            ty
+                        },
                         rocq_type: None,
                         span: None,
                     });
@@ -724,8 +746,8 @@ impl JavaScriptParser {
             self.top_level = outer_top_level;
             let (body, proof) = read?;
             return Ok(SFn {
-                source_finite_record_loop_helper:false,
-                source_finite_record_loop_witness:None,
+                source_finite_record_loop_helper: false,
+                source_finite_record_loop_witness: None,
                 semantic_ret: None,
                 name,
                 params,
@@ -868,8 +890,8 @@ impl JavaScriptParser {
             )?
         };
         let declaration = SFn {
-            source_finite_record_loop_helper:false,
-            source_finite_record_loop_witness:None,
+            source_finite_record_loop_helper: false,
+            source_finite_record_loop_witness: None,
             semantic_ret: None,
             name,
             params,

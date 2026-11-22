@@ -147,3 +147,18 @@ test('terminal tag guard sequences preserve constructor fields scope and ordered
   assert.throws(() => checkProgram(parseJavaScript(different)), error => ['type', 'unsupported'].includes(error.kind),
     'separate bindings of the same data type cannot share exclusions');
 });
+
+test('named union alternatives retain their fields and use the declared receiver for tag dispatch', () => {
+  const source = readFileSync(new URL('../../parity/fixtures/translation-named-constructor-alternatives.js', import.meta.url), 'utf8');
+  const checked = checkProgram(parseJavaScript(source));
+  assert.deepEqual(checked.declarations.get('Observation').ctors[0], checked.declarations.get('Sample').ctors[0]);
+  const observe = text => {
+    const output = [];
+    runInNewContext(text, { console: { log: value => output.push(value) } }, { timeout: 1000 });
+    return output;
+  };
+  assert.deepEqual(observe(source), [9, 7, 2, 0]);
+  assert.deepEqual(observe(emitJavaScript(checked).text), [9, 7, 2, 0]);
+  assert.throws(() => parseJavaScript(source.replace("Sample | { $: 'empty' }", "Sample | { $: 'sample' }")), /duplicate tag sample/u);
+  assert.throws(() => parseJavaScript(source.replace("Sample | { $: 'empty' }", "Unknown | { $: 'empty' }")), /Unknown needs its declared constructor layout/u);
+});

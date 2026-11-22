@@ -295,6 +295,10 @@ impl Type {
                 Vec::new(),
             ),
             Self::Data { name } => (name.clone(), Vec::new()),
+            Self::Named { path, .. } => {
+                let path = serde_json::to_string(path).expect("a source type path is text");
+                return format!("named:{path}");
+            }
             Self::Array { element, .. } | Self::Set { element, .. } | Self::Cell { element } => {
                 (std::string::String::new(), vec![element.key()])
             }

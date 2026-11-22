@@ -200,7 +200,12 @@ impl JavaScriptParser {
         token: &Token,
     ) -> Result<SExpr> {
         let place = joined(&left, &right, token);
-        let (field, tag) = if is_tag_field(&left) {
+        let tag_on_right = is_tag_field(&left);
+        let comparison = if tag_on_right { &right } else { &left };
+        if !matches!(comparison.node, SNode::Str { .. }) {
+            return Ok(binary(op, left, right, token));
+        }
+        let (field, tag) = if tag_on_right {
             (left, right)
         } else {
             (right, left)
@@ -209,11 +214,7 @@ impl JavaScriptParser {
             return Ok(field);
         };
         let SNode::Str { value: tag } = tag.node else {
-            return Err(unsupported(
-                "computed tag test",
-                "compare the $ tag with a string literal",
-                Some(place),
-            ));
+            unreachable!("nonliteral comparisons remain ordinary equality")
         };
         let candidates: Vec<&SData> = self
             .data_types

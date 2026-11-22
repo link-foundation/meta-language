@@ -80,6 +80,8 @@ function ordinaryTypeKey(type) {
       return renderPortableTypeIdentity(type.kind, `${type.signed ? 'i' : 'u'}${type.bits}`, []);
     case 'data':
       return renderPortableTypeIdentity(type.kind, type.name, []);
+    case 'named':
+      return 'named:' + JSON.stringify(type.path);
     case 'array':
     case 'cell':
       return renderPortableTypeIdentity(type.kind, '', [typeKey(type.element)]);

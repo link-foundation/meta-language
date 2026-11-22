@@ -42,7 +42,7 @@ import { imperative, lowerImperative, lowerTopLevel, statementUses } from './jav
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { readJavaScriptConstructorFieldBoundary } from './javascript-constructor-field-type-rules.js';
 import { javaScriptOptionalConstructorFieldType, readJavaScriptOptionalConstructorField } from './javascript-constructor-presence.js';
-import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
+import { BOOL, FLOAT, INT, NAT, STRING, array, typeKey } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
@@ -497,7 +497,18 @@ class JavaScriptParser {
         const ctors = [];
         do {
           if (!c.is('{')) {
-            throw unsupported(`@typedef ${tag.name}`, 'a portable data type is a union of { $: \'tag\', … } object types', range);
+            const reference = c.identifier('tagged object type alternative');
+            const alternatives = this.dataTypes.get(reference.value);
+            if (!alternatives) {
+              throw unsupported(`@typedef ${tag.name}`, `tagged object alternative ${reference.value} needs its declared constructor layout`, range);
+            }
+            for (const constructor of alternatives) {
+              if (ctors.some(({ name }) => name === constructor.name)) {
+                throw typeError(`duplicate tag ${constructor.name} in ${tag.name}`, range);
+              }
+              ctors.push({ name: constructor.name, fields: constructor.fields.map(field => ({ ...field })) });
+            }
+            continue;
           }
           c.next();
           let name = null;
@@ -1376,6 +1387,10 @@ class JavaScriptParser {
         this.declareLocal(local.name, binding === 'let');
         this.lexicalBinding(local.name, c.peek().start);
       }
+      if (name && binding === 'const') {
+        const type = this.readTagReceiverType(value);
+        if (type?.kind === 'array') this.rememberTagBinding(name.value, { type: type.element });
+      }
       body = this.loopBody();
     } finally {
       this.scope = outer;
@@ -1534,10 +1549,12 @@ class JavaScriptParser {
   switchData(node) {
     const tags = node.clauses.flatMap((clause) => clause.tests.filter((test) => test.k === 'tag').map((test) => test.tag));
     const candidates = [...this.dataTypes].filter(([, ctors]) => tags.every((tag) => ctors.some((ctor) => ctor.name === tag)));
-    if (candidates.length !== 1) {
+    const receiver = candidates.length > 1 ? this.readTagReceiverOwner(node.discriminant.object) : '';
+    const position = readJavaScriptTagOwnerPosition(candidates.map(([name]) => name), receiver);
+    if (position < 0) {
       throw typeError(candidates.length ? `tags ${tags.join(', ')} are ambiguous between data types` : `no @typedef has tags ${tags.join(', ')}`, node.span);
     }
-    const [name, ctors] = candidates[0];
+    const [name, ctors] = candidates[position];
     return { name, ctors };
   }
 
@@ -2057,6 +2074,18 @@ class JavaScriptParser {
    * never borrow a same-spelled outer parameter's context.
    */
   readTagReceiverFact(node) {
+    if (node.k === 'field' || node.k === 'index') {
+      const parent = this.readTagReceiverType(node.object);
+      if (node.k === 'index' && parent?.kind === 'array') return { type: parent.element };
+      if (node.k === 'field' && parent) {
+        const owner = readJavaScriptTagDeclaredOwner(parent.kind, parent.path ?? [], parent.name ?? '', ROOT);
+        const fields = this.dataTypes.get(owner)?.map(ctor => ctor.fields.find(field => field.name === node.field));
+        if (fields?.length && fields.every(field => field && !field.optional && typeKey(field.type) === typeKey(fields[0].type))) {
+          return { type: fields[0].type };
+        }
+      }
+      return null;
+    }
     const target = node.k === 'app' ? node.fn : node;
     const path = target.path ?? [];
     const form = readJavaScriptTagReceiverForm(node.k, node.k === 'app' ? target.k : '', path, ROOT);
@@ -2071,9 +2100,9 @@ class JavaScriptParser {
     return null;
   }
 
-  readTagReceiverOwner(node) {
+  readTagReceiverType(node) {
     const fact = this.readTagReceiverFact(node);
-    if (!fact) return '';
+    if (!fact) return null;
     let type = fact.type;
     if (acceptJavaScriptTagHeaderFact(Boolean(type), Boolean(fact.token), Boolean(fact.asynchronous))) {
       // This is speculative context, not ordinary declaration validation.
@@ -2082,10 +2111,15 @@ class JavaScriptParser {
         const doc = this.jsdocFor(fact.token);
         if (doc?.returns) type = this.type(doc.returns, doc.range);
       } catch (error) {
-        if (error instanceof TranslationError) return '';
+        if (error instanceof TranslationError) return null;
         throw error;
       }
     }
+    return type;
+  }
+
+  readTagReceiverOwner(node) {
+    const type = this.readTagReceiverType(node);
     return readJavaScriptTagDeclaredOwner(type?.kind ?? '', type?.path ?? [], type?.name ?? '', ROOT);
   }
 
@@ -2093,7 +2127,7 @@ class JavaScriptParser {
   tagTest(op, left, right, where) {
     const [field, tag] = left.k === 'field' && left.field === '$' ? [left, right] : [right, left];
     if (field.k !== 'field' || field.field !== '$') return null;
-    if (tag.k !== 'str') throw unsupported('computed tag test', 'compare the $ tag with a string literal', where);
+    if (tag.k !== 'str') return null;
     const candidates = [...this.dataTypes].filter(([, ctors]) => ctors.some((ctor) => ctor.name === tag.value));
     const receiver = candidates.length > 1 ? this.readTagReceiverOwner(field.object) : '';
     const position = readJavaScriptTagOwnerPosition(candidates.map(([name]) => name), receiver);

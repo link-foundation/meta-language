@@ -25,7 +25,7 @@ function readEntry(item) {
   return item.value ?? 0;
 }
 
-/** @param {Entry} item @returns {void} */
+/** @param {Entry} item */
 function printEntry(item) {
   console.log(Object.hasOwn(item, 'value'), readEntry(item));
 }
