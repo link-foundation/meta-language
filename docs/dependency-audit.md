@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 266 | 265 | 1 | 0 |
+| Generators | 340 | 339 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 93 | 0 | 0 | 93 |
+| Published artifact contents | 304 | 0 | 0 | 304 |
 
 ## JavaScript engines
 
@@ -813,6 +813,80 @@ they are.
 | `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-compiler-host-source-history.mjs` | `js/scripts/generate-native-compiler-host-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-module-scope-declaration-history.mjs` | `js/scripts/generate-module-scope-declaration-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-state-method-fixtures.mjs` | `js/scripts/generate-array-state-method-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-state-method-rules.mjs` | `js/scripts/generate-array-state-method-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-bitwise-fixtures.mjs` | `js/scripts/generate-big-integer-bitwise-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-bitwise-rules.mjs` | `js/scripts/generate-big-integer-bitwise-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-conversion-fixtures.mjs` | `js/scripts/generate-big-integer-conversion-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-division-fixtures.mjs` | `js/scripts/generate-big-integer-division-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-big-integer-source-fixtures.mjs` | `js/scripts/generate-big-integer-source-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-binding-default-fixtures.mjs` | `js/scripts/generate-binding-default-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-access-fixtures.mjs` | `js/scripts/generate-collection-access-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-access-rules.mjs` | `js/scripts/generate-collection-access-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-declaration-dependency-branch-fixture.mjs` | `js/scripts/generate-declaration-dependency-branch-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dynamic-meta-language-rules.mjs` | `js/scripts/generate-dynamic-meta-language-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-exponentiation-fixtures.mjs` | `js/scripts/generate-exponentiation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-fixed-integer-cast-rules.mjs` | `js/scripts/generate-fixed-integer-cast-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-inference-rules.mjs` | `js/scripts/generate-grammar-inference-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-identifier-fixtures.mjs` | `js/scripts/generate-javascript-identifier-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-identifier-rules.mjs` | `js/scripts/generate-javascript-identifier-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-optional-call-fixtures.mjs` | `js/scripts/generate-javascript-optional-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-property-call-fixtures.mjs` | `js/scripts/generate-javascript-property-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-property-call-rules.mjs` | `js/scripts/generate-javascript-property-call-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-string-unit-fixtures.mjs` | `js/scripts/generate-javascript-string-unit-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-allocation-fixtures.mjs` | `js/scripts/generate-link-allocation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-allocation-rules.mjs` | `js/scripts/generate-link-allocation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-meta-language-archive-rules.mjs` | `js/scripts/generate-meta-language-archive-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-module-binding-fixtures.mjs` | `js/scripts/generate-module-binding-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-number-bitwise-rules.mjs` | `js/scripts/generate-number-bitwise-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-numeric-operation-error-fixtures.mjs` | `js/scripts/generate-numeric-operation-error-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-primitive-comparison-fixtures.mjs` | `js/scripts/generate-primitive-comparison-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-project-translation-rules.mjs` | `js/scripts/generate-project-translation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-parameter-write-fixtures.mjs` | `js/scripts/generate-record-parameter-write-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-write-fixtures.mjs` | `js/scripts/generate-record-write-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-write-rules.mjs` | `js/scripts/generate-record-write-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-array-projection-fixtures.mjs` | `js/scripts/generate-reference-array-projection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-array-projection-rules.mjs` | `js/scripts/generate-reference-array-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-method-fixtures.mjs` | `js/scripts/generate-reference-method-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-method-rules.mjs` | `js/scripts/generate-reference-method-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-regular-grammar-inference-fixtures.mjs` | `js/scripts/generate-regular-grammar-inference-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-address-fixtures.mjs` | `js/scripts/generate-resource-description-address-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-address-rules.mjs` | `js/scripts/generate-resource-description-address-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-binding-fixtures.mjs` | `js/scripts/generate-rust-binding-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-carrier-fixtures.mjs` | `js/scripts/generate-rust-completion-carrier-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-function-output-fixtures.mjs` | `js/scripts/generate-rust-function-output-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-inherent-fixtures.mjs` | `js/scripts/generate-rust-inherent-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-inherent-rules.mjs` | `js/scripts/generate-rust-inherent-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-let-else-fixtures.mjs` | `js/scripts/generate-rust-let-else-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-ordinary-return-fixtures.mjs` | `js/scripts/generate-rust-ordinary-return-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-pattern-condition-fixtures.mjs` | `js/scripts/generate-rust-pattern-condition-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-bitwise-fixtures.mjs` | `js/scripts/generate-rust-primitive-bitwise-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-bitwise-rules.mjs` | `js/scripts/generate-rust-primitive-bitwise-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-raw-identifier-fixtures.mjs` | `js/scripts/generate-rust-raw-identifier-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-record-fixtures.mjs` | `js/scripts/generate-rust-record-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-record-rules.mjs` | `js/scripts/generate-rust-record-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-shift-fixtures.mjs` | `js/scripts/generate-rust-shift-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-shift-rules.mjs` | `js/scripts/generate-rust-shift-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-statement-value-fixtures.mjs` | `js/scripts/generate-rust-statement-value-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-terminal-return-fixtures.mjs` | `js/scripts/generate-rust-terminal-return-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-tuple-pattern-fixtures.mjs` | `js/scripts/generate-rust-tuple-pattern-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-unit-value-fixtures.mjs` | `js/scripts/generate-rust-unit-value-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-scalar-assignment-fixtures.mjs` | `js/scripts/generate-scalar-assignment-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-semantic-input-rules.mjs` | `js/scripts/generate-semantic-input-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-sequence-expression-fixtures.mjs` | `js/scripts/generate-sequence-expression-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-exception-fixtures.mjs` | `js/scripts/generate-source-exception-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-identifier-fixtures.mjs` | `js/scripts/generate-source-identifier-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-identifier-rules.mjs` | `js/scripts/generate-source-identifier-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-construction-fixtures.mjs` | `js/scripts/generate-string-construction-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-number-fixtures.mjs` | `js/scripts/generate-string-number-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-replacement-fixtures.mjs` | `js/scripts/generate-string-replacement-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-split-fixtures.mjs` | `js/scripts/generate-string-split-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-unit-call-fixtures.mjs` | `js/scripts/generate-string-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-syntax-projection-rules.mjs` | `js/scripts/generate-syntax-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-translation-source-layout.mjs` | `js/scripts/generate-translation-source-layout.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-unicode-case-fixtures.mjs` | `js/scripts/generate-unicode-case-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-unicode-identifier-fixtures.mjs` | `js/scripts/generate-unicode-identifier-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-unicode-scalar-rules.mjs` | `js/scripts/generate-unicode-scalar-rules.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -856,7 +930,7 @@ they are.
 | `docker/metadata-action` | `.github/workflows/rust.yml` | `v6` | v6.2.0 (GitHub release, docker/metadata-action) | major | current |  |
 | `docker/setup-buildx-action` | `.github/workflows/rust.yml` | `v4` | v4.4.1 (GitHub release, docker/setup-buildx-action) | major | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml` | `1.99.0` | 1.99.0 (GitHub release, rust-lang/rust) | version | current |  |
-| `dtolnay/rust-toolchain` | `.github/workflows/rust.yml` | `master` |  | floating | current |  |
+| `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `master` |  | floating | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `stable` |  | floating | current |  |
 | `ocaml/setup-ocaml` | `.github/workflows/ci.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
 | `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.1 (GitHub release, peter-evans/create-pull-request) | major | current |  |
@@ -974,6 +1048,217 @@ they are.
 | `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/empty-module-collections.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/numeric-module-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/abrupt-result-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/absence-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/absence-only-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-classification-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-formal-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-state-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/big-integer-bitwise-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/big-integer-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/binding-initialization-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/boolean-constructor-match-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/callable-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/collection-access-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/conditional-chain-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/conditional-constructor-sharing-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/dynamic-language-command-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/excess-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/fixed-integer-cast-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/formal-string-unit-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-composition-batch-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-inference-refinement-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/inert-module-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-call-machine-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-call-natural-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-class-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-comparison-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-data-field-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-descriptor-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-fixed-integer-cast-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-identifier-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-literal-property-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-nominal-spread-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-nullish-field-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-optional-call-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-optional-chain-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-ordinary-heap-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-own-property-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-primitive-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-property-call-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-property-definition-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-property-descriptor-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-property-key-conversion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-record-order-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-record-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-string-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-string-range-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-string-unit-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/let-else-completion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/lexical-declaration-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/LICENSE-UNICODE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/link-allocation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/missing-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/module-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/named-default-callable-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/nominal-array-loan-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/number-bitwise-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/object-entry-pair-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/object-rest-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/optional-callable-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/optional-policy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/optional-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/owned-array-allocation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/owned-array-reader-domain-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/pattern-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/project-translation-archive-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-callable-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-closure-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-order-surface-library.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-value-order-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-write-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/recursive-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/recursive-object-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/reference-array-projection-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/reference-identity-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/reference-method-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/resource-description-address-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-array-element-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-array-index-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-array-length-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-array-lookup-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-byte-ascii-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-byte-pattern-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-byte-string-expression-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-byte-string-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-callable-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-checked-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-constant-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-constructed-string-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-contextual-closure-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-copy-closure-parameter-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-copy-closure-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-data-type-field-signature-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-declaration-header-controls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-declaration-header-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-displayed-string-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-formatting-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fresh-vector-argument-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fresh-vector-call-result-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fresh-vector-result-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-function-pointer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-function-qualifier-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-inherent-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-integer-bit-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-integer-float-plan-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-integer-magnitude-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-integer-range-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-iterator-arithmetic-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-iterator-pipeline-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-iterator-reduction-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-module-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-named-formatting-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-nominal-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-numeric-pattern-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-panic-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-pattern-match-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-pointer-integer-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-associated-call-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-bitwise-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-default-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-expression-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-from-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-function-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-inherent-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-integer-constant-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-owner-path-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-selection-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-try-from-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-project-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-record-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-saturating-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-saturating-multiplication-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-scalar-mathematical-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-scalar-source-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-scalar-vector-copy-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-shared-array-handle-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-shift-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-signed-integer-property-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-constant-evaluation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-constant-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-owner-retention-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-version-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-owned-call-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-string-view-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-addition-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-byte-kernel-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-byte-length-controls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-byte-length-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-byte-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-byte-view-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-pattern-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-string-predicate-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-textual-source-interface-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-type-alias-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-type-token-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-unit-value-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-usize-index-expression-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-wrapping-integer-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-wrapping-shift-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/scalar-assignment-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/scalar-closure-default-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/sequential-parameter-default-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-construct-signal-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-definition-catalog-controls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-definition-catalog-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-definition-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-exception-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-identifier-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-library-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-library-export-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-module-request-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-parameter-binding-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-project-archive-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-version-column-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-array-sort-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-construction-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-number-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/type-query-evaluation-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typed-program-record-shapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typed-program-value-sharing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typed-record-shape-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unicode-case-emission-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unicode-case-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unicode-scalar-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unicode-source-tables.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unsigned-graph-command-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unsigned-link-identity-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unsigned-source-command-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/unsigned-source-document-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/utf16-method-emission-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/utf16-text-expansion-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/utf16-text-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/whole-parameter-default-bab148f9-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/whole-parameter-default-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/big-integer-conversion.js` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/big-integer-conversion.lean` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/big-integer-conversion.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/record-property-order.js` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/record-property-order.lean` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/record-property-order.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/source-exception.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/string-number.lean` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/string-number.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/unicode-case.js` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/unicode-case.lean` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/unicode-case.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/utf16-text.js` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/utf16-text.lean` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/utf16-text.v` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 
