@@ -36,6 +36,15 @@ pub fn relay(receiver: ${receiver}, name: String) -> String { self::lookup(recei
 pub fn relay(receiver: ${receiver}, name: &str) -> String { self::lookup(receiver.clone(), name) }`);
 });
 
+test('identical generated blocks at distinct module owners receive one replayable lint action', () => {
+  const declaration = 'pub fn decide(value: f64) -> bool { if value != 7f64 { true } else { false } }';
+  const source = `pub mod left {\n${declaration}\n}\npub mod right {\n${declaration}\n}`;
+  const result = readPortableSourceLintStyles(source);
+  assert.equal(result.actions.filter(action => action.from === declaration).length, 1);
+  assert.equal((result.source.match(/#\[must_use\]\npub fn decide/gu) ?? []).length, 2);
+  assert.equal(result.actions.reduce((current, action) => current.split(action.from).join(action.to), source), result.source);
+});
+
 test('actual multi-line lint attributes remain attached to complete partitioned declarations', () => {
   const source = Array.from({length: 18}, (_, index) =>
     '/** @param {number} a @param {number} b @param {number} c @param {number} d @param {number} e @param {number} f @param {number} g @param {number} h @param {number} i @returns {number} */ function column' + index + '(a,b,c,d,e,f,g,h,i){return a+b+c+d+e+f+g+h+i;}').join('\n');

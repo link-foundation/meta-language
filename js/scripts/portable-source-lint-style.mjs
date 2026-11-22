@@ -40,7 +40,7 @@ function readPortableLintTokens(source) {
 }
 
 function readPortableLintFunctionBlocks(source, {tokens, matching, opaque} = readPortableLintTokens(source)) {
-  const functions = [];
+  const functions = new Set();
   for (const [index, token] of tokens.entries()) {
     if (token.kind !== 'identifier' || token.value !== 'pub' || opaque.has(index)
       || (token.start > 0 && source[token.start - 1] !== '\n') || tokens[index + 1]?.value !== 'fn') continue;
@@ -52,7 +52,8 @@ function readPortableLintFunctionBlocks(source, {tokens, matching, opaque} = rea
     }
     const end = matching.get(body);
     assert.notEqual(end, undefined, 'an emitted lint target retains its complete function body: ' + name);
-    functions.push(source.slice(token.start, tokens[end].end));
+    // A recorded string replacement changes every exact occurrence at once.
+    functions.add(source.slice(token.start, tokens[end].end));
   }
   return functions;
 }
@@ -435,7 +436,7 @@ export function readPortableSourceLintStyles(source, {modulePath, scopedCallBorr
   const actions = [];
   const replace = (from, to) => {
     if (from === to) return;
-    assert.ok(adapted.includes(from), 'a library lint style retains its exact source context');
+    assert.ok(adapted.includes(from), 'a library lint style retains its exact source context: ' + from.slice(0, 100));
     // Keep small recorded edits independent of each full preceding library
     // string. A sliced UTF-16 view can otherwise retain that entire library.
     const preceding = Buffer.from(from, 'utf16le').toString('utf16le');
