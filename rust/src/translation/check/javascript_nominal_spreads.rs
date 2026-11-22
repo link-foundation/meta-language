@@ -2,8 +2,9 @@
 use super::{
     Checker, Env, Expr, Language, Node, Result, SExpr, SNode, Span, Type, UnaryOp, type_error,
 };
-use crate::translation::javascript_nominal_spread_rules as rules;
+use crate::translation::ir::{Case, Pattern};
 use crate::translation::javascript_constructor_presence::{field_value_type, own_value};
+use crate::translation::javascript_nominal_spread_rules as rules;
 use crate::translation::surface::SRecordEntry;
 
 impl Checker {
@@ -107,6 +108,34 @@ impl Checker {
         }
         let declaration = self.data_decl(owner)?.clone();
         let ctor = declaration.ctors.first();
+        let kinds = entries
+            .iter()
+            .map(|entry| if entry.spread { "spread" } else { "field" }.to_owned())
+            .collect::<Vec<_>>();
+        let count = serde_json::Number::from(declaration.ctors.len())
+            .as_f64()
+            .expect("actual constructor count is a Number");
+        if declaration.ctors.len() > 1 {
+            let common = entries.iter().skip(1).all(|entry| {
+                declaration.ctors[0]
+                    .fields
+                    .iter()
+                    .find(|field| Some(field.name.as_str()) == entry.name.as_deref())
+                    .is_some_and(|field| {
+                        declaration.ctors[1..].iter().all(|variant| {
+                            variant.fields.iter().any(|candidate| {
+                                candidate.name == field.name
+                                    && candidate.optional == field.optional
+                                    && candidate.ty == field.ty
+                            })
+                        })
+                    })
+            });
+            let error = rules::read_java_script_nominal_sum_spread_error(count, &kinds, common);
+            if !error.is_empty() {
+                return Err(type_error(error, span));
+            }
+        }
         let mut values = Vec::new();
         for entry in entries {
             let declared = if entry.spread {
@@ -117,7 +146,13 @@ impl Checker {
                         .iter()
                         .find(|field| Some(field.name.as_str()) == entry.name.as_deref())
                 })
-                .map(|field| if field.optional { field_value_type(&field.ty).expect("checked field presence") } else { &field.ty })
+                .map(|field| {
+                    if field.optional {
+                        field_value_type(&field.ty).expect("checked field presence")
+                    } else {
+                        &field.ty
+                    }
+                })
             };
             let value = self.expr(&entry.value, env, path, declared, false)?;
             values.push(if entry.spread {
@@ -126,10 +161,6 @@ impl Checker {
                 value
             });
         }
-        let kinds = entries
-            .iter()
-            .map(|entry| if entry.spread { "spread" } else { "field" }.to_owned())
-            .collect::<Vec<_>>();
         let names = entries
             .iter()
             .map(|entry| {
@@ -163,12 +194,9 @@ impl Checker {
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
-        let count = serde_json::Number::from(declaration.ctors.len())
-            .as_f64()
-            .expect("actual constructor count is a Number");
         let error = rules::read_java_script_nominal_spread_error(
             self.language.as_str(),
-            count,
+            count.min(1.0),
             &fields,
             &kinds,
             &names,
@@ -178,6 +206,79 @@ impl Checker {
         );
         if !error.is_empty() {
             return Err(type_error(error, span));
+        }
+        if declaration.ctors.len() > 1 {
+            let mut cases = Vec::with_capacity(declaration.ctors.len());
+            for variant in &declaration.ctors {
+                let binds = variant
+                    .fields
+                    .iter()
+                    .map(|_| self.fresh_name("ml_nominal_field"))
+                    .collect::<Vec<_>>();
+                let mut args = variant
+                    .fields
+                    .iter()
+                    .zip(&binds)
+                    .map(|(field, name)| Expr::var(name, field.ty.clone()))
+                    .collect::<Vec<_>>();
+                let mut overrides = Vec::new();
+                for (entry, value) in entries.iter().skip(1).zip(values.iter().skip(1)) {
+                    let index = variant
+                        .fields
+                        .iter()
+                        .position(|field| Some(field.name.as_str()) == entry.name.as_deref())
+                        .expect("the shared rule selects a common declared field");
+                    let field = &variant.fields[index];
+                    let expected = if field.optional {
+                        field_value_type(&field.ty).expect("checked field presence")
+                    } else {
+                        &field.ty
+                    };
+                    let name = self.fresh_name("ml_nominal_override");
+                    let value = self.coerce(value.clone(), expected, span)?;
+                    let variable = Expr::var(&name, expected.clone());
+                    args[index] = if field.optional {
+                        own_value(variable, &field.ty)
+                    } else {
+                        variable
+                    };
+                    overrides.push((name, value));
+                }
+                let mut body = Expr::new(
+                    Node::Ctor {
+                        data: declaration.full_name.clone(),
+                        ctor: variant.name.clone(),
+                        args,
+                        frozen: false,
+                    },
+                    selected.clone(),
+                );
+                for (name, value) in overrides.into_iter().rev() {
+                    body = Expr::new(
+                        Node::Let {
+                            name,
+                            value: Box::new(value),
+                            body: Box::new(body),
+                        },
+                        selected.clone(),
+                    );
+                }
+                cases.push(Case {
+                    pattern: Pattern::Ctor {
+                        data: declaration.full_name.clone(),
+                        ctor: variant.name.clone(),
+                        binds: binds.into_iter().map(Some).collect(),
+                    },
+                    body,
+                });
+            }
+            return Ok(Some(Expr::new(
+                Node::Match {
+                    scrutinee: Box::new(values.remove(0)),
+                    cases,
+                },
+                selected.clone(),
+            )));
         }
         let ctor = ctor.expect("the shared rule selects one actual constructor");
         let mut bindings = Vec::new();
@@ -194,18 +295,27 @@ impl Checker {
                 for field in &ctor.fields {
                     let name = self.fresh_name("ml_nominal_field");
                     let value = self
-                        .javascript_data_field_projection(&variable, &field.name, span, field.optional)?
+                        .javascript_data_field_projection(
+                            &variable,
+                            &field.name,
+                            span,
+                            field.optional,
+                        )?
                         .expect("actual nominal field projection");
                     bindings.push((name.clone(), value));
                     let current = Expr::var(name, field.ty.clone());
                     let value = match (selected_fields.remove(&field.name), &field.ty) {
                         (Some(previous), Type::Option { element, .. }) if field.optional => {
-                            let condition = Self::javascript_optional_presence(current.clone(), element, span)?;
-                            Expr::new(Node::If {
-                                cond: Box::new(condition),
-                                then: Box::new(current),
-                                otherwise: Box::new(previous),
-                            }, field.ty.clone())
+                            let condition =
+                                Self::javascript_optional_presence(current.clone(), element, span)?;
+                            Expr::new(
+                                Node::If {
+                                    cond: Box::new(condition),
+                                    then: Box::new(current),
+                                    otherwise: Box::new(previous),
+                                },
+                                field.ty.clone(),
+                            )
                         }
                         _ => current,
                     };
@@ -221,9 +331,20 @@ impl Checker {
                     .iter()
                     .find(|item| item.name == field)
                     .expect("the shared rule selects a declared field");
-                let expected = if declaration.optional { field_value_type(&declaration.ty).expect("checked field presence") } else { &declaration.ty };
+                let expected = if declaration.optional {
+                    field_value_type(&declaration.ty).expect("checked field presence")
+                } else {
+                    &declaration.ty
+                };
                 let value = self.coerce(variable, expected, span)?;
-                selected_fields.insert(field.to_owned(), if declaration.optional { own_value(value, &declaration.ty) } else { value });
+                selected_fields.insert(
+                    field.to_owned(),
+                    if declaration.optional {
+                        own_value(value, &declaration.ty)
+                    } else {
+                        value
+                    },
+                );
             }
         }
         let args = ctor

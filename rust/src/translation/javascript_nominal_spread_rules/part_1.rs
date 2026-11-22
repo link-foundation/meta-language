@@ -219,6 +219,56 @@ pub fn read_java_script_nominal_spread_guard_arm(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_nominal_sum_spread_error(
+    constructors: f64,
+    kinds: &[String],
+    common_fields: bool,
+) -> String {
+    if ((((constructors < 2f64) || (constructors > 4096f64)) || ((kinds.len() as f64) == 0f64))
+        || ((kinds.len() as f64) > 65_536f64))
+        || {
+            let source_ml_source1_comparison_operand5 =
+                self::ml_array::optional_at(kinds, self::ml_array::number_index(0f64));
+            {
+                let source_ml_source1_comparison_operand6 = String::from("spread");
+                !(match (
+                    source_ml_source1_comparison_operand5,
+                    source_ml_source1_comparison_operand6,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                })
+            }
+        }
+    {
+        String::from("nominal sum copies require a bounded actual constructor directory")
+    } else {
+        {
+            let at = 1f64;
+            {
+                let source_ml_source1_s7 =
+                    self::source_ml_temporary_read_java_script_nominal_sum_spread_error_loop3(
+                        kinds, at,
+                    );
+                match source_ml_source1_s7 {
+                    self::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Result::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Done => {
+                        if common_fields {
+                            String::new()
+                        } else {
+                            String::from("nominal sum copies can override only the same declared fields in every constructor")
+                        }
+                    }
+                    self::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Result::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Return(source_ml_temporary_result3) => {
+                        source_ml_temporary_result3.clone()
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryReadJavaScriptNominalSpreadErrorLoop2Result {
     MlTemporaryReadJavaScriptNominalSpreadErrorLoop2Done,
@@ -327,6 +377,50 @@ pub fn source_ml_temporary_read_java_script_nominal_spread_error_loop1(
             }
         } else {
             self::MlTemporaryReadJavaScriptNominalSpreadErrorLoop1Result::MlTemporaryReadJavaScriptNominalSpreadErrorLoop1Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Result {
+    MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Done,
+    MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Return(String),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_java_script_nominal_sum_spread_error_loop3(
+    kinds: &[String],
+    mut at: f64,
+) -> self::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Result {
+    loop {
+        return if at < (kinds.len() as f64) {
+            if {
+                let source_ml_source1_comparison_operand8 =
+                    self::ml_array::optional_at(kinds, self::ml_array::number_index(at));
+                {
+                    let source_ml_source1_comparison_operand9 = String::from("field");
+                    !(match (
+                        source_ml_source1_comparison_operand8,
+                        source_ml_source1_comparison_operand9,
+                    ) {
+                        (Some(ml_left), ml_right) => ml_left == ml_right,
+                        _ => false,
+                    })
+                }
+            } {
+                self::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Result::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Return(String::from("nominal sum copies require one complete source value before declared field overrides"))
+            } else {
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Result::MlTemporaryReadJavaScriptNominalSumSpreadErrorLoop3Done
         };
     }
 }

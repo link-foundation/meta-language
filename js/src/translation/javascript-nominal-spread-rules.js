@@ -26,3 +26,10 @@ export function readJavaScriptNominalSpreadGuardArm(kind,operation,absence){
   if(kind!=='binary'||absence!=='undefined'&&absence!=='null')return 0;
   return operation==='ne'?1:operation==='eq'?2:0;
 }
+
+/** @param {number} constructors @param {string[]} kinds @param {boolean} commonFields @returns {string} */
+export function readJavaScriptNominalSumSpreadError(constructors,kinds,commonFields){
+ if(constructors<2||constructors>4096||kinds.length===0||kinds.length>65536||kinds[0]!=='spread')return 'nominal sum copies require a bounded actual constructor directory';
+ for(let at=1;at<kinds.length;at++)if(kinds[at]!=='field')return 'nominal sum copies require one complete source value before declared field overrides';
+ return commonFields?'':'nominal sum copies can override only the same declared fields in every constructor';
+}

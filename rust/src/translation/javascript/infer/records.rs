@@ -98,12 +98,37 @@ impl Inference {
         right: &Rc<RefCell<RecordTerm>>,
         place: Option<Span>,
     ) -> Result<()> {
-        let (left_owner,left_open)={let value=left.borrow();(value.source_class_owner.clone(),value.open)};
-        let (right_owner,right_open)={let value=right.borrow();(value.source_class_owner.clone(),value.open)};
-        match crate::translation::class_owners::infer_class_owner(left_owner.as_deref().unwrap_or(""),right_owner.as_deref().unwrap_or(""),left_open,right_open)?.as_str(){
-            "left"=>{left.borrow_mut().source_class_owner=right_owner;self.unification_changes+=1;},
-            "right"=>{right.borrow_mut().source_class_owner=left_owner;self.unification_changes+=1;},
-            "error"=>return Err(type_error("an actual class constructor owner cannot be erased or replaced by a plain record",place)),_=>{}
+        let (left_owner, left_open) = {
+            let value = left.borrow();
+            (value.source_class_owner.clone(), value.open)
+        };
+        let (right_owner, right_open) = {
+            let value = right.borrow();
+            (value.source_class_owner.clone(), value.open)
+        };
+        match crate::translation::class_owners::infer_class_owner(
+            left_owner.as_deref().unwrap_or(""),
+            right_owner.as_deref().unwrap_or(""),
+            left_open,
+            right_open,
+        )?
+        .as_str()
+        {
+            "left" => {
+                left.borrow_mut().source_class_owner = right_owner;
+                self.unification_changes += 1;
+            }
+            "right" => {
+                right.borrow_mut().source_class_owner = left_owner;
+                self.unification_changes += 1;
+            }
+            "error" => {
+                return Err(type_error(
+                    "an actual class constructor owner cannot be erased or replaced by a plain record",
+                    place,
+                ));
+            }
+            _ => {}
         }
         let mut phase = 0.0;
         let mut index = 0.0;
@@ -288,6 +313,40 @@ impl Inference {
             let nominal = Term::Known(crate::translation::types::Type::Data {
                 name: owner.clone(),
             });
+            let kinds = entries
+                .iter()
+                .map(|entry| if entry.spread { "spread" } else { "field" }.to_owned())
+                .collect::<Vec<_>>();
+            let count = serde_json::Number::from(ctors.len())
+                .as_f64()
+                .expect("actual constructor count is a Number");
+            if ctors.len() > 1 {
+                let common = entries.iter().skip(1).all(|entry| {
+                    let Some((index, field)) = ctors[0]
+                        .fields
+                        .iter()
+                        .enumerate()
+                        .find(|(_, field)| field.name == entry.name)
+                    else {
+                        return false;
+                    };
+                    let expected = self.field(&owner, &ctors[0].name, index);
+                    ctors[1..].iter().all(|variant| {
+                        variant.fields.iter().enumerate().any(|(index, candidate)| {
+                            candidate.name == field.name
+                                && candidate.optional == field.optional
+                                && {
+                                    let actual = self.field(&owner, &variant.name, index);
+                                    self.same_term(&actual, &expected)
+                                }
+                        })
+                    })
+                });
+                let error = crate::translation::javascript_nominal_spread_rules::read_java_script_nominal_sum_spread_error(count, &kinds, common);
+                if !error.is_empty() {
+                    return Err(type_error(error, node.span));
+                }
+            }
             let mut owners = Vec::new();
             for (index, entry) in entries.iter().enumerate() {
                 if entry.spread {
@@ -350,10 +409,6 @@ impl Inference {
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
-            let kinds = entries
-                .iter()
-                .map(|entry| if entry.spread { "spread" } else { "field" }.to_owned())
-                .collect::<Vec<_>>();
             let names = entries
                 .iter()
                 .map(|entry| {
@@ -371,10 +426,9 @@ impl Inference {
                     ..
                 }
             );
-            let count = serde_json::Number::from(ctors.len())
-                .as_f64()
-                .expect("actual constructor count is a Number");
-            let error=crate::translation::javascript_nominal_spread_rules::read_java_script_nominal_spread_error("JavaScript",count,&fields,&kinds,&names,&owners,&owner,prototype);
+            let error = crate::translation::javascript_nominal_spread_rules::read_java_script_nominal_spread_error(
+                "JavaScript", count.min(1.0), &fields, &kinds, &names, &owners, &owner, prototype,
+            );
             if !error.is_empty() {
                 return Err(type_error(error, node.span));
             }
@@ -455,7 +509,13 @@ impl Inference {
             }
         }
         let owner = Rc::new(RefCell::new(RecordTerm {
-            source_class_owner: crate::translation::class_owners::source_record_owner(self.source_class_owners.as_ref(),&fields.iter().map(|(name,_)|name.clone()).collect::<Vec<_>>())?,
+            source_class_owner: crate::translation::class_owners::source_record_owner(
+                self.source_class_owners.as_ref(),
+                &fields
+                    .iter()
+                    .map(|(name, _)| name.clone())
+                    .collect::<Vec<_>>(),
+            )?,
             fields: insertion_fields(&fields),
             open,
         }));

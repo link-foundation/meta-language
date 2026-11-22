@@ -2,7 +2,7 @@ import {requireCallableConstantApplicationCapture} from './rust-module-value-rul
 import {readClosedClassMethodTarget} from './javascript-class-methods.js';
 import {readJavaScriptSourceClassOwner} from './javascript-class-owners.js';
 import {readJavaScriptClassOwnerInference} from './javascript-class-owner-rules.js';
-import {readJavaScriptNominalSpreadError} from './javascript-nominal-spread-rules.js';
+import {readJavaScriptNominalSpreadError,readJavaScriptNominalSumSpreadError} from './javascript-nominal-spread-rules.js';
 import {readJavaScriptDataFieldInferenceForm,acceptJavaScriptDataFieldOwnerFallback} from './javascript-data-field-rules.js';
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
 import {readJavaScriptEnumerationForm,acceptJavaScriptEnumerationValueDomain} from './javascript-enumeration-rules.js';
@@ -1364,11 +1364,19 @@ class Inference {
     const nominal=want?.kind==='data'?want:source?.kind==='data'?source:null;
     if(nominal&&node.entries[0]?.spread){
       const ctors=this.data.get(nominal.name)??[],ctor=ctors[0],owners=[];
+      const kinds=node.entries.map(entry=>entry.spread?'spread':'field');
+      if(ctors.length>1){
+        const overrides=node.entries.slice(1).map(entry=>ctor.fields.find(field=>field.name===entry.name));
+        const common=overrides.every(field=>field&&ctors.every(variant=>variant.fields.some(candidate=>
+          candidate.name===field.name&&(candidate.optional===true)===(field.optional===true)&&this.sameTerm(this.field(candidate),this.field(field)))));
+        const error=readJavaScriptNominalSumSpreadError(ctors.length,kinds,common);
+        if(error)throw typeError(error,node.span);
+      }
       for(const [index,entry]of node.entries.entries()){
         if(entry.spread){const term=entryTerms?.[index]??(index===0?leading:this.expr(entry.value,env)),raw=this.resolve(term),present=raw.kind==='option'?raw.element:term;this.unify(present,nominal,entry.value.span??node.span);const actual=this.resolve(present);owners.push(actual.kind==='data'?actual.name:'');}
         else{const field=ctor?.fields.find(field=>field.name===entry.name),declared=field?(field.optional?this.declared(javaScriptConstructorFieldValueType(field)):this.field(field)):null,value=entryTerms?.[index]??this.expr(entry.value,env,declared);if(declared)this.unify(value,declared,entry.value.span??node.span);owners.push('');}
       }
-      const error=readJavaScriptNominalSpreadError('JavaScript',ctors.length,ctor?.fields.map(field=>field.name)??[],node.entries.map(entry=>entry.spread?'spread':'field'),node.entries.map(entry=>entry.spread?'':entry.name),owners,nominal.name,node.prototypeDefinition!==undefined);
+      const error=readJavaScriptNominalSpreadError('JavaScript',Math.min(1,ctors.length),ctor?.fields.map(field=>field.name)??[],kinds,node.entries.map(entry=>entry.spread?'':entry.name),owners,nominal.name,node.prototypeDefinition!==undefined);
       if(error)throw typeError(error,node.span);
       this.records.set(node,nominal);return nominal;
     }

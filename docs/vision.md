@@ -11405,8 +11405,16 @@ Owned single-constructor tagged values can be copied by a leading whole-value
 spread, followed by whole copies of the same actual owner and declared-field
 overrides. Every input and copied field is captured in source order, including
 overwritten values; source expressions evaluate once. Extra fields, changed
-owners/tags, multiple constructors, reordered leading fields and unsupported
-prototype changes refuse. This is a closed nominal representation profile;
+owners or tags, reordered leading fields and unsupported prototype changes
+refuse. A closed sum with several constructors preserves the actual tag and
+all of its fields by matching the spread source once and capturing that
+constructor's fields before evaluating the overrides. Its overrides must name
+fields declared with the same type and presence in every constructor. A second
+spread requires separate rules to preserve the resulting tag and layout. The
+former refusal for two constructors sharing a field retains its exact copy
+source as a positive control. Additional controls cover variant-specific and
+incompatible fields and repeated spreads. This is a closed nominal
+representation profile;
 general CopyDataProperties, accessor/exotic sources and arbitrary observable
 property-order layouts retain their separate required interpretation.
 
