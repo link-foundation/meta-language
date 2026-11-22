@@ -1885,6 +1885,14 @@ export function identifyLanguage(
   options?: { readonly minimumConfidence?: number },
 ): LanguageIdentification;
 
+export interface NaturalLanguageValue {
+  /** UTF-8 offsets into the original text. */
+  readonly start: number;
+  readonly end: number;
+  readonly term: string;
+}
+export function naturalLanguageValues(text: string, language: string): NaturalLanguageValue[];
+
 export type TextNormalization = 'nfkc' | 'quotes' | 'dashes' | 'yo' | 'case' | 'softHyphen' | 'whitespace';
 
 export interface TextLocationRange {

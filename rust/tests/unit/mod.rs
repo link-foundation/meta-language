@@ -164,6 +164,7 @@ mod lino_serialization;
 mod native_recovery_records;
 mod native_text_grammars;
 mod natural_language_grammar;
+mod natural_language_values;
 mod network_projection;
 mod parity_corpora;
 mod parity_manifest;

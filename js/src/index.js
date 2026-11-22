@@ -35,6 +35,7 @@ export * from './grammar-concepts.js';
 export * from './language-profile.js';
 export * from './language-support.js';
 export * from './network.js';
+export { naturalLanguageValues } from './natural-language-values.js';
 export * from './parser-registry.js';
 export { grammarNames } from './programming-language-parser.js';
 export * from './program-representation.js';

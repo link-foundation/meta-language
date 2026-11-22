@@ -20,6 +20,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   visibleDocumentText: 'https://github.com/link-foundation/meta-language/issues/238',
   rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
   grammarSearch: 'https://github.com/link-foundation/meta-language/issues/235',
+  naturalLanguageValues: 'https://github.com/link-foundation/meta-language/issues/242',
   normalizedTextLocation: 'https://github.com/link-foundation/meta-language/issues/243',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
@@ -559,6 +560,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/grammar/import/pest.rs', 'rust/tests/unit/grammar_import_pest.rs'],
       },
     })),
+    {
+      id: 'I195-I242-NATURAL-LANGUAGE-VALUES',
+      source: ISSUE_195_SOURCES.naturalLanguageValues,
+      language: 'English, Russian and shared digit-based value syntax',
+      version: 'ISO 4217 List One 2026-09-17, exact decimal arithmetic, proleptic Gregorian dates',
+      construct: 'typed value links from grammar searches',
+      expectedBehavior: 'Grammar search emits localized number, numeric range, currency, duration, calendar date and calendar range annotations over original UTF-8 spans. Inflected number words and open date endpoints are recognized. A numeric range and a date can coexist over the same spelling.',
+      fixture: 'parity/fixtures/natural-language-values.lino',
+      selector: 'the reported Russian and English examples, related inflected forms, punctuation, shared Spanish digit and currency syntax, and invalid dates and currency codes',
+      assertions: ['localizedExactNumbers', 'currencyRanges', 'inflectedDurations', 'dateAlternatives', 'utf8SourceSpans'],
+      implementationEntryPoints: {
+        javascript: ['js/src/natural-language-values.js', 'js/tests/natural-language-values.test.js'],
+        rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I243-NORMALIZED-TEXT-LOCATION',

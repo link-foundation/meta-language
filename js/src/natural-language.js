@@ -8,6 +8,7 @@ import {
 } from './primitives.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 import { LANGUAGE_IDENTIFIER_TERM, identifyLanguage } from './language-identification.js';
+import { naturalLanguageValues } from './natural-language-values.js';
 import { BIDI_RANGES } from './unicode-bidi-classes.js';
 
 const encoder = new TextEncoder();
@@ -199,6 +200,9 @@ export function annotateNaturalLanguage(network, document, text, language) {
     ...unicodeAnnotations(text).map((term) =>
       insertSemanticAnnotation(network, languageLink, term, detectedLanguage, documentSpan)),
   );
+  for (const { start, end, term } of naturalLanguageValues(text, declaredLanguage)) {
+    annotations.push(insertSemanticAnnotation(network, languageLink, term, declaredLanguage, lines.span(start, end)));
+  }
   const workedExample = insertWorkedExampleAnnotation(network, text, declaredLanguage, documentSpan);
   if (workedExample) annotations.push(workedExample);
 

@@ -555,6 +555,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("nativeGrammarSource", "native_grammar_source", "function"),
     (
+        "naturalLanguageValues",
+        "link_network::natural_language_values::natural_language_values",
+        "function",
+    ),
+    (
         "normalizedRuleDefinition",
         "normalized_rule_definition",
         "function",

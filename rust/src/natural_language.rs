@@ -17,6 +17,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::configuration::{LanguageIdentificationDetector, ParseConfiguration};
 use crate::language_identification::{self, LANGUAGE_IDENTIFIER_TERM};
 use crate::line_index::LineIndex;
+use crate::link_network::natural_language_values::natural_language_values;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::natural_language_grammar::annotate_morphosyntax;
 use crate::source::{ByteRange, SourceSpan};
@@ -125,6 +126,16 @@ pub fn annotate_natural_language(
         detected_language,
         document_span,
     );
+    for value in natural_language_values(text, declared_language) {
+        insert_semantic_annotation(
+            network,
+            region,
+            language_link,
+            value.term,
+            declared_language,
+            span_for_range(&lines, value.start, value.end),
+        );
+    }
     insert_worked_example_annotations(network, region, text, declared_language, document_span);
 }
 

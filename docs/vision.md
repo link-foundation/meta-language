@@ -1571,6 +1571,14 @@ the same global space as programming languages, and reuse requires the same
 checked meaning correspondence. Tests distinguish native representation and
 source preservation from any richer linguistic capability they verify.
 
+Value annotations use grammar search over the source and keep each successful
+interpretation as a semantic link at its original UTF-8 extent. The shared
+Links grammars recognize the shape of numeric expressions, currencies,
+durations and dates. Locale vocabularies provide number words, units and month
+names. A value action reads the captured fields, normalizes exact decimals and
+ISO 4217 codes, and validates calendar dates. A spelling such as `5-7` can carry
+both a numeric range and a date.
+
 ## Grammar feature union
 
 A compiled grammar can scan a text with a selected rule. Grammar search
