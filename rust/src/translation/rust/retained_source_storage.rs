@@ -265,7 +265,7 @@ mod tests {
                 },
             )
             .unwrap_err();
-            assert!(error.message.contains("from 1.90.0 through 1.99.x"));
+            assert!(error.reason.contains("from 1.90.0 through 1.99.x"));
         }
         for (exclusive_source, fn_mut_source, diagnostic) in [
             (
@@ -288,7 +288,7 @@ mod tests {
                 },
             )
             .unwrap_err();
-            assert!(error.message.contains(diagnostic));
+            assert!(error.reason.contains(diagnostic));
         }
     }
 
