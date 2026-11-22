@@ -10,11 +10,27 @@ export {readPortableSourceLintStyles} from './portable-source-lint-style.mjs';
 /** Borrow immutable primitive parameters; retain actual assigned parameters. */
 export function readPortableSourceParameterStyles(source, {publicNames = [], ownedParameters = {}, normalizeBorrowedArguments = false} = {}) {
   const declarations = new Map();
-  for (const [, name] of source.matchAll(/^pub fn (\w+)\(/gmu)) {
-    const block = readSourceTextRustBlock(source, 'fn', name);
-    const header = /^pub fn \w+\(([^)]*)\)/u.exec(block);
-    assert.ok(header, 'a generated library function retains its complete signature');
-    const body = tokenize(block.slice(header[0].length), 'Rust').tokens;
+  const {tokens: sourceTokens} = tokenize(source, 'Rust');
+  const tokenPositions = new Map(sourceTokens.map((token, index) => [token.start, index]));
+  const delimiters = new Map(), openings = [];
+  for (const [index, token] of sourceTokens.entries()) {
+    if (token.kind !== 'punct') continue;
+    if (['(', '{', '['].includes(token.value)) openings.push(index);
+    else if ([')', '}', ']'].includes(token.value)) delimiters.set(openings.pop(), index);
+  }
+  for (const match of source.matchAll(/^pub fn (\w+)\(/gmu)) {
+    const [, name] = match;
+    const parameterStart = tokenPositions.get(match.index + match[0].length - 1);
+    const parameterEnd = delimiters.get(parameterStart);
+    assert.notEqual(parameterEnd, undefined, 'a generated library function retains its complete signature: ' + name);
+    let bodyStart = parameterEnd + 1;
+    while (bodyStart < sourceTokens.length && !(sourceTokens[bodyStart].kind === 'punct' && sourceTokens[bodyStart].value === '{')) {
+      bodyStart = (delimiters.get(bodyStart) ?? bodyStart) + 1;
+    }
+    const bodyEnd = delimiters.get(bodyStart);
+    assert.notEqual(bodyEnd, undefined, 'a generated library function retains its complete body: ' + name);
+    const block = source.slice(match.index, sourceTokens[bodyEnd].end);
+    const body = sourceTokens.slice(bodyStart, bodyEnd + 1);
     const assigned = new Set();
     for (let index = 0; index < body.length; index += 1) {
       if (body[index].kind !== 'punct' || !['=', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>='].includes(body[index].value)) continue;
@@ -31,7 +47,8 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         assert.equal(depth, 0, 'an emitted tuple assignment has its complete left-hand side');
       }
     }
-    const params = header[1].split(',').map(value => /^\s*(?:mut )?(\w+):\s*(.+?)\s*$/u.exec(value)).filter(Boolean)
+    const parameterSource = source.slice(sourceTokens[parameterStart].end, sourceTokens[parameterEnd].start);
+    const params = parameterSource.split(',').map(value => /^\s*(?:mut )?(\w+):\s*(.+?)\s*$/u.exec(value)).filter(Boolean)
       .map(([, parameter, type]) => ({name: parameter, type}));
     for (const param of params) {
       let element = param.type;

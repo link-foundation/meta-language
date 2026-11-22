@@ -16,6 +16,14 @@ import {DecoratorSet} from '../src/decorators.js';
 import {applyRecordedFamilyLibraryStyles} from '../scripts/recorded-family-library-style.mjs';
 import {formatProductRuleSource} from '../scripts/product-rule-style-corrections.mjs';
 
+test('a generated function borrows its own parameters when a helper shares its name', () => {
+  const nativeHelper = 'mod helper {\n    fn read(value: f64) -> f64 { value }\n}';
+  const declaration = 'pub fn read(value: Vec<f64>) -> Vec<f64> { value }';
+  const styled = readPortableSourceParameterStyles(nativeHelper + '\n' + declaration);
+  assert.equal(styled.source, nativeHelper + '\npub fn read(value: &[f64]) -> Vec<f64> { value.to_vec() }');
+  assert.deepEqual(styled.actions.map(action => action.from), [declaration]);
+});
+
 test('actual multi-line lint attributes remain attached to complete partitioned declarations', () => {
   const source = Array.from({length: 18}, (_, index) =>
     '/** @param {number} a @param {number} b @param {number} c @param {number} d @param {number} e @param {number} f @param {number} g @param {number} h @param {number} i @returns {number} */ function column' + index + '(a,b,c,d,e,f,g,h,i){return a+b+c+d+e+f+g+h+i;}').join('\n');
