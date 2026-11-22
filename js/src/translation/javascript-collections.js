@@ -32,6 +32,13 @@ function replaceJavaScriptCollectionEntries(heap, object, entries) {
    : {$:'setObject',identity,prototype,extensible,callable,properties,entries};
  return replaceJavaScriptOrdinaryObject(heap,replacement);
 }
+/** @param {JavaScriptOrdinaryObject} object @param {string} kind
+ * @returns {JavaScriptCollectionEntry[]|undefined} */
+function readJavaScriptCollectionEntries(object, kind) {
+ if (object.$==='mapObject') return kind==='Map'?object.entries:undefined;
+ if (object.$==='setObject') return kind==='Set'?object.entries:undefined;
+ return undefined;
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} receiver @param {string} operation @param {JavaScriptSemanticValue[]} args @returns {JavaScriptCollectionCompletion} */
 export function executeJavaScriptCollectionOperation(heap,receiver,operation,args){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'collectionInvalid',heap,reason:error};
@@ -39,16 +46,18 @@ export function executeJavaScriptCollectionOperation(heap,receiver,operation,arg
  if(args.length>4096)return {$:'collectionResourceLimit',heap,reason:'collection arguments exceed their execution budget'};
  for(const value of [receiver,...args]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {$:'collectionInvalid',heap,reason:invalid};}
  const object=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
- if(object===undefined||!(kind==='Map'&&object.$==='mapObject'||kind==='Set'&&object.$==='setObject'))return {$:'collectionTypeError',heap,reason:operation+' requires its actual collection internal slot receiver'};
- const key=normalizeJavaScriptCollectionKey(args[0]??{$:'undefined'}),at=object.entries.findIndex(entry=>entry.present&&testJavaScriptCollectionKey(entry.key,key)),entry=object.entries[at];
+ if(object===undefined)return {$:'collectionTypeError',heap,reason:operation+' requires its actual collection internal slot receiver'};
+ const stored=readJavaScriptCollectionEntries(object,kind);
+ if(stored===undefined)return {$:'collectionTypeError',heap,reason:operation+' requires its actual collection internal slot receiver'};
+ const key=normalizeJavaScriptCollectionKey(args[0]??{$:'undefined'}),at=stored.findIndex(entry=>entry.present&&testJavaScriptCollectionKey(entry.key,key)),entry=stored[at];
  if(operation==='Map.get')return {$:'collectionNormal',heap,value:entry===undefined?{$:'undefined'}:entry.value};
  if(operation==='Map.has'||operation==='Set.has')return {$:'collectionNormal',heap,value:{$:'boolean',value:at>=0}};
- if(operation==='Map.size'||operation==='Set.size')return {$:'collectionNormal',heap,value:{$:'number',value:object.entries.filter(entry=>entry.present).length}};
- if(operation==='Map.clear'||operation==='Set.clear')return {$:'collectionNormal',heap:replaceJavaScriptCollectionEntries(heap,object,object.entries.map(entry=>({...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}))),value:{$:'undefined'}};
- if(operation==='Map.delete'||operation==='Set.delete')return {$:'collectionNormal',heap:at<0?heap:replaceJavaScriptCollectionEntries(heap,object,object.entries.map((entry,index)=>index===at?{...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}:entry)),value:{$:'boolean',value:at>=0}};
- if(at<0&&object.entries.length>=65536)return {$:'collectionResourceLimit',heap,reason:'collection insertion history exceeds its explicit ordinal budget'};
+ if(operation==='Map.size'||operation==='Set.size')return {$:'collectionNormal',heap,value:{$:'number',value:stored.filter(entry=>entry.present).length}};
+ if(operation==='Map.clear'||operation==='Set.clear')return {$:'collectionNormal',heap:replaceJavaScriptCollectionEntries(heap,object,stored.map(entry=>({...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}))),value:{$:'undefined'}};
+ if(operation==='Map.delete'||operation==='Set.delete')return {$:'collectionNormal',heap:at<0?heap:replaceJavaScriptCollectionEntries(heap,object,stored.map((entry,index)=>index===at?{...entry,key:{$:'undefined'},value:{$:'undefined'},present:false}:entry)),value:{$:'boolean',value:at>=0}};
+ if(at<0&&stored.length>=65536)return {$:'collectionResourceLimit',heap,reason:'collection insertion history exceeds its explicit ordinal budget'};
  const value=kind==='Set'?key:args[1]??{$:'undefined'},next={$:'collectionEntry',key,value,present:true};
- const entries=at<0?object.entries.concat([next]):object.entries.map((current,index)=>index===at?{...current,value}:current);
+ const entries=at<0?stored.concat([next]):stored.map((current,index)=>index===at?{...current,value}:current);
  const updated=replaceJavaScriptCollectionEntries(heap,object,entries),limit=readJavaScriptOrdinaryHeapError(updated);
  if(limit!=='')return {$:'collectionResourceLimit',heap,reason:limit};
  return {$:'collectionNormal',heap:updated,value:receiver};

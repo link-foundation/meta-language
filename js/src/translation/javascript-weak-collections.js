@@ -31,6 +31,13 @@ function replaceJavaScriptWeakCollectionEntries(heap, object, weakEntries) {
    : {$:'weakSetObject',identity,prototype,extensible,callable,properties,weakEntries};
  return replaceJavaScriptOrdinaryObject(heap,replacement);
 }
+/** @param {JavaScriptOrdinaryObject} object @param {string} kind
+ * @returns {JavaScriptWeakCollectionEntry[]|undefined} */
+function readJavaScriptWeakCollectionEntries(object, kind) {
+ if (object.$==='weakMapObject') return kind==='WeakMap'?object.weakEntries:undefined;
+ if (object.$==='weakSetObject') return kind==='WeakSet'?object.weakEntries:undefined;
+ return undefined;
+}
 /** Receiver brand is tested before key eligibility. Primitive query keys do
  * not coerce or throw. Only insertion rejects an ineligible weak key.
  * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} receiver @param {string} operation @param {JavaScriptSemanticValue[]} args @returns {JavaScriptCollectionCompletion} */
@@ -40,15 +47,17 @@ export function executeJavaScriptWeakCollectionOperation(heap,receiver,operation
  if(args.length>4096)return {$:'collectionResourceLimit',heap,reason:'weak collection arguments exceed their explicit execution profile'};
  for(const value of [receiver,...args]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {$:'collectionInvalid',heap,reason:invalid};}
  const object=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
- if(object===undefined||!(kind==='WeakMap'&&object.$==='weakMapObject'||kind==='WeakSet'&&object.$==='weakSetObject'))return {$:'collectionTypeError',heap,reason:operation+' requires its actual weak internal slot receiver'};
+ if(object===undefined)return {$:'collectionTypeError',heap,reason:operation+' requires its actual weak internal slot receiver'};
+ const stored=readJavaScriptWeakCollectionEntries(object,kind);
+ if(stored===undefined)return {$:'collectionTypeError',heap,reason:operation+' requires its actual weak internal slot receiver'};
  const key=args[0]??{$:'undefined'},eligibility=readJavaScriptWeakKeyEligibility(heap,key),inserting=operation==='WeakMap.set'||operation==='WeakSet.add';
  if(eligibility==='missing symbol registration authority')return {$:'collectionInvalid',heap,reason:'weak Symbol keys require their actual registered or unregistered global Symbol fact'};
  if(eligibility==='ineligible')return inserting?{$:'collectionTypeError',heap,reason:'weak insertion requires an Object or nonregistered Symbol key'}:{$:'collectionNormal',heap,value:operation==='WeakMap.get'?{$:'undefined'}:{$:'boolean',value:false}};
- const at=findJavaScriptWeakCollectionKey(object.weakEntries,key),entry=object.weakEntries[at];
+ const at=findJavaScriptWeakCollectionKey(stored,key),entry=stored[at];
  if(operation==='WeakMap.get')return {$:'collectionNormal',heap,value:entry?.value??{$:'undefined'}};
  if(operation==='WeakMap.has'||operation==='WeakSet.has')return {$:'collectionNormal',heap,value:{$:'boolean',value:at>=0}};
- if(operation==='WeakMap.delete'||operation==='WeakSet.delete')return {$:'collectionNormal',heap:at<0?heap:replaceJavaScriptWeakCollectionEntries(heap,object,object.weakEntries.filter((_,index)=>index!==at)),value:{$:'boolean',value:at>=0}};
- if(at<0&&object.weakEntries.length>=65536)return {$:'collectionResourceLimit',heap,reason:'weak collection live slots exceed their explicit storage budget'};
- const value=kind==='WeakMap'?args[1]??{$:'undefined'}:{$:'undefined'},next={$:'weakCollectionEntry',key,value},weakEntries=at<0?object.weakEntries.slice(0,-at-1).concat([next],object.weakEntries.slice(-at-1)):object.weakEntries.map((current,index)=>index===at?next:current),updated=replaceJavaScriptWeakCollectionEntries(heap,object,weakEntries),failure=readJavaScriptOrdinaryHeapError(updated);
+ if(operation==='WeakMap.delete'||operation==='WeakSet.delete')return {$:'collectionNormal',heap:at<0?heap:replaceJavaScriptWeakCollectionEntries(heap,object,stored.filter((_,index)=>index!==at)),value:{$:'boolean',value:at>=0}};
+ if(at<0&&stored.length>=65536)return {$:'collectionResourceLimit',heap,reason:'weak collection live slots exceed their explicit storage budget'};
+ const value=kind==='WeakMap'?args[1]??{$:'undefined'}:{$:'undefined'},next={$:'weakCollectionEntry',key,value},weakEntries=at<0?stored.slice(0,-at-1).concat([next],stored.slice(-at-1)):stored.map((current,index)=>index===at?next:current),updated=replaceJavaScriptWeakCollectionEntries(heap,object,weakEntries),failure=readJavaScriptOrdinaryHeapError(updated);
  return failure===''?{$:'collectionNormal',heap:updated,value:receiver}:{$:'collectionResourceLimit',heap,reason:failure};
 }
