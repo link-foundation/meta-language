@@ -35,6 +35,7 @@ import {createJavaScriptStringLiteral} from './javascript-string-literals.js';
 import {readJavaScriptStringConstructionOperation} from './string-construction-rules.js';
 import {readJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
+import { readDocumentationTypeEnd } from './type-syntax-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import {readClosedCollectionIterationSourceScope,wrapClosedCollectionIteration,wrapClosedCollectionSpread} from './source-collection-iterations.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -2818,19 +2819,13 @@ function jsdocTags(comment) {
   let match = pattern.exec(text);
   while (match) {
     let index = match.index + match[0].length;
+  let typeUnits;
     while (text[index] === ' ' || text[index] === '\t') index += 1;
     let type = null;
     if (text[index] === '{') {
-      let depth = 0;
-      let end = index;
-      for (; end < text.length; end += 1) {
-        if (text[end] === '{') depth += 1;
-        if (text[end] === '}') {
-          depth -= 1;
-          if (depth === 0) break;
-        }
-      }
-      if (depth !== 0) throw new TranslationError('syntax', `unbalanced braces in the JSDoc type of @${match[1]}`, comment);
+      typeUnits ??= Array.from({ length: text.length }, (_, at) => text.charCodeAt(at));
+      const end = readDocumentationTypeEnd(typeUnits, index);
+      if (end < 0) throw new TranslationError('syntax', `unbalanced braces in the JSDoc type of @${match[1]}`, comment);
       type = text.slice(index + 1, end).replaceAll('\n', ' ');
       index = end + 1;
     }

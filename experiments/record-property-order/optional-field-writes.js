@@ -1,10 +1,11 @@
-/** @typedef {{head:number,5:number,2?:number,late?:number}} Shape */
+/** @typedef {{head:number,'\x35':number,'2'?:number,late?:number,'l,a:te}'?:number}} Shape */
 /** @returns {Shape} */
 function make() { return {head:3,'5':5}; }
 /** @returns {boolean} */
 function compute() {
   const record = make(), alias = record;
-  const absent = !Object.hasOwn(alias,'late') && !Object.hasOwn(alias,'2');
+  const absent = !Object.hasOwn(alias,'late') && !Object.hasOwn(alias,'2') &&
+    !Object.hasOwn(alias,'l,a:te}');
   record.late = undefined;
   record['2'] = 2;
   alias.head = 4;

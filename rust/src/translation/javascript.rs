@@ -661,6 +661,7 @@ fn jsdoc_tags(comment: &Comment) -> Result<Vec<JsDocTag>> {
         .chars()
         .collect();
     let mut tags = Vec::new();
+    let mut type_units = None;
     let mut at = 0;
     while let Some((tag_start, tag_end)) = next_tag(&text, at) {
         let tag: String = text[tag_start + 1..tag_end].iter().collect();
@@ -670,26 +671,21 @@ fn jsdoc_tags(comment: &Comment) -> Result<Vec<JsDocTag>> {
         }
         let mut ty = None;
         if text.get(index) == Some(&'{') {
-            let mut depth = 0;
-            let mut end = index;
-            while end < text.len() {
-                if text[end] == '{' {
-                    depth += 1;
-                }
-                if text[end] == '}' {
-                    depth -= 1;
-                    if depth == 0 {
-                        break;
-                    }
-                }
-                end += 1;
-            }
-            if depth != 0 {
+            let units = type_units.get_or_insert_with(|| {
+                text.iter()
+                    .map(|character| f64::from(u32::from(*character)))
+                    .collect::<Vec<_>>()
+            });
+            let start = serde_json::Number::from(index)
+                .as_f64()
+                .expect("a source coordinate has a finite binary64 projection");
+            let end = super::type_syntax_rules::read_documentation_type_end(units, start);
+            let Some(end) = super::frontend_rules::ml_array::number_index(end) else {
                 return Err(TranslationError::syntax(
                     format!("unbalanced braces in the JSDoc type of @{tag}"),
                     Some(Span::new(comment.start, comment.end)),
                 ));
-            }
+            };
             ty = Some(
                 text[index + 1..end]
                     .iter()

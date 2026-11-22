@@ -1,6 +1,7 @@
 // Binding forms share one evaluation order: read the value once, then bind
 // its selected fields or elements from left to right.
 import { unsupported, typeError } from './diagnostics.js';
+import { tokenize } from './lexer.js';
 import { imperative, lowerImperative } from './javascript-lower.js';
 import { readTypeSeparatorPositions } from './type-syntax-rules.js';
 import { acceptRecordTypeBoundary, acceptRecordTypeOptionalName, readRecordTypeFieldColon } from './record-type-syntax-rules.js';
@@ -200,10 +201,19 @@ export function readCompositeType(parser, name, range) {
       if (index < 0) throw unsupported(`record type {${name}}`, 'every field has a name and a type', range);
       const field = part.slice(0, index).trim();
       const optional = acceptRecordTypeOptionalName(field.charCodeAt(field.length - 1));
+      let fieldName = optional ? field.slice(0, -1).trimEnd() : field;
+      if (fieldName.startsWith('"') || fieldName.startsWith("'")) {
+        const { tokens } = tokenize(fieldName, 'JavaScript');
+        const token = tokens[0];
+        if (token.kind !== 'string' || token.raw !== fieldName || token.stringUnits) {
+          throw unsupported('quoted record property name', 'a field name needs one scalar JavaScript String literal', range);
+        }
+        fieldName = token.value;
+      }
       const type = parser.type(part.slice(index + 1), range);
       return optional
-        ? { name: field.slice(0, -1), type: javaScriptOptionalConstructorFieldType(type), optional: true }
-        : { name: field, type };
+        ? { name: fieldName, type: javaScriptOptionalConstructorFieldType(type), optional: true }
+        : { name: fieldName, type };
     });
     return { kind: 'record', fields };
   }

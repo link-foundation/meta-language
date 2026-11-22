@@ -38,7 +38,7 @@ export function typeSyntaxRulesPolicy(baseline) {
     sourceClosure: { source: readTypeSyntaxSourceModule(source), sourceSha256: hash(readTypeSyntaxSourceModule(source)), removedImport: requiredImport,
       inputs: [{ path: 'js/src/translation/type-syntax-rules.js', sourceSha256: hash(source) },
         { path: 'js/src/translation/fact-column-rules.js', sourceSha256: hash(readFileSync(factsFile, 'utf8')) }] },
-    boundary: 'Positions retain UTF16 source coordinates and the original bracket and arrow behavior. Host slice/trim and existing recursive type parsing remain mandatory; this scanner does not prove arbitrary type syntax or union coercion.' };
+    boundary: 'Positions retain source coordinates, skip quoted names and tags with escapes, and preserve the original bracket and arrow behavior. Host slicing, lexical string decoding and recursive type parsing remain mandatory.' };
 }
 
 export async function generateTypeSyntaxRules({ check = false, native = false } = {}) {
