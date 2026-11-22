@@ -202,6 +202,12 @@ test('family whole inequality inversion preserves unordered Numbers and both ori
   assert.notEqual(invertFamilyLibraryInequalityBranches(strings), strings);
   const helpers = 'fn observe(value:f64)->f64{value}pub fn decide(first:f64,second:f64)->bool{let value=observe(first);if value!=observe(second){true}else{false}}';
   assert.notEqual(invertFamilyLibraryInequalityBranches(helpers), helpers, 'actual unique local helper return types supply the operand proof');
+  const local = 'pub fn decide(first:f64,second:f64)->bool{if observe(first)!=observe(second){true}else{false}}';
+  for (const context of [
+    'mod nested {fn observe(value:f64)->f64{value}}',
+    'struct Wrapped; impl Wrapped {fn observe(value:f64)->f64{value}}',
+    'fn outer(){fn observe(value:f64)->f64{value}}',
+  ]) assert.equal(invertFamilyLibraryInequalityBranches(local, {context: context + local}), local);
   const overridden = 'struct Custom;impl PartialEq for Custom{fn eq(&self,other:&Self)->bool{true}fn ne(&self,other:&Self)->bool{true}}'
     + 'pub fn decide(first:Custom,second:Custom,ml_library_inequality_1:bool)->bool{if first!=second{/*different*/true}else{/*equal*/false}}';
   assert.equal(invertFamilyLibraryInequalityBranches(overridden), overridden);
