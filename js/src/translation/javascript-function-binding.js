@@ -42,7 +42,7 @@ export function beginJavaScriptFunctionBind(heap,target,boundThis,arguments_){
  const state={$:'functionBindState',target,boundThis,arguments:arguments_.slice(),phase:'prototype',prototype:{$:'undefined'},receiver:{$:'undefined'},length:0,name:{$:'text',units:[]}},error=readJavaScriptFunctionBindStateError(heap,state);return error===''?{$:'functionBindContinue',heap,state}:{$:'functionBindInvalid',heap,reason:error};
 }
 /** @param {JavaScriptSemanticValue} value @param {number} count @returns {number} */
-export function readJavaScriptBoundFunctionLength(value,count){if(value.$!=='number'||Number.isNaN(value.value)||value.value===-Infinity)return 0;if(value.value===Infinity)return Infinity;return Math.max(0,Math.trunc(value.value)-count);}
+export function readJavaScriptBoundFunctionLength(value,count){if(value.$!=='number')return 0;if(Number.isNaN(value.value)||value.value===-Infinity)return 0;if(value.value===Infinity)return Infinity;return Math.max(0,Math.trunc(value.value)-count);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptFunctionBindState} state @param {JavaScriptSemanticValue} value @returns {JavaScriptFunctionBindTransition} */
 export function retainJavaScriptFunctionBindMetadata(heap,state,value){
  const {call:previous,...base}=state;if(state.phase==='length getter'||state.phase==='length')return {$:'functionBindContinue',heap,state:{...base,phase:'define length',length:readJavaScriptBoundFunctionLength(value,state.arguments.length)}};
@@ -74,7 +74,9 @@ export function resumeJavaScriptFunctionBindAllocation(heap,state,identity){
  const error=readJavaScriptFunctionBindStateError(heap,state);if(error!==''||state.phase!=='allocate')return {$:'functionBindInvalid',heap,reason:error||'bound Function identity resumes only its actual allocation'};
  const request=stepJavaScriptFunctionBind(heap,state);if(request.$!=='functionBindAllocate')return request;
  if(typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n||findJavaScriptOrdinaryObject(heap.objects,identity)>=0||heap.symbols.includes(identity))return {$:'functionBindInvalid',heap,reason:'bound Function allocation requires a fresh external global identity'};
- const object={$:'boundFunctionObject',identity,prototype:state.prototype,extensible:true,callable:true,properties:[],boundTarget:state.target,boundThis:state.boundThis,boundArguments:state.arguments.slice()};let at=0;while(at<heap.objects.length&&(heap.objects[at]?.identity??identity)<identity)at++;const next={...heap,objects:heap.objects.slice(0,at).concat([object],heap.objects.slice(at))},invalid=readJavaScriptOrdinaryHeapError(next);
+ /** @type {JavaScriptBoundFunctionObject} */
+ const object={$:'boundFunctionObject',identity,prototype:state.prototype,extensible:true,callable:true,properties:[],boundTarget:state.target,boundThis:state.boundThis,boundArguments:state.arguments.slice()};
+ let at=0;while(at<heap.objects.length&&(heap.objects[at]?.identity??identity)<identity)at++;const next={...heap,objects:heap.objects.slice(0,at).concat([object],heap.objects.slice(at))},invalid=readJavaScriptOrdinaryHeapError(next);
  return invalid!==''?{$:'functionBindInvalid',heap,reason:invalid}:{$:'functionBindContinue',heap:next,state:{...state,phase:'length own',receiver:{$:'object',identity,callable:true}}};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptFunctionBindState} state @param {JavaScriptPrimitiveConversionCompletion} completion @returns {JavaScriptFunctionBindTransition} */

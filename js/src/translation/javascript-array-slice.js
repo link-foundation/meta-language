@@ -4,7 +4,7 @@ import {readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet} from './java
 import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
-import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact} from './javascript-array-species.js';
+import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact,copyJavaScriptArrayConstructorFact} from './javascript-array-species.js';
 import {allocateJavaScriptArray} from './javascript-arrays.js';
 import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.js';
 import {readJavaScriptObjectSpreadStateError,stepJavaScriptObjectSpread,resumeJavaScriptObjectSpread} from './javascript-object-spread.js';
@@ -86,9 +86,9 @@ function acceptSpecies(heap,state,transition){
   case 'arraySpeciesNeedAuthority':return {$:'arraySliceNeedAuthority',heap:transition.heap,state:{...base,phase:'species',species:transition.state},constructor:transition.constructor};
   case 'arraySpeciesAllocate':return allocationRequest(transition.heap,{...base,phase:'allocate',species:transition.state,allocationPrototype:transition.prototype});
   case 'arraySpeciesConstruct':{
-   const selected={...base,species:transition.state,constructor:transition.constructor,constructorFact:{...transition.fact}};
+   const selected={...base,species:transition.state,constructor:transition.constructor,constructorFact:copyJavaScriptArrayConstructorFact(transition.fact)};
    if(transition.fact.intrinsicArray&&transition.fact.realm===transition.state.realm&&testJavaScriptSemanticSameValue(transition.constructor,transition.state.arrayConstructor))return allocationRequest(transition.heap,{...selected,phase:'allocate',allocationPrototype:transition.state.arrayPrototype});
-   return {$:'arraySliceConstruct',heap:transition.heap,state:{...selected,phase:'construct'},constructor:transition.constructor,arguments:transition.arguments,fact:{...transition.fact}};
+   return {$:'arraySliceConstruct',heap:transition.heap,state:{...selected,phase:'construct'},constructor:transition.constructor,arguments:transition.arguments,fact:copyJavaScriptArrayConstructorFact(transition.fact)};
   }
   case 'arraySpeciesThrow':return {$:'arraySliceThrow',heap:transition.heap,value:transition.value};
   case 'arraySpeciesError':return {$:'arraySliceError',heap:transition.heap,errorClass:transition.errorClass,reason:transition.reason};

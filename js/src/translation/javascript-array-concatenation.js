@@ -4,7 +4,7 @@ import {readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet} from './java
 import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
-import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact} from './javascript-array-species.js';
+import {beginJavaScriptArraySpeciesSelection,stepJavaScriptArraySpeciesSelection,resumeJavaScriptArraySpeciesGetter,readJavaScriptArraySpeciesStateError,readJavaScriptArraySpeciesDirectoryError,classifyJavaScriptArraySpeciesConstructor,readJavaScriptKnownArrayConstructorFact,copyJavaScriptArrayConstructorFact} from './javascript-array-species.js';
 import {allocateJavaScriptArray,testJavaScriptArrayValue} from './javascript-arrays.js';
 import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.js';
 import {readJavaScriptObjectSpreadStateError,stepJavaScriptObjectSpread,resumeJavaScriptObjectSpread} from './javascript-object-spread.js';
@@ -84,9 +84,9 @@ function continueJavaScriptArrayConcatenationSpecies(heap,state,transition){
   case 'arraySpeciesNeedAuthority':return {$:'arrayConcatenationNeedAuthority',heap:transition.heap,state:{...base,phase:'species',species:transition.state},constructor:transition.constructor};
   case 'arraySpeciesAllocate':return requestJavaScriptArrayConcatenationAllocation(transition.heap,{...base,phase:'allocate',species:transition.state,allocationPrototype:transition.prototype});
   case 'arraySpeciesConstruct':{
-   const selected={...base,species:transition.state,constructor:transition.constructor,constructorFact:{...transition.fact}};
+   const selected={...base,species:transition.state,constructor:transition.constructor,constructorFact:copyJavaScriptArrayConstructorFact(transition.fact)};
    if(transition.fact.intrinsicArray&&transition.fact.realm===transition.state.realm&&testJavaScriptSemanticSameValue(transition.constructor,transition.state.arrayConstructor))return requestJavaScriptArrayConcatenationAllocation(transition.heap,{...selected,phase:'allocate',allocationPrototype:transition.state.arrayPrototype});
-   return {$:'arrayConcatenationConstruct',heap:transition.heap,state:{...selected,phase:'construct'},constructor:transition.constructor,arguments:transition.arguments,fact:{...transition.fact}};
+   return {$:'arrayConcatenationConstruct',heap:transition.heap,state:{...selected,phase:'construct'},constructor:transition.constructor,arguments:transition.arguments,fact:copyJavaScriptArrayConstructorFact(transition.fact)};
   }
   case 'arraySpeciesThrow':return {$:'arrayConcatenationThrow',heap:transition.heap,value:transition.value};
   case 'arraySpeciesError':return {$:'arrayConcatenationError',heap:transition.heap,errorClass:transition.errorClass,reason:transition.reason};

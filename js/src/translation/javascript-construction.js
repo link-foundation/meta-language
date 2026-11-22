@@ -54,8 +54,7 @@ export function readJavaScriptActiveConstruction(state){return state.operation??
 export function adaptJavaScriptBoundConstruction(state,transition){
  if(transition.$==='constructionCompleted'||transition.$==='constructionThrow'||transition.$==='constructionError'||transition.$==='constructionInvalid')return transition;
  const {call:prior,...base}=state,operation=transition.state;
- const next={...base,phase:'bound construction',operation};
- if(operation.call!==undefined)next.call=operation.call;
+ const call=operation.call,next=call===undefined?{...base,phase:'bound construction',operation}:{...base,phase:'bound construction',operation,call};
  const heap=transition.heap;
  switch(transition.$){
   case 'constructionContinue':return {$:'constructionContinue',heap,state:next};

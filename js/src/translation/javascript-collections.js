@@ -76,7 +76,9 @@ export function copyJavaScriptCollection(heap,target,input,adder,iteratorKey,ite
  if(object===undefined||object.$!=='mapObject'&&object.$!=='setObject'||object.entries.length!==0)return {$:'collectionInvalid',heap,reason:'constructor copying needs its actual fresh empty collection'};
  if(input.$==='undefined'||input.$==='null')return {$:'collectionNormal',heap,value:target};
  const source=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;
- if(source===undefined||source.$!=='mapObject'&&source.$!=='setObject'||source.$!==object.$||iteratorKey.$!=='symbol'||iteratorPrototype.$!=='object'||adder.$!=='object'||!adder.callable||iteratorMethod.$!=='object'||!iteratorMethod.callable||nextMethod.$!=='object'||!nextMethod.callable)return {$:'collectionNeedIterable',heap,target,input};
+ if(source===undefined||source.$!=='mapObject'&&source.$!=='setObject'||source.$!==object.$||iteratorKey.$!=='symbol')return {$:'collectionNeedIterable',heap,target,input};
+ if(iteratorPrototype.$!=='object')return {$:'collectionNeedIterable',heap,target,input};
+ if(adder.$!=='object'||!adder.callable||iteratorMethod.$!=='object'||!iteratorMethod.callable||nextMethod.$!=='object'||!nextMethod.callable)return {$:'collectionNeedIterable',heap,target,input};
  const addKey=object.$==='setObject'?{$:'text',units:[97,100,100]}:{$:'text',units:[115,101,116]},nextKey={$:'text',units:[110,101,120,116]};
  const actualAdder=planJavaScriptOrdinaryGet(heap,object.identity,addKey,target),actualIterator=planJavaScriptOrdinaryGet(heap,source.identity,iteratorKey,input),actualNext=planJavaScriptOrdinaryGet(heap,iteratorPrototype.identity,nextKey,iteratorPrototype);
  if(actualAdder.action!=='value'||actualIterator.action!=='value'||actualNext.action!=='value'||!testJavaScriptSemanticSameValue(actualAdder.value,adder)||!testJavaScriptSemanticSameValue(actualIterator.value,iteratorMethod)||!testJavaScriptSemanticSameValue(actualNext.value,nextMethod))return {$:'collectionNeedIterable',heap,target,input};

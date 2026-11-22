@@ -54,7 +54,9 @@ export function readJavaScriptPropertyReflectionStateError(heap,state){
 export function beginJavaScriptPropertyReflection(heap,operation,input,key,objectPrototype,arrayPrototype){
  const invalid=readJavaScriptOrdinaryHeapError(heap)||readJavaScriptOrdinaryValueError(heap,input);if(invalid!=='')return {$:'propertyReflectionInvalid',heap,reason:invalid};
  if(input.$==='null'||input.$==='undefined'||operation.startsWith('Reflect.')&&input.$!=='object')return {$:'propertyReflectionError',heap,errorClass:'TypeError',reason:'Property reflection requires its actual nonnull Object input'};
- const state={$:'propertyReflection',operation,input,key,objectPrototype,arrayPrototype,phase:'keys',keys:[],position:0,fields:[],field:0,target:{$:'undefined'},descriptor:{$:'undefined'}},error=readJavaScriptPropertyReflectionStateError(heap,state);return error===''?{$:'propertyReflectionContinue',heap,state}:{$:'propertyReflectionInvalid',heap,reason:error};
+ /** @type {JavaScriptPropertyReflectionState} */
+ const state={$:'propertyReflection',operation,input,key,objectPrototype,arrayPrototype,phase:'keys',keys:[],position:0,fields:[],field:0,target:{$:'undefined'},descriptor:{$:'undefined'}};
+ const error=readJavaScriptPropertyReflectionStateError(heap,state);return error===''?{$:'propertyReflectionContinue',heap,state}:{$:'propertyReflectionInvalid',heap,reason:error};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} target @param {JavaScriptSemanticValue} key @returns {boolean} */
 export function testJavaScriptReflectionPropertyBudget(heap,target,key){

@@ -18,6 +18,8 @@ import {findJavaScriptCallConstructorFact} from './javascript-call-code.js';
  * {$:'arraySpeciesInvalid',heap:JavaScriptOrdinaryHeap,reason:string}} JavaScriptArraySpeciesTransition */
 /** @param {JavaScriptArrayConstructorFact[]} facts @param {bigint} identity @returns {number} */
 export function findJavaScriptArrayConstructorFact(facts,identity){return findJavaScriptCallConstructorFact(facts,identity);}
+/** @param {JavaScriptArrayConstructorFact} fact @returns {JavaScriptArrayConstructorFact} */
+export function copyJavaScriptArrayConstructorFact(fact){return {...fact};}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory @returns {string} */
 export function readJavaScriptArraySpeciesDirectoryError(heap,directory){
  const heapError=readJavaScriptOrdinaryHeapError(heap);if(heapError!=='')return heapError;
@@ -59,7 +61,7 @@ export function readJavaScriptArraySpeciesStateError(heap,directory,state){
  * @param {JavaScriptSemanticValue} candidate @returns {JavaScriptArrayConstructorClassification} */
 export function classifyJavaScriptArraySpeciesConstructor(heap,directory,candidate){
  if(candidate.$!=='object'||!candidate.callable)return {$:'arrayConstructorNotConstructable'};
- const target=readJavaScriptConstructorAuthorityTarget(heap,candidate);if(target?.$!=='object'||!target.callable)return {$:'arrayConstructorNotConstructable'};
+ const target=readJavaScriptConstructorAuthorityTarget(heap,candidate);if(target===undefined||target.$!=='object'||!target.callable)return {$:'arrayConstructorNotConstructable'};
  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)];if(object===undefined||object.$==='closureObject')return {$:'arrayConstructorNotConstructable'};
  const fact=directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,target.identity)];if(fact===undefined)return {$:'arrayConstructorUnknown',constructor:target};
  return {$:'arrayConstructorKnown',fact:target.identity===candidate.identity?fact:{$:'arrayConstructorFact',identity:candidate.identity,constructable:fact.constructable,realm:fact.realm,intrinsicArray:false}};
