@@ -138,11 +138,11 @@ fn grammar_search_reports_original_ranges_captures_and_query_results() {
         }
     }
     observe(
-        "I235-GRAMMAR-SEARCH-SPANS",
+        "I195-I235-GRAMMAR-SEARCH-SPANS",
         &["searchFindsOriginalSpans", "wholeInputParseIsPreserved"],
     );
     observe(
-        "I235-GRAMMAR-SEARCH-CAPTURES",
+        "I195-I235-GRAMMAR-SEARCH-CAPTURES",
         &["repeatedNamedCapturesRetainSourceSpans"],
     );
 
@@ -231,7 +231,7 @@ fn grammar_search_reports_original_ranges_captures_and_query_results() {
         "stepLimit"
     );
     observe(
-        "I235-GRAMMAR-SEARCH-POLICY",
+        "I195-I235-GRAMMAR-SEARCH-POLICY",
         &[
             "wordBoundariesUseUnicode",
             "matchPoliciesChooseAtEachStart",
@@ -258,7 +258,7 @@ fn grammar_search_reports_original_ranges_captures_and_query_results() {
             .unwrap();
     assert_eq!(matches, network.find(&expected_query));
     observe(
-        "I235-GRAMMAR-SEARCH-QUERY",
+        "I195-I235-GRAMMAR-SEARCH-QUERY",
         &["sourceTextQueryPredicateComposes"],
     );
 }

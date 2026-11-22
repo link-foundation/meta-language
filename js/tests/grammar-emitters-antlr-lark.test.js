@@ -414,6 +414,13 @@ test('lark sources round-trip with their rule structure and docs', async () => {
   }
 });
 
+test('ANTLR emission preserves Lark regex classes and reports the dropped token boundary', async () => {
+  const grammar = importLark(await fixture('lark/covering.lark'));
+  const { source, report } = roundTrip(grammar, emitAntlr, importAntlr);
+  assert.match(source, /trailer : \[a-z\]\+ ;/);
+  assert.ok(report.lossy.some((note) => note.includes('dropped the Lark regex token boundary')));
+});
+
 // Emitted by the Rust binary: `meta-language import-grammar --format <fmt> --to <target>`.
 const RUST_FIXTURE_TEXT = {
   'abnf:message': {

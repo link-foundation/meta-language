@@ -194,7 +194,19 @@ class LarkEmitter {
         return renderClassText(false, [{ kind: 'range', start, end }]);
       }
       case 'charClass':
+        if (expression.items?.some((item) => item.kind === 'category')) {
+          return ['/' + regexTokenText(expression) + '/', Precedence.ATOM];
+        }
         return this.renderClass(Boolean(expression.negated), classItems(FORMAT, expression));
+      case 'token': {
+        const terminal = '/' + regexTokenText(expression.item) + '/';
+        try {
+          importLark('start: ' + terminal);
+        } catch {
+          throw unsupportedError(FORMAT, 'token without a portable Lark regex');
+        }
+        return [terminal, Precedence.ATOM];
+      }
       case 'any':
         this.note('emitted any character as a regex character class');
         return renderClassText(false, [ANY_CHAR_RANGE]);
@@ -378,6 +390,52 @@ function regexLiteralText(value) {
     output += /^[!-/:-@[-`{-~]$/.test(character) ? `\\${character}` : plainChar(character);
   }
   return output;
+}
+
+function regexTokenText(expression) {
+  switch (expression.kind) {
+    case 'literal':
+      return regexLiteralText(expression.value);
+    case 'seq':
+      return expression.items.map(regexTokenText).join('');
+    case 'charClass': {
+      const items = classItems(FORMAT, expression);
+      if (items.length === 0) throw unsupportedError(FORMAT, 'character class without a portable Lark regex');
+      if (items.length === 1 && items[0].kind === 'category' && items[0].value === 'Nd') {
+        return expression.negated ? '\\D' : '\\d';
+      }
+      let text = '';
+      for (let index = 0; index < items.length; index += 1) {
+        const item = items[index];
+        if (item.kind === 'range' && codePoint(item.start) <= codePoint(item.end)) {
+          text += classChar(item.start) + '-' + classChar(item.end);
+        } else if (item.kind === 'char') {
+          text += classChar(item.value);
+        } else if (item.kind === 'category' && item.value === 'Nd') {
+          text += '\\d';
+        } else if (item.kind === 'category' && item.value === 'L'
+          && items[index + 1]?.kind === 'category' && items[index + 1].value === 'N'
+          && items[index + 2]?.kind === 'char' && items[index + 2].value === '_') {
+          text += '\\w';
+          index += 2;
+          if (items.length === 3 && expression.negated) return '\\W';
+        } else {
+          throw unsupportedError(FORMAT, 'character class without a portable Lark regex');
+        }
+      }
+      return (expression.negated ? '[^' : '[') + text + ']';
+    }
+    case 'repeat0': case 'repeat1': case 'optional': {
+      const { item } = expression;
+      if (item.kind === 'charClass' || (item.kind === 'literal' && Array.from(item.value).length === 1)) {
+        return regexTokenText(item) + { repeat0: '*', repeat1: '+', optional: '?' }[expression.kind];
+      }
+      break;
+    }
+    default:
+      break;
+  }
+  throw unsupportedError(FORMAT, 'token without a portable Lark regex');
 }
 
 /** Renders a regex character class terminal. */

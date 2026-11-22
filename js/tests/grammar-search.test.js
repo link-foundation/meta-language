@@ -34,8 +34,8 @@ test('grammar search reports exact source offsets and repeated captures', contex
       }
     }
   }
-  observed('I235-GRAMMAR-SEARCH-SPANS', context, ['searchFindsOriginalSpans', 'wholeInputParseIsPreserved']);
-  observed('I235-GRAMMAR-SEARCH-CAPTURES', context, ['repeatedNamedCapturesRetainSourceSpans']);
+  observed('I195-I235-GRAMMAR-SEARCH-SPANS', context, ['searchFindsOriginalSpans', 'wholeInputParseIsPreserved']);
+  observed('I195-I235-GRAMMAR-SEARCH-CAPTURES', context, ['repeatedNamedCapturesRetainSourceSpans']);
 });
 
 test('grammar search controls word boundaries, selection and overlap', context => {
@@ -52,7 +52,7 @@ test('grammar search controls word boundaries, selection and overlap', context =
   assert.throws(() => choices.findAll('aaa', { rule: 'missing' }), { reason: 'reference' });
   const limited = createGrammarParser(importEbnf(fixture.selectionGrammar), { stepLimit: 1 });
   assert.throws(() => limited.findAll('aaa'), { reason: 'stepLimit' });
-  observed('I235-GRAMMAR-SEARCH-POLICY', context, ['wordBoundariesUseUnicode', 'matchPoliciesChooseAtEachStart', 'overlapAndEmptyMatchesAreControlled']);
+  observed('I195-I235-GRAMMAR-SEARCH-POLICY', context, ['wordBoundariesUseUnicode', 'matchPoliciesChooseAtEachStart', 'overlapAndEmptyMatchesAreControlled']);
 });
 
 test('grammar search composes with source text predicates in LinkQuery', context => {
@@ -64,5 +64,5 @@ test('grammar search composes with source text predicates in LinkQuery', context
   const cyclicNetwork = LinkNetwork.parseLosslessText('text', 'English');
   const wildcard = LinkQuery.fromSexpression('(_) @source (#grammar-match? @source)');
   assert.deepEqual(cyclicNetwork.queryMatchesWith(wildcard, parser.searchPredicate()), []);
-  observed('I235-GRAMMAR-SEARCH-QUERY', context, ['sourceTextQueryPredicateComposes']);
+  observed('I195-I235-GRAMMAR-SEARCH-QUERY', context, ['sourceTextQueryPredicateComposes']);
 });

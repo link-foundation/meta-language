@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
+import { readProjectData } from '../scripts/project-data.mjs';
 import { deserializeGrammar, serializeGrammar } from '../src/grammar.js';
 import { GrammarImportError } from '../src/grammar-importers/common.js';
-import { importLark } from '../src/grammar-importers/lark.js';
+import { createGrammarParser, emitLark, importLark } from '../src/index.js';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { renderGrammarRule } from './support/render-grammar-expression.js';
 
 const covering = readFileSync(
@@ -57,9 +59,11 @@ test('imports covering lark fixture', () => {
     negated: false,
   });
   assert.deepEqual(grammar.rule('trailer').expression, {
-    kind: 'capture',
-    label: 'regex',
-    item: { kind: 'literal', value: '[a-z]+' },
+    kind: 'token',
+    item: {
+      kind: 'repeat1',
+      item: { kind: 'charClass', items: [{ kind: 'range', start: 'a', end: 'z' }], negated: false },
+    },
   });
   assert.deepEqual(grammar.undefinedNonterminals(), []);
 
@@ -100,4 +104,43 @@ test('imported lark grammar survives serialization round trip', () => {
   const restored = deserializeGrammar(serializeGrammar(grammar));
 
   assert.deepEqual(restored.normalized(), grammar.normalized());
+});
+
+const regexFixture = 'parity/fixtures/lark-regex-terminals.json';
+const regexCases = readProjectData(new URL('../../' + regexFixture, import.meta.url));
+
+for (const [group, requirementId, assertion] of [
+  ['cases', 'I195-I233-LARK-REGEX-TERMINALS', 'regexTerminalsMatchTheirLanguage'],
+  ['flags', 'I195-I233-LARK-REGEX-FLAGS', 'supportedRegexFlagsChangeMatching'],
+]) {
+  test('Lark regex ' + group + ' match before and after emission', (context) => {
+    for (const { source, accept, reject } of regexCases[group]) {
+      const grammar = importLark(source);
+      for (const inputGrammar of [grammar, importLark(emitLark(grammar).source)]) {
+        const parser = createGrammarParser(inputGrammar);
+        for (const [inputs, expected] of [[accept, true], [reject, false]]) {
+          for (const input of inputs) {
+            assert.equal(parser.parseTree(input).ok, expected, source + ' ' + JSON.stringify(input));
+          }
+        }
+      }
+    }
+    recordIssue195Observations({
+      requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(), fixtureFile: regexFixture,
+      assertions: [assertion], testName: context.name,
+    });
+  });
+}
+
+test('Lark refuses unsupported and malformed regexes at their UTF-8 byte positions', (context) => {
+  for (const [source, diagnostic] of regexCases.diagnostics) {
+    assert.throws(() => importLark(source), {
+      message: 'lark import parse error: ' + diagnostic,
+    });
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-I233-LARK-REGEX-DIAGNOSTICS', suffix: 'behavior',
+    fixtureId: 'i233-lark-regex-diagnostics', fixtureFile: regexFixture,
+    assertions: ['unsupportedRegexReportsSourceByte'], testName: context.name,
+  });
 });

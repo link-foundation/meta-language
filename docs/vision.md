@@ -2246,6 +2246,14 @@ catalog starts with:
 
 This list is a minimum and is reconciled with the other widely used formats.
 
+Lark regex terminals lower to native expressions for literals, scalar classes,
+Unicode digit, word and whitespace shorthands, and greedy repetition. The
+runtime treats a regular-expression terminal as one lexical match even when
+the imported expression has multiple atoms. The portable subset supports
+ASCII case-insensitive patterns with Python's additional Unicode equivalents,
+and dot-all matching. Patterns outside the subset report the UTF-8 byte
+position of the unsupported syntax during import.
+
 The JavaScript Yacc/Lex draft lowers declared token rules, left and right
 precedence, `%prec`, lexical modes, trivia and supported arithmetic or textual
 actions to shared native Links operations. Rejection actions become explicit

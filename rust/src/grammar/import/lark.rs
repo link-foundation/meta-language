@@ -1,5 +1,8 @@
 use super::{GrammarImportError, parse_error, unsupported_error};
-use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
+use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
+
+mod regex;
+use regex::lower_regex;
 
 const FORMAT: GrammarFormat = GrammarFormat::Lark;
 
@@ -204,9 +207,9 @@ impl Parser {
                 self.advance();
                 Ok(GrammarExpr::Terminal(value))
             }
-            TokenKind::Regex(value) => {
+            TokenKind::Regex { value, flags } => {
                 self.advance();
-                lower_regex(&value, token.offset)
+                lower_regex(&value, &flags, token.offset)
             }
             TokenKind::Dot => {
                 self.advance();
@@ -390,7 +393,7 @@ struct Token {
 enum TokenKind {
     Ident(String),
     String(String),
-    Regex(String),
+    Regex { value: String, flags: String },
     Number(usize),
     Comment(String),
     Percent,
@@ -461,7 +464,7 @@ impl<'text> Lexer<'text> {
                 Ok(TokenKind::Newline)
             }
             '"' | '\'' => self.string_literal(character).map(TokenKind::String),
-            '/' => self.regex_literal().map(TokenKind::Regex),
+            '/' => self.regex_literal(),
             '%' => {
                 self.advance_char();
                 Ok(TokenKind::Percent)
@@ -544,7 +547,7 @@ impl<'text> Lexer<'text> {
         Err(error_at(start, "unterminated string literal"))
     }
 
-    fn regex_literal(&mut self) -> Result<String, GrammarImportError> {
+    fn regex_literal(&mut self) -> Result<TokenKind, GrammarImportError> {
         let start = self.cursor;
         self.advance_char();
         let content_start = self.cursor;
@@ -556,7 +559,17 @@ impl<'text> Lexer<'text> {
                 escaped = true;
             } else if character == '/' {
                 let content_end = self.cursor - character.len_utf8();
-                return Ok(self.text[content_start..content_end].to_string());
+                let flag_start = self.cursor;
+                while self
+                    .peek_char()
+                    .is_some_and(|flag| flag.is_ascii_alphabetic())
+                {
+                    self.advance_char();
+                }
+                return Ok(TokenKind::Regex {
+                    value: self.text[content_start..content_end].to_owned(),
+                    flags: self.text[flag_start..self.cursor].to_owned(),
+                });
             } else if character == '\n' || character == '\r' {
                 return Err(error_at(start, "unterminated regex literal"));
             }
@@ -634,168 +647,6 @@ impl<'text> Lexer<'text> {
 
     fn starts_with(&self, prefix: &str) -> bool {
         self.text[self.cursor..].starts_with(prefix)
-    }
-
-    const fn is_end(&self) -> bool {
-        self.cursor >= self.text.len()
-    }
-
-    fn peek_char(&self) -> Option<char> {
-        self.text[self.cursor..].chars().next()
-    }
-
-    fn advance_char(&mut self) -> Option<char> {
-        let character = self.peek_char()?;
-        self.cursor += character.len_utf8();
-        Some(character)
-    }
-}
-
-fn lower_regex(value: &str, offset: usize) -> Result<GrammarExpr, GrammarImportError> {
-    trivial_regex_char_class(value).map_or_else(
-        || {
-            Ok(GrammarExpr::capture(
-                "regex",
-                GrammarExpr::Terminal(value.to_string()),
-            ))
-        },
-        |content| lower_char_set(content, offset),
-    )
-}
-
-fn trivial_regex_char_class(value: &str) -> Option<&str> {
-    if (!value.starts_with('[') || !value.ends_with(']'))
-        || has_unescaped_inner_closing_bracket(value)
-    {
-        None
-    } else {
-        Some(&value[1..value.len() - 1])
-    }
-}
-
-fn has_unescaped_inner_closing_bracket(value: &str) -> bool {
-    let mut escaped = false;
-    for (index, character) in value.char_indices().skip(1) {
-        if index == value.len() - 1 {
-            return false;
-        }
-        if escaped {
-            escaped = false;
-        } else if character == '\\' {
-            escaped = true;
-        } else if character == ']' {
-            return true;
-        }
-    }
-    false
-}
-
-fn lower_char_set(content: &str, offset: usize) -> Result<GrammarExpr, GrammarImportError> {
-    let mut scanner = ClassScanner::new(content, offset);
-    let negated = scanner.try_consume('^');
-    let mut items = Vec::new();
-    while !scanner.is_end() {
-        let start = scanner.read_char()?;
-        if scanner.try_consume_range_separator() {
-            let end = scanner.read_char()?;
-            if start > end {
-                return Err(error_at(offset, "character class range start exceeds end"));
-            }
-            items.push(CharClassItem::Range(start, end));
-        } else {
-            items.push(CharClassItem::Char(start));
-        }
-    }
-    if items.is_empty() {
-        return Err(error_at(offset, "character class must not be empty"));
-    }
-    Ok(GrammarExpr::CharClass { negated, items })
-}
-
-#[derive(Clone, Debug)]
-struct ClassScanner<'text> {
-    text: &'text str,
-    cursor: usize,
-    offset: usize,
-}
-
-impl<'text> ClassScanner<'text> {
-    const fn new(text: &'text str, offset: usize) -> Self {
-        Self {
-            text,
-            cursor: 0,
-            offset,
-        }
-    }
-
-    fn read_char(&mut self) -> Result<char, GrammarImportError> {
-        let Some(character) = self.advance_char() else {
-            return Err(error_at(self.offset, "unexpected end of character class"));
-        };
-        if character == '\\' {
-            self.read_escape()
-        } else {
-            Ok(character)
-        }
-    }
-
-    fn read_escape(&mut self) -> Result<char, GrammarImportError> {
-        let Some(character) = self.advance_char() else {
-            return Err(error_at(self.offset, "unterminated character class escape"));
-        };
-        match character {
-            'n' => Ok('\n'),
-            'r' => Ok('\r'),
-            't' => Ok('\t'),
-            'b' => Ok('\u{08}'),
-            'f' => Ok('\u{0c}'),
-            '\\' | '"' | '\'' | '/' | '[' | ']' | '-' | '^' => Ok(character),
-            'x' => self.hex_escape(2),
-            'u' => self.hex_escape(4),
-            'U' => self.hex_escape(8),
-            character => Ok(character),
-        }
-    }
-
-    fn hex_escape(&mut self, digits: usize) -> Result<char, GrammarImportError> {
-        let mut value = 0_u32;
-        for _ in 0..digits {
-            let Some(character) = self.advance_char() else {
-                return Err(error_at(self.offset, "unterminated hexadecimal escape"));
-            };
-            let Some(digit) = character.to_digit(16) else {
-                return Err(error_at(
-                    self.offset + self.cursor.saturating_sub(character.len_utf8()),
-                    "hexadecimal escape requires hexadecimal digits",
-                ));
-            };
-            value = (value << 4) | digit;
-        }
-        char::from_u32(value).ok_or_else(|| error_at(self.offset, "invalid hexadecimal escape"))
-    }
-
-    fn try_consume(&mut self, expected: char) -> bool {
-        if self.peek_char() == Some(expected) {
-            self.advance_char();
-            true
-        } else {
-            false
-        }
-    }
-
-    fn try_consume_range_separator(&mut self) -> bool {
-        if self.peek_char() == Some('-') && self.has_char_after_current() {
-            self.advance_char();
-            true
-        } else {
-            false
-        }
-    }
-
-    fn has_char_after_current(&self) -> bool {
-        let mut chars = self.text[self.cursor..].chars();
-        chars.next();
-        chars.next().is_some()
     }
 
     const fn is_end(&self) -> bool {

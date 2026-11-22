@@ -783,11 +783,13 @@ fn cross_format_sources_keep_rule_structure() {
     let lark =
         import_lark(include_str!("../fixtures/grammar/lark/covering.lark")).expect("imports");
     let (text, report, _) = round_trip(&lark, emit_antlr, import_antlr);
+    assert!(text.contains("trailer : [a-z]+ ;"), "{text}");
     assert!(
-        text.contains("trailer : [a-z]+ ;") || text.contains("regex="),
-        "{text}"
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("dropped the Lark regex token boundary"))
     );
-    assert_ne!(report.lossy, [] as [String; 0]);
 }
 
 fn fixture_importer(format: &str) -> Importer {

@@ -13,6 +13,7 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   sentenceAbbreviations: 'https://github.com/link-foundation/meta-language/issues/232',
+  larkRegexTerminals: 'https://github.com/link-foundation/meta-language/issues/233',
   grammarAssetAvailability: 'https://github.com/link-foundation/meta-language/issues/244',
   pdfStreamNullCharacters: 'https://github.com/link-foundation/meta-language/issues/239',
   rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
@@ -410,28 +411,28 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
     },
     ...[
       {
-        id: 'I235-GRAMMAR-SEARCH-SPANS',
+        id: 'I195-I235-GRAMMAR-SEARCH-SPANS',
         construct: 'grammar search and original-text coordinates',
         expectedBehavior: 'A compiled grammar finds the reported price phrases and returns their half-open locations and concrete trees. JavaScript uses UTF-16 offsets for match ranges and Rust uses byte offsets. Whole-input parsing keeps its existing acceptance behavior.',
         selector: 'all three price phrases and the original whole-input parse',
         assertions: ['searchFindsOriginalSpans', 'wholeInputParseIsPreserved'],
       },
       {
-        id: 'I235-GRAMMAR-SEARCH-CAPTURES',
+        id: 'I195-I235-GRAMMAR-SEARCH-CAPTURES',
         construct: 'named grammar captures',
         expectedBehavior: 'A caller can read all occurrences of a named rule in the match, including both amounts in the range, with the original spelling and span for each.',
         selector: 'amount and currency captures from all three price phrases',
         assertions: ['repeatedNamedCapturesRetainSourceSpans'],
       },
       {
-        id: 'I235-GRAMMAR-SEARCH-POLICY',
+        id: 'I195-I235-GRAMMAR-SEARCH-POLICY',
         construct: 'Unicode word boundaries, match selection and overlap',
         expectedBehavior: 'Search exposes first and longest match selection at each start, controls whether matches overlap, ignores zero-width results, and can require Unicode word boundaries.',
         selector: 'word-boundary, overlapping, match policy and empty-result controls',
         assertions: ['wordBoundariesUseUnicode', 'matchPoliciesChooseAtEachStart', 'overlapAndEmptyMatchesAreControlled'],
       },
       {
-        id: 'I235-GRAMMAR-SEARCH-QUERY',
+        id: 'I195-I235-GRAMMAR-SEARCH-QUERY',
         construct: 'grammar search in source text predicates',
         expectedBehavior: 'A grammar predicate composes with existing source text predicates in a LinkQuery over captured text.',
         selector: 'the positive and negative HTML text links with combined predicates',
@@ -446,6 +447,39 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       implementationEntryPoints: {
         javascript: ['js/src/grammar-runtime.js', 'js/tests/grammar-search.test.js'],
         rust: ['rust/src/grammar/feature_runtime/search.rs', 'rust/tests/unit/issue_195_grammar_feature_union.rs'],
+      },
+    })),
+    ...[
+      {
+        id: 'I195-I233-LARK-REGEX-TERMINALS',
+        construct: 'portable regular-expression terminal lowering',
+        expectedBehavior: 'The reported Lark terminals recognize their expected strings using native expressions, including Unicode digit and whitespace shorthands. Greedy regex consumption is atomic to the enclosing grammar.',
+        selector: 'cases, all accepted and rejected strings on both sides of Lark emission',
+        assertions: ['regexTerminalsMatchTheirLanguage'],
+      },
+      {
+        id: 'I195-I233-LARK-REGEX-FLAGS',
+        construct: 'case-insensitive and dot-all regex flags',
+        expectedBehavior: 'The Lark importer recognizes i and s flags and applies the documented matching behavior of the portable subset.',
+        selector: 'flags, all accepted and rejected strings on both sides of Lark emission',
+        assertions: ['supportedRegexFlagsChangeMatching'],
+      },
+      {
+        id: 'I195-I233-LARK-REGEX-DIAGNOSTICS',
+        construct: 'unsupported or malformed Lark regular expressions',
+        expectedBehavior: 'Unsupported flags and regex syntax fail at import with an exact UTF-8 byte diagnostic.',
+        selector: 'diagnostics, exact messages including a UTF-8 input prefix',
+        assertions: ['unsupportedRegexReportsSourceByte'],
+      },
+    ].map(entry => ({
+      ...entry,
+      source: ISSUE_195_SOURCES.larkRegexTerminals,
+      language: 'Lark regular-expression terminals',
+      version: 'shared portable importer for Python re 3.11–3.14 syntax in the covered subset',
+      fixture: 'parity/fixtures/lark-regex-terminals.json',
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/lark-regex.js', 'js/tests/grammar-lark.test.js'],
+        rust: ['rust/src/grammar/import/lark/regex.rs', 'rust/tests/unit/grammar_import_lark.rs'],
       },
     })),
   ];
