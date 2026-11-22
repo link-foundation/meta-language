@@ -224,6 +224,35 @@ pub fn parse_rust_with_const_function_model(
     )
 }
 
+/// Read actual Rust declarations with a selected closed FnMut source profile.
+///
+/// # Errors
+/// Refuses unknown models, uncovered source versions and unproved callback state.
+pub fn parse_rust_with_fn_mut_source_model(
+    source: &str,
+    model: &str,
+    exclusive_source_model: &str,
+    source_version: &str,
+) -> Result<SProgram> {
+    if model.is_empty() {
+        return Err(unsupported(
+            "Rust source FnMut function",
+            "select the exact source FnMut specialization profile",
+            None,
+        ));
+    }
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            fn_mut_source: model,
+            exclusive_source: exclusive_source_model,
+            source_version,
+            retain_source_type_owners: true,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
     source_version: &'a str,
