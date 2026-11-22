@@ -20,9 +20,10 @@ export * from './concept-records.js';
 export * from './concept-distinctions.js';
 export * from './global-concept-space.js';
 export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
-export { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGrammarSymbols,
+export { inferRegularGrammar, inferRegularGrammarWithParserOracle, readRegularGrammarInferenceLinks, acceptInferredGrammarSymbols,
   createRegularGrammarInferenceProgramLinks } from './grammar-inference.js';
 export { acceptActiveGrammarWord, learnActiveGrammar, learnActiveGrammarAutomaton, sampleActiveGrammarWords } from './grammar-active-learning.js';
+export { observeGrammarDiscoveryParserOracle } from './grammar-discovery-parser-oracle.js';
 export { inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference } from './grammar-structural-inference.js';
 export {refineRegularGrammarInference,readRefinedRegularGrammarInferenceLinks} from './grammar-inference-refinement.js';
 export { inferGrammarScanner, inferGrammarScannerClasses, inferGrammarScannerModeStack } from './grammar-scanner-inference.js';

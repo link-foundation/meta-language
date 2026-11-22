@@ -28,6 +28,8 @@ const delimiterProductionsRequirement = 'I195-GRAMMAR-INFERENCE-DELIMITER-PRODUC
 const structuralRefinementRequirement = 'I195-GRAMMAR-INFERENCE-STRUCTURAL-REFINEMENT';
 const concreteAttributeRequirement = 'I195-GRAMMAR-INFERENCE-CONCRETE-ATTRIBUTES';
 const concreteAttributeFixture = 'parity/fixtures/grammar-attribute-inference.lino';
+const parserOracleRequirement = 'I195-GRAMMAR-INFERENCE-NATIVE-PARSER-ORACLE';
+const parserOracleFixture = 'parity/fixtures/dynamic-language-command.lino';
 
 const sourceTooling = {
   'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK': [
@@ -212,6 +214,10 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  [parserOracleRequirement]: {
+    javascript: ['js/src/grammar-discovery-parser-oracle.js', 'js/src/grammar-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/dynamic-language-command.test.js'],
+    rust: ['rust/src/grammar_discovery_parser_oracle.rs', 'rust/src/grammar_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/dynamic_language_command.rs'],
+  },
   [concreteAttributeRequirement]: {
     javascript: ['js/src/grammar-attribute-inference-rules.js', 'js/src/grammar-attribute-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/grammar-attribute-inference.test.js'],
     rust: ['rust/src/grammar_attribute_inference_rules.rs', 'rust/src/grammar/attribute_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/unit/grammar_attribute_inference.rs'],
@@ -277,6 +283,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     ...(id === delimiterProductionsRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'grammar-inference-delimiter-productions' } : {}),
     ...(id === structuralRefinementRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'grammar-inference-structural-refinement' } : {}),
     ...(id === concreteAttributeRequirement ? { fixture: concreteAttributeFixture, fixtureId: 'grammar-attribute-inference' } : {}),
+    ...(id === parserOracleRequirement ? { fixture: parserOracleFixture, fixtureId: 'grammar-discovery-parser-oracle' } : {}),
     ...(area === 'formal-concept-definitions' ? {
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
@@ -394,6 +401,8 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
   ...rows('grammarInferenceIssue', inferenceSource, 'dynamic-knowledge-and-language-extension', 'grammar-inference', [
     ['I195-GRAMMAR-INFERENCE-PUBLIC-API-CLI', 'matching public grammar discovery library and CLI interfaces',
       'JavaScript and Rust library and CLI interfaces accept pinned positive and negative examples, independent membership or parser oracles, optional execution traces and existing grammars. Diagnostics identify unresolved context sensitivity, scanners and action semantics rather than silently approximating them.', ['matchingDiscoveryApiAndCliExecuted', 'examplesOraclesTracesAndSourcesAccepted', 'unsupportedSemanticsPreciselyDiagnosed']],
+    [parserOracleRequirement, 'bounded native parser oracle for scalar regular grammar discovery',
+      'Both library and command interfaces check declared labels against a bounded native Links grammar, refuse contradictions and ungrounded candidate words, retain distinct ordered observations through source-free link-cli and binary refinement, and parse an independently classified positive and reject a negative after installation.', ['nativeOracleChecksDeclaredAndIndependentWords', 'oracleObservationsReplaySourceFreeAfterRefinement', 'installedCandidateExecutesIndependentOracleCases']],
     ['I195-GRAMMAR-INFERENCE-NATIVE-OUTPUT', 'fully native executable discovered grammars and attributed behavior',
       'Discovery emits executable Links grammars with lossless CST structure, lexer and scanner state, precedence, ambiguity, recovery and attributed semantic actions. Foreign parser blobs, opaque sources and host callbacks cannot stand in for native operational definitions.', ['discoveredGrammarNativeAndExecutable', 'discoveredCstAndScannerSemanticsPreserved', 'attributedActionsAndRecoveryExplicit']],
     [scannerModeStackRequirement, 'finite scanner mode stack operations from bounded pre-token and post-token observations',

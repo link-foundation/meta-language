@@ -6,10 +6,11 @@ import {renderRustTest,renderRustItemImports,resolveExports,rustPublicSurface} f
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const file=new URL('../../parity/language-features.lino',import.meta.url),value=readProjectData(file);
 const id='dynamic-language-command-archives';
-const common=['parity/fixtures/dynamic-language-command.lino','parity/self-translation/dynamic-language-command-rules-native.lino'];
+const common=['parity/fixtures/dynamic-language-command.lino','parity/self-translation/dynamic-language-command-rules-native.lino',
+ 'parity/self-translation/grammar-discovery-parser-oracle-rules-native.lino'];
 const row={id,required:true,
- javascript:{status:'implemented',evidence:['js/src/dynamic-language-cli.js','js/src/dynamic-language-command-rules.js','js/src/dynamic-language-command-program.js','js/src/grammar-inference.js','js/src/grammar-inference-refinement.js','js/tests/dynamic-language-command.test.js',...common]},
- rust:{status:'implemented',evidence:['rust/src/dynamic_language_cli.rs','rust/src/dynamic_language_cli/arguments.rs','rust/src/dynamic_language_cli/configuration.rs','rust/src/dynamic_language_command_rules.rs','rust/src/dynamic_language_command_program.rs','rust/src/grammar_inference.rs','rust/src/grammar_inference/refinement.rs','rust/tests/dynamic_language_command.rs',...common]},
+ javascript:{status:'implemented',evidence:['js/src/dynamic-language-cli.js','js/src/dynamic-language-command-rules.js','js/src/dynamic-language-command-program.js','js/src/grammar-discovery-parser-oracle.js','js/src/grammar-discovery-parser-oracle-rules.js','js/src/grammar-inference.js','js/src/grammar-inference-refinement.js','js/tests/dynamic-language-command.test.js',...common]},
+ rust:{status:'implemented',evidence:['rust/src/dynamic_language_cli.rs','rust/src/dynamic_language_cli/arguments.rs','rust/src/dynamic_language_cli/configuration.rs','rust/src/dynamic_language_command_rules.rs','rust/src/dynamic_language_command_program.rs','rust/src/grammar_discovery_parser_oracle.rs','rust/src/grammar_discovery_parser_oracle_rules.rs','rust/src/grammar_inference.rs','rust/src/grammar_inference/refinement.rs','rust/tests/dynamic_language_command.rs',...common]},
 };
 const previous=value.features.findIndex(entry=>entry.id===id);
 if(previous<0)value.features.push(row);else value.features[previous]=row;
@@ -63,7 +64,7 @@ if(previousOptionalConstructor<0)value.features.push(optionalConstructorRow);els
 // These declarations identify source counterparts; they are not observations.
 const source=readFileSync(new URL('../src/index.js',import.meta.url),'utf8');
 const modules=new Set(['meta-language-archive.js','dynamic-meta-language.js','dynamic-language-cli.js',
- 'dynamic-language-command-program.js','grammar-inference.js','grammar-inference-refinement.js','grammar-scanner-inference.js']);
+ 'dynamic-language-command-program.js','grammar-discovery-parser-oracle.js','grammar-inference.js','grammar-inference-refinement.js','grammar-scanner-inference.js']);
 const names=[];
 for(const [,bindings,file] of source.matchAll(/export \{([^}]+)\} from '\.\/([^']+)';/gu)){
  if(modules.has(file)) names.push(...bindings.split(',').map(name=>name.trim()).filter(Boolean));

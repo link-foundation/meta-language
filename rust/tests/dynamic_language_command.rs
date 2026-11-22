@@ -5,11 +5,17 @@ use meta_language::{
     meta_language_archive_to_binary, meta_language_archive_to_link_cli_store, parse_grammar_links,
     read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
     read_meta_language_archive_network_text, read_meta_language_archive_text,
-    read_structured_data_lino, render_grammar_links, run_dynamic_language_command,
+    read_refined_regular_grammar_inference_links, read_structured_data_lino, render_grammar_links,
+    run_dynamic_language_command,
 };
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
+
+#[allow(dead_code)]
+#[path = "unit/issue_195_observations.rs"]
+mod issue_195_observations;
+use issue_195_observations::{Observation, record};
 
 #[test]
 fn link_cli_store_preserves_ordered_cycles_and_disconnected_links() {
@@ -300,6 +306,22 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
                     Some("grammar inference")
                 );
             }
+            if let Some(observations) = step.get("oracle") {
+                let checkpoint = session
+                    .entries()
+                    .iter()
+                    .find(|entry| entry.identifier == "grammar inference:oracle-refined")
+                    .unwrap();
+                let result = read_refined_regular_grammar_inference_links(
+                    &checkpoint.network,
+                    checkpoint.root,
+                )
+                .unwrap();
+                assert_eq!(
+                    serde_json::to_value(result.oracle_observations).unwrap(),
+                    *observations
+                );
+            }
             if let Some(name) = step["concrete"].as_str() {
                 let entry = session
                     .entries()
@@ -366,4 +388,16 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
         },
     );
     assert_eq!(parsed.exit_code, 0, "{}", parsed.stderr);
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-NATIVE-PARSER-ORACLE",
+        suffix: "behavior",
+        fixture_id: "grammar-discovery-parser-oracle",
+        fixture_file: "parity/fixtures/dynamic-language-command.lino",
+        assertions: &[
+            "nativeOracleChecksDeclaredAndIndependentWords",
+            "oracleObservationsReplaySourceFreeAfterRefinement",
+            "installedCandidateExecutesIndependentOracleCases",
+        ],
+        test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
+    });
 }

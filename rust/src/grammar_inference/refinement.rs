@@ -4,6 +4,7 @@ use super::{
     SCANNER_CLASS_ALGORITHM, SCANNER_MODE_STACK_ALGORITHM, index, infer_regular_grammar, number,
     read_regular_grammar_inference_links,
 };
+use crate::grammar_discovery_parser_oracle::GRAMMAR_DISCOVERY_PARSER_ORACLE;
 use crate::grammar_inference_refinement_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
 use crate::{
@@ -99,6 +100,7 @@ fn base(
                     SCANNER_ALGORITHM,
                     SCANNER_CLASS_ALGORITHM,
                     SCANNER_MODE_STACK_ALGORITHM,
+                    GRAMMAR_DISCOVERY_PARSER_ORACLE,
                 ]
                 .contains(&entry.identifier.as_str())
             })
@@ -412,6 +414,7 @@ pub fn refine_regular_grammar_inference(
     Ok(RegularGrammarInference {
         network: archive.network,
         root: archive.root,
+        oracle_observations: checkpoint.current.oracle_observations,
         ..next
     })
 }

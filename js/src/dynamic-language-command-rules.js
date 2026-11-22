@@ -20,7 +20,7 @@ export function readDynamicLanguageArgumentArity(command, option) {
   }
   if (option === '--binary' || option === '--link-cli-store') return command === 'list' || command === 'grammar' ? -1 : 0;
   if (option === '--input-binary' || option === '--input-link-cli-store') return command === 'prepare' || command === 'discover' ? -1 : 0;
-  if (command === 'discover') return option === '--identifier' || option === '--language' || option === '--edition' ? 1 : -1;
+  if (command === 'discover') return option === '--identifier' || option === '--language' || option === '--edition' || option === '--oracle-grammar' ? 1 : -1;
   if (command === 'refine') return option === '--examples' || option === '--identifier' ? 1 : -1;
   if (command === 'install') {
     return option === '--base' || option === '--base-encoding' || option === '--merge-with'
@@ -68,7 +68,7 @@ export function readDynamicLanguageCommandUsage() {
     + '         [--step-limit <n>] [--memory-limit <n>] [--max-depth <n>] [--memo-limit <n>] [--max-repairs <n>]\n'
     + '         [--error-recovery] [--accept-recovery] [--reject-ambiguity] [--input-binary] [--binary]\n'
     + '       meta-language language list|grammar <archive> [--source <id>] [--input-binary]\n'
-    + '       meta-language language discover <examples.lino> [--identifier <id>] [--language <name>] [--edition <edition>] [--binary]\n'
+    + '       meta-language language discover <examples.lino> [--identifier <id>] [--language <name>] [--edition <edition>] [--oracle-grammar <grammar.lino>] [--binary]\n'
     + '       meta-language language refine <checkpoint> --examples <examples.lino> [--identifier <id>] [--input-binary] [--binary]\n'
     + '       meta-language language install <checkpoint> [--input-binary] [--binary]\n'
     + '         [--base <archive> --merge-with <source> --identifier <merged> [--base-encoding text|binary|link-cli-store]]\n'

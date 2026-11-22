@@ -981,6 +981,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("inferRegularGrammar", "infer_regular_grammar", "function"),
     (
+        "inferRegularGrammarWithParserOracle",
+        "infer_regular_grammar_with_parser_oracle",
+        "function",
+    ),
+    (
         "inferStructuralGrammar",
         "infer_structural_grammar",
         "function",
@@ -1078,6 +1083,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "normalizedRuleDefinition",
         "normalized_rule_definition",
+        "function",
+    ),
+    (
+        "observeGrammarDiscoveryParserOracle",
+        "observe_grammar_discovery_parser_oracle",
         "function",
     ),
     ("parseEngine", "LinkNetwork::parse_engine", "method"),

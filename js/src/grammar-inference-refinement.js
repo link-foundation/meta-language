@@ -1,6 +1,7 @@
 // Keep prior model/grammar source graphs as flat archive groups. The complete
 // algorithm is shared once, not recursively copied into predecessor envelopes.
 import {inferRegularGrammar,readRegularGrammarInferenceLinks} from './grammar-inference.js';
+import {grammarDiscoveryParserOracleIdentifier} from './grammar-discovery-parser-oracle.js';
 import {createMetaLanguageArchive,readMetaLanguageArchive} from './meta-language-archive.js';
 import {encodeStructuredDataLinks,decodeStructuredDataLinks} from './structured-data-links.js';
 import {LinkId} from './primitives.js';
@@ -17,7 +18,7 @@ export const regularGrammarRefinementArchiveLimits=Object.freeze({nodeLimit:read
 function select(entries,identifier,kind){const entry=entries.find(entry=>entry.identifier===identifier);if(!entry||entry.kind!==kind)fail('missing '+identifier);return entry;}
 function model(entry){return decodeStructuredDataLinks(entry.network,entry.root);}
 function base(entries,modelEntry,grammarEntry){
- const scanner=entries.filter(entry=>[scannerIdentifier,scannerClassIdentifier,scannerModeStackIdentifier].includes(entry.identifier));
+ const scanner=entries.filter(entry=>[scannerIdentifier,scannerClassIdentifier,scannerModeStackIdentifier,grammarDiscoveryParserOracleIdentifier].includes(entry.identifier));
  const archive=createMetaLanguageArchive([{...modelEntry,identifier:modelIdentifier},select(entries,algorithmIdentifier,'typed program'),{...grammarEntry,identifier:grammarIdentifier},...scanner]);
  return readRegularGrammarInferenceLinks(archive.network,archive.root);
 }
@@ -86,5 +87,6 @@ export function refineRegularGrammarInference(network,root,positives=[],negative
   {identifier:journalIdentifier,kind:'grammar inference',...data},
   previous.entries.find(entry=>entry.identifier===refinementIdentifier)??{identifier:refinementIdentifier,kind:'typed program',...refinementDefinition()}];
  const archive=createMetaLanguageArchive(entries,regularGrammarRefinementArchiveLimits);
- return {...next,...archive};
+ const observations=previous.current.oracleObservations;
+ return {...next,...archive,...(observations?{oracleObservations:observations}:{})};
 }

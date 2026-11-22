@@ -5,10 +5,12 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {runDynamicLanguageCommand} from '../src/dynamic-language-cli.js';
 import {DynamicMetaLanguage} from '../src/dynamic-meta-language.js';
 import {parseGrammarLinks} from '../src/grammar-links.js';
+import {readRefinedRegularGrammarInferenceLinks} from '../src/grammar-inference-refinement.js';
 import {createMetaLanguageArchive,metaLanguageArchiveToBinary,metaLanguageArchiveToLinkCliStore,
  readMetaLanguageArchiveText,readMetaLanguageArchiveBinary,readMetaLanguageArchiveLinkCliStore} from '../src/meta-language-archive.js';
 import {decodeStructuredDataLinks,readStructuredDataLino} from '../src/structured-data-links.js';
 import {LinkNetwork} from '../src/network.js';
+import {recordIssue195Observations} from './support/issue-195-observations.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/dynamic-language-command.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
@@ -24,7 +26,7 @@ function concreteData(entry){
   const link=entry.network.link(id);network.insertLinkWithOptionalId(id,link.references(),link.metadata().clone());pending.push(...link.references());}
  return decodeStructuredDataLinks(network,entry.root);
 }
-test('one shared command sequence retains concrete trees, recursive definitions and old contexts',()=>{
+test('one shared command sequence retains concrete trees, recursive definitions and old contexts',context=>{
  const files=new Map(fixture.files.map(file=>[file.path,encoder.encode(file.text)]));
  const host={readFile:path=>decoder.decode(files.get(path)??assert.fail('missing fixture file '+path)),readBytes:path=>files.get(path)??assert.fail('missing fixture file '+path)};
  for(const step of fixture.steps){
@@ -57,6 +59,10 @@ test('one shared command sequence retains concrete trees, recursive definitions 
     assert.deepEqual(report.sourceProductions.map(production => production.alias).sort(), aliases.sort(), step.name);
     assert.equal(session.entries.find(entry => entry.identifier === step.merge.checkpoint)?.kind, 'grammar inference', step.name);
    }
+   if (step.oracle) {
+    const checkpoint = session.entries.find(entry => entry.identifier === 'grammar inference:oracle-refined');
+    assert.deepEqual(readRefinedRegularGrammarInferenceLinks(checkpoint.network, checkpoint.root).oracleObservations, step.oracle, step.name);
+   }
    if(step.concrete){
     const entry=session.entries.find(entry=>entry.identifier===step.concrete);
     assert.equal(entry.kind,'concrete syntax',step.name);
@@ -67,6 +73,10 @@ test('one shared command sequence retains concrete trees, recursive definitions 
    if(step.abstract)assert.equal(session.entries.find(entry=>entry.identifier===step.abstract)?.kind,'abstract syntax',step.name);
   }
  }
+ recordIssue195Observations({requirementId:'I195-GRAMMAR-INFERENCE-NATIVE-PARSER-ORACLE',suffix:'behavior',
+  fixtureId:'grammar-discovery-parser-oracle',fixtureFile:'parity/fixtures/dynamic-language-command.lino',
+  assertions:['nativeOracleChecksDeclaredAndIndependentWords','oracleObservationsReplaySourceFreeAfterRefinement','installedCandidateExecutesIndependentOracleCases'],
+  testName:context.name});
 });
 test('source-free reload needs no grammar source callback',()=>{
  const files=new Map(fixture.files.map(file=>[file.path,encoder.encode(file.text)]));

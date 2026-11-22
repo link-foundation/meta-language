@@ -6,7 +6,7 @@ import {readMetaLanguageArchiveText, readMetaLanguageArchiveBinary,
   metaLanguageArchiveToText, metaLanguageArchiveToBinary,
   metaLanguageArchiveToLinkCliStore, readMetaLanguageArchiveLinkCliStore} from './meta-language-archive.js';
 import {readStructuredDataLino, structuredDataToLino} from './structured-data-links.js';
-import {inferRegularGrammar} from './grammar-inference.js';
+import {inferRegularGrammar,inferRegularGrammarWithParserOracle} from './grammar-inference.js';
 import {inferGrammarAttributeAction} from './grammar-attribute-inference.js';
 import {readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference,regularGrammarRefinementArchiveLimits} from './grammar-inference-refinement.js';
 import {inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference, structuralGrammarInferenceModelIdentifier} from './grammar-structural-inference.js';
@@ -52,10 +52,11 @@ function labelledExamples(path,readFile,allowDiscoveryOptions) {
   const examples=readStructuredDataLino(readFile(path));
   const sequences=value=>Array.isArray(value)&&value.every(sequence=>Array.isArray(sequence)&&sequence.every(symbol=>typeof symbol==='string'));
   if(!examples||typeof examples!=='object'||Array.isArray(examples)
-    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowDiscoveryOptions&&(key==='delimiters'||scannerObservationFields.includes(key))))
+    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowDiscoveryOptions&&(key==='delimiters'||key==='oracleCandidates'||scannerObservationFields.includes(key))))
     ||(Object.hasOwn(examples,'delimiters')&&(!Array.isArray(examples.delimiters)
       ||!examples.delimiters.every(pair=>Array.isArray(pair)&&pair.length===2&&pair.every(token=>typeof token==='string'))))
-    ||!sequences(examples.positives)||!sequences(examples.negatives)) {
+    ||!sequences(examples.positives)||!sequences(examples.negatives)
+    ||(Object.hasOwn(examples,'oracleCandidates')&&!sequences(examples.oracleCandidates))) {
     throw new TypeError('labelled examples must contain positive and negative symbol sequences');
   }
   if(Object.hasOwn(examples,'delimiters')&&scannerObservationFields.some(key=>Object.hasOwn(examples,key))) {
@@ -125,8 +126,18 @@ function installMergedDiscovery(source, checkpoint, options, readFile, readBytes
 function discoveryArchive(command,file,options,readFile,readBytes) {
   const identifier=options.get('--identifier');
   if(command==='discover') {
-    const {positives,negatives,delimiters,scannerObservations,scannerCharacterClasses,scannerModeStackObservations}=labelledExamples(file,readFile,true);
+    const examples=labelledExamples(file,readFile,true);
+    const {positives,negatives,delimiters,scannerObservations,scannerCharacterClasses,scannerModeStackObservations,oracleCandidates}=examples;
     const source={identifier,language:options.get('--language'),edition:options.get('--edition')};
+    const oraclePath=options.get('--oracle-grammar');
+    if(oraclePath!==undefined) {
+      if(Object.hasOwn(examples,'delimiters')||scannerObservationFields.some(field=>Object.hasOwn(examples,field))) {
+        throw new TypeError('native parser oracle discovery requires a scalar regular language input');
+      }
+      const grammar=parseGrammarLinks(readFile(oraclePath));
+      return inferRegularGrammarWithParserOracle(grammar,positives,negatives,oracleCandidates,source);
+    }
+    if(oracleCandidates!==undefined)throw new TypeError('oracle candidates require --oracle-grammar');
     if(delimiters!==undefined)return inferStructuralGrammar(positives,negatives,{...source,delimiters});
     return inferRegularGrammar(positives,negatives,{...source,scannerObservations,scannerCharacterClasses,scannerModeStackObservations});
   }

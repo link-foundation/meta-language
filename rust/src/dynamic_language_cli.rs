@@ -11,7 +11,8 @@ use crate::{
     GrammarAttributeObservation, LoadedMetaLanguageArchive, MetaLanguageArchive,
     MetaLanguageArchiveLimits, OperationValue, RegularGrammarInferenceOptions,
     StructuralGrammarInferenceOptions, create_dynamic_meta_language,
-    infer_grammar_attribute_action, infer_regular_grammar, infer_structural_grammar,
+    infer_grammar_attribute_action, infer_regular_grammar,
+    infer_regular_grammar_with_parser_oracle, infer_structural_grammar,
     meta_language_archive_to_binary, meta_language_archive_to_link_cli_store,
     meta_language_archive_to_text, parse_grammar_links, read_meta_language_archive_binary,
     read_meta_language_archive_link_cli_store, read_meta_language_archive_text,
@@ -48,6 +49,9 @@ struct LabelledExamples {
     #[serde(default)]
     scanner_character_classes: bool,
     scanner_mode_stack_observations: Option<Vec<crate::GrammarScannerModeStackObservation>>,
+    oracle_candidates: Option<Vec<Vec<String>>>,
+    #[serde(skip)]
+    has_scanner_fields: bool,
 }
 
 fn labelled_examples(
@@ -66,6 +70,7 @@ fn labelled_examples(
         "delimiters",
         "scannerObservations",
         "scannerModeStackObservations",
+        "oracleCandidates",
     ]
     .into_iter()
     .any(|field| {
@@ -86,7 +91,12 @@ fn labelled_examples(
                 .to_owned(),
         );
     }
-    serde_json::from_value(value).map_err(|_| message())
+    let has_scanner_fields = scanner_fields
+        .iter()
+        .any(|field| value.get(*field).is_some());
+    let mut examples: LabelledExamples = serde_json::from_value(value).map_err(|_| message())?;
+    examples.has_scanner_fields = has_scanner_fields;
+    Ok(examples)
 }
 
 #[derive(serde::Deserialize)]
@@ -279,6 +289,15 @@ where
             .as_deref()
             .ok_or("a labelled examples input is required")?;
         let examples = labelled_examples(&read_text(file)?, true)?;
+        let oracle_path = args.options.get("--oracle-grammar");
+        if oracle_path.is_some() && (examples.delimiters.is_some() || examples.has_scanner_fields) {
+            return Err(
+                "native parser oracle discovery requires a scalar regular language input".into(),
+            );
+        }
+        if oracle_path.is_none() && examples.oracle_candidates.is_some() {
+            return Err("oracle candidates require --oracle-grammar".into());
+        }
         if let Some(delimiters) = examples.delimiters {
             let defaults = StructuralGrammarInferenceOptions::default();
             let options = StructuralGrammarInferenceOptions {
@@ -318,7 +337,19 @@ where
         options.scanner_observations = examples.scanner_observations;
         options.scanner_character_classes = examples.scanner_character_classes;
         options.scanner_mode_stack_observations = examples.scanner_mode_stack_observations;
-        infer_regular_grammar(&examples.positives, &examples.negatives, &options)?
+        if let Some(path) = oracle_path {
+            let grammar =
+                parse_grammar_links(&read_text(path)?).map_err(|error| error.to_string())?;
+            infer_regular_grammar_with_parser_oracle(
+                &grammar,
+                &examples.positives,
+                &examples.negatives,
+                examples.oracle_candidates.as_deref().unwrap_or_default(),
+                &options,
+            )?
+        } else {
+            infer_regular_grammar(&examples.positives, &examples.negatives, &options)?
+        }
     } else {
         let archive = archive_input(
             args,
@@ -349,7 +380,9 @@ where
                 );
             }
             let options = inference_checkpoint_options(&source.id, archive.archive);
-            return Ok(create_dynamic_meta_language(&[source], &options)?.archive().clone());
+            return Ok(create_dynamic_meta_language(&[source], &options)?
+                .archive()
+                .clone());
         }
         let file = args
             .options

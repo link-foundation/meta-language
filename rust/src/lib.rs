@@ -40,6 +40,8 @@ pub use grammar_composition_batch::{
     read_grammar_composition_batch_links,
 };
 mod grammar_concepts;
+mod grammar_discovery_parser_oracle;
+mod grammar_discovery_parser_oracle_rules;
 mod grammar_inference;
 mod grammar_inference_refinement_rules;
 mod grammar_inference_rules;
@@ -48,14 +50,19 @@ mod grammar_scanner_inference;
 mod grammar_scanner_inference_rules;
 mod grammar_scanner_mode_stack_rules;
 mod grammar_structural_inference_rules;
+pub use grammar_discovery_parser_oracle::{
+    GrammarDiscoveryOracleObservation, GrammarDiscoveryOracleObservations,
+    observe_grammar_discovery_parser_oracle,
+};
 pub use grammar_inference::{
     RegularGrammarInference, RegularGrammarInferenceOptions, RegularGrammarInferenceParameters,
     StructuralGrammarInference, StructuralGrammarInferenceLimits,
     StructuralGrammarInferenceOptions, accept_inferred_grammar_symbols,
     create_regular_grammar_inference_program_links, infer_regular_grammar,
-    infer_structural_grammar, read_refined_regular_grammar_inference_links,
-    read_regular_grammar_inference_links, read_structural_grammar_inference_links,
-    refine_regular_grammar_inference, refine_structural_grammar_inference,
+    infer_regular_grammar_with_parser_oracle, infer_structural_grammar,
+    read_refined_regular_grammar_inference_links, read_regular_grammar_inference_links,
+    read_structural_grammar_inference_links, refine_regular_grammar_inference,
+    refine_structural_grammar_inference,
 };
 pub use grammar_scanner_inference::{
     GrammarScannerModeStackObservation, GrammarScannerObservation, InferredGrammarScanner,
@@ -180,12 +187,12 @@ pub use translation::reference_method_program::create_reference_method_program_l
 pub use translation::rust_inherent_program::create_rust_inherent_program_links;
 pub use translation::rust_primitive_bitwise_program::create_rust_primitive_bitwise_program_links;
 pub use translation::rust_record_program::create_rust_record_program_links;
+pub use translation::rust_shift_program::create_rust_shift_program_links;
 pub use translation::rust_standard_collection_library::{
     RustStandardCollectionLibraryLimits, RustStandardCollectionSourceHandlers,
     RustStandardCollectionSourceLibrary, create_rust_standard_collection_source_library,
     load_rust_standard_collection_source_library,
 };
-pub use translation::rust_shift_program::create_rust_shift_program_links;
 pub use translation::scalar_assignment_program::create_scalar_assignment_program_links;
 pub use translation::source_identifier_program::create_source_identifier_program_links;
 pub use translation::unicode_scalar_program::create_unicode_scalar_program_links;
@@ -236,7 +243,8 @@ pub use dynamic_language_cli::{DynamicLanguageCommandOutput, run_dynamic_languag
 pub use dynamic_language_command_program::create_dynamic_language_command_program_links;
 pub use dynamic_meta_language::{
     DynamicAttributeSelection, DynamicAttributeTranslation, DynamicMetaLanguage,
-    DynamicMetaLanguageOptions, DynamicParseOptions, DynamicParseResult, create_dynamic_meta_language,
+    DynamicMetaLanguageOptions, DynamicParseOptions, DynamicParseResult,
+    create_dynamic_meta_language,
 };
 pub use formal_concept_definition::{
     FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
@@ -569,8 +577,8 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_standard_collection_source_model,
     create_typed_program_links_with_rust_type_namespace_model,
     create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
-    decode_typed_program_links_with_limits,
-    emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
+    decode_typed_program_links_with_limits, emit_typed_program_links,
+    emit_typed_program_links_with_options, encode_typed_program_links,
     encode_typed_program_links_with_record_shapes, encode_typed_program_links_with_value_sharing,
     read_typed_program_binding_identities, typed_program_links_schema,
 };

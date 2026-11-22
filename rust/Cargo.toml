@@ -143,6 +143,7 @@ include = [
     "src/data/grammar-active-learning-program.lino",
     "src/data/grammar-attribute-inference-program.lino",
     "src/data/grammar-composition-batch-program.lino",
+    "src/data/grammar-discovery-parser-oracle-program.lino",
     "src/data/grammar-inference-program.lino",
     "src/data/grammar-inference-refinement-program.lino",
     "src/data/grammar-scanner-character-class-program.lino",

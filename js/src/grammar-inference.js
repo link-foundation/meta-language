@@ -5,7 +5,9 @@ import { Grammar } from './grammar.js';
 import { LinkNetwork } from './network.js';
 import { LinkId } from './primitives.js';
 import { encodeStructuredDataLinks, decodeStructuredDataLinks } from './structured-data-links.js';
-import { createMetaLanguageArchive, readMetaLanguageArchive } from './meta-language-archive.js';
+import { createMetaLanguageArchive, extendMetaLanguageArchive, readMetaLanguageArchive } from './meta-language-archive.js';
+import { observeGrammarDiscoveryParserOracle, createGrammarDiscoveryParserOracleEntry,
+  readGrammarDiscoveryParserOracleEntry, grammarDiscoveryParserOracleIdentifier } from './grammar-discovery-parser-oracle.js';
 import { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
 import { decodeTypedProgramLinks } from './typed-program-links.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
@@ -132,6 +134,17 @@ export function inferRegularGrammar(positives, negatives = [], options = {}) {
   return { grammar, source, alphabet: [...input.alphabet], table: [...table], ...archive };
 }
 
+/** Discover a scalar regular grammar with a native parser as a finite oracle. */
+export function inferRegularGrammarWithParserOracle(grammar, positives, negatives, candidates = [], options = {}) {
+  if (options.scannerObservations !== undefined || options.scannerCharacterClasses === true || options.scannerModeStackObservations !== undefined) {
+    fail('native parser oracle discovery requires a scalar regular language input');
+  }
+  const observed = observeGrammarDiscoveryParserOracle(grammar, positives, negatives, candidates);
+  const result = inferRegularGrammar(observed.positives, observed.negatives, options);
+  const entry = createGrammarDiscoveryParserOracleEntry(grammar, positives, negatives, candidates, observed.observations);
+  return { ...result, ...extendMetaLanguageArchive(result, [entry]), oracleObservations: observed.observations };
+}
+
 /** Reload the complete algorithm, model, recursive grammar and concept graphs.
  * Recompute the selected version's decisions; stored declarations are never
  * trusted as proof or represented as independent observed execution evidence.
@@ -186,7 +199,10 @@ export function readRegularGrammarInferenceLinks(network, root) {
   const grammar = grammarFromTable(table, input.alphabet, scanner), source = decoded.sources[0];
   if (decoded.sources.length !== 1 || source.id !== model.identifier || source.language !== model.language || source.edition !== model.edition
     || !isDeepStrictEqual(source.grammar.normalized(), grammar.normalized())) fail('candidate grammar differs from its actual model');
-  return { grammar: source.grammar, source, alphabet: [...input.alphabet], table: [...table], network, root: LinkId.from(root) };
+  const oracle = entries.find(entry => entry.identifier === grammarDiscoveryParserOracleIdentifier);
+  const oracleObservations = oracle ? readGrammarDiscoveryParserOracleEntry(oracle, model.positives, model.negatives) : undefined;
+  return { grammar: source.grammar, source, alphabet: [...input.alphabet], table: [...table], network, root: LinkId.from(root),
+    ...(oracleObservations ? { oracleObservations } : {}) };
 }
 
 /** Execute the actual inferred automaton over an independently supplied token
