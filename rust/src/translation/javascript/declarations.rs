@@ -27,6 +27,52 @@ mod file;
 mod jsdoc;
 use jsdoc::{jsdoc_type, promised};
 
+/// An actual function expression or arrow function at a source token index.
+pub(in crate::translation) fn test_javascript_source_function_start(
+    tokens: &[Token],
+    index: usize,
+) -> bool {
+    let Some(mut token) = tokens.get(index) else {
+        return false;
+    };
+    if token.kind == TokenKind::Identifier
+        && !crate::translation::javascript_identifier_rules::accept_java_script_source_keyword_token(
+            &token.value,
+            &token.raw,
+        )
+        && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>")
+    {
+        return false;
+    }
+    let mut index = index;
+    if token.kind == TokenKind::Identifier
+        && token.value == "async"
+        && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>")
+    {
+        index += 1;
+        let Some(next) = tokens.get(index) else {
+            return false;
+        };
+        token = next;
+    }
+    let kind = match token.kind {
+        TokenKind::Identifier => "identifier",
+        TokenKind::Punct => "punct",
+        _ => "",
+    };
+    let after_group = if token.kind == TokenKind::Punct && token.value == "(" {
+        tokens.get(super::matching_source_group(tokens, index) + 1)
+    } else {
+        None
+    };
+    super::surface_rules::accept_java_script_function_start(
+        kind,
+        &token.value,
+        tokens.get(index + 1).map_or("", |next| next.value.as_str()),
+        after_group.map_or("", |next| next.value.as_str()),
+    )
+}
+
 /// How a function's body is written: a block, or an arrow's block or expression.
 #[derive(Clone)]
 enum Body {
@@ -468,40 +514,7 @@ impl JavaScriptParser {
     /// Whether the tokens from `index` are a function expression or an arrow
     /// function, either maybe async.
     pub(super) fn starts_function(&self, index: usize) -> bool {
-        let tokens = &self.cursor.tokens;
-        let Some(mut token) = tokens.get(index) else {
-            return false;
-        };
-        if token.kind == TokenKind::Identifier
-            && !crate::translation::javascript_identifier_rules::accept_java_script_source_keyword_token(&token.value, &token.raw)
-            && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>") { return false; }
-        let mut index = index;
-        if token.kind == TokenKind::Identifier
-            && token.value == "async"
-            && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>")
-        {
-            index += 1;
-            let Some(next) = tokens.get(index) else {
-                return false;
-            };
-            token = next;
-        }
-        let kind = match token.kind {
-            TokenKind::Identifier => "identifier",
-            TokenKind::Punct => "punct",
-            _ => "",
-        };
-        let after_group = if token.kind == TokenKind::Punct && token.value == "(" {
-            tokens.get(self.matching(index) + 1)
-        } else {
-            None
-        };
-        super::surface_rules::accept_java_script_function_start(
-            kind,
-            &token.value,
-            tokens.get(index + 1).map_or("", |next| next.value.as_str()),
-            after_group.map_or("", |next| next.value.as_str()),
-        )
+        test_javascript_source_function_start(&self.cursor.tokens, index)
     }
 
     /// A parameter list after its `(`, through its `)`.

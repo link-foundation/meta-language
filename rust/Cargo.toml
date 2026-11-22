@@ -367,6 +367,8 @@ include = [
     "src/data/utf16-text-program.lino",
     "src/data/whole-parameter-default-bab148f9-program.lino",
     "src/data/whole-parameter-default-program.lino",
+    "src/data/rust-standard-collection-value-packet-program.lino",
+    "src/data/rust-standard-collection-value-packet-program-source.lino",
     "src/translation/runtime/big-integer-conversion.js",
     "src/translation/runtime/big-integer-conversion.lean",
     "src/translation/runtime/big-integer-conversion.v",

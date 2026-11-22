@@ -473,6 +473,7 @@ mod translation_rust_function_qualifiers;
 mod translation_rust_type_aliases;
 mod translation_rust_generic_type_aliases;
 mod translation_rust_standard_sum_integration;
+mod translation_rust_standard_collection_library;
 mod translation_rust_standard_option_panic;
 
 mod translation_rust_fresh_vector_arguments;

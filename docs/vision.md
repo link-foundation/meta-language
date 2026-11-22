@@ -246,17 +246,23 @@ retain their own actual source identities rather than borrow another profile's
 interpretation. Stored/escaping references and additional ownership families
 remain required independent interpretations, not silently erased source facets.
 
-The initial standard Rust collection profile resolves actual HashMap/HashSet
-owners and concrete Eq domains. Boolean, exact integer and valid Unicode String
-keys use explicit owned entries; no hash iteration order is inferred from the
-JavaScript representation. Owned insert/remove results and clone ownership are
-separate from root/revision-bound borrowed get results and copied/cloned
-projections. Real projected library bodies, declaration/type ownership and actual
-call/loan witnesses must connect these semantics to source value/state packets.
-A method name or declared library asset alone cannot establish source execution.
-Custom hash/equality behavior and remaining collection families still require
-their complete semantics. Recursive metadata, live loans, entries and text retain
-explicit resource bounds across shared/native representations.
+The closed standard Rust collection profile resolves actual HashMap, HashSet,
+BTreeMap and BTreeSet owners and concrete Eq or Ord domains. Boolean, exact
+integer and valid Unicode String keys use explicit owned entries. Hash
+collection storage carries no source iteration order. BTree storage retains
+the key ordering for borrowed and consuming traversal and lexicographic
+comparison. Owned insert/remove results and clone ownership are separate from
+root/revision-bound borrowed get results and copied/cloned projections.
+
+Library admission recomposes the complete original modules and resolves their
+lexical imports before checking the source under the ordinary value profile.
+The generated Links graph must agree with the independently checked bodies and
+original declaration owners. The nominal packet retains the distinct normal,
+invalid and resource continuations. Source lowering additionally requires
+actual call and loan witnesses to authorize the represented value/state
+transitions. Custom hash/equality behavior and further collection families
+require separate source interpretations. Recursive metadata, live loans,
+entries and text retain explicit resource bounds across representations.
 
 Array slice captures length before ordered start/end scalar conversion, preserves
 omitted and explicit undefined end behavior, and performs ArraySpeciesCreate for

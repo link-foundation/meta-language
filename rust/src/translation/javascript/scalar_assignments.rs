@@ -286,7 +286,9 @@ impl JavaScriptParser {
                 Some(place),
             ));
         }
-        if rules::read_scalar_assignment_operation(&operator.value).is_empty() {
+        if !self.reference_state.permitted
+            || rules::read_scalar_assignment_operation(&operator.value).is_empty()
+        {
             return Err(unsupported(
                 "scalar assignment expression",
                 "the selected source profile needs the complete shared cell operation",

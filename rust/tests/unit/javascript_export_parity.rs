@@ -207,6 +207,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("SEMANTIC_CONSTRUCTS", "SEMANTIC_CONSTRUCTS", "constant"),
     ("SEMANTIC_ENCODING", "SEMANTIC_ENCODING", "constant"),
     ("SEMANTIC_OBSERVATION", "SEMANTIC_OBSERVATION", "constant"),
+    (
+        "SOURCE_IDENTIFIER_UNICODE_VERSION",
+        "SOURCE_IDENTIFIER_UNICODE_VERSION",
+        "constant",
+    ),
     ("SQL_DIALECT_PROFILES", "SQL_DIALECT_PROFILES", "constant"),
     ("SelfTranslationError", "SelfTranslationError", "type"),
     ("SourceSpan", "SourceSpan", "type"),
@@ -225,6 +230,9 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("TraversalStrategy", "TraversalStrategy", "type"),
     ("TriviaAttachmentPolicy", "TriviaAttachmentPolicy", "type"),
     ("TruthValue", "TruthValue", "type"),
+    ("UnsignedLink", "Link", "type"),
+    ("UnsignedLinkId", "LinkId", "type"),
+    ("UnsignedLinkNetwork", "LinkNetwork", "type"),
     ("VerificationIssue", "VerificationIssue", "type"),
     ("VerificationReport", "VerificationReport", "type"),
     (
@@ -242,11 +250,41 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "accept_intrinsic_module_initializer_scope",
         "function",
     ),
+    (
+        "acceptJavaScriptRecordOrderNames",
+        "accept_java_script_record_order_names",
+        "function",
+    ),
+    (
+        "acceptJavaScriptRecordOrderPermutation",
+        "accept_java_script_record_order_permutation",
+        "function",
+    ),
+    (
+        "acceptJavaScriptRecordPropertyOrder",
+        "accept_java_script_record_property_order",
+        "function",
+    ),
+    (
+        "acceptLinkAllocationCapacity",
+        "accept_link_allocation_capacity",
+        "function",
+    ),
+    (
+        "acceptLinkAllocationWord",
+        "accept_link_allocation_word",
+        "function",
+    ),
     ("acceptsText", "accepts_text", "function"),
     ("accessModeIsMutable", "AccessMode::is_mutable", "method"),
     ("accessModeIsReadOnly", "AccessMode::is_read_only", "method"),
     ("accessModeLabel", "AccessMode::label", "method"),
     ("analyzeProgram", "analyze_program", "function"),
+    (
+        "analyzeSourceModuleRequests",
+        "analyze_source_module_requests",
+        "function",
+    ),
     ("analyze_program", "analyze_program", "function"),
     ("asReadOnly", "LinkNetwork::as_read_only", "method"),
     ("as_read_only", "LinkNetwork::as_read_only", "method"),
@@ -264,6 +302,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("captureGrammarLayout", "capture_grammar_layout", "function"),
+    (
+        "captureRustConcreteSourceItems",
+        "capture_rust_concrete_source_items",
+        "function",
+    ),
+    (
+        "captureRustSuppliedModuleProject",
+        "capture_rust_supplied_module_project",
+        "function",
+    ),
     ("carryRuleDocs", "carry_rule_docs", "function"),
     (
         "checkConceptDistinctions",
@@ -294,6 +342,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("choice", "choice", "function"),
     ("compileGrammar", "compile_feature_grammar", "function"),
     (
+        "composeRustSourceProject",
+        "compose_rust_source_project",
+        "function",
+    ),
+    (
         "conceptCorrespondence",
         "concept_correspondence",
         "function",
@@ -311,7 +364,67 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "construct_program_from_fragments",
         "function",
     ),
+    (
+        "convertJavaScriptBooleanBigInteger",
+        "convert_javascript_boolean_big_integer",
+        "function",
+    ),
+    (
+        "convertJavaScriptNumberBigInteger",
+        "convert_javascript_number_big_integer",
+        "function",
+    ),
+    (
+        "convertJavaScriptStringBigInteger",
+        "convert_javascript_string_big_integer",
+        "function",
+    ),
+    (
+        "convertJavaScriptStringBigIntegerUnits",
+        "convert_javascript_string_big_integer_units",
+        "function",
+    ),
+    (
+        "convertJavaScriptStringNumber",
+        "convert_javascript_string_number",
+        "function",
+    ),
+    (
+        "createAbstractSyntaxLinks",
+        "create_abstract_syntax_links",
+        "function",
+    ),
+    (
+        "createArrayBindingProgramLinks",
+        "create_array_binding_program_links",
+        "function",
+    ),
+    (
+        "createArrayStateMethodProgramLinks",
+        "create_array_state_method_program_links",
+        "function",
+    ),
+    (
+        "createBigIntegerBitwiseProgramLinks",
+        "create_big_integer_bitwise_program_links",
+        "function",
+    ),
+    (
+        "createBigIntegerConversionProgramLinks",
+        "create_big_integer_conversion_program_links",
+        "function",
+    ),
+    (
+        "createCallableSourceProgramLinks",
+        "create_callable_source_program_links",
+        "function",
+    ),
     ("createConceptViews", "create_concept_views", "function"),
+    (
+        "createDenseUnsignedLinkNetwork",
+        "create_dense_unsigned_link_network",
+        "function",
+    ),
     (
         "createDiscoveredConceptLinks",
         "create_discovered_concept_links",
@@ -325,6 +438,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "createDynamicMetaLanguage",
         "create_dynamic_meta_language",
+        "function",
+    ),
+    (
+        "createFixedIntegerCastProgramLinks",
+        "create_fixed_integer_cast_program_links",
+        "function",
+    ),
+    (
+        "createFormalStringUnitProgramLinks",
+        "create_formal_string_unit_program_links",
         "function",
     ),
     (
@@ -349,6 +472,46 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createJavaScriptComparisonProgramLinks",
+        "create_java_script_comparison_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptIdentifierProgramLinks",
+        "create_java_script_identifier_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptLiteralPropertyProgramLinks",
+        "create_java_script_literal_property_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptNullishFieldProgramLinks",
+        "create_java_script_nullish_field_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptOptionalCallProgramLinks",
+        "create_java_script_optional_call_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptOptionalChainProgramLinks",
+        "create_java_script_optional_chain_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptOwnPropertyProgramLinks",
+        "create_java_script_own_property_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptPropertyCallProgramLinks",
+        "create_java_script_property_call_program_links",
+        "function",
+    ),
+    (
         "createJavaScriptRecordCallableParameterProgramLinks",
         "create_java_script_record_callable_parameter_program_links",
         "function",
@@ -359,14 +522,79 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createJavaScriptRecordOrderProgramLinks",
+        "create_java_script_record_order_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptRecordParameterProgramLinks",
+        "create_javascript_record_parameter_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptRecordPropertyOrder",
+        "create_java_script_record_property_order",
+        "function",
+    ),
+    (
+        "createJavaScriptStringRangeProgramLinks",
+        "create_java_script_string_range_program_links",
+        "function",
+    ),
+    (
+        "createJavaScriptStringUnitProgramLinks",
+        "create_java_script_string_unit_program_links",
+        "function",
+    ),
+    (
+        "createLinkAllocationProgramLinks",
+        "create_link_allocation_program_links",
+        "function",
+    ),
+    (
         "createMetaLanguageArchive",
         "create_meta_language_archive",
+        "function",
+    ),
+    (
+        "createModuleBindingProgramLinks",
+        "create_module_binding_program_links",
+        "function",
+    ),
+    (
+        "createNumberBitwiseProgramLinks",
+        "create_number_bitwise_program_links",
+        "function",
+    ),
+    (
+        "createOptionalValueProgramLinks",
+        "create_optional_value_program_links",
         "function",
     ),
     (
         "createProgramSnapshot",
         "ProgramRepresentation::serialize_snapshot",
         "method",
+    ),
+    (
+        "createProjectTranslationArchive",
+        "create_project_translation_archive",
+        "function",
+    ),
+    (
+        "createRecordFieldWriteProgramLinks",
+        "create_record_field_write_program_links",
+        "function",
+    ),
+    (
+        "createReferenceArrayProjectionProgramLinks",
+        "create_reference_array_projection_program_links",
+        "function",
+    ),
+    (
+        "createReferenceMethodProgramLinks",
+        "create_reference_method_program_links",
+        "function",
     ),
     (
         "createRegularGrammarInferenceProgramLinks",
@@ -376,6 +604,56 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "createRustByteStringProgramLinks",
         "create_rust_byte_string_program_links",
+        "function",
+    ),
+    (
+        "createRustFormattingProgramLinks",
+        "create_rust_formatting_program_links",
+        "function",
+    ),
+    (
+        "createRustInherentProgramLinks",
+        "create_rust_inherent_program_links",
+        "function",
+    ),
+    (
+        "createRustPrimitiveBitwiseProgramLinks",
+        "create_rust_primitive_bitwise_program_links",
+        "function",
+    ),
+    (
+        "createRustRecordProgramLinks",
+        "create_rust_record_program_links",
+        "function",
+    ),
+    (
+        "createRustShiftProgramLinks",
+        "create_rust_shift_program_links",
+        "function",
+    ),
+    (
+        "createRustSourceOwnerProgramLinks",
+        "create_rust_source_owner_program_links",
+        "function",
+    ),
+    (
+        "createRustSourceProjectProgramLinks",
+        "create_rust_source_project_program_links",
+        "function",
+    ),
+    (
+        "createRustStandardCollectionSourceLibrary",
+        "create_rust_standard_collection_source_library",
+        "function",
+    ),
+    (
+        "createRustUnitValueProgramLinks",
+        "create_rust_unit_value_program_links",
+        "function",
+    ),
+    (
+        "createScalarAssignmentProgramLinks",
+        "create_scalar_assignment_program_links",
         "function",
     ),
     (
@@ -389,8 +667,73 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createSourceExceptionProgramLinks",
+        "create_source_exception_program_links",
+        "function",
+    ),
+    (
+        "createSourceIdentifierProgramLinks",
+        "create_source_identifier_program_links",
+        "function",
+    ),
+    (
+        "createSourceProjectArchive",
+        "create_source_project_archive",
+        "function",
+    ),
+    (
+        "createStringConstructionProgramLinks",
+        "create_string_construction_program_links",
+        "function",
+    ),
+    (
+        "createStringNumberProgramLinks",
+        "create_string_number_program_links",
+        "function",
+    ),
+    (
         "createTypedProgramLinks",
         "create_typed_program_links",
+        "function",
+    ),
+    (
+        "createUnicodeCaseProgramLinks",
+        "create_unicode_case_program_links",
+        "function",
+    ),
+    (
+        "createUnicodeScalarProgramLinks",
+        "create_unicode_scalar_program_links",
+        "function",
+    ),
+    (
+        "createUnsignedLinkIdentityProgramLinks",
+        "create_unsigned_link_identity_program_links",
+        "function",
+    ),
+    (
+        "createUnsignedRustSourceOwnerProgramLinks",
+        "create_unsigned_rust_source_owner_program_links",
+        "function",
+    ),
+    (
+        "createUnsignedSourceDocumentLinks",
+        "create_unsigned_source_document_links",
+        "function",
+    ),
+    (
+        "createUnsignedSourceDocumentLinksWithRegistry",
+        "create_unsigned_source_document_links_with_registry",
+        "function",
+    ),
+    (
+        "createUnsignedTypedProgramLinks",
+        "create_unsigned_typed_program_links",
+        "function",
+    ),
+    (
+        "createUtf16TextProgramLinks",
+        "create_utf16_text_program_links",
         "function",
     ),
     ("currentConceptId", "current_concept_id", "function"),
@@ -419,6 +762,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "decode_typed_program_links",
         "function",
     ),
+    (
+        "decodeUnsignedLinkNetworkBinary",
+        "decode_unsigned_link_network_binary",
+        "function",
+    ),
     ("decorateGrammar", "decorate_grammar", "function"),
     ("decorateSyntaxTree", "decorate_syntax_tree", "function"),
     ("decorator", "Decorator", "type"),
@@ -437,6 +785,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "displayGrammarExpression",
         "display_grammar_expression",
+        "function",
+    ),
+    (
+        "divideJavaScriptBigInteger",
+        "divide_javascript_big_integer",
+        "function",
+    ),
+    (
+        "draftProjectTranslation",
+        "draft_project_translation",
         "function",
     ),
     (
@@ -463,6 +821,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "emitTypedProgramLinks",
         "emit_typed_program_links",
+        "function",
+    ),
+    (
+        "emitUnsignedTypedProgramLinks",
+        "emit_unsigned_typed_program_links",
         "function",
     ),
     ("emit_abnf", "emit_abnf", "function"),
@@ -518,10 +881,25 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "encode_typed_program_links_with_value_sharing",
         "function",
     ),
+    (
+        "encodeUnsignedLinkNetworkBinary",
+        "encode_unsigned_link_network_binary",
+        "function",
+    ),
     ("eraseTypeScript", "erase_type_script", "function"),
     (
         "extendMetaLanguageArchive",
         "extend_meta_language_archive",
+        "function",
+    ),
+    (
+        "extendProjectTranslationArchive",
+        "extend_project_translation_archive",
+        "function",
+    ),
+    (
+        "extendSourceProjectArchive",
+        "extend_source_project_archive",
         "function",
     ),
     ("fourLanguageSupport", "FOUR_LANGUAGE_SUPPORT", "constant"),
@@ -630,6 +1008,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "grammar::inference::active::learn_active_grammar_automaton",
         "function",
     ),
+    (
+        "loadRustStandardCollectionSourceLibrary",
+        "load_rust_standard_collection_source_library",
+        "function",
+    ),
     ("lowerGrammar", "lower_grammar", "function"),
     ("lowerGraphQL", "lower_graphql", "function"),
     ("lowerGraphQl", "lower_graphql", "function"),
@@ -637,7 +1020,17 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("lowerSQL", "lower_sql", "function"),
     ("lowerSql", "lower_sql", "function"),
     ("lower_sql", "lower_sql", "function"),
+    (
+        "mapUnicodeCaseUtf16Text",
+        "map_unicode_case_utf16_text",
+        "function",
+    ),
     ("mergeGrammars", "merge_grammars", "function"),
+    (
+        "mergeJavaScriptRecordPropertyOrder",
+        "merge_java_script_record_property_order",
+        "function",
+    ),
     (
         "mergeResourceDescriptionGraphs",
         "merge_resource_description_graphs",
@@ -681,6 +1074,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("nativeGrammarSource", "native_grammar_source", "function"),
+    ("normalizeUnicodeText", "normalize_unicode_text", "function"),
     (
         "normalizedRuleDefinition",
         "normalized_rule_definition",
@@ -700,6 +1094,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("parseNativeGrammar", "parse_native_grammar", "function"),
+    (
+        "parseRustSourceProject",
+        "parse_rust_source_project",
+        "function",
+    ),
     ("parseWithGrammar", "parse_with_grammar", "function"),
     ("parse_engine", "LinkNetwork::parse_engine", "method"),
     (
@@ -713,6 +1112,21 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "powerJavaScriptBigInteger",
+        "power_javascript_big_integer",
+        "function",
+    ),
+    (
+        "powerJavaScriptNumber",
+        "power_javascript_number",
+        "function",
+    ),
+    (
+        "projectTranslationDraftToLinks",
+        "project_translation_draft_to_links",
+        "function",
+    ),
+    (
         "projectTypeScriptTyping",
         "project_type_script_typing",
         "function",
@@ -723,6 +1137,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("queryByConceptTerm", "query_by_concept_term", "function"),
+    (
+        "readAbstractSyntaxLinks",
+        "read_abstract_syntax_links",
+        "function",
+    ),
     ("readConceptOntology", "read_concept_ontology", "function"),
     ("readConceptTaxonomy", "read_concept_taxonomy", "function"),
     (
@@ -751,6 +1170,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "readJavaScriptRecordPropertyKeys",
+        "read_java_script_record_property_keys",
+        "function",
+    ),
+    (
         "readMetaLanguageArchive",
         "read_meta_language_archive",
         "function",
@@ -776,9 +1200,19 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "readProgramConcreteSyntaxFacts",
+        "read_program_concrete_syntax_facts",
+        "function",
+    ),
+    (
         "readProgramSnapshot",
         "ProgramRepresentation::from_snapshot",
         "method",
+    ),
+    (
+        "readProjectTranslationArchive",
+        "read_project_translation_archive",
+        "function",
     ),
     (
         "readRefinedRegularGrammarInferenceLinks",
@@ -793,6 +1227,21 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "readResourceDescriptionNTriplesSource",
         "read_resource_description_ntriples_source",
+        "function",
+    ),
+    (
+        "readRustSourceProjectConcreteGraphs",
+        "read_rust_source_project_concrete_graphs",
+        "function",
+    ),
+    (
+        "readRustSuppliedModuleOwnership",
+        "read_rust_supplied_module_ownership",
+        "function",
+    ),
+    (
+        "readSourceProjectArchive",
+        "read_source_project_archive",
         "function",
     ),
     ("readSourceTextByte", "read_source_text_byte", "function"),
@@ -825,6 +1274,26 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "readTypedProgramBindingIdentities",
         "read_typed_program_binding_identities",
+        "function",
+    ),
+    (
+        "readUnsignedGraphSnapshot",
+        "read_unsigned_graph_snapshot",
+        "function",
+    ),
+    (
+        "rebaseJavaScriptRecordPropertyOrder",
+        "rebase_java_script_record_property_order",
+        "function",
+    ),
+    (
+        "rebaseUnsignedLinkNetwork",
+        "rebase_unsigned_link_network",
+        "function",
+    ),
+    (
+        "rebaseUnsignedTypedProgramLinks",
+        "rebase_unsigned_typed_program_links",
         "function",
     ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
@@ -875,6 +1344,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("renderRuleFieldLinks", "render_rule_fields", "function"),
     ("renderRuleLink", "render_rule_link", "function"),
     ("renderSyntaxTree", "SyntaxTree::render", "method"),
+    (
+        "restoreDenseUnsignedLinkNetwork",
+        "restore_dense_unsigned_link_network",
+        "function",
+    ),
+    (
+        "restoreProjectTranslationArchiveInputs",
+        "restore_project_translation_archive_inputs",
+        "function",
+    ),
     ("restoreSourceNames", "restore_source_names", "function"),
     ("runApiStyleFixture", "run_api_style_fixture", "function"),
     (
@@ -884,8 +1363,33 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("runGrammarCommand", "run_grammar_command", "function"),
     (
+        "runProjectTranslationArchiveCommand",
+        "run_project_translation_archive_command",
+        "function",
+    ),
+    (
+        "runRustSourceProjectCommand",
+        "run_rust_source_project_command",
+        "function",
+    ),
+    (
         "runSourceDefinitionCommand",
         "run_source_definition_command",
+        "function",
+    ),
+    (
+        "runSourceModuleRequestCommand",
+        "run_source_module_request_command",
+        "function",
+    ),
+    (
+        "runUnsignedGraphCommand",
+        "run_unsigned_graph_command",
+        "function",
+    ),
+    (
+        "runUnsignedSourceCommand",
+        "run_unsigned_source_command",
         "function",
     ),
     (
@@ -894,7 +1398,17 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("scriptLanguage", "script_language", "function"),
+    (
+        "selectUnsignedTypedProgramRoot",
+        "select_unsigned_typed_program_root",
+        "function",
+    ),
     ("selfTranslate", "self_translate", "function"),
+    (
+        "selfTranslateWithDiagnostics",
+        "self_translate_with_diagnostics",
+        "function",
+    ),
     (
         "selfTranslationLanguage",
         "self_translation_language",

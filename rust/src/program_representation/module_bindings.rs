@@ -10,7 +10,7 @@ fn number(value: usize) -> f64 {
         .expect("a bounded source coordinate is a Number")
 }
 
-pub(super) fn read_fields(
+pub(crate) fn read_fields(
     network: &LinkNetwork,
     syntax: &[ProgramSourceMapping],
     language: &str,
@@ -86,10 +86,10 @@ pub(super) fn read_fields(
     }
     Ok(plan)
 }
-pub(super) fn role(plan: &[f64], range: ProgramRange) -> f64 {
+pub(crate) fn role(plan: &[f64], range: ProgramRange) -> f64 {
     rules::read_source_module_binding_range_role(plan, number(range.start), number(range.end))
 }
-pub(super) fn affixes(
+pub(crate) fn affixes(
     role: f64,
     shorthand: bool,
     original: &str,

@@ -160,7 +160,9 @@ impl JavaScriptParser {
             ));
         }
         items.append(&mut self.generated);
-        if !self.eliminated_owned_array_append_operations.is_empty() {
+        if self.reference_state.permitted
+            && !self.eliminated_owned_array_append_operations.is_empty()
+        {
             self.reference_state.enabled = self.reference_state.forced
                 || super::super::reference_analysis::requires_reference_semantics(
                     &self.cursor.tokens,
@@ -193,12 +195,16 @@ impl JavaScriptParser {
                 &self.nested_product_bindings,
             )?;
             super::super::scalar_loops::finish_scalar_loops(&mut program)?;
-            super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            if self.reference_state.permitted {
+                super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            }
             Ok(program)
         } else {
             let mut program = infer_javascript_types(program)?;
             super::super::scalar_loops::finish_scalar_loops(&mut program)?;
-            super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            if self.reference_state.permitted {
+                super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
+            }
             Ok(program)
         }
     }

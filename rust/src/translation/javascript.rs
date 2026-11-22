@@ -68,6 +68,27 @@ use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};
 
+pub(super) use declarations::test_javascript_source_function_start;
+
+fn matching_source_group(tokens: &[Token], index: usize) -> usize {
+    let mut depth = 0_i64;
+    for (at, token) in tokens.iter().enumerate().skip(index) {
+        if token.kind != TokenKind::Punct {
+            continue;
+        }
+        if ["(", "[", "{"].contains(&token.value.as_str()) {
+            depth += 1;
+        }
+        if [")", "]", "}"].contains(&token.value.as_str()) {
+            depth -= 1;
+            if depth == 0 {
+                return at;
+            }
+        }
+    }
+    tokens.len() - 1
+}
+
 const ROOT: &str = "crate";
 const ASSIGNMENTS: [&str; 16] = [
     "=", "+=", "-=", "*=", "/=", "%=", "**=", "<<=", ">>=", ">>>=", "&=", "|=", "^=", "&&=", "||=",
@@ -144,6 +165,27 @@ enum AssertionKind {
 /// the portable core.
 pub fn parse_javascript(source: &str) -> Result<SProgram> {
     parse_javascript_in(source, &ModuleContext::default())
+}
+
+pub(super) fn parse_ordinary_javascript_source_library(source: &str) -> Result<SProgram> {
+    let tokens = tokenize(source, Language::JavaScript)?;
+    let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    parser.reference_state.permitted = false;
+    parser.reference_state.enabled = false;
+    parser.file()
+}
+
+pub(super) fn has_source_library_typedef(text: &str, span: Span, name: &str) -> bool {
+    text.starts_with("/**")
+        && jsdoc_tags(&Comment {
+            text: text.to_owned(),
+            start: span.start,
+            end: span.end,
+        })
+        .is_ok_and(|tags| {
+            tags.iter()
+                .any(|tag| tag.tag == "typedef" && tag.name.as_deref() == Some(name))
+        })
 }
 
 /// Read actual emitted scalar loops under the selected Number/Boolean interface.
@@ -472,6 +514,7 @@ struct ReadonlyConstants {
 }
 
 struct ReferenceSemantics {
+    permitted: bool,
     enabled: bool,
     forced: bool,
 }
@@ -559,6 +602,7 @@ impl JavaScriptParser {
             top_level: false,
             readonly_constants: ReadonlyConstants::default(),
             reference_state: ReferenceSemantics {
+                permitted: true,
                 enabled: reference_semantics,
                 forced: false,
             },

@@ -180,6 +180,11 @@ pub use translation::reference_method_program::create_reference_method_program_l
 pub use translation::rust_inherent_program::create_rust_inherent_program_links;
 pub use translation::rust_primitive_bitwise_program::create_rust_primitive_bitwise_program_links;
 pub use translation::rust_record_program::create_rust_record_program_links;
+pub use translation::rust_standard_collection_library::{
+    RustStandardCollectionLibraryLimits, RustStandardCollectionSourceHandlers,
+    RustStandardCollectionSourceLibrary, create_rust_standard_collection_source_library,
+    load_rust_standard_collection_source_library,
+};
 pub use translation::rust_shift_program::create_rust_shift_program_links;
 pub use translation::scalar_assignment_program::create_scalar_assignment_program_links;
 pub use translation::source_identifier_program::create_source_identifier_program_links;

@@ -174,23 +174,7 @@ impl JavaScriptParser {
     }
 
     pub(in super::super) fn matching(&self, index: usize) -> usize {
-        let tokens = &self.cursor.tokens;
-        let mut depth = 0_i64;
-        for (at, token) in tokens.iter().enumerate().skip(index) {
-            if token.kind != TokenKind::Punct {
-                continue;
-            }
-            if ["(", "[", "{"].contains(&token.value.as_str()) {
-                depth += 1;
-            }
-            if [")", "]", "}"].contains(&token.value.as_str()) {
-                depth -= 1;
-                if depth == 0 {
-                    return at;
-                }
-            }
-        }
-        tokens.len() - 1
+        super::super::matching_source_group(&self.cursor.tokens, index)
     }
 
     /// Template literals concatenate their text with `String(value)` of each substitution.

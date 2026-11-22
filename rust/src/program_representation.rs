@@ -2,7 +2,7 @@
 
 mod analysis;
 mod edit;
-mod module_bindings;
+pub(crate) mod module_bindings;
 mod module_resolution;
 mod project;
 mod snapshot;
