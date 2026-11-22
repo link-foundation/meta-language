@@ -108,36 +108,49 @@ fn actual_standard_collection_source_survives_both_links_transports() {
             original
         );
     }
-    let consuming = include_str!("../../../examples/rust-consuming-ordered-collections.rs");
-    let packet = create_typed_program_links_with_rust_standard_collection_source_model(
-        consuming,
-        MODEL,
-        version,
-        64,
-        Rc::clone(&library),
-        None,
-    )
-    .unwrap_or_else(|error| {
-        panic!("actual consuming BTree source under Rust {version}: {error:?}")
-    });
-    let checked =
-        decode_typed_program_links_with_limits(&packet.network, packet.root, limits).unwrap();
-    let original = compile_and_observe(consuming);
-    assert_eq!(original, "a first\nz last\n1\ndone\n");
-    assert_eq!(
-        compile_and_observe(&emit_rust(&checked).unwrap().text),
-        original,
-    );
-    let directory = TemporaryDirectory::new("javascript-consuming-ordered-collections");
-    let output = directory.0.join("consuming-ordered.mjs");
-    fs::write(&output, emit_javascript(&checked).unwrap().text).unwrap();
-    let execution = run(Command::new("node").arg(output));
-    assert!(execution.ok, "{}", execution.stderr);
-    assert_eq!(execution.stdout, original);
+    for (source, expected) in [
+        (
+            include_str!("../../../examples/rust-consuming-ordered-collections.rs"),
+            "a first\nz last\n1\ndone\n",
+        ),
+        (
+            include_str!("../../../examples/rust-borrowed-ordered-collections.rs"),
+            "1\n1\n3\n7\n1 8\n2 7\n1\n2\n8\n7\n2\n",
+        ),
+    ] {
+        let packet = create_typed_program_links_with_rust_standard_collection_source_model(
+            source,
+            MODEL,
+            version,
+            64,
+            Rc::clone(&library),
+            None,
+        )
+        .unwrap_or_else(|error| {
+            panic!("actual ordered BTree source under Rust {version}: {error:?}")
+        });
+        let checked =
+            decode_typed_program_links_with_limits(&packet.network, packet.root, limits).unwrap();
+        let original = compile_and_observe(source);
+        assert_eq!(original, expected);
+        assert_eq!(
+            compile_and_observe(&emit_rust(&checked).unwrap().text),
+            original
+        );
+        let directory = TemporaryDirectory::new("javascript-ordered-collections");
+        let output = directory.0.join("ordered.mjs");
+        fs::write(&output, emit_javascript(&checked).unwrap().text).unwrap();
+        let execution = run(Command::new("node").arg(output));
+        assert!(execution.ok, "{}", execution.stderr);
+        assert_eq!(execution.stdout, original);
+    }
     for rejected in [
         "use std::collections::BTreeSet; fn main() { let set:BTreeSet<u8> = BTreeSet::new(); for _value in set {} println!(\"{}\", set.len()); }",
         "use std::collections::BTreeSet; fn main() { let mut set:BTreeSet<u8> = BTreeSet::new(); set.insert(1u8); for _value in set.into_iter() { break; } println!(\"{}\", set.len()); }",
         "use std::collections::BTreeSet; fn main() { let set:BTreeSet<u8> = BTreeSet::new(); for item in (*(&set)).into_iter() { println!(\"{}\", item); } }",
+        "use std::collections::BTreeSet; fn main() { let mut set:BTreeSet<u8> = BTreeSet::new(); for &item in set.iter() { set.insert(item); } }",
+        "use std::collections::BTreeSet; fn main() { let set:BTreeSet<String> = BTreeSet::new(); for &item in &set { println!(\"{}\", item); } }",
+        "use std::collections::BTreeSet; fn main() { let set:BTreeSet<u8> = BTreeSet::new(); for item in &set.iter() { println!(\"{}\", item); } }",
     ] {
         assert!(
             parse_rust_with_standard_collection_source_model(

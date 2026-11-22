@@ -19,7 +19,13 @@ mod packets;
 pub(super) struct StandardCollectionSource {
     library: Rc<dyn CollectionSourceDeclarations>,
     carriers: Vec<SourceCarrier>,
-    pub(super) ordered_iteration_head: Option<Vec<(SExpr, SourceOrigin)>>,
+    pub(super) ordered_iteration_head: Option<Vec<OrderedIterationHead>>,
+}
+
+pub(super) struct OrderedIterationHead {
+    pub(super) expression: SExpr,
+    pub(super) item: SourceOrigin,
+    pub(super) end_token: usize,
 }
 
 #[derive(Clone)]

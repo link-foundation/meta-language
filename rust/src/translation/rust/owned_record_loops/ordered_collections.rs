@@ -20,6 +20,7 @@ enum Pattern {
     Wildcard,
     Name(String, Option<Span>),
     Tuple(Vec<Pattern>, Option<Span>),
+    Reference(Box<Pattern>, Option<Span>),
 }
 
 fn fail(reason: &str, span: Option<Span>) -> super::super::TranslationError {
@@ -31,6 +32,12 @@ fn pattern(parser: &mut RustParser, path: &[String], depth: usize) -> Result<Pat
     if depth > 4 {
         return Err(fail(
             "the ordered item pattern exceeds its finite depth",
+            span,
+        ));
+    }
+    if parser.cursor.eat("&").is_some() {
+        return Ok(Pattern::Reference(
+            Box::new(pattern(parser, path, depth + 1)?),
             span,
         ));
     }
@@ -89,6 +96,27 @@ fn bind(
 ) -> Result<()> {
     match pattern {
         Pattern::Wildcard => Ok(()),
+        Pattern::Reference(inner, span) => {
+            if origin.wrappers.as_slice() != ["reference"]
+                || !matches!(
+                    origin.ty,
+                    Some(super::Type::Fixed { .. } | super::Type::Bool)
+                )
+            {
+                return Err(fail(
+                    "a reference pattern requires its actual primitive Copy referent",
+                    span,
+                ));
+            }
+            let mut copied = origin;
+            copied.wrappers.clear();
+            copied.source_lifetimes.clear();
+            copied.source_borrowed_place = false;
+            copied.source_value_borrow_bindings.clear();
+            copied.source_loan_binding_identities.clear();
+            copied.source_place_loan_binding_identities.clear();
+            bind(parser, *inner, value, copied, path, bindings, names)
+        }
         Pattern::Tuple(items, span) => {
             let fields = origin
                 .fields
@@ -170,6 +198,7 @@ impl RustParser {
             .depth = depth;
         self.standard_sum_source.return_origin = result_origin;
         self.origins.scope = previous_scope;
+        self.origins.finish_ordered_iteration_loans(&temporaries);
         self.origins.restore_owned_temporary_frame(temporaries);
         self.end_owned_record_state_block(frame)?;
         result
@@ -242,15 +271,28 @@ impl RustParser {
         .expect("actual ordered head inventory");
         let receiver = receiver?;
         let (input, item) = match heads.as_slice() {
-            [] => self
-                .standard_collection_owned_iteration(&receiver, path)?
-                .ok_or_else(|| {
-                    fail(
-                        "for requires its actual standard BTree receiver",
-                        receiver.span,
-                    )
-                })?,
-            [(node, item)] if node.node == receiver.node => (node.clone(), item.clone()),
+            [] => {
+                let method = if self.origins.origin(&receiver, path).wrappers.is_empty() {
+                    "into_iter"
+                } else {
+                    "iter"
+                };
+                self.standard_collection_iteration(&receiver, method, path)?
+                    .ok_or_else(|| {
+                        fail(
+                            "for requires its actual standard BTree receiver",
+                            receiver.span,
+                        )
+                    })?
+            }
+            [head]
+                if head.expression.node == receiver.node
+                    && self.cursor.tokens.get(head.end_token..self.cursor.index)
+                        .is_some_and(|remaining| remaining.iter().all(|token| token.value == ")"))
+                    && self.origins.origin(&receiver, path).wrappers.is_empty() =>
+            {
+                (head.expression.clone(), head.item.clone())
+            }
             _ => {
                 return Err(fail(
                     "a private ordered iterator must be the complete loop head",
@@ -258,11 +300,18 @@ impl RustParser {
                 ));
             }
         };
+        let iteration_origin = self.origins.origin(&input, path);
+        let iterator_regions = &iteration_origin.source_value_borrow_bindings;
+        if !iterator_regions.is_empty() {
+            // The receiver remains borrowed even when the item pattern copies.
+            let sentinel = self.fresh_product_binding();
+            self.origins
+                .scope
+                .insert(sentinel, iteration_origin.clone());
+        }
         let before = self.ordinary_completion_snapshot()?;
         let slots = self.record_state_active_slots();
-        let input_type = self
-            .origins
-            .origin(&input, path)
+        let input_type = iteration_origin
             .ty
             .ok_or_else(|| fail("ordered iteration needs its actual input type", input.span))?;
         let item_type = item
@@ -327,8 +376,11 @@ impl RustParser {
                 }
                 if exit.kind == "return"
                     && (!exit.origin.wrappers.is_empty()
-                        || !super::super::copy_closure_lifetimes::value_borrows(&exit.origin)
-                            .is_empty())
+                        || super::super::copy_closure_lifetimes::value_borrows(&exit.origin)
+                            .iter()
+                            .any(|region| {
+                                iterator_regions.is_empty() || iterator_regions.contains(region)
+                            }))
                 {
                     return Err(fail(
                         "ordered loop return needs its actual result without a loop loan",

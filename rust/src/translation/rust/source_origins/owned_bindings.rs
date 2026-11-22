@@ -179,6 +179,17 @@ impl SourceOrigins {
     pub(in super::super) fn restore_owned_temporary_frame(&mut self,frame:HashSet<String>){
         self.source_temporary_bindings=frame;
     }
+    pub(in super::super) fn finish_ordered_iteration_loans(&mut self, frame: &HashSet<String>) {
+        let loans = self.source_temporary_bindings.difference(frame)
+            .filter(|id| self.mutable_record_loans.loans.contains_key(*id))
+            .cloned().collect::<Vec<_>>();
+        for id in loans {
+            if let Some(state) = self.source_binding_states.get_mut(&id) {
+                *state = rules::expire_rust_owned_binding_state(state);
+            }
+            self.retire_mutable_record_loan(&id);
+        }
+    }
     pub(in super::super) fn capture_owned_borrow(&mut self, origin: SourceOrigin) -> SourceOrigin {
         if !self.owned_binding_value(&origin)
             || origin.source_binding_identity.is_some()

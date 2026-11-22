@@ -878,22 +878,24 @@ impl RustParser {
         if self.standard_collection_origin(&actual).is_none() {
             return Ok(None);
         }
-        if method.value == "into_iter"
-            && self
-                .standard_collections
-                .as_ref()
-                .is_some_and(|source| source.ordered_iteration_head.is_some())
+        if matches!(
+            method.value.as_str(),
+            "iter" | "keys" | "values" | "into_iter"
+        ) && self
+            .standard_collections
+            .as_ref()
+            .is_some_and(|source| source.ordered_iteration_head.is_some())
         {
             self.cursor
-                .expect("(", Some("ordered collection IntoIterator"))?;
+                .expect("(", Some("ordered collection iterator"))?;
             let end = self
                 .cursor
-                .expect(")", Some("ordered collection IntoIterator"))?;
+                .expect(")", Some("ordered collection iterator"))?;
             let (mut node, item) = self
-                .standard_collection_owned_iteration(receiver, module)?
+                .standard_collection_iteration(receiver, &method.value, module)?
                 .ok_or_else(|| {
                     fail(
-                        "IntoIterator requires its actual standard BTree owner",
+                        "iteration requires its actual standard BTree owner",
                         Some(method.span()),
                     )
                 })?;
@@ -904,7 +906,11 @@ impl RustParser {
                 .as_mut()
                 .and_then(|source| source.ordered_iteration_head.as_mut())
                 .expect("actual ordered iteration head reader")
-                .push((node.clone(), item));
+                .push(super::OrderedIterationHead {
+                    expression: node.clone(),
+                    item,
+                    end_token: self.cursor.index,
+                });
             return Ok(Some(node));
         }
         if matches!(method.value.as_str(), "eq" | "ne") {
@@ -938,9 +944,10 @@ impl RustParser {
         )
     }
 
-    pub(in super::super) fn standard_collection_owned_iteration(
+    pub(in super::super) fn standard_collection_iteration(
         &mut self,
         receiver: &SExpr,
+        method: &str,
         module: &[String],
     ) -> Result<Option<(SExpr, SourceOrigin)>> {
         let actual = self.origins.origin(receiver, module);
@@ -951,13 +958,51 @@ impl RustParser {
         if !test_rust_standard_collection_ordered(&Text::from_text(&carrier.owner.path.join("::")))
         {
             return Err(fail(
-                "ordered IntoIterator requires its actual standard BTree owner",
+                "ordered iteration requires its actual standard BTree owner",
                 location,
             ));
         }
-        let (collection_module, item) = match carrier.arguments.as_slice() {
-            [key] => ("btree_set", key.clone()),
-            [key, value] => {
+        let carrier = carrier.clone();
+        let owned = method == "into_iter";
+        let loan = if owned {
+            None
+        } else {
+            if !(actual.wrappers.is_empty() || actual.wrappers.as_slice() == ["reference"])
+                || !matches!(
+                    (carrier.arguments.len(), method),
+                    (1, "iter") | (2, "iter" | "keys" | "values")
+                )
+            {
+                return Err(fail(
+                    "a shared iterator needs its actual standard BTree method and receiver",
+                    location,
+                ));
+            }
+            Some(self.borrow_ordered_collection_receiver(receiver, actual.clone(), location)?)
+        };
+        let regions = loan.as_ref().map_or_else(Vec::new, |origin| {
+            origin.source_value_borrow_bindings.clone()
+        });
+        let item_origin = |origin: &SourceOrigin| {
+            let mut selected = origin.clone();
+            if !owned {
+                selected.wrappers = vec!["reference".to_owned()];
+                selected.source_lifetimes =
+                    vec![actual.source_lifetimes.first().cloned().flatten()];
+                selected.source_borrowed_place = true;
+                selected.copy_evidence = Some(());
+                selected.source_owned_result_proof = false;
+                selected.source_value_borrow_bindings = regions.clone();
+            }
+            selected
+        };
+        let (collection_module, item) = match (carrier.arguments.as_slice(), method) {
+            ([key], _) => ("btree_set", item_origin(key)),
+            ([key, _], "keys") => ("btree_map", item_origin(key)),
+            ([_, value], "values") => ("btree_map", item_origin(value)),
+            ([key, value], _) => {
+                let key = item_origin(key);
+                let value = item_origin(value);
                 let (Some(key_type), Some(value_type)) = (&key.ty, &value.ty) else {
                     return Err(fail(
                         "the ordered map needs its actual key and value types",
@@ -971,8 +1016,9 @@ impl RustParser {
                     module,
                     Vec::new(),
                 );
-                pair.fields = Some(vec![key.clone(), value.clone()]);
                 pair.copy_evidence = key.copy_evidence.and(value.copy_evidence);
+                pair.fields = Some(vec![key, value]);
+                pair.source_value_borrow_bindings = regions.clone();
                 ("btree_map", pair)
             }
             _ => {
@@ -996,22 +1042,86 @@ impl RustParser {
         );
         iteration.source_owner = Some(SourceOwner {
             kind: "library".to_owned(),
-            path: ["std", "collections", collection_module, "IntoIter"]
-                .map(str::to_owned)
-                .to_vec(),
+            path: [
+                "std",
+                "collections",
+                collection_module,
+                match method {
+                    "into_iter" => "IntoIter",
+                    "keys" => "Keys",
+                    "values" => "Values",
+                    _ => "Iter",
+                },
+            ]
+            .map(str::to_owned)
+            .to_vec(),
             arguments: carrier.owner.arguments.clone(),
         });
         iteration.array_source_model = None;
         iteration.copy_evidence = None;
+        iteration.source_borrowed_place = !owned;
+        iteration.source_value_borrow_bindings = regions;
         let lowered = self.lower_standard_collection_method(
             receiver,
-            "into_iter",
+            method,
             module,
             location,
             false,
             Some(iteration),
         )?;
         Ok(lowered.map(|expression| (expression, item)))
+    }
+
+    fn borrow_ordered_collection_receiver(
+        &mut self,
+        receiver: &SExpr,
+        mut actual: SourceOrigin,
+        location: Option<Span>,
+    ) -> Result<SourceOrigin> {
+        self.origins.check_owned_origin(&actual, location)?;
+        let identity = actual
+            .source_place_binding_identity
+            .as_ref()
+            .or(actual.source_binding_identity.as_ref());
+        let root = identity.map(|id| {
+            let ultimate =
+                super::super::owned_record_policy::fields::read_rust_owned_record_ultimate_root(id);
+            if ultimate.is_empty() {
+                id.clone()
+            } else {
+                ultimate
+            }
+        });
+        let owning = super::super::owned_record_loops::place(self, receiver)
+            .map(|place| place.slot.origin.clone())
+            .or_else(|| {
+                self.origins
+                    .scope
+                    .values()
+                    .find(|origin| {
+                        root.is_some()
+                            && origin.source_binding_identity == root
+                            && origin.wrappers.is_empty()
+                    })
+                    .cloned()
+            });
+        if let Some(owning) = owning {
+            self.origins
+                .register_mutable_record_loan_root(&owning, location)?;
+        }
+        let regions = super::super::borrowed_iterators::argument_regions(&actual)?;
+        if !self.origins.collecting && regions.is_empty() {
+            return Err(fail(
+                "a shared iterator needs actual live receiver-derived source regions",
+                location,
+            ));
+        }
+        actual.wrappers = vec!["reference".to_owned()];
+        actual.source_borrowed_place = true;
+        actual.copy_evidence = Some(());
+        actual.source_value_borrow_bindings = regions;
+        self.origins
+            .capture_mutable_record_value_loans(actual, location)
     }
 
     fn lower_standard_collection_method(
@@ -1184,6 +1294,7 @@ impl RustParser {
                 .expect(")", Some("standard collection method"))?;
         }
         let owned_iteration = result_kind == "owned ordered entries" && iteration.is_some();
+        let shared_iteration = result_kind == "owned ordered values" && iteration.is_some();
         if owned_iteration {
             if !actual.wrappers.is_empty() || actual.source_borrowed_place {
                 return Err(fail(
@@ -1211,20 +1322,22 @@ impl RustParser {
             None
         };
         let payload_index = usize::from(carrier.domains.len() == 2);
-        let ordered_values = result_kind == "owned ordered values";
+        let ordered_values = result_kind == "owned ordered values" && !shared_iteration;
         if ordered_values && method == "iter" && payload_index == 1 {
             return Err(fail(
                 "ordered map pair iteration requires the actual pair consumer",
                 location,
             ));
         }
-        let selected_index = if ordered_values {
+        let selected_index = if ordered_values || shared_iteration {
             usize::from(method == "values")
         } else {
             payload_index
         };
         let projection = if owned_iteration {
             "owned".to_owned()
+        } else if shared_iteration {
+            "borrowed".to_owned()
         } else if method == "get" || ordered_values {
             self.cursor
                 .expect(".", Some("collection reference projection"))?;
@@ -1273,10 +1386,10 @@ impl RustParser {
                 vec![carrier.arguments[payload_index].clone()],
                 location,
             )?,
-            "owned ordered values" => {
+            "owned ordered values" if !shared_iteration => {
                 self.read_ordered_collection_target(&carrier.arguments[selected_index], location)?
             }
-            "owned ordered entries" if owned_iteration => {
+            _ if owned_iteration || shared_iteration => {
                 iteration.expect("admitted ordered consumer")
             }
             _ => {
@@ -1286,7 +1399,12 @@ impl RustParser {
                 ));
             }
         };
-        result.source_owned_result_proof = !owned_iteration;
+        result.source_owned_result_proof = !(owned_iteration || shared_iteration);
+        let decoded_kind = if shared_iteration {
+            "borrowed ordered entries"
+        } else {
+            &result_kind
+        };
         let library = Rc::clone(
             &self
                 .standard_collections
@@ -1435,7 +1553,7 @@ impl RustParser {
                                     value_type,
                                     value,
                                     &result,
-                                    &result_kind,
+                                    decoded_kind,
                                     selected_index,
                                     location,
                                 )?;
@@ -1625,6 +1743,7 @@ impl RustParser {
         input: SExpr,
         packet_element: &Type,
         output: &Type,
+        selected_index: usize,
         location: Option<Span>,
     ) -> Result<SExpr> {
         let Type::Record { fields, .. } = packet_element else {
@@ -1707,6 +1826,10 @@ impl RustParser {
                     location,
                 ))
             }
+            ([_, _], _) => {
+                let field = if selected_index == 0 { "key" } else { "value" };
+                decode_field(field, selected_index, output)
+            }
             _ => Err(fail(
                 "the ordered entry lost its actual collection item type",
                 location,
@@ -1748,103 +1871,111 @@ impl RustParser {
                     })
                 })
             }
-            "owned ordered values" | "owned ordered entries" => self.match_collection_packet(
-                library.program(),
-                ty,
-                value,
-                location,
-                |parser, tag, fields| {
-                    let field = match (kind, tag) {
-                        ("owned ordered values", "rustCollectionOrderedValues") => "values",
-                        ("owned ordered entries", "rustCollectionOrderedEntries") => "entries",
-                        _ => "",
-                    };
-                    if field.is_empty() {
-                        return Ok(invalid(
-                            library,
-                            "the ordered collection needs its actual complete sequence",
+            "owned ordered values" | "owned ordered entries" | "borrowed ordered entries" => self
+                .match_collection_packet(
+                    library.program(),
+                    ty,
+                    value,
+                    location,
+                    |parser, tag, fields| {
+                        let field = match (kind, tag) {
+                            ("owned ordered values", "rustCollectionOrderedValues") => "values",
+                            (
+                                "owned ordered entries" | "borrowed ordered entries",
+                                "rustCollectionOrderedEntries",
+                            ) => "entries",
+                            _ => "",
+                        };
+                        if field.is_empty() {
+                            return Ok(invalid(
+                                library,
+                                "the ordered collection needs its actual complete sequence",
+                                location,
+                            ));
+                        }
+                        let (values, values_type) = required_field(&fields, field, location)?;
+                        let Type::Array {
+                            element: packet_element,
+                            ..
+                        } = values_type
+                        else {
+                            return Err(fail(
+                                "the ordered collection lost its actual sequence type",
+                                location,
+                            ));
+                        };
+                        let Type::Array { element, .. } = result_type else {
+                            return Err(fail(
+                                "the ordered result needs its actual owned Vec target",
+                                location,
+                            ));
+                        };
+                        let accumulator = parser.fresh_product_binding();
+                        let item = parser.fresh_product_binding();
+                        let input = name(vec![item.clone()], location);
+                        let decoded = if field == "values" {
+                            parser.decode_collection_scalar(
+                                library,
+                                input,
+                                packet_element,
+                                &carrier.domains[selected_index],
+                                element,
+                                location,
+                            )?
+                        } else {
+                            parser.decode_ordered_collection_entry(
+                                library,
+                                carrier,
+                                input,
+                                packet_element,
+                                element,
+                                selected_index,
+                                location,
+                            )?
+                        };
+                        let body = SExpr::new(
+                            SNode::Array {
+                                element: Some(element.as_ref().clone()),
+                                items: vec![
+                                    SArrayItem::new(
+                                        name(vec![accumulator.clone()], location),
+                                        true,
+                                    ),
+                                    SArrayItem::new(decoded, false),
+                                ],
+                            },
                             location,
-                        ));
-                    }
-                    let (values, values_type) = required_field(&fields, field, location)?;
-                    let Type::Array {
-                        element: packet_element,
-                        ..
-                    } = values_type
-                    else {
-                        return Err(fail(
-                            "the ordered collection lost its actual sequence type",
+                        );
+                        let reduce = SExpr::new(
+                            SNode::Lambda {
+                                params: vec![
+                                    parameter(accumulator, result_type.clone(), location),
+                                    parameter(item, source_type(packet_element), location),
+                                ],
+                                ret: Some(result_type.clone()),
+                                captures: Vec::new(),
+                                assigned_captures: None,
+                                body: Box::new(body),
+                            },
                             location,
-                        ));
-                    };
-                    let Type::Array { element, .. } = result_type else {
-                        return Err(fail(
-                            "the ordered result needs its actual owned Vec target",
+                        );
+                        let initial = SExpr::new(
+                            SNode::Array {
+                                element: Some(element.as_ref().clone()),
+                                items: Vec::new(),
+                            },
                             location,
-                        ));
-                    };
-                    let accumulator = parser.fresh_product_binding();
-                    let item = parser.fresh_product_binding();
-                    let input = name(vec![item.clone()], location);
-                    let decoded = if field == "values" {
-                        parser.decode_collection_scalar(
-                            library,
-                            input,
-                            packet_element,
-                            &carrier.domains[selected_index],
-                            element,
+                        );
+                        Ok(SExpr::new(
+                            SNode::Method {
+                                object: Box::new(values.clone()),
+                                op: "reduce".to_owned(),
+                                args: vec![Some(reduce), Some(initial)],
+                            },
                             location,
-                        )?
-                    } else {
-                        parser.decode_ordered_collection_entry(
-                            library,
-                            carrier,
-                            input,
-                            packet_element,
-                            element,
-                            location,
-                        )?
-                    };
-                    let body = SExpr::new(
-                        SNode::Array {
-                            element: Some(element.as_ref().clone()),
-                            items: vec![
-                                SArrayItem::new(name(vec![accumulator.clone()], location), true),
-                                SArrayItem::new(decoded, false),
-                            ],
-                        },
-                        location,
-                    );
-                    let reduce = SExpr::new(
-                        SNode::Lambda {
-                            params: vec![
-                                parameter(accumulator, result_type.clone(), location),
-                                parameter(item, source_type(packet_element), location),
-                            ],
-                            ret: Some(result_type.clone()),
-                            captures: Vec::new(),
-                            assigned_captures: None,
-                            body: Box::new(body),
-                        },
-                        location,
-                    );
-                    let initial = SExpr::new(
-                        SNode::Array {
-                            element: Some(element.as_ref().clone()),
-                            items: Vec::new(),
-                        },
-                        location,
-                    );
-                    Ok(SExpr::new(
-                        SNode::Method {
-                            object: Box::new(values.clone()),
-                            op: "reduce".to_owned(),
-                            args: vec![Some(reduce), Some(initial)],
-                        },
-                        location,
-                    ))
-                },
-            ),
+                        ))
+                    },
+                ),
             "owned collection" => self.match_collection_packet(
                 library.program(),
                 ty,
