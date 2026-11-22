@@ -64,13 +64,17 @@ const replace = (from, to) => {
   actions.push({ op: 'replace', field: 'source', from, to });
   adapted = adapted.split(from).join(to);
 };
-// Use the existing complete immutable-array provider, including append/index
-// behavior. No runtime operation or source arithmetic is replaced.
+// Reuse the immutable-array provider and retain the emitted exception runtime
+// for required fact-column bounds and missing-value errors.
 for (const prelude of emitted.preludes) {
-  assert.ok(prelude.startsWith('/// Reads of JavaScript arrays'), 'the closed reference kernel has only its existing immutable-array runtime dependency');
-  replace(prelude, 'pub use crate::translation::frontend_rules::ml_array;');
+  if (prelude.startsWith('/// Reads of JavaScript arrays')) {
+    replace(prelude, 'pub use crate::translation::frontend_rules::ml_array;');
+  } else {
+    assert.ok(prelude.startsWith('pub mod ml_source_exception {'), 'the closed reference kernel uses only immutable arrays and typed fact-column exceptions');
+  }
 }
 replace('crate::ml_array::', 'crate::translation::frontend_rules::ml_array::');
+replace('crate::ml_source_exception::', 'crate::translation::surface_reference_analysis_rules::ml_source_exception::');
 for (const name of [...raw.matchAll(/\b(?:pub )?(?:fn|enum|struct) (\w+)/gu)].map(match => match[1]).sort((left, right) => right.length - left.length)) {
   replace('crate::' + name, 'crate::translation::surface_reference_analysis_rules::' + name);
 }

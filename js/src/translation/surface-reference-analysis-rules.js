@@ -157,55 +157,23 @@ function readSurfaceReferencePath(columns, rows, size, path) {
   return result;
 }
 
-/**
- * @param {string[]} columns
- * @param {number[]} rows
- * @param {number} size
- * @param {number} items
- * @param {string} prefix
- * @param {string} path
- * @returns {number}
+/** @typedef {{paths:string[],declarations:number[]}} SurfaceReferenceSignatures */
+
+/** The last declaration at the given path takes precedence.
+ * @param {string[]} paths @param {string} path @returns {number}
  */
-function findSurfaceReferenceItemSignature(columns, rows, size, items, prefix, path) {
-  if (items < 0) return -1;
-  let found = -1;
-  let offset = readRequiredNumberFact(rows, items);
-  const end = offset + readRequiredNumberFact(rows, size + (items));
-  while (offset < end) {
-    const item = readRequiredNumberFact(rows, size * 2 + (offset));
-    const kind = readSurfaceReferenceKind(columns, rows, size, item);
-    const name = prefix + '.' + readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, item, 'name'));
-    if (kind === 'fn' && name === path) found = item;
-    if (kind === 'module') {
-      const nested = findSurfaceReferenceItemSignature(columns, rows, size, readSurfaceReferenceField(columns, rows, size, item, 'items'), name, path);
-      if (nested >= 0) found = nested;
-    }
-    offset += 1;
+function findSurfaceReferenceItemSignature(paths, path) {
+  let position = paths.length - 1;
+  while (position >= 0 && readRequiredTextFact(paths, position) !== path) {
+    position -= 1;
   }
-  return found;
+  return position;
 }
 
-/**
- * @param {string[]} columns
- * @param {number[]} rows
- * @param {number} size
- * @param {number} program
- * @param {string} path
- * @returns {number}
- */
-function findSurfaceReferenceSignature(columns, rows, size, program, path) {
-  let found = findSurfaceReferenceItemSignature(columns, rows, size, readSurfaceReferenceField(columns, rows, size, program, 'items'), 'crate', path);
-  const externals = readSurfaceReferenceField(columns, rows, size, program, 'externals');
-  if (externals < 0) return found;
-  let offset = readRequiredNumberFact(rows, externals);
-  const end = offset + readRequiredNumberFact(rows, size + (externals));
-  while (offset < end) {
-    const external = readRequiredNumberFact(rows, size * 2 + (offset));
-    const name = 'crate.' + readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, external, 'name'));
-    if (name === path) found = external;
-    offset += 1;
-  }
-  return found;
+/** @param {SurfaceReferenceSignatures} signatures @param {string} path @returns {number} */
+function findSurfaceReferenceSignature(signatures, path) {
+  const position = findSurfaceReferenceItemSignature(signatures.paths, path);
+  return position >= 0 ? readRequiredNumberFact(signatures.declarations, position) : -1;
 }
 
 /**
@@ -230,19 +198,19 @@ function readSurfaceReferenceScope(names, types, name) {
  * @param {string[]} columns
  * @param {number[]} rows
  * @param {number} size
- * @param {number} program
+ * @param {SurfaceReferenceSignatures} signatures
  * @param {number} node
  * @param {string[]} names
  * @param {number[]} types
  * @returns {number[]}
  */
-function inspectSurfaceReferenceExpression(columns, rows, size, program, node, names, types) {
+function inspectSurfaceReferenceExpression(columns, rows, size, signatures, node, names, types) {
   if (node < 0 || readRequiredTextFact(columns, node) !== 'object' && readRequiredTextFact(columns, node) !== 'array') return [-1, 0];
   const kind = readSurfaceReferenceKind(columns, rows, size, node);
   if (kind === 'name') {
     const path = readSurfaceReferenceField(columns, rows, size, node, 'path');
     if (path >= 0 && readRequiredNumberFact(rows, size + (path)) === 1) return [readSurfaceReferenceType(columns, readSurfaceReferenceScope(names, types, readSurfaceReferenceText(columns, size, readRequiredNumberFact(rows, size * 2 + (readRequiredNumberFact(rows, path)))))), 0];
-    const signature = findSurfaceReferenceSignature(columns, rows, size, program, readSurfaceReferencePath(columns, rows, size, path));
+    const signature = findSurfaceReferenceSignature(signatures, readSurfaceReferencePath(columns, rows, size, path));
     // The existing surface represents a zero-argument call as its resolved
     // function name. Read that actual declaration's result, as the checker
     // does; an unapplied function with parameters is still not a container.
@@ -253,16 +221,16 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
     return [readSurfaceReferenceType(columns, readSurfaceReferenceField(columns, rows, size, signature, 'type')), 0];
   }
   if (kind === 'let') {
-    const value = inspectSurfaceReferenceExpression(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, node, 'value'), names, types);
+    const value = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'value'), names, types);
     const name = readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, node, 'name'));
-    const body = inspectSurfaceReferenceExpression(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, node, 'body'), names.concat([name]), types.concat([readRequiredNumberFact(value, 0)]));
+    const body = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'body'), names.concat([name]), types.concat([readRequiredNumberFact(value, 0)]));
     return [readRequiredNumberFact(body, 0), readRequiredNumberFact(value, 1) === 1 || readRequiredNumberFact(body, 1) === 1 ? 1 : 0];
   }
   if (kind === 'binary') {
     const leftNode = readSurfaceReferenceField(columns, rows, size, node, 'left');
     const rightNode = readSurfaceReferenceField(columns, rows, size, node, 'right');
-    const left = inspectSurfaceReferenceExpression(columns, rows, size, program, leftNode, names, types);
-    const right = inspectSurfaceReferenceExpression(columns, rows, size, program, rightNode, names, types);
+    const left = inspectSurfaceReferenceExpression(columns, rows, size, signatures, leftNode, names, types);
+    const right = inspectSurfaceReferenceExpression(columns, rows, size, signatures, rightNode, names, types);
     const operation = readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, node, 'op'));
     const observed = readRequiredNumberFact(left, 1) === 1 || readRequiredNumberFact(right, 1) === 1 || (operation === 'eq' || operation === 'ne')
       && readSurfaceReferenceKind(columns, rows, size, leftNode) !== 'none'
@@ -286,7 +254,7 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
         offset += 1;
       }
     }
-    const body = inspectSurfaceReferenceExpression(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, node, 'body'), innerNames, innerTypes);
+    const body = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'body'), innerNames, innerTypes);
     return [-2, readRequiredNumberFact(body, 1)];
   }
   let observed = false;
@@ -295,7 +263,7 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
   while (offset < end) {
     const field = readRequiredTextFact(columns, size * 2 + (offset));
     if (field !== 'type' && field !== 'span' && field !== 'data') {
-      const child = inspectSurfaceReferenceExpression(columns, rows, size, program, readRequiredNumberFact(rows, size * 2 + (offset)), names, types);
+      const child = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readRequiredNumberFact(rows, size * 2 + (offset)), names, types);
       if (readRequiredNumberFact(child, 1) === 1) observed = true;
     }
     offset += 1;
@@ -306,12 +274,12 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
     const head = readSurfaceReferenceField(columns, rows, size, node, 'fn');
     if (readSurfaceReferenceKind(columns, rows, size, head) === 'name') {
       const path = readSurfaceReferenceField(columns, rows, size, head, 'path');
-      const signature = findSurfaceReferenceSignature(columns, rows, size, program, readSurfaceReferencePath(columns, rows, size, path));
+      const signature = findSurfaceReferenceSignature(signatures, readSurfaceReferencePath(columns, rows, size, path));
       return [readSurfaceReferenceType(columns, readSurfaceReferenceField(columns, rows, size, signature, 'ret')), observed ? 1 : 0];
     }
   }
   if (kind === 'field' || kind === 'index') {
-    const object = inspectSurfaceReferenceExpression(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, node, 'object'), names, types);
+    const object = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'object'), names, types);
     if (readRequiredNumberFact(object, 1) === 1) observed = true;
     if (kind === 'index') return [readSurfaceReferenceType(columns, readSurfaceReferenceField(columns, rows, size, readRequiredNumberFact(object, 0), 'element')), observed ? 1 : 0];
     const typeKind = readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, readRequiredNumberFact(object, 0), 'kind'));
@@ -331,10 +299,10 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
     return [-1, observed ? 1 : 0];
   }
   if (kind === 'if') {
-    const yes = inspectSurfaceReferenceExpression(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, node, 'then'), names, types);
+    const yes = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'then'), names, types);
     if (readRequiredNumberFact(yes, 1) === 1) observed = true;
     if (readRequiredNumberFact(yes, 0) !== -1) return [readRequiredNumberFact(yes, 0), observed ? 1 : 0];
-    const no = inspectSurfaceReferenceExpression(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, node, 'else'), names, types);
+    const no = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, node, 'else'), names, types);
     return [readRequiredNumberFact(no, 0), observed || readRequiredNumberFact(no, 1) === 1 ? 1 : 0];
   }
   if (kind === 'num' || kind === 'str' || kind === 'bool') return [-2, observed ? 1 : 0];
@@ -346,11 +314,11 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
  * @param {string[]} columns
  * @param {number[]} rows
  * @param {number} size
- * @param {number} program
+ * @param {SurfaceReferenceSignatures} signatures
  * @param {number} items
  * @returns {boolean}
  */
-function inspectSurfaceReferenceItems(columns, rows, size, program, items) {
+function inspectSurfaceReferenceItems(columns, rows, size, signatures, items) {
   if (items < 0) return false;
   let observed = false;
   let offset = readRequiredNumberFact(rows, items);
@@ -358,7 +326,7 @@ function inspectSurfaceReferenceItems(columns, rows, size, program, items) {
   while (offset < end) {
     const item = readRequiredNumberFact(rows, size * 2 + (offset));
     const kind = readSurfaceReferenceKind(columns, rows, size, item);
-    if (kind === 'module' && inspectSurfaceReferenceItems(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, item, 'items'))) observed = true;
+    if (kind === 'module' && inspectSurfaceReferenceItems(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, item, 'items'))) observed = true;
     if (kind === 'fn') {
       let names = [];
       let types = [];
@@ -373,7 +341,7 @@ function inspectSurfaceReferenceItems(columns, rows, size, program, items) {
           position += 1;
         }
       }
-      const result = inspectSurfaceReferenceExpression(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, item, 'body'), names, types);
+      const result = inspectSurfaceReferenceExpression(columns, rows, size, signatures, readSurfaceReferenceField(columns, rows, size, item, 'body'), names, types);
       if (readRequiredNumberFact(result, 1) === 1) observed = true;
     }
     offset += 1;
@@ -389,7 +357,11 @@ function inspectSurfaceReferenceItems(columns, rows, size, program, items) {
  * @returns {boolean}
  */
 export function hasSurfaceStructuralIdentity(columns, rows, size, program) {
-  let observed = inspectSurfaceReferenceItems(columns, rows, size, program, readSurfaceReferenceField(columns, rows, size, program, 'items'));
+  const items = readSurfaceReferenceField(columns, rows, size, program, 'items');
+  const externals = readSurfaceReferenceField(columns, rows, size, program, 'externals');
+  const declared = collectSurfaceReferenceItemSignatures(columns, rows, size, items, 'crate', {paths: [], declarations: []}, false);
+  const signatures = collectSurfaceReferenceItemSignatures(columns, rows, size, externals, 'crate', declared, true);
+  let observed = inspectSurfaceReferenceItems(columns, rows, size, signatures, items);
   const main = readSurfaceReferenceField(columns, rows, size, program, 'main');
   const effects = readSurfaceReferenceField(columns, rows, size, main, 'effects');
   if (effects < 0) return observed;
@@ -401,7 +373,7 @@ export function hasSurfaceStructuralIdentity(columns, rows, size, program) {
     const effect = readRequiredNumberFact(rows, size * 2 + (offset));
     const binding = readSurfaceReferenceKind(columns, rows, size, effect) === 'let';
     const node = binding ? readSurfaceReferenceField(columns, rows, size, effect, 'value') : effect;
-    const result = inspectSurfaceReferenceExpression(columns, rows, size, program, node, names, types);
+    const result = inspectSurfaceReferenceExpression(columns, rows, size, signatures, node, names, types);
     if (readRequiredNumberFact(result, 1) === 1) observed = true;
     if (binding) {
       names = names.concat([readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, effect, 'name'))]);
@@ -487,4 +459,38 @@ export function acceptSurfaceReferencePayloadField(field) {
 /** @param {string} kind @param {boolean} reference @returns {string} */
 export function readSurfaceReferencePayloadError(kind, reference) {
   return selectSurfaceReferenceAllocation(true, kind, reference) ? '' : 'a reference payload requires its nonreference structural value';
+}
+/**
+ * Collect declaration paths in traversal order, with external declarations
+ * following the local declarations.
+ * @param {string[]} columns
+ * @param {number[]} rows
+ * @param {number} size
+ * @param {number} items
+ * @param {string} prefix
+ * @param {SurfaceReferenceSignatures} signatures
+ * @param {boolean} external
+ * @returns {SurfaceReferenceSignatures}
+ */
+function collectSurfaceReferenceItemSignatures(columns, rows, size, items, prefix, signatures, external) {
+  if (items < 0) return signatures;
+  let result = signatures;
+  let offset = readRequiredNumberFact(rows, items);
+  const end = offset + readRequiredNumberFact(rows, size + items);
+  while (offset < end) {
+    const item = readRequiredNumberFact(rows, size * 2 + offset);
+    const kind = readSurfaceReferenceKind(columns, rows, size, item);
+    const name = prefix + '.' + readSurfaceReferenceText(columns, size, readSurfaceReferenceField(columns, rows, size, item, 'name'));
+    if (external || kind === 'fn') {
+      result = {
+        paths: result.paths.concat([name]),
+        declarations: result.declarations.concat([item]),
+      };
+    } else if (kind === 'module') {
+      const nested = readSurfaceReferenceField(columns, rows, size, item, 'items');
+      result = collectSurfaceReferenceItemSignatures(columns, rows, size, nested, name, result, false);
+    }
+    offset += 1;
+  }
+  return result;
 }
