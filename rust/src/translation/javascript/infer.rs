@@ -589,46 +589,66 @@ impl Inference {
         Ok(term)
     }
 
-    fn ctor_object(
+    fn infer_ctor_object(
         &mut self,
-        tag: &str,
-        fields: &[(String, SExpr)],
-        place: Option<Span>,
+        expr: &SExpr,
         env: &Env,
+        expected: Option<&Term>,
     ) -> Result<Term> {
+        let SNode::CtorObject {
+            tag,
+            fields,
+            prototype_definition,
+            ..
+        } = &expr.node
+        else {
+            unreachable!("the dispatcher selects only source constructors");
+        };
+        if let Some(definition) = prototype_definition {
+            self.expr(&definition.value, env)?;
+        }
+        let expected_owner = match expected {
+            Some(Term::Known(Type::Data { name })) => Some(name),
+            _ => None,
+        };
         let owners: Vec<(String, Vec<SCtor>)> = self
             .data
             .iter()
-            .filter(|(_, ctors)| ctors.iter().any(|ctor| ctor.name == tag))
+            .filter(|(name, ctors)| {
+                expected_owner.is_none_or(|owner| name == owner)
+                    && ctors.iter().any(|ctor| &ctor.name == tag)
+            })
             .cloned()
             .collect();
-        let mut terms = Vec::new();
-        for (name, value) in fields {
-            terms.push((name, self.expr(value, env)?, value.span));
-        }
         let [(name, ctors)] = owners.as_slice() else {
+            for (_, value) in fields {
+                self.expr(value, env)?;
+            }
             return Ok(self.fresh(false));
         };
-        let Some(ctor) = ctors.iter().find(|ctor| ctor.name == tag) else {
-            return Ok(self.fresh(false));
+        let Some(ctor) = ctors.iter().find(|ctor| &ctor.name == tag) else {
+            unreachable!("candidate owners include the selected constructor");
         };
-        for (field, term, span) in terms {
-            if let Some(index) = ctor
+        for (field, value) in fields {
+            let declared = ctor
                 .fields
                 .iter()
                 .position(|candidate| candidate.name.as_deref() == Some(field.as_str()))
-            {
-                let field = &ctor.fields[index];
-                let declared = if field.optional {
-                    self.declared(
-                        crate::translation::javascript_constructor_presence::field_value_type(
-                            &field.ty,
-                        ),
-                    )
-                } else {
-                    self.field(name, tag, index)
-                };
-                self.unify(&term, &declared, span.or(place))?;
+                .map(|index| {
+                    let field = &ctor.fields[index];
+                    if field.optional {
+                        self.declared(
+                            crate::translation::javascript_constructor_presence::field_value_type(
+                                &field.ty,
+                            ),
+                        )
+                    } else {
+                        self.field(name, tag, index)
+                    }
+                });
+            let term = self.expr_expected(value, env, declared.as_ref())?;
+            if let Some(declared) = declared {
+                self.unify(&term, &declared, value.span.or(expr.span))?;
             }
         }
         Ok(Term::Known(Type::Data { name: name.clone() }))

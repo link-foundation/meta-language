@@ -694,6 +694,37 @@ fn speculative_tag_headers_preserve_ambiguity_and_ordinary_declaration_error_pre
 }
 
 #[test]
+fn declared_fields_carry_exact_constructor_owners_through_literals_and_accesses() {
+    use meta_language::translation::emit_rust::emit_rust;
+
+    let source =
+        include_str!("../../../experiments/javascript-tag-context/declared-field-owners.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    let expected = "7\n-1\ntrue\nfalse\n";
+    for script in [source, emitted.text.as_str()] {
+        let output = run(Command::new("node").args(["--input-type=module", "-e", script]));
+        assert!(output.ok, "{}", output.stderr);
+        assert_eq!(output.stdout, expected);
+    }
+    let directory = TemporaryDirectory::new("declared-tag-field-owners");
+    let file = directory.0.join("program.rs");
+    let executable = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&file, emit_rust(&checked).unwrap().text).unwrap();
+    let compiled = run(Command::new("rustc")
+        .arg("--edition=2024")
+        .arg(&file)
+        .arg("-o")
+        .arg(&executable));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let output = run(&mut Command::new(&executable));
+    assert!(output.ok, "{}", output.stderr);
+    assert_eq!(output.stdout, expected);
+}
+
+#[test]
 fn named_union_alternatives_keep_their_fields_and_declared_tag_owner() {
     let source =
         include_str!("../../../parity/fixtures/translation-named-constructor-alternatives.js");

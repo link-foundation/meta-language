@@ -227,6 +227,7 @@ impl Inference {
             (SNode::Record { entries, .. }, _) => {
                 self.record_expr(node, entries, env, Some(&expected))?
             }
+            (SNode::CtorObject { .. }, _) => self.infer_ctor_object(node, env, Some(&expected))?,
             (SNode::Match { .. }, _) => self.infer_match_expression(node, env, Some(&expected))?,
             (SNode::Lambda { .. } | SNode::CellWrite { .. }, _) => {
                 self.callable_expr(node, env, Some(&expected))?

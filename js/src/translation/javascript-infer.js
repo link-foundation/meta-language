@@ -1065,7 +1065,7 @@ class Inference {
         this.expr(node.expr, env);
         return this.expr(node.body, env, expected);
       case 'ctorObject':
-        return this.ctorObject(node, env);
+        return this.ctorObject(node, env, expected);
       case 'tuple': {
         const want = expected && this.resolve(expected);
         const term = { kind: 'tuple', elements: node.items.map((item, index) => this.expr(item, env, want?.kind === 'tuple' ? want.elements[index] : undefined)) };
@@ -1350,17 +1350,19 @@ class Inference {
     }
   }
 
-  ctorObject(node, env) {
-    const owners = [...this.data].filter(([, ctors]) => ctors.some((ctor) => ctor.name === node.tag));
-    const fieldTypes = Object.entries(node.fields).map(([name, value]) => [name, this.expr(value, env), value.span]);
-    if (owners.length !== 1) return this.fresh();
-    const [name, ctors] = owners[0];
-    const ctor = ctors.find((candidate) => candidate.name === node.tag);
-    for (const [field, type, where] of fieldTypes) {
-      const declared = ctor.fields.find((candidate) => candidate.name === field);
-      if (declared) this.unify(type, declared.optional ? this.declared(javaScriptConstructorFieldValueType(declared)) : this.field(declared), where ?? node.span);
+  ctorObject(node, env, expected) {
+    const owner = expected && this.resolve(expected);
+    const owners = [...this.data].filter(([name, ctors]) =>
+      (owner?.kind !== 'data' || owner.name === name) && ctors.some((ctor) => ctor.name === node.tag));
+    const [name, ctors] = owners.length === 1 ? owners[0] : [];
+    const ctor = ctors?.find((candidate) => candidate.name === node.tag);
+    for (const [field, value] of Object.entries(node.fields)) {
+      const declared = ctor?.fields.find((candidate) => candidate.name === field);
+      const wanted = declared?.optional ? this.declared(javaScriptConstructorFieldValueType(declared)) : declared && this.field(declared);
+      const type = this.expr(value, env, wanted);
+      if (wanted) this.unify(type, wanted, value.span ?? node.span);
     }
-    return { kind: 'data', name };
+    return ctor ? { kind: 'data', name } : this.fresh();
   }
 
   record(node, env, expected, leadingTerm, entryTerms) {

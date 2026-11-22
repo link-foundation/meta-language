@@ -44,7 +44,7 @@ import { imperative, lowerImperative, lowerTopLevel, statementUses } from './jav
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { readJavaScriptConstructorFieldBoundary } from './javascript-constructor-field-type-rules.js';
 import { expandJavaScriptConstructorSpreads } from './javascript-constructor-spread.js';
-import { javaScriptOptionalConstructorFieldType, readJavaScriptOptionalConstructorField } from './javascript-constructor-presence.js';
+import { javaScriptConstructorFieldValueType, javaScriptOptionalConstructorFieldType, readJavaScriptOptionalConstructorField } from './javascript-constructor-presence.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array, option, typeKey } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
@@ -2089,10 +2089,16 @@ class JavaScriptParser {
       const parent = this.readTagReceiverType(node.object);
       if (node.k === 'index' && parent?.kind === 'array') return { type: parent.element };
       if (node.k === 'field' && parent) {
+        if (parent.kind === 'record') {
+          const field = parent.fields.find(field => field.name === node.field);
+          return field ? { type: javaScriptConstructorFieldValueType(field) } : null;
+        }
         const owner = readJavaScriptTagDeclaredOwner(parent.kind, parent.path ?? [], parent.name ?? '', ROOT);
-        const fields = this.dataTypes.get(owner)?.map(ctor => ctor.fields.find(field => field.name === node.field));
-        if (fields?.length && fields.every(field => field && !field.optional && typeKey(field.type) === typeKey(fields[0].type))) {
-          return { type: fields[0].type };
+        const fields = this.dataTypes.get(owner)
+          ?.flatMap(ctor => ctor.fields.filter(field => field.name === node.field));
+        if (fields?.length && fields.every(field => field.optional === fields[0].optional
+          && typeKey(field.type) === typeKey(fields[0].type))) {
+          return { type: fields[0].optional ? javaScriptConstructorFieldValueType(fields[0]) : fields[0].type };
         }
       }
       return null;
@@ -2819,7 +2825,7 @@ function jsdocTags(comment) {
   let match = pattern.exec(text);
   while (match) {
     let index = match.index + match[0].length;
-  let typeUnits;
+    let typeUnits;
     while (text[index] === ' ' || text[index] === '\t') index += 1;
     let type = null;
     if (text[index] === '{') {

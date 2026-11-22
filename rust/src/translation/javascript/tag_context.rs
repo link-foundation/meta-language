@@ -39,16 +39,40 @@ impl JavaScriptParser {
             }
             SNode::Field { object, field } => {
                 let parent = self.read_tag_receiver_type(object)?;
+                if let Type::Record { fields, .. } = &parent {
+                    return fields
+                        .iter()
+                        .find(|item| &item.name == field)
+                        .and_then(|item| {
+                            let ty = if item.optional {
+                                crate::translation::javascript_constructor_presence::field_value_type(
+                                    &item.ty,
+                                )?
+                            } else {
+                                &item.ty
+                            };
+                            Some(TagReceiverFact::Declared(Some(ty.clone())))
+                        });
+                }
                 let owner = tag_declared_owner(&parent);
                 let declaration = self.data_types.iter().find(|data| data.name == owner)?;
-                let mut types = declaration.ctors.iter().map(|ctor| {
-                    ctor.fields
-                        .iter()
-                        .find(|item| item.name.as_deref() == Some(field.as_str()) && !item.optional)
-                });
-                let first = types.next().flatten()?;
-                if types.all(|item| item.is_some_and(|item| item.ty.key() == first.ty.key())) {
-                    return Some(TagReceiverFact::Declared(Some(first.ty.clone())));
+                let mut types = declaration
+                    .ctors
+                    .iter()
+                    .flat_map(|ctor| &ctor.fields)
+                    .filter(|item| item.name.as_deref() == Some(field.as_str()));
+                let first = types.next()?;
+                if types
+                    .all(|item| item.optional == first.optional && item.ty.key() == first.ty.key())
+                {
+                    let ty = if first.optional {
+                        crate::translation::javascript_constructor_presence::field_value_type(
+                            &first.ty,
+                        )?
+                    } else {
+                        &first.ty
+                    };
+                    return Some(TagReceiverFact::Declared(Some(ty.clone())));
                 }
                 return None;
             }
