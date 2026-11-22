@@ -25,10 +25,26 @@ export function projectJavaScriptCallTemplateFunction(template,identity,captures
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @returns {JavaScriptCallFunction|undefined} */
 export function readJavaScriptExecutableCallFunction(program,heap,identity){
  const staticIndex=findJavaScriptCallCodeFunction(program,identity);if(staticIndex>=0)return program.functions[staticIndex];
- const closure=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];if(closure?.$==='boundFunctionObject'){
-  let target=closure.boundTarget;for(let depth=0;depth<=heap.objects.length;depth++){if(target.$!=='object'||!target.callable)return undefined;const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)];if(object?.$!=='boundFunctionObject'){const actual=readJavaScriptExecutableCallFunction(program,heap,target.identity);return actual===undefined?undefined:{$:'callFunction',identity,realm:actual.realm,receiverMode:'strict',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'boundFunctionCall',destination:1},{$:'return',source:1}]};}target=object.boundTarget;}return undefined;
+ const closure=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];
+ if(closure===undefined)return undefined;
+ if(closure.$==='boundFunctionObject'){
+  const first=closure.boundTarget;if(first===undefined)return undefined;
+  let target=first;
+  for(let depth=0;depth<=heap.objects.length;depth++){
+   const current=target;
+   if(current.$!=='object')return undefined;
+   if(!current.callable)return undefined;
+   const targetIdentity=current.identity,object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,targetIdentity)];
+   if(object!==undefined&&object.$==='boundFunctionObject'){
+    const next=object.boundTarget;if(next===undefined)return undefined;
+    target=next;continue;
+   }
+   const actual=readJavaScriptExecutableCallFunction(program,heap,targetIdentity);
+   return actual===undefined?undefined:{$:'callFunction',identity,realm:actual.realm,receiverMode:'strict',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'boundFunctionCall',destination:1},{$:'return',source:1}]};
+  }
+  return undefined;
  }
- if(closure===undefined||closure.$!=='closureObject')return undefined;
+ if(closure.$!=='closureObject')return undefined;
  const template=(program.templates??[])[findJavaScriptCallTemplate(program,closure.owner,closure.ordinal)];if(template===undefined||template.captureCount!==closure.captures.length)return undefined;
  return projectJavaScriptCallTemplateFunction(template,identity,closure.captures,closure.lexicalReceiver,closure.lexicalNewTarget);
 }
@@ -63,6 +79,13 @@ export function createJavaScriptClosureMetadataDescriptor(value){
  const descriptor=createJavaScriptPropertyDescriptor('data',true,false);
  return {...descriptor,value};
 }
+/** @param {JavaScriptCallTemplate} template @param {bigint} identity
+ * @param {bigint} owner @param {number} ordinal @param {JavaScriptSemanticValue[]} captures
+ * @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue|undefined} newTarget
+ * @returns {JavaScriptOrdinaryObject} */
+function createJavaScriptCallClosureObject(template,identity,owner,ordinal,captures,receiver,newTarget){
+ return {$:'closureObject',identity,prototype:template.prototype,extensible:true,callable:true,owner,ordinal,captures:[...captures],lexicalReceiver:receiver,...(newTarget!==undefined&&(template.receiverMode??'lexical')==='lexical'?{lexicalNewTarget:newTarget}:{}),properties:[{$:'ordinaryProperty',key:{$:'text',units:[108,101,110,103,116,104]},descriptor:createJavaScriptClosureMetadataDescriptor({$:'number',value:template.length})},{$:'ordinaryProperty',key:{$:'text',units:[110,97,109,101]},descriptor:createJavaScriptClosureMetadataDescriptor(template.name)}]};
+}
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
  * @param {bigint} identity @param {bigint} owner @param {number} ordinal
  * @param {JavaScriptSemanticValue[]} captures @param {JavaScriptSemanticValue} receiver
@@ -75,7 +98,7 @@ export function allocateJavaScriptCallClosure(program,heap,identity,owner,ordina
  let captureCount=captures.length,properties=2;for(const object of heap.objects){properties+=object.properties.length;if(object.$==='closureObject')captureCount+=object.captures.length;}
  if(heap.objects.length>=4096||captureCount>1048576||properties>16384)return {$:'closureAllocationResourceLimit',heap,reason:'closure allocation exceeds the actual shared object, property or capture budget'};
  for(const value of [receiver,...captures]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {$:'closureAllocationInvalid',heap,reason:invalid};}
-/** @type {JavaScriptOrdinaryObject} */ const closure={$:'closureObject',identity,prototype:template.prototype,extensible:true,callable:true,owner,ordinal,captures:[...captures],lexicalReceiver:receiver,...(newTarget!==undefined&&(template.receiverMode??'lexical')==='lexical'?{lexicalNewTarget:newTarget}:{}),properties:[{$:'ordinaryProperty',key:{$:'text',units:[108,101,110,103,116,104]},descriptor:createJavaScriptClosureMetadataDescriptor({$:'number',value:template.length})},{$:'ordinaryProperty',key:{$:'text',units:[110,97,109,101]},descriptor:createJavaScriptClosureMetadataDescriptor(template.name)}]};
+ const closure=createJavaScriptCallClosureObject(template,identity,owner,ordinal,captures,receiver,newTarget);
  let at=0;while(at<heap.objects.length&&(heap.objects[at]?.identity??identity)<identity)at++;
  const next={...heap,objects:heap.objects.slice(0,at).concat([closure],heap.objects.slice(at))},invalid=readJavaScriptOrdinaryHeapError(next);
  return invalid!==''?{$:'closureAllocationInvalid',heap,reason:invalid}:{$:'closureAllocationNormal',heap:next,value:{$:'object',identity,callable:true}};
