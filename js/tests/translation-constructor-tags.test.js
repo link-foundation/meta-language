@@ -176,6 +176,16 @@ test('finite conditional constructor tags preserve branch choice and property ev
   assert.throws(() => parseJavaScript(source.replace("'third' : 'second'", "'third' : option")), /finite conditional expression/u);
 });
 
+test('conditional tag tests select the actual constructor fields before evaluating a branch', () => {
+  const source = readFileSync(new URL('../../parity/fixtures/translation-conditional-constructor-fields.js', import.meta.url), 'utf8');
+  const checked = checkProgram(parseJavaScript(source));
+  for (const script of [source, emitJavaScript(checked).text]) {
+    const output = [];
+    runInNewContext(script, { console: { log: value => output.push(value) } }, { timeout: 1000 });
+    assert.deepEqual(output, [7, 7, 'flag', 1, 1, -1, -1]);
+  }
+});
+
 test('literal constructor spreads preserve nested branch effects and field presence', () => {
   const source = readFileSync(new URL('../../parity/fixtures/translation-literal-constructor-spreads.js', import.meta.url), 'utf8');
   const expected = [1, 0, 2, 4, 9, true, false, 1, 4, 4, 9, false, true];

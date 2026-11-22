@@ -1,5 +1,6 @@
 //! Expressions from operator precedence down to literals and references.
 
+use super::lowering::{lower_tag_if, reads_fields, tag_condition};
 use super::{
     ASSIGNMENTS, BinaryOp, External, FLOAT, GLOBALS, JavaScriptParser, Language, ROOT, Result,
     SArrayItem, SData, SExpr, SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span,
@@ -19,18 +20,30 @@ impl JavaScriptParser {
         }
         let mut value = self.or()?;
         if self.cursor.eat("?").is_some() {
+            let read_count = self.lexical.read_count();
             let then = self.expr()?;
             self.cursor.expect(":", Some("conditional expression"))?;
             let otherwise = self.expr()?;
             let place = joined(&value, &otherwise, &start);
-            value = node(
-                SNode::If {
-                    cond: Box::new(value),
-                    then: Box::new(then),
-                    otherwise: Box::new(otherwise),
-                },
-                place,
-            );
+            value = if let Some(test) = tag_condition(&value)
+                && let Some(subject) = test.object.simple_name()
+                && !self
+                    .lexical
+                    .assigned_names_since(read_count)
+                    .any(|name| name == subject)
+                && (reads_fields(&then, subject) || reads_fields(&otherwise, subject))
+            {
+                lower_tag_if(test, then, otherwise, place)?
+            } else {
+                node(
+                    SNode::If {
+                        cond: Box::new(value),
+                        then: Box::new(then),
+                        otherwise: Box::new(otherwise),
+                    },
+                    place,
+                )
+            };
         }
         let next = self.cursor.peek();
         if next.kind == TokenKind::Punct && ASSIGNMENTS.contains(&next.value.as_str()) {

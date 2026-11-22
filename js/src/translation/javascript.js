@@ -1929,6 +1929,7 @@ class JavaScriptParser {
       return binders.get(field);
     };
     const substituted = substituteFields(body, subject, (field, span) => {
+      if (field === '$') return { k: 'str', value: ctor.name, span };
       const binder = { k: 'name', path: [binderFor(field)], span };
       return ctor.fields.find(candidate => candidate.name === field).optional
         ? readJavaScriptOptionalConstructorField(binder, span) : binder;
@@ -1958,10 +1959,17 @@ class JavaScriptParser {
     if (this.startsFunction(c.index)) return this.closure();
     let value = this.or();
     if (c.eat('?')) {
+      const readCount = this.lexicalReads.length;
       const then = this.expr();
       c.expect(':', 'conditional expression');
       const otherwise = this.expr();
-      value = {k:'if',cond:value,then,else:otherwise,span:joined(value,otherwise,start)};
+      const where = joined(value, otherwise, start);
+      const test = this.tagCondition(value);
+      const subject = test?.object.path[0];
+      const assigned = test && this.lexicalReads.slice(readCount).some(read => read.assignment && read.name === subject);
+      value = test && !assigned && (readsFields(then, subject) || readsFields(otherwise, subject))
+        ? this.lowerTagIf(test, then, otherwise, where)
+        : { k: 'if', cond: value, then, else: otherwise, span: where };
     }
     if (ASSIGNMENTS.has(c.peek().value) && c.peek().kind === 'punct') {
       const operator = c.next();

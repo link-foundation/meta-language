@@ -11045,6 +11045,11 @@ frontend adapters construct the same ordinary exhaustive match/optional IR
 from shared source decisions. Inference records presence without inventing
 type-equivalence facts before solving actual types. Array projection adapters
 distinguish typed index expressions from numeric record layout coordinates.
+When a conditional expression tests the tag of a local data value, both
+frontends reuse exhaustive matching for branch-local field reads. A branch gets
+the actual field type of its constructor. Reads of the discriminator yield
+that constructor's tag, and only the chosen branch executes. A branch that
+assigns the tested name keeps ordinary conditional lowering.
 
 The source, native products and typed Links are generated together. Deferred
 controls retain complete descriptor attributes, no-write payload bits, global

@@ -661,7 +661,10 @@ pub(super) fn tag_row(
             break;
         };
         if object.simple_name() != Some(subject)
-            || !ctor.fields.iter().any(|candidate| !candidate.optional && candidate.name.as_deref() == Some(field))
+            || !ctor
+                .fields
+                .iter()
+                .any(|candidate| !candidate.optional && candidate.name.as_deref() == Some(field))
             || binders.iter().any(|(bound, _)| bound == field)
             || name == subject
             || direct.contains(&name.as_str())
@@ -684,7 +687,15 @@ pub(super) fn tag_row(
     for (_, name) in &binders {
         used.insert(name.clone());
     }
-    let mut binder_for = |field: &str| -> Result<(String, bool)> {
+    let mut binder_for = |field: &str, span| -> Result<SExpr> {
+        if field == "$" {
+            return Ok(SExpr::new(
+                SNode::Str {
+                    value: tag.to_owned(),
+                },
+                span,
+            ));
+        }
         if !has_field(field) {
             return Err(type_error(
                 format!(
@@ -694,23 +705,33 @@ pub(super) fn tag_row(
                 Some(place),
             ));
         }
-        let optional = ctor.fields.iter().any(|candidate| candidate.optional && candidate.name.as_deref() == Some(field));
-        if let Some((_, name)) = binders.iter().find(|(bound, _)| bound == field) {
-            return Ok((name.clone(), optional));
-        }
-        let mut name = if used.contains(field) || field == subject {
-            format!("{subject}_{field}")
+        let optional = ctor
+            .fields
+            .iter()
+            .any(|candidate| candidate.optional && candidate.name.as_deref() == Some(field));
+        let name = if let Some((_, name)) = binders.iter().find(|(bound, _)| bound == field) {
+            name.clone()
         } else {
-            field.to_owned()
+            let mut name = if used.contains(field) || field == subject {
+                format!("{subject}_{field}")
+            } else {
+                field.to_owned()
+            };
+            let mut index = 2;
+            while used.contains(&name) {
+                name = format!("{subject}_{field}{index}");
+                index += 1;
+            }
+            used.insert(name.clone());
+            binders.push((field.to_owned(), name.clone()));
+            name
         };
-        let mut index = 2;
-        while used.contains(&name) {
-            name = format!("{subject}_{field}{index}");
-            index += 1;
-        }
-        used.insert(name.clone());
-        binders.push((field.to_owned(), name.clone()));
-        Ok((name, optional))
+        let binding = SExpr::new(SNode::Name { path: vec![name] }, span);
+        Ok(if optional {
+            crate::translation::javascript_constructor_presence::surface_projection(binding, span)
+        } else {
+            binding
+        })
     };
     substitute_fields(&mut body, subject, &mut binder_for)?;
     let args = ctor
@@ -812,21 +833,15 @@ pub(super) fn reads_fields(expr: &SExpr, subject: &str) -> bool {
 }
 
 /// Replaces `subject.field` by the case's pattern variables, up to a rebinding of `subject`.
-pub(super) fn substitute_fields(
+fn substitute_fields(
     expr: &mut SExpr,
     subject: &str,
-    binder_for: &mut dyn FnMut(&str) -> Result<(String, bool)>,
+    binder_for: &mut dyn FnMut(&str, Option<Span>) -> Result<SExpr>,
 ) -> Result<()> {
     if let SNode::Field { object, field } = &expr.node
         && object.simple_name() == Some(subject)
     {
-        let (name, optional) = binder_for(field)?;
-        let binding = SExpr::new(SNode::Name { path: vec![name] }, expr.span);
-        *expr = if optional {
-            crate::translation::javascript_constructor_presence::surface_projection(binding, expr.span)
-        } else {
-            binding
-        };
+        *expr = binder_for(field, expr.span)?;
         return Ok(());
     }
     match &mut expr.node {

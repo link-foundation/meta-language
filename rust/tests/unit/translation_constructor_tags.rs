@@ -754,6 +754,26 @@ fn finite_conditional_tags_preserve_branch_and_property_evaluation_order() {
 }
 
 #[test]
+fn conditional_tag_tests_select_constructor_fields_before_evaluating_a_branch() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-conditional-constructor-fields.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    for script in [source, emitted.text.as_str()] {
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(output.stdout, b"7\n7\nflag\n1\n1\n-1\n-1\n");
+    }
+}
+
+#[test]
 fn literal_constructor_spreads_preserve_nested_branch_effects_and_field_presence() {
     use meta_language::translation::emit_rust::emit_rust;
 
