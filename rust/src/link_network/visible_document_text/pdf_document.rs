@@ -9,7 +9,7 @@ use super::document_container::{
     insert_derived_document,
 };
 use super::document_container_policy::{
-    document_stream_fits_budget, pdf_drawing_operator, pdf_stream_filter_kind,
+    document_stream_fits_budget, pdf_drawing_operator, pdf_lzw_code_width, pdf_stream_filter_kind,
     pdf_text_operator_kind,
 };
 use super::pdf_text_fonts::{
@@ -399,20 +399,21 @@ impl<'source> PdfReader<'source> {
             return None;
         }
         let parameters = self.get(dictionary, "DecodeParms");
-        let predictor = |node| {
-            text_of(self.text, self.get(node, "Predictor"))
+        let options = if parameters.is_some_and(|node| node.term == "array") {
+            array_elements(parameters)
+                .map(|parameter| self.resolve(parameter))
+                .collect::<Vec<_>>()
+        } else {
+            vec![parameters]
+        };
+        if options.iter().any(|&option| {
+            text_of(self.text, self.get(option, "Predictor"))
                 .parse::<f64>()
                 .is_ok_and(|value| value > 1.0)
-        };
-        let uses_predictor = if parameters.is_some_and(|node| node.term == "array") {
-            array_elements(parameters).any(|parameter| predictor(self.resolve(parameter)))
-        } else {
-            predictor(parameters)
-        };
-        if uses_predictor {
+        }) {
             return None;
         }
-        let stream = match self.decode(source, &kinds) {
+        let stream = match self.decode(source, &kinds, &options) {
             Ok(source) => Some(Rc::new(PdfStream {
                 source: Cow::Owned(source),
                 data,
@@ -427,7 +428,12 @@ impl<'source> PdfReader<'source> {
         stream
     }
 
-    fn decode(&mut self, source: &str, kinds: &[u8]) -> Result<String, &'static str> {
+    fn decode(
+        &mut self,
+        source: &str,
+        kinds: &[u8],
+        options: &[Option<&GrammarNode>],
+    ) -> Result<String, &'static str> {
         const SIZE_LIMIT: &str = "PDF stream exceeds the decoded size limit";
         let encoded_size = source.chars().count();
         if self.decoded_bytes >= MAXIMUM_DECODED_BYTES
@@ -437,13 +443,30 @@ impl<'source> PdfReader<'source> {
             return Err(SIZE_LIMIT);
         }
         let mut encoded = binary_string_bytes(source).ok_or("invalid binary PDF stream")?;
-        for &kind in kinds {
+        for (index, &kind) in kinds.iter().enumerate() {
             let limit = MAXIMUM_STREAM_BYTES.min(MAXIMUM_DECODED_BYTES - self.decoded_bytes);
+            if limit == 0 {
+                return Err(SIZE_LIMIT);
+            }
             encoded = match kind {
                 1 => decompress_to_vec_zlib_with_limit(&encoded, limit)
                     .map_err(|_| "invalid or oversized FlateDecode PDF stream")?,
                 2 => decode_ascii_hex(&encoded)?,
-                _ => decode_ascii85(&encoded, limit)?,
+                3 => decode_ascii85(&encoded, limit)?,
+                _ => {
+                    let parameter = self.get(options.get(index).copied().flatten(), "EarlyChange");
+                    let early_change = if let Some(node) = parameter {
+                        let change = text_of(self.text, Some(node)).parse::<i64>();
+                        match (node.term, change) {
+                            ("integer", Ok(0)) => 0,
+                            ("integer", Ok(1)) => 1,
+                            _ => return Err("invalid LZWDecode PDF EarlyChange"),
+                        }
+                    } else {
+                        1
+                    };
+                    decode_lzw(&encoded, early_change, limit)?
+                }
             };
             if !document_stream_fits_budget(0, encoded.len(), self.decoded_bytes) {
                 return Err(SIZE_LIMIT);
@@ -782,6 +805,70 @@ impl<'source> PdfReader<'source> {
             }
         }
         self.output
+    }
+}
+
+fn decode_lzw(source: &[u8], early_change: usize, limit: usize) -> Result<Vec<u8>, &'static str> {
+    const INVALID: &str = "invalid or oversized LZWDecode PDF stream";
+    const DICTIONARY_SIZE: usize = 4096;
+    let mut prefix = [0_u16; DICTIONARY_SIZE];
+    let mut suffix = [0_u8; DICTIONARY_SIZE];
+    let mut sequence = [0_u8; DICTIONARY_SIZE];
+    let mut output = Vec::new();
+    let mut next = 258;
+    let mut width = 9;
+    let mut previous = None;
+    let mut bits = 0;
+    let mut accumulator = 0_u32;
+    let mut bytes = source.iter();
+    loop {
+        while bits < width {
+            accumulator = (accumulator << 8) | u32::from(*bytes.next().ok_or(INVALID)?);
+            bits += 8;
+        }
+        bits -= width;
+        let code = ((accumulator >> bits) & ((1 << width) - 1)) as usize;
+        if code == 256 {
+            next = 258;
+            width = 9;
+            previous = None;
+            continue;
+        }
+        if code == 257 {
+            return Ok(output);
+        }
+        if code > next || (code >= 258 && previous.is_none()) {
+            return Err(INVALID);
+        }
+        // The next entry is the previous entry followed by its first byte.
+        let next_entry = code == next;
+        let mut entry = if next_entry {
+            previous.ok_or(INVALID)?
+        } else {
+            code
+        };
+        let mut length = usize::from(next_entry);
+        while entry >= 258 {
+            sequence[length] = suffix[entry];
+            length += 1;
+            entry = usize::from(prefix[entry]);
+        }
+        sequence[length] = entry as u8;
+        length += 1;
+        if next_entry {
+            sequence[0] = entry as u8;
+        }
+        if output.len() + length > limit {
+            return Err(INVALID);
+        }
+        output.extend(sequence[..length].iter().rev().copied());
+        if let Some(previous) = previous.filter(|_| next < DICTIONARY_SIZE) {
+            prefix[next] = previous as u16;
+            suffix[next] = entry as u8;
+            next += 1;
+            width = pdf_lzw_code_width(width, next, early_change);
+        }
+        previous = Some(code);
     }
 }
 

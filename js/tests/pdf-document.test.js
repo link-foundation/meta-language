@@ -79,13 +79,52 @@ function checkReadingOrder() {
   }
 }
 
+function encodedPdfStream({ parameters, data }) {
+  const encoded = Buffer.from(data, 'hex');
+  const header = `%PDF-1.7\n1 0 obj\n<< /Length ${encoded.length} ${parameters} >>\nstream\n`;
+  const source = header + encoded.toString('latin1') + '\nendstream\nendobj\n%%EOF\n';
+  return { source, bytes: Buffer.from(source, 'latin1'), start: header.length, end: header.length + encoded.length };
+}
+
+function checkLzwDecoding() {
+  const { padding, contents, text, streams, invalid } = fixture.lzw;
+  for (const entry of streams) {
+    const { source, bytes, start, end } = encodedPdfStream(entry);
+    for (const [raw, document] of [[false, LinkNetwork.parse(source, 'PDF')], [true, LinkNetwork.parseBytes(bytes, 'PDF')]]) {
+      const network = LinkNetwork.fromLino(document.toLino());
+      assert.equal(network.verifyFullMatch().isClean(), true);
+      if (raw) assert.deepEqual(Buffer.from(network.reconstructBytes()), bytes);
+      else assert.equal(network.reconstructText(), source);
+      const range = { start, end: raw ? end : Buffer.byteLength(source.slice(0, end)) };
+      const documents = network.derivedDocuments();
+      assert.equal(documents.length, 1);
+      assert.equal(documents[0].compression, entry.compression);
+      assert.deepEqual({ ...documents[0].sourceRange }, range);
+      assert.equal(documents[0].network.reconstructText(), ' '.repeat(padding) + contents);
+      const projection = network.visibleText();
+      assert.equal(projection.text, text);
+      assert.deepEqual(projection.sourceRange(0, text.length), range);
+    }
+  }
+  for (const entry of invalid) {
+    const { bytes, start, end } = encodedPdfStream(entry);
+    const network = LinkNetwork.parseBytes(bytes, 'PDF');
+    assert.equal(network.verifyFullMatch().isClean(), false);
+    assert.deepEqual(Buffer.from(network.reconstructBytes()), bytes);
+    assert.equal(network.derivedDocuments().length, 0);
+    const error = network.links().map(link => link.metadata()).find(metadata => metadata.flags.isError);
+    assert.deepEqual({ ...error.span.byteRange }, { start, end });
+  }
+}
+
 test('PDF streams and font Unicode keep the original ranges with both byte entry points', () => {
   checkPdfContent();
   checkDisabledDecoding();
   checkCorruptDecoding();
   checkReadingOrder();
+  checkLzwDecoding();
   for (const [requirementId, assertions] of [
-    ['I195-I239-PDF-CONTENT-STREAMS', ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError']],
+    ['I195-I239-PDF-CONTENT-STREAMS', ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError']],
     ['I195-I239-PDF-FONT-UNICODE', ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges']],
   ]) {
     recordIssue195Observations({ requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(),

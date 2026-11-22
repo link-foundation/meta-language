@@ -1801,8 +1801,8 @@ maps in page-tree order. Fully positioned horizontal lines on a page are
 ordered by descending baseline and then ascending horizontal position. Lines
 without a common page coordinate system keep their content order. Projected
 coordinates use the runtime's string indices (JavaScript UTF-16 and Rust
-UTF-8). Source ranges index the original
-bytes of byte input or the UTF-8 encoding of string input. Each projected
+UTF-8). Source ranges index the original bytes of byte input or the UTF-8
+encoding of string input. Each projected
 interval maps to the bytes that produced it, including character references,
 collapsed whitespace and inserted separators. A selection can resolve to a
 covering range even when page or part order differs from physical byte order.
@@ -1812,9 +1812,11 @@ lossless networks stored on derived document links. Each link records its
 original byte range, container input encoding and compression. Decoded
 coordinates belong to the child network. Uncompressed selections can resolve
 to individual physical spans. Compressed selections resolve to the covering
-encoded stream or ZIP entry. Optional PDF decoding uses bounded filters and
-keeps the original content bytes. Invalid streams and package entries carry
-diagnostics with a physical source span. WordprocessingML package relationships
+encoded stream or ZIP entry. Optional PDF decoding applies bounded Flate,
+ASCIIHex, ASCII85 and LZW filters in the declared order and keeps the original
+content bytes. LZW respects each filter's code-width setting. Invalid streams
+and package entries carry diagnostics with a physical source span.
+WordprocessingML package relationships
 select the main part and its internal headers, footers, and notes. A package
 without relationship metadata can use conventional part names.
 

@@ -8,7 +8,18 @@ pub(super) fn pdf_stream_filter_kind(name: &str) -> u8 {
         "FlateDecode" | "Fl" => 1,
         "ASCIIHexDecode" | "AHx" => 2,
         "ASCII85Decode" | "A85" => 3,
+        "LZWDecode" | "LZW" => 4,
         _ => 0,
+    }
+}
+
+pub(super) fn pdf_lzw_code_width(width: usize, next: usize, early_change: usize) -> usize {
+    let threshold = next + early_change;
+    match (width, threshold) {
+        (9, 512) => 10,
+        (10, 1024) => 11,
+        (11, 2048) => 12,
+        _ => width,
     }
 }
 

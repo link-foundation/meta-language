@@ -420,9 +420,9 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       {
         id: 'I195-I239-PDF-CONTENT-STREAMS',
         construct: 'linked decoded page content and located stream errors',
-        expectedBehavior: 'Both PDF parse entry points preserve the original file and expose Flate-decoded content operators in linked documents with the encoded range. An option disables stream decoding and corrupt encoded data identifies the affected range.',
-        selector: 'the Flate page content, both binary input modes, disabled decoding and corrupt data',
-        assertions: ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError'],
+        expectedBehavior: 'Both PDF parse entry points preserve the original file and expose Flate- and LZW-decoded content operators in linked documents with the encoded range. LZW supports both standard code-width transitions and chained ASCIIHex decoding. An option disables stream decoding and corrupt encoded data identifies the affected range.',
+        selector: 'Flate and LZW page content, both binary input modes, disabled decoding, both LZW EarlyChange values, a chained filter and corrupt data',
+        assertions: ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError'],
       },
       {
         id: 'I195-I239-PDF-FONT-UNICODE',

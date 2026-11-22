@@ -8,7 +8,17 @@ export function pdfStreamFilterKind(name) {
   if (name === 'FlateDecode' || name === 'Fl') return 1;
   if (name === 'ASCIIHexDecode' || name === 'AHx') return 2;
   if (name === 'ASCII85Decode' || name === 'A85') return 3;
+  if (name === 'LZWDecode' || name === 'LZW') return 4;
   return 0;
+}
+
+/** @param {number} width @param {number} next @param {number} earlyChange @returns {number} */
+export function pdfLzwCodeWidth(width, next, earlyChange) {
+  const threshold = next + earlyChange;
+  if (width === 9 && threshold === 512) return 10;
+  if (width === 10 && threshold === 1024) return 11;
+  if (width === 11 && threshold === 2048) return 12;
+  return width;
 }
 
 /** @param {string} operator @returns {number} */

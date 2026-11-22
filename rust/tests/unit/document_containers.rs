@@ -71,6 +71,74 @@ fn check_reading_order(fixture: &Value) {
     }
 }
 
+fn encoded_pdf_stream(entry: &Value) -> (Vec<u8>, usize, usize) {
+    let encoded = octets(&entry["data"]);
+    let parameters = entry["parameters"].as_str().expect("PDF stream parameters");
+    let header = format!(
+        "%PDF-1.7\n1 0 obj\n<< /Length {} {parameters} >>\nstream\n",
+        encoded.len()
+    );
+    let start = header.len();
+    let end = start + encoded.len();
+    let mut bytes = header.into_bytes();
+    bytes.extend(encoded);
+    bytes.extend_from_slice(b"\nendstream\nendobj\n%%EOF\n");
+    (bytes, start, end)
+}
+
+fn check_lzw_decoding(fixture: &Value) {
+    let padding = offset(&fixture["padding"]);
+    let contents = fixture["contents"].as_str().expect("LZW content");
+    let expected = format!("{}{contents}", " ".repeat(padding));
+    let text = fixture["text"].as_str().expect("LZW visible text");
+    for entry in fixture["streams"].as_array().expect("LZW streams") {
+        let (bytes, start, end) = encoded_pdf_stream(entry);
+        let source = binary_string(&bytes);
+        for (raw, input) in [
+            (true, LinkNetwork::parse_bytes(&bytes, "PDF")),
+            (
+                false,
+                LinkNetwork::parse(&source, "PDF", ParseConfiguration::default()),
+            ),
+        ] {
+            let network = LinkNetwork::from_lino(&input.to_lino()).expect("LZW PDF round trip");
+            assert!(network.verify_full_match(None).is_clean());
+            check_reconstruction(&network, raw, &bytes, &source);
+            let end = if raw {
+                end
+            } else {
+                binary_string(&bytes[..end]).len()
+            };
+            let range = ByteRange::new(start, end);
+            let documents = network.derived_documents();
+            assert_eq!(documents.len(), 1);
+            assert_eq!(
+                documents[0].compression,
+                entry["compression"].as_str().expect("LZW filter chain")
+            );
+            assert_eq!(documents[0].source_range, range);
+            assert_eq!(documents[0].network.reconstruct_text(), expected);
+            let projection = network.visible_text(VisibleDocumentTextOptions::default());
+            assert_eq!(projection.text, text);
+            assert_eq!(projection.source_range(0, text.len()), Some(range));
+        }
+    }
+    for entry in fixture["invalid"].as_array().expect("broken LZW streams") {
+        let (bytes, start, end) = encoded_pdf_stream(entry);
+        let network = LinkNetwork::parse_bytes(&bytes, "PDF");
+        assert!(!network.verify_full_match(None).is_clean());
+        assert_eq!(network.reconstruct_bytes(), bytes);
+        assert!(network.derived_documents().is_empty());
+        assert!(network.links().any(|link| {
+            link.metadata().flags().is_error()
+                && link
+                    .metadata()
+                    .span()
+                    .is_some_and(|span| span.byte_range() == ByteRange::new(start, end))
+        }));
+    }
+}
+
 #[test]
 fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
     let fixture = read_project_data(include_str!("../../../parity/fixtures/pdf-document.lino"))
@@ -181,6 +249,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
         "A€é"
     );
     check_reading_order(&fixture["readingOrder"]);
+    check_lzw_decoding(&fixture["lzw"]);
     for (requirement_id, assertions) in [
         (
             "I195-I239-PDF-CONTENT-STREAMS",
@@ -188,6 +257,8 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
                 "pdfDerivedOperatorsKeepEncodedRange",
                 "pdfFiltersCanBeDisabled",
                 "corruptPdfFilterKeepsLocatedError",
+                "pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange",
+                "corruptPdfLzwKeepsLocatedError",
             ][..],
         ),
         (
