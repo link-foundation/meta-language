@@ -8,8 +8,12 @@ import {writeProjectData} from './project-data.mjs';
 import {draftRustBaselineNativePolicyControls} from './draft-rust-baseline-native-policy-controls.mjs';
 import {readNativePolicyLiteralControls,readExactFixtureExport} from './draft-native-policy-assertion-controls.mjs';
 
-const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArguments==='--draft --defer-publication';
-if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
+const [mode,option,libraryName,...extra]=process.argv.slice(2);
+const deferPublication=option==='--defer-publication';
+if(mode!=='--draft'||extra.length||
+  option==='--library'&&libraryName===undefined||
+  option!=='--library'&&(![undefined,'--defer-publication'].includes(option)||libraryName!==undefined))
+ throw new TypeError('use --draft with optional --defer-publication or --library followed by a registered library');
 const root=new URL('../../',import.meta.url);
 const libraries=[
  {sourcePath:'js/src/translation/rust-record-place-owner-rules.js',moduleName:'rust_record_place_owner_rules',sourceDependencies:true,model:'Rust actual record place shared reference and canonical Box owner layers 1',programAsset:'rust-record-place-owner-program'},
@@ -684,11 +688,14 @@ const consumers=[
  'js/scripts/produce-rust-standard-option-panic.mjs',
  'js/scripts/draft-rust-baseline-inventory.mjs',
 ];
-for(const path of [...libraries.map(row=>row.sourcePath),...fixtures,...consumers]){
+const selectedLibraries=libraryName===undefined?libraries:libraries.filter(library=>library.moduleName===libraryName);
+if(selectedLibraries.length===0)throw new TypeError('no registered source policy library named '+libraryName);
+for(const path of [...selectedLibraries.map(row=>row.sourcePath),...(libraryName===undefined?[...fixtures,...consumers]:[])]){
  parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
  globalThis.gc?.();
 }
-for(const library of libraries){draftSourceLibrary({sourceDependencies:true,...library});globalThis.gc?.();}
+for(const library of selectedLibraries){draftSourceLibrary({sourceDependencies:true,...library});globalThis.gc?.();}
+if(libraryName!==undefined)process.exit(0);
 // Fixture modules contain independently authored literals only. No policy is
 // called to obtain an expected value, and no represented Rust program runs.
 const aliases=await import('../tests/fixtures/rust-generic-type-alias-draft.mjs');
