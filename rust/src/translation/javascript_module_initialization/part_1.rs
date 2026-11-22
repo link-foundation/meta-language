@@ -1,7 +1,4 @@
 // Generated from complete js/src/translation/javascript-module-initialization.js. Do not edit by hand.
-use super::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Result;
-use super::source_ml_temporary_read_java_script_semantic_value_error_loop1;
-
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
     use std::cmp::Ordering;
@@ -23,14 +20,18 @@ pub mod ml {
     }
 
     fn compare_magnitude(a: &[u32], b: &[u32]) -> Ordering {
-        a.len().cmp(&b.len()).then_with(|| a.iter().rev().cmp(b.iter().rev()))
+        a.len()
+            .cmp(&b.len())
+            .then_with(|| a.iter().rev().cmp(b.iter().rev()))
     }
 
     fn add_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
         let mut out = Vec::with_capacity(a.len().max(b.len()) + 1);
         let mut carry = 0u64;
         for index in 0..a.len().max(b.len()) {
-            let sum = u64::from(*a.get(index).unwrap_or(&0)) + u64::from(*b.get(index).unwrap_or(&0)) + carry;
+            let sum = u64::from(*a.get(index).unwrap_or(&0))
+                + u64::from(*b.get(index).unwrap_or(&0))
+                + carry;
             out.push(sum as u32);
             carry = sum >> 32;
         }
@@ -111,7 +112,10 @@ pub mod ml {
     impl Big {
         fn from_parts(negative: bool, magnitude: Vec<u32>) -> Self {
             let magnitude = trim(magnitude);
-            Self { negative: negative && !magnitude.is_empty(), magnitude }
+            Self {
+                negative: negative && !magnitude.is_empty(),
+                magnitude,
+            }
         }
 
         pub fn zero() -> Self {
@@ -161,7 +165,11 @@ pub mod ml {
             if self.negative || self.magnitude.len() > 2 {
                 return None;
             }
-            let value = self.magnitude.iter().rev().fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
+            let value = self
+                .magnitude
+                .iter()
+                .rev()
+                .fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
             usize::try_from(value).ok()
         }
 
@@ -171,11 +179,20 @@ pub mod ml {
 
         pub fn add(&self, other: &Self) -> Self {
             if self.negative == other.negative {
-                return Self::from_parts(self.negative, add_magnitude(&self.magnitude, &other.magnitude));
+                return Self::from_parts(
+                    self.negative,
+                    add_magnitude(&self.magnitude, &other.magnitude),
+                );
             }
             match compare_magnitude(&self.magnitude, &other.magnitude) {
-                Ordering::Less => Self::from_parts(other.negative, sub_magnitude(&other.magnitude, &self.magnitude)),
-                _ => Self::from_parts(self.negative, sub_magnitude(&self.magnitude, &other.magnitude)),
+                Ordering::Less => Self::from_parts(
+                    other.negative,
+                    sub_magnitude(&other.magnitude, &self.magnitude),
+                ),
+                _ => Self::from_parts(
+                    self.negative,
+                    sub_magnitude(&self.magnitude, &other.magnitude),
+                ),
             }
         }
 
@@ -184,7 +201,10 @@ pub mod ml {
         }
 
         pub fn mul(&self, other: &Self) -> Self {
-            Self::from_parts(self.negative != other.negative, mul_magnitude(&self.magnitude, &other.magnitude))
+            Self::from_parts(
+                self.negative != other.negative,
+                mul_magnitude(&self.magnitude, &other.magnitude),
+            )
         }
 
         /// Division rounding toward zero; the divisor is not zero.
@@ -265,10 +285,18 @@ pub mod ml {
                 quotient = quotient.sub(&one);
             }
             if rounding == "euclid" && rest.is_negative() {
-                quotient = if b.is_negative() { quotient.add(&one) } else { quotient.sub(&one) };
+                quotient = if b.is_negative() {
+                    quotient.add(&one)
+                } else {
+                    quotient.sub(&one)
+                };
             }
         }
-        if remainder { a.sub(&quotient.mul(b)) } else { quotient }
+        if remainder {
+            a.sub(&quotient.mul(b))
+        } else {
+            quotient
+        }
     }
 
     pub fn to_nat_checked(value: Big, message: &str) -> Big {
@@ -279,7 +307,11 @@ pub mod ml {
     }
 
     pub fn clamp_nat(value: Big) -> Big {
-        if value.is_negative() { Big::zero() } else { value }
+        if value.is_negative() {
+            Big::zero()
+        } else {
+            value
+        }
     }
 
     /// Bounded domains for executable theorem checks.
@@ -309,7 +341,11 @@ pub mod ml_number {
         if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
             let last = digits.as_bytes()[digits.len() - 1] - b'0';
             let down = exact[..digits.len()].to_string();
-            let other = if digits == down { increment(&down) } else { Some(down) };
+            let other = if digits == down {
+                increment(&down)
+            } else {
+                Some(down)
+            };
             if let Some(other) = other {
                 let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
                 if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
@@ -333,11 +369,7 @@ pub mod ml_number {
                 format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
             }
         };
-        if x < 0.0 {
-            format!("-{body}")
-        } else {
-            body
-        }
+        if x < 0.0 { format!("-{body}") } else { body }
     }
 
     /// What console.log prints: -0 as "-0", where String(-0) is "0".
@@ -379,7 +411,11 @@ pub mod ml_number {
         let (mantissa, exponent) = text.split_once('e').expect("exponent");
         let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
         let digits = digits.trim_end_matches('0').to_string();
-        let digits = if digits.is_empty() { String::from("0") } else { digits };
+        let digits = if digits.is_empty() {
+            String::from("0")
+        } else {
+            digits
+        };
         (digits, exponent.parse::<i32>().expect("exponent") + 1)
     }
 }
@@ -399,11 +435,7 @@ pub mod ml_math {
             return -0.0;
         }
         let floor = x.floor();
-        if x - floor >= 0.5 {
-            floor + 1.0
-        } else {
-            floor
-        }
+        if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
     /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
@@ -424,11 +456,7 @@ pub mod ml_math {
         } else if b > a {
             b
         } else if a == b {
-            if a.is_sign_negative() {
-                b
-            } else {
-                a
-            }
+            if a.is_sign_negative() { b } else { a }
         } else {
             f64::NAN
         }
@@ -441,11 +469,7 @@ pub mod ml_math {
         } else if b < a {
             b
         } else if a == b {
-            if a.is_sign_negative() {
-                a
-            } else {
-                b
-            }
+            if a.is_sign_negative() { a } else { b }
         } else {
             f64::NAN
         }
@@ -495,323 +519,84 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 { if value.is_nan() { 0.0 } else { value.trunc() } }
+    fn integer(value: f64) -> f64 {
+        if value.is_nan() { 0.0 } else { value.trunc() }
+    }
     fn relative(value: f64, length: usize) -> usize {
         let value = integer(value);
-        if value < 0.0 { (length as f64 + value).max(0.0) as usize } else { value.min(length as f64) as usize }
-    }
-    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
-        let start = relative(start, values.len()); let end = relative(end, values.len());
-        values[start..end.max(start)].to_vec()
-    }
-    pub fn index_of<T, F: Fn(&T, &T) -> bool>(values: &[T], search: &T, from: f64, reverse: bool, equal: F) -> f64 {
-        if values.is_empty() { return -1.0; }
-        let from = integer(from);
-        if reverse {
-            if from < -(values.len() as f64) { return -1.0; }
-            let start = if from < 0.0 { (values.len() as f64 + from) as usize } else { from.min((values.len() - 1) as f64) as usize };
-            (0..=start).rev().find(|&index| equal(&values[index], search)).map_or(-1.0, |index| index as f64)
+        if value < 0.0 {
+            (length as f64 + value).max(0.0) as usize
         } else {
-            let start = if from < 0.0 { (values.len() as f64 + from).max(0.0) as usize } else { from.min(values.len() as f64) as usize };
-            (start..values.len()).find(|&index| equal(&values[index], search)).map_or(-1.0, |index| index as f64)
+            value.min(length as f64) as usize
         }
     }
-    pub fn includes<T, F: Fn(&T, &T) -> bool>(values: &[T], search: &T, from: f64, reverse: bool, equal: F) -> bool {
+    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
+        let start = relative(start, values.len());
+        let end = relative(end, values.len());
+        values[start..end.max(start)].to_vec()
+    }
+    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> f64 {
+        if values.is_empty() {
+            return -1.0;
+        }
+        let from = integer(from);
+        if reverse {
+            if from < -(values.len() as f64) {
+                return -1.0;
+            }
+            let start = if from < 0.0 {
+                (values.len() as f64 + from) as usize
+            } else {
+                from.min((values.len() - 1) as f64) as usize
+            };
+            (0..=start)
+                .rev()
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        } else {
+            let start = if from < 0.0 {
+                (values.len() as f64 + from).max(0.0) as usize
+            } else {
+                from.min(values.len() as f64) as usize
+            };
+            (start..values.len())
+                .find(|&index| equal(&values[index], search))
+                .map_or(-1.0, |index| index as f64)
+        }
+    }
+    pub fn includes<T, F: Fn(&T, &T) -> bool>(
+        values: &[T],
+        search: &T,
+        from: f64,
+        reverse: bool,
+        equal: F,
+    ) -> bool {
         index_of(values, search, from, reverse, equal) >= 0.0
     }
     pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
         let mut out = Vec::new();
-        for value in values { if !out.iter().any(|previous| equal(previous, &value)) { out.push(value); } }
+        for value in values {
+            if !out.iter().any(|previous| equal(previous, &value)) {
+                out.push(value);
+            }
+        }
         out
     }
     pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
         let mut out: Vec<(K, V)> = Vec::new();
         for (key, value) in values {
-            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) { out[index].1 = value; }
-            else { out.push((key, value)); }
+            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
+                out[index].1 = value;
+            } else {
+                out.push((key, value));
+            }
         }
         out
-    }
-}
-
-/// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
-pub mod ml_string {
-    #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-    pub struct Text(pub Vec<u16>);
-
-    impl std::fmt::Display for Text {
-        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            out.write_str(&String::from_utf16_lossy(&self.0))
-        }
-    }
-
-    impl Text {
-        pub fn from_text(text: &str) -> Self { Self(text.encode_utf16().collect()) }
-        pub fn from_units(units: Vec<u16>) -> Self { Self(units) }
-        pub fn length(&self) -> f64 { self.0.len() as f64 }
-        pub fn concat(&self, other: &Self) -> Self {
-            let mut units = self.0.clone(); units.extend_from_slice(&other.0); Self(units)
-        }
-        pub fn starts_with(&self, search: &Self) -> bool { self.0.starts_with(&search.0) }
-        pub fn ends_with(&self, search: &Self) -> bool { self.0.ends_with(&search.0) }
-        pub fn contains(&self, search: &Self) -> bool { self.index_of(search, 0.0) >= 0.0 }
-        pub fn slice(&self, start: f64, end: f64) -> Self {
-            let first = relative(start, self.0.len()); let last = relative(end, self.0.len());
-            Self(self.0[first..last.max(first)].to_vec())
-        }
-        pub fn index_of(&self, search: &Self, position: f64) -> f64 {
-            let start = absolute(position, self.0.len());
-            if search.0.is_empty() { return start as f64; }
-            if search.0.len() > self.0.len() { return -1.0; }
-            (start..=self.0.len() - search.0.len()).find(|&index| self.0[index..].starts_with(&search.0)).map_or(-1.0, |index| index as f64)
-        }
-        pub fn last_index_of(&self, search: &Self, position: f64) -> f64 {
-            let position = if position.is_nan() { f64::INFINITY } else { position };
-            let start = absolute(position, self.0.len());
-            if search.0.is_empty() { return start as f64; }
-            if search.0.len() > self.0.len() { return -1.0; }
-            (0..=start.min(self.0.len() - search.0.len())).rev().find(|&index| self.0[index..].starts_with(&search.0)).map_or(-1.0, |index| index as f64)
-        }
-        pub fn split(&self, separator: Option<&Self>, limit: f64) -> Vec<Self> {
-            let maximum = uint32(limit) as usize;
-            if maximum == 0 { return Vec::new(); }
-            let separator = match separator { Some(value) => value, None => return vec![self.clone()] };
-            if separator.0.is_empty() { return self.0.iter().take(maximum).map(|&unit| Self(vec![unit])).collect(); }
-            let mut out = Vec::new(); let mut start = 0;
-            loop {
-                let index = self.index_of(separator, start as f64);
-                if index < 0.0 { break; }
-                out.push(Self(self.0[start..index as usize].to_vec()));
-                if out.len() == maximum { return out; }
-                start = index as usize + separator.0.len();
-            }
-            out.push(Self(self.0[start..].to_vec())); out
-        }
-        pub fn code_point_at(&self, position: f64) -> Option<f64> {
-            let index = integer(position);
-            if index < 0.0 || index >= self.0.len() as f64 { return None; }
-            let index = index as usize; let first = self.0[index];
-            if (0xd800..=0xdbff).contains(&first) {
-                if let Some(&second) = self.0.get(index + 1) {
-                    if (0xdc00..=0xdfff).contains(&second) { return Some(((first as u32 - 0xd800) * 1024 + second as u32 - 0xdc00 + 0x10000) as f64); }
-                }
-            }
-            Some(first as f64)
-        }
-        pub fn code_points(&self) -> Vec<Self> {
-            let mut out = Vec::new(); let mut index = 0;
-            while index < self.0.len() {
-                let first = self.0[index];
-                let width = if (0xd800..=0xdbff).contains(&first) && self.0.get(index + 1).map_or(false, |second| (0xdc00..=0xdfff).contains(second)) { 2 } else { 1 };
-                out.push(Self(self.0[index..index + width].to_vec())); index += width;
-            }
-            out
-        }
-        pub fn repeat(&self, count: f64) -> Self {
-            let count = integer(count);
-            if count < 0.0 || !count.is_finite() { panic!("Invalid count value: {}", count); }
-            if self.0.is_empty() { return Self(Vec::new()); }
-            let size = count * self.0.len() as f64;
-            if size > 536870888.0 { panic!("Invalid string length"); }
-            Self(self.0.repeat(count as usize))
-        }
-        pub fn pad(&self, length: f64, fill: &Self, start: bool) -> Self {
-            let length = integer(length).max(0.0);
-            if length <= self.0.len() as f64 || fill.0.is_empty() { return self.clone(); }
-            if length > 536870888.0 { panic!("Invalid string length"); }
-            let count = length as usize - self.0.len();
-            let padding: Vec<u16> = fill.0.iter().copied().cycle().take(count).collect();
-            let pad = Self(padding); if start { pad.concat(self) } else { self.concat(&pad) }
-        }
-        pub fn replace(&self, search: &Self, replacement: &Self, all: bool) -> Self {
-            let mut out = Vec::new(); let mut start = 0; let mut from = 0;
-            loop {
-                let index = self.index_of(search, from as f64);
-                if index < 0.0 { break; }
-                let index = index as usize;
-                out.extend_from_slice(&self.0[start..index]);
-                substitute(&mut out, &self.0, &search.0, &replacement.0, index);
-                start = index + search.0.len();
-                if !all || (search.0.is_empty() && index == self.0.len()) { break; }
-                from = start + usize::from(search.0.is_empty());
-            }
-            out.extend_from_slice(&self.0[start..]); Self(out)
-        }
-        pub fn trim(&self, start: bool, end: bool, rust: bool) -> Self {
-            let whitespace = |unit: u16| char::from_u32(unit as u32).map_or(false, |c| if rust { c.is_whitespace() } else { (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}' });
-            let mut first = 0; let mut last = self.0.len();
-            if start { while first < last && whitespace(self.0[first]) { first += 1; } }
-            if end { while last > first && whitespace(self.0[last - 1]) { last -= 1; } }
-            Self(self.0[first..last].to_vec())
-        }
-        pub fn map_case(&self, upper: bool) -> Self {
-            let mut out = Vec::new(); let mut run = String::new();
-            let flush = |run: &mut String, out: &mut Vec<u16>| { let mapped = if upper { run.to_uppercase() } else { run.to_lowercase() }; out.extend(mapped.encode_utf16()); run.clear(); };
-            for scalar in char::decode_utf16(self.0.iter().copied()) {
-                match scalar { Ok(c) => run.push(c), Err(error) => { flush(&mut run, &mut out); out.push(error.unpaired_surrogate()); } }
-            }
-            flush(&mut run, &mut out); Self(out)
-        }
-    }
-    pub fn join(values: &[Text], separator: &Text) -> Text {
-        let mut units = Vec::new();
-        for (index, value) in values.iter().enumerate() { if index != 0 { units.extend_from_slice(&separator.0); } units.extend_from_slice(&value.0); }
-        Text(units)
-    }
-    pub fn integer(value: f64) -> f64 { if value.is_nan() { 0.0 } else { value.trunc() } }
-    pub fn absolute(value: f64, length: usize) -> usize { integer(value).max(0.0).min(length as f64) as usize }
-    pub fn relative(value: f64, length: usize) -> usize { let value = integer(value); if value < 0.0 { (length as f64 + value).max(0.0) as usize } else { value.min(length as f64) as usize } }
-    fn uint32(value: f64) -> u32 { if !value.is_finite() || value == 0.0 { 0 } else { value.trunc().rem_euclid(4294967296.0) as u32 } }
-    fn substitute(out: &mut Vec<u16>, text: &[u16], search: &[u16], replacement: &[u16], position: usize) {
-        let mut index = 0;
-        while index < replacement.len() {
-            if replacement[index] == 36 && index + 1 < replacement.len() {
-                match replacement[index + 1] {
-                    36 => { out.push(36); index += 2; continue; }
-                    38 => { out.extend_from_slice(search); index += 2; continue; }
-                    96 => { out.extend_from_slice(&text[..position]); index += 2; continue; }
-                    39 => { out.extend_from_slice(&text[position + search.len()..]); index += 2; continue; }
-                    _ => {}
-                }
-            }
-            out.push(replacement[index]); index += 1;
-        }
-    }
-}
-
-pub mod ml_source_exception {
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct SourceException {
-        pub class_name: String,
-        pub message_units: Vec<u16>,
-        pub message_present: bool,
-    }
-    impl SourceException {
-        pub fn raise(self) -> ! {
-            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
-        }
-        pub fn from_text(class_name: &str, message: &str) -> Self {
-            Self { class_name: class_name.to_owned(), message_units: message.encode_utf16().collect(), message_present: true }
-        }
-    }
-    impl std::fmt::Display for SourceException {
-        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            out.write_str(&String::from_utf16_lossy(&self.message_units))
-        }
-    }
-    impl std::error::Error for SourceException {}
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptSemanticValue {
-    Undefined,
-    Null,
-    Boolean(bool),
-    Number(f64),
-    Integer(self::ml::Big),
-    Text(Vec<f64>),
-    SourceText(self::ml_string::Text, self::ml_string::Text),
-    Symbol(self::ml::Big),
-    Object(self::ml::Big, bool),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptModuleInitializer {
-    ModuleDataLoad(f64, self::ml_string::Text, self::ml_string::Text),
-    ModuleConstAlias(f64, f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptModuleInitializationPlan {
-    ModuleInitializationPlan(self::ml_string::Text, self::ml_string::Text, self::ml_string::Text, Vec<f64>, Vec<self::ml_string::Text>, Vec<self::JavaScriptModuleInitializer>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptModuleBindingSlot {
-    ModuleBindingSlot(f64, bool, Box<self::JavaScriptSemanticValue>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptModuleInitializationState {
-    ModuleInitializationState(self::ml_string::Text, self::ml_string::Text, self::ml_string::Text, self::ml::Big, self::ml_string::Text, f64, Vec<self::JavaScriptModuleBindingSlot>, Box<self::JavaScriptSemanticValue>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptModuleInitializationTransition {
-    ModuleContinue(Box<self::JavaScriptModuleInitializationState>),
-    ModuleReadData(Box<self::JavaScriptModuleInitializationState>, f64, self::ml_string::Text, self::ml_string::Text),
-    ModuleTemporalDeadZone(Box<self::JavaScriptModuleInitializationState>, f64, self::ml_string::Text),
-    ModuleEvaluated(Box<self::JavaScriptModuleInitializationState>),
-    ModuleAbrupt(Box<self::JavaScriptModuleInitializationState>, Box<self::JavaScriptSemanticValue>),
-    ModuleWaiting(Box<self::JavaScriptModuleInitializationState>),
-    ModuleInvalid(Box<self::JavaScriptModuleInitializationState>, self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptModuleBindingRead {
-    ModuleBindingValue(Box<self::JavaScriptSemanticValue>),
-    ModuleBindingUninitialized(f64, self::ml_string::Text),
-    ModuleBindingFailure(Box<self::JavaScriptSemanticValue>),
-    ModuleBindingInvalid(self::ml_string::Text),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_source_text_profile_error(profile: &self::ml_string::Text, length: f64) -> self::ml_string::Text {
-    if ((*profile) != (self::ml_string::Text::from_units(vec![105, 110, 115, 112, 101, 99, 116, 97, 98, 108, 101, 32, 85, 84, 70, 49, 54, 32, 115, 111, 117, 114, 99, 101, 32, 116, 101, 120, 116, 32, 49]))) {
-        self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 116, 101, 120, 116, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 105, 116, 115, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 105, 110, 115, 112, 101, 99, 116, 97, 98, 108, 101, 32, 85, 84, 70, 49, 54, 32, 114, 101, 115, 111, 117, 114, 99, 101, 32, 112, 114, 111, 102, 105, 108, 101])
-    } else {
-        if (((!(self::ml_math::is_safe_integer(length)) || (length < (0f64))) || (length > (16777216f64))) || ((length == (0f64)) && (((1f64 / length)) < (0f64)))) {
-            self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 116, 101, 120, 116, 32, 101, 120, 99, 101, 101, 100, 115, 32, 116, 104, 101, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 49, 54, 55, 55, 55, 50, 49, 54, 32, 85, 84, 70, 49, 54, 32, 117, 110, 105, 116, 32, 98, 117, 100, 103, 101, 116])
-        } else {
-            self::ml_string::Text::from_units(vec![])
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValue) -> self::ml_string::Text {
-    match value.clone() {
-        self::JavaScriptSemanticValue::Text(units) => {
-            if (((units.len() as f64)) > (1048576f64)) {
-                self::ml_string::Text::from_units(vec![115, 101, 109, 97, 110, 116, 105, 99, 32, 116, 101, 120, 116, 32, 101, 120, 99, 101, 101, 100, 115, 32, 116, 104, 101, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 85, 84, 70, 49, 54, 32, 117, 110, 105, 116, 32, 98, 117, 100, 103, 101, 116])
-            } else {
-                {
-                    let at = 0f64;
-                    {
-                        let source_ml_source1_s5 = self::source_ml_temporary_read_java_script_semantic_value_error_loop1(&(units), at);
-                        match source_ml_source1_s5.clone() {
-                            self::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Done => {
-                                self::ml_string::Text::from_units(vec![])
-                            }
-                            self::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Return(source_ml_temporary_result1) => {
-                                source_ml_temporary_result1.clone()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self::JavaScriptSemanticValue::SourceText(profile, text) => {
-            self::read_java_script_source_text_profile_error(&(profile), text.length())
-        }
-        self::JavaScriptSemanticValue::Symbol(identity) => {
-            if ((identity > (self::ml::Big::from_i128(0))) && (identity <= (self::ml::Big::from_i128(18446744073709551615)))) {
-                self::ml_string::Text::from_units(vec![])
-            } else {
-                self::ml_string::Text::from_units(vec![97, 32, 115, 121, 109, 98, 111, 108, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 112, 111, 115, 105, 116, 105, 118, 101, 32, 117, 110, 115, 105, 103, 110, 101, 100, 54, 52, 32, 103, 108, 111, 98, 97, 108, 32, 108, 105, 110, 107, 32, 105, 100, 101, 110, 116, 105, 116, 121])
-            }
-        }
-        self::JavaScriptSemanticValue::Object(identity_2, _) => {
-            if ((identity_2 > (self::ml::Big::from_i128(0))) && (identity_2 <= (self::ml::Big::from_i128(18446744073709551615)))) {
-                self::ml_string::Text::from_units(vec![])
-            } else {
-                self::ml_string::Text::from_units(vec![97, 110, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 112, 111, 115, 105, 116, 105, 118, 101, 32, 117, 110, 115, 105, 103, 110, 101, 100, 54, 52, 32, 103, 108, 111, 98, 97, 108, 32, 108, 105, 110, 107, 32, 105, 100, 101, 110, 116, 105, 116, 121])
-            }
-        }
-        _ => {
-            self::ml_string::Text::from_units(vec![])
-        }
     }
 }

@@ -1,5 +1,11 @@
 // Generated from complete js/src/translation/javascript-module-initialization.js. Do not edit by hand.
-#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]
+#![allow(
+    unused,
+    unreachable_patterns,
+    non_snake_case,
+    non_camel_case_types,
+    invalid_nan_comparisons
+)]
 #[path = "javascript_module_initialization/part_1.rs"]
 mod part_1;
 pub use part_1::*;
@@ -9,3 +15,9 @@ pub use part_2::*;
 #[path = "javascript_module_initialization/part_3.rs"]
 mod part_3;
 pub use part_3::*;
+#[path = "javascript_module_initialization/part_4.rs"]
+mod part_4;
+pub use part_4::*;
+#[path = "javascript_module_initialization/part_5.rs"]
+mod part_5;
+pub use part_5::*;

@@ -8,7 +8,7 @@ const result=draftSourceLibrary({
  moduleName:'javascript_module_initialization',
  model:'actual runtime Links policy initialization machine 1',
  programAsset:'javascript-module-initialization-program',
- sourceDependencies:true,sourceAliases:true,sourceLints:'preserve',sourceFormatting:'preserve',
+ sourceDependencies:true,sourceAliases:true,sourceLints:'preserve',
  valueSharing:'exact scalars, types and source spans 1',
  programEntryPoints:'source module exports 1',nativeEntryPoints:'source module exports 1',
  constructorMatchSharing:'closed constructor match sharing 1',
