@@ -3719,15 +3719,15 @@ extension and parsing commands. It retains the exact selected checkpoint and
 training journal as a separate root for further refinement. The command controls
 delete the input example files after use and cover byte reconstruction and
 rejection after installation.
-Scalar regular discovery can query a bounded native Links grammar supplied as
+Scalar regular and recursive delimiter discovery can query a bounded native Links grammar supplied as
 `--oracle-grammar`. The optional `oracleCandidates` word list provides separate
 inputs to classify. The parser checks supplied labels and queries each distinct
 Unicode scalar word in first-seen order. Syntax rejection is a negative label.
 A contradictory label or an inconclusive parser outcome refuses discovery.
 The checkpoint stores the native oracle grammar, the typed query policy and
 the concrete query words and answers as separate Link roots. Reload checks
-the policy, answers and corresponding
-training prefix before reuse. Refinement preserves the original observations
+the policy, answers and corresponding training prefix before reuse.
+Refinement preserves the original observations
 and identifies subsequent labels separately. The finite transcript records
 training premises and supplies no equivalence certificate.
 The discovery examples may include `scannerObservations`. Their labelled

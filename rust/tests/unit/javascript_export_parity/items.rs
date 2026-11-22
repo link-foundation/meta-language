@@ -311,6 +311,7 @@ use meta_language::infer_grammar_scanner_mode_stack as _;
 use meta_language::infer_regular_grammar as _;
 use meta_language::infer_regular_grammar_with_parser_oracle as _;
 use meta_language::infer_structural_grammar as _;
+use meta_language::infer_structural_grammar_with_parser_oracle as _;
 use meta_language::language_candidates_for_path as _;
 use meta_language::language_catalog as _;
 use meta_language::language_entry as _;

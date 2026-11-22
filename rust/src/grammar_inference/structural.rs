@@ -4,15 +4,19 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use super::{index, number};
 use crate::grammar::{Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarRule};
+use crate::grammar_discovery_parser_oracle::{
+    GRAMMAR_DISCOVERY_PARSER_ORACLE, create_oracle_entry, read_oracle_entry,
+};
 use crate::grammar_inference_refinement_rules::{
     accept_regular_grammar_refinement_count, read_regular_grammar_refinement_identifier,
 };
 use crate::grammar_structural_inference_rules::infer_grammar_structural_productions;
 use crate::{
-    GlobalConceptSource, LinkId, LinkNetwork, MetaLanguageArchiveEntry, MetaLanguageArchiveLimits,
-    create_discovered_concept_links, create_meta_language_archive,
-    create_source_definition_program_links, decode_structured_data_links,
-    encode_structured_data_links, read_meta_language_archive,
+    GlobalConceptSource, GrammarDiscoveryOracleObservation, LinkId, LinkNetwork,
+    MetaLanguageArchiveEntry, MetaLanguageArchiveLimits, create_discovered_concept_links,
+    create_meta_language_archive, create_source_definition_program_links,
+    decode_structured_data_links, encode_structured_data_links,
+    observe_grammar_discovery_parser_oracle, read_meta_language_archive,
 };
 
 use serde::{Deserialize, Serialize};
@@ -86,10 +90,17 @@ pub struct StructuralGrammarInference {
     pub alphabet: Vec<String>,
     /// Ordered rows giving owner, terminals and delimiter-group references.
     pub productions: Vec<Vec<f64>>,
+    /// Independent native parser observations, when supplied.
+    pub oracle_observations: Option<Vec<GrammarDiscoveryOracleObservation>>,
     /// Lossless source, algorithm and concept graph archive.
     pub network: LinkNetwork,
     /// Actual archive entry point.
     pub root: LinkId,
+}
+
+struct StructuralOracle {
+    entry: MetaLanguageArchiveEntry,
+    observations: Vec<GrammarDiscoveryOracleObservation>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -284,7 +295,40 @@ pub fn infer_structural_grammar(
     negatives: &[Vec<String>],
     options: &StructuralGrammarInferenceOptions,
 ) -> Result<StructuralGrammarInference, String> {
-    build_structural_inference(positives, negatives, options, &[])
+    build_structural_inference(positives, negatives, options, &[], None)
+}
+
+/// Infer recursive productions from labels checked by a bounded native parser.
+///
+/// # Errors
+/// Refuses unsupported symbols, contradictory labels, invalid recursive
+/// productions and exhausted parsing or discovery limits.
+pub fn infer_structural_grammar_with_parser_oracle(
+    grammar: &Grammar,
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    candidates: &[Vec<String>],
+    options: &StructuralGrammarInferenceOptions,
+) -> Result<StructuralGrammarInference, String> {
+    let observed =
+        observe_grammar_discovery_parser_oracle(grammar, positives, negatives, candidates)?;
+    let oracle = StructuralOracle {
+        entry: create_oracle_entry(
+            grammar,
+            positives,
+            negatives,
+            candidates,
+            &observed.observations,
+        )?,
+        observations: observed.observations,
+    };
+    build_structural_inference(
+        &observed.positives,
+        &observed.negatives,
+        options,
+        &[],
+        Some(oracle),
+    )
 }
 
 fn infer_structural_production_rows(
@@ -366,6 +410,7 @@ fn build_structural_inference(
     negatives: &[Vec<String>],
     options: &StructuralGrammarInferenceOptions,
     history: &[RefinementStep],
+    oracle: Option<StructuralOracle>,
 ) -> Result<StructuralGrammarInference, String> {
     if [&options.identifier, &options.language, &options.edition]
         .iter()
@@ -412,29 +457,32 @@ fn build_structural_inference(
     )?;
     let discovered =
         create_discovered_concept_links(std::slice::from_ref(&source), &Default::default())?;
-    let archive = create_meta_language_archive(
-        &[
-            entry(
-                STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER,
-                "grammar inference",
-                data.network,
-                data.root,
-            ),
-            entry(DEFINITION, "typed program", bundled.network, bundled.root),
-            entry(
-                GRAMMAR,
-                "discovered concepts",
-                discovered.network,
-                discovered.root,
-            ),
-        ],
-        MetaLanguageArchiveLimits::default(),
-    )?;
+    let mut entries = vec![
+        entry(
+            STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER,
+            "grammar inference",
+            data.network,
+            data.root,
+        ),
+        entry(DEFINITION, "typed program", bundled.network, bundled.root),
+        entry(
+            GRAMMAR,
+            "discovered concepts",
+            discovered.network,
+            discovered.root,
+        ),
+    ];
+    let oracle_observations = oracle.map(|oracle| {
+        entries.push(oracle.entry);
+        oracle.observations
+    });
+    let archive = create_meta_language_archive(&entries, MetaLanguageArchiveLimits::default())?;
     Ok(StructuralGrammarInference {
         grammar,
         source,
         alphabet,
         productions,
+        oracle_observations,
         network: archive.network,
         root: archive.root,
     })
@@ -448,13 +496,19 @@ pub fn read_structural_grammar_inference_links(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<StructuralGrammarInference, String> {
-    Ok(read_structural_checkpoint(network, root)?.0)
+    Ok(read_structural_checkpoint(network, root)?.inference)
+}
+
+struct StructuralCheckpoint {
+    inference: StructuralGrammarInference,
+    model: Model,
+    oracle: Option<StructuralOracle>,
 }
 
 fn read_structural_checkpoint(
     network: &LinkNetwork,
     root: LinkId,
-) -> Result<(StructuralGrammarInference, Model), String> {
+) -> Result<StructuralCheckpoint, String> {
     let entries =
         read_meta_language_archive(network, root, MetaLanguageArchiveLimits::default())?.entries;
     let Some(premise) = entries.iter().find(|entry| {
@@ -463,7 +517,10 @@ fn read_structural_checkpoint(
     }) else {
         return Err(fail("invalid structural discovery checkpoint"));
     };
-    if entries.len() != 3 {
+    let oracle_entry = entries
+        .iter()
+        .find(|entry| entry.identifier == GRAMMAR_DISCOVERY_PARSER_ORACLE);
+    if entries.len() != if oracle_entry.is_some() { 4 } else { 3 } {
         return Err(fail("invalid structural discovery checkpoint"));
     }
     let model: Model = serde_json::from_value(decode_structured_data_links(
@@ -481,8 +538,13 @@ fn read_structural_checkpoint(
         edition: model.edition.clone(),
         limits: model.options.clone(),
     };
-    let mut result =
-        build_structural_inference(&model.positives, &model.negatives, &options, &model.history)?;
+    let mut result = build_structural_inference(
+        &model.positives,
+        &model.negatives,
+        &options,
+        &model.history,
+        None,
+    )?;
     let expected = read_meta_language_archive(
         &result.network,
         result.root,
@@ -505,7 +567,30 @@ fn read_structural_checkpoint(
     }
     result.network = network.clone();
     result.root = root;
-    Ok((result, model))
+    let oracle = if let Some(entry) = oracle_entry {
+        let (positives, negatives) = model.history.first().map_or(
+            (model.positives.as_slice(), model.negatives.as_slice()),
+            |first| {
+                (
+                    &model.positives[..first.positive_count],
+                    &model.negatives[..first.negative_count],
+                )
+            },
+        );
+        let observations = read_oracle_entry(entry, positives, negatives, true)?;
+        result.oracle_observations = Some(observations.clone());
+        Some(StructuralOracle {
+            entry: entry.clone(),
+            observations,
+        })
+    } else {
+        None
+    };
+    Ok(StructuralCheckpoint {
+        inference: result,
+        model,
+        oracle,
+    })
 }
 
 /// Append labelled examples and preserve each prior set of discovery premises.
@@ -518,7 +603,9 @@ pub fn refine_structural_grammar_inference(
     negatives: &[Vec<String>],
     identifier: Option<&str>,
 ) -> Result<StructuralGrammarInference, String> {
-    let (_, mut model) = read_structural_checkpoint(network, root)?;
+    let StructuralCheckpoint {
+        mut model, oracle, ..
+    } = read_structural_checkpoint(network, root)?;
     if positives.is_empty() && negatives.is_empty() {
         return Err(fail("refinement needs additional labelled examples"));
     }
@@ -556,5 +643,11 @@ pub fn refine_structural_grammar_inference(
         delimiters: model.delimiters,
         limits: model.options,
     };
-    build_structural_inference(&model.positives, &model.negatives, &options, &model.history)
+    build_structural_inference(
+        &model.positives,
+        &model.negatives,
+        &options,
+        &model.history,
+        oracle,
+    )
 }

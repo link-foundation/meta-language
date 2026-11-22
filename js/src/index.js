@@ -24,7 +24,7 @@ export { inferRegularGrammar, inferRegularGrammarWithParserOracle, readRegularGr
   createRegularGrammarInferenceProgramLinks } from './grammar-inference.js';
 export { acceptActiveGrammarWord, learnActiveGrammar, learnActiveGrammarAutomaton, sampleActiveGrammarWords } from './grammar-active-learning.js';
 export { observeGrammarDiscoveryParserOracle } from './grammar-discovery-parser-oracle.js';
-export { inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference } from './grammar-structural-inference.js';
+export { inferStructuralGrammar, inferStructuralGrammarWithParserOracle, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference } from './grammar-structural-inference.js';
 export {refineRegularGrammarInference,readRefinedRegularGrammarInferenceLinks} from './grammar-inference-refinement.js';
 export { inferGrammarScanner, inferGrammarScannerClasses, inferGrammarScannerModeStack } from './grammar-scanner-inference.js';
 export { inferGrammarAttributeAction } from './grammar-attribute-inference.js';

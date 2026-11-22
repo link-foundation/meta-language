@@ -9,7 +9,7 @@ import {readStructuredDataLino, structuredDataToLino} from './structured-data-li
 import {inferRegularGrammar,inferRegularGrammarWithParserOracle} from './grammar-inference.js';
 import {inferGrammarAttributeAction} from './grammar-attribute-inference.js';
 import {readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference,regularGrammarRefinementArchiveLimits} from './grammar-inference-refinement.js';
-import {inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference, structuralGrammarInferenceModelIdentifier} from './grammar-structural-inference.js';
+import {inferStructuralGrammar, inferStructuralGrammarWithParserOracle, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference, structuralGrammarInferenceModelIdentifier} from './grammar-structural-inference.js';
 import {readDynamicMetaLanguageIdentifier} from './dynamic-meta-language-rules.js';
 import {acceptDynamicLanguageCommand, readDynamicLanguageArgumentArity,
   readDynamicLanguageProjection, acceptDynamicLanguageConfigurationField,
@@ -131,10 +131,11 @@ function discoveryArchive(command,file,options,readFile,readBytes) {
     const source={identifier,language:options.get('--language'),edition:options.get('--edition')};
     const oraclePath=options.get('--oracle-grammar');
     if(oraclePath!==undefined) {
-      if(Object.hasOwn(examples,'delimiters')||scannerObservationFields.some(field=>Object.hasOwn(examples,field))) {
-        throw new TypeError('native parser oracle discovery requires a scalar regular language input');
+      if(scannerObservationFields.some(field=>Object.hasOwn(examples,field))) {
+        throw new TypeError('native parser oracle discovery needs source symbols for each candidate');
       }
       const grammar=parseGrammarLinks(readFile(oraclePath));
+      if(delimiters!==undefined)return inferStructuralGrammarWithParserOracle(grammar,positives,negatives,oracleCandidates,{...source,delimiters});
       return inferRegularGrammarWithParserOracle(grammar,positives,negatives,oracleCandidates,source);
     }
     if(oracleCandidates!==undefined)throw new TypeError('oracle candidates require --oracle-grammar');

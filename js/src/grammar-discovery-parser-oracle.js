@@ -79,7 +79,7 @@ export function createGrammarDiscoveryParserOracleEntry(grammar, positives, nega
   ]) };
 }
 
-export function readGrammarDiscoveryParserOracleEntry(entry, positives, negatives) {
+export function readGrammarDiscoveryParserOracleEntry(entry, positives, negatives, exactTraining = false) {
   const invalid = () => new TypeError('invalid grammar discovery oracle checkpoint');
   if (entry.kind !== 'grammar inference') throw invalid();
   const { entries } = readMetaLanguageArchive(entry.network, entry.root);
@@ -99,6 +99,7 @@ export function readGrammarDiscoveryParserOracleEntry(entry, positives, negative
     || !Array.isArray(data.candidates)) throw invalid();
   const replayed = observeGrammarDiscoveryParserOracle(source.grammar, data.positives, data.negatives, data.candidates);
   if (!isDeepStrictEqual(replayed.observations, data.observations)
+    || (exactTraining && (replayed.positives.length !== positives.length || replayed.negatives.length !== negatives.length))
     || !isDeepStrictEqual(replayed.positives, positives.slice(0, replayed.positives.length))
     || !isDeepStrictEqual(replayed.negatives, negatives.slice(0, replayed.negatives.length))) throw invalid();
   return replayed.observations;

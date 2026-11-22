@@ -5,8 +5,8 @@ use meta_language::{
     meta_language_archive_to_binary, meta_language_archive_to_link_cli_store, parse_grammar_links,
     read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
     read_meta_language_archive_network_text, read_meta_language_archive_text,
-    read_refined_regular_grammar_inference_links, read_structured_data_lino, render_grammar_links,
-    run_dynamic_language_command,
+    read_refined_regular_grammar_inference_links, read_structural_grammar_inference_links,
+    read_structured_data_lino, render_grammar_links, run_dynamic_language_command,
 };
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
@@ -140,6 +140,23 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
         "../../parity/fixtures/dynamic-language-command.lino"
     ))
     .unwrap();
+    let compiler = std::process::Command::new("rustc")
+        .arg("--version")
+        .output()
+        .unwrap();
+    assert!(compiler.status.success());
+    let compiler = String::from_utf8(compiler.stdout).unwrap();
+    let version = compiler.split_whitespace().nth(1).unwrap();
+    let mut parts = version.split('.');
+    assert!(
+        parts.next() == Some("1")
+            && parts
+                .next()
+                .and_then(|minor| minor.parse::<u32>().ok())
+                .is_some_and(|minor| (90..100).contains(&minor)),
+        "uncovered Rust {version}; {}",
+        fixture["versions"]["Rust"]
+    );
     let mut files = fixture["files"]
         .as_array()
         .unwrap()
@@ -322,6 +339,20 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
                     *observations
                 );
             }
+            if let Some(observations) = step.get("structuralOracle") {
+                let checkpoint = session
+                    .entries()
+                    .iter()
+                    .find(|entry| entry.identifier == "grammar inference:recursive-oracle-refined")
+                    .unwrap();
+                let result =
+                    read_structural_grammar_inference_links(&checkpoint.network, checkpoint.root)
+                        .unwrap();
+                assert_eq!(
+                    serde_json::to_value(result.oracle_observations).unwrap(),
+                    *observations
+                );
+            }
             if let Some(name) = step["concrete"].as_str() {
                 let entry = session
                     .entries()
@@ -397,6 +428,18 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
             "nativeOracleChecksDeclaredAndIndependentWords",
             "oracleObservationsReplaySourceFreeAfterRefinement",
             "installedCandidateExecutesIndependentOracleCases",
+        ],
+        test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
+    });
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-RECURSIVE-PARSER-ORACLE",
+        suffix: "behavior",
+        fixture_id: "grammar-discovery-recursive-parser-oracle",
+        fixture_file: "parity/fixtures/dynamic-language-command.lino",
+        assertions: &[
+            "recursiveOracleLabelsAndAnswersReplayed",
+            "recursiveOracleCheckpointSurvivesSourceFreeRefinement",
+            "installedRecursiveGrammarParsesDeeperAndRejectsNegative",
         ],
         test_name: "shared_dynamic_command_sequence_retains_complete_archive_contexts",
     });

@@ -991,6 +991,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "inferStructuralGrammarWithParserOracle",
+        "infer_structural_grammar_with_parser_oracle",
+        "function",
+    ),
+    (
         "insertConceptRecord",
         "LinkNetwork::insert_concept_record",
         "method",

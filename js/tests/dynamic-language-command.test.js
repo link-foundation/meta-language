@@ -6,6 +6,7 @@ import {runDynamicLanguageCommand} from '../src/dynamic-language-cli.js';
 import {DynamicMetaLanguage} from '../src/dynamic-meta-language.js';
 import {parseGrammarLinks} from '../src/grammar-links.js';
 import {readRefinedRegularGrammarInferenceLinks} from '../src/grammar-inference-refinement.js';
+import {readStructuralGrammarInferenceLinks} from '../src/grammar-structural-inference.js';
 import {createMetaLanguageArchive,metaLanguageArchiveToBinary,metaLanguageArchiveToLinkCliStore,
  readMetaLanguageArchiveText,readMetaLanguageArchiveBinary,readMetaLanguageArchiveLinkCliStore} from '../src/meta-language-archive.js';
 import {decodeStructuredDataLinks,readStructuredDataLino} from '../src/structured-data-links.js';
@@ -63,6 +64,10 @@ test('one shared command sequence retains concrete trees, recursive definitions 
     const checkpoint = session.entries.find(entry => entry.identifier === 'grammar inference:oracle-refined');
     assert.deepEqual(readRefinedRegularGrammarInferenceLinks(checkpoint.network, checkpoint.root).oracleObservations, step.oracle, step.name);
    }
+   if (step.structuralOracle) {
+    const checkpoint = session.entries.find(entry => entry.identifier === 'grammar inference:recursive-oracle-refined');
+    assert.deepEqual(readStructuralGrammarInferenceLinks(checkpoint.network, checkpoint.root).oracleObservations, step.structuralOracle, step.name);
+   }
    if(step.concrete){
     const entry=session.entries.find(entry=>entry.identifier===step.concrete);
     assert.equal(entry.kind,'concrete syntax',step.name);
@@ -76,6 +81,10 @@ test('one shared command sequence retains concrete trees, recursive definitions 
  recordIssue195Observations({requirementId:'I195-GRAMMAR-INFERENCE-NATIVE-PARSER-ORACLE',suffix:'behavior',
   fixtureId:'grammar-discovery-parser-oracle',fixtureFile:'parity/fixtures/dynamic-language-command.lino',
   assertions:['nativeOracleChecksDeclaredAndIndependentWords','oracleObservationsReplaySourceFreeAfterRefinement','installedCandidateExecutesIndependentOracleCases'],
+  testName:context.name});
+ recordIssue195Observations({requirementId:'I195-GRAMMAR-INFERENCE-RECURSIVE-PARSER-ORACLE',suffix:'behavior',
+  fixtureId:'grammar-discovery-recursive-parser-oracle',fixtureFile:'parity/fixtures/dynamic-language-command.lino',
+  assertions:['recursiveOracleLabelsAndAnswersReplayed','recursiveOracleCheckpointSurvivesSourceFreeRefinement','installedRecursiveGrammarParsesDeeperAndRejectsNegative'],
   testName:context.name});
 });
 test('source-free reload needs no grammar source callback',()=>{

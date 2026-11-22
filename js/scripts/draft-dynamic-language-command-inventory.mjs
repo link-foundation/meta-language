@@ -64,7 +64,7 @@ if(previousOptionalConstructor<0)value.features.push(optionalConstructorRow);els
 // These declarations identify source counterparts; they are not observations.
 const source=readFileSync(new URL('../src/index.js',import.meta.url),'utf8');
 const modules=new Set(['meta-language-archive.js','dynamic-meta-language.js','dynamic-language-cli.js',
- 'dynamic-language-command-program.js','grammar-discovery-parser-oracle.js','grammar-inference.js','grammar-inference-refinement.js','grammar-scanner-inference.js']);
+ 'dynamic-language-command-program.js','grammar-discovery-parser-oracle.js','grammar-inference.js','grammar-inference-refinement.js','grammar-scanner-inference.js','grammar-structural-inference.js']);
 const names=[];
 for(const [,bindings,file] of source.matchAll(/export \{([^}]+)\} from '\.\/([^']+)';/gu)){
  if(modules.has(file)) names.push(...bindings.split(',').map(name=>name.trim()).filter(Boolean));

@@ -221,6 +221,7 @@ pub(crate) fn read_oracle_entry(
     entry: &MetaLanguageArchiveEntry,
     positives: &[Vec<String>],
     negatives: &[Vec<String>],
+    exact_training: bool,
 ) -> Result<Vec<GrammarDiscoveryOracleObservation>, String> {
     let invalid = || "invalid grammar discovery oracle checkpoint".to_owned();
     if entry.kind != "grammar inference" {
@@ -269,6 +270,9 @@ pub(crate) fn read_oracle_entry(
         &data.candidates,
     )?;
     if replayed.observations != data.observations
+        || (exact_training
+            && (replayed.positives.len() != positives.len()
+                || replayed.negatives.len() != negatives.len()))
         || !positives.starts_with(&replayed.positives)
         || !negatives.starts_with(&replayed.negatives)
     {

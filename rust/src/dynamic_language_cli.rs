@@ -13,12 +13,13 @@ use crate::{
     StructuralGrammarInferenceOptions, create_dynamic_meta_language,
     infer_grammar_attribute_action, infer_regular_grammar,
     infer_regular_grammar_with_parser_oracle, infer_structural_grammar,
-    meta_language_archive_to_binary, meta_language_archive_to_link_cli_store,
-    meta_language_archive_to_text, parse_grammar_links, read_meta_language_archive_binary,
-    read_meta_language_archive_link_cli_store, read_meta_language_archive_text,
-    read_refined_regular_grammar_inference_links, read_structural_grammar_inference_links,
-    read_structured_data_lino, refine_regular_grammar_inference,
-    refine_structural_grammar_inference, render_grammar_links, structured_data_to_lino,
+    infer_structural_grammar_with_parser_oracle, meta_language_archive_to_binary,
+    meta_language_archive_to_link_cli_store, meta_language_archive_to_text, parse_grammar_links,
+    read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
+    read_meta_language_archive_text, read_refined_regular_grammar_inference_links,
+    read_structural_grammar_inference_links, read_structured_data_lino,
+    refine_regular_grammar_inference, refine_structural_grammar_inference, render_grammar_links,
+    structured_data_to_lino,
 };
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -290,14 +291,17 @@ where
             .ok_or("a labelled examples input is required")?;
         let examples = labelled_examples(&read_text(file)?, true)?;
         let oracle_path = args.options.get("--oracle-grammar");
-        if oracle_path.is_some() && (examples.delimiters.is_some() || examples.has_scanner_fields) {
+        if oracle_path.is_some() && examples.has_scanner_fields {
             return Err(
-                "native parser oracle discovery requires a scalar regular language input".into(),
+                "native parser oracle discovery needs source symbols for each candidate".into(),
             );
         }
         if oracle_path.is_none() && examples.oracle_candidates.is_some() {
             return Err("oracle candidates require --oracle-grammar".into());
         }
+        let oracle = oracle_path
+            .map(|path| parse_grammar_links(&read_text(path)?).map_err(|error| error.to_string()))
+            .transpose()?;
         if let Some(delimiters) = examples.delimiters {
             let defaults = StructuralGrammarInferenceOptions::default();
             let options = StructuralGrammarInferenceOptions {
@@ -315,8 +319,17 @@ where
                     .unwrap_or(defaults.edition),
                 ..defaults
             };
-            let result =
-                infer_structural_grammar(&examples.positives, &examples.negatives, &options)?;
+            let result = if let Some(grammar) = &oracle {
+                infer_structural_grammar_with_parser_oracle(
+                    grammar,
+                    &examples.positives,
+                    &examples.negatives,
+                    examples.oracle_candidates.as_deref().unwrap_or_default(),
+                    &options,
+                )?
+            } else {
+                infer_structural_grammar(&examples.positives, &examples.negatives, &options)?
+            };
             return Ok(MetaLanguageArchive {
                 network: result.network,
                 root: result.root,
@@ -337,11 +350,9 @@ where
         options.scanner_observations = examples.scanner_observations;
         options.scanner_character_classes = examples.scanner_character_classes;
         options.scanner_mode_stack_observations = examples.scanner_mode_stack_observations;
-        if let Some(path) = oracle_path {
-            let grammar =
-                parse_grammar_links(&read_text(path)?).map_err(|error| error.to_string())?;
+        if let Some(grammar) = &oracle {
             infer_regular_grammar_with_parser_oracle(
-                &grammar,
+                grammar,
                 &examples.positives,
                 &examples.negatives,
                 examples.oracle_candidates.as_deref().unwrap_or_default(),
@@ -560,7 +571,7 @@ fn success(stdout: Vec<u8>) -> DynamicLanguageCommandOutput {
 }
 
 /// Run dynamic preparation, extension, parsing, translation and grammar export.
-/// File callbacks only supply bytes; no process, parser oracle or source fetch runs.
+/// File callbacks supply bytes. A requested parser oracle runs in the native grammar runtime.
 pub fn run_dynamic_language_command<T, B>(
     args: &[String],
     mut read_text: T,

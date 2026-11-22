@@ -39,7 +39,8 @@ pub(crate) use structural::STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER;
 pub use structural::{
     StructuralGrammarInference, StructuralGrammarInferenceLimits,
     StructuralGrammarInferenceOptions, infer_structural_grammar,
-    read_structural_grammar_inference_links, refine_structural_grammar_inference,
+    infer_structural_grammar_with_parser_oracle, read_structural_grammar_inference_links,
+    refine_structural_grammar_inference,
 };
 
 /// Explicit deterministic learner and resource parameters, shared with JavaScript.
@@ -714,7 +715,7 @@ pub fn read_regular_grammar_inference_links(
         .entries
         .iter()
         .find(|entry| entry.identifier == GRAMMAR_DISCOVERY_PARSER_ORACLE)
-        .map(|entry| read_oracle_entry(entry, &model.positives, &model.negatives))
+        .map(|entry| read_oracle_entry(entry, &model.positives, &model.negatives, false))
         .transpose()?;
     Ok(RegularGrammarInference {
         grammar: source.grammar.clone(),

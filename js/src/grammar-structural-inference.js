@@ -6,6 +6,8 @@ import { createMetaLanguageArchive, readMetaLanguageArchive } from './meta-langu
 import { createSourceDefinitionProgramLinks } from './source-definition-catalog.js';
 import { inferGrammarStructuralProductions } from './grammar-structural-inference-rules.js';
 import { acceptRegularGrammarRefinementCount, readRegularGrammarRefinementIdentifier } from './grammar-inference-refinement-rules.js';
+import { createGrammarDiscoveryParserOracleEntry, grammarDiscoveryParserOracleIdentifier,
+  observeGrammarDiscoveryParserOracle, readGrammarDiscoveryParserOracleEntry } from './grammar-discovery-parser-oracle.js';
 
 const algorithm = 'recursive grammar inference from labelled delimiter productions 1';
 export const structuralGrammarInferenceModelIdentifier = 'structural-discovery-model';
@@ -123,7 +125,15 @@ export function inferStructuralGrammar(positives, negatives = [], options = {}) 
   return buildStructuralGrammarInference(positives, negatives, options, []);
 }
 
-function buildStructuralGrammarInference(positives, negatives, options, history) {
+/** Discover recursive productions from labels checked by a native parser. */
+export function inferStructuralGrammarWithParserOracle(grammar, positives, negatives, candidates, options) {
+  const observed = observeGrammarDiscoveryParserOracle(grammar, positives, negatives, candidates);
+  const entry = createGrammarDiscoveryParserOracleEntry(grammar, positives, negatives, candidates ?? [], observed.observations);
+  return buildStructuralGrammarInference(observed.positives, observed.negatives, options, [],
+    { entry, observations: observed.observations });
+}
+
+function buildStructuralGrammarInference(positives, negatives, options, history, oracle) {
   const { delimiters, identifier = 'inferred-structure', language = 'Inferred language', edition = 'structural discovery 1' } = options;
   if (![identifier, language, edition].every(sourceText)) fail('invalid source identity');
   const limits = {
@@ -145,8 +155,10 @@ function buildStructuralGrammarInference(positives, negatives, options, history)
     { identifier: structuralGrammarInferenceModelIdentifier, kind: 'grammar inference', ...encodeStructuredDataLinks(model) },
     { identifier: algorithmIdentifier, kind: 'typed program', ...definition() },
     { identifier: grammarIdentifier, kind: 'discovered concepts', ...createDiscoveredConceptLinks([source]) },
+    ...(oracle ? [oracle.entry] : []),
   ]);
-  return { grammar, source, alphabet: input.alphabet, productions, ...archive };
+  return { grammar, source, alphabet: input.alphabet, productions, ...archive,
+    ...(oracle ? { oracleObservations: oracle.observations } : {}) };
 }
 
 /** Reload and check the grammar against the complete archived observations. */
@@ -157,23 +169,33 @@ export function readStructuralGrammarInferenceLinks(network, root) {
 function readStructuralCheckpoint(network, root) {
   const entries = readMetaLanguageArchive(network, root).entries;
   const premise = entries.find(entry => entry.identifier === structuralGrammarInferenceModelIdentifier && entry.kind === 'grammar inference');
-  if (!premise || entries.length !== 3) fail('invalid structural discovery checkpoint');
+  const oracleEntry = entries.find(entry => entry.identifier === grammarDiscoveryParserOracleIdentifier);
+  if (!premise || entries.length !== (oracleEntry ? 4 : 3)) fail('invalid structural discovery checkpoint');
   const model = decodeStructuredDataLinks(premise.network, premise.root);
   if (model?.schemaVersion !== 1 || model.algorithm !== algorithm || !model.options) fail('unsupported structural discovery model');
+  const history = model.history ?? [];
   const result = buildStructuralGrammarInference(model.positives, model.negatives, { ...model.options, delimiters: model.delimiters,
-    identifier: model.identifier, language: model.language, edition: model.edition }, model.history ?? []);
+    identifier: model.identifier, language: model.language, edition: model.edition }, history);
+  const first = history[0];
+  const oracle = oracleEntry ? {
+    entry: oracleEntry,
+    observations: readGrammarDiscoveryParserOracleEntry(oracleEntry,
+      first ? model.positives.slice(0, first.positiveCount) : model.positives,
+      first ? model.negatives.slice(0, first.negativeCount) : model.negatives, true),
+  } : undefined;
   const expected = readMetaLanguageArchive(result.network, result.root).entries;
   for (const entry of expected) {
     const actual = entries.find(candidate => candidate.identifier === entry.identifier);
     if (actual?.kind !== entry.kind || !actual.root.equals(entry.root) || actual.network.toLino() !== entry.network.toLino())
       fail('checkpoint differs from its actual structural discovery model');
   }
-  return { inference: { ...result, network, root: LinkId.from(root) }, model };
+  return { inference: { ...result, network, root: LinkId.from(root),
+    ...(oracle ? { oracleObservations: oracle.observations } : {}) }, model, oracle };
 }
 
 /** Append labelled counterexamples to the archived discovery premises. */
 export function refineStructuralGrammarInference(network, root, positives = [], negatives = [], {identifier} = {}) {
-  const {model} = readStructuralCheckpoint(network, root);
+  const {model, oracle} = readStructuralCheckpoint(network, root);
   if (!Array.isArray(positives) || !Array.isArray(negatives) || positives.length + negatives.length === 0)
     fail('refinement needs additional labelled examples');
   if (model.positives.length + model.negatives.length + positives.length + negatives.length > model.options.symbolLimit)
@@ -183,5 +205,5 @@ export function refineStructuralGrammarInference(network, root, positives = [], 
   if (!acceptRegularGrammarRefinementCount(history.length)) fail('invalid refinement history limit');
   return buildStructuralGrammarInference([...model.positives, ...positives], [...model.negatives, ...negatives], {
     ...model.options, delimiters: model.delimiters, language: model.language, edition: model.edition, identifier: nextIdentifier,
-  }, history);
+  }, history, oracle);
 }
