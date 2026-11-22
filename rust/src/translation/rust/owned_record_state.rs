@@ -169,7 +169,7 @@ impl RustParser{
   }
   Ok(result)
  }
- fn project_record_state(&mut self,layouts:&[Layout],mut value:SExpr,span:Option<Span>)->SExpr{
+ pub(super) fn project_record_state(&mut self,layouts:&[Layout],mut value:SExpr,span:Option<Span>)->SExpr{
   for layout in layouts{
    let binder=self.fresh_product_binding();
    let mut constructor=vec!["crate".to_owned()];

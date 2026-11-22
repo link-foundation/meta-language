@@ -5,11 +5,13 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     diagnostics::{Result, type_error},
-    ir::{DataDecl, Expr, Node, Pattern},
+    ir::{DataDecl, Expr, LitValue, Node, Pattern},
+    rust_exclusive_source_string_rules as string_rules,
     source_expression_positions::check_position,
     source_loop_folds::{SourceFoldSpan, SourceStateBinder, check_slot},
     source_record_places::{box_projection_depth, owner_view},
     source_signatures::SourceTypeSignature,
+    surface::BinaryOp,
     types::Type,
 };
 
@@ -30,6 +32,10 @@ pub enum RustSourcePlaceTransform {
 pub enum SourcePlaceOperation {
     #[serde(rename = "assign field")]
     AssignField,
+    #[serde(rename = "clear string")]
+    ClearString,
+    #[serde(rename = "append string text")]
+    AppendStringText,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -104,6 +110,59 @@ struct Reconstruction<'a, 'data, D> {
 }
 
 impl<'a, 'data, D: FnMut(&Type) -> Option<&'data DataDecl>> Reconstruction<'a, 'data, D> {
+    fn projection(
+        &mut self,
+        mut node: &Expr,
+        root: &SourceTypeSignature,
+        selected: &[usize],
+        input: &str,
+    ) -> Option<()> {
+        let mut position = root;
+        let mut fields = Vec::with_capacity(selected.len());
+        for &index in selected {
+            let (data, positions) = fields_for(position, self.resolve_data)?;
+            self.work += 1 + positions.len();
+            if self.work > 100_000 {
+                return None;
+            }
+            position = positions.get(index)?;
+            fields.push((index, data, positions));
+        }
+        for (index, data, positions) in fields.into_iter().rev() {
+            let Node::Match { scrutinee, cases } = &node.node else {
+                return None;
+            };
+            let [case] = cases.as_slice() else {
+                return None;
+            };
+            let Pattern::Ctor {
+                data: owner,
+                ctor,
+                binds,
+            } = &case.pattern
+            else {
+                return None;
+            };
+            let chosen = binds.get(index)?.as_deref()?;
+            if !plain(node)
+                || owner != &data.full_name
+                || ctor != &data.ctors[0].name
+                || binds.len() != positions.len()
+                || chosen.is_empty()
+                || binds
+                    .iter()
+                    .enumerate()
+                    .any(|(at, bind)| at != index && bind.is_some())
+                || node.ty != positions[index].ty
+                || !variable(&case.body, chosen, &node.ty)
+            {
+                return None;
+            }
+            node = scrutinee;
+        }
+        variable(node, input, &root.ty).then_some(())
+    }
+
     fn field(
         &mut self,
         node: &'a Expr,
@@ -199,7 +258,7 @@ pub(super) fn check_place_transform<'data>(
 ) -> Result<RustSourcePlaceTransform> {
     let fail = || {
         type_error(
-            "a field assignment retains its exact complete source place and Unit writeback packet",
+            "a field replacement retains its exact operation, complete source place and Unit writeback packet",
             node.span,
         )
     };
@@ -216,8 +275,12 @@ pub(super) fn check_place_transform<'data>(
     let [selected] = places.as_slice() else {
         return Err(fail());
     };
-    let [operand] = operands.as_slice() else {
-        return Err(fail());
+    let operand = match (operation, operands.as_slice()) {
+        (SourcePlaceOperation::ClearString, []) => None,
+        (SourcePlaceOperation::AssignField | SourcePlaceOperation::AppendStringText, [operand]) => {
+            Some(operand)
+        }
+        _ => return Err(fail()),
     };
     let Node::Let { name, value, body } = &node.node else {
         return Err(fail());
@@ -239,6 +302,7 @@ pub(super) fn check_place_transform<'data>(
     let expected = Type::Tuple {
         elements: vec![Type::Unit, state.ty.clone()],
     };
+    let mut names = HashSet::from([root.input.as_str(), name.as_str(), rebuilt.as_str()]);
     if language != "Rust"
         || span.start >= span.end
         || span.end as u64 > 9_007_199_254_740_991
@@ -254,16 +318,12 @@ pub(super) fn check_place_transform<'data>(
         || selected.fields.len() > 128
         || root.input.is_empty()
         || root.input.len() > 4096
-        || operand.input.is_empty()
-        || operand.input.len() > 4096
-        || HashSet::from([
-            root.input.as_str(),
-            operand.input.as_str(),
-            name.as_str(),
-            rebuilt.as_str(),
-        ])
-        .len()
-            != 4
+        || names.len() != 3
+        || operand.is_some_and(|operand| {
+            operand.input.is_empty()
+                || operand.input.len() > 4096
+                || !names.insert(operand.input.as_str())
+        })
         || !plain(body)
         || !plain(output)
         || !plain(unit)
@@ -283,39 +343,119 @@ pub(super) fn check_place_transform<'data>(
         &mut resolve_type,
         &mut resolve_data,
     )?;
-    let operand_position = check_position(
-        &operand.position,
-        &value.ty,
-        language,
-        &mut resolve_type,
-        &mut resolve_data,
-    )?;
-    let qualified = value.source_position.as_ref().ok_or_else(fail)?;
-    if value.var_name() != Some(operand.input.as_str())
-        || value.source_state_transition.is_some()
-        || value.source_loop_fold.is_some()
-        || value.source_record_place.is_some()
-        || value.source_place_transform.is_some()
-        || qualified.position != operand_position
-    {
-        return Err(fail());
-    }
+    let (argument, projection) = match (operation, &value.node) {
+        (SourcePlaceOperation::AssignField, Node::Var { .. }) => (Some(value.as_ref()), None),
+        (
+            SourcePlaceOperation::ClearString,
+            Node::Lit {
+                value: LitValue::Text(text),
+            },
+        ) if text.is_empty() && plain(value) => (None, None),
+        (
+            SourcePlaceOperation::AppendStringText,
+            Node::Binary {
+                op: BinaryOp::Concat,
+                left,
+                right,
+                domain: None,
+                semantics: None,
+                rounding: None,
+                by_zero: None,
+            },
+        ) if plain(value) => (Some(right.as_ref()), Some(left.as_ref())),
+        _ => return Err(fail()),
+    };
+    let checked_operand = match (operand, argument) {
+        (Some(operand), Some(argument)) => {
+            let position = check_position(
+                &operand.position,
+                &argument.ty,
+                language,
+                &mut resolve_type,
+                &mut resolve_data,
+            )?;
+            if argument.var_name() != Some(operand.input.as_str())
+                || argument.source_state_transition.is_some()
+                || argument.source_loop_fold.is_some()
+                || argument.source_record_place.is_some()
+                || argument.source_place_transform.is_some()
+            {
+                return Err(fail());
+            }
+            if *operation == SourcePlaceOperation::AssignField {
+                if argument
+                    .source_position
+                    .as_ref()
+                    .is_none_or(|qualifier| qualifier.position != position)
+                {
+                    return Err(fail());
+                }
+            } else if !plain(argument)
+                || !string_rules::accept_rust_exclusive_source_string_suffix(
+                    position.ty.kind(),
+                    if position.owner.kind == "primitive" {
+                        "string slice"
+                    } else {
+                        "owned string"
+                    },
+                    position.wrappers.len() as f64,
+                    true,
+                    position
+                        .wrappers
+                        .iter()
+                        .all(|wrapper| wrapper == "reference"),
+                    &position.owner.kind,
+                    &position.owner.path.join("::"),
+                    position.owner.arguments.len() as f64,
+                )
+            {
+                return Err(fail());
+            }
+            Some(SourcePlaceOperand {
+                input: operand.input.clone(),
+                position,
+            })
+        }
+        (None, None) => None,
+        _ => return Err(fail()),
+    };
     let mut reconstruction = Reconstruction {
         resolve_data: &mut resolve_data,
         replacement: name,
         replacement_type: &value.ty,
         work: 0,
-        seen: HashSet::from([
-            root.input.as_str(),
-            operand.input.as_str(),
-            name.as_str(),
-            rebuilt.as_str(),
-        ]),
+        seen: names,
         lifetime: std::marker::PhantomData,
     };
     let target = reconstruction.field(state, &position, &selected.fields, &root.input)?;
-    if target.ty != value.ty || box_projection_depth(&operand_position, &target) != Some(0) {
+    if target.ty != value.ty
+        || !target.lifetimes.is_empty()
+        || target.array_element_position.is_some()
+    {
         return Err(fail());
+    }
+    if *operation == SourcePlaceOperation::AssignField {
+        if checked_operand
+            .as_ref()
+            .is_none_or(|operand| box_projection_depth(&operand.position, &target) != Some(0))
+        {
+            return Err(fail());
+        }
+    } else if !string_rules::accept_rust_exclusive_source_string_receiver(
+        target.ty.kind(),
+        "owned string",
+        target.wrappers.len() as f64,
+        true,
+        &target.owner.kind,
+        &target.owner.path.join("::"),
+        target.owner.arguments.len() as f64,
+    ) {
+        return Err(fail());
+    }
+    if let Some(projection) = projection {
+        reconstruction
+            .projection(projection, &position, &selected.fields, &root.input)
+            .ok_or_else(fail)?;
     }
     Ok(RustSourcePlaceTransform::Replacement {
         operation: *operation,
@@ -325,10 +465,7 @@ pub(super) fn check_place_transform<'data>(
             input: root.input.clone(),
         }],
         places: places.clone(),
-        operands: vec![SourcePlaceOperand {
-            position: operand_position,
-            input: operand.input.clone(),
-        }],
+        operands: checked_operand.into_iter().collect(),
         span: span.clone(),
     })
 }

@@ -69,7 +69,7 @@ impl RustParser {
             let suffix = self.with_standard_sum_source_context(None, |parser| {
                 parser.expr(path, Default::default())
             })?;
-            let origin = self.origins.origin(&suffix, path);
+            let mut origin = self.origins.origin(&suffix, path);
             let owner = origin
                 .expanded_source_owner
                 .clone()
@@ -85,6 +85,9 @@ impl RustParser {
                         Vec::new(),
                     )
                 });
+            if origin.source_owner.is_none() {
+                origin.source_owner = Some(owner.clone());
+            }
             if !self.origins.collecting
                 && !string_rules::accept_rust_exclusive_source_string_suffix(
                     origin.ty.as_ref().map_or("", super::Type::kind),
@@ -104,7 +107,7 @@ impl RustParser {
             }
             self.origins.check_owned_origin(&origin, suffix.span)?;
             self.cursor.eat(",");
-            Some(suffix)
+            Some((suffix, origin))
         } else {
             None
         };
@@ -123,10 +126,26 @@ impl RustParser {
                 span,
             ));
         }
+        if !source_fields.is_empty() && slot.source_binder.is_some() {
+            let result = self.owned_record_effect_string_replacement(
+                super::CollectionPlace {
+                    slot,
+                    layouts: source_fields,
+                    target,
+                },
+                field,
+                suffix,
+                path,
+                span,
+            )?;
+            self.origins
+                .finish_owned_expression(&result, path, &temporaries, false);
+            return Ok(Some(result));
+        }
         let mut origin = SourceOrigin::with_type(STRING, path, Vec::new());
         origin.source_owner = field.source_owner.clone();
         origin.expanded_source_owner = field.expanded_source_owner.clone();
-        let value = if let Some(suffix) = suffix {
+        let value = if let Some((suffix, _)) = suffix {
             let suffix_name = self.fresh_product_binding();
             let prior = self.owned_record_effect_read(slot.clone(), span)?;
             let current = self.project_record_state(&source_fields, prior, span);

@@ -215,6 +215,28 @@ impl Regions<'_> {
         Ok(())
     }
 
+    pub(super) fn check_selected_record_field(
+        &self,
+        mut root: usize,
+        path: &[usize],
+    ) -> Result<()> {
+        for &index in path {
+            accept(rules::read_rust_borrowed_source_read_error(
+                &self.states[root],
+                &[],
+            ))?;
+            root = self
+                .field_images
+                .get(&root)
+                .and_then(|image| image.fields.get(index))
+                .copied()
+                .ok_or_else(|| {
+                    fail("a field replacement retains its actual declaration-order coordinate")
+                })?;
+        }
+        self.check_record_roots(vec![root])
+    }
+
     pub(super) fn revise_record_field(
         &mut self,
         prior: usize,

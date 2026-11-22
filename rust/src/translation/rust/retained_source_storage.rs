@@ -291,6 +291,49 @@ mod tests {
     }
 
     #[test]
+    fn projected_string_replacements_preserve_disjoint_sibling_loans() {
+        let source = r#"struct Message { body: String, tag: u8 }
+            struct Envelope { message: Message, id: u8 }
+            fn refs<'a>(tag: &'a u8) -> Vec<&'a u8> { vec![tag] }
+            fn main() {
+                let mut envelope = Envelope {
+                    message: Message { body: String::from("discarded"), tag: 7u8 },
+                    id: 8u8,
+                };
+                let tags = refs(&envelope.message.tag);
+                envelope.message.body.clear();
+                envelope.message.body.push_str("kept");
+                println!("{}", envelope.message.body);
+                println!("{}", tags.len() == 1 && envelope.id == 8u8);
+            }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        assert_eq!(wire.matches("\"operation\":\"clear string\"").count(), 1);
+        assert_eq!(
+            wire.matches("\"operation\":\"append string text\"").count(),
+            1
+        );
+        let edited = wire.replacen(
+            "\"operation\":\"append string text\"",
+            "\"operation\":\"clear string\"",
+            1,
+        );
+        assert_ne!(wire, edited);
+        crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(
+            &serde_json::from_str(&edited).unwrap(),
+        )
+        .expect_err("changing the retained intrinsic cannot change the meaning of the actual term");
+    }
+
+    #[test]
     fn selected_record_field_moves_leave_its_actual_sibling_available() {
         let source = r#"struct Pair { first: String, second: String }
             fn main() {

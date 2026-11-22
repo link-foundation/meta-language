@@ -11,10 +11,11 @@ use crate::translation::rust_owned_record_effect_rules as rules;
 use crate::translation::rust_expression_completion_rules as completion;
 use crate::translation::proposition_value_rules as proposition;
 use crate::translation::rust_owned_record_loop_rules as loops;
+use crate::translation::source_place_transforms::SourcePlaceOperation;
 
 #[derive(Default)]
 pub(super) struct OwnedRecordEffects{reads:Vec<Slot>,writes:Vec<Write>,packets:Vec<(CollectionPlace,Type)>,pub(super) loops:super::owned_record_loops::FiniteRecordLoopState,pub(super) loop_scope:Option<usize>}
-struct Write{slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String}
+struct Write{slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,intrinsic:Option<(SourcePlaceOperation, Option<SourceOrigin>)>}
 pub(super) enum EffectSource<'a>{Read(&'a Slot),Write{slot:&'a Slot,target:&'a str}}
 type Environment=BTreeMap<String,(Slot,String)>;
 fn fail(reason:&str)->super::TranslationError{unsupported("Rust ordered record state",reason,None)}
@@ -169,36 +170,50 @@ impl Transport<'_>{
  fn write_state(&mut self,mut node:Value,environment:Environment,depth:usize)->Result<Lowered>{
   use crate::translation::{
    source_loop_folds::SourceFoldSpan,
-   source_place_transforms::{RustSourcePlaceTransform,SourcePlaceOperation,SourcePlaceOperand,SourcePlacePath,SourcePlaceSlot},
+   source_place_transforms::{RustSourcePlaceTransform,SourcePlaceOperand,SourcePlacePath,SourcePlaceSlot},
    source_signatures::RustSourceExpressionPosition,
   };
   let ordinal=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state write"))?;
   let write=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.writes.get(ordinal)).ok_or_else(||fail("unknown actual state write"))?;
-  let (slot,layouts,field)=(write.slot.clone(),write.layouts.clone(),write.field.clone());
-  let expected=field.ty.as_ref().map(|ty|encode(&self.parser.record_source_type(ty,&field.path))).transpose()?;
+  let (slot,layouts,field,intrinsic)=(write.slot.clone(),write.layouts.clone(),write.field.clone(),write.intrinsic.clone());
+  let operand_origin=intrinsic.as_ref().map_or(Some(&field),|(_, operand)|operand.as_ref());
+  let expected=operand_origin.and_then(|origin|origin.ty.as_ref().map(|ty|(origin,ty))).map(|(origin,ty)|encode(&self.parser.record_source_type(ty,&origin.path))).transpose()?;
   let span=node.get("span").cloned().map(serde_json::from_value::<Span>).transpose().map_err(|_|fail("a field assignment needs its actual source span"))?;
   let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,expected.as_ref())?;
   let previous=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable write cannot leave its actual lexical declaration scope"))?.1.clone();
   let rhs=self.parser.fresh_product_binding();
-  let mut binding=json!({"k":"let","name":rhs,"value":result.value});
-  if let Some(ty)=expected{binding["type"]=ty;}
-  result.bindings.push(binding);
+  if operand_origin.is_some(){
+   let mut binding=json!({"k":"let","name":rhs,"value":result.value});
+   if let Some(ty)=expected{binding["type"]=ty;}
+   result.bindings.push(binding);
+  }
   let fresh=self.parser.fresh_product_binding();
   let root_type=encode(&self.parser.record_source_type(slot.origin.ty.as_ref().ok_or_else(||fail("a mutable root lost its actual type"))?,&slot.origin.path))?;
   if !layouts.is_empty()&&slot.source_binder.is_some(){
    let span=span.ok_or_else(||fail("a field assignment needs its actual complete source span"))?;
    let root=self.parser.retain_source_fold_slot(&slot)?;
-   let position=self.parser.retain_source_region_position(&field,Some(span))?;
+   let operation=intrinsic.as_ref().map_or(SourcePlaceOperation::AssignField,|(operation,_)|*operation);
+   let operands=operand_origin.map(|origin|self.parser.retain_source_region_position(origin,Some(span)).map(|position|SourcePlaceOperand{input:rhs.clone(),position})).transpose()?.into_iter().collect::<Vec<_>>();
    let replacement=self.parser.fresh_product_binding();
    let rebuilt=self.parser.fresh_product_binding();
    let state=self.parser.rebuild_record_state(&layouts,0,decode(name(&previous))?,decode(name(&replacement))?,Some(span))?;
-   let mut operand=name(&rhs);
-   operand["sourcePosition"]=encode(&RustSourceExpressionPosition{model:"Rust borrowed expression source position 1".into(),position:position.clone()})?;
+   let operand=match operation{
+    SourcePlaceOperation::AssignField=>{
+     let mut operand=name(&rhs);
+     operand["sourcePosition"]=encode(&RustSourceExpressionPosition{model:"Rust borrowed expression source position 1".into(),position:operands[0].position.clone()})?;
+     operand
+    }
+    SourcePlaceOperation::ClearString=>json!({"k":"str","value":""}),
+    SourcePlaceOperation::AppendStringText=>{
+     let selected=self.parser.project_record_state(&layouts,decode(name(&previous))?,Some(span));
+     json!({"k":"binary","op":"concat","left":encode(&selected)?,"right":name(&rhs)})
+    }
+   };
    let facet=RustSourcePlaceTransform::Replacement{
-    operation:SourcePlaceOperation::AssignField,
+    operation,
     slots:vec![SourcePlaceSlot{binder:root.binder,position:root.position,input:previous}],
     places:vec![SourcePlacePath{slot:0,fields:layouts.iter().map(|layout|layout.index).collect()}],
-    operands:vec![SourcePlaceOperand{input:rhs,position}],
+    operands,
     span:SourceFoldSpan{start:span.start,end:span.end},
    };
    let packet=self.parser.fresh_product_binding();
@@ -303,7 +318,30 @@ impl RustParser{
  pub(super) fn begin_owned_record_short_circuit(&self)->Option<HashMap<String,String>>{self.owned_record_state.effects.as_ref().map(|_|self.origins.snapshot_owned_bindings())}
  pub(super) fn end_owned_record_short_circuit(&mut self,before:Option<HashMap<String,String>>){if let Some(before)=before{let after=self.origins.snapshot_owned_bindings();self.origins.join_owned_bindings(&before,&after,true,true);}}
  pub(super) fn owned_record_effect_read(&mut self,slot:Slot,span:Option<Span>)->Result<SExpr>{self.charge_owned_record_effect()?;let origin=slot.origin.clone();let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("state read transport is not active"))?;let ordinal=effects.reads.len();effects.reads.push(slot);let mut value=decode(json!({"k":"math","op":rules::read_rust_owned_record_effect_operation("read"),"name":ordinal.to_string(),"args":[]}))?;value.span=span;self.origins.mark(&value,origin);Ok(value)}
- pub(super) fn owned_record_effect_write(&mut self,slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,value:SExpr,path:&[String],span:Option<Span>)->Result<SExpr>{self.charge_owned_record_effect()?;let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("state write transport is not active"))?;let ordinal=effects.writes.len();effects.writes.push(Write{slot,layouts,field,target});let mut node=decode(json!({"k":"math","op":rules::read_rust_owned_record_effect_operation("write"),"name":ordinal.to_string(),"args":[{"value":encode(&value)?,"spread":false}]}))?;node.span=span;let origin=SourceOrigin::with_type(super::UNIT,path,Vec::new());self.origins.mark(&node,origin);Ok(node)}
+ pub(super) fn owned_record_effect_write(&mut self,slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,value:SExpr,path:&[String],span:Option<Span>)->Result<SExpr>{
+  self.record_owned_write(Write{slot,layouts,field,target,intrinsic:None},value,path,span)
+ }
+ fn record_owned_write(&mut self,write:Write,value:SExpr,path:&[String],span:Option<Span>)->Result<SExpr>{
+  self.charge_owned_record_effect()?;
+  let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("state write transport is not active"))?;
+  let ordinal=effects.writes.len();
+  effects.writes.push(write);
+  let mut node=decode(json!({"k":"math","op":rules::read_rust_owned_record_effect_operation("write"),"name":ordinal.to_string(),"args":[{"value":encode(&value)?,"spread":false}]}))?;
+  node.span=span;
+  let origin=SourceOrigin::with_type(super::UNIT,path,Vec::new());
+  self.origins.mark(&node,origin);
+  Ok(node)
+ }
+ pub(super) fn owned_record_effect_string_replacement(
+  &mut self,place:CollectionPlace,field:SourceOrigin,operand:Option<(SExpr,SourceOrigin)>,path:&[String],span:Option<Span>,
+ )->Result<SExpr>{
+  let (value,intrinsic)=match operand{
+   Some((value,origin))=>(value,(SourcePlaceOperation::AppendStringText,Some(origin))),
+   None=>(SExpr::new(super::SNode::Unit,span),(SourcePlaceOperation::ClearString,None)),
+  };
+  let CollectionPlace{slot,layouts,target}=place;
+  self.record_owned_write(Write{slot,layouts,field,target,intrinsic:Some(intrinsic)},value,path,span)
+ }
  pub(super) fn is_collection_mutation_statement(&self,node:&SExpr)->bool{
   let super::SNode::Math{op,name,args}=&node.node else{return false;};
   op==rules::read_rust_owned_record_effect_operation("packet")

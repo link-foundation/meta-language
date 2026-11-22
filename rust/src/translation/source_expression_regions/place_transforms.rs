@@ -4,7 +4,9 @@ use super::{
     rules,
 };
 use crate::translation::{
-    source_place_transforms::{RustSourcePlaceTransform, check_place_transform, plain},
+    source_place_transforms::{
+        RustSourcePlaceTransform, SourcePlaceOperation, check_place_transform, plain,
+    },
     types::Type,
 };
 
@@ -58,6 +60,7 @@ impl Regions<'_> {
             ));
         }
         let RustSourcePlaceTransform::Replacement {
+            operation,
             slots,
             places,
             operands,
@@ -66,8 +69,8 @@ impl Regions<'_> {
         let slot = &slots[0];
         self.scope(&slot.position, bindings)?;
         self.closed_output(&slot.position)?;
-        let operand = &operands[0];
-        self.scope(&operand.position, bindings)?;
+        let path = &places[0].fields;
+        let assignment = operation == SourcePlaceOperation::AssignField;
         let source = env
             .get(&slot.input)
             .cloned()
@@ -83,20 +86,42 @@ impl Regions<'_> {
                 })
         }).ok_or_else(|| fail("a field write retains its actual initialized binder and current closed storage revision"))?;
         let prior = current.revision;
+        if !assignment {
+            self.check_selected_record_field(prior, path)?;
+        }
         let Node::Let { value, .. } = &node.node else {
             return Err(fail(
                 "a field write needs its checked source operand binding",
             ));
         };
-        let actual = self.expression(value, env, bindings, Some(&operand.position), depth + 1)?;
-        let actual = self.read(actual, "move")?;
-        if !actual.regions.is_empty() {
-            return Err(fail(
-                "a closed source field write cannot retain a borrowed operand",
-            ));
-        }
+        let shared_operand = match (operation, &value.node, operands.as_slice()) {
+            (SourcePlaceOperation::AssignField, _, [operand]) => {
+                self.scope(&operand.position, bindings)?;
+                let actual =
+                    self.expression(value, env, bindings, Some(&operand.position), depth + 1)?;
+                let actual = self.read(actual, "move")?;
+                if !actual.regions.is_empty() {
+                    return Err(fail(
+                        "a closed source field write cannot retain a borrowed operand",
+                    ));
+                }
+                None
+            }
+            (SourcePlaceOperation::AppendStringText, Node::Binary { right, .. }, [operand]) => {
+                self.scope(&operand.position, bindings)?;
+                self.closed_target(&operand.position)?;
+                let actual =
+                    self.expression(right, env, bindings, Some(&operand.position), depth + 1)?;
+                Some(self.read(actual, "read")?)
+            }
+            (SourcePlaceOperation::ClearString, _, []) => None,
+            _ => return Err(fail("a field replacement retains its checked operand")),
+        };
         self.read_lifetime(source.clone())?;
-        let revision = self.revise_record_field(prior, &slot.position, &places[0].fields, 0)?;
+        if !assignment {
+            self.check_selected_record_field(prior, path)?;
+        }
+        let revision = self.revise_record_field(prior, &slot.position, path, 0)?;
         if let Some(root) = source.root.filter(|root| *root != prior) {
             self.states[root] = rules::consume_rust_borrowed_source_region(&self.states[root]);
         }
@@ -104,6 +129,11 @@ impl Regions<'_> {
             .get_mut(identity)
             .ok_or_else(|| fail("a field write retains its original source storage"))?
             .revision = revision;
+        if let Some(mut actual) = shared_operand {
+            actual.root = None;
+            actual.producer = true;
+            self.read(actual, "read")?;
+        }
 
         let unit = self.position(&Position {
             ty: Type::Unit,
