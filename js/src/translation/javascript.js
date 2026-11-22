@@ -1196,7 +1196,8 @@ class JavaScriptParser {
   startsReferenceAssignment() {
     const c = this.cursor;
     let index = c.index;
-    if (c.tokens[index]?.value === '++' || c.tokens[index]?.value === '--') index += 1;
+    const prefix = c.is('++') || c.is('--');
+    if (prefix) index += 1;
     if (c.tokens[index]?.kind !== 'identifier') return false;
     index += 1;
     let member = false;
@@ -1206,7 +1207,11 @@ class JavaScriptParser {
       break;
     }
     const operator = c.tokens[index];
-    return member && (operator?.kind === 'punct' && (ASSIGNMENTS.has(operator.value) || operator.value === '++' || operator.value === '--') || c.is('++') || c.is('--'));
+    if (!member || prefix) return member;
+    if (operator?.kind !== 'punct') return false;
+    if (ASSIGNMENTS.has(operator.value)) return true;
+    return (operator.value === '++' || operator.value === '--')
+      && findJavaScriptLineTerminator(this.source, c.tokens[index - 1].end, operator.start) === operator.start;
   }
 
   referenceAssignment() {

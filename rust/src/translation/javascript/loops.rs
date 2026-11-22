@@ -31,11 +31,17 @@ impl JavaScriptParser {
             }
         }
         let operator = self.cursor.peek_at(offset);
-        field
-            && (prefix
-                || operator.kind == TokenKind::Punct
-                    && (ASSIGNMENTS.contains(&operator.value.as_str())
-                        || matches!(operator.value.as_str(), "++" | "--")))
+        if !field || prefix {
+            return field;
+        }
+        if operator.kind != TokenKind::Punct {
+            return false;
+        }
+        ASSIGNMENTS.contains(&operator.value.as_str())
+            || matches!(operator.value.as_str(), "++" | "--")
+                && !self.source.units()[self.cursor.peek_at(offset - 1).end..operator.start]
+                    .iter()
+                    .any(|unit| accept_java_script_line_terminator(f64::from(*unit)))
     }
 
     pub(super) fn record_field_assignment(&mut self) -> Result<Stmt> {
