@@ -3,6 +3,7 @@
 mod document;
 mod emit;
 mod import;
+mod integer_policy;
 mod numeric_ranges;
 mod pattern_policy;
 mod patterns;

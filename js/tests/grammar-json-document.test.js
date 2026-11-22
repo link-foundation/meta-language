@@ -28,7 +28,7 @@ function schemaParsers(schema) {
 }
 
 test('the shipped JSON decoder grammar and self-translated pattern policy match their sources', () => {
-  for (const script of ['build-json-decoder-grammar.mjs', 'build-json-schema-pattern-policy.mjs']) {
+  for (const script of ['build-json-decoder-grammar.mjs', 'build-json-schema-pattern-policy.mjs', 'build-json-schema-integer-policy.mjs']) {
     execFileSync(process.execPath, [fileURLToPath(new URL(`../scripts/${script}`, import.meta.url)), '--check']);
   }
 });
@@ -207,7 +207,7 @@ test('degenerate substring repetition is reported without editing valid JSON', (
 });
 
 test('shared JSON Schema fixtures validate decoders and locate document errors', context => {
-  for (const [schema, cases, diagnostics] of shared.grammars) {
+  for (const [schema, cases, diagnostics, validation] of shared.grammars) {
     if (diagnostics !== undefined) {
       assert.deepEqual(importJsonSchema(schema).schemaDiagnostics.map(issue => issue.pointer), diagnostics);
       if (diagnostics.length === 0) {
@@ -217,6 +217,7 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
     for (const parser of schemaParsers(schema)) {
       for (const [source, accepted] of cases) assert.equal(parser.parseTree(source).ok, accepted, source);
     }
+    for (const [source, accepted] of validation ?? []) assert.equal(validateJson(source, schema).valid, accepted, source);
   }
   assert.deepEqual(emitJsonSchema(importJsonSchema(shared.schema)).schema, shared.schema);
   const grammar = new GrammarBuilder('document').rule('document',
@@ -240,7 +241,7 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   recordIssue195Observations({
     requirementId: 'I195-I240-JSON-SCHEMA', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema', fixtureFile,
-    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations'],
+    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap'],
     testName: context.name,
   });
 });

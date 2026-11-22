@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::sync::LazyLock;
 
 use serde_json::Value;
@@ -6,6 +6,7 @@ use serde_json::Value;
 use super::super::{
     CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule, parse_grammar_links,
 };
+use super::integer_policy::exclusive_integer_boundary;
 use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_range};
 use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
@@ -317,6 +318,12 @@ impl<'schema> Importer<'schema> {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
                 }
                 if keyword == "oneOf" && !branches_use_disjoint_types(branches) {
+                    if let Some(integer) = exclusive_integer_range(branches) {
+                        if integer.is_some() {
+                            self.report(pointer, keyword, "The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.");
+                        }
+                        return integer;
+                    }
                     self.report(
                         pointer,
                         keyword,
@@ -668,31 +675,9 @@ impl<'schema> Importer<'schema> {
         if name == "integer" {
             self.report(pointer, "type", "The decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.");
             if !limits.is_empty() {
-                let minimum = schema["minimum"]
-                    .as_f64()
-                    .unwrap_or(f64::NEG_INFINITY)
-                    .ceil()
-                    .max(
-                        schema["exclusiveMinimum"]
-                            .as_f64()
-                            .unwrap_or(f64::NEG_INFINITY)
-                            .floor()
-                            + 1.0,
-                    );
-                let maximum = schema["maximum"]
-                    .as_f64()
-                    .unwrap_or(f64::INFINITY)
-                    .floor()
-                    .min(
-                        schema["exclusiveMaximum"]
-                            .as_f64()
-                            .unwrap_or(f64::INFINITY)
-                            .ceil()
-                            - 1.0,
-                    );
-                let safe = |value: f64| value.abs() <= 9_007_199_254_740_991.0;
-                if (safe(minimum) || minimum == f64::NEG_INFINITY)
-                    && (safe(maximum) || maximum == f64::INFINITY)
+                let (minimum, maximum) = integer_bounds(schema);
+                if (safe_integer_bound(minimum) || minimum == f64::NEG_INFINITY)
+                    && (safe_integer_bound(maximum) || maximum == f64::INFINITY)
                 {
                     if minimum > maximum {
                         return None;
@@ -728,6 +713,76 @@ fn integer(value: f64) -> Option<i64> {
             .parse()
             .expect("safe integer spelling")
     })
+}
+
+fn safe_integer_bound(value: f64) -> bool {
+    value.abs() <= 9_007_199_254_740_991.0
+}
+
+fn integer_bounds(schema: &Value) -> (f64, f64) {
+    let number = |key: &str, fallback| schema[key].as_f64().unwrap_or(fallback);
+    let minimum = number("minimum", f64::NEG_INFINITY)
+        .ceil()
+        .max(number("exclusiveMinimum", f64::NEG_INFINITY).floor() + 1.0);
+    let maximum = number("maximum", f64::INFINITY)
+        .floor()
+        .min(number("exclusiveMaximum", f64::INFINITY).ceil() - 1.0);
+    (minimum, maximum)
+}
+
+fn exclusive_integer_range(branches: &[Value]) -> Option<Option<Expression>> {
+    let mut boundaries = BTreeMap::new();
+    let mut coverage = 0.0;
+    for branch in branches {
+        if branch == &Value::Bool(false) {
+            continue;
+        }
+        if !matches!(types(branch.get("type")?), [value] if value.as_str() == Some("integer"))
+            || branch.get("$ref").is_some()
+            || branch.as_object()?.keys().any(|key| {
+                key != "type"
+                    && !reference_keyword(key)
+                    && !keywords("limit").any(|name| name == key.as_str())
+            })
+        {
+            return None;
+        }
+        let (first, last) = integer_bounds(branch);
+        if first > last {
+            continue;
+        }
+        if first == f64::NEG_INFINITY {
+            coverage += 1.0;
+        } else {
+            if !safe_integer_bound(first) || !safe_integer_bound(first - 1.0) {
+                return None;
+            }
+            *boundaries.entry(integer(first)?).or_insert(0.0) += 1.0;
+        }
+        if last != f64::INFINITY {
+            if !safe_integer_bound(last) || !safe_integer_bound(last + 1.0) {
+                return None;
+            }
+            *boundaries.entry(integer(last + 1.0)?).or_insert(0.0) -= 1.0;
+        }
+    }
+    let mut expressions = Vec::new();
+    let mut first = None;
+    for (point, change) in boundaries {
+        let next = coverage + change;
+        let boundary = exclusive_integer_boundary(coverage, next);
+        if boundary < 0.0 {
+            expressions.push(signed_integer_range(first, Some(point - 1)));
+        }
+        if boundary > 0.0 {
+            first = Some(point);
+        }
+        coverage = next;
+    }
+    if coverage == 1.0 {
+        expressions.push(signed_integer_range(first, None));
+    }
+    Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
 }
 
 fn reference_keyword(keyword: &str) -> bool {

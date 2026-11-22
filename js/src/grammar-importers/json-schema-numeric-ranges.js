@@ -1,4 +1,7 @@
 import { GrammarBuilder as Expression } from '../grammar.js';
+import { exclusiveIntegerBoundary } from './json-schema-integer-policy.js';
+
+export const numericLimitKeywords = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum'];
 
 const { charRange, seq, choice, literal, repeat, repeat0, optional, empty } = Expression;
 const digit = charRange('0', '9');
@@ -35,6 +38,42 @@ export function signedIntegerRange(first, last) {
   if (first === null || first <= 0) parts.push(seq(literal('-'), unsignedIntegerRange(last === null ? 0 : Math.max(0, -last), first === null ? null : -first)));
   if (last === null || last >= 0) parts.push(unsignedIntegerRange(Math.max(0, first ?? 0), last));
   return choice(...parts);
+}
+
+export function integerBounds(rules) {
+  return [
+    Math.max(Math.ceil(rules.minimum ?? -Infinity), Math.floor(rules.exclusiveMinimum ?? -Infinity) + 1),
+    Math.min(Math.floor(rules.maximum ?? Infinity), Math.ceil(rules.exclusiveMaximum ?? Infinity) - 1),
+  ];
+}
+
+export function exclusiveIntegerRange(branches, annotations) {
+  const boundaries = new Map();
+  const changeAt = (point, change) => boundaries.set(point, (boundaries.get(point) ?? 0) + change);
+  let coverage = 0;
+  for (const branch of branches) {
+    if (branch === false) continue;
+    if (branch.type !== 'integer' && !(Array.isArray(branch.type) && branch.type.length === 1 && branch.type[0] === 'integer')) return undefined;
+    if (branch.$ref !== undefined || Object.keys(branch).some(key => key !== 'type' && !annotations.has(key) && !numericLimitKeywords.includes(key))) return undefined;
+    const [first, last] = integerBounds(branch);
+    if (first > last) continue;
+    if (first !== -Infinity && (!Number.isSafeInteger(first) || !Number.isSafeInteger(first - 1))) return undefined;
+    if (last !== Infinity && (!Number.isSafeInteger(last) || !Number.isSafeInteger(last + 1))) return undefined;
+    if (first === -Infinity) coverage += 1;
+    else changeAt(first, 1);
+    if (last !== Infinity) changeAt(last + 1, -1);
+  }
+  const expressions = [];
+  let first = null;
+  for (const [point, change] of [...boundaries].sort(([left], [right]) => left - right)) {
+    const next = coverage + change;
+    const boundary = exclusiveIntegerBoundary(coverage, next);
+    if (boundary < 0) expressions.push(signedIntegerRange(first, point - 1));
+    if (boundary > 0) first = point;
+    coverage = next;
+  }
+  if (coverage === 1) expressions.push(signedIntegerRange(first, null));
+  return alternatives(expressions);
 }
 
 function decimalParts({ value, inclusive }) {

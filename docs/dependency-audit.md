@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 268 | 267 | 1 | 0 |
+| Generators | 269 | 268 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -816,6 +816,7 @@ they are.
 | `js/scripts/build-pest-builtin-grammar.mjs` | `js/scripts/build-pest-builtin-grammar.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-text-location-policy.mjs` | `js/scripts/build-text-location-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-json-schema-pattern-policy.mjs` | `js/scripts/build-json-schema-pattern-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-json-schema-integer-policy.mjs` | `js/scripts/build-json-schema-integer-policy.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

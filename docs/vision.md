@@ -4634,12 +4634,14 @@ and additional fields.
 The additional-field rule excludes every decoded spelling of each declared
 key. Bounded numeric rules generate signed integer or decimal spellings and
 apply inclusive and exclusive limits. The grammar represents exclusive
-alternatives with disjoint JSON instance types as a choice. Pattern rules
+alternatives with disjoint JSON instance types as a choice. For alternatives
+made of bounded or unbounded integer intervals, the decoder generates each
+integer spelling covered by exactly one interval. Pattern rules
 compile character classes, alternation, top-level anchors, and bounded or
 unbounded repetitions from the catalog regex syntax tree. They match decoded
 Unicode scalars and admit their raw and escaped JSON spellings, including
 surrogate pairs. Grammar diagnostics identify assertions that require
-validation, including exponent spellings, overlapping alternatives,
+validation, including exponent spellings, other overlapping alternatives,
 unsupported patterns, and objects that exceed the decoder's field-order or
 key-spelling bounds. Decoder and validation rules share the JSON grammar and
 keyword policy. The reverse API preserves an imported schema and can infer

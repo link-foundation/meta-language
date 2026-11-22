@@ -6,7 +6,7 @@ import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-doc
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-patterns.js';
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
-import { signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
+import { exclusiveIntegerRange, integerBounds, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
 const space = ref('json_space');
@@ -374,7 +374,7 @@ export function importJsonSchema(schema) {
     return ref('string');
   }
   function numberExpression(type, rules, pointer) {
-    const keywords = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum'].filter(key => rules[key] !== undefined);
+    const keywords = numericLimitKeywords.filter(key => rules[key] !== undefined);
     if (type === 'integer') report(pointer, 'type', 'The decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
     if (keywords.length === 0) return ref(type);
     if (type === 'number') {
@@ -384,8 +384,7 @@ export function importJsonSchema(schema) {
         return decimal;
       }
     }
-    const first = Math.max(Math.ceil(rules.minimum ?? -Infinity), Math.floor(rules.exclusiveMinimum ?? -Infinity) + 1);
-    const last = Math.min(Math.floor(rules.maximum ?? Infinity), Math.ceil(rules.exclusiveMaximum ?? Infinity) - 1);
+    const [first, last] = integerBounds(rules);
     if (type === 'integer' && (first === -Infinity || Number.isSafeInteger(first)) && (last === Infinity || Number.isSafeInteger(last))) {
       return first <= last ? signedIntegerRange(Number.isFinite(first) ? first : null, Number.isFinite(last) ? last : null) : null;
     }
@@ -416,6 +415,11 @@ export function importJsonSchema(schema) {
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== keyword && !referenceKeys.has(key));
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
       if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives)) {
+        const integer = exclusiveIntegerRange(alternatives, referenceKeys);
+        if (integer !== undefined) {
+          if (integer) report(pointer, 'oneOf', 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
+          return integer;
+        }
         report(pointer, keyword, 'Exclusive branch selection is checked during document validation.');
       }
       const entries = alternatives.map((child, index) => named(child, pointerChild(pointerChild(pointer, keyword), index))).filter(Boolean);

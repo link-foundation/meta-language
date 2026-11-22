@@ -65,6 +65,16 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
                 assert_eq!(Some(outcome.ok), case[1].as_bool(), "{source}");
             }
         }
+        if let Some(cases) = row.get(3).and_then(Value::as_array) {
+            for case in cases {
+                let source = case[0].as_str().unwrap();
+                assert_eq!(
+                    Some(validate_json(source, &row[0]).valid),
+                    case[1].as_bool(),
+                    "{source}"
+                );
+            }
+        }
     }
     let schema = &fixture["schema"];
     let imported = import_json_schema(schema).unwrap();
@@ -144,6 +154,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "decoderFormatsRespectDecodedStrings",
             "decoderPatternsCombineEscapedSurrogatePairs",
             "decoderObjectConstantsAcceptMemberPermutations",
+            "decoderExclusiveIntegerAlternativesRejectOverlap",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });
