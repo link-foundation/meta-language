@@ -4612,7 +4612,12 @@ documents. Instance errors carry a JSON Pointer, source span, expected values
 or tokens, and a link that can be inspected in the returned network.
 
 The schema importer builds the shared grammar representation for existing
-emitters. Object rules can interleave declared fields and additional fields.
+emitters. It defines a `start` production for Lark consumers, and retains only
+the productions reachable from that entry point. GBNF emitters map it to
+`root` and qualify identifiers reserved by XGrammar. Lark emits supplementary
+Unicode scalars directly. Calendar productions use matching scalar boundaries
+across overlapping alternatives so a contextual decoder can follow either
+path. Object rules can interleave declared fields and additional fields.
 The additional-field rule excludes every decoded spelling of each declared
 key. Bounded numeric rules generate signed integer or decimal spellings and
 apply inclusive and exclusive limits. Grammar diagnostics identify assertions

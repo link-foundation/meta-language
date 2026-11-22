@@ -453,19 +453,17 @@ function classChar(character) {
 }
 
 /**
- * Escapes line breaks, tabs, controls, whitespace other than space, and
- * characters outside the Basic Multilingual Plane.
+ * Escapes line breaks, tabs, controls, and whitespace other than space.
  */
 function plainChar(character) {
   if (character === '\n') return '\\n';
   if (character === '\r') return '\\r';
   if (character === '\t') return '\\t';
   const code = codePoint(character);
-  if (isControl(character) || (isWhitespace(character) && character !== ' ') || code > 0xffff) {
+  if (isControl(character) || (isWhitespace(character) && character !== ' ')) {
     const hex = code.toString(16).toUpperCase();
     if (code <= 0xff) return `\\x${hex.padStart(2, '0')}`;
-    if (code <= 0xffff) return `\\u${hex.padStart(4, '0')}`;
-    return `\\U${hex.padStart(8, '0')}`;
+    return `\\u${hex.padStart(4, '0')}`;
   }
   return character;
 }

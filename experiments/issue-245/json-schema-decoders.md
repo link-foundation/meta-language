@@ -1,0 +1,31 @@
+# JSON Schema decoder conformance
+
+The experiment emits both decoder formats from the schemas and expected results
+in `parity/fixtures/json-schema-and-recovery.lino`. It checks acceptance with a
+byte vocabulary and the provider grammar engines. It requires no model weights.
+
+Run from the repository root with Node and Python 3.12. The example uses a
+virtual environment and puts temporary data in a separate directory.
+
+```sh
+decoder_scratch=$(mktemp -d)
+python3.12 -m venv "$decoder_scratch/venv"
+decoder_python="$decoder_scratch/venv/bin/python"
+"$decoder_python" -m pip install llguidance==1.9.1 outlines==1.3.3 numpy==2.4.6 apache-tvm-ffi==0.1.12
+"$decoder_python" -m pip install --no-deps xgrammar==0.2.9
+node experiments/issue-245/json-schema-decoders.mjs > "$decoder_scratch/fixtures.json"
+export OPENBLAS_NUM_THREADS=1
+ulimit -Sv 550000
+ulimit -s 8192
+"$decoder_python" experiments/issue-245/json-schema-decoders.py llguidance "$decoder_scratch/fixtures.json"
+"$decoder_python" experiments/issue-245/json-schema-decoders.py outlines "$decoder_scratch/fixtures.json"
+xgrammar_package=$("$decoder_python" -c 'from importlib.metadata import distribution; print(distribution("xgrammar").locate_file("xgrammar"))')
+"$decoder_python" experiments/issue-245/json-schema-decoders.py xgrammar "$decoder_scratch/fixtures.json" --xgrammar-package "$xgrammar_package"
+```
+
+For llama.cpp use the `llama-gbnf-validator` executable from the `b12633` source
+tree, or link its `tests/test-gbnf-validator.cpp` to the prebuilt release's
+`libllama` and `libggml-base`. Pass that executable's path as
+`--llama-validator` with `llama.cpp` as the provider. The validator reads the
+exact emitted GBNF and the unmodified fixture bytes.
+[Pinned llama.cpp validator](https://github.com/ggml-org/llama.cpp/blob/b12633/tests/test-gbnf-validator.cpp)

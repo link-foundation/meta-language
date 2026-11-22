@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -254,17 +254,34 @@ pub fn import_json_schema(schema: &Value) -> Result<JsonSchemaGrammar, JsonSchem
         });
     };
     importer.grammar.add_rule(GrammarRule::new(
-        "document",
+        "start",
         EXPRESSION.seq([
             reference_expression("json_space"),
             start,
             reference_expression("json_space"),
         ]),
     ));
-    importer.grammar.set_start("document");
+    let mut reachable = BTreeSet::new();
+    let mut pending = BTreeSet::from([String::from("start")]);
+    while let Some(name) = pending.pop_first() {
+        if reachable.contains(&name) {
+            continue;
+        }
+        if let Some(rule) = importer.grammar.rule(&name) {
+            rule.expr().collect_nonterminals(&mut pending);
+        }
+        reachable.insert(name);
+    }
+    let mut grammar = Grammar::default();
+    grammar.set_start("start");
+    for rule in importer.grammar.rules() {
+        if reachable.contains(rule.name()) {
+            grammar.add_rule(rule.clone());
+        }
+    }
     Ok(JsonSchemaGrammar {
-        original: importer.grammar.clone(),
-        grammar: importer.grammar,
+        original: grammar.clone(),
+        grammar,
         diagnostics: importer.diagnostics,
         source: schema.clone(),
     })

@@ -43,14 +43,15 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
         }
     }
     let schema = &fixture["schema"];
-    assert_eq!(
-        import_json_schema(schema)
-            .unwrap()
-            .emit_json_schema()
-            .schema
-            .as_ref(),
-        Some(schema)
+    let imported = import_json_schema(schema).unwrap();
+    let (lark, _) = emit_lark(&imported.grammar).unwrap();
+    assert!(lark.lines().any(|line| line.starts_with("start: ")));
+    assert!(
+        !lark
+            .lines()
+            .any(|line| line.starts_with("json_format_email: "))
     );
+    assert_eq!(imported.emit_json_schema().schema.as_ref(), Some(schema));
     let expression = Grammar::expr();
     let grammar = Grammar::builder()
         .start("document")

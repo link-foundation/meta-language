@@ -209,6 +209,7 @@ function sanitizeIdentifier(source) {
   }
   output = output.replace(/^-+|-+$/g, '');
   if (output === '') output = 'ml';
+  if (['false', 'null', 'true'].includes(output)) return `value-${output}`;
   return /^[A-Za-z]/.test(output) ? output : `ml-${output}`;
 }
 
@@ -264,7 +265,7 @@ function quoteTerminal(value) {
 
 const COMMON_ESCAPES = { '\\': '\\\\', '\n': '\\n', '\r': '\\r', '\t': '\\t', '\b': '\\b', '\f': '\\f' };
 const STRING_ESCAPES = { ...COMMON_ESCAPES, '"': '\\"' };
-const CLASS_ESCAPES = { ...COMMON_ESCAPES, '[': '\\[', ']': '\\]', '-': '\\-', '^': '\\^' };
+const CLASS_ESCAPES = { ...COMMON_ESCAPES, '[': '\\[', ']': '\\]', '-': '\\-', '^': '\\x5E' };
 
 function escapeStringChar(character) {
   return STRING_ESCAPES[character] ?? escapeControl(character);

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { GrammarBuilder as Expression } from '../grammar.js';
+import { collectReferences } from '../grammar-emitters/structural.js';
 import { parseGrammarLinks } from '../grammar-links.js';
 import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-document.js';
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
@@ -108,12 +109,16 @@ function uuidExpression() {
   return seq(repeat(hex, 8, 8), ...[4, 4, 4, 12].map(length => seq(literal('-'), repeat(hex, length, length))));
 }
 
+function dateCharacters(text) {
+  return seq(...Array.from(text, digit => characters(digit)));
+}
+
 function decimalWidth(min, max, width = 2) {
   const alternatives = [];
   for (let prefix = Math.floor(min / 10); prefix <= Math.floor(max / 10); prefix += 1) {
     const first = Math.max(0, min - prefix * 10);
     const last = Math.min(9, max - prefix * 10);
-    alternatives.push(seq(literal(String(prefix).padStart(width - 1, '0')), first === last ? literal(String(first)) : charRange(String(first), String(last))));
+    alternatives.push(seq(dateCharacters(String(prefix).padStart(width - 1, '0')), first === last ? characters(String(first)) : charRange(String(first), String(last))));
   }
   return choice(...alternatives);
 }
@@ -121,12 +126,12 @@ function decimalWidth(min, max, width = 2) {
 function dateExpression() {
   const digit = charRange('0', '9');
   const normal = seq(repeat(digit, 4, 4), literal('-'), choice(
-    ...['01', '03', '05', '07', '08', '10', '12'].map(month => seq(literal(`${month}-`), decimalWidth(1, 31))),
-    ...['04', '06', '09', '11'].map(month => seq(literal(`${month}-`), decimalWidth(1, 30))),
-    seq(literal('02-'), decimalWidth(1, 28)),
+    ...['01', '03', '05', '07', '08', '10', '12'].map(month => seq(dateCharacters(`${month}-`), decimalWidth(1, 31))),
+    ...['04', '06', '09', '11'].map(month => seq(dateCharacters(`${month}-`), decimalWidth(1, 30))),
+    seq(dateCharacters('02-'), decimalWidth(1, 28)),
   ));
-  const multiples = Array.from({ length: 25 }, (_, index) => literal(String(index * 4).padStart(2, '0')));
-  const leap = seq(choice(seq(repeat(digit, 2, 2), choice(...multiples.slice(1))), seq(choice(...multiples), literal('00'))), literal('-02-29'));
+  const multiples = Array.from({ length: 25 }, (_, index) => dateCharacters(String(index * 4).padStart(2, '0')));
+  const leap = seq(choice(seq(repeat(digit, 2, 2), choice(...multiples.slice(1))), seq(choice(...multiples), dateCharacters('00'))), dateCharacters('-02-29'));
   return choice(normal, leap);
 }
 
@@ -215,7 +220,7 @@ function lowerStringPattern(pattern) {
 /** Import a draft 2020-12 schema into a constrained-decoding grammar. */
 export function importJsonSchema(schema) {
   const analysis = analyzeJsonSchema(schema);
-  const builder = new Expression('document').source('json-schema');
+  const builder = new Expression('start').source('json-schema');
   decoderBase ??= parseGrammarLinks(readFileSync(baseFile, 'utf8'));
   for (const rule of decoderBase.rules.values()) builder.rule(rule.name, rule.expression);
   const compiled = new Map();
@@ -400,8 +405,20 @@ export function importJsonSchema(schema) {
   }
   const start = named(schema, '');
   if (!start) throw new RangeError('The JSON Schema has no generatable document');
-  builder.rule('document', seq(space, start, space));
+  builder.rule('start', seq(space, start, space));
   const grammar = builder.build();
+  const reachable = new Set();
+  const pending = ['start'];
+  while (pending.length) {
+    const name = pending.pop();
+    if (reachable.has(name)) continue;
+    reachable.add(name);
+    const rule = grammar.rule(name);
+    if (rule) pending.push(...collectReferences(rule.expression));
+  }
+  for (const name of grammar.rules.keys()) {
+    if (!reachable.has(name)) grammar.rules.delete(name);
+  }
   grammar.schemaDiagnostics = diagnostics;
   importedSchemas.set(grammar, { schema: structuredClone(schema), grammar: JSON.stringify(grammar.normalized()) });
   return grammar;

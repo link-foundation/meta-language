@@ -348,6 +348,9 @@ fn sanitize_identifier(source: &str) -> String {
     if output.is_empty() {
         output.push_str("ml");
     }
+    if matches!(output.as_str(), "false" | "null" | "true") {
+        return format!("value-{output}");
+    }
     if !output.starts_with(|character: char| character.is_ascii_alphabetic()) {
         output.insert_str(0, "ml-");
     }
@@ -511,7 +514,7 @@ fn push_escaped_class_char(output: &mut String, character: char) {
         '[' => output.push_str("\\["),
         ']' => output.push_str("\\]"),
         '-' => output.push_str("\\-"),
-        '^' => output.push_str("\\^"),
+        '^' => output.push_str("\\x5E"),
         '\n' => output.push_str("\\n"),
         '\r' => output.push_str("\\r"),
         '\t' => output.push_str("\\t"),

@@ -281,7 +281,7 @@ test('GBNF escapes literals and classes and sanitizes names like Rust', () => {
     ['root', E.literal('r')],
   ));
 
-  assert.equal(source, 'root ::= "\\"\\\\\\n\\r\\t\\b\\f\\x01é" [\\x00-\\x9F] [\\[\\]\\-\\^\\\\] ' +
+  assert.equal(source, 'root ::= "\\"\\\\\\n\\r\\t\\b\\f\\x01é" [\\x00-\\x9F] [\\[\\]\\-\\x5E\\\\] ' +
     '[Aa]"-"[Bb]" ""1" ("m" | "n") ml-9lives root-1\nroot-1 ::= "r"\n');
   assert.deepEqual(report.lossy, [
     'GBNF renamed rule "root" to "root-1"',

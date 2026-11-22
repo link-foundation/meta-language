@@ -40,6 +40,8 @@ test('JSON Schema emits decoders that constrain required fields, enums and escap
   }
   const grammar = importJsonSchema(answerSchema);
   assert.deepEqual(grammar.schemaDiagnostics, []);
+  assert.match(emitLark(grammar).source, /^start: /mu);
+  assert.doesNotMatch(emitLark(grammar).source, /^json_format_email: /mu);
   assert.deepEqual(emitJsonSchema(grammar).schema, answerSchema);
 });
 
@@ -87,7 +89,7 @@ test('JSON Schema reverse export infers semantic constants from sample productio
   assert.equal(validateJson('{"status":"not_met"}', emitted.schema).valid, false);
   assert.equal(emitJsonSchema(new GrammarBuilder('word').rule('word', literal('not JSON')).build()).schema, null);
   const imported = importJsonSchema(answerSchema);
-  imported.rules.delete('object');
+  imported.rules.delete('start');
   assert.equal(emitJsonSchema(imported).schema, null);
 });
 

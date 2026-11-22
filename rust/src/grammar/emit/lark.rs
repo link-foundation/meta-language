@@ -691,24 +691,20 @@ fn push_class_char(output: &mut String, character: char) {
     }
 }
 
-/// Pushes a character, escaping line breaks, tabs, controls, whitespace
-/// other than space, and characters outside the Basic Multilingual Plane.
+/// Pushes a character, escaping line breaks, tabs, controls, and whitespace
+/// other than space.
 fn push_plain_char(output: &mut String, character: char) {
     let code = u32::from(character);
     match character {
         '\n' => output.push_str("\\n"),
         '\r' => output.push_str("\\r"),
         '\t' => output.push_str("\\t"),
-        character
-            if character.is_control()
-                || (character.is_whitespace() && character != ' ')
-                || code > 0xFFFF =>
-        {
-            let _ = match code {
-                0..=0xFF => write!(output, "\\x{code:02X}"),
-                0x100..=0xFFFF => write!(output, "\\u{code:04X}"),
-                _ => write!(output, "\\U{code:08X}"),
-            };
+        character if character.is_control() || (character.is_whitespace() && character != ' ') => {
+            if code <= 0xFF {
+                let _ = write!(output, "\\x{code:02X}");
+            } else {
+                let _ = write!(output, "\\u{code:04X}");
+            }
         }
         character => output.push(character),
     }
