@@ -5369,6 +5369,15 @@ serialized type identities. Typed Links transports must preserve the transition
 and all actual datatype references even on expressions with lexical scope.
 A structurally valid facet alone cannot prove source ownership or loan safety.
 
+The owned `Vec` loop transport retains the original vector and item owners,
+the actual generated completion type, the loop span and the ordered mutable
+slots. The checked interpreter uses the initial accumulator and the guarded
+active step to establish region flow. A stored slot can continue through the
+loop only through the corresponding packet position. Completion can carry an
+actual return value and preserves the latest storage revision at loop exit.
+The Links archive holds the source positions and packet structure. The
+interpreter reconstructs live regions from the checked body.
+
 Original-source control capture must use actual CST item/name/body/type links and
 enclosing module/implementation owners, preserving full original declarations,
 annotations, method bodies, source hashes and both byte/unit coordinates.

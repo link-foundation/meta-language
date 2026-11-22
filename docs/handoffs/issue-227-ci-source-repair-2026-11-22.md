@@ -46,6 +46,23 @@ remaining default-branch checks still need CI evidence.
 
 ## Open work
 
+- Native Rust now has a source draft for complete mutable root initialization
+  and whole-root replacement, including canonical closed `Box` owners. The
+  shared three-profile selector regenerated in
+  `ci-logs/rust-retained-region-selector-draft.log`. The owned `Vec` fold
+  draft retains actual loop control and mutable slot coordinates through
+  checked Links. The composed entry point, field selection, partial writes,
+  exclusive call and callback packets, remaining Vec operations and CI
+  verification are open.
+- The call-machine author now reads suspended instructions from the actual
+  declared instruction array. The complete source declaration check reduced
+  the failure to one optional preconverted descriptor mismatch in
+  `ci-logs/javascript-call-machine-definition-opcodes-draft.log`.
+  The next parse rejected a conditional owner that could also be an earlier
+  descriptor phase in
+  `ci-logs/javascript-call-machine-definition-descriptor-draft.log`.
+  The latest draft uses independent cases for the two exact states. Native
+  call-machine publication, dependent program codecs and CI remain open.
 - A source syntax scan found an extra parenthesis in the ordinary class
   closure control. After that repair, static linking reached missing class,
   collection and module initialization codecs. The module initialization and

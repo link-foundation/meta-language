@@ -152,3 +152,33 @@ impl RustParser {
         }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::{SourceProfiles, parse_rust_with_selected_profiles};
+    use crate::translation::check::check_program;
+
+    const SOURCE: &str =
+        "fn main() { let mut number = 1u16; number = 2u16; println!(\"{}\", number); }";
+
+    #[test]
+    fn explicit_region_composition_retains_whole_storage_write_authority() {
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(SOURCE, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        assert!(wire.contains("\"operation\":\"initialize\""));
+        assert!(wire.contains("\"operation\":\"write\""));
+        let separate = SourceProfiles {
+            fn_mut_source: "",
+            ..profiles
+        };
+        assert!(parse_rust_with_selected_profiles(SOURCE, separate).is_err());
+    }
+}

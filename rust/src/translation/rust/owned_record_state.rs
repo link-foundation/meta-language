@@ -222,7 +222,8 @@ impl RustParser{
    }
   }else{None};
   let span=Some(Span::new(tokens[0].start,tokens[count-1].end));
-  let mutation=crate::translation::rust_borrowed_vector_rules::read_rust_borrowed_vector_mutation_error(self.origins.borrowed_vector_source_enabled);if !mutation.is_empty(){return Err(unsupported("Rust borrowed vector source",&mutation,span));}
+  let readonly_vector_profile = self.origins.borrowed_vector_source_enabled && !self.source_regions_composed;
+  let mutation=crate::translation::rust_borrowed_vector_rules::read_rust_borrowed_vector_mutation_error(readonly_vector_profile);if !mutation.is_empty(){return Err(unsupported("Rust borrowed vector source",&mutation,span));}
   let layouts=self.record_state_layout_path(&source,&fields,span)?;
   let field=layouts.last().map_or(&source,|layout|&layout.fields[layout.index]).clone();
   if operation.is_some()&&!self.origins.collecting{
