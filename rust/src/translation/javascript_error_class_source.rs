@@ -120,6 +120,3 @@ pub use part_39::*;
 #[path = "javascript_error_class_source/part_40.rs"]
 mod part_40;
 pub use part_40::*;
-#[path = "javascript_error_class_source/part_41.rs"]
-mod part_41;
-pub use part_41::*;

@@ -712,6 +712,14 @@ pub enum JavaScriptSemanticValue {
     Object(self::ml::Big, bool),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallPrimitiveResult {
+    PrimitiveValue(Box<self::JavaScriptSemanticValue>),
+    PrimitiveInvalid(self::ml_string::Text),
+    PrimitiveError(self::ml_string::Text, self::ml_string::Text),
+    PrimitiveResourceLimit(self::ml_string::Text),
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum JavaScriptArrayConstructorFact {
     ArrayConstructorFact(self::ml::Big, bool, self::ml::Big, bool, Option<(Option<self::ml_string::Text>,)>),

@@ -1,8 +1,8 @@
 // Source/model/literal-data construction only; controls are parsed, never run.
 import {readFileSync,writeFileSync} from 'node:fs';
-import {createHash} from 'node:crypto';
 import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {readProjectData,writeProjectData} from './project-data.mjs';
+import {requireCurrentJavaScriptCallLibrary} from './javascript-call-library-reuse.mjs';
 const mode=process.argv.slice(2).join(' '),reuse=mode==='--draft --reuse-libraries';
 if(mode!=='--draft'&&!reuse)throw new TypeError('use --draft [--reuse-libraries]');
 process.argv.splice(2,process.argv.length-2,'--draft');
@@ -27,7 +27,7 @@ for (const path of ['js/src/translation/record-write-rules.js', 'js/src/translat
  'js/tests/translation-record-writes.test.js']) parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
 await import('./generate-record-write-rules.mjs'); globalThis.gc?.();
 await import('./generate-record-write-fixtures.mjs'); globalThis.gc?.();
-for(const path of ['js/scripts/draft-number-negation-profile.mjs','js/src/translation/javascript-call-natural-source.js','js/scripts/draft-javascript-call-natural-source.mjs','js/scripts/draft-javascript-call-natural-source-fixtures.mjs','experiments/javascript-properties/call-natural-source-controls.mjs','experiments/javascript-properties/call-natural-source-oracle.mjs','js/tests/translation-javascript-call-natural-source.test.js','js/src/translation/javascript-fixed-integer-cast-plan.js','js/src/translation/javascript-fixed-integer-casts.js','js/scripts/draft-javascript-fixed-integer-cast-plan.mjs','js/tests/translation-javascript-fixed-integer-casts.test.js','js/scripts/model-text-wire.mjs','js/scripts/draft-native-model-codecs.mjs','js/scripts/draft-javascript-model-codecs.mjs','js/tests/model-text-wire.test.js','js/tests/translation-javascript-call-integer-lowering.test.js','js/src/translation/javascript-call-code.js','js/src/translation/javascript-call-primitives.js','js/src/translation/javascript-call-integers.js','js/src/translation/javascript-call-integer-conversion.js','js/src/translation/javascript-call-integer-lowering.js','js/src/translation/javascript-number-conversion-protocol.js','js/src/translation/javascript-call-number-conversion.js','js/src/translation/javascript-number-conversion-protocol.js','js/src/translation/javascript-text-conversion-protocol.js','js/src/translation/javascript-call-machine.js','js/src/translation/javascript-call-source.js','js/src/translation/javascript-call-lowering.js',
+for(const path of ['js/scripts/draft-number-negation-profile.mjs','js/src/translation/javascript-call-natural-source.js','js/scripts/draft-javascript-call-natural-source.mjs','js/scripts/draft-javascript-call-natural-source-fixtures.mjs','experiments/javascript-properties/call-natural-source-controls.mjs','experiments/javascript-properties/call-natural-source-oracle.mjs','js/tests/translation-javascript-call-natural-source.test.js','js/src/translation/javascript-fixed-integer-cast-plan.js','js/src/translation/javascript-fixed-integer-casts.js','js/scripts/draft-javascript-fixed-integer-cast-plan.mjs','js/tests/translation-javascript-fixed-integer-casts.test.js','js/scripts/model-text-wire.mjs','js/scripts/draft-native-model-codecs.mjs','js/scripts/native-model-codec-files.mjs','js/scripts/draft-javascript-model-codecs.mjs','js/tests/model-text-wire.test.js','js/tests/translation-javascript-call-integer-lowering.test.js','js/src/translation/javascript-call-code.js','js/src/translation/javascript-call-primitives.js','js/src/translation/javascript-call-integers.js','js/src/translation/javascript-call-integer-conversion.js','js/src/translation/javascript-call-integer-lowering.js','js/src/translation/javascript-number-conversion-protocol.js','js/src/translation/javascript-call-number-conversion.js','js/src/translation/javascript-number-conversion-protocol.js','js/src/translation/javascript-text-conversion-protocol.js','js/src/translation/javascript-call-machine.js','js/src/translation/javascript-call-source.js','js/src/translation/javascript-call-lowering.js',
  'js/src/translation/javascript-scalar-conversion-protocol.js','js/scripts/draft-javascript-call-source.mjs','js/scripts/draft-javascript-call-source-fixtures.mjs','js/scripts/draft-javascript-call-source-integration.mjs','js/scripts/source-boolean-match-sharing.mjs','js/scripts/source-constructor-projections.mjs','js/scripts/source-lexical-aliases.mjs','js/src/translation/javascript-string-argument-rules.js','js/scripts/draft-javascript-string-argument-fixtures.mjs','js/tests/translation-javascript-string-arguments.test.js','js/src/translation/boolean-constructor-match-rules.js','js/scripts/draft-boolean-constructor-match-fixtures.mjs','js/tests/boolean-constructor-match.test.js',
  'experiments/javascript-properties/call-source-controls.mjs','experiments/javascript-properties/call-source-oracle.mjs','experiments/javascript-properties/call-source-exception-controls.mjs','js/scripts/draft-javascript-call-source-exceptions.mjs','experiments/javascript-properties/call-machine-controls.mjs','js/scripts/draft-javascript-call-machine-fixtures.mjs','js/tests/translation-javascript-call-source.test.js']){
  parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);globalThis.gc?.();
@@ -35,24 +35,8 @@ for(const path of ['js/scripts/draft-number-negation-profile.mjs','js/src/transl
 await import('./draft-javascript-fixed-integer-cast-plan.mjs');globalThis.gc?.();
 await import('./draft-javascript-call-natural-source.mjs');globalThis.gc?.();
 if(reuse){
- // Bounded authoring jobs may emit the two libraries separately. Admit only
- // exact current source inputs and the complete original generated files.
  for(const stem of ['javascript-call-source','javascript-call-machine']){
-  const recipe=readProjectData(new URL('parity/self-translation/'+stem+'-native.lino',root));
-  if(stem==='javascript-call-machine'&&recipe.conditionalConstructorSharing?.model!=='closed value constructor selection 1')throw new TypeError('regenerate the call machine with its actual conditional constructor selection profile');
-  if(stem==='javascript-call-machine'){const inputs=recipe.conditionalConstructorSharing.producer?.inputs;if(!Array.isArray(inputs)||inputs.length<3)throw new TypeError('constructor sharing requires its actual producer inputs');for(const input of inputs){const bytes=readFileSync(new URL(input.path,root));if(bytes.length!==input.bytes||createHash('sha256').update(bytes).digest('hex')!==input.sha256)throw new TypeError('constructor-sharing producer changed; regenerate '+stem);}}
-  if(recipe.schemaVersion!==1||!recipe.sourceClosure?.inputs?.length||!recipe.files?.length||!recipe.programProjection?.entryPoints?.length||!recipe.programAsset)throw new TypeError('reuse needs complete actual source and linked-model receipts; native-only construction is insufficient');
-  for(const input of recipe.sourceClosure.inputs){
-   if(!/^js\/src\/(?:[a-z0-9-]+\/)*[a-z0-9-]+\.js$/u.test(input.path)||readFileSync(new URL(input.path,root),'utf8')!==input.source)throw new TypeError('source-library input changed; regenerate '+stem);
-  }
-  for(const file of recipe.files){
-   if(!new RegExp('^'+stem.replaceAll('-','_')+'(?:/part_[0-9]+)?\\.rs$','u').test(file.path)||readFileSync(new URL('rust/src/translation/'+file.path,root),'utf8')!==file.source)throw new TypeError('source-library output changed; regenerate '+stem);
-  }
-  const asset=recipe.programAsset;
-  if(asset.path!=='js/src/data/'+stem+'-program.lino')throw new TypeError('reuse needs its actual qualified source program asset');
-  const bytes=readFileSync(new URL(asset.path,root)),twin=readFileSync(new URL(asset.path.replace('js/src/','rust/src/'),root));
-  if(bytes.length!==asset.bytes||createHash('sha256').update(bytes).digest('hex')!==asset.sha256||!bytes.equals(twin))throw new TypeError('source program asset changed; regenerate '+stem);
-  globalThis.gc?.();
+  requireCurrentJavaScriptCallLibrary(root,stem);globalThis.gc?.();
  }
 }else for(const path of ['draft-javascript-call-source.mjs','draft-javascript-call-machine.mjs']){await import(new URL(path,import.meta.url));globalThis.gc?.();}
 for(const path of ['draft-number-negation-profile.mjs','draft-javascript-call-natural-source-fixtures.mjs','draft-javascript-call-source-fixtures.mjs','draft-javascript-call-source-exceptions.mjs','draft-javascript-string-argument-fixtures.mjs','draft-javascript-call-machine-fixtures.mjs','draft-boolean-constructor-match-fixtures.mjs']){await import(new URL(path,import.meta.url));globalThis.gc?.();}
@@ -73,7 +57,10 @@ for(const feature of [
   rust:{status:'implemented',evidence:['rust/src/translation/utf16_text_expansion_rules.rs','rust/src/translation/javascript_call_machine.rs','rust/tests/unit/utf16_text_expansion.rs','parity/fixtures/utf16-text-expansion.lino','parity/fixtures/javascript-call-source.lino']}},
  {id:'source-conditional-value-constructor-selection',required:true,
  javascript:{status:'implemented',evidence:['js/src/translation/conditional-constructor-sharing-rules.js','js/scripts/source-conditional-constructors.mjs','js/tests/translation-conditional-constructor-sharing.test.js','parity/fixtures/conditional-constructor-sharing.lino']},
- rust:{status:'implemented',evidence:['rust/src/translation/conditional_constructor_sharing_rules.rs','rust/tests/unit/conditional_constructor_sharing.rs','parity/fixtures/conditional-constructor-sharing.lino','parity/self-translation/javascript-call-machine-native.lino']}},
+ rust:{status:'implemented',evidence:['rust/src/translation/conditional_constructor_sharing_rules.rs','rust/tests/unit/conditional_constructor_sharing.rs','parity/fixtures/conditional-constructor-sharing.lino','parity/self-translation/javascript-module-initialization-native.lino']}},
+ {id:'source-immutable-nominal-constructor-projections',required:true,
+ javascript:{status:'implemented',evidence:['js/src/translation/boolean-constructor-match-rules.js','js/scripts/source-constructor-projections.mjs','js/tests/boolean-constructor-match.test.js','parity/self-translation/source-reference-constructor-projection-sharing.lino']},
+ rust:{status:'implemented',evidence:['rust/src/translation/boolean_constructor_match_rules.rs','rust/src/translation/javascript_call_machine.rs','rust/tests/unit/boolean_constructor_match.rs','parity/self-translation/javascript-call-machine-native.lino']}},
  {id:'javascript-call-literal-text-replacement',required:true,
  javascript:{status:'implemented',evidence:['js/src/translation/javascript-call-primitives.js','js/src/translation/utf16-text-rules.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-javascript-text-replacement.test.js','parity/fixtures/javascript-call-source.lino','parity/fixtures/javascript-call-machine.lino']},
  rust:{status:'implemented',evidence:['rust/src/translation/javascript_call_machine.rs','rust/tests/unit/translation_javascript_call_source_machine.rs','parity/fixtures/javascript-call-source.lino','parity/fixtures/javascript-call-machine.lino']}},

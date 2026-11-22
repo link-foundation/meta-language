@@ -1,7 +1,4 @@
 // Generated from complete js/src/translation/javascript-call-natural-source.js. Do not edit by hand.
-use super::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result;
-use super::source_ml_source1_temporary_read_java_script_semantic_value_error_loop1;
-
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
     use std::cmp::Ordering;
@@ -285,6 +282,102 @@ pub mod ml {
     /// Bounded domains for executable theorem checks.
     pub fn range(low: i128, high: i128) -> Vec<Big> {
         (low..=high).map(Big::from_i128).collect()
+    }
+}
+
+/// JavaScript's Number operations that Rust's f64 does not share.
+pub mod ml_number {
+    /// ECMAScript Number::toString: the shortest decimal that reads back as
+    /// the value, the even one on a tie, laid out as JavaScript prints it.
+    pub fn js_number(x: f64) -> String {
+        if x.is_nan() {
+            return String::from("NaN");
+        }
+        if x.is_infinite() {
+            return String::from(if x > 0.0 { "Infinity" } else { "-Infinity" });
+        }
+        if x == 0.0 {
+            return String::from("0");
+        }
+        let (mut digits, n) = decimal(&format!("{:e}", x.abs()));
+        // Rust's shortest digits round a tie away from zero; ECMAScript takes the even neighbour.
+        let (exact, _) = decimal(&format!("{:.800e}", x.abs()));
+        let rest = &exact[digits.len().min(exact.len())..];
+        if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
+            let last = digits.as_bytes()[digits.len() - 1] - b'0';
+            let down = exact[..digits.len()].to_string();
+            let other = if digits == down { increment(&down) } else { Some(down) };
+            if let Some(other) = other {
+                let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
+                if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
+                    digits = other.trim_end_matches('0').to_string();
+                }
+            }
+        }
+        let k = digits.len() as i32;
+        let body = if k <= n && n <= 21 {
+            format!("{digits}{}", "0".repeat((n - k) as usize))
+        } else if 0 < n && n <= 21 {
+            format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
+        } else if -6 < n && n <= 0 {
+            format!("0.{}{digits}", "0".repeat((-n) as usize))
+        } else {
+            let sign = if n - 1 < 0 { '-' } else { '+' };
+            let power = (n - 1).abs();
+            if k == 1 {
+                format!("{digits}e{sign}{power}")
+            } else {
+                format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
+            }
+        };
+        if x < 0.0 {
+            format!("-{body}")
+        } else {
+            body
+        }
+    }
+
+    /// What console.log prints: -0 as "-0", where String(-0) is "0".
+    pub fn js_console(x: f64) -> String {
+        if x == 0.0 && x.is_sign_negative() {
+            String::from("-0")
+        } else {
+            js_number(x)
+        }
+    }
+
+    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
+    /// NaN, and 0 differs from -0.
+    pub fn same_value(a: f64, b: f64) -> bool {
+        if a.is_nan() || b.is_nan() {
+            a.is_nan() && b.is_nan()
+        } else {
+            a.to_bits() == b.to_bits()
+        }
+    }
+
+    /// A decimal digit string plus one, or None when it gains a digit.
+    fn increment(digits: &str) -> Option<String> {
+        let mut bytes = digits.as_bytes().to_vec();
+        for index in (0..bytes.len()).rev() {
+            if bytes[index] == b'9' {
+                bytes[index] = b'0';
+            } else {
+                bytes[index] += 1;
+                return String::from_utf8(bytes).ok();
+            }
+        }
+        None
+    }
+
+    /// The significant digits without trailing zeros, and the exponent n with
+    /// value 0.digits × 10^n, of Rust's {:e} text.
+    fn decimal(text: &str) -> (String, i32) {
+        let (mantissa, exponent) = text.split_once('e').expect("exponent");
+        let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
+        let digits = digits.trim_end_matches('0').to_string();
+        let digits = if digits.is_empty() { String::from("0") } else { digits };
+        (digits, exponent.parse::<i32>().expect("exponent") + 1)
     }
 }
 
@@ -613,42 +706,10 @@ pub enum JavaScriptSemanticValue {
     Boolean(bool),
     Number(f64),
     Integer(self::ml::Big),
-    Text(Vec<f64>),
+    Text(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    SourceText(self::ml_string::Text, self::ml_string::Text),
     Symbol(self::ml::Big),
     Object(self::ml::Big, bool),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallInstruction {
-    Constant(f64, Box<self::JavaScriptSemanticValue>),
-    Copy(f64, f64),
-    Argument(f64, f64),
-    Jump(f64),
-    Branch(f64, f64, f64),
-    Call(f64, f64, f64, Vec<f64>),
-    Return(f64),
-    Throw(f64),
-    PushHandler(f64, f64),
-    PopHandler,
-    NumberBinary(f64, f64, f64, self::ml_string::Text),
-    SameValue(f64, f64, f64),
-    StrictEqual(f64, f64, f64),
-    RequireWrite(f64),
-    Primitive(f64, self::ml_string::Text, Vec<f64>),
-    OrdinaryGet(f64, f64, f64, f64),
-    OrdinarySet(f64, f64, f64, f64, f64),
-    PropertyKey(f64, f64, self::ml::Big),
-    PropertyDefinition(f64, f64, f64, f64, self::ml::Big),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallFunction {
-    CallFunction(self::ml::Big, self::ml::Big, self::ml_string::Text, Box<self::JavaScriptSemanticValue>, f64, f64, Vec<self::JavaScriptSemanticValue>, Vec<self::JavaScriptCallInstruction>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallProgram {
-    CallProgram(Vec<self::JavaScriptCallFunction>, Vec<self::ml::Big>, Box<self::JavaScriptSemanticValue>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -659,186 +720,125 @@ pub enum JavaScriptCallPrimitiveResult {
     PrimitiveResourceLimit(self::ml_string::Text),
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallSource {
-    SourceConstant(Box<self::JavaScriptSemanticValue>),
-    SourceReceiver,
-    SourceArgument(f64),
-    SourceThrow(Box<self::JavaScriptCallSource>),
-    SourceTry(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceBinding(f64),
-    SourceLet(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceIf(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceNumberBinary(self::ml_string::Text, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceSameValue(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceStrictEqual(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourcePrimitive(self::ml_string::Text, Vec<self::JavaScriptCallSource>),
-    SourceRecur(Vec<self::JavaScriptCallSource>),
-    SourceSet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceGet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Vec<self::JavaScriptCallSource>),
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum JavaScriptArrayConstructorFact {
+    ArrayConstructorFact(self::ml::Big, bool, self::ml::Big, bool, Option<(Option<self::ml_string::Text>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallSourceBinding {
-    SourceBindingRegister(f64, f64),
+pub enum JavaScriptConstructorRealm {
+    ConstructorRealm(self::ml::Big, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallSourceBuilder {
-    SourceBuilder(Vec<self::JavaScriptCallInstruction>, f64, f64, f64, f64, self::ml_string::Text),
+pub enum JavaScriptArraySpeciesDirectory {
+    ArraySpeciesDirectory(self::ml::Big, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptArrayConstructorFact>>>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptConstructorRealm>>>>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallSourceResult {
-    SourceResult(Box<self::JavaScriptCallSourceBuilder>, f64),
+pub enum JavaScriptCallSourceUnit {
+    CallSourceUnit(self::ml_string::Text, Box<self::JavaScriptSemanticValue>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallSourceCompilation {
-    SourceCompiled(Vec<self::JavaScriptCallInstruction>, f64, self::ml_string::Text),
+pub enum JavaScriptCallSourceSpan {
+    CallSourceSpan(self::ml_string::Text, f64, f64),
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValue) -> self::ml_string::Text {
-    match value.clone() {
-        self::JavaScriptSemanticValue::Text(units) => {
-            if (((units.len() as f64)) > (1048576f64)) {
-                self::ml_string::Text::from_units(vec![115, 101, 109, 97, 110, 116, 105, 99, 32, 116, 101, 120, 116, 32, 101, 120, 99, 101, 101, 100, 115, 32, 116, 104, 101, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 85, 84, 70, 49, 54, 32, 117, 110, 105, 116, 32, 98, 117, 100, 103, 101, 116])
-            } else {
-                {
-                    let at = 0f64;
-                    {
-                        let source_ml_source2_s5 = self::source_ml_source1_temporary_read_java_script_semantic_value_error_loop1(&(units), at);
-                        match source_ml_source2_s5.clone() {
-                            self::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Done => {
-                                self::ml_string::Text::from_units(vec![])
-                            }
-                            self::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Return(source_ml_source1_temporary_result1) => {
-                                source_ml_source1_temporary_result1.clone()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self::JavaScriptSemanticValue::Symbol(identity) => {
-            if ((identity > (self::ml::Big::from_i128(0))) && (identity <= (self::ml::Big::from_i128(18446744073709551615)))) {
-                self::ml_string::Text::from_units(vec![])
-            } else {
-                self::ml_string::Text::from_units(vec![97, 32, 115, 121, 109, 98, 111, 108, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 112, 111, 115, 105, 116, 105, 118, 101, 32, 117, 110, 115, 105, 103, 110, 101, 100, 54, 52, 32, 103, 108, 111, 98, 97, 108, 32, 108, 105, 110, 107, 32, 105, 100, 101, 110, 116, 105, 116, 121])
-            }
-        }
-        self::JavaScriptSemanticValue::Object(identity_2, _) => {
-            if ((identity_2 > (self::ml::Big::from_i128(0))) && (identity_2 <= (self::ml::Big::from_i128(18446744073709551615)))) {
-                self::ml_string::Text::from_units(vec![])
-            } else {
-                self::ml_string::Text::from_units(vec![97, 110, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 112, 111, 115, 105, 116, 105, 118, 101, 32, 117, 110, 115, 105, 103, 110, 101, 100, 54, 52, 32, 103, 108, 111, 98, 97, 108, 32, 108, 105, 110, 107, 32, 105, 100, 101, 110, 116, 105, 116, 121])
-            }
-        }
-        _ => {
-            self::ml_string::Text::from_units(vec![])
-        }
-    }
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallInstruction {
+    Constant(f64, Box<self::JavaScriptSemanticValue>),
+    Copy(f64, f64),
+    Argument(f64, f64),
+    ArgumentCount(f64),
+    ArgumentAt(f64, f64),
+    FunctionBind(f64),
+    BoundFunctionCall(f64),
+    FunctionToString(f64),
+    PushFinally(f64),
+    FinishFinally,
+    CompleteJump(f64, f64),
+    Jump(f64),
+    Branch(f64, f64, f64),
+    Call(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    ArgumentListOpen(f64),
+    ArgumentListAppend(f64, f64),
+    ArgumentListCall(f64, f64, f64, f64, self::ml_string::Text),
+    Construct(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    ConstructorCheck(f64, f64, bool),
+    ReadNewTarget(f64),
+    ArrayJoinEnter(f64, f64),
+    ArrayJoinLeave(f64),
+    ConstructErrorClass(f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    CallClassConstructor(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    ConstructCollection(f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    CollectionAllocate(f64, f64, self::ml_string::Text),
+    CollectionIteratorAllocate(f64, f64, self::ml_string::Text, self::ml_string::Text, Option<(Option<f64>,)>),
+    ArgumentRest(f64, f64, f64, self::ml::Big),
+    IteratorProtocol(f64, f64, f64, f64, f64, self::ml_string::Text, self::ml::Big, Option<(Option<bool>,)>),
+    CollectionIteratorResult(f64, self::ml_string::Text, f64, f64),
+    CollectionOperation(f64, self::ml_string::Text),
+    PrimitiveMethod(f64, self::ml_string::Text),
+    CollectionForEach(f64, self::ml_string::Text),
+    ArrayConcatenation(f64, Option<(Option<f64>,)>, f64, Box<self::JavaScriptArraySpeciesDirectory>),
+    ArraySlice(f64, Option<(Option<f64>,)>, Box<self::JavaScriptArraySpeciesDirectory>),
+    ArrayCreation(f64, self::ml_string::Text, f64, f64),
+    ArrayCallback(f64, self::ml_string::Text, Option<(Option<f64>,)>),
+    ArraySearch(f64, self::ml_string::Text, Option<(Option<f64>,)>),
+    ArrayTransform(f64, self::ml_string::Text, Box<self::JavaScriptArraySpeciesDirectory>, Option<(Option<f64>,)>),
+    ObjectEnumeration(f64, self::ml_string::Text, f64),
+    PropertyDefinitions(f64, self::ml_string::Text, f64, f64),
+    PropertyReflection(f64, self::ml_string::Text, f64, f64, f64, f64),
+    InstanceOf(f64, f64, f64, f64, self::ml_string::Text),
+    ObjectObservation(f64, self::ml_string::Text, f64, f64),
+    CollectionCopy(f64, f64, f64, f64, f64, f64, f64, f64),
+    ConstructErrorValue(f64, f64, f64, f64, f64, f64, self::ml::Big, self::ml_string::Text, bool),
+    ReadDerivedReceiver(f64),
+    InvokeErrorIntrinsic(f64),
+    InvokeHostCapability(f64),
+    Return(f64),
+    Throw(f64),
+    PushHandler(f64, f64),
+    PopHandler,
+    NumberBinary(f64, f64, f64, self::ml_string::Text),
+    SameValue(f64, f64, f64),
+    StrictEqual(f64, f64, f64),
+    RequireWrite(f64),
+    Primitive(f64, self::ml_string::Text, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    OrdinaryAllocate(f64, f64),
+    LiteralPrototype(f64, f64, f64),
+    LiteralAccessor(f64, f64, f64, f64, self::ml_string::Text, self::ml::Big),
+    ObjectFromEntries(f64, f64, f64, f64),
+    PrimitiveWrapper(f64, f64, f64),
+    SymbolAllocate(f64, f64),
+    SymbolDescription(f64, f64),
+    SymbolRegistry(f64, f64, self::ml_string::Text),
+    FunctionName(f64, f64, f64, self::ml_string::Text, self::ml::Big),
+    ArrayAllocate(f64, f64, f64),
+    ClosureAllocate(f64, self::ml::Big, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>, f64),
+    ArraySpread(f64, f64, f64, f64, f64, self::ml::Big),
+    ObjectSpread(f64, f64, f64, self::ml::Big, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<f64>>>>,)>, Option<(Option<self::ml_string::Text>,)>),
+    OrdinaryDataProperty(f64, f64, f64, f64, self::ml::Big),
+    OrdinaryGet(f64, f64, f64, f64),
+    OrdinaryDelete(f64, f64, f64),
+    OrdinaryHas(f64, f64, f64),
+    OrdinarySet(f64, f64, f64, f64, f64),
+    OrdinaryDefine(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>, self::ml::Big),
+    PropertyKey(f64, f64, self::ml::Big),
+    PropertyDefinition(f64, f64, f64, f64, self::ml::Big, Option<(Option<self::ml_string::Text>,)>),
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_java_script_call_code_coordinate(value: f64, limit: f64) -> bool {
-    (((self::ml_math::is_safe_integer(value) && (value >= (0f64))) && (value < limit)) && ((value != (0f64)) || (((1f64 / value)) > (0f64))))
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallFunction {
+    CallFunction(self::ml::Big, self::ml::Big, self::ml_string::Text, Box<self::JavaScriptSemanticValue>, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptSemanticValue>>>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallInstruction>>>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptCallSourceSpan>,)>),
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_call_constant_error(value: self::JavaScriptSemanticValue) -> self::ml_string::Text {
-    self::read_java_script_semantic_value_error(value.clone())
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallTemplate {
+    CallTemplate(self::ml::Big, f64, self::ml::Big, f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallInstruction>>>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, f64, Option<(Option<self::ml_string::Text>,)>, Option<(Option<self::JavaScriptCallSourceSpan>,)>),
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_call_integer_arity(operation: &self::ml_string::Text) -> f64 {
-    if ((((*operation) == (self::ml_string::Text::from_units(vec![110, 101, 103, 97, 116, 101, 32, 105, 110, 116, 101, 103, 101, 114]))) || ((*operation) == (self::ml_string::Text::from_units(vec![99, 111, 109, 112, 108, 101, 109, 101, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 98, 105, 116, 115])))) || ((*operation) == (self::ml_string::Text::from_units(vec![99, 111, 109, 112, 108, 101, 109, 101, 110, 116, 32, 110, 117, 109, 98, 101, 114, 32, 98, 105, 116, 115])))) {
-        1f64
-    } else {
-        if self::ml_array::includes(&vec![self::ml_string::Text::from_units(vec![97, 100, 100, 32, 105, 110, 116, 101, 103, 101, 114, 115]), self::ml_string::Text::from_units(vec![115, 117, 98, 116, 114, 97, 99, 116, 32, 105, 110, 116, 101, 103, 101, 114, 115]), self::ml_string::Text::from_units(vec![109, 117, 108, 116, 105, 112, 108, 121, 32, 105, 110, 116, 101, 103, 101, 114, 115]), self::ml_string::Text::from_units(vec![100, 105, 118, 105, 100, 101, 32, 105, 110, 116, 101, 103, 101, 114, 115]), self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 105, 110, 116, 101, 103, 101, 114, 32, 114, 101, 109, 97, 105, 110, 100, 101, 114]), self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 32, 105, 110, 116, 101, 103, 101, 114, 32, 112, 111, 119, 101, 114]), self::ml_string::Text::from_units(vec![99, 111, 109, 112, 97, 114, 101, 32, 105, 110, 116, 101, 103, 101, 114, 115]), self::ml_string::Text::from_units(vec![99, 111, 109, 112, 97, 114, 101, 32, 110, 117, 109, 98, 101, 114, 32, 105, 110, 116, 101, 103, 101, 114]), self::ml_string::Text::from_units(vec![99, 111, 109, 112, 97, 114, 101, 32, 116, 101, 120, 116, 32, 105, 110, 116, 101, 103, 101, 114]), self::ml_string::Text::from_units(vec![99, 111, 110, 106, 111, 105, 110, 32, 105, 110, 116, 101, 103, 101, 114, 32, 98, 105, 116, 115]), self::ml_string::Text::from_units(vec![100, 105, 115, 106, 111, 105, 110, 32, 105, 110, 116, 101, 103, 101, 114, 32, 98, 105, 116, 115]), self::ml_string::Text::from_units(vec![101, 120, 99, 108, 117, 100, 101, 32, 101, 113, 117, 97, 108, 32, 105, 110, 116, 101, 103, 101, 114, 32, 98, 105, 116, 115]), self::ml_string::Text::from_units(vec![115, 104, 105, 102, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 98, 105, 116, 115, 32, 108, 101, 102, 116]), self::ml_string::Text::from_units(vec![115, 104, 105, 102, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 98, 105, 116, 115, 32, 114, 105, 103, 104, 116]), self::ml_string::Text::from_units(vec![99, 111, 110, 106, 111, 105, 110, 32, 110, 117, 109, 98, 101, 114, 32, 98, 105, 116, 115]), self::ml_string::Text::from_units(vec![100, 105, 115, 106, 111, 105, 110, 32, 110, 117, 109, 98, 101, 114, 32, 98, 105, 116, 115]), self::ml_string::Text::from_units(vec![101, 120, 99, 108, 117, 100, 101, 32, 101, 113, 117, 97, 108, 32, 110, 117, 109, 98, 101, 114, 32, 98, 105, 116, 115]), self::ml_string::Text::from_units(vec![115, 104, 105, 102, 116, 32, 110, 117, 109, 98, 101, 114, 32, 98, 105, 116, 115, 32, 108, 101, 102, 116]), self::ml_string::Text::from_units(vec![115, 104, 105, 102, 116, 32, 110, 117, 109, 98, 101, 114, 32, 98, 105, 116, 115, 32, 114, 105, 103, 104, 116]), self::ml_string::Text::from_units(vec![115, 104, 105, 102, 116, 32, 110, 117, 109, 98, 101, 114, 32, 98, 105, 116, 115, 32, 114, 105, 103, 104, 116, 32, 117, 110, 115, 105, 103, 110, 101, 100])], operation, 0f64, false, |a, b| a == b) {
-            2f64
-        } else {
-            0f64
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_source_exception_operation(name: &self::ml_string::Text) -> self::ml_string::Text {
-    if ((*name) == (self::ml_string::Text::from_units(vec![69, 114, 114, 111, 114]))) {
-        self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 69, 114, 114, 111, 114])
-    } else {
-        if ((*name) == (self::ml_string::Text::from_units(vec![84, 121, 112, 101, 69, 114, 114, 111, 114]))) {
-            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 84, 121, 112, 101, 69, 114, 114, 111, 114])
-        } else {
-            if ((*name) == (self::ml_string::Text::from_units(vec![82, 97, 110, 103, 101, 69, 114, 114, 111, 114]))) {
-                self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 82, 97, 110, 103, 101, 69, 114, 114, 111, 114])
-            } else {
-                if ((*name) == (self::ml_string::Text::from_units(vec![83, 121, 110, 116, 97, 120, 69, 114, 114, 111, 114]))) {
-                    self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 83, 121, 110, 116, 97, 120, 69, 114, 114, 111, 114])
-                } else {
-                    if ((*name) == (self::ml_string::Text::from_units(vec![82, 101, 102, 101, 114, 101, 110, 99, 101, 69, 114, 114, 111, 114]))) {
-                        self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 82, 101, 102, 101, 114, 101, 110, 99, 101, 69, 114, 114, 111, 114])
-                    } else {
-                        if ((*name) == (self::ml_string::Text::from_units(vec![85, 82, 73, 69, 114, 114, 111, 114]))) {
-                            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 85, 82, 73, 69, 114, 114, 111, 114])
-                        } else {
-                            if ((*name) == (self::ml_string::Text::from_units(vec![69, 118, 97, 108, 69, 114, 114, 111, 114]))) {
-                                self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 69, 118, 97, 108, 69, 114, 114, 111, 114])
-                            } else {
-                                self::ml_string::Text::from_units(vec![])
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_source_exception_class(operation: &self::ml_string::Text) -> self::ml_string::Text {
-    if ((*operation) == (self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 69, 114, 114, 111, 114]))) {
-        self::ml_string::Text::from_units(vec![69, 114, 114, 111, 114])
-    } else {
-        if ((*operation) == (self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 84, 121, 112, 101, 69, 114, 114, 111, 114]))) {
-            self::ml_string::Text::from_units(vec![84, 121, 112, 101, 69, 114, 114, 111, 114])
-        } else {
-            if ((*operation) == (self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 82, 97, 110, 103, 101, 69, 114, 114, 111, 114]))) {
-                self::ml_string::Text::from_units(vec![82, 97, 110, 103, 101, 69, 114, 114, 111, 114])
-            } else {
-                if ((*operation) == (self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 83, 121, 110, 116, 97, 120, 69, 114, 114, 111, 114]))) {
-                    self::ml_string::Text::from_units(vec![83, 121, 110, 116, 97, 120, 69, 114, 114, 111, 114])
-                } else {
-                    if ((*operation) == (self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 82, 101, 102, 101, 114, 101, 110, 99, 101, 69, 114, 114, 111, 114]))) {
-                        self::ml_string::Text::from_units(vec![82, 101, 102, 101, 114, 101, 110, 99, 101, 69, 114, 114, 111, 114])
-                    } else {
-                        if ((*operation) == (self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 85, 82, 73, 69, 114, 114, 111, 114]))) {
-                            self::ml_string::Text::from_units(vec![85, 82, 73, 69, 114, 114, 111, 114])
-                        } else {
-                            if ((*operation) == (self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 69, 118, 97, 108, 69, 114, 114, 111, 114]))) {
-                                self::ml_string::Text::from_units(vec![69, 118, 97, 108, 69, 114, 114, 111, 114])
-                            } else {
-                                self::ml_string::Text::from_units(vec![])
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_java_script_call_unary_number_operation(operation: &self::ml_string::Text) -> bool {
-    self::ml_array::includes(&vec![self::ml_string::Text::from_units(vec![110, 101, 103, 97, 116, 101, 32, 110, 117, 109, 98, 101, 114]), self::ml_string::Text::from_units(vec![116, 114, 117, 110, 99, 97, 116, 101, 32, 110, 117, 109, 98, 101, 114]), self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 97, 98, 115, 111, 108, 117, 116, 101, 32, 110, 117, 109, 98, 101, 114]), self::ml_string::Text::from_units(vec![102, 108, 111, 111, 114, 32, 110, 117, 109, 98, 101, 114]), self::ml_string::Text::from_units(vec![99, 101, 105, 108, 32, 110, 117, 109, 98, 101, 114]), self::ml_string::Text::from_units(vec![114, 111, 117, 110, 100, 32, 110, 117, 109, 98, 101, 114]), self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 110, 117, 109, 98, 101, 114, 32, 115, 105, 103, 110]), self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 115, 113, 117, 97, 114, 101, 32, 114, 111, 111, 116]), self::ml_string::Text::from_units(vec![116, 101, 115, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 110, 117, 109, 98, 101, 114]), self::ml_string::Text::from_units(vec![116, 101, 115, 116, 32, 115, 97, 102, 101, 32, 105, 110, 116, 101, 103, 101, 114, 32, 110, 117, 109, 98, 101, 114])], operation, 0f64, false, |a, b| a == b)
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallProgram {
+    CallProgram(std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallFunction>>>, std::rc::Rc<std::cell::RefCell<Vec<self::ml::Big>>>, Box<self::JavaScriptSemanticValue>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallTemplate>>>>,)>, Option<(Option<self::JavaScriptArraySpeciesDirectory>,)>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceUnit>>>>,)>),
 }

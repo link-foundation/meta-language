@@ -1,6 +1,7 @@
 // Generated from complete js/src/translation/javascript-error-construction-rules.js. Do not edit by hand.
 use super::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result;
 use super::source_ml_source1_temporary_read_java_script_semantic_value_error_loop1;
+use super::test_java_script_semantic_text_equal;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -285,102 +286,6 @@ pub mod ml {
     /// Bounded domains for executable theorem checks.
     pub fn range(low: i128, high: i128) -> Vec<Big> {
         (low..=high).map(Big::from_i128).collect()
-    }
-}
-
-/// JavaScript's Number operations that Rust's f64 does not share.
-pub mod ml_number {
-    /// ECMAScript Number::toString: the shortest decimal that reads back as
-    /// the value, the even one on a tie, laid out as JavaScript prints it.
-    pub fn js_number(x: f64) -> String {
-        if x.is_nan() {
-            return String::from("NaN");
-        }
-        if x.is_infinite() {
-            return String::from(if x > 0.0 { "Infinity" } else { "-Infinity" });
-        }
-        if x == 0.0 {
-            return String::from("0");
-        }
-        let (mut digits, n) = decimal(&format!("{:e}", x.abs()));
-        // Rust's shortest digits round a tie away from zero; ECMAScript takes the even neighbour.
-        let (exact, _) = decimal(&format!("{:.800e}", x.abs()));
-        let rest = &exact[digits.len().min(exact.len())..];
-        if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
-            let last = digits.as_bytes()[digits.len() - 1] - b'0';
-            let down = exact[..digits.len()].to_string();
-            let other = if digits == down { increment(&down) } else { Some(down) };
-            if let Some(other) = other {
-                let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
-                if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
-                    digits = other.trim_end_matches('0').to_string();
-                }
-            }
-        }
-        let k = digits.len() as i32;
-        let body = if k <= n && n <= 21 {
-            format!("{digits}{}", "0".repeat((n - k) as usize))
-        } else if 0 < n && n <= 21 {
-            format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
-        } else if -6 < n && n <= 0 {
-            format!("0.{}{digits}", "0".repeat((-n) as usize))
-        } else {
-            let sign = if n - 1 < 0 { '-' } else { '+' };
-            let power = (n - 1).abs();
-            if k == 1 {
-                format!("{digits}e{sign}{power}")
-            } else {
-                format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
-            }
-        };
-        if x < 0.0 {
-            format!("-{body}")
-        } else {
-            body
-        }
-    }
-
-    /// What console.log prints: -0 as "-0", where String(-0) is "0".
-    pub fn js_console(x: f64) -> String {
-        if x == 0.0 && x.is_sign_negative() {
-            String::from("-0")
-        } else {
-            js_number(x)
-        }
-    }
-
-    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
-    /// NaN, and 0 differs from -0.
-    pub fn same_value(a: f64, b: f64) -> bool {
-        if a.is_nan() || b.is_nan() {
-            a.is_nan() && b.is_nan()
-        } else {
-            a.to_bits() == b.to_bits()
-        }
-    }
-
-    /// A decimal digit string plus one, or None when it gains a digit.
-    fn increment(digits: &str) -> Option<String> {
-        let mut bytes = digits.as_bytes().to_vec();
-        for index in (0..bytes.len()).rev() {
-            if bytes[index] == b'9' {
-                bytes[index] = b'0';
-            } else {
-                bytes[index] += 1;
-                return String::from_utf8(bytes).ok();
-            }
-        }
-        None
-    }
-
-    /// The significant digits without trailing zeros, and the exponent n with
-    /// value 0.digits × 10^n, of Rust's {:e} text.
-    fn decimal(text: &str) -> (String, i32) {
-        let (mantissa, exponent) = text.split_once('e').expect("exponent");
-        let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
-        let digits = digits.trim_end_matches('0').to_string();
-        let digits = if digits.is_empty() { String::from("0") } else { digits };
-        (digits, exponent.parse::<i32>().expect("exponent") + 1)
     }
 }
 
@@ -716,6 +621,14 @@ pub enum JavaScriptSemanticValue {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallPrimitiveResult {
+    PrimitiveValue(Box<self::JavaScriptSemanticValue>),
+    PrimitiveInvalid(self::ml_string::Text),
+    PrimitiveError(self::ml_string::Text, self::ml_string::Text),
+    PrimitiveResourceLimit(self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptOrdinaryProperty {
     OrdinaryProperty(Box<self::JavaScriptSemanticValue>, (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)),
 }
@@ -844,6 +757,113 @@ pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValu
         }
         _ => {
             self::ml_string::Text::from_units(vec![])
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_java_script_semantic_same_value(left: self::JavaScriptSemanticValue, right: self::JavaScriptSemanticValue) -> bool {
+    if (((self::read_java_script_semantic_value_error(left.clone())) != (self::ml_string::Text::from_units(vec![]))) || ((self::read_java_script_semantic_value_error(right.clone())) != (self::ml_string::Text::from_units(vec![])))) {
+        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![83, 97, 109, 101, 86, 97, 108, 117, 101, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 116, 119, 111, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 118, 97, 108, 117, 101, 115, 32, 105, 110, 32, 116, 104, 101, 32, 100, 101, 99, 108, 97, 114, 101, 100, 32, 115, 101, 109, 97, 110, 116, 105, 99, 32, 109, 111, 100, 101, 108])).0, message_present: true }).raise()
+    } else {
+        match left.clone() {
+            self::JavaScriptSemanticValue::Undefined => {
+                match right.clone() {
+                    self::JavaScriptSemanticValue::Undefined => {
+                        true
+                    }
+                    _ => {
+                        false
+                    }
+                }
+            }
+            self::JavaScriptSemanticValue::Null => {
+                match right.clone() {
+                    self::JavaScriptSemanticValue::Null => {
+                        true
+                    }
+                    _ => {
+                        false
+                    }
+                }
+            }
+            self::JavaScriptSemanticValue::Boolean(left_value) => {
+                match right.clone() {
+                    self::JavaScriptSemanticValue::Boolean(value) => {
+                        (left_value == value)
+                    }
+                    _ => {
+                        false
+                    }
+                }
+            }
+            self::JavaScriptSemanticValue::Number(left_value_2) => {
+                match right.clone() {
+                    self::JavaScriptSemanticValue::Number(value_2) => {
+                        if (left_value_2 == value_2) {
+                            ((left_value_2 != (0f64)) || (((1f64 / left_value_2)) == ((1f64 / value_2))))
+                        } else {
+                            (left_value_2.is_nan() && value_2.is_nan())
+                        }
+                    }
+                    _ => {
+                        false
+                    }
+                }
+            }
+            self::JavaScriptSemanticValue::Integer(left_value_3) => {
+                match right.clone() {
+                    self::JavaScriptSemanticValue::Integer(value_3) => {
+                        (left_value_3 == value_3)
+                    }
+                    _ => {
+                        false
+                    }
+                }
+            }
+            self::JavaScriptSemanticValue::Text(_) => {
+                self::test_java_script_semantic_text_equal(left.clone(), right.clone())
+            }
+            self::JavaScriptSemanticValue::SourceText(_, _) => {
+                self::test_java_script_semantic_text_equal(left.clone(), right.clone())
+            }
+            self::JavaScriptSemanticValue::Symbol(left_identity) => {
+                match right.clone() {
+                    self::JavaScriptSemanticValue::Symbol(identity) => {
+                        (left_identity == identity)
+                    }
+                    _ => {
+                        false
+                    }
+                }
+            }
+            self::JavaScriptSemanticValue::Object(left_identity_2, _) => {
+                match right.clone() {
+                    self::JavaScriptSemanticValue::Object(identity_2, _) => {
+                        (left_identity_2 == identity_2)
+                    }
+                    _ => {
+                        false
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_semantic_text_length(value: self::JavaScriptSemanticValue) -> f64 {
+    match value.clone() {
+        self::JavaScriptSemanticValue::Text(source_ml_source2_f71) => {
+            (source_ml_source2_f71.len() as f64)
+        }
+        self::JavaScriptSemanticValue::SourceText(_, text) => {
+            text.length()
+        }
+        _ => {
+            (-1f64)
         }
     }
 }

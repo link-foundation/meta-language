@@ -3,15 +3,21 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {readProjectData,writeProjectData} from './project-data.mjs';
 import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
-if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+import {requireCurrentJavaScriptCallLibrary} from './javascript-call-library-reuse.mjs';
+const mode=process.argv.slice(2).join(' '),reuse=mode==='--draft --reuse-library';
+if(mode!=='--draft'&&!reuse)throw new TypeError('use --draft [--reuse-library]');
+process.argv.splice(2,process.argv.length-2,'--draft');
 const root=new URL('../../',import.meta.url);
 for(const path of ['js/src/translation/javascript-call-machine.js','js/src/typed-program-links.js','js/scripts/draft-source-library.mjs','js/scripts/source-library-entry-points.mjs',
- 'js/scripts/draft-native-model-codecs.mjs','js/scripts/draft-javascript-model-codecs.mjs','js/scripts/draft-javascript-call-machine.mjs','js/scripts/draft-javascript-call-machine-fixtures.mjs','js/scripts/draft-javascript-call-machine-integration.mjs',
+ 'js/scripts/draft-native-model-codecs.mjs','js/scripts/native-model-codec-files.mjs','js/scripts/draft-javascript-model-codecs.mjs','js/scripts/draft-javascript-call-machine.mjs','js/scripts/draft-javascript-call-machine-fixtures.mjs','js/scripts/draft-javascript-call-machine-integration.mjs',
  'js/scripts/draft-typed-program-sharing-fixtures.mjs','experiments/javascript-properties/call-machine-controls.mjs','experiments/javascript-properties/call-machine-oracle.mjs',
  'experiments/javascript-properties/typed-sharing-controls.mjs','experiments/javascript-properties/typed-sharing-oracle.mjs','js/tests/typed-program-value-sharing.test.js','js/tests/translation-javascript-call-machine.test.js']){
  parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);globalThis.gc?.();
 }
-for(const path of ['draft-javascript-call-machine.mjs','draft-javascript-call-machine-fixtures.mjs','draft-typed-program-sharing-fixtures.mjs']){await import(new URL(path,import.meta.url));globalThis.gc?.();}
+if(reuse)requireCurrentJavaScriptCallLibrary(root,'javascript-call-machine');
+else await import('./draft-javascript-call-machine.mjs');
+globalThis.gc?.();
+for(const path of ['draft-javascript-call-machine-fixtures.mjs','draft-typed-program-sharing-fixtures.mjs']){await import(new URL(path,import.meta.url));globalThis.gc?.();}
 parseAuthoredJavaScriptModule(readFileSync(new URL('experiments/javascript-properties/call-machine-codecs.mjs',root),'utf8'),'experiments/javascript-properties/call-machine-codecs.mjs');
 const file=new URL('parity/language-features.lino',root),inventory=readProjectData(file);
 const shared=['parity/fixtures/javascript-call-machine.lino','experiments/javascript-properties/call-machine-oracle.mjs','experiments/javascript-properties/call-machine-controls.mjs','experiments/javascript-properties/call-machine-codecs.mjs'];

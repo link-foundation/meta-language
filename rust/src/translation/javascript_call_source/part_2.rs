@@ -7,6 +7,13 @@ use super::JavaScriptSemanticValue;
 use super::ml_array;
 use super::ml_math;
 use super::read_java_script_semantic_value_error;
+use super::test_java_script_source_coordinate;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_java_script_call_code_coordinate(value: f64, limit: f64) -> bool {
+    self::test_java_script_source_coordinate(value, limit)
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

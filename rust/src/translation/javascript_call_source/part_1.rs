@@ -570,6 +570,14 @@ pub enum JavaScriptSemanticValue {
     Object(self::ml::Big, bool),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallPrimitiveResult {
+    PrimitiveValue(Box<self::JavaScriptSemanticValue>),
+    PrimitiveInvalid(String),
+    PrimitiveError(String, String),
+    PrimitiveResourceLimit(String),
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum JavaScriptArrayConstructorFact {
     ArrayConstructorFact(self::ml::Big, bool, self::ml::Big, bool, Option<(Option<String>,)>),
@@ -892,10 +900,4 @@ pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValu
 #[must_use]
 pub fn test_java_script_source_coordinate(value: f64, limit: f64) -> bool {
     (((self::ml_math::is_safe_integer(value) && (value >= (0f64))) && (value < limit)) && ((value != (0f64)) || (((1f64 / value)) > (0f64))))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_java_script_call_code_coordinate(value: f64, limit: f64) -> bool {
-    self::test_java_script_source_coordinate(value, limit)
 }

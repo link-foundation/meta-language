@@ -185,73 +185,73 @@ pub fn lower_java_script_call_source_array_expression(source: self::JavaScriptCa
                     let prototype = self::lower_java_script_call_source_expression(source_prototype.clone(), bindings.clone(), state.clone(), (depth + 1f64));
                     {
                         let object = self::allocate_java_script_call_source_register(match prototype.clone() {
-                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10179, _) => {
-                                let source_ml_source2_data_property_value10179 = *source_ml_source2_data_property_value10179;
-                                source_ml_source2_data_property_value10179.clone()
+                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10125, _) => {
+                                let source_ml_source2_data_property_value10125 = *source_ml_source2_data_property_value10125;
+                                source_ml_source2_data_property_value10125.clone()
                             }
                         });
                         {
                             let current = self::append_java_script_call_source_instruction(match object.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10180, _) => {
-                                    let source_ml_source2_data_property_value10180 = *source_ml_source2_data_property_value10180;
-                                    source_ml_source2_data_property_value10180.clone()
+                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10126, _) => {
+                                    let source_ml_source2_data_property_value10126 = *source_ml_source2_data_property_value10126;
+                                    source_ml_source2_data_property_value10126.clone()
                                 }
                             }, self::JavaScriptCallInstruction::ArrayAllocate(match object.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10181) => {
-                                    source_ml_source2_data_property_value10181
+                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10127) => {
+                                    source_ml_source2_data_property_value10127
                                 }
                             }, match prototype.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10182) => {
-                                    source_ml_source2_data_property_value10182
+                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10128) => {
+                                    source_ml_source2_data_property_value10128
                                 }
                             }, 0f64));
                             {
                                 let iterator_key = self::lower_java_script_call_source_expression(source_iterator_key.clone(), bindings.clone(), current.clone(), (depth + 1f64));
                                 {
                                     let saved_key = self::allocate_java_script_call_source_register(match iterator_key.clone() {
-                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10183, _) => {
-                                            let source_ml_source2_data_property_value10183 = *source_ml_source2_data_property_value10183;
-                                            source_ml_source2_data_property_value10183.clone()
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10129, _) => {
+                                            let source_ml_source2_data_property_value10129 = *source_ml_source2_data_property_value10129;
+                                            source_ml_source2_data_property_value10129.clone()
                                         }
                                     });
                                     {
                                         let keyed = self::append_java_script_call_source_instruction(match saved_key.clone() {
-                                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10184, _) => {
-                                                let source_ml_source2_data_property_value10184 = *source_ml_source2_data_property_value10184;
-                                                source_ml_source2_data_property_value10184.clone()
+                                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10130, _) => {
+                                                let source_ml_source2_data_property_value10130 = *source_ml_source2_data_property_value10130;
+                                                source_ml_source2_data_property_value10130.clone()
                                             }
                                         }, self::JavaScriptCallInstruction::Copy(match saved_key.clone() {
-                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10185) => {
-                                                source_ml_source2_data_property_value10185
+                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10131) => {
+                                                source_ml_source2_data_property_value10131
                                             }
                                         }, match iterator_key.clone() {
-                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10186) => {
-                                                source_ml_source2_data_property_value10186
+                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10132) => {
+                                                source_ml_source2_data_property_value10132
                                             }
                                         }));
                                         {
                                             let index = self::allocate_java_script_call_source_register(keyed.clone());
                                             {
                                                 let current_2 = self::append_java_script_call_source_instruction(match index.clone() {
-                                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10187, _) => {
-                                                        let source_ml_source2_data_property_value10187 = *source_ml_source2_data_property_value10187;
-                                                        source_ml_source2_data_property_value10187.clone()
+                                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10133, _) => {
+                                                        let source_ml_source2_data_property_value10133 = *source_ml_source2_data_property_value10133;
+                                                        source_ml_source2_data_property_value10133.clone()
                                                     }
                                                 }, self::JavaScriptCallInstruction::Constant(match index.clone() {
-                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10188) => {
-                                                        source_ml_source2_data_property_value10188
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10134) => {
+                                                        source_ml_source2_data_property_value10134
                                                     }
                                                 }, Box::new(self::JavaScriptSemanticValue::Number(0f64))));
                                                 {
                                                     let source_ml_source1_temporary_index31 = self::ml::Big::from_i128(0);
                                                     {
-                                                        let source_ml_source2_s10189 = self::source_ml_source1_temporary_lower_java_script_call_source_array_expression_loop33(bindings.clone(), depth, realm.clone(), object.clone(), current_2.clone(), saved_key.clone(), index.clone(), parts.clone(), source_ml_source1_temporary_index31.clone());
-                                                        match source_ml_source2_s10189.clone() {
+                                                        let source_ml_source2_s10135 = self::source_ml_source1_temporary_lower_java_script_call_source_array_expression_loop33(bindings.clone(), depth, realm.clone(), object.clone(), current_2.clone(), saved_key.clone(), index.clone(), parts.clone(), source_ml_source1_temporary_index31.clone());
+                                                        match source_ml_source2_s10135.clone() {
                                                             self::MlSource1TemporaryLowerJavaScriptCallSourceArrayExpressionLoop33Result::MlSource1TemporaryLowerJavaScriptCallSourceArrayExpressionLoop33Done(current_3) => {
                                                                 let current_3 = *current_3;
                                                                 self::JavaScriptCallSourceResult::SourceResult(Box::new(current_3.clone()), match object.clone() {
-                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10190) => {
-                                                                        source_ml_source2_data_property_value10190
+                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10136) => {
+                                                                        source_ml_source2_data_property_value10136
                                                                     }
                                                                 })
                                                             }
@@ -275,8 +275,8 @@ pub fn lower_java_script_call_source_array_expression(source: self::JavaScriptCa
         self::JavaScriptCallSource::SourceArray(source_prototype_2, length, elements, realm_2) => {
             let source_prototype_2 = *source_prototype_2;
             if ((((((!(self::ml_math::is_integer(length)) || (length < (0f64))) || (length > (4294967295f64))) || {
-                let source_ml_source2_same_value_operand10192 = (-0f64);
-                (((length == source_ml_source2_same_value_operand10192) && ((length != (0f64)) || (((1f64 / length)) == ((1f64 / source_ml_source2_same_value_operand10192))))) || ((length != length) && (source_ml_source2_same_value_operand10192 != source_ml_source2_same_value_operand10192)))
+                let source_ml_source2_same_value_operand10138 = (-0f64);
+                (((length == source_ml_source2_same_value_operand10138) && ((length != (0f64)) || (((1f64 / length)) == ((1f64 / source_ml_source2_same_value_operand10138))))) || ((length != length) && (source_ml_source2_same_value_operand10138 != source_ml_source2_same_value_operand10138)))
             }) || (({ let ml_reference_array80 = elements.clone(); let ml_reference_projection80 = ml_reference_array80.borrow().len() as f64; ml_reference_projection80 }) > (4096f64))) || (realm_2 <= (self::ml::Big::from_i128(0)))) || (realm_2 > (self::ml::Big::from_i128(18446744073709551615)))) {
                 self::refuse_java_script_call_source(state.clone(), "source Array construction requires its actual sparse length, bounded elements and realm")
             } else {
@@ -284,24 +284,24 @@ pub fn lower_java_script_call_source_array_expression(source: self::JavaScriptCa
                     let prototype_2 = self::lower_java_script_call_source_expression(source_prototype_2.clone(), bindings.clone(), state.clone(), (depth + 1f64));
                     {
                         let object_2 = self::allocate_java_script_call_source_register(match prototype_2.clone() {
-                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10193, _) => {
-                                let source_ml_source2_data_property_value10193 = *source_ml_source2_data_property_value10193;
-                                source_ml_source2_data_property_value10193.clone()
+                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10139, _) => {
+                                let source_ml_source2_data_property_value10139 = *source_ml_source2_data_property_value10139;
+                                source_ml_source2_data_property_value10139.clone()
                             }
                         });
                         {
                             let current_4 = self::append_java_script_call_source_instruction(match object_2.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10194, _) => {
-                                    let source_ml_source2_data_property_value10194 = *source_ml_source2_data_property_value10194;
-                                    source_ml_source2_data_property_value10194.clone()
+                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10140, _) => {
+                                    let source_ml_source2_data_property_value10140 = *source_ml_source2_data_property_value10140;
+                                    source_ml_source2_data_property_value10140.clone()
                                 }
                             }, self::JavaScriptCallInstruction::ArrayAllocate(match object_2.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10195) => {
-                                    source_ml_source2_data_property_value10195
+                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10141) => {
+                                    source_ml_source2_data_property_value10141
                                 }
                             }, match prototype_2.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10196) => {
-                                    source_ml_source2_data_property_value10196
+                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10142) => {
+                                    source_ml_source2_data_property_value10142
                                 }
                             }, length));
                             {
@@ -309,13 +309,13 @@ pub fn lower_java_script_call_source_array_expression(source: self::JavaScriptCa
                                 {
                                     let source_ml_source1_temporary_index32 = self::ml::Big::from_i128(0);
                                     {
-                                        let source_ml_source2_s10197 = self::source_ml_source1_temporary_lower_java_script_call_source_array_expression_loop34(bindings.clone(), depth, realm_2.clone(), length, object_2.clone(), current_4.clone(), previous, elements.clone(), source_ml_source1_temporary_index32.clone());
-                                        match source_ml_source2_s10197.clone() {
+                                        let source_ml_source2_s10143 = self::source_ml_source1_temporary_lower_java_script_call_source_array_expression_loop34(bindings.clone(), depth, realm_2.clone(), length, object_2.clone(), current_4.clone(), previous, elements.clone(), source_ml_source1_temporary_index32.clone());
+                                        match source_ml_source2_s10143.clone() {
                                             self::MlSource1TemporaryLowerJavaScriptCallSourceArrayExpressionLoop34Result::MlSource1TemporaryLowerJavaScriptCallSourceArrayExpressionLoop34Done(current_5) => {
                                                 let current_5 = *current_5;
                                                 self::JavaScriptCallSourceResult::SourceResult(Box::new(current_5.clone()), match object_2.clone() {
-                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10198) => {
-                                                        source_ml_source2_data_property_value10198
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10144) => {
+                                                        source_ml_source2_data_property_value10144
                                                     }
                                                 })
                                             }
@@ -534,36 +534,36 @@ pub fn lower_java_script_call_source_object_expression(source: self::JavaScriptC
                         let prototype = self::lower_java_script_call_source_expression(source_prototype.clone(), bindings.clone(), state.clone(), (depth + 1f64));
                         {
                             let object = self::allocate_java_script_call_source_register(match prototype.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10380, _) => {
-                                    let source_ml_source2_data_property_value10380 = *source_ml_source2_data_property_value10380;
-                                    source_ml_source2_data_property_value10380.clone()
+                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10326, _) => {
+                                    let source_ml_source2_data_property_value10326 = *source_ml_source2_data_property_value10326;
+                                    source_ml_source2_data_property_value10326.clone()
                                 }
                             });
                             {
                                 let current = self::append_java_script_call_source_instruction(match object.clone() {
-                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10381, _) => {
-                                        let source_ml_source2_data_property_value10381 = *source_ml_source2_data_property_value10381;
-                                        source_ml_source2_data_property_value10381.clone()
+                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value10327, _) => {
+                                        let source_ml_source2_data_property_value10327 = *source_ml_source2_data_property_value10327;
+                                        source_ml_source2_data_property_value10327.clone()
                                     }
                                 }, self::JavaScriptCallInstruction::OrdinaryAllocate(match object.clone() {
-                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10382) => {
-                                        source_ml_source2_data_property_value10382
+                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10328) => {
+                                        source_ml_source2_data_property_value10328
                                     }
                                 }, match prototype.clone() {
-                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10383) => {
-                                        source_ml_source2_data_property_value10383
+                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10329) => {
+                                        source_ml_source2_data_property_value10329
                                     }
                                 }));
                                 {
                                     let source_ml_source1_temporary_index35 = self::ml::Big::from_i128(0);
                                     {
-                                        let source_ml_source2_s10384 = self::source_ml_source1_temporary_lower_java_script_call_source_object_expression_loop41(bindings.clone(), depth, realm.clone(), object.clone(), current.clone(), properties.clone(), source_ml_source1_temporary_index35.clone());
-                                        match source_ml_source2_s10384.clone() {
+                                        let source_ml_source2_s10330 = self::source_ml_source1_temporary_lower_java_script_call_source_object_expression_loop41(bindings.clone(), depth, realm.clone(), object.clone(), current.clone(), properties.clone(), source_ml_source1_temporary_index35.clone());
+                                        match source_ml_source2_s10330.clone() {
                                             self::MlSource1TemporaryLowerJavaScriptCallSourceObjectExpressionLoop41Result::MlSource1TemporaryLowerJavaScriptCallSourceObjectExpressionLoop41Done(current_2) => {
                                                 let current_2 = *current_2;
                                                 self::JavaScriptCallSourceResult::SourceResult(Box::new(current_2.clone()), match object.clone() {
-                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10385) => {
-                                                        source_ml_source2_data_property_value10385
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value10331) => {
+                                                        source_ml_source2_data_property_value10331
                                                     }
                                                 })
                                             }

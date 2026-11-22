@@ -30,21 +30,21 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
         None::<self::JavaScriptCallFunction>
     } else {
         if ((((*operation) == (self::ml_string::Text::from_units(vec![83, 116, 114, 105, 110, 103, 46, 116, 111, 76, 111, 119, 101, 114, 67, 97, 115, 101]))) || ((*operation) == (self::ml_string::Text::from_units(vec![83, 116, 114, 105, 110, 103, 46, 116, 111, 85, 112, 112, 101, 114, 67, 97, 115, 101])))) && ((((match unicode_profile.clone() { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) != (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) || (({
-            let source_ml_source1_nullish_field_receiver1707 = (unicode_profile.clone(),);
-            if ((match (source_ml_source1_nullish_field_receiver1707.clone()).0 { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) {
+            let source_ml_source1_nullish_field_receiver1699 = (unicode_profile.clone(),);
+            if ((match (source_ml_source1_nullish_field_receiver1699.clone()).0 { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) {
                 {
-                    let source_ml_source1_nullish_field_present1708 = ((source_ml_source1_nullish_field_receiver1707.clone()).0).clone().expect("a proven present value");
-                    source_ml_source1_nullish_field_present1708.length()
+                    let source_ml_source1_nullish_field_present1700 = ((source_ml_source1_nullish_field_receiver1699.clone()).0).clone().expect("a proven present value");
+                    source_ml_source1_nullish_field_present1700.length()
                 }
             } else {
                 (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 108, 101, 110, 103, 116, 104, 39, 41])).0, message_present: true }).raise()
             }
         }) == (0f64))) || (({
-            let source_ml_source1_nullish_field_receiver1711 = (unicode_profile.clone(),);
-            if ((match (source_ml_source1_nullish_field_receiver1711.clone()).0 { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) {
+            let source_ml_source1_nullish_field_receiver1703 = (unicode_profile.clone(),);
+            if ((match (source_ml_source1_nullish_field_receiver1703.clone()).0 { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) {
                 {
-                    let source_ml_source1_nullish_field_present1712 = ((source_ml_source1_nullish_field_receiver1711.clone()).0).clone().expect("a proven present value");
-                    source_ml_source1_nullish_field_present1712.length()
+                    let source_ml_source1_nullish_field_present1704 = ((source_ml_source1_nullish_field_receiver1703.clone()).0).clone().expect("a proven present value");
+                    source_ml_source1_nullish_field_present1704.length()
                 }
             } else {
                 (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 108, 101, 110, 103, 116, 104, 39, 41])).0, message_present: true }).raise()
@@ -54,12 +54,12 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
         } else {
             {
                 let name = {
-                    let source_ml_source1_string_range_operand1714 = 7f64;
+                    let source_ml_source1_string_range_operand1706 = 7f64;
                     {
-                        let source_ml_source1_string_range_position1715 = source_ml_source1_string_range_operand1714;
+                        let source_ml_source1_string_range_position1707 = source_ml_source1_string_range_operand1706;
                         {
-                            let source_ml_source1_string_range_position1716 = f64::INFINITY;
-                            operation.slice(source_ml_source1_string_range_position1715, source_ml_source1_string_range_position1716)
+                            let source_ml_source1_string_range_position1708 = f64::INFINITY;
+                            operation.slice(source_ml_source1_string_range_position1707, source_ml_source1_string_range_position1708)
                         }
                     }
                 };
@@ -68,13 +68,13 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                     {
                         let at = 0f64;
                         {
-                            let source_ml_source1_s1717 = self::source_ml_temporary_compile_java_script_string_method_function_loop356(&(name), units.clone(), at);
-                            match source_ml_source1_s1717.clone() {
+                            let source_ml_source1_s1709 = self::source_ml_temporary_compile_java_script_string_method_function_loop356(&(name), units.clone(), at);
+                            match source_ml_source1_s1709.clone() {
                                 self::MlTemporaryCompileJavaScriptStringMethodFunctionLoop356Result::MlTemporaryCompileJavaScriptStringMethodFunctionLoop356Done => {
                                     {
                                         let code = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptCallInstruction>::new()));
                                         {
-                                            let source_ml_source1_s1729 = if ((name == (self::ml_string::Text::from_units(vec![102, 114, 111, 109, 67, 104, 97, 114, 67, 111, 100, 101]))) || (name == (self::ml_string::Text::from_units(vec![102, 114, 111, 109, 67, 111, 100, 101, 80, 111, 105, 110, 116])))) {
+                                            let source_ml_source1_s1721 = if ((name == (self::ml_string::Text::from_units(vec![102, 114, 111, 109, 67, 104, 97, 114, 67, 111, 100, 101]))) || (name == (self::ml_string::Text::from_units(vec![102, 114, 111, 109, 67, 111, 100, 101, 80, 111, 105, 110, 116])))) {
                                                 {
                                                     let source_ml_temporary_compile_java_script_string_method_function_ignored358 = { let ml_method_owner424 = code.clone(); let ml_method_argument424_0 = self::JavaScriptCallInstruction::Constant(1f64, Box::new(self::JavaScriptSemanticValue::Text(std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()))))); let ml_method_argument424_1 = self::JavaScriptCallInstruction::ArgumentCount(5f64); let ml_method_argument424_2 = self::JavaScriptCallInstruction::Constant(4f64, Box::new(self::JavaScriptSemanticValue::Number(0f64))); let ml_method_argument424_3 = self::JavaScriptCallInstruction::Constant(8f64, Box::new(self::JavaScriptSemanticValue::Number(1f64))); let ml_inserted = vec![ml_method_argument424_0, ml_method_argument424_1, ml_method_argument424_2, ml_method_argument424_3]; let mut ml_method_values424 = ml_method_owner424.borrow_mut(); let ml_length = ml_method_values424.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values424.extend(ml_inserted); ml_length as f64 };
                                                     {
@@ -119,8 +119,8 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                                                                 {
                                                                     let at_2 = 0f64;
                                                                     {
-                                                                        let source_ml_source1_s1730 = self::source_ml_temporary_compile_java_script_string_method_function_loop365(unicode_profile.clone(), profile_units.clone(), at_2);
-                                                                        match source_ml_source1_s1730.clone() {
+                                                                        let source_ml_source1_s1722 = self::source_ml_temporary_compile_java_script_string_method_function_loop365(unicode_profile.clone(), profile_units.clone(), at_2);
+                                                                        match source_ml_source1_s1722.clone() {
                                                                             self::MlTemporaryCompileJavaScriptStringMethodFunctionLoop365Result::MlTemporaryCompileJavaScriptStringMethodFunctionLoop365Done => {
                                                                                 {
                                                                                     let source_ml_temporary_compile_java_script_string_method_function_ignored366 = { let ml_method_owner434 = code.clone(); let ml_method_argument434_0 = self::JavaScriptCallInstruction::Constant(8f64, Box::new(self::JavaScriptSemanticValue::Text(profile_units.clone()))); let ml_method_argument434_1 = self::JavaScriptCallInstruction::Primitive(9f64, if (name == (self::ml_string::Text::from_units(vec![116, 111, 76, 111, 119, 101, 114, 67, 97, 115, 101]))) {
@@ -311,13 +311,13 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                                                                                     {
                                                                                         let source_ml_temporary_compile_java_script_string_method_function_ignored393 = { let ml_method_owner474 = code.clone(); let ml_method_argument474_0 = self::JavaScriptCallInstruction::Argument(2f64, 0f64); let ml_inserted = vec![ml_method_argument474_0]; let mut ml_method_values474 = ml_method_owner474.borrow_mut(); let ml_length = ml_method_values474.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values474.extend(ml_inserted); ml_length as f64 };
                                                                                         {
-                                                                                            let source_ml_source1_s1735 = if (((name == (self::ml_string::Text::from_units(vec![115, 116, 97, 114, 116, 115, 87, 105, 116, 104]))) || (name == (self::ml_string::Text::from_units(vec![101, 110, 100, 115, 87, 105, 116, 104])))) || (name == (self::ml_string::Text::from_units(vec![105, 110, 99, 108, 117, 100, 101, 115])))) {
+                                                                                            let source_ml_source1_s1727 = if (((name == (self::ml_string::Text::from_units(vec![115, 116, 97, 114, 116, 115, 87, 105, 116, 104]))) || (name == (self::ml_string::Text::from_units(vec![101, 110, 100, 115, 87, 105, 116, 104])))) || (name == (self::ml_string::Text::from_units(vec![105, 110, 99, 108, 117, 100, 101, 115])))) {
                                                                                                 if {
-                                                                                                    let source_ml_source1_comparison_operand1737 = {
-                                                                                                        let source_ml_source1_optional_chain_receiver1736 = (match_key.clone(),);
-                                                                                                        if match (source_ml_source1_optional_chain_receiver1736.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                                                                                                    let source_ml_source1_comparison_operand1729 = {
+                                                                                                        let source_ml_source1_optional_chain_receiver1728 = (match_key.clone(),);
+                                                                                                        if match (source_ml_source1_optional_chain_receiver1728.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
                                                                                                             Some({
-                                                                                                                let source_ml_temporary_optional_chain355 = ((source_ml_source1_optional_chain_receiver1736.clone()).0).clone().expect("a proven present value");
+                                                                                                                let source_ml_temporary_optional_chain355 = ((source_ml_source1_optional_chain_receiver1728.clone()).0).clone().expect("a proven present value");
                                                                                                                 match source_ml_temporary_optional_chain355.clone() {
                                                                                                                     self::JavaScriptSemanticValue::Undefined => {
                                                                                                                         self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100])
@@ -352,7 +352,7 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                                                                                                             None::<self::ml_string::Text>
                                                                                                         }
                                                                                                     };
-                                                                                                    !(match (source_ml_source1_comparison_operand1737.clone(), self::ml_string::Text::from_units(vec![115, 121, 109, 98, 111, 108])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })
+                                                                                                    !(match (source_ml_source1_comparison_operand1729.clone(), self::ml_string::Text::from_units(vec![115, 121, 109, 98, 111, 108])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })
                                                                                                 } {
                                                                                                     self::MlTemporaryCompileJavaScriptStringMethodFunctionJoin394::MlTemporaryCompileJavaScriptStringMethodFunctionJoin394Return(None::<self::JavaScriptCallFunction>)
                                                                                                 } else {
@@ -385,8 +385,8 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                                                                                                                                                         {
                                                                                                                                                             let at_3 = 0f64;
                                                                                                                                                             {
-                                                                                                                                                                let source_ml_source1_s1739 = self::source_ml_temporary_compile_java_script_string_method_function_loop411(&(message), message_units.clone(), at_3);
-                                                                                                                                                                match source_ml_source1_s1739.clone() {
+                                                                                                                                                                let source_ml_source1_s1731 = self::source_ml_temporary_compile_java_script_string_method_function_loop411(&(message), message_units.clone(), at_3);
+                                                                                                                                                                match source_ml_source1_s1731.clone() {
                                                                                                                                                                     self::MlTemporaryCompileJavaScriptStringMethodFunctionLoop411Result::MlTemporaryCompileJavaScriptStringMethodFunctionLoop411Done => {
                                                                                                                                                                         {
                                                                                                                                                                             let source_ml_temporary_compile_java_script_string_method_function_ignored412 = { let ml_method_owner486 = code.clone(); let ml_method_argument486_0 = self::JavaScriptCallInstruction::Constant(7f64, Box::new(self::JavaScriptSemanticValue::Text(message_units.clone()))); let ml_method_argument486_1 = self::JavaScriptCallInstruction::Constant(8f64, Box::new(self::JavaScriptSemanticValue::Boolean(true))); let ml_method_argument486_2 = self::JavaScriptCallInstruction::Primitive(9f64, self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 84, 121, 112, 101, 69, 114, 114, 111, 114]), std::rc::Rc::new(std::cell::RefCell::new(vec![7f64, 8f64]))); let ml_inserted = vec![ml_method_argument486_0, ml_method_argument486_1, ml_method_argument486_2]; let mut ml_method_values486 = ml_method_owner486.borrow_mut(); let ml_length = ml_method_values486.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values486.extend(ml_inserted); ml_length as f64 };
@@ -428,12 +428,12 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                                                                                             } else {
                                                                                                 self::MlTemporaryCompileJavaScriptStringMethodFunctionJoin394::MlTemporaryCompileJavaScriptStringMethodFunctionJoin394Next
                                                                                             };
-                                                                                            match source_ml_source1_s1735.clone() {
+                                                                                            match source_ml_source1_s1727.clone() {
                                                                                                 self::MlTemporaryCompileJavaScriptStringMethodFunctionJoin394::MlTemporaryCompileJavaScriptStringMethodFunctionJoin394Next => {
                                                                                                     {
                                                                                                         let source_ml_temporary_compile_java_script_string_method_function_ignored395 = { let ml_method_owner492 = code.clone(); let ml_method_argument492_0 = self::JavaScriptCallInstruction::Primitive(2f64, self::ml_string::Text::from_units(vec![99, 111, 110, 118, 101, 114, 116, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 116, 101, 120, 116]), std::rc::Rc::new(std::cell::RefCell::new(vec![2f64]))); let ml_method_argument492_1 = self::JavaScriptCallInstruction::Argument(3f64, 1f64); let ml_inserted = vec![ml_method_argument492_0, ml_method_argument492_1]; let mut ml_method_values492 = ml_method_owner492.borrow_mut(); let ml_length = ml_method_values492.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values492.extend(ml_inserted); ml_length as f64 };
                                                                                                         {
-                                                                                                            let source_ml_source1_s1740 = if (name == (self::ml_string::Text::from_units(vec![101, 110, 100, 115, 87, 105, 116, 104]))) {
+                                                                                                            let source_ml_source1_s1732 = if (name == (self::ml_string::Text::from_units(vec![101, 110, 100, 115, 87, 105, 116, 104]))) {
                                                                                                                 {
                                                                                                                     let source_ml_temporary_compile_java_script_string_method_function_ignored398 = { let ml_method_owner493 = code.clone(); let ml_method_argument493_0 = self::JavaScriptCallInstruction::Constant(8f64, Box::new(self::JavaScriptSemanticValue::Undefined)); let ml_method_argument493_1 = self::JavaScriptCallInstruction::StrictEqual(6f64, 3f64, 8f64); let ml_inserted = vec![ml_method_argument493_0, ml_method_argument493_1]; let mut ml_method_values493 = ml_method_owner493.borrow_mut(); let ml_length = ml_method_values493.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values493.extend(ml_inserted); ml_length as f64 };
                                                                                                                     {
@@ -471,7 +471,7 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                                                                                                                     self::MlTemporaryCompileJavaScriptStringMethodFunctionJoin396::MlTemporaryCompileJavaScriptStringMethodFunctionJoin396Next
                                                                                                                 }
                                                                                                             };
-                                                                                                            match source_ml_source1_s1740.clone() {
+                                                                                                            match source_ml_source1_s1732.clone() {
                                                                                                                 self::MlTemporaryCompileJavaScriptStringMethodFunctionJoin396::MlTemporaryCompileJavaScriptStringMethodFunctionJoin396Next => {
                                                                                                                     {
                                                                                                                         let source_ml_temporary_compile_java_script_string_method_function_ignored397 = { let ml_method_owner504 = code.clone(); let ml_method_argument504_0 = self::JavaScriptCallInstruction::Primitive(9f64, if (name == (self::ml_string::Text::from_units(vec![105, 110, 100, 101, 120, 79, 102]))) {
@@ -514,17 +514,17 @@ pub fn compile_java_script_string_method_function(identity: self::ml::Big, realm
                                                     }
                                                 }
                                             };
-                                            match source_ml_source1_s1729.clone() {
+                                            match source_ml_source1_s1721.clone() {
                                                 self::MlTemporaryCompileJavaScriptStringMethodFunctionJoin357::MlTemporaryCompileJavaScriptStringMethodFunctionJoin357Next => {
                                                     Some({
-                                                        let source_ml_source1_constructor_field1744 = self::JavaScriptSemanticValue::Undefined;
+                                                        let source_ml_source1_constructor_field1736 = self::JavaScriptSemanticValue::Undefined;
                                                         {
-                                                            let source_ml_source1_constructor_field1745 = 0f64;
+                                                            let source_ml_source1_constructor_field1737 = 0f64;
                                                             {
-                                                                let source_ml_source1_constructor_field1746 = 10f64;
+                                                                let source_ml_source1_constructor_field1738 = 10f64;
                                                                 {
-                                                                    let source_ml_source1_constructor_field1747 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
-                                                                    self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1744.clone()), source_ml_source1_constructor_field1745, source_ml_source1_constructor_field1746, source_ml_source1_constructor_field1747.clone(), code.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
+                                                                    let source_ml_source1_constructor_field1739 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
+                                                                    self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1736.clone()), source_ml_source1_constructor_field1737, source_ml_source1_constructor_field1738, source_ml_source1_constructor_field1739.clone(), code.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
                                                                 }
                                                             }
                                                         }
@@ -560,16 +560,16 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
     } else {
         if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 112, 114, 111, 116, 111, 116, 121, 112, 101]))) {
             Some({
-                let source_ml_source1_constructor_field1752 = self::JavaScriptSemanticValue::Undefined;
+                let source_ml_source1_constructor_field1744 = self::JavaScriptSemanticValue::Undefined;
                 {
-                    let source_ml_source1_constructor_field1753 = 0f64;
+                    let source_ml_source1_constructor_field1745 = 0f64;
                     {
-                        let source_ml_source1_constructor_field1754 = 2f64;
+                        let source_ml_source1_constructor_field1746 = 2f64;
                         {
-                            let source_ml_source1_constructor_field1755 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
+                            let source_ml_source1_constructor_field1747 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
                             {
-                                let source_ml_source1_constructor_field1756 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::Constant(1f64, Box::new(self::JavaScriptSemanticValue::Undefined)), self::JavaScriptCallInstruction::Return(1f64)]));
-                                self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1752.clone()), source_ml_source1_constructor_field1753, source_ml_source1_constructor_field1754, source_ml_source1_constructor_field1755.clone(), source_ml_source1_constructor_field1756.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
+                                let source_ml_source1_constructor_field1748 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::Constant(1f64, Box::new(self::JavaScriptSemanticValue::Undefined)), self::JavaScriptCallInstruction::Return(1f64)]));
+                                self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1744.clone()), source_ml_source1_constructor_field1745, source_ml_source1_constructor_field1746, source_ml_source1_constructor_field1747.clone(), source_ml_source1_constructor_field1748.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
                             }
                         }
                     }
@@ -578,16 +578,16 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
         } else {
             if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 98, 105, 110, 100]))) {
                 Some({
-                    let source_ml_source1_constructor_field1760 = self::JavaScriptSemanticValue::Undefined;
+                    let source_ml_source1_constructor_field1752 = self::JavaScriptSemanticValue::Undefined;
                     {
-                        let source_ml_source1_constructor_field1761 = 0f64;
+                        let source_ml_source1_constructor_field1753 = 0f64;
                         {
-                            let source_ml_source1_constructor_field1762 = 2f64;
+                            let source_ml_source1_constructor_field1754 = 2f64;
                             {
-                                let source_ml_source1_constructor_field1763 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
+                                let source_ml_source1_constructor_field1755 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
                                 {
-                                    let source_ml_source1_constructor_field1764 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::FunctionBind(1f64), self::JavaScriptCallInstruction::Return(1f64)]));
-                                    self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1760.clone()), source_ml_source1_constructor_field1761, source_ml_source1_constructor_field1762, source_ml_source1_constructor_field1763.clone(), source_ml_source1_constructor_field1764.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
+                                    let source_ml_source1_constructor_field1756 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::FunctionBind(1f64), self::JavaScriptCallInstruction::Return(1f64)]));
+                                    self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1752.clone()), source_ml_source1_constructor_field1753, source_ml_source1_constructor_field1754, source_ml_source1_constructor_field1755.clone(), source_ml_source1_constructor_field1756.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
                                 }
                             }
                         }
@@ -596,16 +596,16 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
             } else {
                 if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 116, 111, 83, 116, 114, 105, 110, 103]))) {
                     Some({
-                        let source_ml_source1_constructor_field1768 = self::JavaScriptSemanticValue::Undefined;
+                        let source_ml_source1_constructor_field1760 = self::JavaScriptSemanticValue::Undefined;
                         {
-                            let source_ml_source1_constructor_field1769 = 0f64;
+                            let source_ml_source1_constructor_field1761 = 0f64;
                             {
-                                let source_ml_source1_constructor_field1770 = 2f64;
+                                let source_ml_source1_constructor_field1762 = 2f64;
                                 {
-                                    let source_ml_source1_constructor_field1771 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
+                                    let source_ml_source1_constructor_field1763 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
                                     {
-                                        let source_ml_source1_constructor_field1772 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::FunctionToString(1f64), self::JavaScriptCallInstruction::Return(1f64)]));
-                                        self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1768.clone()), source_ml_source1_constructor_field1769, source_ml_source1_constructor_field1770, source_ml_source1_constructor_field1771.clone(), source_ml_source1_constructor_field1772.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
+                                        let source_ml_source1_constructor_field1764 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::FunctionToString(1f64), self::JavaScriptCallInstruction::Return(1f64)]));
+                                        self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1760.clone()), source_ml_source1_constructor_field1761, source_ml_source1_constructor_field1762, source_ml_source1_constructor_field1763.clone(), source_ml_source1_constructor_field1764.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
                                     }
                                 }
                             }
@@ -614,16 +614,16 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                 } else {
                     if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 114, 101, 115, 116, 114, 105, 99, 116, 101, 100, 32, 112, 114, 111, 112, 101, 114, 116, 121]))) {
                         Some({
-                            let source_ml_source1_constructor_field1776 = self::JavaScriptSemanticValue::Undefined;
+                            let source_ml_source1_constructor_field1768 = self::JavaScriptSemanticValue::Undefined;
                             {
-                                let source_ml_source1_constructor_field1777 = 0f64;
+                                let source_ml_source1_constructor_field1769 = 0f64;
                                 {
-                                    let source_ml_source1_constructor_field1778 = 2f64;
+                                    let source_ml_source1_constructor_field1770 = 2f64;
                                     {
-                                        let source_ml_source1_constructor_field1779 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
+                                        let source_ml_source1_constructor_field1771 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
                                         {
-                                            let source_ml_source1_constructor_field1780 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::Primitive(1f64, self::ml_string::Text::from_units(vec![116, 104, 114, 111, 119, 32, 114, 101, 115, 116, 114, 105, 99, 116, 101, 100, 32, 70, 117, 110, 99, 116, 105, 111, 110, 32, 97, 99, 99, 101, 115, 115]), std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()))), self::JavaScriptCallInstruction::Return(1f64)]));
-                                            self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1776.clone()), source_ml_source1_constructor_field1777, source_ml_source1_constructor_field1778, source_ml_source1_constructor_field1779.clone(), source_ml_source1_constructor_field1780.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
+                                            let source_ml_source1_constructor_field1772 = std::rc::Rc::new(std::cell::RefCell::new(vec![self::JavaScriptCallInstruction::Primitive(1f64, self::ml_string::Text::from_units(vec![116, 104, 114, 111, 119, 32, 114, 101, 115, 116, 114, 105, 99, 116, 101, 100, 32, 70, 117, 110, 99, 116, 105, 111, 110, 32, 97, 99, 99, 101, 115, 115]), std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()))), self::JavaScriptCallInstruction::Return(1f64)]));
+                                            self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1768.clone()), source_ml_source1_constructor_field1769, source_ml_source1_constructor_field1770, source_ml_source1_constructor_field1771.clone(), source_ml_source1_constructor_field1772.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
                                         }
                                     }
                                 }
@@ -633,7 +633,7 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                         {
                             let instructions = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptCallInstruction>::new()));
                             {
-                                let source_ml_source1_s1781 = if ((*operation) == (self::ml_string::Text::from_units(vec![82, 101, 102, 108, 101, 99, 116, 46, 97, 112, 112, 108, 121]))) {
+                                let source_ml_source1_s1773 = if ((*operation) == (self::ml_string::Text::from_units(vec![82, 101, 102, 108, 101, 99, 116, 46, 97, 112, 112, 108, 121]))) {
                                     {
                                         let source_ml_temporary_compile_java_script_function_invocation_function_ignored440 = { let ml_method_owner506 = instructions.clone(); let ml_method_argument506_0 = self::JavaScriptCallInstruction::Argument(1f64, 0f64); let ml_method_argument506_1 = self::JavaScriptCallInstruction::Argument(2f64, 1f64); let ml_method_argument506_2 = self::JavaScriptCallInstruction::Argument(3f64, 2f64); let ml_inserted = vec![ml_method_argument506_0, ml_method_argument506_1, ml_method_argument506_2]; let mut ml_method_values506 = ml_method_owner506.borrow_mut(); let ml_length = ml_method_values506.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values506.extend(ml_inserted); ml_length as f64 };
                                         self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin419::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin419Next
@@ -651,12 +651,12 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                                         }
                                     }
                                 };
-                                match source_ml_source1_s1781.clone() {
+                                match source_ml_source1_s1773.clone() {
                                     self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin419::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin419Next => {
                                         {
                                             let source_ml_temporary_compile_java_script_function_invocation_function_ignored420 = { let ml_method_owner509 = instructions.clone(); let ml_method_argument509_0 = self::JavaScriptCallInstruction::Primitive(1f64, self::ml_string::Text::from_units(vec![114, 101, 113, 117, 105, 114, 101, 32, 99, 97, 108, 108, 97, 98, 108, 101, 32, 116, 97, 114, 103, 101, 116]), std::rc::Rc::new(std::cell::RefCell::new(vec![1f64]))); let ml_method_argument509_1 = self::JavaScriptCallInstruction::ArgumentListOpen(0f64); let ml_method_argument509_2 = self::JavaScriptCallInstruction::Constant(8f64, Box::new(self::JavaScriptSemanticValue::Number(1f64))); let ml_inserted = vec![ml_method_argument509_0, ml_method_argument509_1, ml_method_argument509_2]; let mut ml_method_values509 = ml_method_owner509.borrow_mut(); let ml_length = ml_method_values509.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values509.extend(ml_inserted); ml_length as f64 };
                                             {
-                                                let source_ml_source1_s1785 = if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 99, 97, 108, 108]))) {
+                                                let source_ml_source1_s1777 = if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 99, 97, 108, 108]))) {
                                                     {
                                                         let source_ml_temporary_compile_java_script_function_invocation_function_ignored422 = { let ml_method_owner510 = instructions.clone(); let ml_method_argument510_0 = self::JavaScriptCallInstruction::ArgumentCount(5f64); let ml_method_argument510_1 = self::JavaScriptCallInstruction::Constant(4f64, Box::new(self::JavaScriptSemanticValue::Number(1f64))); let ml_inserted = vec![ml_method_argument510_0, ml_method_argument510_1]; let mut ml_method_values510 = ml_method_owner510.borrow_mut(); let ml_length = ml_method_values510.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values510.extend(ml_inserted); ml_length as f64 };
                                                         {
@@ -688,7 +688,7 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                                                         {
                                                             let undefined_branch = (-1f64);
                                                             {
-                                                                let source_ml_source1_s1786 = if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 97, 112, 112, 108, 121]))) {
+                                                                let source_ml_source1_s1778 = if ((*operation) == (self::ml_string::Text::from_units(vec![70, 117, 110, 99, 116, 105, 111, 110, 46, 97, 112, 112, 108, 121]))) {
                                                                     {
                                                                         let source_ml_temporary_compile_java_script_function_invocation_function_ignored437 = { let ml_method_owner518 = instructions.clone(); let ml_method_argument518_0 = self::JavaScriptCallInstruction::Constant(6f64, Box::new(self::JavaScriptSemanticValue::Null)); let ml_method_argument518_1 = self::JavaScriptCallInstruction::StrictEqual(6f64, 3f64, 6f64); let ml_inserted = vec![ml_method_argument518_0, ml_method_argument518_1]; let mut ml_method_values518 = ml_method_owner518.borrow_mut(); let ml_length = ml_method_values518.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values518.extend(ml_inserted); ml_length as f64 };
                                                                         {
@@ -708,7 +708,7 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                                                                 } else {
                                                                     self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin427::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin427Next(null_branch, undefined_branch)
                                                                 };
-                                                                match source_ml_source1_s1786.clone() {
+                                                                match source_ml_source1_s1778.clone() {
                                                                     self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin427::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin427Next(null_branch_3, undefined_branch_3) => {
                                                                         {
                                                                             let source_ml_temporary_compile_java_script_function_invocation_function_ignored428 = { let ml_method_owner523 = instructions.clone(); let ml_method_argument523_0 = self::JavaScriptCallInstruction::Primitive(3f64, self::ml_string::Text::from_units(vec![114, 101, 113, 117, 105, 114, 101, 32, 97, 114, 114, 97, 121, 32, 108, 105, 107, 101, 32, 97, 114, 103, 117, 109, 101, 110, 116, 115, 32, 79, 98, 106, 101, 99, 116]), std::rc::Rc::new(std::cell::RefCell::new(vec![3f64]))); let ml_method_argument523_1 = self::JavaScriptCallInstruction::Constant(6f64, Box::new(self::JavaScriptSemanticValue::Text(std::rc::Rc::new(std::cell::RefCell::new(vec![108f64, 101f64, 110f64, 103f64, 116f64, 104f64]))))); let ml_method_argument523_2 = self::JavaScriptCallInstruction::OrdinaryGet(5f64, 3f64, 6f64, 3f64); let ml_method_argument523_3 = self::JavaScriptCallInstruction::Primitive(5f64, self::ml_string::Text::from_units(vec![99, 111, 101, 114, 99, 101, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 110, 117, 109, 98, 101, 114]), std::rc::Rc::new(std::cell::RefCell::new(vec![5f64]))); let ml_method_argument523_4 = self::JavaScriptCallInstruction::Primitive(5f64, self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 97, 114, 114, 97, 121, 32, 108, 105, 107, 101, 32, 108, 101, 110, 103, 116, 104]), std::rc::Rc::new(std::cell::RefCell::new(vec![5f64]))); let ml_method_argument523_5 = self::JavaScriptCallInstruction::Constant(4f64, Box::new(self::JavaScriptSemanticValue::Number(0f64))); let ml_inserted = vec![ml_method_argument523_0, ml_method_argument523_1, ml_method_argument523_2, ml_method_argument523_3, ml_method_argument523_4, ml_method_argument523_5]; let mut ml_method_values523 = ml_method_owner523.borrow_mut(); let ml_length = ml_method_values523.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values523.extend(ml_inserted); ml_length as f64 };
@@ -725,7 +725,7 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                                                                                                 {
                                                                                                     let source_ml_temporary_compile_java_script_function_invocation_function_ignored431 = { let ml_array_owner529 = instructions.clone(); let ml_array_argument529_0: self::JavaScriptCallInstruction = self::JavaScriptCallInstruction::Branch(6f64, (branch_2 + 1f64), call_2); let ml_array_argument529_1: f64 = branch_2; let ml_array_argument529_2: f64 = (branch_2 + 1f64); let ml_array_length = ml_array_owner529.borrow().len(); let ml_array_start = { let ml_relative_value: f64 = ml_array_argument529_1; let ml_relative = if ml_relative_value.is_nan() { 0f64 } else { ml_relative_value.trunc() }; let ml_bound = ml_array_length as f64; (if ml_relative < 0f64 { (ml_bound + ml_relative).clamp(0f64, ml_bound) } else { ml_relative.min(ml_bound) }) as usize }; let ml_array_end = { let ml_relative_value: f64 = ml_array_argument529_2; let ml_relative = if ml_relative_value.is_nan() { 0f64 } else { ml_relative_value.trunc() }; let ml_bound = ml_array_length as f64; (if ml_relative < 0f64 { (ml_bound + ml_relative).clamp(0f64, ml_bound) } else { ml_relative.min(ml_bound) }) as usize }; { let mut ml_array_values = ml_array_owner529.borrow_mut(); if ml_array_start < ml_array_end { ml_array_values[ml_array_start..ml_array_end].fill(ml_array_argument529_0); } } ml_array_owner529 };
                                                                                                     {
-                                                                                                        let source_ml_source1_s1787 = if (null_branch_3 >= (0f64)) {
+                                                                                                        let source_ml_source1_s1779 = if (null_branch_3 >= (0f64)) {
                                                                                                             {
                                                                                                                 let source_ml_temporary_compile_java_script_function_invocation_function_ignored436 = { let ml_array_owner530 = instructions.clone(); let ml_array_argument530_0: self::JavaScriptCallInstruction = self::JavaScriptCallInstruction::Branch(6f64, call_2, (null_branch_3 + 1f64)); let ml_array_argument530_1: f64 = null_branch_3; let ml_array_argument530_2: f64 = (null_branch_3 + 1f64); let ml_array_length = ml_array_owner530.borrow().len(); let ml_array_start = { let ml_relative_value: f64 = ml_array_argument530_1; let ml_relative = if ml_relative_value.is_nan() { 0f64 } else { ml_relative_value.trunc() }; let ml_bound = ml_array_length as f64; (if ml_relative < 0f64 { (ml_bound + ml_relative).clamp(0f64, ml_bound) } else { ml_relative.min(ml_bound) }) as usize }; let ml_array_end = { let ml_relative_value: f64 = ml_array_argument530_2; let ml_relative = if ml_relative_value.is_nan() { 0f64 } else { ml_relative_value.trunc() }; let ml_bound = ml_array_length as f64; (if ml_relative < 0f64 { (ml_bound + ml_relative).clamp(0f64, ml_bound) } else { ml_relative.min(ml_bound) }) as usize }; { let mut ml_array_values = ml_array_owner530.borrow_mut(); if ml_array_start < ml_array_end { ml_array_values[ml_array_start..ml_array_end].fill(ml_array_argument530_0); } } ml_array_owner530 };
                                                                                                                 self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin432::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin432Next
@@ -733,10 +733,10 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                                                                                                         } else {
                                                                                                             self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin432::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin432Next
                                                                                                         };
-                                                                                                        match source_ml_source1_s1787.clone() {
+                                                                                                        match source_ml_source1_s1779.clone() {
                                                                                                             self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin432::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin432Next => {
                                                                                                                 {
-                                                                                                                    let source_ml_source1_s1788 = if (undefined_branch_3 >= (0f64)) {
+                                                                                                                    let source_ml_source1_s1780 = if (undefined_branch_3 >= (0f64)) {
                                                                                                                         {
                                                                                                                             let source_ml_temporary_compile_java_script_function_invocation_function_ignored435 = { let ml_array_owner531 = instructions.clone(); let ml_array_argument531_0: self::JavaScriptCallInstruction = self::JavaScriptCallInstruction::Branch(6f64, call_2, (undefined_branch_3 + 1f64)); let ml_array_argument531_1: f64 = undefined_branch_3; let ml_array_argument531_2: f64 = (undefined_branch_3 + 1f64); let ml_array_length = ml_array_owner531.borrow().len(); let ml_array_start = { let ml_relative_value: f64 = ml_array_argument531_1; let ml_relative = if ml_relative_value.is_nan() { 0f64 } else { ml_relative_value.trunc() }; let ml_bound = ml_array_length as f64; (if ml_relative < 0f64 { (ml_bound + ml_relative).clamp(0f64, ml_bound) } else { ml_relative.min(ml_bound) }) as usize }; let ml_array_end = { let ml_relative_value: f64 = ml_array_argument531_2; let ml_relative = if ml_relative_value.is_nan() { 0f64 } else { ml_relative_value.trunc() }; let ml_bound = ml_array_length as f64; (if ml_relative < 0f64 { (ml_bound + ml_relative).clamp(0f64, ml_bound) } else { ml_relative.min(ml_bound) }) as usize }; { let mut ml_array_values = ml_array_owner531.borrow_mut(); if ml_array_start < ml_array_end { ml_array_values[ml_array_start..ml_array_end].fill(ml_array_argument531_0); } } ml_array_owner531 };
                                                                                                                             self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin433::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin433Next
@@ -744,7 +744,7 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                                                                                                                     } else {
                                                                                                                         self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin433::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin433Next
                                                                                                                     };
-                                                                                                                    match source_ml_source1_s1788.clone() {
+                                                                                                                    match source_ml_source1_s1780.clone() {
                                                                                                                         self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin433::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin433Next => {
                                                                                                                             {
                                                                                                                                 let source_ml_temporary_compile_java_script_function_invocation_function_ignored434 = { let ml_method_owner532 = instructions.clone(); let ml_method_argument532_0 = self::JavaScriptCallInstruction::ArgumentListCall(9f64, 0f64, 1f64, 2f64, self::ml_string::Text::from_units(vec![99, 97, 108, 108])); let ml_method_argument532_1 = self::JavaScriptCallInstruction::Return(9f64); let ml_inserted = vec![ml_method_argument532_0, ml_method_argument532_1]; let mut ml_method_values532 = ml_method_owner532.borrow_mut(); let ml_length = ml_method_values532.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4294967295usize).expect("Invalid array length"); ml_method_values532.extend(ml_inserted); ml_length as f64 };
@@ -769,17 +769,17 @@ pub fn compile_java_script_function_invocation_function(identity: self::ml::Big,
                                                         }
                                                     }
                                                 };
-                                                match source_ml_source1_s1785.clone() {
+                                                match source_ml_source1_s1777.clone() {
                                                     self::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin421::MlTemporaryCompileJavaScriptFunctionInvocationFunctionJoin421Next => {
                                                         Some({
-                                                            let source_ml_source1_constructor_field1792 = self::JavaScriptSemanticValue::Undefined;
+                                                            let source_ml_source1_constructor_field1784 = self::JavaScriptSemanticValue::Undefined;
                                                             {
-                                                                let source_ml_source1_constructor_field1793 = 0f64;
+                                                                let source_ml_source1_constructor_field1785 = 0f64;
                                                                 {
-                                                                    let source_ml_source1_constructor_field1794 = 10f64;
+                                                                    let source_ml_source1_constructor_field1786 = 10f64;
                                                                     {
-                                                                        let source_ml_source1_constructor_field1795 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
-                                                                        self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1792.clone()), source_ml_source1_constructor_field1793, source_ml_source1_constructor_field1794, source_ml_source1_constructor_field1795.clone(), instructions.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
+                                                                        let source_ml_source1_constructor_field1787 = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptSemanticValue>::new()));
+                                                                        self::JavaScriptCallFunction::CallFunction(identity.clone(), realm.clone(), self::ml_string::Text::from_units(vec![112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 116, 114, 105, 110, 115, 105, 99]), Box::new(source_ml_source1_constructor_field1784.clone()), source_ml_source1_constructor_field1785, source_ml_source1_constructor_field1786, source_ml_source1_constructor_field1787.clone(), instructions.clone(), None::<(Option<self::JavaScriptSemanticValue>,)>, None::<(Option<self::JavaScriptCallSourceSpan>,)>)
                                                                     }
                                                                 }
                                                             }
