@@ -24,6 +24,7 @@ use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
 };
 
+pub mod text_location;
 mod trivia;
 mod verification;
 

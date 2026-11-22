@@ -18,6 +18,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   pdfStreamNullCharacters: 'https://github.com/link-foundation/meta-language/issues/239',
   rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
   grammarSearch: 'https://github.com/link-foundation/meta-language/issues/235',
+  normalizedTextLocation: 'https://github.com/link-foundation/meta-language/issues/243',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
@@ -480,6 +481,39 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       implementationEntryPoints: {
         javascript: ['js/src/grammar-importers/lark-regex.js', 'js/tests/grammar-lark.test.js'],
         rust: ['rust/src/grammar/import/lark/regex.rs', 'rust/tests/unit/grammar_import_lark.rs'],
+      },
+    })),
+    ...[
+      {
+        id: 'I195-I243-NORMALIZED-TEXT-LOCATION',
+        construct: 'normalization-tolerant quote location',
+        expectedBehavior: 'Every occurrence of the normalized fragment has an original UTF-16 or UTF-8 source span and the transformations needed for equality. An occurrence spans whole normalization expansions.',
+        selector: 'exact cases, all matched original spans and needed normalizations',
+        assertions: ['allNormalizedMatchesKeepSourceRanges', 'neededNormalizationsAreReported'],
+      },
+      {
+        id: 'I195-I243-APPROXIMATE-TEXT-LOCATION',
+        construct: 'bounded grapheme and word edit scripts',
+        expectedBehavior: 'An explicit edit budget switches on approximate matching. Each returned edit describes the source and fragment unit, with native original-text offsets on each applicable side.',
+        selector: 'approximate cases, substitutions, insertions and deletions in both edit units',
+        assertions: ['editBudgetAndUnitControlMatches', 'reportedEditScriptsKeepSourceRanges'],
+      },
+      {
+        id: 'I195-I243-WORD-NGRAM-OVERLAP',
+        construct: 'word sequence overlap and source range pairs',
+        expectedBehavior: 'A shared word n-gram is reported once for every left and right occurrence pair, with exact source spans in both original texts.',
+        selector: 'overlap cases, duplicate word sequence pairs and the character-only negative input',
+        assertions: ['wordNgramsReportEverySharedSourcePair'],
+      },
+    ].map(entry => ({
+      ...entry,
+      source: ISSUE_195_SOURCES.normalizedTextLocation,
+      language: 'Unicode text search',
+      version: 'Unicode 13.0 through 17.0 fixture characters and boundaries',
+      fixture: 'parity/fixtures/text-location.lino',
+      implementationEntryPoints: {
+        javascript: ['js/src/text-location.js', 'js/tests/text-location.test.js'],
+        rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
       },
     })),
   ];

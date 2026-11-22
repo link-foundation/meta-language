@@ -2254,6 +2254,15 @@ ASCII case-insensitive patterns with Python's additional Unicode equivalents,
 and dot-all matching. Patterns outside the subset report the UTF-8 byte
 position of the unsupported syntax during import.
 
+Quote location builds a Unicode projection of the source and fragment and
+retains original offsets across character expansion, whitespace collapse and
+soft-hyphen removal. An exact occurrence reports the transformations it used.
+With a positive edit budget, the search compares graphemes or word segments
+and returns the lowest-distance nonempty match at each start, preferring the
+shorter match on ties. Word n-gram overlap returns every pair of source ranges
+for each shared projected word sequence. JavaScript exposes UTF-16 offsets
+and Rust exposes UTF-8 offsets for these operations.
+
 The JavaScript Yacc/Lex draft lowers declared token rules, left and right
 precedence, `%prec`, lexical modes, trivia and supported arithmetic or textual
 actions to shared native Links operations. Rejection actions become explicit

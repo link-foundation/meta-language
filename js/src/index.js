@@ -17,6 +17,7 @@ export * from './grammar-runtime.js';
 export * from './graphql-adapter.js';
 export * from './language-catalog.js';
 export { rankLanguageIdentification as identifyLanguage } from './language-identification.js';
+export { locate, wordNgramOverlap } from './text-location.js';
 export * from './concept-records.js';
 export * from './concept-distinctions.js';
 export * from './global-concept-space.js';

@@ -32,6 +32,8 @@ const rustItemsPath = path.join(root, 'rust/tests/unit/javascript_export_parity/
  */
 export const OVERRIDES = Object.freeze({
   identifyLanguage: { rust: 'link_network::rank_language_identification' },
+  locate: { rust: 'link_network::text_location::locate' },
+  wordNgramOverlap: { rust: 'link_network::text_location::word_ngram_overlap' },
   importResourceDescriptionNTriples: { rust: 'import_resource_description_ntriples' },
   emitResourceDescriptionNTriples: { rust: 'emit_resource_description_ntriples' },
   readResourceDescriptionNTriplesSource: { rust: 'read_resource_description_ntriples_source' },

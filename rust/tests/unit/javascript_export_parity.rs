@@ -517,6 +517,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("languageEntry", "language_entry", "function"),
     ("languageForPath", "language_for_path", "function"),
     ("languageSupport", "language_support", "function"),
+    ("locate", "link_network::text_location::locate", "function"),
     ("lowerGrammar", "lower_grammar", "function"),
     ("lowerGraphQL", "lower_graphql", "function"),
     ("lowerGraphQl", "lower_graphql", "function"),
@@ -756,6 +757,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "verifyResourceDescriptionGraphWitnesses",
         "verify_resource_description_graph_witnesses",
+        "function",
+    ),
+    (
+        "wordNgramOverlap",
+        "link_network::text_location::word_ngram_overlap",
         "function",
     ),
 ];

@@ -194,6 +194,7 @@ mod storage;
 mod structured_data_links;
 mod structured_data_records;
 mod substitution;
+mod text_location;
 mod translation;
 mod translation_arrays;
 mod translation_ascii_text_predicates;
