@@ -1,0 +1,27 @@
+import { writeFileSync } from 'node:fs';
+import { readLinkNetworkBinaryBufferSourceModule } from '../../js/scripts/generate-link-network-binary-buffer-rules.mjs';
+import { parseJavaScript } from '../../js/src/translation/javascript.js';
+import { checkProgram } from '../../js/src/translation/check.js';
+import { emitRust } from '../../js/src/translation/emit-rust.js';
+import { readPortableLibraryRelocation } from '../../js/scripts/record-rule-library.mjs';
+import { readPortableSourceParameterStyles, readPortableSourceLintStyles } from '../../js/scripts/portable-source-library-style.mjs';
+import { readProjectData } from '../../js/scripts/project-data.mjs';
+import { readSourceTextRustBlock } from '../../js/scripts/source-text-byte-library-style.mjs';
+import { formatProductRuleSource } from '../../js/scripts/product-rule-style-corrections.mjs';
+
+const output = process.argv[2];
+if (!output || process.argv.length !== 3) throw new TypeError('provide one output path');
+const source = readLinkNetworkBinaryBufferSourceModule();
+const program = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
+const emission = emitRust(program, { arrayConsumption: true });
+const header = emission.text.split('\n').find(line => line.startsWith('#![allow('));
+const raw = [header, ...emission.preludes, ...emission.definitions].join('\n\n');
+const { source: relocated } = readPortableLibraryRelocation(raw);
+const publicNames = [...relocated.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
+const loans = readPortableSourceParameterStyles(relocated, { publicNames });
+const lints = readPortableSourceLintStyles(loans.source);
+const entry = readSourceTextRustBlock(lints.source, 'fn', 'transcode_link_network_binary');
+writeFileSync(output, formatProductRuleSource(entry).trim());
+const previous = readProjectData(new URL('../../parity/self-translation/binary-buffer-ci-style-review-117536842665.lino', import.meta.url));
+writeFileSync(output + '.previous', previous.function.source);
+writeFileSync(output + '.renames.json', JSON.stringify(previous.function.renames, null, 2) + '\n');

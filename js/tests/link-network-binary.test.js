@@ -178,11 +178,11 @@ function readBufferedBinaryEmission() {
   if (!bufferedBinaryEmission) {
     const source = readLinkNetworkBinaryBufferSourceModule();
     const program = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
-    assert.equal(program.declarations.size, 74, 'the actual complete source and all generated owners are checked');
+    assert.equal(program.declarations.size, 77, 'the actual complete source and all generated owners are checked');
     assert.deepEqual(program.items.filter(owner => !owner.generated).map(owner => owner.name), [
       'linkNetworkBinaryUnit', 'acceptLinkNetworkBinaryInteger', 'readLinkNetworkBinaryInteger',
       'linkNetworkBinaryIntegerByte', 'acceptLinkNetworkBinaryUnicode', 'renderLinkNetworkBinaryHexadecimalDigit',
-      'renderLinkNetworkBinaryField', 'transcodeLinkNetworkBinary',
+      'renderLinkNetworkBinaryField', 'hasOrderedLinkNetworkIdentity', 'transcodeLinkNetworkBinary',
     ]);
     const context = {};
     runInNewContext(emitJavaScript(program).text, context, { timeout: 1000 });
@@ -264,8 +264,8 @@ test('buffered framing preserves safe integer identities cache membership limits
     if (version === 2) input[1] = Number.MAX_SAFE_INTEGER;
     assert.match(compareBufferedBinaryControl(input, false), /^-7,/u);
   }
-  for (const identity of [1, largest, 2, Number.MAX_SAFE_INTEGER]) {
-    const records = createBinaryIdentityControl(2, [largest, 1]);
+  for (const identities of [[1, largest], [largest, 1]]) for (const identity of [1, largest, 2, Number.MAX_SAFE_INTEGER]) {
+    const records = createBinaryIdentityControl(2, identities);
     records[1] = Number.MAX_SAFE_INTEGER;
     const input = [...records.slice(0, -2), 1, 1, 99, identity, 0];
     const expected = compareBufferedBinaryControl(input, false);

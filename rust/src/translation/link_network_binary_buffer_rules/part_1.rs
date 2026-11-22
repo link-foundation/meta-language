@@ -1,8 +1,10 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
 use super::MlTemporaryAcceptLinkNetworkBinaryUnicodeLoop3Result;
+use super::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Result;
 use super::MlTemporaryReadLinkNetworkBinaryIntegerLoop1Result;
 use super::source_ml_temporary_accept_link_network_binary_unicode_loop3;
+use super::source_ml_temporary_has_ordered_link_network_identity_loop4;
 use super::source_ml_temporary_link_network_binary_integer_byte_loop2;
 use super::source_ml_temporary_read_link_network_binary_integer_loop1;
 
@@ -780,5 +782,30 @@ pub fn render_link_network_binary_field(value: f64, binary: bool) -> self::ml_st
         (self::render_link_network_binary_hexadecimal_digit((value / 16f64).floor())).concat(
             &self::render_link_network_binary_hexadecimal_digit(value % 16f64),
         )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn has_ordered_link_network_identity(identities: &[f64], target: f64) -> bool {
+    {
+        let lower = 0f64;
+        {
+            let upper = identities.len() as f64;
+            {
+                let source_ml_source1_s3 =
+                    self::source_ml_temporary_has_ordered_link_network_identity_loop4(
+                        identities, target, lower, upper,
+                    );
+                match source_ml_source1_s3 {
+                    self::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Result::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Done => {
+                        false
+                    }
+                    self::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Result::MlTemporaryHasOrderedLinkNetworkIdentityLoop4Return(source_ml_temporary_result4) => {
+                        source_ml_temporary_result4
+                    }
+                }
+            }
+        }
     }
 }

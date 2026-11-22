@@ -11,6 +11,19 @@ const digest=source=>createHash('sha256').update(source).digest('hex');
 
 function verifyReviewedBinaryBufferSource(current,previous){
  if(current===previous)return new Map();
+ // Adding the binary-search owner advances the emitted local and loop names
+ // by one. The two loops retain their original result uses and carry the new
+ // identity-order state. Keep the historical diagnostic packet verbatim.
+ if(digest(current)==='4e13c855544753360662b68adef5a0d82e0f3e99a45f9347d63f4f233f132513'){
+  for(const [binding,loop,state] of [
+   ['source_ml_source1_s16',9,'ordered_identities, record'],
+   ['source_ml_source1_s19',11,'ordered_identities_2, section'],
+  ]){
+   const assignment=current.match(new RegExp('let '+binding+' = self::source_ml_temporary_transcode_link_network_binary_loop'+loop+'\\(([^\\n]+)\\);\\s+match '+binding+' \\{','u'));
+   assert.ok(assignment?.[1].endsWith(', '+state),'the successor keeps the reviewed loop result and carries its actual identity order');
+  }
+  return new Map([['ml_s15','source_ml_source1_s16'],['ml_s18','source_ml_source1_s19']]);
+ }
  assert.equal(digest(current),'fc538108ce75bfa56d830e0a7feb2fb295a72adc213956acbf99b7a5e7930d98',
   'the complete pre-style function is the recorded emitter successor');
  const tokens=tokenize(current,'Rust').tokens, aliases=new Map();
