@@ -2,8 +2,13 @@ use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::translation::{
     emit_javascript::emit_javascript,
     emit_rust::emit_rust,
+    ir::Decl,
     rust::parse_rust_with_standard_collection_source_model,
+    source_signatures::{
+        SourceSignature, SourceTypeSignature, validate_source_signature_with_data,
+    },
     surface::{SExpr, SNode},
+    types::Type,
 };
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, RustStandardCollectionLibraryLimits,
@@ -155,6 +160,56 @@ fn actual_standard_collection_source_survives_both_links_transports() {
     };
     let checked =
         decode_typed_program_links_with_limits(&packet.network, packet.root, limits).unwrap();
+    let collection = checked
+        .declarations
+        .iter()
+        .find_map(|declaration| match declaration {
+            Decl::Data(data)
+                if data
+                    .name
+                    .starts_with("RustStandardCollectionBTreeMap_u8_u64_") =>
+            {
+                Some(data)
+            }
+            _ => None,
+        })
+        .expect("source fixture's actual map carrier");
+    let ty = Type::Data {
+        name: collection.full_name.clone(),
+    };
+    let carrier = serde_json::to_value(&collection.source_standard_collection_carrier).unwrap();
+    let mut signature = SourceSignature {
+        model: "Rust source function signature 2".into(),
+        language: "Rust".into(),
+        parameters: Vec::new(),
+        lifetime_bindings: Vec::new(),
+        result: SourceTypeSignature {
+            ty: ty.clone(),
+            wrappers: Vec::new(),
+            lifetimes: Vec::new(),
+            owner: serde_json::from_value(carrier["origin"]["sourceOwner"].clone()).unwrap(),
+            array_element_position: None,
+        },
+    };
+    let validate_signature = |signature: &SourceSignature| {
+        validate_source_signature_with_data(
+            signature,
+            &[],
+            &ty,
+            "Rust",
+            |ty| Ok(ty.clone()),
+            |ty| match ty {
+                Type::Data { name } => match checked.declaration(name) {
+                    Some(Decl::Data(data)) => Some(data),
+                    _ => None,
+                },
+                _ => None,
+            },
+        )
+    };
+    validate_signature(&signature).unwrap();
+    signature.result.owner.arguments.swap(0, 1);
+    assert!(validate_signature(&signature).is_err());
     let options = BinaryLinksOptions::default();
     let binary = encode_link_network_binary(&packet.network, options).unwrap();
     let original = compile_and_observe(source);

@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use super::Span;
 use super::diagnostics::{TranslationError, unsupported};
-use super::ir::{Decl, Program};
+use super::ir::{DataDecl, Decl, Program};
 use super::rust_standard_collection_library::RustStandardCollectionSourceLibrary;
 use super::rust_standard_collection_value_packet::{
     RustStandardCollectionOrigin, ml_string::Text, read_rust_standard_collection_kind,
@@ -438,12 +438,28 @@ fn valid_source_identity(path: &str, sha256: &str) -> bool {
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
+pub(crate) fn is_standard_collection_owner(path: &str) -> bool {
+    let candidate = Text::from_text(path);
+    !path.is_empty() && resolve_rust_standard_collection_owner(&candidate, true, false) == candidate
+}
+
 fn library_owner(declaration: &Decl) -> Option<&CollectionLibraryOwner> {
     match declaration {
         Decl::Data(data) => data.source_standard_collection_library_owner.as_deref(),
         Decl::Fn(function) => function.source_standard_collection_library_owner.as_deref(),
         Decl::Theorem(_) => None,
     }
+}
+
+fn matches_state_owner(data: &DataDecl, owner: &CollectionLibraryOwner, language: &str) -> bool {
+    language == "Rust"
+        && owner.model == "Rust standard collection projected library owner 1"
+        && owner.declaration == data.full_name
+        && valid_source_identity(&owner.entry_path, &owner.source_sha256)
+        && owner.role == "state"
+        && matches!(data.ctors.as_slice(), [constructor]
+            if constructor.name == "rustStandardCollectionState"
+                && constructor.fields.iter().map(|field| field.name.as_str()).eq(["origin", "root", "keyDomain", "valueDomain", "pointerWidth", "revision", "entries"]))
 }
 
 fn check_library_owner(
@@ -472,9 +488,7 @@ fn check_library_owner(
         ));
     }
     let valid = match (owner.role.as_str(), declaration) {
-        ("state", Decl::Data(data)) => matches!(data.ctors.as_slice(), [constructor]
-            if constructor.name == "rustStandardCollectionState"
-                && constructor.fields.iter().map(|field| field.name.as_str()).eq(["origin", "root", "keyDomain", "valueDomain", "pointerWidth", "revision", "entries"])),
+        ("state", Decl::Data(data)) => matches_state_owner(data, owner, language),
         ("equality" | "ordering", Decl::Fn(function)) => {
             matches!(function.params.as_slice(), [left, right, call, budget]
             if [&left.ty, &right.ty, &call.ty].iter().all(|ty| matches!(ty, Type::Data { .. } | Type::Record { .. }))
@@ -504,6 +518,124 @@ fn check_library_owner(
     Ok(())
 }
 
+fn check_carrier(data: &DataDecl, carrier: &CollectionCarrier, language: &str) -> Result<()> {
+    let origin = CollectionOrigin::deserialize(&carrier.origin).map_err(|_| {
+        fail(
+            "collection carrier retains its actual complete source origin",
+            data.span,
+        )
+    })?;
+    let library = &carrier.kernel_library;
+    if language != "Rust"
+        || carrier.model != "Rust closed standard collections 1"
+        || carrier.pointer_width != 64
+        || origin.tag != "rustStandardCollectionOrigin"
+        || library.model != "Rust standard collection kernel library 1"
+        || !valid_source_identity(&library.entry_path, &library.source_sha256)
+    {
+        return Err(fail(
+            "collection carrier requires its actual complete Rust specialization facet",
+            data.span,
+        ));
+    }
+    let reason = read_rust_standard_collection_source_origin_error(
+        origin.native(),
+        &Text::from_text(&carrier.key_domain),
+        &Text::from_text(&carrier.value_domain),
+        f64::from(carrier.pointer_width),
+    );
+    if !reason.0.is_empty() {
+        return Err(fail(&reason.to_string(), data.span));
+    }
+    let owner = resolve_rust_standard_collection_owner(
+        &Text::from_text(&origin.resolved_owner),
+        true,
+        false,
+    );
+    let set = read_rust_standard_collection_kind(&owner) == Text::from_text("set");
+    let owner = owner.to_string();
+    let domains = if set {
+        carrier.key_domain.clone()
+    } else {
+        format!("{},{}", carrier.key_domain, carrier.value_domain)
+    };
+    let identity = format!("{owner}<{domains}>@{}", carrier.pointer_width);
+    let base = format!(
+        "RustStandardCollection{}_{}_{}_{}",
+        owner.rsplit("::").next().unwrap_or_default(),
+        carrier.key_domain,
+        carrier.value_domain,
+        carrier.pointer_width
+    );
+    let suffix = data
+        .name
+        .strip_prefix(&base)
+        .and_then(|suffix| suffix.strip_prefix('_'));
+    if carrier.concrete_identity != identity
+        || origin.type_identity != identity
+        || !(data.name == base
+            || suffix.is_some_and(|suffix| {
+                !suffix.is_empty()
+                    && !suffix.starts_with('0')
+                    && suffix.bytes().all(|byte| byte.is_ascii_digit())
+            }))
+    {
+        return Err(fail(
+            "collection nominal identity preserves its canonical owner key/value domains and target width",
+            data.span,
+        ));
+    }
+    if carrier.kernel_type
+        != (Type::Data {
+            name: library.kernel_declaration.clone(),
+        })
+        || !matches!(data.ctors.as_slice(), [constructor] if constructor.name == "CollectionState"
+            && matches!(constructor.fields.as_slice(), [field] if field.name == "state" && field.ty == carrier.kernel_type))
+    {
+        return Err(fail(
+            "collection specialization retains its actual generic shared kernel state type",
+            data.span,
+        ));
+    }
+    Ok(())
+}
+
+pub(crate) fn check_source_owner<'a>(
+    data: &DataDecl,
+    language: &str,
+    resolve_data: &mut (impl FnMut(&Type) -> Option<&'a DataDecl> + ?Sized),
+) -> Result<SourceOwner> {
+    let missing = || {
+        fail(
+            "an owned standard collection needs its actual checked carrier specialization",
+            data.span,
+        )
+    };
+    let carrier = data
+        .source_standard_collection_carrier
+        .as_deref()
+        .ok_or_else(missing)?;
+    check_carrier(data, carrier, language)?;
+    let state = resolve_data(&carrier.kernel_type).ok_or_else(missing)?;
+    let binding = state
+        .source_standard_collection_library_owner
+        .as_deref()
+        .ok_or_else(missing)?;
+    let library = &carrier.kernel_library;
+    if !matches_state_owner(state, binding, language)
+        || binding.entry_path != library.entry_path
+        || binding.source_sha256 != library.source_sha256
+        || binding.declaration != library.kernel_declaration
+    {
+        return Err(fail(
+            "collection specialization cannot substitute an unrelated generic-state declaration or source owner",
+            data.span,
+        ));
+    }
+    let owner = carrier.origin.get("sourceOwner").ok_or_else(missing)?;
+    SourceOwner::deserialize(owner).map_err(|_| missing())
+}
+
 pub(crate) fn check_program(program: &Program) -> Result<()> {
     let language = program.source_language.as_str();
     for declaration in &program.declarations {
@@ -516,84 +648,8 @@ pub(crate) fn check_program(program: &Program) -> Result<()> {
         let Some(carrier) = &data.source_standard_collection_carrier else {
             continue;
         };
-        let origin = CollectionOrigin::deserialize(&carrier.origin).map_err(|_| {
-            fail(
-                "collection carrier retains its actual complete source origin",
-                data.span,
-            )
-        })?;
+        check_carrier(data, carrier, language)?;
         let library = &carrier.kernel_library;
-        if language != "Rust"
-            || carrier.model != "Rust closed standard collections 1"
-            || carrier.pointer_width != 64
-            || origin.tag != "rustStandardCollectionOrigin"
-            || library.model != "Rust standard collection kernel library 1"
-            || !valid_source_identity(&library.entry_path, &library.source_sha256)
-        {
-            return Err(fail(
-                "collection carrier requires its actual complete Rust specialization facet",
-                data.span,
-            ));
-        }
-        let reason = read_rust_standard_collection_source_origin_error(
-            origin.native(),
-            &Text::from_text(&carrier.key_domain),
-            &Text::from_text(&carrier.value_domain),
-            f64::from(carrier.pointer_width),
-        );
-        if !reason.0.is_empty() {
-            return Err(fail(&reason.to_string(), data.span));
-        }
-        let owner = resolve_rust_standard_collection_owner(
-            &Text::from_text(&origin.resolved_owner),
-            true,
-            false,
-        );
-        let set = read_rust_standard_collection_kind(&owner) == Text::from_text("set");
-        let owner = owner.to_string();
-        let domains = if set {
-            carrier.key_domain.clone()
-        } else {
-            format!("{},{}", carrier.key_domain, carrier.value_domain)
-        };
-        let identity = format!("{owner}<{domains}>@{}", carrier.pointer_width);
-        let base = format!(
-            "RustStandardCollection{}_{}_{}_{}",
-            owner.rsplit("::").next().unwrap_or_default(),
-            carrier.key_domain,
-            carrier.value_domain,
-            carrier.pointer_width
-        );
-        let suffix = data
-            .name
-            .strip_prefix(&base)
-            .and_then(|suffix| suffix.strip_prefix('_'));
-        if carrier.concrete_identity != identity
-            || origin.type_identity != identity
-            || !(data.name == base
-                || suffix.is_some_and(|suffix| {
-                    !suffix.is_empty()
-                        && !suffix.starts_with('0')
-                        && suffix.bytes().all(|byte| byte.is_ascii_digit())
-                }))
-        {
-            return Err(fail(
-                "collection nominal identity preserves its canonical owner key/value domains and target width",
-                data.span,
-            ));
-        }
-        if carrier.kernel_type
-            != (Type::Data {
-                name: library.kernel_declaration.clone(),
-            })
-            || !matches!(data.ctors.as_slice(), [constructor] if constructor.name == "CollectionState"
-                && matches!(constructor.fields.as_slice(), [field] if field.name == "state" && field.ty == carrier.kernel_type))
-        {
-            return Err(fail(
-                "collection specialization retains its actual generic shared kernel state type",
-                data.span,
-            ));
-        }
         for (name, role) in [
             (&library.kernel_declaration, "state"),
             (&library.packet_declaration, "packet"),

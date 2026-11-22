@@ -116,12 +116,15 @@ impl SignatureValidation<'_,'_> {
         Ok(())
     }
     fn owner_equal(&mut self, left: &SourceOwner, right: &SourceOwner) -> Result<()> {
+        self.compare_owners(left, right, "an owned Rust standard sum changes a retained payload owner")
+    }
+    fn compare_owners(&mut self, left: &SourceOwner, right: &SourceOwner, difference: &str) -> Result<()> {
         let mut pending=std::collections::VecDeque::from([(left,right)]);
         while let Some((left,right))=pending.pop_front() {
             // Both trees have already passed recursive owner depth checking.
             // Comparison shares the enclosing visit budget in the same order.
             self.visit(0)?;
-            if left.kind!=right.kind || left.path!=right.path || left.arguments.len()!=right.arguments.len() { return Err(fail("an owned Rust standard sum changes a retained payload owner")); }
+            if left.kind!=right.kind || left.path!=right.path || left.arguments.len()!=right.arguments.len() { return Err(fail(difference)); }
             pending.extend(left.arguments.iter().zip(&right.arguments));
         }
         Ok(())
@@ -164,6 +167,13 @@ impl SignatureValidation<'_,'_> {
             }
             "library" if path=="std::string::String" => {
                 if !owner.arguments.is_empty() || *ty!=Type::String { return Err(fail("an owned Rust source string differs from its value type")); }
+            }
+            "library" if super::rust_standard_collection_carriers::is_standard_collection_owner(&path) => {
+                let Type::Data {name} = ty else { return Err(fail("an owned standard collection needs its actual distinct nominal carrier")); };
+                let declaration = (self.resolve_data)(ty).filter(|data| data.full_name == *name)
+                    .ok_or_else(|| fail("an owned standard collection needs its actual checked carrier specialization"))?;
+                let actual = super::rust_standard_collection_carriers::check_source_owner(declaration, &self.signature.language, self.resolve_data)?;
+                self.compare_owners(owner, &actual, "a collection source position changes its actual complete standard owner or domains")?;
             }
             "library" if path=="std::option::Option" || path=="std::result::Result" => {
                 let Type::Data {name} = ty else { return Err(fail("an owned Rust standard sum needs its actual datatype encoding")); };
