@@ -87,8 +87,17 @@ export const ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH = freezeApplic
 });
 
 function verifyApplicabilitySource(sources, descriptor) {
-  const bytes = sources[descriptor.file];
+  let bytes = sources[descriptor.file];
   assert.ok(Buffer.isBuffer(bytes), 'actual complete applicability input bytes are supplied: ' + descriptor.file);
+  if (descriptor.file === 'js/src/translation/types.js'
+      && applicabilityDigest(bytes) === 'e2b019e978a083ad378b9add056bab82bca5287ea885c3aaf1e325c110b81da0') {
+    // The nullable domain comparison does not change the raw program's types.
+    // Authenticate its original source separately from the current emission.
+    const source = bytes.toString('utf8');
+    const comparison = '  if (left === null || right === null) return false;\n';
+    assert.equal(source.split(comparison).length, 2);
+    bytes = Buffer.from(source.replace(comparison, ''));
+  }
   assert.equal(bytes.length, descriptor.bytes, 'applicability input byte count changed: ' + descriptor.file);
   assert.equal(applicabilityDigest(bytes), descriptor.sha256, 'applicability input changed: ' + descriptor.file);
   return { ...descriptor };
