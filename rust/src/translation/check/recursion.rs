@@ -377,6 +377,7 @@ pub(super) fn split_natural(
             source_position: expr.source_position.clone(),
             source_state_transition: expr.source_state_transition.clone(),
             source_loop_fold: expr.source_loop_fold.clone(),
+            source_record_place: expr.source_record_place.clone(),
         });
     }
     match &expr.node {
@@ -447,6 +448,7 @@ impl Predecessor<'_> {
             source_position: like.source_position.clone(),
             source_state_transition: like.source_state_transition.clone(),
             source_loop_fold: like.source_loop_fold.clone(),
+            source_record_place: like.source_record_place.clone(),
         }
     }
 
@@ -521,6 +523,7 @@ impl Predecessor<'_> {
                 source_position: node.source_position.clone(),
                 source_state_transition: node.source_state_transition.clone(),
                 source_loop_fold: node.source_loop_fold.clone(),
+                source_record_place: node.source_record_place.clone(),
             };
             return self.minus(&k, &like);
         }

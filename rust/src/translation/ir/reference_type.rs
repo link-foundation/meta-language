@@ -47,6 +47,8 @@ impl Serialize for Expr {
             source_state_transition: Option<&'a crate::translation::source_loop_folds::RustSourceStateTransition>,
             #[serde(rename = "sourceLoopFold", skip_serializing_if = "Option::is_none")]
             source_loop_fold: Option<&'a crate::translation::source_loop_folds::RustSourceLoopFold>,
+            #[serde(rename = "sourceRecordPlace", skip_serializing_if = "Option::is_none")]
+            source_record_place: Option<&'a crate::translation::source_record_places::RustSourceRecordPlace>,
         }
         ExpressionWire {
             node: &self.node,
@@ -65,6 +67,7 @@ impl Serialize for Expr {
             source_position: self.source_position.as_deref(),
             source_state_transition: self.source_state_transition.as_deref(),
             source_loop_fold: self.source_loop_fold.as_deref(),
+            source_record_place: self.source_record_place.as_deref(),
         }
         .serialize(serializer)
     }
@@ -88,6 +91,8 @@ impl<'de> Deserialize<'de> for Expr {
             source_state_transition: Option<Box<crate::translation::source_loop_folds::RustSourceStateTransition>>,
             #[serde(rename = "sourceLoopFold", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
             source_loop_fold: Option<Box<crate::translation::source_loop_folds::RustSourceLoopFold>>,
+            #[serde(rename = "sourceRecordPlace", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+            source_record_place: Option<Box<crate::translation::source_record_places::RustSourceRecordPlace>>,
         }
         let wire = ExpressionWire::deserialize(deserializer)?;
         let operation =
@@ -111,6 +116,7 @@ impl<'de> Deserialize<'de> for Expr {
             source_position: wire.source_position,
             source_state_transition: wire.source_state_transition,
             source_loop_fold: wire.source_loop_fold,
+            source_record_place: wire.source_record_place,
         })
     }
 }

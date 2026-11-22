@@ -6,9 +6,11 @@ use super::{diagnostics::{TranslationError,type_error},ir::{Program,Decl,FnDecl,
 mod folds;
 mod matching;
 mod packets;
+mod record_fields;
 mod storage;
 use folds::{FoldControl,FoldFrame};
 use packets::StatePacket;
+use record_fields::{FieldPlace, RecordImage};
 use storage::{Storage, StorageValue};
 
 const MODEL:&str="Rust source function signature 3";
@@ -39,13 +41,13 @@ fn role(p:&Position)->String{let(bits,signed)=match &p.ty{Type::Fixed{bits,signe
 fn lifetime(p:&Position)->String{if role(p)=="borrowed vector"{p.array_element_position.as_deref().and_then(|p|p.lifetimes.first()).and_then(Clone::clone).unwrap_or_default()}else{p.lifetimes.first().and_then(Clone::clone).unwrap_or_default()}}
 fn same_owner(left:Option<&Position>,right:Option<&Position>)->bool{match(left,right){(Some(l),Some(r))=>l.owner==r.owner&&match(l.array_element_position.as_deref(),r.array_element_position.as_deref()){(None,None)=>true,(Some(a),Some(b))=>a.wrappers==b.wrappers&&same_owner(Some(a),Some(b)),_=>false},_=>false}}
 fn instantiate_call_parameter(position:&mut Position){for life in &mut position.lifetimes{if life.as_deref()!=Some("static"){*life=None;}}if let Some(child)=position.array_element_position.as_deref_mut(){instantiate_call_parameter(child);}}
-#[derive(Clone)]struct Value{position:Option<Rc<Position>>,root:Option<usize>,regions:Vec<usize>,producer:bool,inference:Option<usize>,role:String,storage:Option<StorageValue>,packet:Option<StatePacket>,control:Option<FoldControl>}
-impl Value{fn new(position:Option<Rc<Position>>,root:Option<usize>,regions:Vec<usize>,producer:bool,inference:Option<usize>)->Self{let role=position.as_deref().map(role).unwrap_or_else(||"inferred numeric".into());Self{position,root,regions,producer,inference,role,storage:None,packet:None,control:None}}}
+#[derive(Clone)]struct Value{position:Option<Rc<Position>>,root:Option<usize>,regions:Vec<usize>,borrow_roots:Vec<usize>,producer:bool,inference:Option<usize>,role:String,storage:Option<StorageValue>,packet:Option<StatePacket>,control:Option<FoldControl>,place:Option<FieldPlace>}
+impl Value{fn new(position:Option<Rc<Position>>,root:Option<usize>,regions:Vec<usize>,producer:bool,inference:Option<usize>)->Self{let role=position.as_deref().map(role).unwrap_or_else(||"inferred numeric".into());let borrow_roots=if matches!(role.as_str(),"reference"|"borrowed vector"){regions.clone()}else{Vec::new()};Self{position,root,regions,borrow_roots,producer,inference,role,storage:None,packet:None,control:None,place:None}}}
 fn observation_role(v:&Value)->String{match v.position.as_deref(){Some(p)=>rules::read_rust_borrowed_source_observation_role(&v.role,p.ty.kind(),&p.owner.kind,&p.owner.path.join("::"),p.owner.arguments.len() as f64,&p.wrappers),None=>v.role.clone()}}
 type Environment=HashMap<String,Value>;
-struct Regions<'p>{program:&'p Program,states:Vec<String>,lifetimes:Vec<String>,temporaries:Vec<usize>,constraints:HashMap<usize,Rc<Position>>,closed:HashSet<String>,visits:usize,loans:usize,position_nodes:usize,position_units:usize,branch_cells:usize,discovery:bool,composed:bool,storages:HashMap<String,Storage>,folds:Vec<Rc<FoldFrame>>}
+struct Regions<'p>{program:&'p Program,states:Vec<String>,lifetimes:Vec<String>,temporaries:Vec<usize>,constraints:HashMap<usize,Rc<Position>>,closed:HashSet<String>,visits:usize,loans:usize,position_nodes:usize,position_units:usize,branch_cells:usize,discovery:bool,composed:bool,storages:HashMap<String,Storage>,folds:Vec<Rc<FoldFrame>>,field_images:HashMap<usize,RecordImage>,field_lifetimes:HashMap<usize,usize>,borrowed_field_views:HashMap<usize,HashMap<String,usize>>}
 impl<'p> Regions<'p>{
- fn new(program:&'p Program)->Self{Self{program,states:vec!["available".into()],lifetimes:vec!["static".into()],temporaries:Vec::new(),constraints:HashMap::new(),closed:HashSet::new(),visits:0,loans:0,position_nodes:0,position_units:0,branch_cells:0,discovery:true,composed:false,storages:HashMap::new(),folds:Vec::new()}}
+ fn new(program:&'p Program)->Self{Self{program,states:vec!["available".into()],lifetimes:vec!["static".into()],temporaries:Vec::new(),constraints:HashMap::new(),closed:HashSet::new(),visits:0,loans:0,position_nodes:0,position_units:0,branch_cells:0,discovery:true,composed:false,storages:HashMap::new(),folds:Vec::new(),field_images:HashMap::new(),field_lifetimes:HashMap::new(),borrowed_field_views:HashMap::new()}}
  fn reset_scope(&mut self) {
      self.states.truncate(1);
      self.states[0]="available".into();
@@ -54,6 +56,9 @@ impl<'p> Regions<'p>{
      self.constraints.clear();
      self.storages.clear();
      self.folds.clear();
+     self.field_images.clear();
+     self.field_lifetimes.clear();
+     self.borrowed_field_views.clear();
  }
  fn branches(&mut self,addition:usize)->Result<()>{let next=rules::reserve_rust_borrowed_source_branches(self.branch_cells as f64,addition as f64);if next<0.0{return Err(fail("source branch snapshots exceed their finite binder profile"));}self.branch_cells=next as usize;Ok(())}
  fn budget(&self,depth:usize)->Result<()>{if self.discovery{return Ok(());}accept(rules::read_rust_borrowed_source_region_budget_error(self.visits as f64,depth as f64,self.states.len() as f64,self.loans as f64))}
@@ -62,13 +67,26 @@ impl<'p> Regions<'p>{
  fn root(&mut self,life:String,temporary:bool)->Result<usize>{self.budget(0)?;let id=self.states.len();self.states.push("available".into());self.lifetimes.push(life);if temporary{self.temporaries.push(id);}self.budget(0)?;Ok(id)}
  fn union(&mut self,values:impl IntoIterator<Item=Vec<usize>>)->Result<Vec<usize>>{let mut seen=HashSet::new();let mut result=Vec::new();for values in values{for id in values{self.loans+=1;self.budget(0)?;if seen.insert(id){result.push(id);}}}Ok(result)}
  fn resolved(&self,mut v:Value)->Value{if let Some(p)=v.inference.and_then(|id|self.constraints.get(&id)){v.position=Some(p.clone());v.role="copy".into();}v}
- fn read(&mut self, v: Value, mode: &str) -> Result<Value> {
-     let mut v = self.resolved(v);
-     let loans: Vec<String> = v.regions.iter().map(|id| self.states[*id].clone()).collect();
+ fn read_lifetime(&self, v: Value) -> Result<Value> {
+     let v = self.resolved(v);
+     let loans: Vec<String> = v.regions.iter()
+         .chain(v.place.iter().flat_map(|place| place.ancestors.iter().chain(&place.roots)))
+         .chain(v.place.iter().flat_map(|place| place.roots.iter().filter_map(|root| self.field_lifetimes.get(root))))
+         .map(|id| self.states[*id].clone()).collect();
      accept(rules::read_rust_borrowed_source_read_error(
          v.root.map(|id| self.states[id].as_str()).unwrap_or(""), &loans,
      ))?;
      self.check_storage_revision(&v)?;
+     if self.composed {
+         self.check_record_roots(v.borrow_roots.clone())?;
+     }
+     Ok(v)
+ }
+ fn read(&mut self, v: Value, mode: &str) -> Result<Value> {
+     let mut v = self.read_lifetime(v)?;
+     if self.composed {
+         self.check_place_image(&v)?;
+     }
      if v.packet.is_some() { return self.read_state_packet(v, mode); }
      if v.control.is_some() { return self.read_loop_control(v, mode); }
      let plan = rules::read_rust_borrowed_source_use_plan(&v.role, mode);
@@ -76,33 +94,105 @@ impl<'p> Regions<'p>{
      if mode == "transport" {
          if let Some(id) = v.root.take()
              && matches!(v.role.as_str(), "owned" | "string" | "box" | "borrowed vector")
+             && !v.storage.as_ref().is_some_and(|slot| slot.revision == id)
          {
              self.states[id] = rules::consume_rust_borrowed_source_region(&self.states[id]);
          }
          v.producer = true;
      } else if plan == "consume" {
+         if v.place.as_ref().is_some_and(|place| place.borrowed) {
+             return Err(fail("moving a borrowed source field requires an actual clone or transfer proof"));
+         }
          if v.root.is_none() && !v.producer {
              return Err(fail("an owned source value needs an actual producer or available lexical binder"));
          }
-         if let Some(id) = v.root.take() {
-             self.states[id] = rules::consume_rust_borrowed_source_region(&self.states[id]);
+         let mut places = Self::place_roots(&v);
+         if let Some(root) = v.root.take()
+             && !places.contains(&root)
+         {
+             places.push(root);
          }
-         if let Some(storage) = v.storage.take() {
-             self.states[storage.revision] = rules::consume_rust_borrowed_source_region(&self.states[storage.revision]);
+         v.storage = None;
+         for root in places {
+             self.retire_field_lifetime(root,"move");
+             self.states[root] = rules::consume_rust_borrowed_source_region(&self.states[root]);
          }
          v.producer = true;
+         v.place = None;
      } else if mode == "move" {
          v.storage = None;
+         v.place = None;
      }
      Ok(v)
  }
  fn scope(&self,p:&Position,bindings:&[String])->Result<()>{let mut current=Some(p);let mut depth=0;while let Some(p)=current{self.budget(depth)?;for life in &p.lifetimes{accept(borrowed::read_rust_borrowed_expression_lifetime_scope_error(life.as_deref().unwrap_or(""),bindings))?;}current=p.array_element_position.as_deref();depth+=1;}Ok(())}
  fn data(&self,name:&str)->Option<&'p DataDecl>{self.program.declarations.iter().find_map(|d|match d{Decl::Data(d)if d.full_name==name=>Some(d),_=>None})}
- fn closed_target(&mut self,p:&Position)->Result<()>{let mut position=self.position(p)?;while !position.wrappers.is_empty(){position=self.inner(Some(&position))?.ok_or_else(||fail("a referent needs its complete source position"))?;}let mut pending=vec![position];let mut visits=0;while let Some(p)=pending.pop(){visits+=1;if visits>100000{return Err(fail("the closed referent field graph exceeds its source budget"));}accept(rules::read_rust_borrowed_source_target_field_error(p.ty.kind(),&p.wrappers,p.array_element_position.is_some()))?;match &p.ty{Type::Data{name}=>{if self.closed.contains(name){continue;}let data=self.data(name).ok_or_else(||fail("the referent needs its actual datatype"))?;let fields=data.source_field_signatures.as_deref().filter(|v|v.model=="Rust data type field signatures 1").ok_or_else(||fail("the actual referent datatype needs its complete retained source field inventory"))?;super::callable_data::read_formal_datatype_constructive_profiles(&p.ty,&|name|self.data(name))?;self.closed.insert(name.clone());for ctor in &fields.ctors{for field in &ctor.fields{pending.push(self.position(field)?);}}},Type::Array{element,..}=>{if p.owner.kind!="library"||p.owner.path.join("::")!="std::vec::Vec"||p.owner.arguments.len()!=1{return Err(fail("a referent array needs its actual standard vector owner"));}pending.push(self.position(&Position{ty:element.as_ref().clone(),wrappers:Vec::new(),lifetimes:Vec::new(),owner:p.owner.arguments[0].clone(),array_element_position:None})?);},_=>{}}}Ok(())}
+ fn closed_target(&mut self, position: &Position) -> Result<()> {
+     let mut position = self.position(position)?;
+     while !position.wrappers.is_empty() {
+         position = self.inner(Some(&position))?
+             .ok_or_else(|| fail("a referent needs its complete source position"))?;
+     }
+     let mut pending = vec![position];
+     let mut visits = 0;
+     while let Some(position) = pending.pop() {
+         visits += 1;
+         if visits > 100_000 {
+             return Err(fail("the closed referent field graph exceeds its source budget"));
+         }
+         let position = if self.composed && !position.wrappers.is_empty()
+             && let Some((owner, _)) = super::source_record_places::owner_view(&position, false)
+         {
+             let mut inner = position.as_ref().clone();
+             inner.owner = owner.clone();
+             inner.wrappers.clear();
+             self.position(&inner)?
+         } else {
+             position
+         };
+         accept(rules::read_rust_borrowed_source_target_field_error(
+             position.ty.kind(), &position.wrappers, position.array_element_position.is_some(),
+         ))?;
+         match &position.ty {
+             Type::Data { name } => {
+                 if self.closed.contains(name) {
+                     continue;
+                 }
+                 let data = self.data(name).ok_or_else(|| fail("the referent needs its actual datatype"))?;
+                 let fields = data.source_field_signatures.as_deref()
+                     .filter(|entry| entry.model == "Rust data type field signatures 1")
+                     .ok_or_else(|| fail("the actual referent datatype needs its complete retained source field inventory"))?;
+                 super::callable_data::read_formal_datatype_constructive_profiles(&position.ty, &|name| self.data(name))?;
+                 self.closed.insert(name.clone());
+                 for constructor in &fields.ctors {
+                     for field in &constructor.fields {
+                         pending.push(self.position(field)?);
+                     }
+                 }
+             }
+             Type::Array { element, .. } => {
+                 if position.owner.kind != "library" || position.owner.path.join("::") != "std::vec::Vec"
+                     || position.owner.arguments.len() != 1
+                 {
+                     return Err(fail("a referent array needs its actual standard vector owner"));
+                 }
+                 pending.push(self.position(&Position {
+                     ty: element.as_ref().clone(),
+                     wrappers: Vec::new(),
+                     lifetimes: Vec::new(),
+                     owner: position.owner.arguments[0].clone(),
+                     array_element_position: None,
+                 })?);
+             }
+             _ => {}
+         }
+     }
+     Ok(())
+ }
  fn check_lifetime(&self,v:&Value,p:&Position)->Result<()>{accept(rules::read_rust_borrowed_source_lifetime_error(&lifetime(p),&v.regions.iter().map(|id|self.lifetimes[*id].clone()).collect::<Vec<_>>()))}
  fn box_reference(&mut self,mut value:Value,target:&Position)->Result<Value>{let Some(source)=value.position.as_deref()else{return Ok(value)};if source.wrappers.first().map(String::as_str)!=Some("reference")||target.wrappers.first().map(String::as_str)!=Some("reference")||source.wrappers.len()<=target.wrappers.len(){return Ok(value);}let drop=source.wrappers.len()-target.wrappers.len();let mut owner=&source.owner;let mut canonical=true;for _ in 0..drop{if !super::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(source_policy_column(&["box".into()]),&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64){canonical=false;break;}owner=&owner.arguments[0];}let wrappers:Vec<String>=std::iter::once("reference".into()).chain(source.wrappers[1+drop..].iter().cloned()).collect();let same=owner==&target.owner&&match(source.array_element_position.as_deref(),target.array_element_position.as_deref()){(None,None)=>true,(Some(a),Some(b))=>a.wrappers==b.wrappers&&same_owner(Some(a),Some(b)),_=>false};if !rules::accept_rust_borrowed_source_box_reference(&source.wrappers,&target.wrappers,canonical,same){return Ok(value);}let mut projected=self.position(source)?.as_ref().clone();projected.owner=owner.clone();projected.wrappers=wrappers;value.position=Some(Rc::new(projected));Ok(value)}
  fn adjust(&mut self,v:Value,p:Option<Rc<Position>>,node:&Expr)->Result<Value>{let mut v=self.resolved(v);let Some(p)=p else{return Ok(v)};v=self.box_reference(v,&p)?;let wanted=role(&p);if wanted.is_empty(){return Err(fail("the actual expression source position needs a separate value domain"));}let target_inner=self.inner(Some(&p))?;if v.role=="inferred numeric"&&wanted=="reference"&&target_inner.as_deref().map(role).as_deref()==Some("copy"){if let Some(id)=v.inference{self.constraints.insert(id,target_inner.clone().unwrap());v=self.resolved(v);}}let source_inner=self.inner(v.position.as_deref())?;let plan=rules::read_rust_borrowed_source_adjustment(&v.role,&wanted,same_owner(v.position.as_deref(),Some(&p)),same_owner(v.position.as_deref(),target_inner.as_deref()),same_owner(source_inner.as_deref(),Some(&p)),v.root.is_some(),matches!(&node.node,Node::Lit{..})&&target_inner.as_deref().map(role).as_deref()==Some("copy"),source_inner.as_deref().map(role).as_deref()==Some("text"),v.position.as_deref().map(references).unwrap_or(0) as f64,references(&p) as f64);
- match plan.as_str(){"preserve"|"project reference"=>{},"constrain primitive"=>{let id=v.inference.ok_or_else(||fail("an inferred primitive needs its actual literal dependency"))?;self.constraints.insert(id,p.clone());v=self.resolved(v);},"borrow"|"temporary borrow"=>{self.closed_target(&p)?;v=self.read(v,"read")?;let root=match v.storage.as_ref().map(|storage|storage.revision).or(v.root){Some(id)=>id,None=>self.root(String::new(),true)?};v.regions=self.union([v.regions,vec![root]])?;v.producer=false;},"static literal"=>{self.closed_target(&p)?;v.regions=vec![0];v.producer=false;},"copy referent"=>{v=self.read(v,"read")?;v.root=None;v.storage=None;v.regions.clear();v.producer=false;},"construct box"|"move box payload"=>{v=self.read(v,"move")?;v.root=Some(self.root(String::new(),true)?);v.producer=true;},"copy box payload"=>{v=self.read(v,"read")?;v.root=None;v.producer=false;},"materialize text"=>{v=self.read(v,"read")?;v.root=Some(self.root(String::new(),true)?);v.regions.clear();v.producer=true;},_=>return Err(fail("the expression qualifier change needs its explicit source operation proof"))}
+ match plan.as_str(){"preserve"|"project reference"=>{},"constrain primitive"=>{let id=v.inference.ok_or_else(||fail("an inferred primitive needs its actual literal dependency"))?;self.constraints.insert(id,p.clone());v=self.resolved(v);},"borrow"|"temporary borrow"=>{self.closed_target(&p)?;v=self.read(v,"read")?;let root=match v.storage.as_ref().map(|storage|storage.revision).or(v.root){Some(id)=>id,None=>self.root(String::new(),true)?};v.borrow_roots=v.place.as_ref().map_or_else(||vec![root],|place|place.roots.clone());let place=match v.place.as_ref(){Some(place)=>{let mut regions=place.ancestors.clone();for root in &place.roots{regions.push(*root);regions.push(self.field_lifetime(*root)?);}regions},None=>vec![root]};v.regions=self.union([v.regions,place])?;v.place=None;v.producer=false;},"static literal"=>{self.closed_target(&p)?;v.regions=vec![0];v.borrow_roots=vec![0];v.producer=false;},"copy referent"=>{v=self.read(v,"read")?;v.root=None;v.storage=None;v.regions.clear();v.borrow_roots.clear();v.place=None;v.producer=false;},"construct box"|"move box payload"=>{v=self.read(v,"move")?;v.root=Some(self.root(String::new(),true)?);v.producer=true;},"copy box payload"=>{v=self.read(v,"read")?;v.root=None;v.producer=false;},"materialize text"=>{v=self.read(v,"read")?;v.root=Some(self.root(String::new(),true)?);v.regions.clear();v.borrow_roots.clear();v.place=None;v.producer=true;},_=>return Err(fail("the expression qualifier change needs its explicit source operation proof"))}
  if wanted=="reference"{self.closed_target(&p)?;}if wanted=="borrowed vector"{self.closed_target(p.array_element_position.as_deref().ok_or_else(||fail("a borrowed vector needs its actual element position"))?)?;}v.position=Some(p.clone());v.role=wanted;self.check_lifetime(&v,&p)?;Ok(v)}
  fn compatible(&mut self,v:Value,p:Option<&Position>)->Result<Value>{let mut v=self.resolved(v);let Some(p)=p else{return Ok(v)};if v.role=="inferred numeric"&&role(p)=="copy"{let id=v.inference.ok_or_else(||fail("an inferred primitive needs its actual literal dependency"))?;let p=self.position(p)?;self.constraints.insert(id,p);v=self.resolved(v);}let same=same_owner(v.position.as_deref(),Some(p))&&v.role==role(p)&&v.position.as_deref().map(references).unwrap_or(0)>=references(p);accept(rules::read_rust_borrowed_source_position_flow_error(&v.role,same,lifetime(p)=="static",v.regions.iter().all(|id|self.lifetimes[*id]=="static")))?;self.check_lifetime(&v,p)?;Ok(v)}
  fn bind(&mut self, env: &mut Environment, name: &str, value: Value) -> Result<usize> {
@@ -114,10 +204,18 @@ impl<'p> Regions<'p>{
      }
      value.root = Some(id);
      value.producer = false;
+     self.prepare_value_record_images(&value)?;
      env.insert(name.into(), value);
      Ok(id)
  }
- fn finish(&mut self,v:Value,start:usize)->Result<Value>{for id in &self.temporaries[start..]{self.states[*id]=rules::expire_rust_borrowed_source_region(&self.states[*id]);}self.read(v,"read")}
+ fn finish(&mut self,v:Value,start:usize)->Result<Value>{
+     for index in start..self.temporaries.len(){
+         let id=self.temporaries[index];
+         self.states[id]=rules::expire_rust_borrowed_source_region(&self.states[id]);
+         self.retire_field_lifetime(id,"expire");
+     }
+     self.read(v,"read")
+ }
  fn sources(result:&Position,parameters:&[Position])->Vec<f64>{let r=role(result);if r!="reference"&&r!="borrowed vector"{return Vec::new();}borrowed::plan_rust_borrowed_vector_result_parameters(&lifetime(result),&parameters.iter().map(|p|matches!(role(p).as_str(),"reference"|"borrowed vector")).collect::<Vec<_>>(),&parameters.iter().map(lifetime).collect::<Vec<_>>())}
  fn iterator_item(&mut self,source:&Value)->Result<Rc<Position>>{let p=source.position.as_deref().ok_or_else(||fail("a readonly source method needs its actual borrowed vector receiver position"))?;let Type::Array{element,..}=&p.ty else{return Err(fail("a readonly source method needs its actual borrowed vector receiver position"))};if p.owner.kind!="library"||p.owner.path.join("::")!="std::vec::Vec"||p.owner.arguments.len()!=1||!matches!(source.role.as_str(),"reference"|"borrowed vector"){return Err(fail("a readonly source method needs its actual borrowed vector receiver position"));}if let Some(child)=p.array_element_position.as_deref(){return self.position(child);}let mut owner=&p.owner.arguments[0];let mut wrappers=vec!["reference".into()];while super::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(source_policy_column(&["box".into()]),&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64){wrappers.push("box".into());owner=&owner.arguments[0];if wrappers.len()>129{return Err(fail("readonly iterator element nesting exceeds its finite position profile"));}}self.position(&Position{ty:element.as_ref().clone(),wrappers,lifetimes:vec![p.lifetimes.first().cloned().flatten()],owner:p.owner.arguments[0].clone(),array_element_position:None})}
  fn callback_projection(&mut self,root:&Expr)->Result<bool>{let mut pending=vec![root];while let Some(node)=pending.pop(){self.visits+=1;self.budget(0)?;let kind=if matches!(&node.node,Node::Var{..}){"name"}else{node.node.kind()};match super::rust_borrowed_iterator_rules::read_rust_borrowed_iterator_projection_syntax(kind).as_str(){"name"=>{},"match"=>{let Node::Match{scrutinee,cases}=&node.node else{return Ok(false)};pending.push(scrutinee);for arm in cases{if !matches!(arm.pattern,Pattern::Ctor{..}|Pattern::Wild|Pattern::Bind{..}){return Ok(false);}pending.push(&arm.body);}},_=>return Ok(false)}}Ok(true)}
@@ -140,12 +238,12 @@ impl<'p> Regions<'p>{
          return Err(fail("initializing source storage requires its actual lexical binding and value"));
      }
      if matches!(&node.node, Node::Abort { .. }) {
-         if node.source_position.is_some() || node.source_state_transition.is_some() || node.source_loop_fold.is_some() {
+         if node.source_position.is_some() || node.source_state_transition.is_some() || node.source_loop_fold.is_some() || node.source_record_place.is_some() {
              return Err(fail("a diverging source term cannot publish a value or storage position"));
          }
          return Err(RegionError::Diverged);
      }
-if let Some(facet)=node.source_loop_fold.as_deref(){return self.loop_expression(node,facet,env,bindings,expected,depth);}let mut operation=rules::read_rust_borrowed_source_operation(node.node.kind());if self.composed&&matches!(&node.node,Node::Tuple{..}|Node::TupleIndex{..}|Node::If{..}|Node::Append{..}){operation=node.node.kind().into();}if operation.is_empty(){operation=rules::read_rust_borrowed_source_match_operation(node.node.kind());}if operation.is_empty(){let op=match &node.node{Node::Method{op,..}=>op.as_str(),_=>""};operation=rules::read_rust_borrowed_source_iterator_operation(node.node.kind(),op);}if operation.is_empty(){return Err(fail("this checked expression needs its actual source binder operation adapter"));}let qualifier=node.source_position.as_deref().map(|v|&v.position);let transition=node.source_state_transition.as_deref();let position=qualifier.or_else(||transition.map(|facet|&facet.position));if let Some(p)=position{self.scope(p,bindings)?;}let mut value=match &node.node{
+if let Some(facet)=node.source_loop_fold.as_deref(){return self.loop_expression(node,facet,env,bindings,expected,depth);}let mut operation=rules::read_rust_borrowed_source_operation(node.node.kind());if self.composed&&matches!(&node.node,Node::Tuple{..}|Node::TupleIndex{..}|Node::If{..}|Node::Append{..}){operation=node.node.kind().into();}if operation.is_empty(){operation=rules::read_rust_borrowed_source_match_operation(node.node.kind());}if operation.is_empty(){let op=match &node.node{Node::Method{op,..}=>op.as_str(),_=>""};operation=rules::read_rust_borrowed_source_iterator_operation(node.node.kind(),op);}if operation.is_empty(){return Err(fail("this checked expression needs its actual source binder operation adapter"));}let qualifier=node.source_position.as_deref().map(|v|&v.position);let transition=node.source_state_transition.as_deref();let position=qualifier.or_else(||transition.map(|facet|&facet.position));if let Some(p)=position{self.scope(p,bindings)?;}let mut value=if let Some(facet)=node.source_record_place.as_deref(){self.project_record_place(node,facet,env,bindings,depth)?}else{match &node.node{
  Node::Var{name}=>self.read(env.get(name).cloned().ok_or_else(||fail("the source variable needs its actual lexical binder"))?,"read")?,
  Node::Lit{..}|Node::Unit=>{if node.ty==Type::String{let p=self.position(&Position{ty:node.ty.clone(),wrappers:vec!["reference".into()],lifetimes:vec![Some("static".into())],owner:SourceOwner{kind:"primitive".into(),path:vec!["str".into()],arguments:Vec::new()},array_element_position:None})?;Value::new(Some(p),None,vec![0],false,None)}else{Value::new(None,None,Vec::new(),false,Some(self.visits))}},
  Node::Let{name,value,body}=>{let before=self.temporaries.len();let initial=self.binding_value(value,env,bindings,depth+1)?;let mut local=env.clone();let id=self.bind(&mut local,name,initial)?;self.finish(local[name].clone(),before)?;let body=self.expression(body,&local,bindings,expected,depth+1)?;let result=self.read(body,"move")?;self.expire_binding(id,&local[name]);self.read(result,"read")?},
@@ -206,10 +304,10 @@ if let Some(facet)=node.source_loop_fold.as_deref(){return self.loop_expression(
  },
  Node::Array{items}=>{let wanted=position.or(expected).ok_or_else(||fail("an array source constructor needs its complete element position"))?;if !matches!(role(wanted).as_str(),"owned"|"borrowed vector"){return Err(fail("an array source constructor needs its complete element position"));}let element=match wanted.array_element_position.as_deref(){Some(p)=>self.position(p)?,None=>match &wanted.ty{Type::Array{element,..}=>self.position(&Position{ty:element.as_ref().clone(),wrappers:Vec::new(),lifetimes:Vec::new(),owner:wanted.owner.arguments.first().ok_or_else(||fail("a vector needs its actual element owner"))?.clone(),array_element_position:None})?,_=>return Err(fail("the source array needs its actual element type"))}};let mut values=Vec::new();for item in items{let v=self.expression(item,env,bindings,Some(&element),depth+1)?;let v=self.compatible(v,Some(&element))?;values.push(self.read(v,"move")?);}let root=self.root(String::new(),true)?;let regions=self.union(values.into_iter().map(|v|v.regions))?;Value::new(Some(self.position(wanted)?),Some(root),regions,true,None)},
  Node::Ctor{data,ctor,args,..}=>{if let Some(control)=self.loop_constructor(node,ctor,args,env,bindings,depth)?{if position.is_some(){return Err(fail("compiler loop control does not carry an independent source position"));}return self.compatible(control,expected);}let declaration=self.data(data).ok_or_else(||fail("a constructor needs its actual datatype"))?;let index=declaration.ctors.iter().position(|c|&c.name==ctor).ok_or_else(||fail("a constructor needs its actual declaration"))?;let fields=&declaration.source_field_signatures.as_deref().and_then(|f|f.ctors.get(index)).ok_or_else(||fail("a source constructor needs its actual complete field positions"))?.fields;if fields.len()!=args.len(){return Err(fail("a constructor needs its actual complete field positions"));}let mut values=Vec::new();for(arg,field)in args.iter().zip(fields){let v=self.expression(arg,env,bindings,Some(field),depth+1)?;let v=self.compatible(v,Some(field))?;values.push(self.read(v,"move")?);}let root=self.root(String::new(),true)?;let regions=self.union(values.into_iter().map(|v|v.regions))?;let p=self.position(&Position{ty:node.ty.clone(),wrappers:Vec::new(),lifetimes:Vec::new(),owner:SourceOwner{kind:"declaration".into(),path:data.split('.').map(str::to_owned).collect(),arguments:Vec::new()},array_element_position:None})?;Value::new(Some(p),Some(root),regions,true,None)},
- Node::Call{func,args}=>{let declaration=self.program.declarations.iter().find_map(|d|match d{Decl::Fn(f)if &f.full_name==func=>Some(f),_=>None}).ok_or_else(||fail("a source call needs its actual selected function interface"))?;let signature=declaration.source_signature.as_ref().filter(|s|(s.model==MODEL||self.composed&&s.model==CLOSED_MODEL)&&s.parameters.len()==args.len()).ok_or_else(||fail("a source call needs its actual complete selected function interface"))?;let mut values=Vec::new();for(arg,p)in args.iter().zip(&signature.parameters){let p=self.position(p)?;let mut parameter=p.as_ref().clone();instantiate_call_parameter(&mut parameter);let v=self.expression(arg,env,bindings,Some(&parameter),depth+1)?;let v=self.compatible(v,Some(&parameter))?;values.push(self.read(v,"move")?);}for actual in &values{let mut check=actual.clone();check.root=None;check.producer=true;self.read(check,"read")?;}let sources=Self::sources(&signature.result,&signature.parameters);if sources.contains(&-1.0){return Err(fail("a source call needs its actual parameter region interface"));}let regions=self.union(sources.iter().map(|index|values[*index as usize].regions.clone()))?;let root=self.root(String::new(),true)?;Value::new(Some(self.position(&signature.result)?),Some(root),regions,true,None)},
+ Node::Call{func,args}=>{let declaration=self.program.declarations.iter().find_map(|d|match d{Decl::Fn(f)if &f.full_name==func=>Some(f),_=>None}).ok_or_else(||fail("a source call needs its actual selected function interface"))?;let signature=declaration.source_signature.as_ref().filter(|s|(s.model==MODEL||self.composed&&s.model==CLOSED_MODEL)&&s.parameters.len()==args.len()).ok_or_else(||fail("a source call needs its actual complete selected function interface"))?;let mut values=Vec::new();for(arg,p)in args.iter().zip(&signature.parameters){let p=self.position(p)?;let mut parameter=p.as_ref().clone();instantiate_call_parameter(&mut parameter);let v=self.expression(arg,env,bindings,Some(&parameter),depth+1)?;let v=self.compatible(v,Some(&parameter))?;values.push(self.read(v,"move")?);}for actual in &values{let mut check=actual.clone();check.root=None;check.producer=true;self.read(check,"read")?;}let sources=Self::sources(&signature.result,&signature.parameters);if sources.contains(&-1.0){return Err(fail("a source call needs its actual parameter region interface"));}let regions=self.union(sources.iter().map(|index|values[*index as usize].regions.clone()))?;let borrow_roots=self.union(sources.iter().map(|index|values[*index as usize].borrow_roots.clone()))?;let root=self.root(String::new(),true)?;let mut result=Value::new(Some(self.position(&signature.result)?),Some(root),regions,true,None);result.borrow_roots=borrow_roots;result},
  Node::Length{array}=>{let v=self.expression(array,env,bindings,None,depth+1)?;let v=self.read(v,"read")?;accept(borrowed::read_rust_borrowed_vector_observation_error(v.role=="borrowed vector","len"))?;Value::new(None,None,Vec::new(),false,Some(self.visits))},
  _=>{for child in node.children(){let v=self.expression(child,env,bindings,None,depth+1)?;let v=self.read(v,"read")?;accept(borrowed::read_rust_borrowed_vector_observation_error(v.role=="borrowed vector",&operation))?;accept(rules::read_rust_borrowed_source_observation_error(&observation_role(&v),&operation))?;}Value::new(None,None,Vec::new(),false,Some(self.visits))}
- };let p=position.map(|p|self.position(p)).transpose()?;value=self.adjust(value,p,node)?;if let Some(facet)=transition{value=self.apply_storage_transition(value,facet)?;}self.compatible(value,expected)}
+ }};let p=position.map(|p|self.position(p)).transpose()?;value=self.adjust(value,p,node)?;if let Some(facet)=transition{value=self.apply_storage_transition(value,facet)?;}self.compatible(value,expected)}
  fn closed_output(&mut self, position:&Position)->Result<()> {
      if !position.lifetimes.is_empty()
          || position.array_element_position.is_some()
@@ -260,12 +358,12 @@ if let Some(facet)=node.source_loop_fold.as_deref(){return self.loop_expression(
          }
          return Ok(());
      };
-     let mut env=Environment::new();let mut parameters=Vec::new();for(param,p)in f.params.iter().zip(&signature.parameters){self.scope(p,&signature.lifetime_bindings)?;let r=role(p);if r.is_empty(){return Err(fail("a source parameter needs its separate value-domain proof"));}if r=="reference"{self.closed_target(p)?;}if r=="borrowed vector"{self.closed_target(p.array_element_position.as_deref().ok_or_else(||fail("a borrowed vector needs its actual element position"))?)?;}let regions=if matches!(r.as_str(),"reference"|"borrowed vector"){vec![self.root(lifetime(p),false)?]}else{Vec::new()};let root=self.root(String::new(),false)?;let p=self.position(p)?;let value=Value::new(Some(p),Some(root),regions,false,None);env.insert(param.name.clone(),value.clone());parameters.push(value);}let value=self.expression(&f.body,&env,&signature.lifetime_bindings,Some(&signature.result),0)?;let value=self.read(value,"move")?;let sources=Self::sources(&signature.result,&signature.parameters);let allowed=self.union(sources.iter().filter(|i|**i>=0.0).map(|i|parameters[*i as usize].regions.clone()))?;let statics:Vec<f64>=self.lifetimes.iter().enumerate().filter(|(_,life)|life.as_str()=="static").map(|(i,_)|i as f64).collect();accept(rules::read_rust_borrowed_source_return_error(&value.regions.iter().map(|i|*i as f64).collect::<Vec<_>>(),&allowed.iter().map(|i|*i as f64).collect::<Vec<_>>(),&statics,!sources.contains(&-1.0)))}
+     let mut env=Environment::new();let mut parameters=Vec::new();for(param,p)in f.params.iter().zip(&signature.parameters){self.scope(p,&signature.lifetime_bindings)?;let r=role(p);if r.is_empty(){return Err(fail("a source parameter needs its separate value-domain proof"));}if r=="reference"{self.closed_target(p)?;}if r=="borrowed vector"{self.closed_target(p.array_element_position.as_deref().ok_or_else(||fail("a borrowed vector needs its actual element position"))?)?;}let regions=if matches!(r.as_str(),"reference"|"borrowed vector"){vec![self.root(lifetime(p),false)?]}else{Vec::new()};let root=self.root(String::new(),false)?;let p=self.position(p)?;let value=Value::new(Some(p),Some(root),regions,false,None);self.prepare_value_record_images(&value)?;env.insert(param.name.clone(),value.clone());parameters.push(value);}let value=self.expression(&f.body,&env,&signature.lifetime_bindings,Some(&signature.result),0)?;let value=self.read(value,"move")?;let sources=Self::sources(&signature.result,&signature.parameters);let allowed=self.union(sources.iter().filter(|i|**i>=0.0).map(|i|parameters[*i as usize].regions.clone()))?;let allowed=self.record_field_roots(allowed)?;let statics:Vec<f64>=self.lifetimes.iter().enumerate().filter(|(_,life)|life.as_str()=="static").map(|(i,_)|i as f64).collect();accept(rules::read_rust_borrowed_source_return_error(&value.regions.iter().map(|i|*i as f64).collect::<Vec<_>>(),&allowed.iter().map(|i|*i as f64).collect::<Vec<_>>(),&statics,!sources.contains(&-1.0)))}
  fn contains(&mut self,root:&Expr)->Result<bool>{
      let mut pending=vec![(root,0)];let mut selected=false;
      while let Some((node,depth))=pending.pop(){
          self.visits+=1;self.budget(depth)?;
-         if node.source_state_transition.is_some()||node.source_loop_fold.is_some(){self.composed=true;selected=true;}
+         if node.source_state_transition.is_some()||node.source_loop_fold.is_some()||node.source_record_place.is_some(){self.composed=true;selected=true;}
          if node.source_position.is_some(){selected=true;}
          for child in node.children(){pending.push((child,depth+1));}
      }

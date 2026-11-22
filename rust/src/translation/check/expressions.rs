@@ -79,6 +79,7 @@ impl Checker {
                 || node.source_position.is_some()
                 || node.source_state_transition.is_some()
                 || node.source_loop_fold.is_some()
+                || node.source_record_place.is_some()
                 || matches!(value.node, SNode::ReferencePayload { .. })
             {
                 return Err(type_error(
@@ -154,6 +155,16 @@ impl Checker {
                     |ty| self.resolve_type(Some(ty), path, node.span), resolve_data,
                 )?,
             ));
+        }
+        if let Some(facet) = node.source_record_place.as_deref() {
+            let (place, _) = super::super::source_record_places::check_record_place(
+                facet,
+                &result,
+                self.language.as_str(),
+                |ty| self.resolve_type(Some(ty), path, node.span),
+                resolve_data,
+            )?;
+            result.source_record_place = Some(Box::new(place));
         }
         Ok(result)
     }
@@ -345,6 +356,7 @@ impl Checker {
                         source_position: arg.source_position.clone(),
                         source_state_transition: arg.source_state_transition.clone(),
                         source_loop_fold: arg.source_loop_fold.clone(),
+                        source_record_place: arg.source_record_place.clone(),
                     };
                     let literal = self.expr(&flipped, env, path, expected, allow_literal)?;
                     if !accept_rust_numeric_literal_negation(

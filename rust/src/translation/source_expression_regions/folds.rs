@@ -17,7 +17,7 @@ pub(super) struct FoldFrame {
 #[derive(Clone)]
 pub(super) struct FoldControl {
     frame: Rc<FoldFrame>,
-    variants: Vec<(String, Option<Value>)>,
+    pub(super) variants: Vec<(String, Option<Value>)>,
 }
 
 impl Regions<'_> {
@@ -421,10 +421,14 @@ impl Regions<'_> {
                     "iteration-local and noncarried storage cannot change across loop iterations",
                 ));
             }
-            let carried_roots: HashSet<_> = storage_base
+            let carried_roots: Vec<_> = storage_base
                 .iter()
                 .filter(|(identity, _)| carried.contains(identity.as_str()))
                 .map(|(_, storage)| storage.revision)
+                .collect();
+            let carried_roots: HashSet<_> = self
+                .record_field_roots(carried_roots)?
+                .into_iter()
                 .collect();
             if (0..count)
                 .any(|root| !carried_roots.contains(&root) && base[root] != self.states[root])
@@ -438,11 +442,13 @@ impl Regions<'_> {
             let step = self.states.clone();
             let storage_step = self.storages.clone();
             self.merge_state_prefix(count, &base, &step);
-            self.join_storages(
+            let [left_revisions, right_revisions] = self.join_storages(
                 storage_base.clone(),
                 (&storage_base, &base),
                 (&storage_step, &step),
             )?;
+            let zero = self.rebase_branch_value(zero, &left_revisions)?;
+            let one = self.rebase_branch_value(one, &right_revisions)?;
             let joined = self.join_values(zero, one)?;
             self.verify_loop_slots(&frame, &joined)?;
             Ok(joined)

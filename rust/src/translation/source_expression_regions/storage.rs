@@ -60,9 +60,11 @@ impl Regions<'_> {
         if let Some(revision) = revision {
             self.states[revision] =
                 rules::consume_rust_borrowed_source_region(&self.states[revision]);
+            self.retire_field_lifetime(revision, "move");
         }
         let revision = self.root(String::new(), false)?;
         let position = self.position(position)?;
+        self.prepare_record_image(revision, &position)?;
         self.storages.insert(
             id.clone(),
             Storage {
@@ -99,12 +101,14 @@ impl Regions<'_> {
 
     pub(super) fn expire_binding(&mut self, id: usize, value: &Value) {
         self.states[id] = rules::expire_rust_borrowed_source_region(&self.states[id]);
+        self.retire_field_lifetime(id, "expire");
         if let Some(storage) = &value.storage
             && storage.owns_scope
             && let Some(current) = self.storages.remove(&storage.identity)
         {
             self.states[current.revision] =
                 rules::expire_rust_borrowed_source_region(&self.states[current.revision]);
+            self.retire_field_lifetime(current.revision, "expire");
         }
     }
 }

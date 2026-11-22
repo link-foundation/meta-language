@@ -25,6 +25,8 @@ pub(super) struct SurfaceExpression {
     source_state_transition: Option<Box<crate::translation::source_loop_folds::RustSourceStateTransition>>,
     #[serde(rename = "sourceLoopFold", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
     source_loop_fold: Option<Box<crate::translation::source_loop_folds::RustSourceLoopFold>>,
+    #[serde(rename = "sourceRecordPlace", default, deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    source_record_place: Option<Box<crate::translation::source_record_places::RustSourceRecordPlace>>,
     #[serde(
         default,
         deserialize_with = "raw_metadata::read_present_surface_raw_metadata"
@@ -52,7 +54,8 @@ impl TryFrom<SurfaceExpression> for SExpr {
     fn try_from(raw: SurfaceExpression) -> Result<Self, Self::Error> {
         let has_source_facet = raw.source_position.is_some()
             || raw.source_state_transition.is_some()
-            || raw.source_loop_fold.is_some();
+            || raw.source_loop_fold.is_some()
+            || raw.source_record_place.is_some();
         if let SNode::ReferenceIdentity { extra, .. } = &raw.node
             && (!extra.is_empty()
                 || raw.parenthesized.is_some()
@@ -84,6 +87,7 @@ impl TryFrom<SurfaceExpression> for SExpr {
             source_position: raw.source_position,
             source_state_transition: raw.source_state_transition,
             source_loop_fold: raw.source_loop_fold,
+            source_record_place: raw.source_record_place,
             parenthesized: raw.parenthesized,
             block: raw.block.unwrap_or(false),
             tag_test: match raw.tag_test {

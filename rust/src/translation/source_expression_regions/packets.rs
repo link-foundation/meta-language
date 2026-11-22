@@ -237,12 +237,14 @@ impl Regions<'_> {
         }
         while let Some(right) = outcomes.next() {
             self.merge_state_prefix(count, &joined.states, &right.states);
-            self.join_storages(
+            let [left_revisions, right_revisions] = self.join_storages(
                 base.clone(),
                 (&joined.storages, &joined.states),
                 (&right.storages, &right.states),
             )?;
-            let value = self.join_values(joined.value, right.value)?;
+            let left = self.rebase_branch_value(joined.value, &left_revisions)?;
+            let right = self.rebase_branch_value(right.value, &right_revisions)?;
+            let value = self.join_values(left, right)?;
             if outcomes.peek().is_none() {
                 return Ok(value);
             }
@@ -263,13 +265,14 @@ impl Regions<'_> {
         base: HashMap<String, Storage>,
         (left, left_states): (&HashMap<String, Storage>, &[String]),
         (right, right_states): (&HashMap<String, Storage>, &[String]),
-    ) -> Result<()> {
+    ) -> Result<[HashMap<usize, usize>; 2]> {
         if base.len() != left.len() || base.len() != right.len() {
             return Err(fail(
                 "state branches retain exactly the actual enclosing storage roots",
             ));
         }
         let mut joined = base;
+        let mut mappings = [HashMap::new(), HashMap::new()];
         for (identity, original) in &mut joined {
             let same_storage = |storage: &&Storage| {
                 storage.binder == original.binder && storage.position == original.position
@@ -285,21 +288,85 @@ impl Regions<'_> {
             if a.revision == b.revision {
                 original.revision = a.revision;
             } else {
-                let state = rules::merge_rust_borrowed_source_region(
-                    &left_states[a.revision],
-                    &right_states[b.revision],
-                );
                 let joined_revision = self.root(String::new(), false)?;
-                self.states[joined_revision] = state;
+                self.prepare_record_image(joined_revision, &original.position)?;
+                let mut components = HashMap::<usize, Vec<&str>>::new();
+                for (index, (source, states)) in
+                    [(a.revision, left_states), (b.revision, right_states)]
+                        .into_iter()
+                        .enumerate()
+                {
+                    let mut mapping = HashMap::new();
+                    self.map_record_image(source, joined_revision, &mut mapping)?;
+                    for (&prior, &current) in &mapping {
+                        let state = states.get(prior).ok_or_else(|| {
+                            fail("a joined field image retains its actual branch snapshot")
+                        })?;
+                        components.entry(current).or_default().push(state);
+                    }
+                    mappings[index].extend(mapping);
+                }
+                for (root, states) in components {
+                    let [left, right] = states.as_slice() else {
+                        self.states[root] =
+                            rules::merge_rust_borrowed_source_region(states[0], "moved");
+                        continue;
+                    };
+                    self.states[root] = rules::merge_rust_borrowed_source_region(left, right);
+                }
                 original.revision = joined_revision;
                 for old in [a.revision, b.revision] {
+                    self.retire_field_lifetime(old, "move");
                     self.states[old] =
                         rules::consume_rust_borrowed_source_region(&self.states[old]);
                 }
             }
         }
         self.storages = joined;
-        Ok(())
+        Ok(mappings)
+    }
+
+    pub(super) fn rebase_branch_value(
+        &mut self,
+        mut value: Value,
+        mapping: &HashMap<usize, usize>,
+    ) -> Result<Value> {
+        if mapping.is_empty() {
+            return Ok(value);
+        }
+        fn remap(roots: &mut [usize], mapping: &HashMap<usize, usize>) {
+            for root in roots {
+                if let Some(target) = mapping.get(root) {
+                    *root = *target;
+                }
+            }
+        }
+        remap(&mut value.regions, mapping);
+        remap(&mut value.borrow_roots, mapping);
+        if let Some(place) = &mut value.place {
+            remap(&mut place.roots, mapping);
+            remap(&mut place.ancestors, mapping);
+        }
+        if let Some(packet) = &mut value.packet {
+            packet.fields = std::mem::take(&mut packet.fields)
+                .into_iter()
+                .map(|field| self.rebase_branch_value(field, mapping))
+                .collect::<Result<_>>()?;
+        }
+        if let Some(control) = &mut value.control {
+            for (_, payload) in &mut control.variants {
+                if let Some(prior) = payload.take() {
+                    *payload = Some(self.rebase_branch_value(prior, mapping)?);
+                }
+            }
+        }
+        if let Some(storage) = &mut value.storage {
+            let current = self.storages.get(&storage.identity).ok_or_else(|| {
+                fail("a joined state carrier retains its surviving original storage")
+            })?;
+            storage.revision = current.revision;
+        }
+        Ok(value)
     }
 
     pub(super) fn join_values(&mut self, left: Value, right: Value) -> Result<Value> {
@@ -344,6 +411,7 @@ impl Regions<'_> {
                 result.root = None;
                 result.producer = true;
                 result.regions = self.union([result.regions, right.regions])?;
+                result.borrow_roots = self.union([result.borrow_roots, right.borrow_roots])?;
                 match (&mut result.storage, right.storage) {
                     (Some(a), Some(b))
                         if a.identity == b.identity

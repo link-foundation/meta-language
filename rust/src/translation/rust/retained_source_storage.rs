@@ -1,8 +1,11 @@
 //! Resolve source storage metadata against the actual parser slot and tokens.
-use super::{Result, RustParser, SourceOrigin, Span, TokenKind, unsupported};
+use super::{Result, RustParser, SExpr, SourceOrigin, Span, TokenKind, unsupported};
 use crate::translation::{
     rust_owned_record_loop_rules as rules,
-    source_loop_folds::{RustSourceFoldSlot, RustSourceStateTransition, SourceStateBinder},
+    source_loop_folds::{
+        RustSourceFoldSlot, RustSourceStateTransition, SourceFoldSpan, SourceStateBinder,
+    },
+    source_record_places::{RustSourceRecordPlace, owner_view},
     source_signatures::SourceTypeSignature,
 };
 
@@ -105,6 +108,36 @@ impl RustParser {
             .ok_or_else(|| fail("a retained place needs its actual closed source type", span))
     }
 
+    pub(super) fn retain_record_field_place(
+        &self,
+        node: &mut SExpr,
+        parent: &SourceOrigin,
+        field: &SourceOrigin,
+        index: usize,
+    ) -> Result<()> {
+        if field.array_element_position.is_some() {
+            return Ok(());
+        }
+        let span = node
+            .span
+            .ok_or_else(|| fail("a retained field needs its actual source span", None))?;
+        let root = self.retain_source_region_position(parent, Some(span))?;
+        let value = self.retain_source_region_position(field, Some(span))?;
+        if owner_view(&root, true).is_some() && owner_view(&value, false).is_some() {
+            node.source_record_place = Some(Box::new(RustSourceRecordPlace {
+                model: "Rust source record place 1".into(),
+                root,
+                field: index,
+                value,
+                span: SourceFoldSpan {
+                    start: span.start,
+                    end: span.end,
+                },
+            }));
+        }
+        Ok(())
+    }
+
     pub(super) fn retain_source_fold_slot(
         &self,
         slot: &super::owned_record_state::Slot,
@@ -202,5 +235,43 @@ mod tests {
         let wire = serde_json::to_string(&checked).unwrap();
         assert_eq!(wire.matches("\"operation\":\"write\"").count(), 2);
         assert!(wire.contains("\"op\":\"concat\""));
+    }
+
+    #[test]
+    fn selected_record_field_moves_leave_its_actual_sibling_available() {
+        let source = r#"struct Pair { first: String, second: String }
+            fn main() {
+                let pair = Box::new(Pair {
+                    first: String::from("first"),
+                    second: String::from("second"),
+                });
+                let first = pair.first;
+                println!("{}", pair.second);
+                println!("{}", first);
+            }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        assert_eq!(
+            wire.matches("\"model\":\"Rust source record place 1\"")
+                .count(),
+            2
+        );
+        let edited = wire.replacen("\"field\":0,\"value\":", "\"field\":1,\"value\":", 1);
+        assert_ne!(wire, edited);
+        let edited = serde_json::from_str(&edited).unwrap();
+        let error =
+            crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(
+                &edited,
+            )
+            .expect_err("the actual bound field must agree with the retained ordinal");
+        assert!(error.reason.contains("actual one-constructor projection"));
     }
 }

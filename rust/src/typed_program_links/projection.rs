@@ -19,7 +19,12 @@ mod number_projection;
 
 fn expression(value: &Value, program: &Program) -> Result<Value> {
     let mut projected = expression_value(value, program)?;
-    for field in ["sourcePosition", "sourceStateTransition", "sourceLoopFold"] {
+    for field in [
+        "sourcePosition",
+        "sourceStateTransition",
+        "sourceLoopFold",
+        "sourceRecordPlace",
+    ] {
         if let Some(facet) = value.get(field) {
             projected
                 .as_object_mut()

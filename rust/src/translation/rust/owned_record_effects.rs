@@ -143,6 +143,14 @@ impl Transport<'_>{
  }
  fn visit(&mut self,mut node:Value,environment:Environment,depth:usize,want:Option<&Value>)->Result<Lowered>{
   self.charge(depth)?;let kind=text(&node,"k").to_owned();if kind=="lambda"{let ret=node.get("ret").cloned();let result=self.visit(node["body"].take(),Environment::new(),depth+1,ret.as_ref())?;node["body"]=wrap(result.bindings,result.value);return Ok(Lowered::plain(node,environment));}if !contains(&node,true,&mut self.inspection,Some(&self.declarations))?{return Ok(Lowered::plain(node,environment));}
+  if kind == "match" && node.get("sourceRecordPlace").is_some()
+      && node["scrutinees"].as_array().is_some_and(|values| values.len() == 1)
+  {
+      let expected = node["sourceRecordPlace"]["root"]["type"].clone();
+      let owner = self.visit(node["scrutinees"][0].take(), environment, depth + 1, Some(&expected))?;
+      node["scrutinees"][0] = owner.value;
+      return Ok(Lowered { bindings: owner.bindings, value: node, environment: owner.environment });
+  }
   if kind=="math"&&text(&node,"op")==loops::read_rust_owned_record_loop_operation(){return self.finite_loop(node,environment);}
   if kind=="math"&&text(&node,"op")==loops::read_rust_ordered_collection_loop_operation(){return self.ordered_collection_loop(node,environment,depth);}
   let form=rules::read_rust_owned_record_effect_form(&kind,text(&node,"op"));

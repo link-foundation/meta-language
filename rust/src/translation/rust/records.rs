@@ -438,7 +438,8 @@ impl RustParser {
         path: &[String],
         range: Option<Span>,
     ) -> Result<Option<SExpr>> {
-        let origin = self.origins.owned_box_record_parent(&self.origins.origin(object,path))?;
+        let parent = self.origins.origin(object, path);
+        let origin = self.origins.owned_box_record_parent(&parent)?;
         let record = if let Some(Type::Named { path: owner, .. }) = &origin.ty {
             self.record_owner(owner, &origin.path)
         } else {
@@ -489,7 +490,7 @@ impl RustParser {
             },
             span: None,
         };
-        let node = SExpr::new(
+        let mut node = SExpr::new(
             SNode::Match {
                 scrutinees: vec![object.clone()],
                 rows: vec![SRow {
@@ -508,6 +509,9 @@ impl RustParser {
         if let Some(found) = self.origins.lookup(&constructor_path, &[]) {
             if let SourceDeclaration::Constructor { fields, .. } = found.declaration {
                 if let Some(field) = fields.get(index) {
+                    if !self.origins.collecting && self.retain_source_region_state() {
+                        self.retain_record_field_place(&mut node, &parent, field, index)?;
+                    }
                     let selected=self.origins.project_owned_record_field(&origin,field,index,!origin.wrappers.is_empty()&&origin.wrappers.iter().all(|layer|layer=="reference"),range)?;self.origins.mark(&node,selected);
                 }
             }
