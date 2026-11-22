@@ -118,8 +118,13 @@ checkpoint journal and dynamic parser, with versioned text and binary archive
 transport. The shared control deletes source example files as it goes and
 checks both CST byte reconstruction and rejection after installation. The
 command vocabulary and fixture authors completed without running the controls.
-Scanner state, attributed inference, installed-language semantic translation
-and executed held-out benchmark comparisons remain open.
+Finite scanner-state transitions can now be inferred from explicit mode,
+spelling, token and successor-mode observations. The native scanner fragment
+orders overlapping spellings by length, refuses conflicting observations and
+round-trips through the grammar listing. The draft fixture exercises its
+token boundaries in both runtimes. Checkpoint integration, inferred lexical
+classes, attributed inference, installed-language semantic translation and
+executed held-out benchmark comparisons remain open.
 
 The pinned upstream link-cli importer reads one two-endpoint row per line.
 Its native binary store archive also stores doublets, with exact addresses and

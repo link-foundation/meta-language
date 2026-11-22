@@ -6,6 +6,9 @@ import { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGr
 import { LinkNetwork } from '../src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { createDynamicMetaLanguage } from '../src/dynamic-meta-language.js';
+import { inferGrammarScanner } from '../src/grammar-scanner-inference.js';
+import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
+import { createGrammarParser as compileGrammar, renderSyntaxTree } from '../src/grammar-runtime.js';
 
 const fixtures = readProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino', import.meta.url));
 const [major, minor] = process.versions.node.split('.').map(Number);
@@ -38,4 +41,24 @@ for (const fixture of fixtures.cases) test(fixture.name + ': observations, indep
 
 for (const fixture of fixtures.refusals) test(fixture.name + ' remains an explicit refusal', () => {
   assert.throws(() => inferRegularGrammar(fixture.positives, fixture.negatives, fixture.options), error => error.message.includes(fixture.reason));
+});
+
+test('scanner trace inference emits executable mode transitions and preserves source bytes', () => {
+  const fixture = fixtures.scanner;
+  const inferred = inferGrammarScanner(fixture.observations);
+  assert.deepEqual(inferred.modes, ['inside']);
+  assert.ok(inferred.listing.indexOf('(valid long)') < inferred.listing.indexOf('(valid short)'));
+  assert.equal(inferred.listing.match(/\(valid content\)/gu).length, 1);
+  const listing = '(grammar (start source))\n' + inferred.listing + fixture.syntax;
+  const loaded = parseGrammarLinks(renderGrammarLinks(parseGrammarLinks(listing)));
+  const parser = compileGrammar(loaded);
+  const bytes = tree => tree.type === 'node' ? tree.children.map(bytes).join('') : tree.text;
+  for (const { input, tree } of fixture.accepted) {
+    const result = parser.parseTree(input);
+    assert.equal(result.ok, true, input);
+    assert.equal(renderSyntaxTree(result.tree), tree);
+    assert.equal(bytes(result.tree), input);
+  }
+  for (const input of fixture.rejected) assert.equal(parser.parseTree(input).ok, false, input);
+  assert.throws(() => inferGrammarScanner([...fixture.observations, fixture.conflicting]), /unsupported context sensitivity/u);
 });

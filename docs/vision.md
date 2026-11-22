@@ -3625,8 +3625,20 @@ language library. The resulting language archive uses the existing list,
 extension and parsing commands, and the inference checkpoint retains the
 training journal for further refinement. The command controls delete the input
 example files after use and cover byte reconstruction and rejection after
-installation. Their runtime verification and the broader scanner, attributed
-semantics and link-cli requirements remain outstanding.
+installation.
+
+`inferGrammarScanner` and `infer_grammar_scanner` compile bounded trace
+observations into native scanner operations. Each observation supplies the
+current mode, exact consumed spelling, emitted token and resulting mode.
+The scanner checks the parser's valid token set and mode before consuming the
+longest eligible spelling. Repeated identical observations share one
+transition. Conflicting observations for the same mode and spelling report
+unsupported context sensitivity. The trace model currently derives finite
+literal transitions and explicit mode changes. Lexical class induction,
+stack transition discovery and attributed actions use separate requirements.
+The shared controls combine the generated scanner with native syntax rules and
+check text round trips, token kinds, exact bytes and rejected inputs. The
+source draft has generated the native implementation and typed program.
 
 The complete typed algorithm, declared inputs, selected parameters, actual model,
 recursive candidate grammar and common concept definitions serialize together

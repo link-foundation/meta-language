@@ -1,9 +1,10 @@
 //! Future CI controls; not executed during the complete source draft phase.
 use meta_language::{
-    BinaryLinksOptions, LinkNetwork, RegularGrammarInferenceOptions,
-    accept_inferred_grammar_symbols, decode_link_network_binary, encode_link_network_binary,
-    infer_regular_grammar, read_regular_grammar_inference_links, read_structured_data_lino,
-    serialize_grammar,
+    BinaryLinksOptions, FeatureParseOptions, GrammarScannerObservation, LinkNetwork,
+    RegularGrammarInferenceOptions, accept_inferred_grammar_symbols, compile_feature_grammar,
+    decode_link_network_binary, encode_link_network_binary, infer_grammar_scanner,
+    infer_regular_grammar, parse_grammar_links, read_regular_grammar_inference_links,
+    read_structured_data_lino, render_grammar_links, serialize_grammar,
 };
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -14,6 +15,54 @@ fn fixture() -> Value {
         "../../../parity/fixtures/regular-grammar-inference.lino"
     ))
     .unwrap()
+}
+
+#[test]
+fn scanner_trace_inference_emits_native_mode_transitions_and_preserves_bytes() {
+    versions();
+    let data = fixture();
+    let fixture = &data["scanner"];
+    let mut observations: Vec<GrammarScannerObservation> =
+        serde_json::from_value(fixture["observations"].clone()).unwrap();
+    let inferred = infer_grammar_scanner(&observations, None).unwrap();
+    assert_eq!(inferred.modes, ["inside"]);
+    assert!(
+        inferred.listing.find("(valid long)").unwrap()
+            < inferred.listing.find("(valid short)").unwrap()
+    );
+    assert_eq!(inferred.listing.matches("(valid content)").count(), 1);
+    let listing = format!(
+        "(grammar (start source))\n{}{}",
+        inferred.listing,
+        fixture["syntax"].as_str().unwrap()
+    );
+    let loaded = parse_grammar_links(&render_grammar_links(
+        &parse_grammar_links(&listing).unwrap(),
+    ))
+    .unwrap();
+    let options = FeatureParseOptions::default();
+    let parser = compile_feature_grammar(&loaded, None, options.clone()).unwrap();
+    for row in fixture["accepted"].as_array().unwrap() {
+        let input = row["input"].as_str().unwrap();
+        let result = parser.parse_tree(input.as_bytes(), &options).unwrap();
+        assert!(result.ok, "{input}: {:?}", result.rejection);
+        let tree = result.tree.unwrap();
+        assert_eq!(tree.render(), row["tree"].as_str().unwrap());
+        assert_eq!(super::issue_195_native_grammar_rows::rebuilt(&tree), input);
+    }
+    for input in fixture["rejected"].as_array().unwrap() {
+        let input = input.as_str().unwrap();
+        assert!(
+            !parser.parse_tree(input.as_bytes(), &options).unwrap().ok,
+            "{input}"
+        );
+    }
+    observations.push(serde_json::from_value(fixture["conflicting"].clone()).unwrap());
+    assert!(
+        infer_grammar_scanner(&observations, None)
+            .unwrap_err()
+            .contains("unsupported context sensitivity")
+    );
 }
 pub(super) fn examples(value: &Value) -> Vec<Vec<String>> {
     serde_json::from_value(value.clone()).unwrap()

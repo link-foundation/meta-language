@@ -25,10 +25,21 @@ const storeRow={id:storeId,required:true,
 };
 const previousStore=value.features.findIndex(entry=>entry.id===storeId);
 if(previousStore<0)value.features.push(storeRow);else value.features[previousStore]=storeRow;
+const scannerId='grammar-scanner-trace-inference';
+const scannerControls=['parity/fixtures/regular-grammar-inference.lino',
+ 'parity/self-translation/grammar-scanner-inference-rules-native.lino'];
+const scannerRow={id:scannerId,required:true,
+ javascript:{status:'implemented',evidence:['js/src/grammar-scanner-inference.js','js/src/grammar-scanner-inference-rules.js',
+  'js/tests/grammar-inference.test.js',...scannerControls]},
+ rust:{status:'implemented',evidence:['rust/src/grammar_scanner_inference.rs','rust/src/grammar_scanner_inference_rules.rs',
+  'rust/tests/unit/regular_grammar_inference.rs',...scannerControls]},
+};
+const previousScanner=value.features.findIndex(entry=>entry.id===scannerId);
+if(previousScanner<0)value.features.push(scannerRow);else value.features[previousScanner]=scannerRow;
 // These declarations identify source counterparts; they are not observations.
 const source=readFileSync(new URL('../src/index.js',import.meta.url),'utf8');
 const modules=new Set(['meta-language-archive.js','dynamic-meta-language.js','dynamic-language-cli.js',
- 'dynamic-language-command-program.js','grammar-inference.js','grammar-inference-refinement.js']);
+ 'dynamic-language-command-program.js','grammar-inference.js','grammar-inference-refinement.js','grammar-scanner-inference.js']);
 const names=[];
 for(const [,bindings,file] of source.matchAll(/export \{([^}]+)\} from '\.\/([^']+)';/gu)){
  if(modules.has(file)) names.push(...bindings.split(',').map(name=>name.trim()).filter(Boolean));

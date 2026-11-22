@@ -1107,6 +1107,18 @@ export function readRegularGrammarInferenceLinks(network: LinkNetwork, root: Lin
 export function refineRegularGrammarInference(network:LinkNetwork,root:LinkIdValue,positives?:readonly (readonly string[])[],negatives?:readonly (readonly string[])[],options?:{identifier?:string}):RegularGrammarInference;
 export function readRefinedRegularGrammarInferenceLinks(network:LinkNetwork,root:LinkIdValue):RegularGrammarInference;
 export function acceptInferredGrammarSymbols(model: RegularGrammarInference, symbols: readonly string[]): boolean;
+export interface GrammarScannerObservation {
+  mode: string;
+  spelling: string;
+  token: string;
+  nextMode: string;
+}
+export interface InferredGrammarScanner {
+  listing: string;
+  modes: string[];
+  scanner: NonNullable<GrammarDeclarations['scanners']>[number];
+}
+export function inferGrammarScanner(observations: readonly GrammarScannerObservation[], name?: string): InferredGrammarScanner;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,

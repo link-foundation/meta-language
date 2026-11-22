@@ -86,6 +86,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "grammar-inference-refinement-program.lino" => Some(include_str!(
             "../data/grammar-inference-refinement-program.lino"
         )),
+        "grammar-scanner-inference-program.lino" => Some(include_str!(
+            "../data/grammar-scanner-inference-program.lino"
+        )),
         "guarded-private-array-write-program.lino" => Some(include_str!(
             "../data/guarded-private-array-write-program.lino"
         )),
