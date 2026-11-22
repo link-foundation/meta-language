@@ -14,11 +14,18 @@ test('the Node test source placement preserves original namespaces and every pre
   const destination=readFileSync(new URL('../../'+policy.placement.destination,import.meta.url),'utf8');
   const oldNames=previous.extract(destination,policy.placement.destination);assert.equal(oldNames.length,3);
   const current=NAME_INVENTORIES.find(row=>row.inventory==='B70 physical field source view names for '+policy.placement.destination);assert.ok(current);
-  assert.equal(current.extract(destination).length,4);
+  // These placements are bound to complete source contexts. Only the certified
+  // integration successor can reuse the original four physical contexts.
+  const placementView=restoreIntegrationSource(destination,policy.placement.destination);
+  const placedNames=current.extract(placementView);
+  assert.equal(placedNames.length,4);
   const historical=readNodeDependencyGeneratorRegistrationHistory().legacyNames;
   assert.equal(historical.length,2);
-  assert.equal(new Set([...historical,...current.extract(destination).slice(0,3).map(name=>current.recordOf(name))]).size,5,'the two original and three preceding current qualified meanings remain distinct');
-  for(const change of [destination+' ',destination.replace('const node=','const other=')])assert.throws(()=>previous.extract(change,policy.placement.destination));
+  assert.equal(new Set([...historical,...placedNames.slice(0,3).map(name=>current.recordOf(name))]).size,5,'the two original and three preceding current qualified meanings remain distinct');
+  for(const change of [destination+' ',destination.replace('const node=','const other=')]){
+    assert.equal(restoreIntegrationSource(change,policy.placement.destination),change);
+    assert.throws(()=>previous.extract(change,policy.placement.destination));
+  }
   assert.throws(()=>previous.extract(destination,policy.placement.source));
 });
 
@@ -31,3 +38,4 @@ test('placement literal extraction refuses missing ambiguous or altered owner ex
 });
 
 import {readNodeDependencyGeneratorRegistrationHistory} from '../scripts/node-dependency-registration-history.mjs';
+import {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';
