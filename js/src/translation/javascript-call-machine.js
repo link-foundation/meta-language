@@ -982,9 +982,17 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
             const operands=readJavaScriptDescriptorOperands(instruction.fields.map(coordinate=>frame.registers[coordinate]??{$:'undefined'}));
             const wrongDescriptor='internal definitions retain their actual key and complete preconverted descriptor operands';
             const state=pending.state;
-            if(operands.error!==''||state.$!=='propertyDefinitionArray'&&state.$!=='propertyDefinitionReady')return wrongDescriptor;
-            const descriptor=state.$==='propertyDefinitionArray'?state.assignment.definition.descriptor:state.descriptor;
-            if(!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||!testJavaScriptPropertyDescriptorsSameValue(descriptor,operands.descriptor))return wrongDescriptor;
+            const key=frame.registers[instruction.key]??{$:'undefined'};
+            if(operands.error!=='')return wrongDescriptor;
+            switch(state.$){
+              case 'propertyDefinitionArray':
+                if(!testJavaScriptSemanticSameValue(key,state.key)||!testJavaScriptPropertyDescriptorsSameValue(state.assignment.definition.descriptor,operands.descriptor))return wrongDescriptor;
+                break;
+              case 'propertyDefinitionReady':
+                if(!testJavaScriptSemanticSameValue(key,state.key)||!testJavaScriptPropertyDescriptorsSameValue(state.descriptor,operands.descriptor))return wrongDescriptor;
+                break;
+              default:return wrongDescriptor;
+            }
             break;
           }
           case 'propertyDefinition':{
