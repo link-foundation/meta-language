@@ -143,6 +143,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-error-class-program.lino" => {
             Some(include_str!("../data/javascript-error-class-program.lino"))
         }
+        "javascript-error-class-source-program.lino" => Some(include_str!(
+            "../data/javascript-error-class-source-program.lino"
+        )),
         "javascript-error-construction-program.lino" => Some(include_str!(
             "../data/javascript-error-construction-program.lino"
         )),

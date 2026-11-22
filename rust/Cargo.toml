@@ -161,6 +161,7 @@ include = [
     "src/data/javascript-data-field-program.lino",
     "src/data/javascript-descriptor-conversion-program.lino",
     "src/data/javascript-error-class-program.lino",
+    "src/data/javascript-error-class-source-program.lino",
     "src/data/javascript-error-construction-program.lino",
     "src/data/javascript-fixed-integer-cast-program.lino",
     "src/data/javascript-host-capability-program.lino",

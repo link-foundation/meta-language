@@ -5,6 +5,7 @@ mod native;
 mod codecs;
 use codecs::*;
 use serde_json::Value;
+use std::{cell::RefCell, rc::Rc};
 
 fn assert_compilation_unit(input:&Value){
  let plan=decode_java_script_error_module_plan(&input["plan"]);
@@ -16,13 +17,14 @@ fn assert_compilation_unit(input:&Value){
   assert_eq!(encode_java_script_error_module_binding(&value),*wire);
   value
  }).collect::<Vec<_>>();
+ let bindings=Rc::new(RefCell::new(bindings));
  let actual=if let Some(owners)=input.get("capabilities"){
   let capabilities=owners.as_array().expect("actual source-qualified capability owners").iter().map(|wire|{
    let owner=decode_java_script_source_capability_owner(wire);
    assert_eq!(encode_java_script_source_capability_owner(&owner),*wire);
    owner
   }).collect::<Vec<_>>();
-  native::compile_java_script_error_module_plan_with_capabilities(plan,registry,bindings,capabilities)
+  native::compile_java_script_error_module_plan_with_capabilities(plan,registry,bindings,Rc::new(RefCell::new(capabilities)))
  }else{native::compile_java_script_error_module_plan_with_bindings(plan,registry,bindings)};
  let wire=encode_java_script_error_module_compilation(&actual);
  assert_eq!(wire["error"],"","actual initialized captures must compile completely");
