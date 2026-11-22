@@ -16,8 +16,8 @@ use std::fmt::Write as _;
 use super::Language;
 use super::diagnostics::{Result, type_error, unsupported};
 use super::emit_common::{
-    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, dependencies, order_declarations_with_dependencies,
-    unthreaded,
+    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, datatype_groups, dependencies,
+    mutual_groups, order_declarations_with_dependencies, unthreaded,
 };
 use super::ir::{
     ByZero, Case, DataDecl, Decl, Expr, FnDecl, Hints, LitValue, Node, Pattern, Plan, Program,
@@ -211,15 +211,17 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
             ..EmitOptions::default()
         },
     );
-    let plan=super::formal_datatype_modules::plan_formal_datatype_modules(program)?;
-    let aliases=super::formal_datatype_aliases::capture_formal_datatype_aliases(&plan.aliases,&state)?;
-    let alias_dependencies=super::formal_datatype_modules::formal_datatype_module_dependencies(&plan)?;
-    state.relocate_datatypes(&plan.program,&plan.aliases)?;
-    let program=&plan.program;
+    let plan = super::formal_datatype_modules::plan_formal_datatype_modules(program)?;
+    let aliases =
+        super::formal_datatype_aliases::capture_formal_datatype_aliases(&plan.aliases, &state)?;
+    let alias_dependencies =
+        super::formal_datatype_modules::formal_datatype_module_dependencies(&plan)?;
+    state.relocate_datatypes(&plan.program, &plan.aliases)?;
+    let program = &plan.program;
     LeanEmitter {
         program,
         state,
-        aliases:super::formal_datatype_aliases::FormalDatatypeAliases::new(aliases,"Lean"),
+        aliases: super::formal_datatype_aliases::FormalDatatypeAliases::new(aliases, "Lean"),
         alias_dependencies,
         helpers: if utf16_strings {
             HashSet::from(["utf16Text"])
@@ -238,8 +240,8 @@ struct LeanEmitter<'p> {
     utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
-    aliases:super::formal_datatype_aliases::FormalDatatypeAliases,
-    alias_dependencies:HashMap<String,HashSet<String>>,
+    aliases: super::formal_datatype_aliases::FormalDatatypeAliases,
+    alias_dependencies: HashMap<String, HashSet<String>>,
     helpers: HashSet<&'static str>,
     // Inside `| p + 1 =>` of a match on `x`, `x` is written `p + 1`: Lean's
     // structural recursion sees through the pattern but not the variable.
@@ -254,24 +256,43 @@ impl LeanEmitter<'_> {
             self.state.encode("utf16-formal-strings","source strings are ordered UTF-16 code-unit columns represented by natural numbers 0..65535; generated complete shared operations retain isolated units, and scalar display alone replaces unpaired surrogates");
         }
         let mut blocks = Vec::new();
-        blocks.extend(self.aliases.open(&[],&self.state)?);
+        blocks.extend(self.aliases.open(&[], &self.state)?);
         let mut open: Vec<String> = Vec::new();
         let groups = mutual_groups(self.program);
-        let data_groups=datatype_groups(self.program)?;
-        for entry in order_declarations_with_dependencies(self.program,self.aliases.has_aliases(),&self.alias_dependencies)? {
+        let data_groups = datatype_groups(self.program)?;
+        for entry in order_declarations_with_dependencies(
+            self.program,
+            self.aliases.has_aliases(),
+            &self.alias_dependencies,
+        )? {
             self.move_to(&mut open, entry.module_path(), &mut blocks)?;
             let block = match (entry, groups.get(entry.full_name())) {
                 (_, Some(group)) if std::ptr::eq(group[0], entry) => self.mutual(group)?,
                 (_, Some(_)) => continue,
-                (Decl::Data(data), None) => if let Some(group)=data_groups.get(entry.full_name()){if std::ptr::eq(group[0],entry){self.mutual_data(group)?}else{continue;}}else{self.data(entry,data)?},
+                (Decl::Data(data), None) => {
+                    if let Some(group) = data_groups.get(entry.full_name()) {
+                        if std::ptr::eq(group[0], entry) {
+                            self.mutual_data(group)?
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        self.data(entry, data)?
+                    }
+                }
                 (Decl::Fn(function), None) => self.function(entry, function)?,
                 (Decl::Theorem(theorem), None) => self.theorem(entry, theorem)?,
             };
-            if let Some(group)=data_groups.get(entry.full_name()){self.aliases.complete(group);}else{self.aliases.complete(&[entry]);}
+            if let Some(group) = data_groups.get(entry.full_name()) {
+                self.aliases.complete(group);
+            } else {
+                self.aliases.complete(&[entry]);
+            }
             blocks.push(block);
         }
         self.move_to(&mut open, &[], &mut blocks)?;
-        blocks.extend(self.aliases.close(&[],&self.state)?);self.aliases.finish()?;
+        blocks.extend(self.aliases.close(&[], &self.state)?);
+        self.aliases.finish()?;
         let main = match &self.program.main {
             Some(main) => Some(self.main(main)?),
             None => None,
@@ -330,21 +351,26 @@ impl LeanEmitter<'_> {
     }
 
     /// Closes and opens namespaces so that `path` is the open one.
-    fn move_to(&mut self, open: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>)->Result<()> {
+    fn move_to(
+        &mut self,
+        open: &mut Vec<String>,
+        path: &[String],
+        blocks: &mut Vec<String>,
+    ) -> Result<()> {
         let common = open
             .iter()
             .zip(path)
             .take_while(|(left, right)| left == right)
             .count();
         while open.len() > common {
-            blocks.extend(self.aliases.close(open,&self.state)?);
+            blocks.extend(self.aliases.close(open, &self.state)?);
             blocks.push(format!("end {}", self.module_name(open)));
             open.pop();
         }
         while open.len() < path.len() {
             open.push(path[open.len()].clone());
             blocks.push(format!("namespace {}", self.module_name(open)));
-            blocks.extend(self.aliases.open(open,&self.state)?);
+            blocks.extend(self.aliases.open(open, &self.state)?);
         }
         Ok(())
     }
@@ -354,12 +380,48 @@ impl LeanEmitter<'_> {
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
-        self.data_definition(entry,data,false)
+        self.data_definition(entry, data, false)
     }
-    fn data_definition(&mut self, entry: &Decl, data: &DataDecl, mutual:bool) -> Result<String> {
-        let facts=crate::translation::callable_data::read_callable_data_facts(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
-        let profile=if facts.callable&&!mutual{Some(crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?)}else{None};
-        let self_profile=if !mutual&&!facts.callable&&dependencies(entry).contains(&data.full_name){crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?.remove(&data.full_name)}else{None};
+    fn data_definition(&mut self, entry: &Decl, data: &DataDecl, mutual: bool) -> Result<String> {
+        let facts = crate::translation::callable_data::read_callable_data_facts(
+            &Type::Data {
+                name: data.full_name.clone(),
+            },
+            &|name| match self.program.declaration(name) {
+                Some(Decl::Data(data)) => Some(data),
+                _ => None,
+            },
+        )?;
+        let profile = if facts.callable && !mutual {
+            Some(
+                crate::translation::callable_data::read_callable_data_recursive_profile(
+                    &Type::Data {
+                        name: data.full_name.clone(),
+                    },
+                    &|name| match self.program.declaration(name) {
+                        Some(Decl::Data(data)) => Some(data),
+                        _ => None,
+                    },
+                )?,
+            )
+        } else {
+            None
+        };
+        let self_profile =
+            if !mutual && !facts.callable && dependencies(entry).contains(&data.full_name) {
+                crate::translation::callable_data::read_formal_datatype_constructive_profiles(
+                    &Type::Data {
+                        name: data.full_name.clone(),
+                    },
+                    &|name| match self.program.declaration(name) {
+                        Some(Decl::Data(data)) => Some(data),
+                        _ => None,
+                    },
+                )?
+                .remove(&data.full_name)
+            } else {
+                None
+            };
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         let mut lines = vec![format!("inductive {name} where")];
@@ -374,17 +436,79 @@ impl LeanEmitter<'_> {
         }
         // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
         // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
-        let undecidable=self.undecidable(&data.full_name,&mut HashSet::new());
-        let deriving = if mutual||self_profile.is_some(){crate::translation::callable_data_derivation_rules::read_formal_datatype_lean_block_derivation(facts.callable,data.output,undecidable)}else{crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Lean",facts.callable,false,data.output,undecidable)};
-        if let Some(profile)=profile.filter(|profile|profile.recursive){let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}else if !deriving.is_empty(){lines.push(format!("  deriving {deriving}"));}
-        if let Some(profile)=self_profile{let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}
+        let undecidable = self.undecidable(&data.full_name, &mut HashSet::new());
+        let deriving = if mutual || self_profile.is_some() {
+            crate::translation::callable_data_derivation_rules::read_formal_datatype_lean_block_derivation(facts.callable,data.output,undecidable)
+        } else {
+            crate::translation::callable_data_derivation_rules::read_callable_data_derivation(
+                "Lean",
+                facts.callable,
+                false,
+                data.output,
+                undecidable,
+            )
+        };
+        if let Some(profile) = profile.filter(|profile| profile.recursive) {
+            let witness = &data.ctors[profile.witness];
+            let constructor = self.state.ctor_ref(&data.full_name, &witness.name, ".");
+            lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));
+        } else if !deriving.is_empty() {
+            lines.push(format!("  deriving {deriving}"));
+        }
+        if let Some(profile) = self_profile {
+            let witness = &data.ctors[profile.witness];
+            let constructor = self.state.ctor_ref(&data.full_name, &witness.name, ".");
+            lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));
+        }
         Ok(lines.join("\n"))
     }
-    fn mutual_data(&mut self,group:&[&Decl])->Result<String>{
-        for entry in group{let ty=Type::Data{name:entry.full_name().to_owned()};let lookup=|name:&str|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None};if crate::translation::callable_data::read_callable_data_facts(&ty,&lookup)?.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&ty,&lookup)?;}}
-        let profiles=crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:group[0].full_name().to_owned()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
-        let mut lines=vec!["mutual".to_owned()];for entry in group{let Decl::Data(data)=entry else{return Err(unsupported("formal mutual datatype","the complete component needs actual data declarations",None));};lines.push(self.data_definition(entry,data,true)?);}lines.push("end".to_owned());
-        let mut defaults=group.to_vec();defaults.sort_by_key(|entry|profiles[entry.full_name()].rank);for entry in defaults{let Decl::Data(data)=entry else{unreachable!("validated actual data component")};let witness=&data.ctors[profiles[entry.full_name()].witness];lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(self.state.local_name(&data.full_name),&self.state.ctor_ref(&data.full_name,&witness.name,"."),witness.fields.len() as f64));}Ok(lines.join("\n"))
+    fn mutual_data(&mut self, group: &[&Decl]) -> Result<String> {
+        for entry in group {
+            let ty = Type::Data {
+                name: entry.full_name().to_owned(),
+            };
+            let lookup = |name: &str| match self.program.declaration(name) {
+                Some(Decl::Data(data)) => Some(data),
+                _ => None,
+            };
+            if crate::translation::callable_data::read_callable_data_facts(&ty, &lookup)?.callable {
+                crate::translation::callable_data::read_callable_data_recursive_profile(
+                    &ty, &lookup,
+                )?;
+            }
+        }
+        let profiles =
+            crate::translation::callable_data::read_formal_datatype_constructive_profiles(
+                &Type::Data {
+                    name: group[0].full_name().to_owned(),
+                },
+                &|name| match self.program.declaration(name) {
+                    Some(Decl::Data(data)) => Some(data),
+                    _ => None,
+                },
+            )?;
+        let mut lines = vec!["mutual".to_owned()];
+        for entry in group {
+            let Decl::Data(data) = entry else {
+                return Err(unsupported(
+                    "formal mutual datatype",
+                    "the complete component needs actual data declarations",
+                    None,
+                ));
+            };
+            lines.push(self.data_definition(entry, data, true)?);
+        }
+        lines.push("end".to_owned());
+        let mut defaults = group.to_vec();
+        defaults.sort_by_key(|entry| profiles[entry.full_name()].rank);
+        for entry in defaults {
+            let Decl::Data(data) = entry else {
+                unreachable!("validated actual data component")
+            };
+            let witness = &data.ctors[profiles[entry.full_name()].witness];
+            lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(self.state.local_name(&data.full_name),&self.state.ctor_ref(&data.full_name,&witness.name,"."),witness.fields.len() as f64));
+        }
+        Ok(lines.join("\n"))
     }
 
     fn definition(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
@@ -577,476 +701,6 @@ impl LeanEmitter<'_> {
             }
         })
     }
-
-    fn expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
-        if let Some(copy) =
-            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
-                self.program.source_language.as_str(),
-                e,
-            )
-        {
-            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
-            let value = self.expr(copy, depth)?;
-            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("Lean",&value));
-        }
-        if let Some(text) = super::formal_unit_strings::expression(self, e, depth)? {
-            return Ok(text);
-        }
-        if self.program.source_language == crate::translation::Language::JavaScript
-            && matches!(&e.node, Node::Ctor { frozen: true, .. })
-        {
-            return Err(unsupported(
-                "explicit data object freeze",
-                "this target needs a JavaScript property descriptor model to retain explicit constructor freezing",
-                e.span,
-            ));
-        }
-        if let Node::Tuple {
-            frozen,
-            product_model: Some(model),
-            ..
-        } = &e.node
-        {
-            if !accept_program_tuple_product_model(model, *frozen) {
-                return Err(unsupported(
-                    "immutable tuple product model",
-                    "the tuple model must be immutable value product with explicit frozen evidence",
-                    e.span,
-                ));
-            }
-            let mut pending = vec![&e.ty];
-            while let Some(ty) = pending.pop() {
-                if let Type::Tuple { elements } = ty {
-                    if elements.len() < 2 {
-                        return Err(unsupported(
-                            "immutable tuple arity",
-                            "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
-                            e.span,
-                        ));
-                    }
-                    pending.extend(elements);
-                }
-            }
-        }
-        Ok(match &e.node {
-            Node::Record { entries, order } => self.record_value(
-                entries,
-                order.as_deref(),
-                matches!(&e.ty, Type::Record { ordered: true, .. }),
-                depth,
-            )?,
-            Node::RecordField { object, index, .. } => self.record_field(object, *index, depth)?,
-            Node::ReferenceAllocate { .. }
-            | Node::ReferenceRead { .. }
-            | Node::CellAllocate { .. }
-            | Node::CellRead { .. }
-            | Node::CellWrite { .. } => {
-                return Err(unsupported(
-                    "mutable structural value",
-                    &super::surface_reference_analysis_rules::read_surface_reference_refusal(),
-                    e.span,
-                ));
-            }
-            Node::Lit { value } => {
-                if e.ty.is_float() {
-                    self.ty(&e.ty)?;
-                }
-                literal(&e.ty, value)?
-            }
-            Node::Unit => "()".to_owned(),
-            Node::None { .. }
-            | Node::Some { .. }
-            | Node::FlattenOption { .. }
-            | Node::Coalesce { .. }
-            | Node::OptionalField { .. }
-            | Node::OptionalProject { .. }
-            | Node::NullishNumber { .. }
-            | Node::OptionalIndexNumber { .. }
-            | Node::OptionalText { .. }
-            | Node::OptionalTypeOf { .. }
-            | Node::Truthy { .. }
-            | Node::StrictEqual { .. }
-            | Node::UnwrapOption { .. }
-            | Node::OptionalPredicate { .. } => self.optional_expr(e, depth)?,
-            Node::OutNil => "([] : List String)".to_owned(),
-            Node::OutCons { head, tail } => {
-                format!(
-                    "({} :: {})",
-                    self.expr(head, depth)?,
-                    self.expr(tail, depth)?
-                )
-            }
-            Node::Tuple { items, .. } => {
-                let mut parts = Vec::new();
-                for item in items {
-                    parts.push(self.expr(item, depth)?);
-                }
-                format!("({})", parts.join(", "))
-            }
-            Node::TupleIndex { object, index } => {
-                let Type::Tuple { elements } = &object.ty else {
-                    return Err(unsupported(
-                        "tuple projection",
-                        "the projection needs a checked tuple layout",
-                        e.span,
-                    ));
-                };
-                let value = self.expr(object, depth)?;
-                if elements.len() == 1 {
-                    value
-                } else {
-                    format!(
-                        "({value}){}{}",
-                        ".2".repeat(*index),
-                        if *index < elements.len() - 1 {
-                            ".1"
-                        } else {
-                            ""
-                        }
-                    )
-                }
-            }
-            Node::Var { name } => self.successors.get(name).unwrap_or(name).clone(),
-            Node::FunctionRef { .. } | Node::Apply { .. } | Node::Lambda { .. } => {
-                self.callable_expression(e, depth)?
-            }
-            Node::Call { func, args } => {
-                let head = self.state.reference(func, ".");
-                self.application(head, args, depth)?
-            }
-            Node::Ctor {
-                data, ctor, args, ..
-            } => {
-                let head = self.state.ctor_ref(data, ctor, ".");
-                self.application(head, args, depth)?
-            }
-            Node::Unary { op, arg, semantics } => {
-                if *op == UnaryOp::Not {
-                    format!("(!{})", self.expr(arg, depth)?)
-                } else {
-                    if *semantics == Some(Semantics::Checked) {
-                        unthreaded("a machine-integer negation");
-                    }
-                    format!("(-{})", self.expr(arg, depth)?)
-                }
-            }
-            Node::Binary { .. } => self.binary(e, depth)?,
-            Node::If {
-                cond,
-                then,
-                otherwise,
-            } => {
-                let cond = self.expr(cond, depth)?;
-                let then = self.expr(then, depth)?;
-                format!(
-                    "(if {cond} then {then} else {})",
-                    self.expr(otherwise, depth)?
-                )
-            }
-            Node::Let { name, value, body } => {
-                let value = self.expr(value, depth)?;
-                format!(
-                    "(let {name} := {value};\n{}{})",
-                    pad(depth + 1),
-                    self.expr(body, depth + 1)?
-                )
-            }
-            Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
-            Node::Method { object, op, args } => {
-                if op == "toSorted" {
-                    return Err(unsupported(
-                        "array copying sort",
-                        "this target needs an explicit UTF-16 string ordering interpretation",
-                        e.span,
-                    ));
-                }
-                if op == "readJavaScriptRecordPropertyOrder" {
-                    let rendered = self.expr(object, depth)?;
-                    return crate::translation::ordered_record_values::order_read(
-                        "Lean", e, &rendered,
-                    );
-                }
-                if matches!(object.ty, Type::Array { .. }) && op == "map" {
-                    let callback = args
-                        .first()
-                        .and_then(Option::as_ref)
-                        .expect("the checked map has its actual callback");
-                    return self.array_map_expression(object, callback, depth);
-                }
-                return Err(unsupported(
-                    &format!(".{op}()"),
-                    &super::primitive_method_rules::read_primitive_method_rendering_refusal(
-                        "Lean",
-                        object.ty.kind(),
-                        op,
-                    ),
-                    e.span,
-                ));
-            }
-            Node::StringMap { op, .. } => {
-                return Err(crate::translation::diagnostics::unsupported(
-                    &format!(".{op}()"),
-                    &crate::translation::frontend_rules::read_string_map_refusal("Lean", op),
-                    e.span,
-                ));
-            }
-            Node::StringTest { op, string, search } => {
-                let refusal =
-                    crate::translation::string_order_rules::read_string_order_refusal("Lean", op);
-                if !refusal.is_empty() {
-                    return Err(crate::translation::diagnostics::unsupported(
-                        "string comparison",
-                        &refusal,
-                        e.span,
-                    ));
-                }
-                let helper =
-                    crate::translation::frontend_rules::read_string_test_helper("Lean", op);
-                if helper == "stringIncludes" {
-                    self.helpers.insert("stringIncludes");
-                }
-                let object = self.expr(string, depth)?;
-                let search = self.expr(search, depth)?;
-                crate::translation::frontend_rules::render_string_test_expression(
-                    "Lean", op, &object, &search,
-                )
-            }
-            Node::PropositionValue{..}=>self.check(&e.proposition_value_atom().ok_or_else(||unsupported("proposition value","an actual checked comparison is required",e.span))?)?,
-            Node::ToString { arg, console } => {
-                if arg.ty == Type::String {
-                    self.expr(arg, depth)?
-                } else {
-                    self.text_of(arg, depth, *console)?
-                }
-            }
-            Node::Cast {
-                arg,
-                from,
-                to,
-                flavor,
-                ..
-            } => self.cast(arg, from, to, *flavor, depth)?,
-            Node::Abort { .. } => unthreaded("an abort"),
-            Node::Array { .. }
-            | Node::Set { .. }
-            | Node::Map { .. }
-            | Node::Append { .. }
-            | Node::Index { .. }
-            | Node::Length { .. }
-            | Node::OptionalIndex { .. }
-            | Node::StringPoints { .. }
-            | Node::CollectionItems { .. } => self.array_expr(e, depth)?,
-            Node::CollectionSize { .. } | Node::CollectionRead { .. } => {
-                self.array_expr(e, depth)?
-            }
-            Node::Math { .. } => self.math(e, depth)?,
-            // Output threading leaves no `print` node.
-            Node::Print { .. } => {
-                return Err(type_error(
-                    "print with its output not threaded".to_owned(),
-                    e.span,
-                ));
-            }
-        })
-    }
-
-    /// A call or constructor application: the bare head without arguments.
-    fn application(&mut self, head: String, args: &[Expr], depth: usize) -> Result<String> {
-        if args.is_empty() {
-            return Ok(head);
-        }
-        let mut parts = vec![head];
-        for arg in args {
-            parts.push(self.expr(arg, depth)?);
-        }
-        Ok(format!("({})", parts.join(" ")))
-    }
-
-    fn binary(&mut self, e: &Expr, depth: usize) -> Result<String> {
-        let Node::Binary {
-            op, left, right, ..
-        } = &e.node
-        else {
-            unreachable!("binary expressions only");
-        };
-        let left_text = self.expr(left, depth)?;
-        let right_text = self.expr(right, depth)?;
-        let comparison = match op {
-            BinaryOp::And => return Ok(format!("({left_text} && {right_text})")),
-            BinaryOp::Or => return Ok(format!("({left_text} || {right_text})")),
-            BinaryOp::Concat => return Ok(format!("({left_text} ++ {right_text})")),
-            BinaryOp::Eq => return Ok(format!("({left_text} == {right_text})")),
-            BinaryOp::Ne => return Ok(format!("({left_text} != {right_text})")),
-            BinaryOp::Lt => "<",
-            BinaryOp::Le => "≤",
-            BinaryOp::Gt => ">",
-            BinaryOp::Ge => "≥",
-            _ => return self.arithmetic(e, &left_text, &right_text),
-        };
-        Ok(format!("(decide ({left_text} {comparison} {right_text}))"))
-    }
-
-    fn arithmetic(&mut self, e: &Expr, left_text: &str, right_text: &str) -> Result<String> {
-        let Node::Binary {
-            op,
-            domain,
-            rounding,
-            by_zero,
-            semantics,
-            ..
-        } = &e.node
-        else {
-            unreachable!("binary expressions only");
-        };
-        if *semantics == Some(Semantics::Ieee) {
-            let operator = match op {
-                BinaryOp::Add => "+",
-                BinaryOp::Sub => "-",
-                BinaryOp::Mul => "*",
-                BinaryOp::Div => "/",
-                _ => {
-                    self.helpers.insert("floatRem");
-                    return Ok(format!("(ml_float_rem {left_text} {right_text})"));
-                }
-            };
-            return Ok(format!("({left_text} {operator} {right_text})"));
-        }
-        // A machine-integer operation, one that may abort, reaches here as its abort test and its value computed on the representation (output.rs).
-        if *semantics == Some(Semantics::Checked)
-            || *by_zero == Some(ByZero::Abort)
-            || matches!(e.ty, Type::Fixed { .. })
-        {
-            unthreaded(&format!("a machine-integer {}", op.name()));
-        }
-        match op {
-            BinaryOp::Add => Ok(format!("({left_text} + {right_text})")),
-            BinaryOp::Mul => Ok(format!("({left_text} * {right_text})")),
-            BinaryOp::Sub => Ok(format!("({left_text} - {right_text})")),
-            BinaryOp::Div | BinaryOp::Rem => {
-                let division = *op == BinaryOp::Div;
-                if matches!(domain, Some(Type::Nat)) {
-                    return Ok(format!(
-                        "({left_text} {} {right_text})",
-                        if division { "/" } else { "%" }
-                    ));
-                }
-                if *rounding == Some(Rounding::Trunc) {
-                    return Ok(format!(
-                        "(Int.{} {left_text} {right_text})",
-                        if division { "tdiv" } else { "tmod" }
-                    ));
-                }
-                if *rounding == Some(Rounding::Floor) {
-                    return Ok(format!(
-                        "(Int.{} {left_text} {right_text})",
-                        if division { "fdiv" } else { "fmod" }
-                    ));
-                }
-                Ok(format!(
-                    "({left_text} {} {right_text})",
-                    if division { "/" } else { "%" }
-                ))
-            }
-            other => Err(type_error(
-                format!("no Lean operator {}", operator_name(*other)),
-                None,
-            )),
-        }
-    }
-
-    fn match_expr(&mut self, scrutinee: &Expr, cases: &[Case], depth: usize) -> Result<String> {
-        let subject = self.expr(scrutinee, depth)?;
-        let mut arms = Vec::new();
-        for kase in cases {
-            let text = match &kase.pattern {
-                Pattern::NatZero => "0".to_owned(),
-                Pattern::NatSucc { name } => format!("{name} + 1"),
-                Pattern::Wild => "_".to_owned(),
-                Pattern::Bind { name } => name.clone(),
-                Pattern::Ctor { data, ctor, binds } => {
-                    let mut parts = vec![self.state.ctor_ref(data, ctor, ".")];
-                    parts.extend(
-                        binds
-                            .iter()
-                            .map(|bind| bind.clone().unwrap_or_else(|| "_".to_owned())),
-                    );
-                    parts.join(" ")
-                }
-            };
-            let saved = self.successors.clone();
-            if let (Pattern::NatSucc { name }, Some(variable)) =
-                (&kase.pattern, scrutinee.var_name())
-            {
-                self.successors
-                    .insert(variable.to_owned(), format!("({name} + 1)"));
-            }
-            let body = self.expr(&kase.body, depth + 2);
-            self.successors = saved;
-            arms.push(format!("{}| {text} => {}", pad(depth + 1), body?));
-        }
-        Ok(format!("(match {subject} with\n{})", arms.join("\n")))
-    }
 }
 
-fn literal(ty: &Type, value: &LitValue) -> Result<String> {
-    Ok(match ty {
-        Type::Float => lean_float(&value.text()),
-        Type::Nat => format!("({} : Nat)", value.text()),
-        Type::Int => format!("({} : Int)", value.text()),
-        Type::Fixed { signed, .. } => {
-            format!(
-                "({} : {})",
-                value.text(),
-                if *signed { "Int" } else { "Nat" }
-            )
-        }
-        Type::Bool => value.text(),
-        Type::String => json_string(&value.text()),
-        other => {
-            return Err(type_error(
-                format!("no Lean literal for {}", other.kind()),
-                None,
-            ));
-        }
-    })
-}
-
-/// A Number's canonical JavaScript text as a Float term; Lean reads decimal
-/// literals correctly rounded.
-fn lean_float(value: &str) -> String {
-    let text = match value {
-        "NaN" => "0.0 / 0.0".to_owned(),
-        "Infinity" => "1.0 / 0.0".to_owned(),
-        "-Infinity" => "-1.0 / 0.0".to_owned(),
-        _ => value.replacen("e+", "e", 1),
-    };
-    format!("({text} : Float)")
-}
-
-/// A string literal as JavaScript's `JSON.stringify` writes it.
-fn json_string(text: &str) -> String {
-    serde_json::to_string(text).unwrap_or_default()
-}
-
-/// The operator's name in the checked program's JSON form.
-fn operator_name(op: BinaryOp) -> String {
-    serde_json::to_value(op)
-        .ok()
-        .and_then(|value| value.as_str().map(str::to_owned))
-        .unwrap_or_default()
-}
-
-fn collect_unfold(plan: &Plan) -> Vec<&String> {
-    match plan {
-        Plan::Close { hints } => hints.unfold.iter().collect(),
-        Plan::Induction(split) | Plan::Cases(split) => split
-            .cases
-            .iter()
-            .flat_map(|kase| collect_unfold(&kase.plan))
-            .collect(),
-    }
-}
-
-fn pad(depth: usize) -> String {
-    "  ".repeat(depth)
-}
+include!("emit_lean_expressions.rs");
