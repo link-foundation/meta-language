@@ -40,6 +40,7 @@ mod grammar_inference_rules;
 mod grammar_scanner_character_class_rules;
 mod grammar_scanner_inference;
 mod grammar_scanner_inference_rules;
+mod grammar_scanner_mode_stack_rules;
 pub use grammar_inference::{
     RegularGrammarInference, RegularGrammarInferenceOptions, RegularGrammarInferenceParameters,
     accept_inferred_grammar_symbols, create_regular_grammar_inference_program_links,
@@ -47,8 +48,8 @@ pub use grammar_inference::{
     read_regular_grammar_inference_links, refine_regular_grammar_inference,
 };
 pub use grammar_scanner_inference::{
-    GrammarScannerObservation, InferredGrammarScanner, infer_grammar_scanner,
-    infer_grammar_scanner_classes,
+    GrammarScannerModeStackObservation, GrammarScannerObservation, InferredGrammarScanner,
+    infer_grammar_scanner, infer_grammar_scanner_classes, infer_grammar_scanner_mode_stack,
 };
 pub mod graphql_adapter;
 mod incremental;

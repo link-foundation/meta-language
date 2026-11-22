@@ -6,10 +6,11 @@ import { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGr
 import { LinkNetwork } from '../src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { createDynamicMetaLanguage } from '../src/dynamic-meta-language.js';
-import { inferGrammarScanner, inferGrammarScannerClasses } from '../src/grammar-scanner-inference.js';
+import { inferGrammarScanner, inferGrammarScannerClasses, inferGrammarScannerModeStack } from '../src/grammar-scanner-inference.js';
 import { readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference } from '../src/grammar-inference-refinement.js';
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { createGrammarParser as compileGrammar, renderSyntaxTree } from '../src/grammar-runtime.js';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtures = readProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino', import.meta.url));
 const [major, minor] = process.versions.node.split('.').map(Number);
@@ -88,4 +89,43 @@ test('scanner character classes preserve gaps, literal precedence and archive re
   const reloaded = readRefinedRegularGrammarInferenceLinks(binary, refined.root);
   assert.deepEqual(reloaded.grammar.normalized(), refined.grammar.normalized());
   assert.ok(acceptInferredGrammarSymbols(reloaded, ['word', 'member']));
+});
+
+test('scanner mode stacks restore each actual parent and replay the selected archive', context => {
+  const fixture = fixtures.scannerModeStack;
+  for (const classes of [false, true]) {
+    const inferred = inferGrammarScannerModeStack(fixture.observations, undefined, classes);
+    for (const operation of fixture.operations) assert.ok(inferred.listing.includes(operation));
+    assert.equal(inferred.listing.includes(fixture.matcher), classes);
+    assert.equal(inferred.listing.match(/\(popMode\)/gu).length, 1);
+    const listing = '(grammar (start source))\n' + inferred.listing + fixture.syntax;
+    const parser = compileGrammar(parseGrammarLinks(renderGrammarLinks(parseGrammarLinks(listing))));
+    for (const {input, tree} of fixture.accepted) {
+      const result = parser.parseTree(input);
+      assert.equal(result.ok, true, input);
+      assert.equal(renderSyntaxTree(result.tree), tree);
+    }
+    for (const input of fixture.rejected) assert.equal(parser.parseTree(input).ok, false, input);
+    const original = inferRegularGrammar([['begin', 'word', 'end', 'suffix']], [[]], {
+      scannerModeStackObservations: fixture.observations, scannerCharacterClasses: classes,
+    });
+    const restored = readRegularGrammarInferenceLinks(LinkNetwork.fromLino(original.network.toLino()), original.root);
+    assert.deepEqual(restored.grammar.normalized(), original.grammar.normalized());
+    const addition = ['alternate', 'begin', 'member', 'end', 'suffix'];
+    const refined = refineRegularGrammarInference(restored.network, restored.root, [addition]);
+    const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(refined.network));
+    const reloaded = readRefinedRegularGrammarInferenceLinks(binary, refined.root);
+    assert.deepEqual(reloaded.grammar.normalized(), refined.grammar.normalized());
+    assert.equal(acceptInferredGrammarSymbols(reloaded, addition), true);
+  }
+  assert.throws(() => inferGrammarScannerModeStack([...fixture.observations, fixture.conflicting]), /unsupported context sensitivity/u);
+  assert.throws(() => inferGrammarScannerModeStack([fixture.unsupported]), /at most one native scanner mode operation/u);
+  assert.throws(() => inferGrammarScannerModeStack([{...fixture.unsupported, after: []}]), /bounded nonempty/u);
+  assert.throws(() => inferRegularGrammar([], [], {scannerObservations: [], scannerModeStackObservations: []}), /one scanner observation format/u);
+  recordIssue195Observations({
+    requirementId: 'I195-GRAMMAR-INFERENCE-SCANNER-MODE-STACK', suffix: 'behavior',
+    fixtureId: 'regular-grammar-inference-scanner-mode-stack', fixtureFile: 'parity/fixtures/regular-grammar-inference.lino',
+    assertions: ['scannerModeStackTreesAndRejectionsMatch', 'scannerModeStackArchiveReplaysAndRefines', 'unsupportedScannerModeStackEffectsAreRefused'],
+    testName: context.name,
+  });
 });

@@ -128,9 +128,14 @@ through the installed grammar. The optional character class profile groups
 observed Unicode scalars that have identical scanner transitions. Draft
 controls check range gaps, longer literal prefixes, exact accepted trees,
 checkpoint reload and refinement in both runtimes. Its source author produced
-a checked program and native counterpart. Generalization beyond observed
-characters, attributed inference, installed-language semantic translation and
-executed held-out benchmark comparisons remain open.
+a checked program and native counterpart. Full before-and-after mode stacks
+now supply the finite observations for native push, pop and replace. Shared
+controls exercise nested pushes, the same pop restoring different parents,
+conflicting effects and source-free archive replay with counterexamples. The
+portable planner and its Rust counterpart are generated, and both controls
+still require execution. Generalization beyond observed characters, attributed
+inference, installed-language semantic translation and executed held-out
+benchmark comparisons remain open.
 
 The pinned upstream link-cli importer reads one two-endpoint row per line.
 Its native binary store archive also stores doublets, with exact addresses and

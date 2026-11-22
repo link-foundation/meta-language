@@ -1,0 +1,1 @@
+Grammar discovery can use complete mode stacks before and after each token to infer native scanner mode pushes, pops and replacements. Discovery archives retain these observations through refinement and installation.

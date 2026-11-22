@@ -10,7 +10,8 @@ import { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './disc
 import { decodeTypedProgramLinks } from './typed-program-links.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
 import { createGrammarScannerInferenceProgramLinks, grammarScannerInferenceArchiveIdentifier, inferGrammarScanner,
-  createGrammarScannerCharacterClassProgramLinks, grammarScannerCharacterClassArchiveIdentifier, inferGrammarScannerClasses } from './grammar-scanner-inference.js';
+  createGrammarScannerCharacterClassProgramLinks, grammarScannerCharacterClassArchiveIdentifier, inferGrammarScannerClasses,
+  createGrammarScannerModeStackProgramLinks, grammarScannerModeStackArchiveIdentifier, inferGrammarScannerModeStack } from './grammar-scanner-inference.js';
 import { inferRegularGrammarTable, findInferenceRepresentative,
   acceptInferredSymbolSequence, acceptInferenceTableShape, readInferenceFailureReason } from './grammar-inference-rules.js';
 
@@ -95,8 +96,11 @@ export function createRegularGrammarInferenceProgramLinks() {
  */
 export function inferRegularGrammar(positives, negatives = [], options = {}) {
   const characterClasses = options.scannerCharacterClasses === undefined ? false : options.scannerCharacterClasses;
-  if (typeof characterClasses !== 'boolean' || (characterClasses && options.scannerObservations === undefined)) fail('scanner character classes require scanner observations');
-  const scanner = options.scannerObservations === undefined ? undefined
+  const modeStacks = options.scannerModeStackObservations !== undefined;
+  if (modeStacks && options.scannerObservations !== undefined) fail('select one scanner observation format');
+  if (typeof characterClasses !== 'boolean' || (characterClasses && !modeStacks && options.scannerObservations === undefined)) fail('scanner character classes require scanner observations');
+  const scanner = modeStacks ? inferGrammarScannerModeStack(options.scannerModeStackObservations, undefined, characterClasses)
+    : options.scannerObservations === undefined ? undefined
     : (characterClasses ? inferGrammarScannerClasses : inferGrammarScanner)(options.scannerObservations);
   const limits = configuration(options), input = samples(positives, negatives, limits, scanner);
   const identifier = options.identifier ?? 'inferred-language', language = options.language ?? 'Inferred language', edition = options.edition ?? 'regular discovery 1';
@@ -107,9 +111,10 @@ export function inferRegularGrammar(positives, negatives = [], options = {}) {
   if (!acceptInferenceTableShape(table, input.alphabet.length)) fail('invalid model table');
   const grammar = grammarFromTable(table, input.alphabet, scanner);
   const source = { id: identifier, language, edition, grammar };
-  const model = { schemaVersion: characterClasses ? 3 : scanner ? 2 : 1, algorithm, identifier, language, edition, options: limits,
+  const model = { schemaVersion: modeStacks ? 4 : characterClasses ? 3 : scanner ? 2 : 1, algorithm, identifier, language, edition, options: limits,
     positives, negatives, alphabet: input.alphabet, table,
-    ...(scanner ? { scannerObservations: options.scannerObservations } : {}),
+    ...(modeStacks ? { scannerModeStackObservations: options.scannerModeStackObservations }
+      : scanner ? { scannerObservations: options.scannerObservations } : {}),
     ...(characterClasses ? { scannerCharacterClasses: true } : {}) };
   const data = encodeStructuredDataLinks(model), definitions = createRegularGrammarInferenceProgramLinks();
   const discovered = createDiscoveredConceptLinks([source]);
@@ -121,6 +126,8 @@ export function inferRegularGrammar(positives, negatives = [], options = {}) {
       ...createGrammarScannerInferenceProgramLinks() }] : []),
     ...(characterClasses ? [{ identifier: grammarScannerCharacterClassArchiveIdentifier, kind: 'typed program',
       ...createGrammarScannerCharacterClassProgramLinks() }] : []),
+    ...(modeStacks ? [{ identifier: grammarScannerModeStackArchiveIdentifier, kind: 'typed program',
+      ...createGrammarScannerModeStackProgramLinks() }] : []),
   ]);
   return { grammar, source, alphabet: [...input.alphabet], table: [...table], ...archive };
 }
@@ -138,23 +145,33 @@ export function readRegularGrammarInferenceLinks(network, root) {
   };
   const data = select('regular-discovery-model', 'grammar inference');
   const model = decodeStructuredDataLinks(data.network, data.root);
-  if (model?.algorithm !== algorithm || ![1, 2, 3].includes(model.schemaVersion)
-    || Object.hasOwn(model, 'scannerObservations') !== (model.schemaVersion >= 2)
-    || (model.schemaVersion === 3 ? model.scannerCharacterClasses !== true
-      : Object.hasOwn(model, 'scannerCharacterClasses'))) fail('unsupported model version');
+  if (model?.algorithm !== algorithm || ![1, 2, 3, 4].includes(model.schemaVersion)) fail('unsupported model version');
+  const modeStacks = model.schemaVersion === 4;
+  const classes = model.scannerCharacterClasses === true;
+  if (Object.hasOwn(model, 'scannerObservations') !== [2, 3].includes(model.schemaVersion)
+    || Object.hasOwn(model, 'scannerModeStackObservations') !== modeStacks
+    || Object.hasOwn(model, 'scannerCharacterClasses') !== classes
+    || (model.schemaVersion === 3 && !classes) || (model.schemaVersion < 3 && classes)) fail('unsupported model version');
   const storedScanner = entries.find(entry => entry.identifier === grammarScannerInferenceArchiveIdentifier);
   const storedClasses = entries.find(entry => entry.identifier === grammarScannerCharacterClassArchiveIdentifier);
-  if (model.schemaVersion === 3) {
+  if (classes) {
     const bundledClasses = createGrammarScannerCharacterClassProgramLinks();
     if (!storedClasses || storedClasses.kind !== 'typed program' || !storedClasses.root.equals(bundledClasses.root)
       || storedClasses.network.toLino() !== bundledClasses.network.toLino()) fail('the selected scanner character class definition differs from its versioned implementation');
   } else if (storedClasses) fail('the scanner character class definition needs its versioned model');
+  const storedModeStacks = entries.find(entry => entry.identifier === grammarScannerModeStackArchiveIdentifier);
+  if (modeStacks) {
+    const bundledModeStacks = createGrammarScannerModeStackProgramLinks();
+    if (!storedModeStacks || storedModeStacks.kind !== 'typed program' || !storedModeStacks.root.equals(bundledModeStacks.root)
+      || storedModeStacks.network.toLino() !== bundledModeStacks.network.toLino()) fail('the selected scanner mode stack definition differs from its versioned implementation');
+  } else if (storedModeStacks) fail('the scanner mode stack definition needs its versioned model');
   let scanner;
   if (model.schemaVersion >= 2) {
     const bundledScanner = createGrammarScannerInferenceProgramLinks();
     if (!storedScanner || storedScanner.kind !== 'typed program' || !storedScanner.root.equals(bundledScanner.root)
       || storedScanner.network.toLino() !== bundledScanner.network.toLino()) fail('the selected scanner definition differs from its versioned implementation');
-    scanner = (model.schemaVersion === 3 ? inferGrammarScannerClasses : inferGrammarScanner)(model.scannerObservations);
+    scanner = modeStacks ? inferGrammarScannerModeStack(model.scannerModeStackObservations, undefined, classes)
+      : (classes ? inferGrammarScannerClasses : inferGrammarScanner)(model.scannerObservations);
   } else if (storedScanner) fail('the selected scanner definition needs its actual observations');
   const definitions = select('regular-discovery-algorithm', 'typed program'), bundled = createRegularGrammarInferenceProgramLinks();
   if (!definitions.root.equals(bundled.root) || definitions.network.toLino() !== bundled.network.toLino()) fail('the selected algorithm definition differs from its versioned implementation');

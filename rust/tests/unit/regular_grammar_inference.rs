@@ -1,9 +1,11 @@
 //! Future CI controls; not executed during the complete source draft phase.
+use super::issue_195_observations::{Observation, record};
 use meta_language::{
-    BinaryLinksOptions, FeatureParseOptions, GrammarScannerObservation, LinkNetwork,
-    RegularGrammarInferenceOptions, accept_inferred_grammar_symbols, compile_feature_grammar,
-    decode_link_network_binary, encode_link_network_binary, infer_grammar_scanner,
-    infer_grammar_scanner_classes, infer_regular_grammar, parse_grammar_links,
+    BinaryLinksOptions, FeatureParseOptions, GrammarScannerModeStackObservation,
+    GrammarScannerObservation, LinkNetwork, RegularGrammarInferenceOptions,
+    accept_inferred_grammar_symbols, compile_feature_grammar, decode_link_network_binary,
+    encode_link_network_binary, infer_grammar_scanner, infer_grammar_scanner_classes,
+    infer_grammar_scanner_mode_stack, infer_regular_grammar, parse_grammar_links,
     read_refined_regular_grammar_inference_links, read_regular_grammar_inference_links,
     read_structured_data_lino, refine_regular_grammar_inference, render_grammar_links,
     serialize_grammar,
@@ -100,6 +102,135 @@ fn scanner_character_classes_preserve_gaps_literal_precedence_and_archive_refine
         serialize_grammar(&refined.grammar)
     );
     assert!(accept_inferred_grammar_symbols(&reloaded, &counterexample[0]).unwrap());
+}
+
+#[test]
+fn scanner_mode_stacks_restore_each_actual_parent_and_replay_the_selected_archive() {
+    versions();
+    let data = fixture();
+    let fixture = &data["scannerModeStack"];
+    let observations: Vec<GrammarScannerModeStackObservation> =
+        serde_json::from_value(fixture["observations"].clone()).unwrap();
+    for classes in [false, true] {
+        let inferred = infer_grammar_scanner_mode_stack(&observations, None, classes).unwrap();
+        for operation in fixture["operations"].as_array().unwrap() {
+            assert!(inferred.listing.contains(operation.as_str().unwrap()));
+        }
+        assert_eq!(
+            inferred
+                .listing
+                .contains(fixture["matcher"].as_str().unwrap()),
+            classes
+        );
+        assert_eq!(inferred.listing.matches("(popMode)").count(), 1);
+        let listing = format!(
+            "(grammar (start source))\n{}{}",
+            inferred.listing,
+            fixture["syntax"].as_str().unwrap()
+        );
+        let loaded = parse_grammar_links(&render_grammar_links(
+            &parse_grammar_links(&listing).unwrap(),
+        ))
+        .unwrap();
+        let parse_options = FeatureParseOptions::default();
+        let parser = compile_feature_grammar(&loaded, None, parse_options.clone()).unwrap();
+        for row in fixture["accepted"].as_array().unwrap() {
+            let input = row["input"].as_str().unwrap();
+            let result = parser.parse_tree(input.as_bytes(), &parse_options).unwrap();
+            assert!(result.ok, "{input}: {:?}", result.rejection);
+            assert_eq!(result.tree.unwrap().render(), row["tree"].as_str().unwrap());
+        }
+        for input in fixture["rejected"].as_array().unwrap() {
+            let input = input.as_str().unwrap();
+            assert!(
+                !parser
+                    .parse_tree(input.as_bytes(), &parse_options)
+                    .unwrap()
+                    .ok,
+                "{input}"
+            );
+        }
+        let original = infer_regular_grammar(
+            &[["begin", "word", "end", "suffix"]
+                .map(str::to_owned)
+                .to_vec()],
+            &[vec![]],
+            &RegularGrammarInferenceOptions {
+                scanner_mode_stack_observations: Some(observations.clone()),
+                scanner_character_classes: classes,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let text = LinkNetwork::from_lino(&original.network.to_lino()).unwrap();
+        let restored = read_regular_grammar_inference_links(&text, original.root).unwrap();
+        assert_eq!(
+            serialize_grammar(&restored.grammar),
+            serialize_grammar(&original.grammar)
+        );
+        let addition = ["alternate", "begin", "member", "end", "suffix"]
+            .map(str::to_owned)
+            .to_vec();
+        let refined = refine_regular_grammar_inference(
+            &restored.network,
+            restored.root,
+            std::slice::from_ref(&addition),
+            &[],
+            None,
+        )
+        .unwrap();
+        let bytes =
+            encode_link_network_binary(&refined.network, BinaryLinksOptions::default()).unwrap();
+        let binary = decode_link_network_binary(&bytes, BinaryLinksOptions::default()).unwrap();
+        let reloaded = read_refined_regular_grammar_inference_links(&binary, refined.root).unwrap();
+        assert_eq!(
+            serialize_grammar(&reloaded.grammar),
+            serialize_grammar(&refined.grammar)
+        );
+        assert!(accept_inferred_grammar_symbols(&reloaded, &addition).unwrap());
+    }
+    let mut conflicting = observations;
+    conflicting.push(serde_json::from_value(fixture["conflicting"].clone()).unwrap());
+    assert!(
+        infer_grammar_scanner_mode_stack(&conflicting, None, false)
+            .unwrap_err()
+            .contains("unsupported context sensitivity")
+    );
+    let mut unsupported: GrammarScannerModeStackObservation =
+        serde_json::from_value(fixture["unsupported"].clone()).unwrap();
+    assert!(
+        infer_grammar_scanner_mode_stack(std::slice::from_ref(&unsupported), None, false)
+            .unwrap_err()
+            .contains("at most one native scanner mode operation")
+    );
+    unsupported.after.clear();
+    assert!(
+        infer_grammar_scanner_mode_stack(&[unsupported], None, false)
+            .unwrap_err()
+            .contains("bounded nonempty")
+    );
+    let mixed = RegularGrammarInferenceOptions {
+        scanner_observations: Some(Vec::new()),
+        scanner_mode_stack_observations: Some(Vec::new()),
+        ..Default::default()
+    };
+    assert!(
+        infer_regular_grammar(&[], &[], &mixed)
+            .unwrap_err()
+            .contains("one scanner observation format")
+    );
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-SCANNER-MODE-STACK",
+        suffix: "behavior",
+        fixture_id: "regular-grammar-inference-scanner-mode-stack",
+        fixture_file: "parity/fixtures/regular-grammar-inference.lino",
+        assertions: &[
+            "scannerModeStackTreesAndRejectionsMatch",
+            "scannerModeStackArchiveReplaysAndRefines",
+            "unsupportedScannerModeStackEffectsAreRefused",
+        ],
+        test_name: "scanner_mode_stacks_restore_each_actual_parent_and_replay_the_selected_archive",
+    });
 }
 
 #[test]

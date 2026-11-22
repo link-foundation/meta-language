@@ -3662,9 +3662,15 @@ with equal modes, tokens and successor modes. It joins only consecutive
 observed scalars into ranges, retaining gaps and placing longer literal
 prefixes before scalar classes. Version 3 of the discovery model retains the
 profile and its own exact typed algorithm alongside the trace algorithm.
-Refinement replays and retains both definitions. Stack transition discovery,
-attributed actions and extrapolation beyond observed scalars require additional
-independent controls.
+Refinement replays and retains both definitions. Version 4 accepts complete
+`scannerModeStackObservations`, with stacks ordered bottom first. A token can
+leave the stack unchanged, replace its top, push one mode, or pop one mode.
+Pop restores the actual parent, including when the same transition was
+observed under different parents. Changes that need more than one operation
+are refused. The exact stack algorithm is retained and replayed with optional
+character classes through refinement and installation. Attributed actions
+and extrapolation beyond observed scalars require additional independent
+controls.
 The shared controls combine the generated scanner with native syntax rules and
 check text round trips, token kinds, exact bytes and rejected inputs. The
 source draft has generated the native implementation and typed program.

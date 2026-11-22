@@ -9,10 +9,12 @@ use crate::grammar::{
 };
 use crate::grammar_inference_rules as rules;
 use crate::grammar_scanner_inference::{
-    GrammarScannerObservation, InferredGrammarScanner, SCANNER_ALGORITHM, SCANNER_CLASS_ALGORITHM,
+    GrammarScannerModeStackObservation, GrammarScannerObservation, InferredGrammarScanner,
+    SCANNER_ALGORITHM, SCANNER_CLASS_ALGORITHM, SCANNER_MODE_STACK_ALGORITHM,
     create_grammar_scanner_character_class_program_links,
-    create_grammar_scanner_inference_program_links, infer_grammar_scanner,
-    infer_grammar_scanner_classes,
+    create_grammar_scanner_inference_program_links,
+    create_grammar_scanner_mode_stack_program_links, infer_grammar_scanner,
+    infer_grammar_scanner_classes, infer_grammar_scanner_mode_stack,
 };
 use crate::{
     GlobalConceptSource, LinkId, LinkNetwork, MetaLanguageArchiveEntry, MetaLanguageArchiveLimits,
@@ -77,6 +79,8 @@ pub struct RegularGrammarInferenceOptions {
     pub scanner_observations: Option<Vec<GrammarScannerObservation>>,
     /// Coalesce observed scalars into finite character classes.
     pub scanner_character_classes: bool,
+    /// Optional finite observations of complete mode stacks before and after a token.
+    pub scanner_mode_stack_observations: Option<Vec<GrammarScannerModeStackObservation>>,
 }
 
 impl Default for RegularGrammarInferenceOptions {
@@ -88,6 +92,7 @@ impl Default for RegularGrammarInferenceOptions {
             edition: "regular discovery 1".to_owned(),
             scanner_observations: None,
             scanner_character_classes: false,
+            scanner_mode_stack_observations: None,
         }
     }
 }
@@ -126,6 +131,8 @@ struct Model {
     scanner_observations: Option<Vec<GrammarScannerObservation>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     scanner_character_classes: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    scanner_mode_stack_observations: Option<Vec<GrammarScannerModeStackObservation>>,
 }
 
 fn infer_scanner(
@@ -376,16 +383,28 @@ pub fn infer_regular_grammar(
         }
     }
     let classes = options.scanner_character_classes;
-    if classes && options.scanner_observations.is_none() {
+    let mode_stacks = options.scanner_mode_stack_observations.is_some();
+    if mode_stacks && options.scanner_observations.is_some() {
+        return Err(fail("select one scanner observation format"));
+    }
+    if classes && !mode_stacks && options.scanner_observations.is_none() {
         return Err(fail(
             "scanner character classes require scanner observations",
         ));
     }
-    let scanner = options
-        .scanner_observations
-        .as_deref()
-        .map(|observations| infer_scanner(observations, classes))
-        .transpose()?;
+    let scanner = if let Some(observations) = options.scanner_mode_stack_observations.as_deref() {
+        Some(infer_grammar_scanner_mode_stack(
+            observations,
+            None,
+            classes,
+        )?)
+    } else {
+        options
+            .scanner_observations
+            .as_deref()
+            .map(|observations| infer_scanner(observations, classes))
+            .transpose()?
+    };
     let (alphabet, table) = table(positives, negatives, &options.parameters, scanner.as_ref())?;
     let grammar = grammar_from_table(&table, &alphabet, scanner.as_ref());
     let source = GlobalConceptSource {
@@ -395,7 +414,9 @@ pub fn infer_regular_grammar(
         grammar: grammar.clone(),
     };
     let model = Model {
-        schema_version: if classes {
+        schema_version: if mode_stacks {
+            4
+        } else if classes {
             3
         } else if scanner.is_some() {
             2
@@ -413,6 +434,7 @@ pub fn infer_regular_grammar(
         table: table.clone(),
         scanner_observations: options.scanner_observations.clone(),
         scanner_character_classes: classes.then_some(true),
+        scanner_mode_stack_observations: options.scanner_mode_stack_observations.clone(),
     };
     let data = encode_structured_data_links(
         &serde_json::to_value(model).map_err(|error| error.to_string())?,
@@ -458,6 +480,15 @@ pub fn infer_regular_grammar(
             root: definition.root,
         });
     }
+    if mode_stacks {
+        let definition = create_grammar_scanner_mode_stack_program_links()?;
+        entries.push(MetaLanguageArchiveEntry {
+            identifier: SCANNER_MODE_STACK_ALGORITHM.to_owned(),
+            kind: "typed program".to_owned(),
+            network: Arc::new(definition.network),
+            root: definition.root,
+        });
+    }
     let archive = create_meta_language_archive(&entries, MetaLanguageArchiveLimits::default())?;
     Ok(RegularGrammarInference {
         grammar,
@@ -489,15 +520,20 @@ pub fn read_regular_grammar_inference_links(
     let model_data = decode_structured_data_links(&data.network, data.root)?;
     let has_scanner_field = model_data.get("scannerObservations").is_some();
     let has_class_field = model_data.get("scannerCharacterClasses").is_some();
+    let has_stack_field = model_data.get("scannerModeStackObservations").is_some();
     let model: Model =
         serde_json::from_value(model_data).map_err(|error| fail(&error.to_string()))?;
-    let classes = model.schema_version == 3;
+    let classes = model.scanner_character_classes == Some(true);
+    let mode_stacks = model.schema_version == 4;
     if model.algorithm != ALGORITHM
-        || !matches!(model.schema_version, 1..=3)
-        || has_scanner_field != (model.schema_version >= 2)
+        || !matches!(model.schema_version, 1..=4)
+        || has_scanner_field != matches!(model.schema_version, 2 | 3)
         || has_scanner_field != model.scanner_observations.is_some()
+        || has_stack_field != mode_stacks
+        || has_stack_field != model.scanner_mode_stack_observations.is_some()
         || has_class_field != classes
-        || model.scanner_character_classes != classes.then_some(true)
+        || (model.schema_version == 3 && !classes)
+        || (model.schema_version < 3 && classes)
     {
         return Err(fail("unsupported model version"));
     }
@@ -520,7 +556,26 @@ pub fn read_regular_grammar_inference_links(
             "the scanner character class definition needs its versioned model",
         ));
     }
-    let scanner = if let Some(observations) = model.scanner_observations.as_deref() {
+    if mode_stacks {
+        let definition = select(SCANNER_MODE_STACK_ALGORITHM, "typed program")?;
+        let bundled = create_grammar_scanner_mode_stack_program_links()?;
+        if definition.root != bundled.root
+            || definition.network.to_lino() != bundled.network.to_lino()
+        {
+            return Err(fail(
+                "the selected scanner mode stack definition differs from its versioned implementation",
+            ));
+        }
+    } else if decoded
+        .entries
+        .iter()
+        .any(|entry| entry.identifier == SCANNER_MODE_STACK_ALGORITHM)
+    {
+        return Err(fail(
+            "the scanner mode stack definition needs its versioned model",
+        ));
+    }
+    let scanner = if model.schema_version >= 2 {
         let definition = select(SCANNER_ALGORITHM, "typed program")?;
         let bundled = create_grammar_scanner_inference_program_links()?;
         if definition.root != bundled.root
@@ -530,7 +585,21 @@ pub fn read_regular_grammar_inference_links(
                 "the selected scanner definition differs from its versioned implementation",
             ));
         }
-        Some(infer_scanner(observations, classes)?)
+        if let Some(observations) = model.scanner_mode_stack_observations.as_deref() {
+            Some(infer_grammar_scanner_mode_stack(
+                observations,
+                None,
+                classes,
+            )?)
+        } else {
+            Some(infer_scanner(
+                model
+                    .scanner_observations
+                    .as_deref()
+                    .ok_or_else(|| fail("unsupported model version"))?,
+                classes,
+            )?)
+        }
     } else {
         if decoded
             .entries

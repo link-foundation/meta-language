@@ -42,7 +42,7 @@ function labelledExamples(path,readFile,allowScanner) {
   const examples=readStructuredDataLino(readFile(path));
   const sequences=value=>Array.isArray(value)&&value.every(sequence=>Array.isArray(sequence)&&sequence.every(symbol=>typeof symbol==='string'));
   if(!examples||typeof examples!=='object'||Array.isArray(examples)
-    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowScanner&&['scannerObservations','scannerCharacterClasses'].includes(key)))
+    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowScanner&&['scannerObservations','scannerCharacterClasses','scannerModeStackObservations'].includes(key)))
     ||!sequences(examples.positives)||!sequences(examples.negatives)) {
     throw new TypeError('labelled examples must contain positive and negative symbol sequences');
   }
@@ -62,8 +62,8 @@ function archiveOutput(archive,options,limits) {
 function discoveryArchive(command,file,options,readFile,readBytes) {
   const identifier=options.get('--identifier');
   if(command==='discover') {
-    const {positives,negatives,scannerObservations,scannerCharacterClasses}=labelledExamples(file,readFile,true);
-    return inferRegularGrammar(positives,negatives,{identifier,language:options.get('--language'),edition:options.get('--edition'),scannerObservations,scannerCharacterClasses});
+    const {positives,negatives,scannerObservations,scannerCharacterClasses,scannerModeStackObservations}=labelledExamples(file,readFile,true);
+    return inferRegularGrammar(positives,negatives,{identifier,language:options.get('--language'),edition:options.get('--edition'),scannerObservations,scannerCharacterClasses,scannerModeStackObservations});
   }
   const {network,root}=archiveInput(file,options,readFile,readBytes,regularGrammarRefinementArchiveLimits);
   if(command==='refine') {

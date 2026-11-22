@@ -1100,6 +1100,7 @@ export interface RegularGrammarInferenceOptions {
   identifier?: string; language?: string; edition?: string;
   scannerObservations?: readonly GrammarScannerObservation[];
   scannerCharacterClasses?: boolean;
+  scannerModeStackObservations?: readonly GrammarScannerModeStackObservation[];
 }
 export interface RegularGrammarInference extends TypedProgramLinks {
   grammar: Grammar; source: GlobalConceptSource; alphabet: string[]; table: number[];
@@ -1115,6 +1116,12 @@ export interface GrammarScannerObservation {
   token: string;
   nextMode: string;
 }
+export interface GrammarScannerModeStackObservation {
+  before: readonly string[];
+  spelling: string;
+  token: string;
+  after: readonly string[];
+}
 export interface InferredGrammarScanner {
   listing: string;
   modes: string[];
@@ -1122,6 +1129,7 @@ export interface InferredGrammarScanner {
 }
 export function inferGrammarScanner(observations: readonly GrammarScannerObservation[], name?: string): InferredGrammarScanner;
 export function inferGrammarScannerClasses(observations: readonly GrammarScannerObservation[], name?: string): InferredGrammarScanner;
+export function inferGrammarScannerModeStack(observations: readonly GrammarScannerModeStackObservation[], name?: string, characterClasses?: boolean): InferredGrammarScanner;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,

@@ -22,6 +22,8 @@ const modernJavaScriptParitySource = 'parity/sources/modern-javascript-parity-ex
 const compactContributorInstructionsSource = 'parity/sources/compact-contributor-instructions-and-assertion-corrections-2026-10-16.txt';
 const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertions-2026-10-16.txt';
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
+const scannerModeStackFixture = 'parity/fixtures/regular-grammar-inference.lino';
+const scannerModeStackRequirement = 'I195-GRAMMAR-INFERENCE-SCANNER-MODE-STACK';
 
 const sourceTooling = {
   'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK': [
@@ -206,6 +208,10 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  [scannerModeStackRequirement]: {
+    javascript: ['js/src/grammar-scanner-mode-stack-rules.js', 'js/src/grammar-scanner-inference.js', 'js/src/grammar-inference.js', 'js/tests/grammar-inference.test.js'],
+    rust: ['rust/src/grammar_scanner_mode_stack_rules.rs', 'rust/src/grammar_scanner_inference.rs', 'rust/src/grammar_inference.rs', 'rust/tests/unit/regular_grammar_inference.rs'],
+  },
   [linkCliReconstruction.requirementId]: {
     javascript: ['js/src/meta-language-archive.js', 'js/src/dynamic-language-cli.js', 'experiments/link-cli-archive-reconstruction.mjs'],
     rust: ['rust/src/meta_language_archive/link_cli_store.rs', 'rust/src/dynamic_language_cli.rs', 'experiments/link-cli-archive-reconstruction.mjs'],
@@ -251,6 +257,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
   return declarations.map(([id, construct, expectedBehavior, assertions]) => ({
     id, construct, expectedBehavior, assertions, sourceKey, fixture,
     fixtureId: `conversation-contract:${sourceKey}`,
+    ...(id === scannerModeStackRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'regular-grammar-inference-scanner-mode-stack' } : {}),
     ...(area === 'formal-concept-definitions' ? {
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
@@ -370,6 +377,8 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'JavaScript and Rust library and CLI interfaces accept pinned positive and negative examples, independent membership or parser oracles, optional execution traces and existing grammars. Diagnostics identify unresolved context sensitivity, scanners and action semantics rather than silently approximating them.', ['matchingDiscoveryApiAndCliExecuted', 'examplesOraclesTracesAndSourcesAccepted', 'unsupportedSemanticsPreciselyDiagnosed']],
     ['I195-GRAMMAR-INFERENCE-NATIVE-OUTPUT', 'fully native executable discovered grammars and attributed behavior',
       'Discovery emits executable Links grammars with lossless CST structure, lexer and scanner state, precedence, ambiguity, recovery and attributed semantic actions. Foreign parser blobs, opaque sources and host callbacks cannot stand in for native operational definitions.', ['discoveredGrammarNativeAndExecutable', 'discoveredCstAndScannerSemanticsPreserved', 'attributedActionsAndRecoveryExplicit']],
+    [scannerModeStackRequirement, 'finite scanner mode stack operations from bounded pre-token and post-token observations',
+      'Both discovery runtimes lower observed unchanged, replace, push and pop transitions to native scanner operations for the shared scannerModeStack fixture. Exact trees and rejected inputs exercise the restored parent and optional observed character classes. The stored definitions replay through text reload and binary refinement, and incompatible stack deltas and competing effects are refused.', ['scannerModeStackTreesAndRejectionsMatch', 'scannerModeStackArchiveReplaysAndRefines', 'unsupportedScannerModeStackEffectsAreRefused']],
     ['I195-GRAMMAR-INFERENCE-GENERIC-UNION', 'generic structural and semantic discovery through the source-union pipeline',
       'Discover lexical classes, recursion and semantic relations generically, preserving every source production and provenance. Merge discovered definitions with the applicable official and mature grammars through the existing automatic native pipeline.', ['lexicalRecursiveAndSemanticDiscoveryExecuted', 'allSourceProductionsAndProvenanceRetained', 'discoveredAndOfficialGrammarsMerged']],
     ['I195-GRAMMAR-INFERENCE-FORMAL-CONCEPT-INTEGRATION', 'discovered concepts integrated with recursive formal definitions',
