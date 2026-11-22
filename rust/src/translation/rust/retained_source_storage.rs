@@ -181,4 +181,26 @@ mod tests {
         };
         assert!(parse_rust_with_selected_profiles(SOURCE, separate).is_err());
     }
+
+    #[test]
+    fn owned_text_constructors_publish_closed_string_revisions() {
+        let source = r#"fn main() {
+            let mut text: String = String::from("discarded");
+            text.clear();
+            text.push_str("kept");
+            println!("{}", text);
+        }"#;
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        let surface = parse_rust_with_selected_profiles(source, profiles).unwrap();
+        let checked = check_program(&surface).unwrap();
+        let wire = serde_json::to_string(&checked).unwrap();
+        assert_eq!(wire.matches("\"operation\":\"write\"").count(), 2);
+        assert!(wire.contains("\"op\":\"concat\""));
+    }
 }

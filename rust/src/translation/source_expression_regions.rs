@@ -155,6 +155,24 @@ if let Some(facet)=node.source_loop_fold.as_deref(){return self.loop_expression(
      let alternatives:[&Expr;2]=if *op==BinaryOp::And{[right,&short_circuit]}else{[&short_circuit,right]};
      self.conditional(left,alternatives,env,bindings,expected,depth)?
  },
+ Node::Binary{op:BinaryOp::Concat,left,right,..}
+     if self.composed && position.or(expected).is_some_and(|p| role(p)=="string")=>{
+     let wanted=position.or(expected).expect("checked owned String position");
+     let current=self.expression(left,env,bindings,None,depth+1)?;
+     let current=self.read(current,"read")?;
+     let suffix=self.expression(right,env,bindings,None,depth+1)?;
+     let suffix=self.read(suffix,"read")?;
+     if !super::rust_exclusive_source_string_rules::accept_rust_source_owned_string_concatenation(
+         &current.role,&observation_role(&suffix),
+     ){
+         return Err(fail("owned String concatenation retains its actual owned input and shared text operand"));
+     }
+     self.compatible(current,Some(wanted))?;
+     self.closed_output(wanted)?;
+     let position=self.position(wanted)?;
+     let root=self.root(String::new(),true)?;
+     Value::new(Some(position),Some(root),Vec::new(),true,None)
+ },
  Node::Tuple{items,..}=>self.state_packet(node,items,env,bindings,depth)?,
  Node::TupleIndex{object,index}=>{
      let packet=self.expression(object,env,bindings,None,depth+1)?;

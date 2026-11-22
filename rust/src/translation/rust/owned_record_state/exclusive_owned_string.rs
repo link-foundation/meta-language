@@ -123,11 +123,14 @@ impl RustParser {
                 span,
             ));
         }
+        let mut origin = SourceOrigin::with_type(STRING, path, Vec::new());
+        origin.source_owner = field.source_owner.clone();
+        origin.expanded_source_owner = field.expanded_source_owner.clone();
         let value = if let Some(suffix) = suffix {
             let suffix_name = self.fresh_product_binding();
             let prior = self.owned_record_effect_read(slot.clone(), span)?;
             let current = self.project_record_state(&source_fields, prior, span);
-            let append = SExpr::new(
+            let mut append = SExpr::new(
                 SNode::Binary {
                     op: BinaryOp::Concat,
                     left: Box::new(current),
@@ -136,6 +139,8 @@ impl RustParser {
                 },
                 span,
             );
+            self.origins.mark_owned_string_constructor(&append, origin);
+            self.note_borrowed_expression_source_position(&mut append, path)?;
             SExpr::new(
                 SNode::Let {
                     name: suffix_name,
@@ -146,16 +151,16 @@ impl RustParser {
                 span,
             )
         } else {
-            SExpr::new(
+            let mut empty = SExpr::new(
                 SNode::Str {
                     value: String::new(),
                 },
                 span,
-            )
+            );
+            self.origins.mark_owned_string_constructor(&empty, origin);
+            self.note_borrowed_expression_source_position(&mut empty, path)?;
+            empty
         };
-        let mut origin = SourceOrigin::with_type(STRING, path, Vec::new());
-        origin.source_owner = field.source_owner.clone();
-        self.origins.mark_owned_string_constructor(&value, origin);
         let result =
             self.owned_record_effect_write(slot, source_fields, field, target, value, path, span)?;
         self.origins

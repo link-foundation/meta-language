@@ -26,6 +26,20 @@ const options={...profiles,sourceVersion:'1.90.0'};
 function nodes(root){const out=[],pending=[root],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;assert.ok(seen.size<1000000);seen.add(value);out.push(value);pending.push(...(value instanceof Map?[...value.values()]:Object.values(value)));}return out;}
 function output(text){const lines=[];vm.runInNewContext(text,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}},{timeout:5000});return lines.length?lines.join('\n')+'\n':'';}
 function captured(){const typesSource=readFileSync(new URL('../../rust/src/translation/types.rs',import.meta.url),'utf8'),spanSource=readFileSync(new URL('../../rust/src/translation/mod.rs',import.meta.url),'utf8');return createRustTypeRegionCompositionOriginals({typesSource,spanSource,typesNetwork:LinkNetwork.parse(typesSource,'Rust'),spanNetwork:LinkNetwork.parse(spanSource,'Rust')});}
+test('owned String constructors remain available across composed storage writes',()=>{
+ const source=`fn main() {
+    let mut text: String = String::from("discarded");
+    text.clear();
+    text.push_str("kept");
+    println!("{}", text);
+ }`;
+ const checked=checkProgram(parseRust(source,options));
+ const expressions=nodes(checked.main);
+ assert.equal(expressions.filter(node=>node.sourceStateTransition?.operation==='write').length,2);
+ assert.ok(expressions.some(node=>node.op==='concat'&&node.sourcePosition?.position.owner.path.join('::')==='std::string::String'));
+ assert.equal(checkRustBorrowedVectorSourceRegions(checked),checked);
+ assert.equal(output(emitJavaScript(checked).text),'kept\n');
+});
 const unseparatedBlockMatchOriginals=['a block-bodied successful owning match guard needs no comma before its next arm','a block-bodied failed owning match guard reaches its next arm without a comma','an if-bodied guarded match arm preserves its final else boundary without a comma','a nested lowered source match retains its block arm syntax without a comma','a shared-reference pattern can begin an unseparated arm after a block-bodied guard','ordered printing guards retain their block arm boundaries without commas','an if condition block does not terminate the actual guarded arm body early'];
 test('actual block-bodied source arm boundaries survive owning guards nested lowering and following reference patterns',()=>{
  for(const name of unseparatedBlockMatchOriginals){const row=originals.find(value=>value.name===name);assert.ok(row);const checked=checkProgram(parseRust(row.source,options));assert.ok(nodes(checked.main).some(node=>node.sourcePlaceTransform?.model==='Rust source readonly match guard 1'));assert.equal(checkRustBorrowedVectorSourceRegions(checked),checked);assert.equal(output(emitJavaScript(checked).text),row.stdout);}
