@@ -471,14 +471,29 @@ function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkPr
     declarationNames: emissionProfile.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
 }
 
+let selectedEmissionSnapshot;
 function readOriginalLinkRawSelectedEmissionProfile(profile) {
-  const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
-  const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
-  const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
-  const selected = readOriginalLinkRawEmissionProfile(['consuming','borrowed consuming'].includes(profile) ? 'current' : profile, {historicalArtifact, currentArtifact, source,
-    producerSources: readOriginalLinkRawEmissionProducerSources()});
-  const {source: selectedSource, ...descriptor} = selected;
-  assert.equal(sha256(selectedSource), descriptor.sourceSha256);
+  const baseProfile = ['consuming', 'borrowed consuming'].includes(profile) ? 'current' : profile;
+  const historical = readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT);
+  const current = readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
+  const rules = readFileSync(new URL('./raw-rules.mjs', import.meta.url));
+  const producerSources = readOriginalLinkRawEmissionProducerSources();
+  const inputs = [historical, current, rules, ...Object.values(producerSources)];
+  // Authenticate the complete live inputs before and after each process run.
+  // Identical bytes can reuse the last immutable, fully checked base descriptor.
+  if (selectedEmissionSnapshot?.profile !== baseProfile ||
+      !inputs.every((bytes, index) => bytes.equals(selectedEmissionSnapshot.inputs[index]))) {
+    const selected = readOriginalLinkRawEmissionProfile(baseProfile, {
+      historicalArtifact: readStructuredDataLino(historical.toString('utf8')),
+      currentArtifact: readStructuredDataLino(current.toString('utf8')),
+      source: rules.toString('utf8'),
+      producerSources,
+    });
+    const {source, ...descriptor} = selected;
+    assert.equal(sha256(source), descriptor.sourceSha256);
+    selectedEmissionSnapshot = {profile: baseProfile, inputs, descriptor: Object.freeze(descriptor)};
+  }
+  const {descriptor} = selectedEmissionSnapshot;
   if (profile === 'consuming') return readOriginalLinkRawConsumingProfile(descriptor);
   if (profile === 'borrowed consuming') return readOriginalLinkRawBorrowedProfile(descriptor);
   return descriptor;

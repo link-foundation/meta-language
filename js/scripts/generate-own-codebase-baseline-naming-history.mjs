@@ -47,6 +47,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'experiments/original-link-complete-table-projection/raw-consuming-emission.mjs',
     'experiments/original-link-complete-table-projection/raw-consuming-emission.test.mjs',
     'experiments/original-link-complete-table-projection/raw-emission-producer-applicability.mjs',
+    'experiments/original-link-complete-table-projection/raw-native-observations.mjs',
     'js/scripts/current-ci-repair-source-history.mjs',
     'js/scripts/generate-continuation-historical-inputs.mjs',
     'js/scripts/generate-own-codebase-baseline-naming-history.mjs',

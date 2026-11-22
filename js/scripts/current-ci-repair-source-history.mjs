@@ -18,7 +18,7 @@ let integrationSources;
 export function restoreIntegrationSource(source,path) {
   if(!integrationSources){
     const bytes=readFileSync(new URL('parity/self-translation/integration-source-history.lino',root));
-    assert.equal(pin(bytes).sha256,'a2d10962c2cd03ddfb97807d62cc343863acb7634558fb508fae2d307ac4fd98');
+    assert.equal(pin(bytes).sha256,'3ef3d501bbb94d8ba520063ec26018caf6c97e358cc6b8e0aae906d322a9b791');
     const archive=readBootstrapStructuredDataLino(bytes.toString('utf8'));
     assert.equal(archive.schemaVersion,1);
     integrationSources=new Map(archive.sources.map(row=>[row.path,row]));

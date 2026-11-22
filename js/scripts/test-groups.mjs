@@ -20,8 +20,23 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
-const translationSchedulingFile = new URL('../../parity/fixtures/ci-45042220137-translation-workload-costs.lino', import.meta.url);
-const translationSchedulingRevision = '38b367159fbe5a20cbcc19a8d75741875113a4b5';
+const schedulingProfiles = {
+  grammar: { file: schedulingFile, revisions: new Map([[39615628279, schedulingRevision]]) },
+  translation: {
+    file: new URL('../../parity/fixtures/ci-45049378352-translation-workload-costs.lino', import.meta.url),
+    revisions: new Map([
+      [45042220137, '38b367159fbe5a20cbcc19a8d75741875113a4b5'],
+      [45049378352, 'f39cd80cf682b33d18a8f35a7a5af6ae39e69f98'],
+    ]),
+  },
+  'self-translation-report': {
+    file: new URL('../../parity/fixtures/ci-45049378352-self-translation-workload-costs.lino', import.meta.url),
+    revisions: new Map([
+      [39615628279, schedulingRevision],
+      [45049378352, 'f39cd80cf682b33d18a8f35a7a5af6ae39e69f98'],
+    ]),
+  },
+};
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
 /** Largest observed workload first; source changes use a byte-size estimate.
@@ -29,11 +44,12 @@ const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 export function partitionMeasuredWorkloads(files,count,{readSource,costs,group}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
- const translation = group === 'translation';
- const measured=costs??readProjectData(translation ? translationSchedulingFile : schedulingFile);
+ const profile = schedulingProfiles[group ?? (files.every(file => file.startsWith('js/src/')) ? 'self-translation-report' : 'grammar')];
+ assert.ok(profile);
+ const measured=costs??readProjectData(profile.file);
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
- assert.equal(measured.run,translation ? 45042220137 : 39615628279);
- assert.equal(measured.revision,translation ? translationSchedulingRevision : schedulingRevision);
+ assert.ok(profile.revisions.has(measured.run));
+ assert.equal(measured.revision,profile.revisions.get(measured.run));
  assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
  const known=new Map();
  for(const row of measured.entries){

@@ -4,7 +4,9 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
@@ -56,15 +58,40 @@ test('six measured grammar cells retain the entire catalog exactly once under th
 
 test('six measured translation shards share the recorded workload and preserve every file', () => {
   const files = partitionTests(testFiles()).groups.translation;
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45042220137-translation-workload-costs.lino', import.meta.url));
+  assert.deepEqual(costs.logs.map(log => log.shard), ['1/6', '2/6', '3/6', '4/6', '5/6', '6/6']);
+  const originalShards = partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), 6, { group: 'translation', costs })
+    .map(shard => shard.map(file => file.slice(9)));
+  assert.deepEqual(originalShards.flat().sort(), files);
+  assert.ok(originalShards.every(shard => shard.length > 0));
+  const measurements = new Map(costs.entries.map(row => [row.file.slice(9), row.milliseconds]));
+  const measuredLoad = shard => shard.reduce((total, file) => total + (measurements.get(file) ?? 0), 0);
+  const moduloLoads = originalShards.map((_, index) => measuredLoad(files.filter((_, offset) => offset % 6 === index)));
+  assert.ok(Math.max(...originalShards.map(measuredLoad)) < Math.max(...moduloLoads) * 0.85);
+
+  const updatedCosts = readProjectData(new URL('../../parity/fixtures/ci-45049378352-translation-workload-costs.lino', import.meta.url));
+  assert.deepEqual(updatedCosts.logs.map(log => log.shard), costs.logs.map(log => log.shard));
+  const updatedMeasurements = new Map(updatedCosts.entries.map(row => [row.file.slice(9), row.milliseconds]));
+  const updatedLoad = shard => shard.reduce((total, file) => total + (updatedMeasurements.get(file) ?? 0), 0);
   const shards = Array.from({ length: 6 }, (_, index) => partitionGroupFiles(files, `${index + 1}/6`));
   assert.deepEqual(shards.flat().sort(), files);
   assert.ok(shards.every(shard => shard.length > 0));
-  const costs = readProjectData(new URL('../../parity/fixtures/ci-45042220137-translation-workload-costs.lino', import.meta.url));
-  assert.deepEqual(costs.logs.map(log => log.shard), ['1/6', '2/6', '3/6', '4/6', '5/6', '6/6']);
-  const measurements = new Map(costs.entries.map(row => [row.file.slice(9), row.milliseconds]));
-  const measuredLoad = shard => shard.reduce((total, file) => total + (measurements.get(file) ?? 0), 0);
-  const moduloLoads = shards.map((_, index) => measuredLoad(files.filter((_, offset) => offset % 6 === index)));
-  assert.ok(Math.max(...shards.map(measuredLoad)) < Math.max(...moduloLoads) * 0.85);
+  assert.ok(Math.max(...shards.map(updatedLoad)) < Math.max(...originalShards.map(updatedLoad)));
+});
+
+test('all eight self-translation reports retain their complete source inventory within a balanced assignment', () => {
+  const modules = readdirSync(new URL('../src/', import.meta.url), { recursive: true })
+    .filter(file => file.endsWith('.js')).map(file => 'js/src/' + file.split(sep).join('/')).sort();
+  const prior = readProjectData(new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino', import.meta.url));
+  const observed = readProjectData(new URL('../../parity/fixtures/ci-45049378352-self-translation-workload-costs.lino', import.meta.url));
+  assert.deepEqual(observed.logs.map(log => log.shard), Array.from({ length: 8 }, (_, index) => `${index + 1}/8`));
+  const timing = new Map(observed.entries.map(row => [row.file, row.milliseconds]));
+  const load = shard => shard.reduce((total, file) => total + (timing.get(file) ?? 0), 0);
+  const priorShards = partitionMeasuredWorkloads(modules, 8, { costs: prior });
+  const shards = partitionMeasuredWorkloads(modules, 8);
+  assert.deepEqual(shards.flat().sort(), modules);
+  assert.ok(shards.every(shard => shard.length > 0));
+  assert.ok(Math.max(...shards.map(load)) < Math.max(...priorShards.map(load)));
 });
 
 test('six JavaScript native grammar partitions conserve each historical partition after the recorded automatic deadline', async () => {
