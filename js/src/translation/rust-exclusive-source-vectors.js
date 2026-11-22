@@ -8,8 +8,8 @@ import {readRustRecordSourceType} from './rust-records.js';
 import {acceptRustPrimitiveFromSource} from './rust-primitive-from-rules.js';
 import {readRustExclusiveSourceVectorMethodArity,acceptRustExclusiveSourceVectorReceiver} from './rust-exclusive-source-vector-rules.js';
 import {attachRustVectorMutationInterface} from './rust-vector-mutation-interfaces.js';
+import {buildRustExclusiveSourceVectorHelperBody} from './rust-vector-mutation-helper-surface.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive Vec source mutation',reason,span);};
-const reference=name=>({k:'name',path:[name]}),project=(name,index)=>({k:'tupleIndex',object:reference(name),index}),tuple=items=>({k:'tuple',items});
 export function readRustExclusiveSourceVectorMethod(parser,origin,method,path){
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'||origin.type?.kind!=='array')return null;
  const arity=readRustExclusiveSourceVectorMethodArity(method.value);if(arity<0)return null;
@@ -28,21 +28,14 @@ export function createRustExclusiveSourceVectorPacket(parser,place,selected,args
   const actual=parser.origins.origin(value,path),owner=actual.expandedSourceOwner??actual.sourceOwner;
   if(!parser.origins.collecting&&(!acceptRustPrimitiveFromSource(actual.type?.kind??'',String(actual.type?.bits??''),Boolean(actual.type?.signed),owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,actual.proven===true,actual.wrappers.length)||owner.path.join('::')!=='usize'))fail('truncate retains its actual direct usize operand without a floating-point index conversion',span);
  }
- const result=selected.method==='pop'?{...createRustStandardSumSourceOrigin(parser,'std::option::Option',[element],span),sourceOwnedResultProof:true}:{...parser.origins.typeOrigin(UNIT,path),proven:true,copyEvidence:true,sourceOwner:{kind:'unit',path:[],arguments:[]}},vector={...field,type:vectorType,path:[],wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceBorrowedPlace:false,sourceExclusiveParameter:false,sourceOwnedResultProof:true},parameters=[vector,...selected.parameters],helper=parser.freshProductBinding(),names=parameters.map(()=>parser.freshProductBinding()),empty={k:'array',element:elementType,items:[],span},packetType={kind:'tuple',elements:[result.type,vectorType]},packetOrigin={...parser.origins.typeOrigin(packetType,[]),fields:[result,vector],copyEvidence:false,proven:true};let body;
- if(selected.method==='clear')body=tuple([{k:'unit',span},empty]);
- else{
-  const accumulator=parser.freshProductBinding(),item=parser.freshProductBinding(),ret=selected.method==='pop'?packetType:{kind:'tuple',elements:[rustFixedType('usize'),vectorType]};let initial,step;
-  if(selected.method==='pop'){
-   const sum=result.standardSumSource,prior=parser.freshProductBinding(),some=value=>({k:'app',fn:{k:'name',path:sum.constructorPaths.Some},args:[value],span});
-   initial=tuple([{k:'app',fn:{k:'name',path:sum.constructorPaths.None},args:[],span},empty]);
-   step={k:'match1',scrutinee:project(accumulator,0),cases:[{pattern:{k:'ctor',path:sum.constructorPaths.None,binds:[]},body:tuple([some(reference(item)),project(accumulator,1)])},{pattern:{k:'ctor',path:sum.constructorPaths.Some,binds:[prior]},body:tuple([some(reference(item)),{k:'array',element:elementType,items:[{value:project(accumulator,1),spread:true},{value:reference(prior),spread:false}],span}])}],span};
-  }else{
-   const number=value=>({k:'num',value,type:rustFixedType('usize'),span});initial=tuple([reference(names[1]),empty]);
-   step={k:'if',cond:{k:'binary',op:'gt',left:project(accumulator,0),right:number('0'),span},then:tuple([{k:'binary',op:'sub',left:project(accumulator,0),right:number('1'),span},{k:'array',element:elementType,items:[{value:project(accumulator,1),spread:true},{value:reference(item),spread:false}],span}]),else:reference(accumulator),span};
-  }
-  const fold={k:'method',object:reference(names[0]),op:'reduce',args:[{k:'lambda',params:[{name:accumulator,type:ret},{name:item,type:elementType}],ret,captures:[],body:step,span},initial],span};
-  if(selected.method==='pop')body=fold;else{const held=parser.freshProductBinding();body={k:'let',name:held,type:ret,value:fold,body:tuple([{k:'unit',span},project(held,1)]),span};}
+ const result=selected.method==='pop'?{...createRustStandardSumSourceOrigin(parser,'std::option::Option',[element],span),sourceOwnedResultProof:true}:{...parser.origins.typeOrigin(UNIT,path),proven:true,copyEvidence:true,sourceOwner:{kind:'unit',path:[],arguments:[]}},vector={...field,type:vectorType,path:[],wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceBorrowedPlace:false,sourceExclusiveParameter:false,sourceOwnedResultProof:true},parameters=[vector,...selected.parameters],helper=parser.freshProductBinding(),names=parameters.map(()=>parser.freshProductBinding()),packetType={kind:'tuple',elements:[result.type,vectorType]},packetOrigin={...parser.origins.typeOrigin(packetType,[]),fields:[result,vector],copyEvidence:false,proven:true};
+ const bindings={parameters:names};
+ if(selected.method!=='clear'){
+  bindings.accumulator=parser.freshProductBinding();bindings.item=parser.freshProductBinding();
+  if(selected.method==='pop'){bindings.prior=parser.freshProductBinding();bindings.constructors=result.standardSumSource.constructorPaths;}
+  else bindings.held=parser.freshProductBinding();
  }
+ const body=buildRustExclusiveSourceVectorHelperBody(selected.method,bindings,elementType,packetType,span);
  const declaration=attachRustVectorMutationInterface(parser,{k:'fn',name:helper,generated:true,params:names.map((name,index)=>({name,type:readRustRecordSourceType(parser,parameters[index].type,parameters[index].path)})),ret:readRustRecordSourceType(parser,packetType,[]),body,span},selected.method,parameters,element,result),helpers=parser.exclusiveSourceVectorHelpers??=[];
  if(helpers.length>=65536)fail('actual Vec source helpers exceed their finite declaration budget',span);
  parser.origins.registerCatalogEntry(helper,{k:'fn',parameters,result:packetOrigin});helpers.push(declaration);
