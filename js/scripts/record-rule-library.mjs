@@ -22,8 +22,14 @@ export function readPortableLibraryRelocation(source) {
       edits.push({start: token.start, end: token.end, from: token.raw, to: 'self'});
     }
   }
-  let relocated = source;
-  for (const edit of [...edits].reverse()) relocated = relocated.slice(0, edit.start) + edit.to + relocated.slice(edit.end);
+  const segments = [];
+  let cursor = 0;
+  for (const edit of edits) {
+    segments.push(source.slice(cursor, edit.start), edit.to);
+    cursor = edit.end;
+  }
+  segments.push(source.slice(cursor));
+  const relocated = segments.join('');
   const legacy = [...declarations].filter(declaration => source.includes('crate::' + declaration))
     .map(declaration => ({op: 'replace', field: 'source', from: 'crate::' + declaration, to: 'self::' + declaration}));
   const global = legacy.reduce((text, action) => text.replaceAll(action.from, action.to), source);
