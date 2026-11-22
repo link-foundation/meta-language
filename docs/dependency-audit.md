@@ -68,7 +68,7 @@ they are.
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
 | Generators | 340 | 339 | 1 | 0 |
-| Toolchains and tools | 17 | 15 | 1 | 1 |
+| Toolchains and tools | 18 | 16 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
@@ -911,6 +911,7 @@ they are.
 | `secretlint` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
 | `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `link-cli` |  | `experiments/link-cli-archive-reconstruction.mjs`, `js/scripts/link-cli-archive-reconstruction-assertions.mjs` | `3.1.1` | 3.1.1 (crates.io, link-cli) | version | current | Registry release checked 2026-11-22 for the native store replay. |
 
 ## GitHub Actions
 

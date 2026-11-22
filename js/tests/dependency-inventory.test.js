@@ -145,6 +145,15 @@ test('local declaration reconciliation retains audited releases and rejects unau
   const rust = collected.find(({ id }) => id === 'action dtolnay/rust-toolchain@1.99.0');
   assert.deepEqual(rust.source, { type: 'github-release', repository: 'rust-lang/rust' });
   assert.equal(rust.compare, 'version');
+  const replay = collected.find(({ id }) => id === 'toolchain link-cli@3.1.1');
+  assert.deepEqual(replay?.source, { type: 'crate', crate: 'link-cli' });
+  assert.equal(replay.compare, 'version');
+  assert.deepEqual(replay.declaredIn, [
+    'experiments/link-cli-archive-reconstruction.mjs',
+    'js/scripts/link-cli-archive-reconstruction-assertions.mjs',
+  ]);
+  const archiveNotation = collected.find(({ id }) => id === 'npm js/package-lock.json link-cli-links-notation@0.31.8');
+  assert.deepEqual(archiveNotation?.source, { type: 'npm', package: 'links-notation' });
 });
 
 /** A toolchain item as the collector records it, with its resolved current release. */

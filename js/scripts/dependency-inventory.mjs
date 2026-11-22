@@ -469,6 +469,20 @@ function collectPreCommit(root, items) {
 
 function collectScripts(root, items) {
   for (const file of trackedFiles(root, 'rust/scripts', /\.sh$/u)) collectFloatingTools(items, file, readText(root, file));
+  const replay = 'experiments/link-cli-archive-reconstruction.mjs';
+  const assertion = 'js/scripts/link-cli-archive-reconstruction-assertions.mjs';
+  if (existsSync(path.join(root, replay))) {
+    const pins = [...readText(root, assertion).matchAll(/^\s*linkCliVersion: '([0-9]+\.[0-9]+\.[0-9]+)',$/gmu)];
+    if (pins.length !== 1) throw new Error('the native Link CLI reconstruction requires one exact release pin');
+    addItem(items, {
+      category: 'toolchain',
+      name: 'link-cli',
+      declaredIn: [assertion, replay],
+      pinned: pins[0][1],
+      compare: 'version',
+      source: { type: 'crate', crate: 'link-cli' },
+    });
+  }
   for (const file of ['Dockerfile', 'rust/Dockerfile', 'js/Dockerfile'].filter((candidate) => existsSync(path.join(root, candidate)))) {
     for (const match of readText(root, file).matchAll(/^FROM\s+([^\s:]+):(\S+)/gmu)) {
       addItem(items, { category: 'image', name: match[1], declaredIn: file, pinned: match[2], compare: 'version', source: { type: 'docker-hub', repository: match[1] } });
