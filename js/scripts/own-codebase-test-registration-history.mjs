@@ -169,6 +169,7 @@ export function readOwnCodebaseTestRegistrationHistory(){
 
 function restoreSource(source,file){
   assert.equal(typeof source,'string');
+  source=restoreIssue245SourceSuccessor(file,source);
   const history=readOwnCodebaseTestRegistrationHistory();
   const row=history.sources.find(row=>row.file===file);assert.ok(row);
   const current=replay(row.predecessor.source,row.edits);
@@ -187,3 +188,5 @@ export function restoreOwnCodebaseTestRegistrationClassifier(source){
 export function restoreOwnCodebaseTestRegistrationTestSource(source){
   return restoreSource(source,'js/tests/issue-195-evidence-node-dependency.test.js');
 }
+
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';

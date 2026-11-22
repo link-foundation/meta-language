@@ -10,6 +10,9 @@ const archive = new URL('./source-history.lino', import.meta.url);
 const mainRevision = 'ec9f4efb0e9ef936114e09823981352f6db13700';
 export const javascriptRuntimeSource = 'js/src/grammar-runtime.js';
 export const platformDeadlineTestSource = 'js/tests/issue-195-evidence-platform-test-deadline.test.js';
+export const larkEmitterSource = 'rust/src/grammar/emit/lark.rs';
+export const javascriptTestGroupsSource = 'js/scripts/test-groups.mjs';
+export const nodeDependencyTestSource = 'js/tests/issue-195-evidence-node-dependency.test.js';
 export const runtimeSourceFiles = Object.freeze([
   'rust/src/grammar/feature_runtime/mod.rs',
   'rust/src/grammar/feature_runtime/operations.rs',
@@ -31,6 +34,15 @@ const profiles = new Map([
   [platformDeadlineTestSource, { revision: mainRevision,
     predecessor: '13b21ff57171819d06efed9a5484a00ad93bd827e018fdb10493ad7264cb0d49',
     current: '0110f454906fcc6c8bcf183269f6085011f6549013248850af1315562ef43e2d' }],
+  [larkEmitterSource, { revision: mainRevision,
+    predecessor: 'ecb991ffa3586243e69f6e94aeae3913ec6a6e93698d1959e224bce5d397273b',
+    current: 'd7759822bcf37a897ddb1da22dd5c2250753a7346a7c87b156e0227922a3a207' }],
+  [javascriptTestGroupsSource, { revision: '5b2a0f71350c96520c1cda8efe004e644aa53158',
+    predecessor: '4dce7b79635607f76fe6b0216775bac1293df47ae5f27580be2015a1d7897678',
+    current: '027b53e855b0992612c91e32f2d3f75acba994a4d8994f0cda1acb556890b3d9' }],
+  [nodeDependencyTestSource, { revision: mainRevision,
+    predecessor: '0f2f9cfdd17ad49c46b62f805738f7e43b35ee1d1e44a11db04102f75f1f731b',
+    current: '0299e111c4080f248603a32ecaa53427fff053f47e50270dccb8cb7e52e0af5e' }],
 ]);
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const text = bytes => {
@@ -73,6 +85,12 @@ export function restoreIssue245Source(file, source) {
   const { predecessor, current } = readIssue245SourcePair(file);
   assert.ok(source === predecessor || source === current, `unreviewed complete source for ${file}`);
   return predecessor;
+}
+
+export function restoreIssue245SourceSuccessor(file, source) {
+  if (!profiles.has(file)) return source;
+  const { predecessor, current } = readIssue245SourcePair(file);
+  return source === current ? predecessor : source;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -1,10 +1,47 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
 import test from 'node:test';
-import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { fileURLToPath } from 'node:url';
+import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, partitionSelfTranslationReportModules, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { partitionGroupFiles, partitionMeasuredWorkloads, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
+
+test('recent report timings balance all complete module workloads across the same sixteen shards', () => {
+  const repository = fileURLToPath(new URL('../../', import.meta.url));
+  const sources = readdirSync(join(repository, 'js/src'), { recursive: true, withFileTypes: true })
+    .filter(entry => entry.isFile() && entry.name.endsWith('.js'))
+    .map(entry => relative(repository, join(entry.parentPath, entry.name)).split(sep).join('/'))
+    .sort();
+  const record = readProjectData(new URL('../../parity/fixtures/ci-45076523061-report-workload-costs.lino', import.meta.url));
+  assert.deepEqual(record.logs.map(row => row.number), Array.from({ length: 16 }, (_, index) => index + 1));
+  const elapsed = new Map(record.entries.map(row => [row.file, row.milliseconds]));
+  const previous = partitionMeasuredWorkloads(sources, 16);
+  const current = partitionSelfTranslationReportModules(sources, 16);
+  const longest = shards => Math.max(...shards.map(shard => shard.reduce((sum, file) => sum + (elapsed.get(file) ?? 0), 0)));
+  assert.deepEqual(current.flat().sort(), sources);
+  assert.ok(longest(previous) >= 30 * 60 * 1000, 'recent elapsed samples reproduce the uneven prior assignment');
+  assert.ok(longest(current) <= 18 * 60 * 1000, 'the recent elapsed samples are spread across the sixteen owners');
+});
+
+test('recent translation test timings balance both jobs in each original three-way partition', () => {
+  const { translation } = partitionTests(testFiles()).groups;
+  const record = readProjectData(new URL('../../parity/fixtures/ci-45076523061-translation-test-workload-costs.lino', import.meta.url));
+  assert.deepEqual(record.logs.map(row => row.number), [1, 2, 3, 4, 5, 6]);
+  const elapsed = new Map(record.entries.map(row => [row.file, row.milliseconds]));
+  const workload = files => files.reduce((sum, file) => sum + (elapsed.get('js/tests/' + file) ?? 0), 0);
+  const old = Array.from({ length: 6 }, (_, index) => translation.filter((_, offset) => offset % 6 === index));
+  const current = Array.from({ length: 6 }, (_, index) => partitionGroupFiles(translation, `${index + 1}/6`));
+  for (let index = 0; index < 3; index += 1) {
+    assert.deepEqual([...current[index], ...current[index + 3]].sort(), partitionGroupFiles(translation, `${index + 1}/3`));
+  }
+  assert.deepEqual(current.flat().sort(), translation);
+  assert.ok(Math.max(...current.map(workload)) < 10 * 60 * 1000);
+  assert.ok(Math.max(...old.map(workload)) > 11 * 60 * 1000);
+});
 
 test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', async () => {
   const module = 'js/src/translation/primitive-value-rules.js';

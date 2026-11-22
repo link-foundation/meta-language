@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {readOwnCodebaseTestRegistrationPolicy,verifyOwnCodebaseTestRegistrationHistory} from './own-codebase-test-registration-history.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 const root=new URL('../../',import.meta.url);
 
 /** Reproduce the complete authenticated sources, current assignments and exact inverse. */
@@ -19,12 +20,13 @@ export function generateOwnCodebaseTestRegistrationSources({check=false}={}){
     let current=row.predecessor.source;
     for(const edit of row.edits){assert.equal(current.split(edit.before).length,2);current=current.replace(edit.before,()=>edit.after);}
     const file=new URL(row.file,root),actual=readFileSync(file,'utf8');
-    assert.ok(actual===row.predecessor.source||actual===current,'the normal generator never replaces unknown source changes');
-    return{file,actual,current};
+    const selected=restoreIssue245SourceSuccessor(row.file,actual);
+    assert.ok(selected===row.predecessor.source||selected===current,'the normal generator never replaces unknown source changes');
+    return{file,actual,selected,current};
   });
   const file=new URL('parity/naming/own-codebase-test-registration-source-history.lino',root);
-  if(check){checkProjectData(file,history);for(const output of outputs)assert.equal(output.actual,output.current);}
-  else{writeProjectData(file,history);for(const output of outputs)writeFileSync(output.file,output.current);}
+  if(check){checkProjectData(file,history);for(const output of outputs)assert.equal(output.selected,output.current);}
+  else{writeProjectData(file,history);for(const output of outputs)if(output.actual===output.selected)writeFileSync(output.file,output.current);}
   return history;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
