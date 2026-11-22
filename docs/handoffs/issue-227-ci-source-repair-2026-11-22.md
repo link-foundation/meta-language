@@ -48,9 +48,9 @@ remaining default-branch checks still need CI evidence.
 
 - A source syntax scan found an extra parenthesis in the ordinary class
   closure control. After that repair, static linking reached missing class,
-  collection and module initialization codecs. The module initialization
-  author has since produced its part. The Rust tests still refer to absent
-  Error class and collection call libraries and their codecs. The collection
+  collection and module initialization codecs. The module initialization and
+  Error class authors have since produced their libraries and codecs. The
+  Rust tests still require the collection call library and its codecs. The collection
   key policy has generated Rust and paired Links sources. Its author uses
   constructor-specific field types and explicitly guarded merge ordering to
   retain the original comparison and storage order.
@@ -155,7 +155,7 @@ peak resident memory for the selected fixture. Catalog-wide workloads and
 their measurements are still required.
 [Pinned link-cli binary archive format](https://github.com/link-foundation/link-cli/blob/fbc90908772dd8117c4d1be05bc16defd1cb9540/docs/protocol/binary-links-notation.md#10-store-archive)
 
-The source generator now handles 53 of the 60 previously ungenerated Rust
+The source generator now handles 54 of the 60 previously ungenerated Rust
 baseline modules. An independent native lint-policy draft resolved 39 policy
 groups and produced 1,199 declaration checks. Six groups refused optional
 JavaScript constructor fields at the last full authoring attempt. Since that
@@ -177,9 +177,14 @@ validation of shared type graphs and still checks expanded type size against
 the original limit. The fixture codecs preserve absent fields and explicitly
 present `undefined` fields. The shared regression exercises both forms in
 JavaScript and Rust. Source authoring completed in
-`ci-logs/javascript-call-source-presence-codecs.log`. The Error class closure
-now reaches reference captures and recursive binding declarations. Native
-compilation, regression execution and the lint-policy assertions remain
+`ci-logs/javascript-call-source-presence-codecs.log`. The Error class compiler
+generated 41 Rust parts and both fixture codecs in `47e83d773`. The qualified
+direct-call match profile in `ad27f4d98` retains the checked call and ordered
+arguments for each source pattern in its receipt. It brought the paired
+archive from 109,062 to 96,052 links. The catalog and Cargo include the complete
+archive. Source logs `ci-logs/javascript-error-class-source-direct-calls.log`
+and `ci-logs/error-class-source-publication.log` record the authoring commands.
+Native compilation, regression execution and the lint-policy assertions remain
 pending.
 
 The draft JSON holdout measures RPNI, EDSM or ALERGIA in a separate process
