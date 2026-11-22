@@ -3806,10 +3806,12 @@ refuse. Original sixty-minute evidence deadlines, compiler checks, commands,
 artifact paths, toolchain pins and all other workflow bytes remain unchanged.
 Historical guard views retain the certified original fifteen-scope workflow;
 independent current controls check the complete six-partition workflow inverse.
-Capture and merge explicitly select six partitions; the transport's historical
-three-part API remains separately checked. Complete original workflow bytes stay
-authenticated for historical controls, and independent controls inspect the
-actual current six-way matrix, feedback cohort and native artifact uploads.
+That feedback capture and merge selected six partitions. The transport's
+original three-part API and the six-part workflow remain separately checked.
+The JavaScript workflow now assigns every translation test file to one of
+eight cells using source-bound timing samples. Its merge requires all eight
+feedback partitions at the exact commit. The separate acceptance workflow still
+requires six translation scopes and twenty total physical scopes.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,
@@ -3875,15 +3877,14 @@ and integrate shared metadata once per complete batch. One coordinator pushes
 only after the preceding CI finishes and its errors have concrete repairs.
 Native compilation and expensive workloads remain exclusive to CI.
 
-Report modules retain eight required jobs; general grammar tests retain six.
-Their complete current source inventories are scheduled using source-bound
-elapsed-time samples captured automatically from the fourteen complete report
-and grammar job logs of CI 39615628279. Missing or changed sources receive a
-size estimate. All modules and test files still execute exactly once, and
-native and historical modulo partitions keep their existing ownership rules.
-Job counts, commands, coverage assertions and deadlines remain unchanged.
-These samples and scheduling estimates establish no requirement observation;
-only the next CI execution can confirm actual timing and results.
+CI 39615628279 supplied source-bound timings from eight report jobs and six
+general grammar jobs. The general grammar suite still uses six jobs. Both report
+workflows now assign the complete 342-module inventory to twelve required jobs
+using updated timings from CI 45060692627. Unmeasured or changed sources use
+earlier matching measurements or a size estimate. The report verifier requires
+each module exactly once at the current commit. Report deadlines remain thirty
+minutes, and the commands, coverage assertions and historical partitions are
+retained. Requirement observations come from the resulting CI execution.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;
