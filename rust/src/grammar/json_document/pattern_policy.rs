@@ -14,6 +14,10 @@ pub fn surrogate_pair_boundaries(first: f64, last: f64) -> (f64, f64, f64, f64) 
     )
 }
 
+pub(super) const fn scalar_from_surrogate_pair(lead: u32, trail: u32) -> u32 {
+    0x1_0000 + (lead - 0xd800) * 1024 + (trail - 0xdc00)
+}
+
 pub fn consuming_pattern_lower_bound(nullable: bool, minimum: f64) -> f64 {
     if nullable { 0.0 } else { minimum }
 }

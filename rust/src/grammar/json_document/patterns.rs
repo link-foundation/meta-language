@@ -1,13 +1,17 @@
 //! Adapt the catalog regular-expression syntax to JSON strings and Rust validation.
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fmt::Write;
+use std::sync::LazyLock;
 
-use regex::Regex;
+use regex::{Captures, Regex};
 
 use crate::native_grammar_parser::{NativeNode, parse_native};
 
 use super::super::{ExprBuilder, GrammarExpr};
-use super::pattern_policy::{bounded_pattern_repetition, consuming_pattern_lower_bound};
+use super::pattern_policy::{
+    bounded_pattern_repetition, consuming_pattern_lower_bound, scalar_from_surrogate_pair,
+};
 use super::property_names::json_string_character;
 
 const EXPRESSION: ExprBuilder = ExprBuilder;
@@ -169,6 +173,24 @@ fn atom_ranges(source: &str, node: &NativeNode) -> Option<Intervals> {
     }
 }
 
+fn normalize_surrogate_pair_escapes(source: &str) -> Cow<'_, str> {
+    static PAIR: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"\\\\|\\u([dD][89a-bA-B][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})")
+            .expect("a valid surrogate-pair expression")
+    });
+    // Consume escaped backslashes before looking for Unicode-mode pairs.
+    PAIR.replace_all(source, |captures: &Captures<'_>| {
+        if let Some(lead) = captures.get(1) {
+            let lead = u32::from_str_radix(lead.as_str(), 16).expect("a hexadecimal lead");
+            let trail = u32::from_str_radix(&captures[2], 16).expect("a hexadecimal trail");
+            let scalar = scalar_from_surrogate_pair(lead, trail);
+            format!(r"\u{{{scalar:x}}}")
+        } else {
+            captures[0].to_owned()
+        }
+    })
+}
+
 fn regular_expression(source: &str) -> Option<NativeNode> {
     if source.len() > 1024 {
         return None;
@@ -212,13 +234,14 @@ fn render_validation_pattern(source: &str, node: &NativeNode, out: &mut String) 
 }
 
 pub(super) fn validation_pattern(source: &str) -> Result<Regex, regex::Error> {
-    if let Some(root) = regular_expression(source) {
+    let source = normalize_surrogate_pair_escapes(source);
+    if let Some(root) = regular_expression(&source) {
         let mut normalized = String::new();
-        if render_validation_pattern(source, &root, &mut normalized).is_some() {
+        if render_validation_pattern(&source, &root, &mut normalized).is_some() {
             return Regex::new(&normalized);
         }
     }
-    Regex::new(source)
+    Regex::new(&source)
 }
 
 struct Match {
@@ -431,6 +454,9 @@ pub(super) fn lower_json_string_pattern(
     source: &str,
     register_pattern_rule: impl FnMut(GrammarExpr) -> GrammarExpr,
 ) -> Option<PatternLowering> {
+    if source.len() > 1024 {
+        return None;
+    }
     if source.is_empty() {
         return Some(PatternLowering::Match(EXPRESSION.repeat(
             EXPRESSION.nt("json_pattern_character"),
@@ -438,9 +464,10 @@ pub(super) fn lower_json_string_pattern(
             None,
         )));
     }
-    let root = regular_expression(source)?;
+    let source = normalize_surrogate_pair_escapes(source);
+    let root = regular_expression(&source)?;
     Lowering {
-        source,
+        source: &source,
         register_pattern_rule,
         characters: BTreeMap::new(),
     }

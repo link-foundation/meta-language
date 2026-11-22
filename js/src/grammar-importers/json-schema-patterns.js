@@ -1,7 +1,7 @@
 import { GrammarBuilder as Expression } from '../grammar.js';
 import { parseNative } from '../native-grammar-parser.js';
 import { jsonStringCharacter } from './json-schema-property-names.js';
-import { boundedPatternRepetition, consumingPatternLowerBound } from './json-schema-pattern-policy.js';
+import { boundedPatternRepetition, consumingPatternLowerBound, scalarFromSurrogatePair } from './json-schema-pattern-policy.js';
 
 const { choice, empty, optional, repeat, repeat0, seq } = Expression;
 const scalars = [[0, 0xd7ff], [0xe000, 0x10ffff]];
@@ -91,6 +91,11 @@ export function lowerJsonStringPattern(source, registerPatternRule) {
   if (typeof source !== 'string' || Buffer.byteLength(source) > 1024 || !source.isWellFormed()) return null;
   try { new RegExp(source, 'u'); } catch { return null; }
   if (source === '') return { expression: wild };
+  // Consume escaped backslashes before looking for Unicode-mode pairs.
+  source = source.replace(/\\\\|\\u([dD][89a-bA-B][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})/gu,
+    (escape, lead, trail) => lead
+      ? '\\u{' + scalarFromSurrogatePair(Number.parseInt(lead, 16), Number.parseInt(trail, 16)).toString(16) + '}'
+      : escape);
   const root = parseNative('native-regex', source);
   if (root.hasError || root.start !== 0 || root.end !== Buffer.byteLength(source)) return null;
   const bytes = Buffer.from(source);

@@ -19,6 +19,11 @@ export function surrogatePairBoundaries(first, last) {
   ];
 }
 
+/** @param {number} lead @param {number} trail @returns {number} */
+export function scalarFromSurrogatePair(lead, trail) {
+  return 65536 + (lead - 55296) * 1024 + (trail - 56320);
+}
+
 /** @param {boolean} nullable @param {number} minimum @returns {number} */
 export function consumingPatternLowerBound(nullable, minimum) {
   if (nullable) return 0;

@@ -34,12 +34,24 @@ const fixtures = [
     [String.raw`"\uD83D\uDE00"`, true], [String.raw`"\t"`, true],
     [String.raw`"\u2028"`, false], [String.raw`"\r"`, false],
   ]],
+  [String.raw`^\uD83D\ude00+$`, [
+    ['"😀"', true], [String.raw`"\ud83D\udE00😀"`, true],
+    ['"😀😂"', false], ['""', false],
+  ]],
+  [String.raw`^[\uD83D\uDE00-\uD83D\uDE02]$`, [
+    ['"😁"', true], [String.raw`"\uD83D\uDE02"`, true],
+    ['"😃"', false], ['"😁😁"', false],
+  ]],
+  [String.raw`^\\uD83D\\uDE00$`, [
+    [String.raw`"\\uD83D\\uDE00"`, true], ['"😀"', false],
+  ]],
 ];
 
 const file = new URL('../../parity/fixtures/json-schema-and-recovery.lino', import.meta.url);
 const data = readProjectData(file);
 const patterns = fixtures.map(([pattern, cases]) => [{ type: 'string', pattern }, cases, []]);
-if (!patterns.every(([schema]) => data.grammars.some(([existing]) => existing.pattern === schema.pattern))) {
-  data.grammars.push(...patterns);
+const additions = patterns.filter(([schema]) => !data.grammars.some(([existing]) => existing.pattern === schema.pattern));
+if (additions.length) {
+  data.grammars.push(...additions);
   writeProjectData(file, data);
 }
