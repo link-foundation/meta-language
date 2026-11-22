@@ -13,6 +13,7 @@ export const platformDeadlineTestSource = 'js/tests/issue-195-evidence-platform-
 export const larkEmitterSource = 'rust/src/grammar/emit/lark.rs';
 export const javascriptTestGroupsSource = 'js/scripts/test-groups.mjs';
 export const nodeDependencyTestSource = 'js/tests/issue-195-evidence-node-dependency.test.js';
+export const typedProgramLinksValidationSource = 'js/src/typed-program-links-validation.js';
 export const runtimeSourceFiles = Object.freeze([
   'rust/src/grammar/feature_runtime/mod.rs',
   'rust/src/grammar/feature_runtime/operations.rs',
@@ -43,6 +44,9 @@ const profiles = new Map([
   [nodeDependencyTestSource, { revision: mainRevision,
     predecessor: '0f2f9cfdd17ad49c46b62f805738f7e43b35ee1d1e44a11db04102f75f1f731b',
     current: '0299e111c4080f248603a32ecaa53427fff053f47e50270dccb8cb7e52e0af5e' }],
+  [typedProgramLinksValidationSource, { revision: mainRevision,
+    predecessor: '6c2ea9bcb6266ef98af1b86708561dd8fd991e002f46c22dbfa047d90de39051',
+    current: '0a3166246358793e5212c7f351f5e1d2254b27d699aceb15fc8ab71324e3e757' }],
 ]);
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const text = bytes => {

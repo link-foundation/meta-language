@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from '../scripts/project-data.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 import {generateJavaScriptMutableArrayBindings} from '../scripts/generate-javascript-mutable-array-bindings.mjs';
 import {restoreProgramStringHostRegistrationSource} from '../scripts/program-string-host-registration-history.mjs';
 import {deriveReferenceIdentityValidationSource,restoreReferenceIdentityHistoricalSource} from '../scripts/reference-identity-source-history.mjs';
@@ -70,10 +71,14 @@ test('the normal author reproduces the exact packet while both old frozen packet
 test('the exact current collection validator keeps its certified program-string source view without admitting unknown successors',()=>{
   const file='js/src/typed-program-links-validation.js';
   const value=readCollectionSizeProjectionSchemaPacket(),owner=value.owners.find(row=>row.file===file);assert.ok(owner);
-  const actual=readFileSync(new URL(file,root),'utf8');
+  const live=readFileSync(new URL(file,root),'utf8');
+  const actual=restoreIssue245SourceSuccessor(file,live);
   const source=restoreReferenceIdentityHistoricalSource(actual,file,'collection size projection');
   assert.equal(source,deriveCollectionSizeProjectionValidationSource(owner.source));
   assert.equal(actual,deriveReferenceIdentityValidationSource(source));
+  assert.notEqual(live,actual);
+  assert.equal(restoreReferenceIdentityHistoricalSource(live,file,'collection size projection'),source);
+  assert.equal(restoreProgramStringHostRegistrationSource(live,file),owner.source);
   assert.equal(restoreProgramStringHostRegistrationSource(actual,file),owner.source);
   assert.deepEqual(pinRequiredFieldNativeHostSource(source),owner.current);assert.notEqual(source,owner.source);
   assert.equal(restoreProgramStringHostRegistrationSource(source,file),owner.source);
@@ -116,21 +121,27 @@ test('both mutable-array source hosts keep the actual required-field transport a
 test('reference equality source changes retain the entire old collection validator and its exact unknown-source boundaries',()=>{
   const value=readCollectionSizeProjectionSchemaPacket(),file='js/src/typed-program-links-validation.js';
   const owner=value.owners.find(row=>row.file===file);assert.ok(owner);
-  const previous=deriveCollectionSizeProjectionValidationSource(owner.source),actual=readFileSync(new URL(file,root),'utf8');
+  const previous=deriveCollectionSizeProjectionValidationSource(owner.source),live=readFileSync(new URL(file,root),'utf8');
+  const actual=restoreIssue245SourceSuccessor(file,live);
   assert.equal(actual,deriveReferenceIdentityValidationSource(previous),'actual source is precisely its certified predecessor plus the two required reference-validation insertions');
   assert.notEqual(actual,previous);assert.deepEqual(pinRequiredFieldNativeHostSource(previous),owner.current);
   for(const scope of['collection size projection','program string registration']){
+    assert.equal(restoreReferenceIdentityHistoricalSource(live,file,scope),previous);
     assert.equal(restoreReferenceIdentityHistoricalSource(actual,file,scope),previous);
     assert.equal(restoreReferenceIdentityHistoricalSource(previous,file,scope),previous);
     assert.equal(restoreReferenceIdentityHistoricalSource(owner.source,file,scope),owner.source);
-    for(const changed of[actual+'\n',actual.replace('readReferenceIdentityComparisonError','unknownReferenceIdentityComparisonError'),actual.replace('referenceError);','referenceError + "changed");')]){
-      assert.notEqual(changed,actual);assert.equal(restoreReferenceIdentityHistoricalSource(changed,file,scope),changed);
-      assert.equal(restoreProgramStringHostRegistrationSource(changed,file),changed);
+    for(const source of[actual,live]){
+      for(const changed of[source+'\n',source.replace('readReferenceIdentityComparisonError','unknownReferenceIdentityComparisonError'),source.replace('referenceError);','referenceError + "changed");')]){
+        assert.notEqual(changed,source);assert.equal(restoreReferenceIdentityHistoricalSource(changed,file,scope),changed);
+        assert.equal(restoreProgramStringHostRegistrationSource(changed,file),changed);
+      }
     }
   }
   assert.equal(restoreProgramStringHostRegistrationSource(actual,file),owner.source);
   assert.equal(restoreReferenceIdentityHistoricalSource(actual,file,'unknown reader'),actual);
   assert.equal(restoreReferenceIdentityHistoricalSource(actual,'unregistered.js','collection size projection'),actual);
+  assert.equal(restoreReferenceIdentityHistoricalSource(live,file,'unknown reader'),live);
+  assert.equal(restoreReferenceIdentityHistoricalSource(live,'unregistered.js','collection size projection'),live);
   assert.throws(()=>deriveReferenceIdentityValidationSource(previous+'\n'));
 });
 
