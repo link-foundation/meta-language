@@ -3830,8 +3830,10 @@ authenticated for historical controls, and independent controls inspect the
 actual current six-way matrix, feedback cohort and native artifact uploads.
 
 A separate JavaScript test group checks these published reports after all
-report shards finish. It uses the producers' exact checkout and source hashes,
-reuses their measurements, and must pass before Rust or delivery stages start.
+sixteen report shards finish. The producer assigns each complete module to one
+shard by measured workload. The verifier uses the producers' exact checkout and
+source hashes, reuses their measurements, and must pass before Rust or delivery
+stages start.
 Standalone JavaScript workflow runs produce and check their own report shards.
 
 Real target-tool interchange reports identify the emitted target format, its

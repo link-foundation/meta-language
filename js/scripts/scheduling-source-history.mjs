@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 const archive=new URL('../../parity/self-translation/ci-39403403220-scheduling-sources-history.lino',import.meta.url);
-const archiveHash='d71a51af8f05bc317bbc9792ac20defc05d502644d6cd2a433420f9fe93ab0ae';
+const archiveHash='d9a98822dd78848495329be657e2c8a893b69b4d837848e5e4f58709404c3154';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 let history;
 

@@ -257,8 +257,8 @@ test('standalone JavaScript runs produce and validate the same report shards', a
   assert.match(workflow, /external_reports:\n(?:[^\n]*\n)*? {8}default: false\n/u);
   assert.match(producers.header, /!inputs.external_reports/u);
   assert.match(producers.header, /fail-fast: false/u);
-  assert.match(producers.header, /shard: \[1, 2, 3, 4, 5, 6, 7, 8\]/u);
-  assert.match(producers.steps.map(step => step.text).join('\n'), /--shard \$\{\{ matrix.shard \}\}\/8/u);
+  assert.match(producers.header, /shard: \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16\]/u);
+  assert.match(producers.steps.map(step => step.text).join('\n'), /--shard \$\{\{ matrix.shard \}\}\/16/u);
   assert.match(producers.steps.map(step => step.text).join('\n'), /name: self-translation-report-\$\{\{ github.sha \}\}-\$\{\{ matrix.shard \}\}/u);
   assert.match(assertions.header, /needs: reports/u);
   assert.match(assertions.header, /!cancelled\(\) && !inputs.external_reports/u);
