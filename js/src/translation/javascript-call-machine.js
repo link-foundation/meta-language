@@ -747,10 +747,13 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
       }
       case 'waitArrayConcatenation':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction?.$!=='arrayConcatenation'||instruction.destination!==pending.destination||pending.realm!==fn.realm)return 'Array concatenation retains actual source instruction destination and realm';
-        const invalid=readJavaScriptArrayConcatenationStateError(heap,instruction.species,pending.state);if(invalid!=='')return invalid;
+        if(instruction===undefined||instruction.$!=='arrayConcatenation'||instruction.destination!==pending.destination||pending.realm!==fn.realm)return 'Array concatenation retains actual source instruction destination and realm';
+        const species=instruction.species;
+        if(species===undefined)return 'Array concatenation retains its actual species authority';
+        const invalid=readJavaScriptArrayConcatenationStateError(heap,species,pending.state);if(invalid!=='')return invalid;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.spreadableKey,frame.registers[instruction.spreadableKey]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey)||pending.state.arguments.length!==frame.arguments.length||pending.state.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,frame.arguments[index]??{$:'undefined'})))return 'Array concatenation retains original receiver arguments and Symbols';
-        if(pending.construction!==undefined){if(pending.state.phase!=='construct'||pending.state.constructor===undefined||!testJavaScriptSemanticSameValue(pending.construction.constructor,pending.state.constructor)||pending.construction.length!==0)return 'Array concatenation retains its actual zero-length species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,instruction.species,pending.construction);if(invalid!=='')return invalid;}
+        const construction=pending.construction;
+        if(construction!==undefined){if(pending.state.phase!=='construct'||pending.state.constructor===undefined||!testJavaScriptSemanticSameValue(construction.constructor,pending.state.constructor)||construction.length!==0)return 'Array concatenation retains its actual zero-length species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,species,construction);if(invalid!=='')return invalid;}
         if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array concatenation child retains its actual selected callback';return '';
       }
       case 'waitArraySlice':{
@@ -1403,7 +1406,8 @@ export function stepJavaScriptCallMachine(program,machine){
      if(pending.error!==undefined)return {$:'machineAllocateError',machine,realm:pending.error.realm,errorClass:pending.error.errorClass,reason:pending.error.reason};
      const construction=pending.construction;
      if(construction!==undefined){const directory=program.constructorDirectory;if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array construction requires actual authority'};return acceptJavaScriptCallArrayConstruction(program,machine,stepJavaScriptConstruction(program,machine.heap,directory,construction));}
-     if(pending.fallback!==undefined)return requestJavaScriptCallArrayFallback(program,machine,pending.destination,pending.realm,pending.state,pending.fallback);
+     const fallback=pending.fallback;
+     if(fallback!==undefined)return requestJavaScriptCallArrayFallback(program,machine,pending.destination,pending.realm,pending.state,fallback);
      return acceptJavaScriptCallArrayCreation(program,machine,pending.destination,pending.realm,stepJavaScriptArrayCreation(machine.heap,pending.state));
     }
     case 'waitConstructorCheck':return acceptJavaScriptCallConstructorCheck(program,machine,pending.destination,pending.input,pending.required);

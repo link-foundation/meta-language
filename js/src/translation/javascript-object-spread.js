@@ -37,7 +37,8 @@ export function readJavaScriptObjectSpreadStateError(heap,state){
  }
  if(state.excluded.length>4096)return 'object spread excluded keys exceed their explicit snapshot budget';
  for(const key of state.excluded){const error=readJavaScriptOrdinaryKeyError(heap,key);if(error!=='')return error;}
- const names=[];for(const key of state.keys){const error=readJavaScriptOrdinaryKeyError(heap,key);if(error!=='')return error;names.push(key.$==='symbol'?'symbol:'+String(key.identity):'text:'+readJavaScriptSemanticTextString(key));}
+ for(const key of state.keys){const error=readJavaScriptOrdinaryKeyError(heap,key);if(error!=='')return error;}
+ const names=state.keys.map(key=>key.$==='symbol'?'symbol:'+String(key.identity):'text:'+readJavaScriptSemanticTextString(key));
  const ordered=names.toSorted();for(let at=1;at<ordered.length;at++)if(ordered[at]===ordered[at-1])return 'object spread own-key snapshots cannot duplicate a semantic key';
  return '';
 }
