@@ -86,6 +86,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "grammar-inference-refinement-program.lino" => Some(include_str!(
             "../data/grammar-inference-refinement-program.lino"
         )),
+        "grammar-scanner-character-class-program.lino" => Some(include_str!(
+            "../data/grammar-scanner-character-class-program.lino"
+        )),
         "grammar-scanner-inference-program.lino" => Some(include_str!(
             "../data/grammar-scanner-inference-program.lino"
         )),
@@ -131,6 +134,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-error-class-program.lino" => {
             Some(include_str!("../data/javascript-error-class-program.lino"))
         }
+        "javascript-error-construction-program.lino" => Some(include_str!(
+            "../data/javascript-error-construction-program.lino"
+        )),
         "javascript-fixed-integer-cast-program.lino" => Some(include_str!(
             "../data/javascript-fixed-integer-cast-program.lino"
         )),
@@ -160,6 +166,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         )),
         "javascript-optional-chain-program.lino" => Some(include_str!(
             "../data/javascript-optional-chain-program.lino"
+        )),
+        "javascript-ordinary-class-program.lino" => Some(include_str!(
+            "../data/javascript-ordinary-class-program.lino"
         )),
         "javascript-ordinary-heap-program.lino" => Some(include_str!(
             "../data/javascript-ordinary-heap-program.lino"

@@ -9,7 +9,8 @@ import { createMetaLanguageArchive, readMetaLanguageArchive } from './meta-langu
 import { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
 import { decodeTypedProgramLinks } from './typed-program-links.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
-import { createGrammarScannerInferenceProgramLinks, grammarScannerInferenceArchiveIdentifier, inferGrammarScanner } from './grammar-scanner-inference.js';
+import { createGrammarScannerInferenceProgramLinks, grammarScannerInferenceArchiveIdentifier, inferGrammarScanner,
+  createGrammarScannerCharacterClassProgramLinks, grammarScannerCharacterClassArchiveIdentifier, inferGrammarScannerClasses } from './grammar-scanner-inference.js';
 import { inferRegularGrammarTable, findInferenceRepresentative,
   acceptInferredSymbolSequence, acceptInferenceTableShape, readInferenceFailureReason } from './grammar-inference-rules.js';
 
@@ -93,7 +94,10 @@ export function createRegularGrammarInferenceProgramLinks() {
  * sample is promoted to a proof of the unknown language's complete meaning.
  */
 export function inferRegularGrammar(positives, negatives = [], options = {}) {
-  const scanner = options.scannerObservations === undefined ? undefined : inferGrammarScanner(options.scannerObservations);
+  const characterClasses = options.scannerCharacterClasses === undefined ? false : options.scannerCharacterClasses;
+  if (typeof characterClasses !== 'boolean' || (characterClasses && options.scannerObservations === undefined)) fail('scanner character classes require scanner observations');
+  const scanner = options.scannerObservations === undefined ? undefined
+    : (characterClasses ? inferGrammarScannerClasses : inferGrammarScanner)(options.scannerObservations);
   const limits = configuration(options), input = samples(positives, negatives, limits, scanner);
   const identifier = options.identifier ?? 'inferred-language', language = options.language ?? 'Inferred language', edition = options.edition ?? 'regular discovery 1';
   for (const value of [identifier, language, edition]) if (typeof value !== 'string' || !value || !value.isWellFormed() || Buffer.byteLength(value) > 4096) fail('invalid source identity');
@@ -103,9 +107,10 @@ export function inferRegularGrammar(positives, negatives = [], options = {}) {
   if (!acceptInferenceTableShape(table, input.alphabet.length)) fail('invalid model table');
   const grammar = grammarFromTable(table, input.alphabet, scanner);
   const source = { id: identifier, language, edition, grammar };
-  const model = { schemaVersion: scanner ? 2 : 1, algorithm, identifier, language, edition, options: limits,
+  const model = { schemaVersion: characterClasses ? 3 : scanner ? 2 : 1, algorithm, identifier, language, edition, options: limits,
     positives, negatives, alphabet: input.alphabet, table,
-    ...(scanner ? { scannerObservations: options.scannerObservations } : {}) };
+    ...(scanner ? { scannerObservations: options.scannerObservations } : {}),
+    ...(characterClasses ? { scannerCharacterClasses: true } : {}) };
   const data = encodeStructuredDataLinks(model), definitions = createRegularGrammarInferenceProgramLinks();
   const discovered = createDiscoveredConceptLinks([source]);
   const archive = createMetaLanguageArchive([
@@ -114,6 +119,8 @@ export function inferRegularGrammar(positives, negatives = [], options = {}) {
     { identifier: 'regular-discovery-grammar', kind: 'discovered concepts', ...discovered },
     ...(scanner ? [{ identifier: grammarScannerInferenceArchiveIdentifier, kind: 'typed program',
       ...createGrammarScannerInferenceProgramLinks() }] : []),
+    ...(characterClasses ? [{ identifier: grammarScannerCharacterClassArchiveIdentifier, kind: 'typed program',
+      ...createGrammarScannerCharacterClassProgramLinks() }] : []),
   ]);
   return { grammar, source, alphabet: [...input.alphabet], table: [...table], ...archive };
 }
@@ -131,15 +138,23 @@ export function readRegularGrammarInferenceLinks(network, root) {
   };
   const data = select('regular-discovery-model', 'grammar inference');
   const model = decodeStructuredDataLinks(data.network, data.root);
-  if (model?.algorithm !== algorithm || ![1, 2].includes(model.schemaVersion)
-    || Object.hasOwn(model, 'scannerObservations') !== (model.schemaVersion === 2)) fail('unsupported model version');
+  if (model?.algorithm !== algorithm || ![1, 2, 3].includes(model.schemaVersion)
+    || Object.hasOwn(model, 'scannerObservations') !== (model.schemaVersion >= 2)
+    || (model.schemaVersion === 3 ? model.scannerCharacterClasses !== true
+      : Object.hasOwn(model, 'scannerCharacterClasses'))) fail('unsupported model version');
   const storedScanner = entries.find(entry => entry.identifier === grammarScannerInferenceArchiveIdentifier);
+  const storedClasses = entries.find(entry => entry.identifier === grammarScannerCharacterClassArchiveIdentifier);
+  if (model.schemaVersion === 3) {
+    const bundledClasses = createGrammarScannerCharacterClassProgramLinks();
+    if (!storedClasses || storedClasses.kind !== 'typed program' || !storedClasses.root.equals(bundledClasses.root)
+      || storedClasses.network.toLino() !== bundledClasses.network.toLino()) fail('the selected scanner character class definition differs from its versioned implementation');
+  } else if (storedClasses) fail('the scanner character class definition needs its versioned model');
   let scanner;
-  if (model.schemaVersion === 2) {
+  if (model.schemaVersion >= 2) {
     const bundledScanner = createGrammarScannerInferenceProgramLinks();
     if (!storedScanner || storedScanner.kind !== 'typed program' || !storedScanner.root.equals(bundledScanner.root)
       || storedScanner.network.toLino() !== bundledScanner.network.toLino()) fail('the selected scanner definition differs from its versioned implementation');
-    scanner = inferGrammarScanner(model.scannerObservations);
+    scanner = (model.schemaVersion === 3 ? inferGrammarScannerClasses : inferGrammarScanner)(model.scannerObservations);
   } else if (storedScanner) fail('the selected scanner definition needs its actual observations');
   const definitions = select('regular-discovery-algorithm', 'typed program'), bundled = createRegularGrammarInferenceProgramLinks();
   if (!definitions.root.equals(bundled.root) || definitions.network.toLino() !== bundled.network.toLino()) fail('the selected algorithm definition differs from its versioned implementation');

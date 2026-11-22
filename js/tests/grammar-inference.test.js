@@ -6,7 +6,8 @@ import { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGr
 import { LinkNetwork } from '../src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { createDynamicMetaLanguage } from '../src/dynamic-meta-language.js';
-import { inferGrammarScanner } from '../src/grammar-scanner-inference.js';
+import { inferGrammarScanner, inferGrammarScannerClasses } from '../src/grammar-scanner-inference.js';
+import { readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference } from '../src/grammar-inference-refinement.js';
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { createGrammarParser as compileGrammar, renderSyntaxTree } from '../src/grammar-runtime.js';
 
@@ -61,4 +62,30 @@ test('scanner trace inference emits executable mode transitions and preserves so
   }
   for (const input of fixture.rejected) assert.equal(parser.parseTree(input).ok, false, input);
   assert.throws(() => inferGrammarScanner([...fixture.observations, fixture.conflicting]), /unsupported context sensitivity/u);
+});
+
+test('scanner character classes preserve gaps, literal precedence and archive refinement', () => {
+  const fixture = fixtures.scannerCharacterClasses;
+  const inferred = inferGrammarScannerClasses(fixture.observations);
+  assert.ok(inferred.listing.includes(fixture.matcher));
+  assert.ok(inferred.listing.lastIndexOf('(valid word)') < inferred.listing.indexOf('(valid member)'));
+  const listing = '(grammar (start source))\n' + inferred.listing + fixture.syntax;
+  const parser = compileGrammar(parseGrammarLinks(renderGrammarLinks(parseGrammarLinks(listing))));
+  for (const {input, tree} of fixture.accepted) {
+    const result = parser.parseTree(input);
+    assert.equal(result.ok, true, input);
+    assert.equal(renderSyntaxTree(result.tree), tree);
+  }
+  for (const input of fixture.rejected) assert.equal(parser.parseTree(input).ok, false, input);
+  assert.throws(() => inferRegularGrammar([], [], {scannerCharacterClasses: true}), /require scanner observations/u);
+  const original = inferRegularGrammar([['member'], ['word']], [[]], {
+    scannerObservations: fixture.observations, scannerCharacterClasses: true,
+  });
+  const restored = readRegularGrammarInferenceLinks(LinkNetwork.fromLino(original.network.toLino()), original.root);
+  assert.deepEqual(restored.grammar.normalized(), original.grammar.normalized());
+  const refined = refineRegularGrammarInference(restored.network, restored.root, [['word', 'member']]);
+  const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(refined.network));
+  const reloaded = readRefinedRegularGrammarInferenceLinks(binary, refined.root);
+  assert.deepEqual(reloaded.grammar.normalized(), refined.grammar.normalized());
+  assert.ok(acceptInferredGrammarSymbols(reloaded, ['word', 'member']));
 });

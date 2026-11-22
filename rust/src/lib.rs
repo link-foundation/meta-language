@@ -37,6 +37,7 @@ mod grammar_concepts;
 mod grammar_inference;
 mod grammar_inference_refinement_rules;
 mod grammar_inference_rules;
+mod grammar_scanner_character_class_rules;
 mod grammar_scanner_inference;
 mod grammar_scanner_inference_rules;
 pub use grammar_inference::{
@@ -47,6 +48,7 @@ pub use grammar_inference::{
 };
 pub use grammar_scanner_inference::{
     GrammarScannerObservation, InferredGrammarScanner, infer_grammar_scanner,
+    infer_grammar_scanner_classes,
 };
 pub mod graphql_adapter;
 mod incremental;

@@ -1,7 +1,8 @@
 //! Actual archive/data transport; generated rules own history continuity.
 use super::{
-    Model, RegularGrammarInference, RegularGrammarInferenceOptions, SCANNER_ALGORITHM, index,
-    infer_regular_grammar, number, read_regular_grammar_inference_links,
+    Model, RegularGrammarInference, RegularGrammarInferenceOptions, SCANNER_ALGORITHM,
+    SCANNER_CLASS_ALGORITHM, index, infer_regular_grammar, number,
+    read_regular_grammar_inference_links,
 };
 use crate::grammar_inference_refinement_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
@@ -93,7 +94,9 @@ fn base(
     retained.extend(
         entries
             .iter()
-            .filter(|entry| entry.identifier == SCANNER_ALGORITHM)
+            .filter(|entry| {
+                [SCANNER_ALGORITHM, SCANNER_CLASS_ALGORITHM].contains(&entry.identifier.as_str())
+            })
             .cloned(),
     );
     let archive = create_meta_language_archive(&retained, MetaLanguageArchiveLimits::default())?;
@@ -196,10 +199,22 @@ fn read_checkpoint(network: &LinkNetwork, root: LinkId) -> Result<Checkpoint, St
             "scanner observations differ across the refinement history",
         ));
     }
+    let classes = models
+        .last()
+        .and_then(|value| value.get("scannerCharacterClasses"));
+    if models
+        .iter()
+        .any(|value| value.get("scannerCharacterClasses") != classes)
+    {
+        return Err(fail(
+            "scanner character class profiles differ across the refinement history",
+        ));
+    }
     // Keep the archived v1 history algorithm and verify its exact ordinary projection.
     let projected_models = models.iter().cloned().map(|mut value| {
         if let Some(fields) = value.as_object_mut() {
             fields.remove("scannerObservations");
+            fields.remove("scannerCharacterClasses");
         }
         value
     });
@@ -317,6 +332,7 @@ pub fn refine_regular_grammar_inference(
             language: checkpoint.model.language,
             edition: checkpoint.model.edition,
             scanner_observations: checkpoint.model.scanner_observations,
+            scanner_character_classes: checkpoint.model.scanner_character_classes.unwrap_or(false),
         },
     )?;
     let mut entries = read_meta_language_archive(
@@ -354,6 +370,7 @@ pub fn refine_regular_grammar_inference(
             JOURNAL,
             REFINEMENT,
             SCANNER_ALGORITHM,
+            SCANNER_CLASS_ALGORITHM,
         ]
         .contains(&entry.identifier.as_str())
     }));

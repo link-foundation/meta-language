@@ -3,8 +3,10 @@ use meta_language::{
     BinaryLinksOptions, FeatureParseOptions, GrammarScannerObservation, LinkNetwork,
     RegularGrammarInferenceOptions, accept_inferred_grammar_symbols, compile_feature_grammar,
     decode_link_network_binary, encode_link_network_binary, infer_grammar_scanner,
-    infer_regular_grammar, parse_grammar_links, read_regular_grammar_inference_links,
-    read_structured_data_lino, render_grammar_links, serialize_grammar,
+    infer_grammar_scanner_classes, infer_regular_grammar, parse_grammar_links,
+    read_refined_regular_grammar_inference_links, read_regular_grammar_inference_links,
+    read_structured_data_lino, refine_regular_grammar_inference, render_grammar_links,
+    serialize_grammar,
 };
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -15,6 +17,89 @@ fn fixture() -> Value {
         "../../../parity/fixtures/regular-grammar-inference.lino"
     ))
     .unwrap()
+}
+
+#[test]
+fn scanner_character_classes_preserve_gaps_literal_precedence_and_archive_refinement() {
+    versions();
+    let data = fixture();
+    let fixture = &data["scannerCharacterClasses"];
+    let observations: Vec<GrammarScannerObservation> =
+        serde_json::from_value(fixture["observations"].clone()).unwrap();
+    let inferred = infer_grammar_scanner_classes(&observations, None).unwrap();
+    assert!(
+        inferred
+            .listing
+            .contains(fixture["matcher"].as_str().unwrap())
+    );
+    assert!(
+        inferred.listing.rfind("(valid word)").unwrap()
+            < inferred.listing.find("(valid member)").unwrap()
+    );
+    let listing = format!(
+        "(grammar (start source))\n{}{}",
+        inferred.listing,
+        fixture["syntax"].as_str().unwrap()
+    );
+    let loaded = parse_grammar_links(&render_grammar_links(
+        &parse_grammar_links(&listing).unwrap(),
+    ))
+    .unwrap();
+    let options = FeatureParseOptions::default();
+    let parser = compile_feature_grammar(&loaded, None, options.clone()).unwrap();
+    for row in fixture["accepted"].as_array().unwrap() {
+        let input = row["input"].as_str().unwrap();
+        let result = parser.parse_tree(input.as_bytes(), &options).unwrap();
+        assert!(result.ok, "{input}: {:?}", result.rejection);
+        assert_eq!(result.tree.unwrap().render(), row["tree"].as_str().unwrap());
+    }
+    for input in fixture["rejected"].as_array().unwrap() {
+        let input = input.as_str().unwrap();
+        assert!(
+            !parser.parse_tree(input.as_bytes(), &options).unwrap().ok,
+            "{input}"
+        );
+    }
+    let mut inference = RegularGrammarInferenceOptions {
+        scanner_character_classes: true,
+        ..Default::default()
+    };
+    assert!(
+        infer_regular_grammar(&[], &[], &inference)
+            .unwrap_err()
+            .contains("require scanner observations")
+    );
+    inference.scanner_observations = Some(observations);
+    let original = infer_regular_grammar(
+        &[vec!["member".to_owned()], vec!["word".to_owned()]],
+        &[vec![]],
+        &inference,
+    )
+    .unwrap();
+    let text = LinkNetwork::from_lino(&original.network.to_lino()).unwrap();
+    let restored = read_regular_grammar_inference_links(&text, original.root).unwrap();
+    assert_eq!(
+        serialize_grammar(&restored.grammar),
+        serialize_grammar(&original.grammar)
+    );
+    let counterexample = [vec!["word".to_owned(), "member".to_owned()]];
+    let refined = refine_regular_grammar_inference(
+        &restored.network,
+        restored.root,
+        &counterexample,
+        &[],
+        None,
+    )
+    .unwrap();
+    let options = BinaryLinksOptions::default();
+    let bytes = encode_link_network_binary(&refined.network, options).unwrap();
+    let binary = decode_link_network_binary(&bytes, BinaryLinksOptions::default()).unwrap();
+    let reloaded = read_refined_regular_grammar_inference_links(&binary, refined.root).unwrap();
+    assert_eq!(
+        serialize_grammar(&reloaded.grammar),
+        serialize_grammar(&refined.grammar)
+    );
+    assert!(accept_inferred_grammar_symbols(&reloaded, &counterexample[0]).unwrap());
 }
 
 #[test]

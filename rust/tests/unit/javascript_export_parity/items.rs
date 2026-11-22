@@ -227,6 +227,7 @@ use meta_language::import_resource_description_graph as _;
 use meta_language::import_resource_description_ntriples as _;
 use meta_language::import_tree_sitter_json as _;
 use meta_language::infer_grammar_scanner as _;
+use meta_language::infer_grammar_scanner_classes as _;
 use meta_language::infer_regular_grammar as _;
 use meta_language::language_candidates_for_path as _;
 use meta_language::language_catalog as _;

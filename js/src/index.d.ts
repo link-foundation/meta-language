@@ -1099,6 +1099,7 @@ export interface RegularGrammarInferenceOptions {
   symbolLimit?: number; byteLimit?: number;
   identifier?: string; language?: string; edition?: string;
   scannerObservations?: readonly GrammarScannerObservation[];
+  scannerCharacterClasses?: boolean;
 }
 export interface RegularGrammarInference extends TypedProgramLinks {
   grammar: Grammar; source: GlobalConceptSource; alphabet: string[]; table: number[];
@@ -1120,6 +1121,7 @@ export interface InferredGrammarScanner {
   scanner: NonNullable<GrammarDeclarations['scanners']>[number];
 }
 export function inferGrammarScanner(observations: readonly GrammarScannerObservation[], name?: string): InferredGrammarScanner;
+export function inferGrammarScannerClasses(observations: readonly GrammarScannerObservation[], name?: string): InferredGrammarScanner;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,

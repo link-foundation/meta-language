@@ -69,10 +69,10 @@ remaining default-branch checks still need CI evidence.
   field declared on that alternative.
   Required constructor fields now use the recursively parsed type grammar in
   both frontends. The source author generated the Rust boundary scanner from
-  the JavaScript scanner. The shared fixtures cover nested generic, tuple,
-  record and function types and a mismatched delimiter. Authoring completed
-  without fixture execution. This leaves optional presence and named
-  alternatives open.
+  the JavaScript scanner. Both frontends now represent optional field presence
+  and reuse previously declared alternatives. Source authoring completed with
+  shared fixtures for nested type grammar, optional presence and literal tag
+  selection. Exact runtime coverage and reverse translation remain open.
 - Exact fixture templates can now substitute initialized text and retain its
   source and UTF-16 units. The native assertion author translated all 54
   borrowed-iterator assertions and all 15 array-object assertions from their
@@ -124,8 +124,12 @@ orders overlapping spellings by length, refuses conflicting observations and
 round-trips through the grammar listing. The draft fixture exercises its
 token boundaries in both runtimes. A second draft control discovers, refines
 and installs the scanner without training files and parses Unicode input
-through the installed grammar. Inferred lexical classes, attributed inference,
-installed-language semantic translation and
+through the installed grammar. The optional character class profile groups
+observed Unicode scalars that have identical scanner transitions. Draft
+controls check range gaps, longer literal prefixes, exact accepted trees,
+checkpoint reload and refinement in both runtimes. Its source author produced
+a checked program and native counterpart. Generalization beyond observed
+characters, attributed inference, installed-language semantic translation and
 executed held-out benchmark comparisons remain open.
 
 The pinned upstream link-cli importer reads one two-endpoint row per line.
@@ -141,12 +145,16 @@ peak resident memory for the selected fixture. Catalog-wide workloads and
 their measurements are still required.
 [Pinned link-cli binary archive format](https://github.com/link-foundation/link-cli/blob/fbc90908772dd8117c4d1be05bc16defd1cb9540/docs/protocol/binary-links-notation.md#10-store-archive)
 
-The source generator now handles 50 of the 60 previously ungenerated Rust
+The source generator now handles 52 of the 60 previously ungenerated Rust
 baseline modules. An independent native lint-policy draft resolved 39 policy
-groups and produced 1,199 declaration checks. Six groups still refuse optional
-JavaScript constructor fields during source generation. These counts describe
-authored source and generation only. Native compilation and the lint-policy
-assertions remain pending.
+groups and produced 1,199 declaration checks. Six groups refused optional
+JavaScript constructor fields at the last full authoring attempt. Since that
+attempt, the frontends gained tagged field presence, declared alternatives
+and finite conditional tags. The Error construction and ordinary class rule
+authors generated native source. The Error class compiler now reaches a
+tagged object spread in its composed call source, with its diagnostic at
+`239691..239877` in `ci-logs/javascript-error-kernels-conditional-tag-source.log`.
+Native compilation and the lint-policy assertions remain pending.
 
 The draft JSON holdout measures RPNI, EDSM or ALERGIA in a separate process
 against the same pinned JSONTestSuite corpus and budgets. It keeps training

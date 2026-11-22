@@ -9,8 +9,10 @@ use crate::grammar::{
 };
 use crate::grammar_inference_rules as rules;
 use crate::grammar_scanner_inference::{
-    GrammarScannerObservation, InferredGrammarScanner, SCANNER_ALGORITHM,
+    GrammarScannerObservation, InferredGrammarScanner, SCANNER_ALGORITHM, SCANNER_CLASS_ALGORITHM,
+    create_grammar_scanner_character_class_program_links,
     create_grammar_scanner_inference_program_links, infer_grammar_scanner,
+    infer_grammar_scanner_classes,
 };
 use crate::{
     GlobalConceptSource, LinkId, LinkNetwork, MetaLanguageArchiveEntry, MetaLanguageArchiveLimits,
@@ -73,6 +75,8 @@ pub struct RegularGrammarInferenceOptions {
     pub edition: String,
     /// Optional finite scanner trace. Sample symbols then refer to its external tokens.
     pub scanner_observations: Option<Vec<GrammarScannerObservation>>,
+    /// Coalesce observed scalars into finite character classes.
+    pub scanner_character_classes: bool,
 }
 
 impl Default for RegularGrammarInferenceOptions {
@@ -83,6 +87,7 @@ impl Default for RegularGrammarInferenceOptions {
             language: "Inferred language".to_owned(),
             edition: "regular discovery 1".to_owned(),
             scanner_observations: None,
+            scanner_character_classes: false,
         }
     }
 }
@@ -119,6 +124,19 @@ struct Model {
     table: Vec<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     scanner_observations: Option<Vec<GrammarScannerObservation>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    scanner_character_classes: Option<bool>,
+}
+
+fn infer_scanner(
+    observations: &[GrammarScannerObservation],
+    classes: bool,
+) -> Result<InferredGrammarScanner, String> {
+    if classes {
+        infer_grammar_scanner_classes(observations, None)
+    } else {
+        infer_grammar_scanner(observations, None)
+    }
 }
 
 fn fail(message: &str) -> String {
@@ -357,10 +375,16 @@ pub fn infer_regular_grammar(
             return Err(fail("invalid source identity"));
         }
     }
+    let classes = options.scanner_character_classes;
+    if classes && options.scanner_observations.is_none() {
+        return Err(fail(
+            "scanner character classes require scanner observations",
+        ));
+    }
     let scanner = options
         .scanner_observations
         .as_deref()
-        .map(|observations| infer_grammar_scanner(observations, None))
+        .map(|observations| infer_scanner(observations, classes))
         .transpose()?;
     let (alphabet, table) = table(positives, negatives, &options.parameters, scanner.as_ref())?;
     let grammar = grammar_from_table(&table, &alphabet, scanner.as_ref());
@@ -371,7 +395,13 @@ pub fn infer_regular_grammar(
         grammar: grammar.clone(),
     };
     let model = Model {
-        schema_version: if scanner.is_some() { 2 } else { 1 },
+        schema_version: if classes {
+            3
+        } else if scanner.is_some() {
+            2
+        } else {
+            1
+        },
         algorithm: ALGORITHM.to_owned(),
         identifier: source.id.clone(),
         language: source.language.clone(),
@@ -382,6 +412,7 @@ pub fn infer_regular_grammar(
         alphabet: alphabet.clone(),
         table: table.clone(),
         scanner_observations: options.scanner_observations.clone(),
+        scanner_character_classes: classes.then_some(true),
     };
     let data = encode_structured_data_links(
         &serde_json::to_value(model).map_err(|error| error.to_string())?,
@@ -418,6 +449,15 @@ pub fn infer_regular_grammar(
             root: definition.root,
         });
     }
+    if classes {
+        let definition = create_grammar_scanner_character_class_program_links()?;
+        entries.push(MetaLanguageArchiveEntry {
+            identifier: SCANNER_CLASS_ALGORITHM.to_owned(),
+            kind: "typed program".to_owned(),
+            network: Arc::new(definition.network),
+            root: definition.root,
+        });
+    }
     let archive = create_meta_language_archive(&entries, MetaLanguageArchiveLimits::default())?;
     Ok(RegularGrammarInference {
         grammar,
@@ -448,14 +488,37 @@ pub fn read_regular_grammar_inference_links(
     let data = select("regular-discovery-model", "grammar inference")?;
     let model_data = decode_structured_data_links(&data.network, data.root)?;
     let has_scanner_field = model_data.get("scannerObservations").is_some();
+    let has_class_field = model_data.get("scannerCharacterClasses").is_some();
     let model: Model =
         serde_json::from_value(model_data).map_err(|error| fail(&error.to_string()))?;
+    let classes = model.schema_version == 3;
     if model.algorithm != ALGORITHM
-        || !matches!(model.schema_version, 1 | 2)
-        || has_scanner_field != (model.schema_version == 2)
+        || !matches!(model.schema_version, 1..=3)
+        || has_scanner_field != (model.schema_version >= 2)
         || has_scanner_field != model.scanner_observations.is_some()
+        || has_class_field != classes
+        || model.scanner_character_classes != classes.then_some(true)
     {
         return Err(fail("unsupported model version"));
+    }
+    if classes {
+        let definition = select(SCANNER_CLASS_ALGORITHM, "typed program")?;
+        let bundled = create_grammar_scanner_character_class_program_links()?;
+        if definition.root != bundled.root
+            || definition.network.to_lino() != bundled.network.to_lino()
+        {
+            return Err(fail(
+                "the selected scanner character class definition differs from its versioned implementation",
+            ));
+        }
+    } else if decoded
+        .entries
+        .iter()
+        .any(|entry| entry.identifier == SCANNER_CLASS_ALGORITHM)
+    {
+        return Err(fail(
+            "the scanner character class definition needs its versioned model",
+        ));
     }
     let scanner = if let Some(observations) = model.scanner_observations.as_deref() {
         let definition = select(SCANNER_ALGORITHM, "typed program")?;
@@ -467,7 +530,7 @@ pub fn read_regular_grammar_inference_links(
                 "the selected scanner definition differs from its versioned implementation",
             ));
         }
-        Some(infer_grammar_scanner(observations, None)?)
+        Some(infer_scanner(observations, classes)?)
     } else {
         if decoded
             .entries

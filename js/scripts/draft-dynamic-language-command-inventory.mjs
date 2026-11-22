@@ -36,6 +36,17 @@ const scannerRow={id:scannerId,required:true,
 };
 const previousScanner=value.features.findIndex(entry=>entry.id===scannerId);
 if(previousScanner<0)value.features.push(scannerRow);else value.features[previousScanner]=scannerRow;
+const scannerClassId='grammar-scanner-character-class-inference';
+const scannerClassControls=['parity/fixtures/regular-grammar-inference.lino',
+ 'parity/self-translation/grammar-scanner-character-class-rules-native.lino'];
+const scannerClassRow={id:scannerClassId,required:true,
+ javascript:{status:'implemented',evidence:['js/src/grammar-scanner-character-class-rules.js','js/src/grammar-scanner-inference.js',
+  'js/tests/grammar-inference.test.js',...scannerClassControls]},
+ rust:{status:'implemented',evidence:['rust/src/grammar_scanner_character_class_rules.rs','rust/src/grammar_scanner_inference.rs',
+  'rust/tests/unit/regular_grammar_inference.rs',...scannerClassControls]},
+};
+const previousScannerClass=value.features.findIndex(entry=>entry.id===scannerClassId);
+if(previousScannerClass<0)value.features.push(scannerClassRow);else value.features[previousScannerClass]=scannerClassRow;
 const optionalConstructorId='javascript-tagged-constructor-optional-field-presence';
 const optionalConstructorControls=['parity/fixtures/translation-optional-constructor-fields.js',
  'parity/self-translation/javascript-constructor-field-type-rules-native.lino'];

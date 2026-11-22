@@ -2,15 +2,25 @@
 use serde::{Deserialize, Serialize};
 
 use crate::grammar::{GrammarScanner, parse_grammar_links, percent_encode_links_text};
+use crate::grammar_scanner_character_class_rules as classes;
 use crate::grammar_scanner_inference_rules as rules;
 use crate::{TypedProgramLinks, create_source_definition_program_links};
 
 pub(crate) const SCANNER_ALGORITHM: &str = "regular-discovery-scanner-algorithm";
+pub(crate) const SCANNER_CLASS_ALGORITHM: &str =
+    "regular-discovery-scanner-character-class-algorithm";
 
 pub(crate) fn create_grammar_scanner_inference_program_links() -> Result<TypedProgramLinks, String>
 {
     create_source_definition_program_links(
         "meta-language/source-program/grammar-scanner-inference-program",
+    )
+}
+
+pub(crate) fn create_grammar_scanner_character_class_program_links()
+-> Result<TypedProgramLinks, String> {
+    create_source_definition_program_links(
+        "meta-language/source-program/grammar-scanner-character-class-program",
     )
 }
 
@@ -53,6 +63,25 @@ pub fn infer_grammar_scanner(
     observations: &[GrammarScannerObservation],
     name: Option<&str>,
 ) -> Result<InferredGrammarScanner, String> {
+    infer_scanner(observations, name, false)
+}
+
+/// Infer scanner character classes from observed single Unicode scalars.
+///
+/// # Errors
+/// Refuses excessive, malformed or contradictory observations.
+pub fn infer_grammar_scanner_classes(
+    observations: &[GrammarScannerObservation],
+    name: Option<&str>,
+) -> Result<InferredGrammarScanner, String> {
+    infer_scanner(observations, name, true)
+}
+
+fn infer_scanner(
+    observations: &[GrammarScannerObservation],
+    name: Option<&str>,
+    character_classes: bool,
+) -> Result<InferredGrammarScanner, String> {
     #[allow(clippy::cast_precision_loss)]
     if observations.len() as f64 > rules::read_grammar_scanner_observation_limit() {
         return Err(fail(&rules::read_grammar_scanner_inference_error(-1.0)));
@@ -62,6 +91,7 @@ pub fn infer_grammar_scanner(
         return Err(fail("invalid scanner name"));
     }
     let mut columns: [Vec<String>; 4] = std::array::from_fn(|_| Vec::new());
+    let mut code_points = Vec::new();
     let mut bytes = 0usize;
     for row in observations {
         let values = [&row.mode, &row.spelling, &row.token, &row.next_mode];
@@ -78,6 +108,13 @@ pub fn infer_grammar_scanner(
             }
             column.push(percent_encode_links_text(value));
         }
+        if character_classes {
+            let mut scalars = row.spelling.chars();
+            code_points.push(match (scalars.next(), scalars.next()) {
+                (Some(scalar), None) => f64::from(u32::from(scalar)),
+                _ => -1.0,
+            });
+        }
     }
     let [modes, spellings, tokens, next_modes] = columns;
     let plan = rules::plan_grammar_scanner_transitions(&modes, &spellings, &tokens, &next_modes);
@@ -85,14 +122,35 @@ pub fn infer_grammar_scanner(
     if !reason.is_empty() {
         return Err(fail(&reason));
     }
-    let listing = rules::render_grammar_scanner_definition(
-        &modes,
-        &spellings,
-        &tokens,
-        &next_modes,
-        &plan,
-        &percent_encode_links_text(name),
-    );
+    let name = percent_encode_links_text(name);
+    let listing = if character_classes {
+        let matchers = classes::plan_grammar_scanner_character_classes(
+            &modes,
+            &spellings,
+            &tokens,
+            &next_modes,
+            &code_points,
+            &plan,
+        );
+        classes::render_grammar_scanner_character_class_definition(
+            &modes,
+            &tokens,
+            &next_modes,
+            &code_points,
+            &plan,
+            &matchers,
+            &name,
+        )
+    } else {
+        rules::render_grammar_scanner_definition(
+            &modes,
+            &spellings,
+            &tokens,
+            &next_modes,
+            &plan,
+            &name,
+        )
+    };
     let grammar = parse_grammar_links(&format!(
         "(grammar (start inferred_scanner_empty))\n{listing}(rule inferred_scanner_empty normal empty)\n"
     ))

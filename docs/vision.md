@@ -3648,8 +3648,15 @@ The scanner checks the parser's valid token set and mode before consuming the
 longest eligible spelling. Repeated identical observations share one
 transition. Conflicting observations for the same mode and spelling report
 unsupported context sensitivity. The trace model currently derives finite
-literal transitions and explicit mode changes. Lexical class induction,
-stack transition discovery and attributed actions use separate requirements.
+literal transitions and explicit mode changes. The optional
+`scannerCharacterClasses` profile coalesces observed single Unicode scalars
+with equal modes, tokens and successor modes. It joins only consecutive
+observed scalars into ranges, retaining gaps and placing longer literal
+prefixes before scalar classes. Version 3 of the discovery model retains the
+profile and its own exact typed algorithm alongside the trace algorithm.
+Refinement replays and retains both definitions. Stack transition discovery,
+attributed actions and extrapolation beyond observed scalars require additional
+independent controls.
 The shared controls combine the generated scanner with native syntax rules and
 check text round trips, token kinds, exact bytes and rejected inputs. The
 source draft has generated the native implementation and typed program.
@@ -3666,7 +3673,7 @@ formal certificate. Worklist, merge and sample budgets return explicit linked
 failure values rather than truncating inference silently. Native source is
 generated automatically from JavaScript. Formatter repair and all behavioral
 checks remain deferred under the current whole-scope draft instruction.
-Context-free inference, active learning, semantic induction, lexical inference,
+Context-free inference, active learning, semantic induction, wider lexical inference,
 minimization and the modern research obligations still require the remaining
 paired implementation work; these regular learners do not discharge them.
 

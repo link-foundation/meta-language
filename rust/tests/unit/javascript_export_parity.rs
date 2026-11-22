@@ -581,6 +581,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("inferGrammarScanner", "infer_grammar_scanner", "function"),
+    (
+        "inferGrammarScannerClasses",
+        "infer_grammar_scanner_classes",
+        "function",
+    ),
     ("inferRegularGrammar", "infer_regular_grammar", "function"),
     (
         "insertConceptRecord",

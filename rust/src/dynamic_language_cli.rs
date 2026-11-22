@@ -36,6 +36,8 @@ struct LabelledExamples {
     positives: Vec<Vec<String>>,
     negatives: Vec<Vec<String>>,
     scanner_observations: Option<Vec<crate::GrammarScannerObservation>>,
+    #[serde(default)]
+    scanner_character_classes: bool,
 }
 
 fn labelled_examples(text: &str, allow_scanner: bool) -> Result<LabelledExamples, String> {
@@ -45,6 +47,7 @@ fn labelled_examples(text: &str, allow_scanner: bool) -> Result<LabelledExamples
     if value
         .get("scannerObservations")
         .is_some_and(|scanner| !allow_scanner || scanner.is_null())
+        || (!allow_scanner && value.get("scannerCharacterClasses").is_some())
     {
         return Err(message());
     }
@@ -117,6 +120,7 @@ where
             .cloned()
             .unwrap_or(options.edition);
         options.scanner_observations = examples.scanner_observations;
+        options.scanner_character_classes = examples.scanner_character_classes;
         infer_regular_grammar(&examples.positives, &examples.negatives, &options)?
     } else {
         let archive = archive_input(
