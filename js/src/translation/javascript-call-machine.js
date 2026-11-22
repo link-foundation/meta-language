@@ -809,7 +809,8 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
       case 'waitObjectSpread':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction===undefined||instruction.$!=='objectSpread'||instruction.realm!==pending.realm||instruction.destination!==pending.destination||!program.realms.includes(pending.realm))return 'object spread retains its actual source instruction, destination and realm';
-        if(pending.state.operation!==instruction.operation||instruction.operation==='assignment'&&!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'object copy retains its actual CreateDataProperty or Set operation and Symbol';
+        const exoticKey=pending.state.exoticKey;
+        if(pending.state.operation!==instruction.operation||instruction.operation==='assignment'&&(exoticKey===undefined||!testJavaScriptSemanticSameValue(exoticKey,program.exoticKey)))return 'object copy retains its actual CreateDataProperty or Set operation and Symbol';
         const error=readJavaScriptObjectSpreadStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[instruction.target]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.input,frame.registers[instruction.input]??{$:'undefined'}))return 'object spread cannot substitute its actual target or source input';
         const excluded=instruction.excluded??[],excludedValues=pending.state.excluded;if(excluded.length!==excludedValues.length)return 'object copy retains every actual excluded-key operand';for(let at=0;at<excluded.length;at++)if(!testJavaScriptSemanticSameValue(excludedValues[at]??{$:'undefined'},frame.registers[excluded[at]??-1]??{$:'undefined'}))return 'object copy cannot substitute an excluded key';
