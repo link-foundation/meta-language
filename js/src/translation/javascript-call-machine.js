@@ -609,38 +609,59 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
     switch(pending.$){
       case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';return '';
       case 'waitObjectPrototype':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='objectObservation'||instruction.operation!=='Object.getPrototypeOf'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||pending.input.$==='object'||pending.input.$==='null'||pending.input.$==='undefined'||suspended)return 'primitive prototype metadata retains its actual source input operation and realm';
+        const invalidInstruction='primitive prototype metadata retains its actual source input operation and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='objectObservation')return invalidInstruction;
+        if(instruction.operation!=='Object.getPrototypeOf'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||pending.input.$==='object'||pending.input.$==='null'||pending.input.$==='undefined'||suspended)return invalidInstruction;
         const invalid=readJavaScriptOrdinaryValueError(heap,pending.input);if(invalid!=='')return invalid;return '';
       }
       case 'waitPropertyDefinitions':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,state=pending.state,selected=state.operation==='Object.create'?state.prototype:state.target;
-        if(instruction===undefined||instruction.$!=='propertyDefinitions'||instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.target]??{$:'undefined'},selected)||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},state.input)||!testJavaScriptSemanticSameValue(program.exoticKey,state.exoticKey)||suspended&&state.call===undefined)return 'bulk definitions retain actual source target attributes Symbol and selected child';
+        const invalidInstruction='bulk definitions retain actual source target attributes Symbol and selected child';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1],state=pending.state,selected=state.operation==='Object.create'?state.prototype:state.target;
+        if(instruction===undefined||instruction.$!=='propertyDefinitions')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.target]??{$:'undefined'},selected)||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},state.input)||!testJavaScriptSemanticSameValue(program.exoticKey,state.exoticKey)||suspended&&state.call===undefined)return invalidInstruction;
         const error=readJavaScriptPropertyDefinitionsStateError(heap,state);if(error!=='')return error;return '';
       }
       case 'waitPropertyReflection':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,state=pending.state;
-        if(instruction===undefined||instruction.$!=='propertyReflection'||instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||!testJavaScriptSemanticSameValue(frame.registers[instruction.objectPrototype]??{$:'undefined'},state.objectPrototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.arrayPrototype]??{$:'undefined'},state.arrayPrototype)||suspended)return 'property reflection retains actual source input key realm prototypes and no invented child call';
+        const invalidInstruction='property reflection retains actual source input key realm prototypes and no invented child call';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1],state=pending.state;
+        if(instruction===undefined||instruction.$!=='propertyReflection')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||!testJavaScriptSemanticSameValue(frame.registers[instruction.objectPrototype]??{$:'undefined'},state.objectPrototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.arrayPrototype]??{$:'undefined'},state.arrayPrototype)||suspended)return invalidInstruction;
         const invalid=readJavaScriptPropertyReflectionStateError(heap,state);if(invalid!=='')return invalid;return '';
       }
       case 'waitInstanceOf':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,state=pending.state;
-        if(instruction===undefined||instruction.$!=='instanceOf'||instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.left]??{$:'undefined'},state.left)||!testJavaScriptSemanticSameValue(frame.registers[instruction.right]??{$:'undefined'},state.right)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||suspended&&state.call===undefined)return 'instanceof retains its actual selected source operands Symbol operation and realm';
+        const invalidInstruction='instanceof retains its actual selected source operands Symbol operation and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1],state=pending.state;
+        if(instruction===undefined||instruction.$!=='instanceOf')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.operation!==state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.left]??{$:'undefined'},state.left)||!testJavaScriptSemanticSameValue(frame.registers[instruction.right]??{$:'undefined'},state.right)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||suspended&&state.call===undefined)return invalidInstruction;
         const invalid=readJavaScriptInstanceOfStateError(heap,state);if(invalid!=='')return invalid;return '';
       }
       case 'waitObjectIntegrity':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='objectObservation'||instruction.destination!==pending.destination||instruction.operation!==pending.state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||suspended)return 'integrity changes retain actual source operation input and no invented child call';
+        const invalidInstruction='integrity changes retain actual source operation input and no invented child call';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='objectObservation')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.operation!==pending.state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||suspended)return invalidInstruction;
         const invalid=readJavaScriptObjectIntegrityStateError(heap,pending.state);if(invalid!=='')return invalid;return '';
       }
       case 'waitObjectEnumeration':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='objectEnumeration'||instruction.destination!==pending.destination||instruction.operation!==pending.state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.arguments[0]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype))return 'Object enumeration retains its actual source operation input and realm Array prototype';
+        const invalidInstruction='Object enumeration retains its actual source operation input and realm Array prototype';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='objectEnumeration')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.operation!==pending.state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.arguments[0]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype))return invalidInstruction;
         const invalid=readJavaScriptObjectEnumerationStateError(heap,pending.state);if(invalid!=='')return invalid;if(suspended&&pending.state.phase!=='getter')return 'Object enumeration child retains its actual getter phase';return '';
       }
       case 'waitArrayCreation':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='arrayCreation'||instruction.destination!==pending.destination||pending.realm!==fn.realm||instruction.operation!==pending.state.operation||!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},pending.state.receiver)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.arrayPrototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey)||frame.arguments.length!==pending.state.arguments.length||frame.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,pending.state.arguments[index]??{$:'undefined'})))return 'Array creation retains its actual receiver arguments roots Symbols and source operation';
+        const invalidInstruction='Array creation retains its actual receiver arguments roots Symbols and source operation';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='arrayCreation')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||instruction.operation!==pending.state.operation||!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},pending.state.receiver)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.arrayPrototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey)||frame.arguments.length!==pending.state.arguments.length||frame.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,pending.state.arguments[index]??{$:'undefined'})))return invalidInstruction;
         const invalid=readJavaScriptArrayCreationStateError(heap,pending.state);if(invalid!=='')return invalid;
         if(pending.construction!==undefined||pending.fallback!==undefined){const request=stepJavaScriptArrayCreation(heap,pending.state);if(request.$!=='arrayCreationConstruct'||pending.error!==undefined||pending.construction!==undefined&&pending.fallback!==undefined)return 'Array creation retains only its actual selected construction phase';
          if(pending.construction!==undefined){const directory=program.constructorDirectory;if(directory===undefined)return 'Array creation construction retains actual constructor authority';const invalid=readJavaScriptConstructionStateError(program,heap,directory,pending.construction);if(invalid!=='')return invalid;if(!testJavaScriptSemanticSameValue(pending.construction.target,request.constructor)||!testJavaScriptSemanticSameValue(pending.construction.newTarget,request.constructor)||pending.construction.arguments.length!==request.arguments.length||pending.construction.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,request.arguments[index]??{$:'undefined'})))return 'Array creation retains its actual constructor and complete arguments';}
@@ -650,66 +671,101 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(pending.construction!==undefined||pending.fallback!==undefined||actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Array creation setup failure retains its actual selected callee Error realm and reason';}return '';
       }
       case 'waitConstructorCheck':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='constructorCheck'||instruction.destination!==pending.destination||instruction.required!==pending.required||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||suspended)return 'constructor checks retain actual selected input predicate mode and instruction';return '';
+        const invalidInstruction='constructor checks retain actual selected input predicate mode and instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='constructorCheck')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.required!==pending.required||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.input)||suspended)return invalidInstruction;return '';
       }
       case 'waitConstruction':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,directory=program.constructorDirectory;
-        const invalidSource='construction retains its actual source target newTarget destination and authority';
-        if(directory===undefined||instruction===undefined||pending.realm!==fn.realm)return invalidSource;
+        const invalidInstruction='construction retains every actual held ordered argument';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1],directory=program.constructorDirectory;
+        if(directory===undefined||instruction===undefined||pending.realm!==fn.realm)return invalidInstruction;
         switch(instruction.$){
           case 'construct':
-            if(instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.callee]??{$:'undefined'},pending.state.target)||!testJavaScriptSemanticSameValue(frame.registers[instruction.newTarget]??{$:'undefined'},pending.state.newTarget))return invalidSource;
-            if(instruction.arguments.length!==pending.state.arguments.length||instruction.arguments.some((coordinate,index)=>!testJavaScriptSemanticSameValue(frame.registers[coordinate]??{$:'undefined'},pending.state.arguments[index]??{$:'undefined'})))return 'construction retains every actual held ordered argument';
+            if(instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.callee]??{$:'undefined'},pending.state.target)||!testJavaScriptSemanticSameValue(frame.registers[instruction.newTarget]??{$:'undefined'},pending.state.newTarget))return invalidInstruction;
+            if(instruction.arguments.length!==pending.state.arguments.length||instruction.arguments.some((coordinate,index)=>!testJavaScriptSemanticSameValue(frame.registers[coordinate]??{$:'undefined'},pending.state.arguments[index]??{$:'undefined'})))return invalidInstruction;
             break;
           case 'argumentListCall':
-            if(instruction.mode!=='construct'||instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.callee]??{$:'undefined'},pending.state.target)||!testJavaScriptSemanticSameValue(frame.registers[instruction.receiver]??{$:'undefined'},pending.state.newTarget))return invalidSource;
+            if(instruction.mode!=='construct'||instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.callee]??{$:'undefined'},pending.state.target)||!testJavaScriptSemanticSameValue(frame.registers[instruction.receiver]??{$:'undefined'},pending.state.newTarget))return invalidInstruction;
             if(pending.heldArguments===undefined||pending.heldArguments.length!==pending.state.arguments.length||pending.heldArguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,pending.state.arguments[index]??{$:'undefined'})))return 'variadic construction retains its consumed immutable argument List proof';
             break;
-          default:return invalidSource;
+          default:return invalidInstruction;
         }
         const invalid=readJavaScriptConstructionStateError(program,heap,directory,pending.state);if(invalid!=='')return invalid;
         if(suspended&&pending.state.call===undefined)return 'a construction child retains its actual selected getter conversion or body call';return '';
       }
       case 'waitFunctionBind':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||instruction===undefined||instruction.$!=='functionBind'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.boundThis,frame.arguments[0]??{$:'undefined'})||pending.state.arguments.length!==Math.max(0,frame.arguments.length-1)||pending.state.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,frame.arguments[index+1]??{$:'undefined'})))return 'binding retains its actual intrinsic target receiver and complete argument prefix';
+        const invalidInstruction='binding retains its actual intrinsic target receiver and complete argument prefix';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='functionBind')return invalidInstruction;
+        if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.boundThis,frame.arguments[0]??{$:'undefined'})||pending.state.arguments.length!==Math.max(0,frame.arguments.length-1)||pending.state.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,frame.arguments[index+1]??{$:'undefined'})))return invalidInstruction;
         const error=readJavaScriptFunctionBindStateError(heap,pending.state);if(error!=='')return error;if(suspended&&pending.state.call===undefined)return 'binding child frames retain their actual selected metadata getter';return '';
       }
       case 'waitFunctionText':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,request=readJavaScriptFunctionText(program,heap,pending.input);if(instruction===undefined||instruction.$!=='functionToString'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptSemanticSameValue(pending.input,frame.registers[0]??{$:'undefined'})||request.$!=='functionTextNeedAuthority'||request.kind!==pending.kind||suspended)return 'function text retains its actual intrinsic receiver realm source category and external metadata request';return '';
+        const invalidInstruction='function text retains its actual intrinsic receiver realm source category and external metadata request';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1],request=readJavaScriptFunctionText(program,heap,pending.input);if(instruction===undefined||instruction.$!=='functionToString')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptSemanticSameValue(pending.input,frame.registers[0]??{$:'undefined'})||request.$!=='functionTextNeedAuthority'||request.kind!==pending.kind||suspended)return invalidInstruction;return '';
       }
       case 'waitObjectFromEntries':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='objectFromEntries'||instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey))return 'Object.fromEntries retains its actual source input realm prototype and well-known Symbols';
+        const invalidInstruction='Object.fromEntries retains its actual source input realm prototype and well-known Symbols';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='objectFromEntries')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey))return invalidInstruction;
         const invalid=readJavaScriptObjectFromEntriesStateError(heap,pending.state);if(invalid!=='')return invalid;
         if(suspended&&(pending.state.call===undefined||pending.error!==undefined))return 'Object.fromEntries child retains its actual selected call rather than an allocation request';
         if(pending.error!==undefined){const callee=pending.state.call?.callee,owner=callee?.$==='object'?readJavaScriptExecutableCallFunction(program,heap,callee.identity):undefined,actual=owner===undefined?undefined:readJavaScriptCallConstructorFailure(heap,owner);if(actual===undefined||pending.error.$!=='objectFromEntriesErrorRequest'||pending.error.realm!==actual.realm||pending.error.errorClass!==actual.errorClass||pending.error.reason!==actual.reason)return 'Object.fromEntries selected-call failure retains its actual callee constructor kind Error realm and reason';}return '';
       }
       case 'waitPrimitiveWrapper':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='primitiveWrapper'||instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||suspended)return 'primitive wrappers retain their actual selected input prototype and allocation instruction';
+        const invalidInstruction='primitive wrappers retain their actual selected input prototype and allocation instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='primitiveWrapper')return invalidInstruction;
+        if(instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||suspended)return invalidInstruction;
         const invalid=readJavaScriptPrimitiveWrapperStateError(heap,pending.state);if(invalid!=='')return invalid;return '';
       }
       case 'waitSymbolAllocation':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        const registry=instruction!==undefined&&instruction.$==='symbolRegistry'&&instruction.operation==='for';
-        if(instruction===undefined||instruction.$!=='symbolAllocate'&&!registry||registry&&(pending.registryKey===undefined||!['text','sourceText'].includes(pending.description.$)||!testJavaScriptSemanticSameValue(pending.registryKey,pending.description))||!registry&&pending.registryKey!==undefined||instruction.destination!==pending.destination||!['undefined','text','sourceText'].includes(pending.description.$)||readJavaScriptOrdinaryValueError(heap,pending.description)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description)||suspended)return 'Symbol allocation retains its actual converted optional description and selected instruction';return '';
+        const invalidInstruction='Symbol allocation retains its actual converted optional description and selected instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||!['undefined','text','sourceText'].includes(pending.description.$)||readJavaScriptOrdinaryValueError(heap,pending.description)!==''||suspended)return invalidInstruction;
+        switch(instruction.$){
+          case 'symbolRegistry':
+            if(instruction.operation!=='for'||pending.registryKey===undefined||!['text','sourceText'].includes(pending.description.$)||!testJavaScriptSemanticSameValue(pending.registryKey,pending.description))return invalidInstruction;
+            if(instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description))return invalidInstruction;
+            return '';
+          case 'symbolAllocate':
+            if(pending.registryKey!==undefined||instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description))return invalidInstruction;
+            return '';
+          default:return invalidInstruction;
+        }
       }
       case 'waitSymbolDescription':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='symbolDescription'||instruction.destination!==pending.destination||pending.symbol.$!=='symbol'||readJavaScriptOrdinaryValueError(heap,pending.symbol)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.symbol)||suspended)return 'Symbol description metadata retains its actual selected Symbol input and instruction';return '';
+        const invalidInstruction='Symbol description metadata retains its actual selected Symbol input and instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='symbolDescription')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.symbol.$!=='symbol'||readJavaScriptOrdinaryValueError(heap,pending.symbol)!==''||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.symbol)||suspended)return invalidInstruction;return '';
       }
       case 'waitFunctionNameSymbol':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='functionName'||instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.prefix!==pending.prefix||pending.key.$!=='symbol'||pending.object.$!=='object'||!pending.object.callable||!testJavaScriptSemanticSameValue(frame.registers[instruction.object]??{$:'undefined'},pending.object)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},pending.key))return 'Symbol name metadata retains its actual selected function property key prefix and instruction';
+        const invalidInstruction='Symbol name metadata retains its actual selected function property key prefix and instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='functionName')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.prefix!==pending.prefix||pending.key.$!=='symbol'||pending.object.$!=='object'||!pending.object.callable||!testJavaScriptSemanticSameValue(frame.registers[instruction.object]??{$:'undefined'},pending.object)||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},pending.key))return invalidInstruction;
         const invalid=readJavaScriptOrdinaryValueError(heap,pending.key)||readJavaScriptOrdinaryValueError(heap,pending.object);if(invalid!=='')return invalid;return '';
       }
       case 'waitSourceError':{
         if(!program.realms.includes(pending.realm)||fn.realm!==pending.realm)return 'pending source Error allocation retains its actual source realm';
         if((pending.message.$!=='text'&&pending.message.$!=='sourceText')||readJavaScriptOrdinaryValueError(heap,pending.message)!==''||typeof pending.messagePresent!=='boolean')return 'pending source Error retains exact UTF16 message and Boolean presence';
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined)return 'pending source Error retains its actual source instruction and arguments';
+        const invalidInstruction='pending source Error retains its actual source instruction and arguments';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined)return invalidInstruction;
         switch(instruction.$){
           case 'primitive':{
             if(readJavaScriptSourceExceptionClass(instruction.operation)!==pending.errorClass||pending.errorClass===''||instruction.arguments.length!==2)return 'pending source Error retains its actual source instruction and arguments';
@@ -724,8 +780,10 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         return '';
       }
       case 'waitErrorValue':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='constructErrorValue')return 'Error value resumption retains its actual constructor instruction';
+        const invalidInstruction='Error value resumption retains its actual constructor instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='constructErrorValue')return invalidInstruction;
         if(instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.errorClass!==pending.errorClass||instruction.bindReceiver!==pending.bindReceiver)return 'Error value resumption retains its actual destination, realm and constructor role';
         const constructor=frame.registers[instruction.constructor]??{$:'undefined'},newTarget=frame.registers[instruction.newTarget]??{$:'undefined'},prototype=frame.registers[instruction.prototype]??{$:'undefined'},message=frame.registers[instruction.message]??{$:'undefined'},present=frame.registers[instruction.present]??{$:'undefined'};
         const error=readJavaScriptErrorConstructionOperandsError(heap,constructor,newTarget,prototype,message,present);if(error!=='')return error;
@@ -735,19 +793,28 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         return '';
       }
       case 'waitErrorIntrinsic':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode)||instruction===undefined||instruction.$!=='invokeErrorIntrinsic'||instruction.destination!==pending.destination)return 'an external Error callback retains its actual registered source instruction';
+        const invalidInstruction='an external Error callback retains its actual registered source instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='invokeErrorIntrinsic')return invalidInstruction;
+        if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode)||instruction.destination!==pending.destination)return invalidInstruction;
         return '';
       }
       case 'waitHostCapability':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(!testJavaScriptHostCapabilityMode(fn.receiverMode)||instruction===undefined||instruction.$!=='invokeHostCapability'||instruction.destination!==pending.destination)return 'an external capability retains its actual qualified source instruction';
+        const invalidInstruction='an external capability retains its actual qualified source instruction';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='invokeHostCapability')return invalidInstruction;
+        if(!testJavaScriptHostCapabilityMode(fn.receiverMode)||instruction.destination!==pending.destination)return invalidInstruction;
         const prior=readJavaScriptErrorPriorDirectoryError(heap,pending.beforeDirectory);if(prior!=='')return prior;
         return '';
       }
       case 'waitArrayConcatenation':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='arrayConcatenation'||instruction.destination!==pending.destination||pending.realm!==fn.realm)return 'Array concatenation retains actual source instruction destination and realm';
+        const invalidInstruction='Array concatenation retains actual source instruction destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='arrayConcatenation')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm)return invalidInstruction;
         const species=instruction.species;
         if(species===undefined)return 'Array concatenation retains its actual species authority';
         const invalid=readJavaScriptArrayConcatenationStateError(heap,species,pending.state);if(invalid!=='')return invalid;
@@ -757,8 +824,11 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(suspended&&(construction!==undefined?construction.call===undefined:pending.state.call===undefined))return 'Array concatenation child retains its actual selected callback';return '';
       }
       case 'waitArraySlice':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='arraySlice'||instruction.destination!==pending.destination||pending.realm!==fn.realm)return 'Array slice retains actual source instruction destination and realm';
+        const invalidInstruction='Array slice retains actual source instruction destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='arraySlice')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm)return invalidInstruction;
         const species=instruction.species;
         if(species===undefined)return 'Array slice retains its actual species authority';
         const invalid=readJavaScriptArraySliceStateError(heap,species,pending.state);if(invalid!=='')return invalid;
@@ -768,8 +838,11 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(suspended&&(construction!==undefined?construction.call===undefined:pending.state.call===undefined))return 'Array slice child retains its actual selected callback';return '';
       }
       case 'waitArrayTransform':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='arrayTransform'||instruction.destination!==pending.destination||pending.realm!==fn.realm||pending.state.operation!==instruction.operation)return 'Array transform continuation retains its actual source operation, destination and realm';
+        const invalidInstruction='Array transform continuation retains its actual source operation, destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='arrayTransform')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||pending.state.operation!==instruction.operation)return invalidInstruction;
         const species=instruction.species;
         if(species===undefined)return 'Array transform retains its actual species authority';
         const error=readJavaScriptArrayTransformStateError(heap,species,pending.state);if(error!=='')return error;
@@ -783,8 +856,11 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(suspended&&(construction!==undefined?construction.call===undefined:pending.state.call===undefined))return 'Array transform child frames retain their actual selected call';return '';
       }
       case 'waitArraySearch':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='arraySearch'||instruction.destination!==pending.destination||pending.realm!==fn.realm||pending.state.operation!==instruction.operation)return 'Array search continuation retains its actual source operation, destination and realm';
+        const invalidInstruction='Array search continuation retains its actual source operation, destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='arraySearch')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||pending.state.operation!==instruction.operation)return invalidInstruction;
         const error=readJavaScriptArraySearchStateError(heap,pending.state);if(error!=='')return error;
         const at=instruction.operation==='Array.at',search=at?{$:'undefined'}:frame.arguments[0]??{$:'undefined'},from=frame.arguments[at?0:1]??{$:'undefined'},present=frame.arguments.length>=(at?1:2);
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.searchElement,search)||!testJavaScriptSemanticSameValue(pending.state.fromIndex,from)||pending.state.fromPresent!==present||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'Array search cannot substitute its actual receiver, search value, index argument, presence or Symbol';
@@ -792,23 +868,32 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         return '';
       }
       case 'waitCollectionForEach':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='collectionForEach'||instruction.destination!==pending.destination||pending.realm!==fn.realm||instruction.operation!==pending.state.operation)return 'collection callback continuation retains its actual operation destination and realm';
+        const invalidInstruction='collection callback continuation retains its actual operation destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='collectionForEach')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||instruction.operation!==pending.state.operation)return invalidInstruction;
         const error=readJavaScriptCollectionForEachStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.callback,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.thisArgument,frame.arguments[1]??{$:'undefined'}))return 'collection callbacks retain their actual receiver callback and thisArgument';
         if(suspended&&pending.state.call===undefined)return 'a collection callback child retains its actual selected call';return '';
       }
       case 'waitArrayCallback':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='arrayCallback'||instruction.destination!==pending.destination||pending.realm!==fn.realm||pending.state.operation!==instruction.operation)return 'Array callback continuation retains its actual source operation, destination and realm';
+        const invalidInstruction='Array callback continuation retains its actual source operation, destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='arrayCallback')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||pending.state.operation!==instruction.operation)return invalidInstruction;
         const error=readJavaScriptArrayCallbackStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.callback,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.thisArgument,frame.arguments[1]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey)||pending.state.initialPresent!==(frame.arguments.length>=2))return 'Array callbacks cannot substitute their receiver, callback, thisArg or well-known Symbol';
         if(suspended&&pending.state.call===undefined)return 'only an actual Array getter, conversion or callback can retain a child frame';
         return '';
       }
       case 'waitObjectSpread':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction===undefined||instruction.$!=='objectSpread'||instruction.realm!==pending.realm||instruction.destination!==pending.destination||!program.realms.includes(pending.realm))return 'object spread retains its actual source instruction, destination and realm';
+        const invalidInstruction='object spread retains its actual source instruction, destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='objectSpread')return invalidInstruction;
+        if(instruction.realm!==pending.realm||instruction.destination!==pending.destination||!program.realms.includes(pending.realm))return invalidInstruction;
         const exoticKey=pending.state.exoticKey;
         if(pending.state.operation!==instruction.operation||instruction.operation==='assignment'&&(exoticKey===undefined||!testJavaScriptSemanticSameValue(exoticKey,program.exoticKey)))return 'object copy retains its actual CreateDataProperty or Set operation and Symbol';
         const error=readJavaScriptObjectSpreadStateError(heap,pending.state);if(error!=='')return error;
@@ -818,8 +903,11 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         return '';
       }
       case 'waitArrayAssignment':{
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(fn.realm!==pending.realm||instruction===undefined||instruction.$!=='ordinarySet'||instruction.destination!==pending.destination)return 'Array assignment retains its actual source Set instruction, destination and realm';
+        const invalidInstruction='Array assignment retains its actual source Set instruction, destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='ordinarySet')return invalidInstruction;
+        if(fn.realm!==pending.realm||instruction.destination!==pending.destination)return invalidInstruction;
         const error=readJavaScriptArrayAssignmentStateError(heap,pending.state);if(error!=='')return error;
         const receiver=frame.registers[instruction.receiver]??{$:'undefined'},definition=pending.state.definition;
         if(receiver.$!=='object'||receiver.identity!==definition.identity||!testJavaScriptSemanticSameValue(definition.key,frame.registers[instruction.key]??{$:'undefined'})||!testJavaScriptSemanticSameValue(definition.descriptor.value,frame.registers[instruction.value]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'Array assignment cannot substitute its receiver, key, value or well-known Symbol';
@@ -829,7 +917,10 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         return '';
       }
       case 'waitArgumentRest':{
-        const instruction=frame.position===0?undefined:fn.instructions[frame.position-1];if(instruction===undefined||instruction.$!=='argumentRest'||instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.from!==pending.state.from||!testJavaScriptSemanticSameValue(pending.state.prototype,frame.registers[instruction.prototype]??{$:'undefined'}))return 'argument rest retains its actual source instruction and prototype';
+        const invalidInstruction='argument rest retains its actual source instruction and prototype';
+        if(frame.position===0)return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];if(instruction===undefined||instruction.$!=='argumentRest')return invalidInstruction;
+        if(instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.from!==pending.state.from||!testJavaScriptSemanticSameValue(pending.state.prototype,frame.registers[instruction.prototype]??{$:'undefined'}))return invalidInstruction;
         const error=readJavaScriptArgumentRestStateError(heap,frame.arguments,pending.state);if(error!=='')return error;if(suspended)return 'argument copying cannot hide a selected source callback';return '';
       }
       case 'waitIteratorProtocol':{
