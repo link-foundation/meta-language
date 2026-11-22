@@ -216,6 +216,32 @@ holdout input. Training exhaustion leaves the comparison scores unmeasured.
 The two process memory figures cover different programs and are recorded as
 such. No XVada comparison has run yet.
 
+The same comparison now admits the pinned model-free NatGI bracket-guided
+learner and the pinned Crucio lexical and distributional learner. Crucio's
+Cython extension builds in a temporary directory from the upstream source.
+Its wheels and the source-only colored dependency have exact SHA-256 pins.
+The job keeps the original checkout, progress diagnostics, membership traces
+and resource-limit outcomes. There is a 90-second training allowance and a
+separate 90-second evaluation allowance per learner run. Holdout rows whose
+bytes occur in either membership trace are excluded from the score and
+retained with their outcomes.
+
+Every JSON strategy receives the same evaluation sources. In addition to
+JSONTestSuite, the draft selects the 64 largest eligible JSON examples from the
+pinned Crucio benchmark and the pinned npm CLI and TypeScript project
+manifests. Rows outside the sample or byte budget remain in the report.
+Node and CPython independently label project inputs, and scores are available
+per corpus and per oracle. The experiment awaits CI execution.
+[npm CLI source](https://github.com/npm/cli/tree/417daa72b09c5129e7390cd12743ef31bf3ddb83) · [TypeScript source](https://github.com/microsoft/TypeScript/tree/c63de15a992d37f0d6cec03ac7631872838602cb)
+
+The attributed holdout is a bounded reproduction of the successful-path
+trace approach. A separate scanner and regular expression characterize
+ordered lists of ASCII decimal quantities with a common unit. The experiment
+checks the inferred sum against that oracle and compares it with syntax-only
+learning. It retains disjoint positive and adversarial holdouts, complete CST
+projection, exact spans and bytes, ambiguity, and repeat outcomes. Broader
+attribute inference and exceptional parser behavior still need coverage.
+
 Reviewed the four exact paper revisions named by #224. The public artifact
 commits below were resolved independently on November 22, 2026. They identify
 inputs for a comparison run. Benchmark results and portability remain open.

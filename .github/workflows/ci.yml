@@ -310,7 +310,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        strategy: [rpni, edsm, alergia, xvada, natgi, attributed]
+        strategy: [rpni, edsm, alergia, xvada, natgi, crucio, attributed]
     steps:
       - uses: actions/checkout@v7
 
@@ -332,6 +332,28 @@ jobs:
           git init "$RUNNER_TEMP/JSONTestSuite"
           git -C "$RUNNER_TEMP/JSONTestSuite" fetch --depth=1 --no-tags \
             https://github.com/nst/JSONTestSuite.git "$CORPUS_REVISION"
+
+      - name: Fetch the pinned benchmark and project inputs
+        if: ${{ matrix.strategy != 'attributed' }}
+        run: |
+          fetch_inputs() {
+            local name="$1" remote="$2" revision="$3"
+            shift 3
+            local checkout="$RUNNER_TEMP/$name"
+            git init "$checkout"
+            git -C "$checkout" remote add origin "$remote"
+            git -C "$checkout" config remote.origin.promisor true
+            git -C "$checkout" config remote.origin.partialclonefilter blob:none
+            git -C "$checkout" fetch --depth=1 --no-tags --filter=blob:none origin "$revision"
+            git -C "$checkout" sparse-checkout set --no-cone "$@"
+            git -C "$checkout" checkout --detach "$revision"
+          }
+          fetch_inputs gi-benchmarks https://github.com/Sinpersrect/gi-benchmarks.git \
+            aab9b09e1af68eed73fb07231b8e0bbd4870cdf2 '/json/json-test/*.ex'
+          fetch_inputs npm-cli https://github.com/npm/cli.git \
+            417daa72b09c5129e7390cd12743ef31bf3ddb83 /package.json '/workspaces/*/package.json'
+          fetch_inputs typescript https://github.com/microsoft/TypeScript.git \
+            c63de15a992d37f0d6cec03ac7631872838602cb /package.json
 
       - name: Fetch the pinned model-free research learner
         if: ${{ matrix.strategy == 'xvada' || matrix.strategy == 'natgi' }}
@@ -356,6 +378,32 @@ jobs:
             -r experiments/grammar-inference/xvada-requirements.txt
           printf '%s\n' "$RUNNER_TEMP/grammar-inference-venv/bin" >> "$GITHUB_PATH"
 
+      - name: Fetch and build the pinned Crucio learner
+        if: ${{ matrix.strategy == 'crucio' }}
+        env:
+          CRUCIO_REVISION: ce913637763f0b25017d38e0e01944f54cf86d38
+        run: |
+          checkout="$RUNNER_TEMP/crucio"
+          git init "$checkout"
+          git -C "$checkout" remote add origin https://github.com/Sinpersrect/crucio.git
+          git -C "$checkout" config remote.origin.promisor true
+          git -C "$checkout" config remote.origin.partialclonefilter blob:none
+          git -C "$checkout" fetch --depth=1 --no-tags --filter=blob:none origin "$CRUCIO_REVISION"
+          git -C "$checkout" sparse-checkout set --no-cone '/*.py' /compute_T.pyx /readme.md /requirements.txt '/crucio/**/*.py'
+          git -C "$checkout" checkout --detach "$CRUCIO_REVISION"
+          python3 -m venv "$RUNNER_TEMP/crucio-venv"
+          python="$RUNNER_TEMP/crucio-venv/bin/python"
+          "$python" -m pip install --require-hashes --only-binary=:all: --no-deps \
+            -r experiments/grammar-inference/crucio-requirements.txt
+          "$python" -m pip install --require-hashes --no-build-isolation --no-deps --no-binary=colored \
+            -r <(printf '%s\n' 'colored==1.4.4 --hash=sha256:04ff4d4dd514274fe3b99a21bb52fb96f2688c01e93fba7bef37221e7cb56ce0')
+          build="$RUNNER_TEMP/crucio-build"
+          mkdir "$build"
+          cp "$checkout/setup.py" "$checkout/compute_T.pyx" "$build/"
+          (cd "$build" && "$python" setup.py build_ext --inplace)
+          printf '%s\n' "$RUNNER_TEMP/crucio-venv/bin" >> "$GITHUB_PATH"
+          printf 'PYTHONPATH=%s\n' "$build" >> "$GITHUB_ENV"
+
       - name: Measure the learner and independent oracles
         env:
           LEARNER_STRATEGY: ${{ matrix.strategy }}
@@ -364,8 +412,8 @@ jobs:
           if [[ "$LEARNER_STRATEGY" == attributed ]]; then
             experiment=(experiments/grammar-inference/attributed-holdout.mjs)
           else
-            experiment=(experiments/grammar-inference/json-holdout.mjs "$RUNNER_TEMP/JSONTestSuite" "$LEARNER_STRATEGY")
-            if [[ "$LEARNER_STRATEGY" == xvada || "$LEARNER_STRATEGY" == natgi ]]; then
+            experiment=(experiments/grammar-inference/json-holdout.mjs "$RUNNER_TEMP/JSONTestSuite" "$RUNNER_TEMP" "$LEARNER_STRATEGY")
+            if [[ "$LEARNER_STRATEGY" == xvada || "$LEARNER_STRATEGY" == natgi || "$LEARNER_STRATEGY" == crucio ]]; then
               experiment+=("$RUNNER_TEMP/$LEARNER_STRATEGY" grammar-inference-results/training-queries.jsonl)
             fi
           fi
