@@ -1,7 +1,7 @@
 // The exclusive source interface is distinct from immutable sourceSignature.
 import {createRustSourceSignature,checkRustSourceSignature} from './rust-source-signatures.js';
 import {readRustSourceVersion} from './rust-source-versions.js';
-import {readRustExclusiveSourceLoanVersionError,rustExclusiveSourceLoanProfile} from './rust-exclusive-source-loan-rules.js';
+import {readRustExclusiveSourceLoanVersionError,readRustExclusiveSourceLoanProfile} from './rust-exclusive-source-loan-rules.js';
 import {typeError,unsupported} from './diagnostics.js';
 import {typeKey} from './types.js';
 import {checkRustStandardCollectionCarrier} from './rust-standard-collection-signatures.js';
@@ -9,7 +9,7 @@ import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
 export function requireRustExclusiveSourceModel(model,version){
  if(model==='')return;
  const facts=readRustSourceVersion(version),error=readRustExclusiveSourceLoanVersionError(facts.major,facts.minor);
- if(model!==rustExclusiveSourceLoanProfile||error)throw unsupported('Rust exclusive source model',error||'select Rust exclusive source loans 1');
+ if(model!==readRustExclusiveSourceLoanProfile()||error)throw unsupported('Rust exclusive source model',error||'select Rust exclusive source loans 1');
 }
 export function createRustExclusiveSourceSignature(parser,parameters,result){
  if(parameters.length>256)throw unsupported('Rust exclusive source signature','the actual formal list exceeds the bounded source carrier profile');
@@ -22,11 +22,11 @@ export function createRustExclusiveSourceSignature(parser,parameters,result){
  };
  if(result.wrappers.includes('reference'))throw unsupported('Rust exclusive source result','returned references need their actual escape and lifetime interpretation');
  const positions=createRustSourceSignature('Rust source function signature 2',parameters.map(referent),referent(result),new Set());
- return {model:rustExclusiveSourceLoanProfile,language:'Rust',sourceVersion:parser.exclusiveSourceVersion,parameters:positions.parameters.map((position,index)=>({mode:mode(parameters[index]),position})),result:positions.result,packet:parameters.flatMap((origin,index)=>mode(origin)==='exclusive'?[index]:[])};
+ return {model:readRustExclusiveSourceLoanProfile(),language:'Rust',sourceVersion:parser.exclusiveSourceVersion,parameters:positions.parameters.map((position,index)=>({mode:mode(parameters[index]),position})),result:positions.result,packet:parameters.flatMap((origin,index)=>mode(origin)==='exclusive'?[index]:[])};
 }
 export function checkRustExclusiveSourceSignature(signature,parameters,result,language,resolveType=value=>value,resolveData=()=>null){
  const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
- if(!exact(signature,['model','language','sourceVersion','parameters','result','packet'])||signature.model!==rustExclusiveSourceLoanProfile||signature.language!=='Rust'||language!=='Rust')throw typeError('an exclusive Rust source signature requires its actual distinct model and fields');
+ if(!exact(signature,['model','language','sourceVersion','parameters','result','packet'])||signature.model!==readRustExclusiveSourceLoanProfile()||signature.language!=='Rust'||language!=='Rust')throw typeError('an exclusive Rust source signature requires its actual distinct model and fields');
  const version=readRustSourceVersion(signature.sourceVersion),versionError=readRustExclusiveSourceLoanVersionError(version.major,version.minor);if(versionError)throw typeError(versionError);
  if(typeof signature.sourceVersion!=='string'||signature.sourceVersion!==version.spelling)throw typeError('an exclusive Rust source signature retains its explicit canonical selected source version');
  if(!Array.isArray(signature.parameters)||signature.parameters.length!==parameters.length||signature.parameters.length>256||!Array.isArray(signature.packet))throw typeError('an exclusive Rust source signature retains its complete bounded formal inventory');

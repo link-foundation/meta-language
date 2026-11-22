@@ -45,7 +45,7 @@ function storage(context,position,active=[],budget={work:0}){
 }
 function place(context,identity,fields){let position=binder(context,identity)?.position;if(!position||!Array.isArray(fields)||fields.length>256)return null;for(const index of fields){const layout=record(context,position);if(!Number.isSafeInteger(index)||index<0||!layout||index>=layout.fields.length)return null;position=layout.fields[index].position;}return position;}
 export function readRustExclusiveSourceLoanContextError(context){
- if(context?.$!=='rustExclusiveSourceContext'||context.profile!==rules.rustExclusiveSourceLoanProfile)return 'exclusive loans require their explicit source profile';
+ if(context?.$!=='rustExclusiveSourceContext'||context.profile!==rules.readRustExclusiveSourceLoanProfile())return 'exclusive loans require their explicit source profile';
  const version=rules.readRustExclusiveSourceLoanVersionError(context.major,context.minor);if(version)return version;
  if(!Array.isArray(context.binders)||!Array.isArray(context.scopes)||!Array.isArray(context.records)||!Array.isArray(context.callables)||!Array.isArray(context.destructors)||context.scopes.length===0)return 'exclusive loans require actual binder, scope, record and callable inventories';
  const budget=rules.readRustExclusiveSourceLoanBudgetError(context.binders.length,context.callables.length,context.scopes.length,context.records.length);if(budget)return budget;
