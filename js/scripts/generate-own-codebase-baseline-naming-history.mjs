@@ -52,17 +52,22 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/scripts/generate-continuation-historical-inputs.mjs',
     'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
     'js/scripts/generate-own-codebase-test-registration-sources.mjs',
+    'js/scripts/generate-raw-oracle-contract-partitions.mjs',
     'js/scripts/generate-tooling-frozen-source-history.mjs',
     'js/scripts/own-codebase-baseline-naming-history.mjs',
     'js/scripts/own-codebase-test-registration-history.mjs',
     'js/scripts/raw-consuming-snapshot-source-profile.mjs',
+    'js/scripts/raw-oracle-contract-partition-history.mjs',
     'js/scripts/test-groups.mjs',
     'js/scripts/tooling-frozen-source-history.mjs',
     'js/tests/issue-195-evidence-node-dependency.test.js',
     'js/tests/issue-195-evidence-node-test-placement.test.js',
     'js/tests/issue-195-evidence-tooling-frozen-sources.test.js',
+    'js/tests/project-data-fixture-links-storage.test.js',
     'js/tests/self-translation.test.js',
+    'js/tests/support/translation-workflow-history.js',
     'js/tests/test-groups.test.js',
+    'js/tests/translation-typescript-workflow.test.js',
   ];
   const file='parity/naming/array-identity-historical-inventories.lino';
   const stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
