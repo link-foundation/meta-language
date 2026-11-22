@@ -228,6 +228,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("VerificationIssue", "VerificationIssue", "type"),
     ("VerificationReport", "VerificationReport", "type"),
     (
+        "acceptActiveGrammarWord",
+        "grammar::inference::active::Dfa::accepts",
+        "method",
+    ),
+    (
         "acceptInferredGrammarSymbols",
         "accept_inferred_grammar_symbols",
         "function",
@@ -610,6 +615,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("languageEntry", "language_entry", "function"),
     ("languageForPath", "language_for_path", "function"),
     ("languageSupport", "language_support", "function"),
+    (
+        "learnActiveGrammar",
+        "grammar::inference::active::learn_active_grammar",
+        "function",
+    ),
+    (
+        "learnActiveGrammarAutomaton",
+        "grammar::inference::active::learn_active_grammar_automaton",
+        "function",
+    ),
     ("lowerGrammar", "lower_grammar", "function"),
     ("lowerGraphQL", "lower_graphql", "function"),
     ("lowerGraphQl", "lower_graphql", "function"),
@@ -868,6 +883,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "run_source_definition_command",
         "function",
     ),
+    (
+        "sampleActiveGrammarWords",
+        "grammar::inference::active::sample_active_grammar_words",
+        "function",
+    ),
     ("scriptLanguage", "script_language", "function"),
     ("selfTranslate", "self_translate", "function"),
     (
@@ -974,6 +994,7 @@ fn export_parity_rust_has_every_listed_feature() {
     let _ = meta_language::ProgramRepresentation::from_snapshot;
     let _ = meta_language::ProgramRepresentation::serialize_snapshot;
     let _ = meta_language::SyntaxTree::render;
+    let _ = meta_language::grammar::inference::active::Dfa::accepts;
     let features = language_features();
     let listed = features["javascriptExports"]
         .as_object()

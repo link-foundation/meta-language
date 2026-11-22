@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGrammarSymbols } from '../src/grammar-inference.js';
+import { acceptActiveGrammarWord, learnActiveGrammar, sampleActiveGrammarWords } from '../src/grammar-active-learning.js';
 import { LinkNetwork } from '../src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { createDynamicMetaLanguage } from '../src/dynamic-meta-language.js';
@@ -189,4 +190,30 @@ test('scanner mode stacks restore each actual parent and replay the selected arc
     assertions: ['scannerModeStackTreesAndRejectionsMatch', 'scannerModeStackArchiveReplaysAndRefines', 'unsupportedScannerModeStackEffectsAreRefused'],
     testName: context.name,
   });
+});
+test('active discovery learns a native grammar through ordered independent queries', () => {
+  const alphabet = ['λ', '🙂'];
+  const membership = word => /^(?:λ🙂)*$/u.test(word.join(''));
+  const options = { maxWordLen: 6, equivalenceSamples: 64, seed: 31n };
+  const candidates = sampleActiveGrammarWords(alphabet, options);
+  assert.deepEqual(candidates, sampleActiveGrammarWords(alphabet, options));
+  assert.deepEqual(candidates.slice(0, 5), [[], ['λ'], ['🙂'], ['λ', 'λ'], ['🙂', '🙂']]);
+  const learned = learnActiveGrammar({
+    alphabet,
+    membership,
+    equivalence: hypothesis => candidates.find(word => acceptActiveGrammarWord(hypothesis, word) !== membership(word)),
+  }, options);
+  assert.equal(learned.equivalence, 'oracle');
+  assert.equal(learned.hypothesis.states, 3);
+  assert.ok(learned.equivalenceQueries > 1);
+  assert.ok(learned.membershipQueries > 0);
+  const parser = compileGrammar(parseGrammarLinks(renderGrammarLinks(learned.grammar)));
+  for (const word of candidates) {
+    assert.equal(parser.parseTree(word.join('')).ok, membership(word), word.join(''));
+  }
+  const sampled = learnActiveGrammar({ alphabet, membership }, options);
+  assert.equal(sampled.equivalence, 'bounded sampling');
+  assert.deepEqual(sampled.hypothesis, learned.hypothesis);
+  assert.equal(sampled.membershipQueries, learned.membershipQueries);
+  assert.equal(sampled.equivalenceQueries, learned.equivalenceQueries);
 });

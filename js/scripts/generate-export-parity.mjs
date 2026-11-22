@@ -56,6 +56,10 @@ export const OVERRIDES = Object.freeze({
   // One compile entry point builds the native executor's parser.
   compileGrammar: { rust: 'compile_feature_grammar' },
   createGrammarParser: { rust: 'compile_feature_grammar' },
+  acceptActiveGrammarWord: { rust: 'grammar::inference::active::Dfa::accepts' },
+  learnActiveGrammar: { rust: 'grammar::inference::active::learn_active_grammar' },
+  learnActiveGrammarAutomaton: { rust: 'grammar::inference::active::learn_active_grammar_automaton' },
+  sampleActiveGrammarWords: { rust: 'grammar::inference::active::sample_active_grammar_words' },
   renderSyntaxTree: { rust: 'SyntaxTree::render' },
   validateGrammar: { rust: 'validate' },
   renderRuleFieldLinks: { rust: 'render_rule_fields' },

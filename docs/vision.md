@@ -3622,6 +3622,14 @@ active learning and minimization already present in the Rust inference modules
 and their closed issues are audited and extended, with matching JavaScript
 behavior. Closed issues do not supply current implementation evidence.
 
+Active regular-language inference maintains an ordered L* observation table.
+Each runtime caches membership by prefix and suffix, adds prefixes until the table is
+closed, and adds the first distinguishing suffix when successor rows disagree.
+An exact caller-supplied equivalence query can return a counterexample. The
+fallback uses deterministic bounded sampling and reports that method with the
+hypothesis and query counts. It makes no claim of exact language equivalence.
+The hypothesis can be materialized as an ordinary right-linear grammar.
+
 A new shared source draft supplies labelled prefix-tree construction, red/blue
 RPNI selection, evidence-driven selection and an ALERGIA-style compatibility
 worklist in both runtimes. First-observed symbol and state order explicitly

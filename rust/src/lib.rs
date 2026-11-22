@@ -27,6 +27,7 @@ mod global_concept_identity_rules;
 mod global_concept_rules;
 mod global_concept_space;
 pub mod grammar;
+mod grammar_active_learning_rules;
 mod grammar_composition_batch;
 mod grammar_composition_batch_rules;
 pub use grammar_composition_batch::{

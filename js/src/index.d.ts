@@ -1110,6 +1110,37 @@ export function readRegularGrammarInferenceLinks(network: LinkNetwork, root: Lin
 export function refineRegularGrammarInference(network:LinkNetwork,root:LinkIdValue,positives?:readonly (readonly string[])[],negatives?:readonly (readonly string[])[],options?:{identifier?:string}):RegularGrammarInference;
 export function readRefinedRegularGrammarInferenceLinks(network:LinkNetwork,root:LinkIdValue):RegularGrammarInference;
 export function acceptInferredGrammarSymbols(model: RegularGrammarInference, symbols: readonly string[]): boolean;
+export interface ActiveGrammarLearningOptions {
+  maxWordLen?: number;
+  equivalenceSamples?: number;
+  seed?: bigint;
+  maxIterations?: number;
+  useTtt?: boolean;
+}
+export interface ActiveGrammarAutomaton {
+  readonly alphabet: readonly string[];
+  readonly states: number;
+  readonly start: number;
+  readonly accepting: readonly boolean[];
+  readonly delta: readonly (readonly number[])[];
+}
+export interface ActiveGrammarOracle {
+  alphabet: readonly string[];
+  membership(word: readonly string[]): boolean;
+  equivalence?(hypothesis: ActiveGrammarAutomaton, options: Required<ActiveGrammarLearningOptions>): readonly string[] | undefined;
+}
+export interface ActiveGrammarLearning {
+  hypothesis: ActiveGrammarAutomaton;
+  /** Membership queries to fill the observation table. */
+  membershipQueries: number;
+  /** Equivalence calls, including the final query without a counterexample. */
+  equivalenceQueries: number;
+  equivalence: 'oracle' | 'bounded sampling';
+}
+export function acceptActiveGrammarWord(hypothesis: ActiveGrammarAutomaton, word: Iterable<string>): boolean;
+export function learnActiveGrammarAutomaton(oracle: ActiveGrammarOracle, options?: ActiveGrammarLearningOptions): ActiveGrammarLearning;
+export function learnActiveGrammar(oracle: ActiveGrammarOracle, options?: ActiveGrammarLearningOptions): ActiveGrammarLearning & { grammar: Grammar };
+export function sampleActiveGrammarWords(alphabet: readonly string[], options?: ActiveGrammarLearningOptions): string[][];
 export interface StructuralGrammarInferenceOptions {
   delimiters: readonly (readonly [string, string])[];
   identifier?: string;

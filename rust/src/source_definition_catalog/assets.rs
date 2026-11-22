@@ -77,6 +77,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "formal-string-unit-program.lino" => {
             Some(include_str!("../data/formal-string-unit-program.lino"))
         }
+        "grammar-active-learning-program.lino" => {
+            Some(include_str!("../data/grammar-active-learning-program.lino"))
+        }
         "grammar-composition-batch-program.lino" => Some(include_str!(
             "../data/grammar-composition-batch-program.lino"
         )),
@@ -125,6 +128,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-class-source-program.lino" => {
             Some(include_str!("../data/javascript-class-source-program.lino"))
         }
+        "javascript-collection-call-source-program.lino" => Some(include_str!(
+            "../data/javascript-collection-call-source-program.lino"
+        )),
         "javascript-collection-iterator-call-source-program.lino" => Some(include_str!(
             "../data/javascript-collection-iterator-call-source-program.lino"
         )),
