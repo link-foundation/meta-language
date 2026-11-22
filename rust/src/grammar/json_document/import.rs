@@ -619,7 +619,6 @@ impl<'schema> Importer<'schema> {
         let pattern = schema.get("pattern");
         if let Some(format) = schema["format"].as_str() {
             if formats(format).is_some() && pattern.is_none() {
-                self.report(pointer, "format", "The decoder generates direct character spellings in the supported format. Validation also checks escaped strings.");
                 return Some(EXPRESSION.nt(format!("json_format_{}", format.replace('-', "_"))));
             }
             self.report(pointer, "format", "The format constraint combined with a pattern is checked during document validation.");

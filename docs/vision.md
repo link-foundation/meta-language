@@ -4624,7 +4624,10 @@ the productions reachable from that entry point. GBNF emitters map it to
 `root` and qualify identifiers reserved by XGrammar. Lark emits supplementary
 Unicode scalars directly. Calendar productions use matching scalar boundaries
 across overlapping alternatives so a contextual decoder can follow either
-path. Object rules can interleave declared fields and additional fields.
+path. Date, date-time, UUID and email productions share the same decoder
+grammar asset across runtimes and accept both direct and escaped spellings
+of their permitted characters. Object rules can interleave declared fields
+and additional fields.
 The additional-field rule excludes every decoded spelling of each declared
 key. Bounded numeric rules generate signed integer or decimal spellings and
 apply inclusive and exclusive limits. The grammar represents exclusive

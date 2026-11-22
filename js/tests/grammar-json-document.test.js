@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import {
@@ -24,6 +26,12 @@ function schemaParsers(schema) {
     importLark(emitLark(grammar).source),
   ].map(item => compileGrammar(item));
 }
+
+test('the shipped JSON decoder grammar and self-translated pattern policy match their sources', () => {
+  for (const script of ['build-json-decoder-grammar.mjs', 'build-json-schema-pattern-policy.mjs']) {
+    execFileSync(process.execPath, [fileURLToPath(new URL(`../scripts/${script}`, import.meta.url)), '--check']);
+  }
+});
 
 test('JSON Schema emits decoders that constrain required fields, enums and escaped property names', () => {
   for (const parser of schemaParsers(answerSchema)) {
@@ -232,7 +240,7 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   recordIssue195Observations({
     requirementId: 'I195-I240-JSON-SCHEMA', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema', fixtureFile,
-    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings'],
+    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings'],
     testName: context.name,
   });
 });

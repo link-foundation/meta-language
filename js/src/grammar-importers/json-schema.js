@@ -5,7 +5,7 @@ import { parseGrammarLinks } from '../grammar-links.js';
 import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-document.js';
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-patterns.js';
-import { additionalPropertyName } from './json-schema-property-names.js';
+import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
 import { signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
@@ -146,11 +146,15 @@ function dateTimeExpression() {
 function emailExpression() {
   const alphaNumeric = [{ kind: 'range', start: 'a', end: 'z' }, { kind: 'range', start: 'A', end: 'Z' }, { kind: 'range', start: '0', end: '9' }];
   const atext = charClass([...alphaNumeric, ...Array.from("!#$%&'*+-/=?^_`{|}~", value => ({ kind: 'char', value }))]);
-  const localPart = repeat(atext, 1);
+  const atom = repeat(atext, 1);
+  const dotAtom = seq(atom, repeat0(seq(literal('.'), atom)));
+  const quotedText = choice(charRange(' ', '!'), charRange('#', '['), charRange(']', '~'),
+    seq(literal('\\'), charRange(' ', '~')));
+  const quotedLocal = seq(literal('"'), repeat0(quotedText), literal('"'));
   const domainStart = charClass(alphaNumeric);
   const domainInner = charClass([...alphaNumeric, { kind: 'char', value: '-' }]);
   const label = seq(domainStart, optional(seq(repeat(domainInner, 0, 61), domainStart)));
-  return seq(localPart, repeat0(seq(literal('.'), localPart)), literal('@'), label, repeat0(seq(literal('.'), label)));
+  return seq(choice(dotAtom, quotedLocal), literal('@'), label, repeat0(seq(literal('.'), label)));
 }
 
 const formatExpressions = new Map([
@@ -161,8 +165,41 @@ const formatExpressions = new Map([
 export function buildJsonDecoderBase() {
   const builder = new Expression('value');
   installJsonRules(builder);
+  const characterRules = new Map();
+  function encodedCharacter(ranges) {
+    const key = JSON.stringify(ranges);
+    if (!characterRules.has(key)) {
+      const name = `json_format_character_${characterRules.size + 1}`;
+      builder.rule(name, jsonStringCharacter(ranges));
+      characterRules.set(key, ref(name));
+    }
+    return characterRules.get(key);
+  }
+  const scalar = character => character.codePointAt(0);
+  function encoded(expression) {
+    switch (expression.kind) {
+      case 'literal':
+        return seq(...Array.from(expression.value, character => encodedCharacter([[scalar(character), scalar(character)]])));
+      case 'charRange':
+        return encodedCharacter([[scalar(expression.start), scalar(expression.end)]]);
+      case 'charClass':
+        return encodedCharacter(expression.items.map(item => item.kind === 'char'
+          ? [scalar(item.value), scalar(item.value)]
+          : [scalar(item.start), scalar(item.end)]));
+      case 'seq':
+      case 'choice':
+        return { ...expression, items: expression.items.map(encoded) };
+      case 'repeat':
+      case 'repeat0':
+      case 'repeat1':
+      case 'optional':
+        return { ...expression, item: encoded(expression.item) };
+      default:
+        throw new Error(`Unsupported JSON Schema format expression ${expression.kind}`);
+    }
+  }
   for (const [format, expression] of formatExpressions) {
-    builder.rule(formatRule(format), seq(literal('"'), expression(), literal('"')));
+    builder.rule(formatRule(format), seq(literal('"'), encoded(expression()), literal('"')));
   }
   return builder.build();
 }
@@ -323,7 +360,6 @@ export function importJsonSchema(schema) {
   }
   function stringExpression(rules, pointer) {
     if (formatExpressions.has(rules.format) && rules.pattern === undefined) {
-      report(pointer, 'format', 'The decoder generates direct character spellings in the supported format. Validation also checks escaped strings.');
       return ref(formatRule(rules.format));
     }
     if (rules.format !== undefined) report(pointer, 'format', 'The format constraint combined with a pattern is checked during document validation.');
