@@ -607,7 +607,59 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
  * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
 function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending){
     switch(pending.$){
-      case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';return '';
+      case 'waitObjectPrototype':
+      case 'waitPropertyDefinitions':
+      case 'waitPropertyReflection':
+      case 'waitInstanceOf':
+      case 'waitObjectIntegrity':
+      case 'waitObjectEnumeration':
+      case 'waitObjectFromEntries':
+      case 'waitObjectSpread':
+        return readJavaScriptCallPendingObjectError(program,heap,frame,fn,suspended,pending);
+      case 'waitArrayCreation':
+      case 'waitConstructorCheck':
+      case 'waitConstruction':
+      case 'waitFunctionBind':
+      case 'waitFunctionText':
+      case 'waitPrimitiveWrapper':
+        return readJavaScriptCallPendingConstructionError(program,heap,frame,fn,suspended,pending);
+      case 'waitError':
+      case 'waitSymbolAllocation':
+      case 'waitSymbolDescription':
+      case 'waitFunctionNameSymbol':
+      case 'waitSourceError':
+      case 'waitErrorValue':
+      case 'waitErrorIntrinsic':
+      case 'waitHostCapability':
+        return readJavaScriptCallPendingIntrinsicError(program,heap,frame,fn,suspended,pending);
+      case 'waitArrayConcatenation':
+      case 'waitArraySlice':
+      case 'waitArrayTransform':
+        return readJavaScriptCallPendingArraySpeciesError(program,heap,frame,fn,suspended,pending);
+      case 'waitArraySearch':
+      case 'waitCollectionForEach':
+      case 'waitArrayCallback':
+      case 'waitArrayAssignment':
+      case 'waitArgumentRest':
+        return readJavaScriptCallPendingArrayCallbackError(program,heap,frame,fn,suspended,pending);
+      case 'waitIteratorProtocol':
+      case 'waitArraySpread':
+      case 'waitArrayIteratorNext':
+      case 'waitCollectionIteratorResult':
+        return readJavaScriptCallPendingIteratorError(program,heap,frame,fn,suspended,pending);
+      case 'waitKey':
+      case 'waitDefinition':
+      case 'waitNumber':
+      case 'waitText':
+        return readJavaScriptCallPendingConversionError(program,heap,frame,fn,suspended,pending);
+      default:return '';
+    }
+}
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingObjectError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitObjectPrototype':{
         const invalidInstruction='primitive prototype metadata retains its actual source input operation and realm';
         if(!(frame.position>0))return invalidInstruction;
@@ -656,6 +708,41 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(instruction.destination!==pending.destination||instruction.operation!==pending.state.operation||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.arguments[0]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype))return invalidInstruction;
         const invalid=readJavaScriptObjectEnumerationStateError(heap,pending.state);if(invalid!=='')return invalid;if(suspended&&pending.state.phase!=='getter')return 'Object enumeration child retains its actual getter phase';return '';
       }
+      case 'waitObjectFromEntries':{
+        const invalidInstruction='Object.fromEntries retains its actual source input realm prototype and well-known Symbols';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='objectFromEntries')return invalidInstruction;
+        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey))return invalidInstruction;
+        const invalid=readJavaScriptObjectFromEntriesStateError(heap,pending.state);if(invalid!=='')return invalid;
+        if(suspended&&(pending.state.call===undefined||pending.error!==undefined))return 'Object.fromEntries child retains its actual selected call rather than an allocation request';
+        const setup=pending.error;
+        if(setup!==undefined&&!testJavaScriptPendingCallConstructorFailure(program,heap,pending.state.call?.callee??{$:'undefined'},setup))return 'Object.fromEntries selected-call failure retains its actual callee constructor kind Error realm and reason';
+        return '';
+      }
+      case 'waitObjectSpread':{
+        const invalidInstruction='object spread retains its actual source instruction, destination and realm';
+        if(!(frame.position>0))return invalidInstruction;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined||instruction.$!=='objectSpread')return invalidInstruction;
+        if(instruction.realm!==pending.realm||instruction.destination!==pending.destination||!program.realms.includes(pending.realm))return invalidInstruction;
+        const exoticKey=pending.state.exoticKey;
+        if(pending.state.operation!==instruction.operation||instruction.operation==='assignment'&&(exoticKey===undefined||!testJavaScriptSemanticSameValue(exoticKey,program.exoticKey)))return 'object copy retains its actual CreateDataProperty or Set operation and Symbol';
+        const error=readJavaScriptObjectSpreadStateError(heap,pending.state);if(error!=='')return error;
+        if(!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[instruction.target]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.input,frame.registers[instruction.input]??{$:'undefined'}))return 'object spread cannot substitute its actual target or source input';
+        const excluded=instruction.excluded??[],excludedValues=pending.state.excluded;if(excluded.length!==excludedValues.length)return 'object copy retains every actual excluded-key operand';for(let at=0;at<excluded.length;at++)if(!testJavaScriptSemanticSameValue(excludedValues[at]??{$:'undefined'},frame.registers[excluded[at]??-1]??{$:'undefined'}))return 'object copy cannot substitute an excluded key';
+        if(suspended&&pending.state.phase!=='getter'&&pending.state.call===undefined)return 'object copy retains only actual selected getters setters and numeric callbacks';
+        return '';
+      }
+      default:return '';
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingConstructionError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitArrayCreation':{
         const invalidInstruction='Array creation retains its actual receiver arguments roots Symbols and source operation';
         if(!(frame.position>0))return invalidInstruction;
@@ -713,18 +800,6 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         const instruction=fn.instructions[frame.position-1],request=readJavaScriptFunctionText(program,heap,pending.input);if(instruction===undefined||instruction.$!=='functionToString')return invalidInstruction;
         if(instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptSemanticSameValue(pending.input,frame.registers[0]??{$:'undefined'})||request.$!=='functionTextNeedAuthority'||request.kind!==pending.kind||suspended)return invalidInstruction;return '';
       }
-      case 'waitObjectFromEntries':{
-        const invalidInstruction='Object.fromEntries retains its actual source input realm prototype and well-known Symbols';
-        if(!(frame.position>0))return invalidInstruction;
-        const instruction=fn.instructions[frame.position-1];
-        if(instruction===undefined||instruction.$!=='objectFromEntries')return invalidInstruction;
-        if(instruction.destination!==pending.destination||pending.realm!==fn.realm||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||!testJavaScriptSemanticSameValue(frame.registers[instruction.iteratorKey]??{$:'undefined'},pending.state.iteratorKey)||!testJavaScriptSemanticSameValue(program.exoticKey,pending.state.exoticKey))return invalidInstruction;
-        const invalid=readJavaScriptObjectFromEntriesStateError(heap,pending.state);if(invalid!=='')return invalid;
-        if(suspended&&(pending.state.call===undefined||pending.error!==undefined))return 'Object.fromEntries child retains its actual selected call rather than an allocation request';
-        const setup=pending.error;
-        if(setup!==undefined&&!testJavaScriptPendingCallConstructorFailure(program,heap,pending.state.call?.callee??{$:'undefined'},setup))return 'Object.fromEntries selected-call failure retains its actual callee constructor kind Error realm and reason';
-        return '';
-      }
       case 'waitPrimitiveWrapper':{
         const invalidInstruction='primitive wrappers retain their actual selected input prototype and allocation instruction';
         if(!(frame.position>0))return invalidInstruction;
@@ -733,16 +808,28 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.state.input)||!testJavaScriptSemanticSameValue(frame.registers[instruction.prototype]??{$:'undefined'},pending.state.prototype)||suspended)return invalidInstruction;
         const invalid=readJavaScriptPrimitiveWrapperStateError(heap,pending.state);if(invalid!=='')return invalid;return '';
       }
+      default:return '';
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingIntrinsicError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
+      case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';return '';
       case 'waitSymbolAllocation':{
         const invalidInstruction='Symbol allocation retains its actual converted optional description and selected instruction';
         if(!(frame.position>0))return invalidInstruction;
         const instruction=fn.instructions[frame.position-1];
         if(instruction===undefined||!['undefined','text','sourceText'].includes(pending.description.$)||readJavaScriptOrdinaryValueError(heap,pending.description)!==''||suspended)return invalidInstruction;
         switch(instruction.$){
-          case 'symbolRegistry':
-            if(instruction.operation!=='for'||pending.registryKey===undefined||!['text','sourceText'].includes(pending.description.$)||!testJavaScriptSemanticSameValue(pending.registryKey,pending.description))return invalidInstruction;
+          case 'symbolRegistry':{
+            const registryKey=pending.registryKey;
+            if(instruction.operation!=='for'||registryKey===undefined||!['text','sourceText'].includes(pending.description.$)||!testJavaScriptSemanticSameValue(registryKey,pending.description))return invalidInstruction;
             if(instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description))return invalidInstruction;
             return '';
+          }
           case 'symbolAllocate':
             if(pending.registryKey!==undefined||instruction.destination!==pending.destination||!testJavaScriptSemanticSameValue(frame.registers[instruction.input]??{$:'undefined'},pending.description))return invalidInstruction;
             return '';
@@ -814,6 +901,15 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         const prior=readJavaScriptErrorPriorDirectoryError(heap,pending.beforeDirectory);if(prior!=='')return prior;
         return '';
       }
+      default:return '';
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingArraySpeciesError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitArrayConcatenation':{
         const invalidInstruction='Array concatenation retains actual source instruction destination and realm';
         if(!(frame.position>0))return invalidInstruction;
@@ -860,6 +956,15 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         }
         if(suspended&&(construction!==undefined?construction.call===undefined:pending.state.call===undefined))return 'Array transform child frames retain their actual selected call';return '';
       }
+      default:return '';
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingArrayCallbackError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitArraySearch':{
         const invalidInstruction='Array search continuation retains its actual source operation, destination and realm';
         if(!(frame.position>0))return invalidInstruction;
@@ -893,20 +998,6 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(suspended&&pending.state.call===undefined)return 'only an actual Array getter, conversion or callback can retain a child frame';
         return '';
       }
-      case 'waitObjectSpread':{
-        const invalidInstruction='object spread retains its actual source instruction, destination and realm';
-        if(!(frame.position>0))return invalidInstruction;
-        const instruction=fn.instructions[frame.position-1];
-        if(instruction===undefined||instruction.$!=='objectSpread')return invalidInstruction;
-        if(instruction.realm!==pending.realm||instruction.destination!==pending.destination||!program.realms.includes(pending.realm))return invalidInstruction;
-        const exoticKey=pending.state.exoticKey;
-        if(pending.state.operation!==instruction.operation||instruction.operation==='assignment'&&(exoticKey===undefined||!testJavaScriptSemanticSameValue(exoticKey,program.exoticKey)))return 'object copy retains its actual CreateDataProperty or Set operation and Symbol';
-        const error=readJavaScriptObjectSpreadStateError(heap,pending.state);if(error!=='')return error;
-        if(!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[instruction.target]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.input,frame.registers[instruction.input]??{$:'undefined'}))return 'object spread cannot substitute its actual target or source input';
-        const excluded=instruction.excluded??[],excludedValues=pending.state.excluded;if(excluded.length!==excludedValues.length)return 'object copy retains every actual excluded-key operand';for(let at=0;at<excluded.length;at++)if(!testJavaScriptSemanticSameValue(excludedValues[at]??{$:'undefined'},frame.registers[excluded[at]??-1]??{$:'undefined'}))return 'object copy cannot substitute an excluded key';
-        if(suspended&&pending.state.phase!=='getter'&&pending.state.call===undefined)return 'object copy retains only actual selected getters setters and numeric callbacks';
-        return '';
-      }
       case 'waitArrayAssignment':{
         const invalidInstruction='Array assignment retains its actual source Set instruction, destination and realm';
         if(!(frame.position>0))return invalidInstruction;
@@ -928,6 +1019,15 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(instruction.destination!==pending.destination||instruction.realm!==pending.realm||instruction.from!==pending.state.from||!testJavaScriptSemanticSameValue(pending.state.prototype,frame.registers[instruction.prototype]??{$:'undefined'}))return invalidInstruction;
         const error=readJavaScriptArgumentRestStateError(heap,frame.arguments,pending.state);if(error!=='')return error;if(suspended)return 'argument copying cannot hide a selected source callback';return '';
       }
+      default:return '';
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingIteratorError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitIteratorProtocol':{
         if(frame.position===0)return 'iterator work retains its actual source instruction and region';
         const state=pending.state,instruction=fn.instructions[frame.position-1];
@@ -970,6 +1070,15 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         if(suspended)return 'iterator result allocation cannot hide a pending source child call';
         return '';
       }
+      default:return '';
+    }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @param {JavaScriptCallPending} pending @returns {string} */
+function readJavaScriptCallPendingConversionError(program,heap,frame,fn,suspended,pending){
+    switch(pending.$){
       case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';return '';
       case 'waitDefinition':{
         if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';const invalid=readJavaScriptPropertyDefinitionStateError(heap,pending.state);if(invalid!=='')return invalid;
