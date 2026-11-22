@@ -39,7 +39,17 @@ test('six actual evidence translation scopes preserve every original workflow by
   const before='          - group: translation\n            shard: 1/1\n            partition: 1-of-1\n';
   const after=Array.from({length:6},(_,index)=>'          - group: translation\n            shard: '+(index+1)+'/6\n            partition: '+(index+1)+'-of-6\n').join('');
   assert.equal(actual.split(after).length,2);assert.equal(actual.includes(before),false);
-  assert.equal(actual.replace(after,before),row.sourceText,'all original jobs, steps, tools, native flags, gates and artifact paths stay exact');
+  const reportScheduleEdits=[
+    ['Self-Translation Report (${{ matrix.shard }}/8)','Self-Translation Report (${{ matrix.shard }}/12)'],
+    ['shard: [1, 2, 3, 4, 5, 6, 7, 8]','shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]'],
+    ['--shard ${{ matrix.shard }}/8 --out-dir','--shard ${{ matrix.shard }}/12 --out-dir'],
+  ];
+  let historical=actual.replace(after,before);
+  for(const [original,current] of reportScheduleEdits){
+    assert.equal(historical.split(current).length,2);
+    historical=historical.replace(current,original);
+  }
+  assert.equal(historical,row.sourceText,'all original jobs, steps, tools, native flags, gates and artifact paths stay exact');
   assert.equal(restoreEvidenceTranslationSourceHistory(row.file,actual),row.sourceText);
   assert.equal(restoreEvidenceTranslationSourceHistory(row.file,row.sourceText),row.sourceText);
   const changed=actual+'\n# changed input\n';assert.equal(restoreEvidenceTranslationSourceHistory(row.file,changed),changed);
