@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readRustPackageSourceIncludes} from '../scripts/rust-package-source-assets.mjs';
 test('asset ownership comes from actual Rust macro operands',()=>{
- const source='// include_str!("comment")\nconst TEXT:&str=include_str!("data/value.lino");\nconst BYTES:&[u8]=std::include_bytes!(r#"data/value.bin"#);\n';
+ const source='// include_str!("comment")\nconst TEXT:&str=include_str!("data/value.lino");\nconst BYTES:&[u8]=std::include_bytes!(r#"data/value.bin"#);\nconst PRELUDE:&str=include!("runtime/prelude.rs");\n';
  const rows=readRustPackageSourceIncludes(source);
- assert.deepEqual(rows.map(({macro,path})=>[macro,path]),[['include_str','data/value.lino'],['include_bytes','data/value.bin']]);
+ assert.deepEqual(rows.map(({macro,path})=>[macro,path]),[['include_str','data/value.lino'],['include_bytes','data/value.bin'],['include','runtime/prelude.rs']]);
  for(const row of rows)assert.ok(source.slice(row.start,row.end).includes(row.path));
 });
 test('macro-looking source text and byte data remain opaque',()=>{

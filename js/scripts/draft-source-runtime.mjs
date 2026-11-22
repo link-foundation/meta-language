@@ -8,6 +8,7 @@ import {emitLean} from '../src/translation/emit-lean.js';
 import {emitRocq} from '../src/translation/emit-rocq.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {tokenize} from '../src/translation/lexer.js';
+import {publishRustRuntimePrelude} from './publish-rust-runtime-prelude.mjs';
 
 export function draftSourceRuntime({runtimeStem,constantPrefix,formalNamespace,entries,...sourceOptions}) {
   if(!/^[a-z][a-z0-9-]*$/u.test(runtimeStem)||!/^[A-Z][A-Z_0-9]*$/u.test(constantPrefix)||!/^ML[A-Za-z0-9]+$/u.test(formalNamespace))throw new TypeError('source runtime names need portable target identities');
@@ -21,7 +22,7 @@ export function draftSourceRuntime({runtimeStem,constantPrefix,formalNamespace,e
   const relocation=readPortableLibraryRelocation(original);
   const loans=readPortableSourceParameterStyles(relocation.source,{publicNames:[...relocation.source.matchAll(/^pub fn (\w+)\(/gmu)].map(match=>match[1])});
   const runtime='pub mod ml_'+runtimeStem.replaceAll('-','_')+' {\n'+loans.source+'\n}\n';
-  writeFileSync(new URL('rust/src/translation/runtime/'+runtimeStem+'.rs',root),runtime);
+  publishRustRuntimePrelude(new URL('rust/src/translation/runtime/',root),runtimeStem,runtime);
   writeFileSync(new URL('js/src/translation/'+runtimeStem+'-runtime.js',root),
     '// Generated from complete checked source definitions. Do not edit.\nexport const '+constantPrefix+'_PRELUDE = '+JSON.stringify(runtime)+';\n');
   writeProjectData(new URL('parity/self-translation/'+runtimeStem+'-runtime.lino',root),{

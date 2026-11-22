@@ -843,15 +843,15 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
             Prelude::NumberBitwise => include_str!("runtime/number-bitwise.rs").to_owned(),
             Prelude::BigIntegerBitwise => include_str!("runtime/big-integer-bitwise.rs").to_owned(),
-            Prelude::StringNumber => include_str!("runtime/string-number.rs").to_owned(),
-            Prelude::Utf16Text => include_str!("runtime/utf16-text.rs").to_owned(),
-            Prelude::UnicodeCase => include_str!("runtime/unicode-case.rs").to_owned(),
+            Prelude::StringNumber => include!("runtime/string-number.rs").to_owned(),
+            Prelude::Utf16Text => include!("runtime/utf16-text.rs").to_owned(),
+            Prelude::UnicodeCase => include!("runtime/unicode-case.rs").to_owned(),
             Prelude::RecordPropertyOrder => {
-                include_str!("runtime/record-property-order.rs").to_owned()
+                include!("runtime/record-property-order.rs").to_owned()
             }
             Prelude::SourceException => include_str!("runtime/source-exception.rs").to_owned(),
             Prelude::BigIntegerConversion => {
-                include_str!("runtime/big-integer-conversion.rs").to_owned()
+                include!("runtime/big-integer-conversion.rs").to_owned()
             }
         })
         .collect();

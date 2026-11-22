@@ -25,7 +25,7 @@ export function readRustPackageSourceIncludes(source){
   for(let index=0;index<tokens.length;index+=1){
     const token=tokens[index];
     const name=token.value.split('::').at(-1);
-    if(!['include_str','include_bytes'].includes(name))continue;
+    if(!['include','include_str','include_bytes'].includes(name))continue;
     const offset=token.kind==='macro'?1:tokens[index+1]?.value==='!'?2:0;
     if(!offset)continue;
     const open=tokens[index+offset]?.value,close=open==='('?')':open==='['?']':open==='{'?'}':'';
@@ -64,7 +64,7 @@ export function draftRustPackageSourceAssets({check=false}={}){
     inputs.push({path:sourcePath,bytes:Buffer.byteLength(source),sha256:digest(source)});
     // Identifiers cannot hide their spelling behind Unicode escapes in Rust.
     // This rejects no actual include and avoids lexing unrelated large modules.
-    if(!source.includes('include_str')&&!source.includes('include_bytes'))continue;
+    if(!source.includes('include'))continue;
     let includes;
     try{includes=readRustPackageSourceIncludes(source);}catch(error){error.message=sourcePath+': '+error.message;throw error;}
     for(const include of includes){
