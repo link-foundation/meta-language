@@ -2,13 +2,93 @@
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::translation::{check::check_program, emit_rust::emit_rust};
 use meta_language::{
-    BinaryLinksOptions, LinkId, LinkNetwork, compose_rust_source_project,
-    create_rust_source_project_program_links, decode_link_network_binary, emit_typed_program_links,
-    encode_link_network_binary, parse_rust_source_project,
-    read_rust_source_project_concrete_graphs, read_structured_data_lino,
+    BinaryLinksOptions, LinkId, LinkNetwork, ParseConfiguration,
+    capture_rust_concrete_source_items, capture_rust_supplied_module_project,
+    compose_rust_source_project, create_rust_source_project_program_links,
+    decode_link_network_binary, emit_typed_program_links, encode_link_network_binary,
+    parse_rust_source_project, read_rust_source_project_concrete_graphs,
+    read_rust_supplied_module_ownership, read_structured_data_lino,
 };
 use serde_json::{Value, json};
 use std::{fs, process::Command};
+
+#[test]
+fn concrete_rust_items_retain_attributes_owners_and_original_coordinates() {
+    let source = "// 🦀\n#[derive(Clone)]\npub struct Item { value: u8 }\nimpl Item { pub fn read(&self) -> u8 { self.value } }\nmod nested { pub fn read() {} }";
+    let network = LinkNetwork::parse(source, "Rust", ParseConfiguration::default());
+    let options = json!({"path":"items.rs","selectors":[
+        {"kind":"structure_item","name":"Item"},
+        {"kind":"function_item","name":"read","implementationType":"Item"},
+        {"kind":"function_item","name":"read","modulePath":["nested"]}
+    ]});
+    let expected = capture_rust_concrete_source_items(&network, source, &options).unwrap();
+    let items = expected["items"].as_array().unwrap();
+    assert_eq!(items.len(), 3);
+    assert_eq!(items[0]["attributes"][0]["text"], "#[derive(Clone)]");
+    assert_eq!(items[1]["implementation"]["type"], "Item");
+    assert_eq!(items[2]["modules"][0]["name"], "nested");
+    let item = &items[1];
+    let start = item["range"]["byteStart"].as_u64().unwrap() as usize;
+    assert_eq!(
+        item["range"]["start"],
+        source[..start].encode_utf16().count()
+    );
+    let link = LinkId::from_u64(item["sourceLink"].as_u64().unwrap());
+    assert!(network.link(link).is_some());
+    let binary_options = BinaryLinksOptions::default();
+    let binary = encode_link_network_binary(&network, binary_options).unwrap();
+    for reloaded in [
+        LinkNetwork::from_lino(&network.to_lino()).unwrap(),
+        decode_link_network_binary(&binary, binary_options).unwrap(),
+    ] {
+        assert_eq!(
+            capture_rust_concrete_source_items(&reloaded, source, &options).unwrap(),
+            expected
+        );
+    }
+    let mut conflicting = network;
+    let foreign_name = LinkId::from_u64(items[2]["nameLink"].as_u64().unwrap());
+    conflicting.insert_field(link, "name", foreign_name);
+    assert!(capture_rust_concrete_source_items(&conflicting, source, &options).is_err());
+}
+
+#[test]
+fn supplied_module_directories_reload_and_refuse_detached_owners() {
+    let source = "// é😀\nmod math; fn main() { assert!(math::read() == 7u8); }";
+    let inputs = json!([
+        {"path":"src/main.rs","source":source},
+        {"path":"src/math.rs","source":"pub fn read() -> u8 { 7u8 }"},
+        {"path":"src/unused.rs","source":"pub fn unused() -> u8 { 9u8 }"}
+    ]);
+    let project =
+        capture_rust_supplied_module_project(&inputs, &json!({"crateRoot":"src/main.rs"})).unwrap();
+    let module = &project.module_graph["modules"][0];
+    assert_eq!(module["namespace"], json!(["crate", "math"]));
+    assert_eq!(module["target"], "Rust supplied source src/math.rs");
+    assert_eq!(
+        module["nameSpan"]["start"],
+        source[..source.find("math").unwrap()]
+            .encode_utf16()
+            .count()
+    );
+    assert_eq!(project.module_graph["files"][2]["selected"], false);
+    assert!(project.packet.network.link(project.archive_root).is_some());
+    let binary_options = BinaryLinksOptions::default();
+    let binary = encode_link_network_binary(&project.packet.network, binary_options).unwrap();
+    for mut reloaded in [
+        LinkNetwork::from_lino(&project.packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(&binary, binary_options).unwrap(),
+    ] {
+        let root = project.packet.root;
+        assert_eq!(
+            read_rust_supplied_module_ownership(&reloaded, root, &json!({})).unwrap(),
+            project.module_graph
+        );
+        reloaded.insert_field(root, "Rust module concrete ownership", project.archive_root);
+        assert!(read_rust_supplied_module_ownership(&reloaded, root, &json!({})).is_err());
+    }
+}
+
 fn emission(value: meta_language::TypedProgramLinksEmission) -> Value {
     json!({"code":value.code,"language":value.language,"mappings":value.mappings,"assumptions":value.assumptions,"encodings":value.encodings,"theorems":value.theorems})
 }

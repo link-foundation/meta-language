@@ -3,16 +3,15 @@
 import {createHash} from 'node:crypto';
 import {readProgramConcreteSyntaxFacts} from '../program-representation.js';
 import {tokenize} from './lexer.js';
+import {readRustConcreteItemKind,testRustConcreteSelectableItemKind,testRustConcreteSourceContainment,testRustConcreteSourceEnclosure} from './rust-concrete-source-rules.js';
 const model='Rust actual concrete source items 1';
 // Exact source-names in parity/grammars/native/rust.lino, not alternate node
 // authorities. The native adapter projects these through oracleKinds; retain
 // the actual supplied CST term rather than claiming the grammar rule is a node.
-const sourceKinds={structure_item:'struct_item',enumeration_item:'enum_item',constant_item:'const_item',module_item:'mod_item',implementation_item:'impl_item'};
-const kinds=new Set(['function_item','struct_item','enum_item','union_item','trait_item','type_item','const_item','static_item']);
 const fail=reason=>{throw new TypeError('Rust concrete source item: '+reason);};
 const hash=text=>createHash('sha256').update(text).digest('hex');
-const inside=(parent,child)=>parent.start<=child.start&&child.end<=parent.end;
-const encloses=(parent,child)=>inside(parent,child)&&(parent.start<child.start||child.end<parent.end);
+const inside=(parent,child)=>testRustConcreteSourceContainment(parent.start,parent.end,child.start,child.end);
+const encloses=(parent,child)=>testRustConcreteSourceEnclosure(parent.start,parent.end,child.start,child.end);
 function bound(value,name){if(!Number.isSafeInteger(value)||value<1)fail(name+' must be a positive safe integer');return value;}
 function identifier(text){return text.startsWith('r#')?text.slice(2):text;}
 /** Select actual complete named items, including their directly preceding
@@ -34,7 +33,7 @@ export function captureRustConcreteSourceItems(network,source,{path,selectors,by
  }
  function field(parent,label,required=false){const ids=fields.get(parent.linkId)?.get(label)??[];if(ids.length>1||required&&ids.length!==1)fail('an actual '+label+' field must have one unambiguous CST owner');const selected=ids.length?byId.get(ids[0]):undefined;if(ids.length&&!selected||selected&&(!inside(parent,selected)||!(parentsById.get(selected.linkId)??[]).includes(parent.linkId)))fail('an actual '+label+' field must remain inside its owner');return selected;}
  function named(parent){const name=field(parent,'name',true);if(!['identifier','type_identifier'].includes(name.term))fail('an item name must retain its actual identifier field');return {node:name,value:identifier(source.slice(name.start,name.end))};}
- function parents(node,term){return facts.filter(parent=>{charge();return (sourceKinds[parent.term]??parent.term)===(sourceKinds[term]??term)&&encloses(parent,node)&&actualAncestor(parent,node);}).sort((a,b)=>a.start-b.start||b.end-a.end);}
+ function parents(node,term){return facts.filter(parent=>{charge();return readRustConcreteItemKind(parent.term)===readRustConcreteItemKind(term)&&encloses(parent,node)&&actualAncestor(parent,node);}).sort((a,b)=>a.start-b.start||b.end-a.end);}
  function container(node){
   const modules=parents(node,'module_item').map(parent=>{const body=field(parent,'body',true);if(!inside(body,node))fail('an inline module must actually contain the selected source item');const name=named(parent);return {name:name.value,sourceLink:parent.linkId,range:{start:parent.start,end:parent.end},nameLink:name.node.linkId};});
   const implementations=parents(node,'implementation_item');if(implementations.length>1)fail('nested implementation ownership requires its separate source interpretation');
@@ -43,15 +42,15 @@ export function captureRustConcreteSourceItems(network,source,{path,selectors,by
  }
  function attributes(node){
   const leading=[],before=facts.filter(row=>{charge();return row.term==='attribute_item'&&row.end<=node.start;}).sort((a,b)=>b.end-a.end||b.start-a.start);let start=node.start;
-  for(const candidate of before){const length=start-candidate.end;charge(length+1);const gap=source.slice(candidate.end,start);if(tokenize(gap,'Rust').tokens.some(token=>token.kind!=='eof'))break;leading.push(candidate);start=candidate.start;}
+  for(const candidate of before){if(candidate.end>start){charge();break;}const length=start-candidate.end;charge(length+1);const gap=source.slice(candidate.end,start);if(tokenize(gap,'Rust').tokens.some(token=>token.kind!=='eof'))break;leading.push(candidate);start=candidate.start;}
   const enclosed=facts.filter(row=>{charge();return ['attribute_item','inner_attribute_item'].includes(row.term)&&inside(node,row);});
   return {start,rows:[...leading.reverse().map(row=>({row,ownership:'leading'})),...enclosed.map(row=>({row,ownership:'enclosed'}))].map(({row,ownership})=>({sourceLink:row.linkId,kind:row.term,ownership,range:{start:row.start,end:row.end},text:source.slice(row.start,row.end)}))};
  }
  const selected=[];const identities=new Set();
  for(const selector of selectors){
-  if(!selector||typeof selector!=='object'||Object.keys(selector).some(key=>!['kind','name','implementationType','implementationTrait','modulePath'].includes(key))||!kinds.has(sourceKinds[selector.kind]??selector.kind)||typeof selector.name!=='string'||!selector.name||selector.modulePath!==undefined&&(!Array.isArray(selector.modulePath)||selector.modulePath.some(name=>typeof name!=='string'||!name))||selector.implementationType!==undefined&&typeof selector.implementationType!=='string'||selector.implementationTrait!==undefined&&typeof selector.implementationTrait!=='string')fail('selectors retain explicit item kind, source name and real enclosing ownership');
+  if(!selector||typeof selector!=='object'||Object.keys(selector).some(key=>!['kind','name','implementationType','implementationTrait','modulePath'].includes(key))||!testRustConcreteSelectableItemKind(selector.kind)||typeof selector.name!=='string'||!selector.name||selector.modulePath!==undefined&&(!Array.isArray(selector.modulePath)||selector.modulePath.some(name=>typeof name!=='string'||!name))||selector.implementationType!==undefined&&typeof selector.implementationType!=='string'||selector.implementationTrait!==undefined&&typeof selector.implementationTrait!=='string')fail('selectors retain explicit item kind, source name and real enclosing ownership');
   const candidates=[];
-  for(const node of facts){charge();if((sourceKinds[node.term]??node.term)!==(sourceKinds[selector.kind]??selector.kind))continue;const name=named(node);if(name.value!==selector.name||parents(node,'function_item').length)continue;const owner=container(node),modules=selector.modulePath??[];
+  for(const node of facts){charge();if(readRustConcreteItemKind(node.term)!==readRustConcreteItemKind(selector.kind))continue;const name=named(node);if(name.value!==selector.name||parents(node,'function_item').length)continue;const owner=container(node),modules=selector.modulePath??[];
    if(owner.modules.length!==modules.length||owner.modules.some((row,index)=>row.name!==modules[index]))continue;
    if((owner.implementation?.type)!==selector.implementationType||(owner.implementation?.trait)!==selector.implementationTrait)continue;candidates.push({node,name,owner});
   }

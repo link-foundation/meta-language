@@ -9,7 +9,7 @@ use meta_language::{
     ParseConfiguration, ProgramConstructStatus, ProgramProjectContext, ProgramRepresentation,
     ReplacementRule, RepresentationLevel, TranslationSupport, analyze_program, construct_program,
     construct_program_from_fragments, decode_program_translation, language_support,
-    translate_program, translation_contracts,
+    read_program_concrete_syntax_facts, translate_program, translation_contracts,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -810,6 +810,28 @@ fn structured_construction_query_edits_cloning_movement_and_emission_reparse_cle
         )
         .is_err()
     );
+}
+
+#[test]
+fn retained_concrete_syntax_uses_original_links_and_both_coordinate_systems() {
+    let source = "const emoji = '😀'; const after = 1;";
+    let network = LinkNetwork::parse(source, "JavaScript", ParseConfiguration::default());
+    let facts = read_program_concrete_syntax_facts(&network, source).unwrap();
+    let byte_start = source.find("after").unwrap();
+    let fact = facts
+        .iter()
+        .find(|fact| {
+            fact.term.as_deref() == Some("identifier") && fact.byte_range.start() == byte_start
+        })
+        .expect("the identifier retains its concrete syntax link");
+    assert!(network.link(fact.link_id).is_some());
+    assert_eq!(fact.byte_range.end(), byte_start + "after".len());
+    assert_eq!(fact.start, source[..byte_start].encode_utf16().count());
+    assert_eq!(fact.end, fact.start + "after".len());
+    assert!(matches!(
+        read_program_concrete_syntax_facts(&network, &source.replace("after", "other")),
+        Err(meta_language::ProgramRepresentationError::ConcreteSourceMismatch)
+    ));
 }
 
 #[test]

@@ -395,11 +395,12 @@ pub use parity::{
 pub use parser_registry::ParserRegistry;
 pub use program_representation::{
     PROGRAM_REPRESENTATION_SCHEMA_VERSION, PROGRAM_SNAPSHOT_SCHEMA_VERSION, ProgramBinding,
-    ProgramConstruct, ProgramConstructStatus, ProgramDiagnostic, ProgramExpansion, ProgramFact,
-    ProgramProjectContext, ProgramProjectModule, ProgramProjectReference, ProgramProjectSource,
-    ProgramRange, ProgramRepresentation, ProgramRepresentationError, ProgramScope,
-    ProgramSourceMapping, SEMANTIC_CONSTRUCTS, analyze_program, analyze_program_decorated,
-    construct_program, construct_program_from_fragments,
+    ProgramConcreteSyntaxFact, ProgramConstruct, ProgramConstructStatus, ProgramDiagnostic,
+    ProgramExpansion, ProgramFact, ProgramProjectContext, ProgramProjectModule,
+    ProgramProjectReference, ProgramProjectSource, ProgramRange, ProgramRepresentation,
+    ProgramRepresentationError, ProgramScope, ProgramSourceMapping, SEMANTIC_CONSTRUCTS,
+    analyze_program, analyze_program_decorated, construct_program,
+    construct_program_from_fragments, read_program_concrete_syntax_facts,
 };
 pub use program_translation::{
     DecodedProgramTranslation, ProgramTranslation, ProgramTranslationError,
@@ -410,9 +411,12 @@ pub use project_data::{
     read_project_file_bytes, resolve_project_data_path, resolve_project_data_path_with_format,
 };
 pub use project_translation::{draft_project_translation, project_translation_draft_to_links};
+mod rust_concrete_source_items;
+mod rust_concrete_source_rules;
 mod rust_project_source_rules;
 mod rust_source_owner_program;
 mod rust_source_project;
+mod rust_supplied_module_project;
 pub use rust_source_owner_program::{
     create_rust_source_owner_program_links,
     create_rust_source_owner_program_links_with_source_version,
@@ -450,6 +454,7 @@ pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,
 };
+pub use rust_concrete_source_items::capture_rust_concrete_source_items;
 pub use rust_source_project::{
     RustSourceProjectConcreteGraph, compose_rust_source_project,
     create_rust_source_project_program_links, parse_rust_source_project,
@@ -457,6 +462,10 @@ pub use rust_source_project::{
 };
 pub use rust_source_project_cli::{
     RustSourceProjectCommandOutput, run_rust_source_project_command,
+};
+pub use rust_supplied_module_project::{
+    RustSuppliedModuleProject, capture_rust_supplied_module_project,
+    read_rust_supplied_module_ownership,
 };
 pub use self_translation::{
     CheckedDeclarationEmission, DeclarationTranslationContext, ErasedTypeScript, Erasure,
@@ -554,9 +563,9 @@ pub use typed_program_links::{
     read_typed_program_binding_identities, typed_program_links_schema,
 };
 pub use unsigned_graph_cli::{
-    UnsignedGraphCommandOutput, read_unsigned_graph_snapshot_binary,
-    read_unsigned_graph_snapshot_text, run_unsigned_graph_command,
-    select_unsigned_typed_program_root,
+    UnsignedGraphCommandOutput, UnsignedGraphSnapshot, read_unsigned_graph_snapshot,
+    read_unsigned_graph_snapshot_binary, read_unsigned_graph_snapshot_text,
+    run_unsigned_graph_command, select_unsigned_typed_program_root,
 };
 pub use unsigned_link_identity_program::create_unsigned_link_identity_program_links;
 pub use unsigned_link_network::{

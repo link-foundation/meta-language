@@ -45,18 +45,24 @@ struct JavaScriptFunctionStart {
 }
 
 pub(super) fn syntax_facts(network: &LinkNetwork) -> Vec<ProgramSourceMapping> {
-    network
-        .links()
-        .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
-        .filter_map(|link| {
-            let span = link.metadata().span()?;
+    syntax_fact_spans(network)
+        .filter_map(|(link, span)| {
             Some(ProgramSourceMapping {
                 link_id: link.id().as_u64(),
                 term: link.metadata().term()?.to_string(),
-                range: ProgramRange::new(span.byte_range().start(), span.byte_range().end()),
+                range: ProgramRange::new(span.start(), span.end()),
             })
         })
         .collect()
+}
+
+pub(super) fn syntax_fact_spans(
+    network: &LinkNetwork,
+) -> impl Iterator<Item = (&crate::Link, crate::ByteRange)> {
+    network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+        .filter_map(|link| Some((link, link.metadata().span()?.byte_range())))
 }
 
 pub(super) fn semantic_tokens(

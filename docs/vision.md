@@ -12999,6 +12999,23 @@ which records const availability since Rust 1.39.0; the controls remain bounded
 to the declared Rust profile.
 
 
+### Rust concrete item and supplied module ownership
+
+The concrete item directory selects declarations through a supplied current
+Rust syntax graph. Each selected name, implementation and inline module must
+come from its actual CST field owner. Captures retain leading and enclosed
+attributes, distinct byte and UTF-16 ranges, complete declaration text and
+source digests. JavaScript and Rust use the same generated kind and range
+rules. Lexical trivia between an outer attribute and its declaration belongs
+to that capture only while the ordered attribute spans remain disjoint.
+
+The supplied module directory uses the ordinary Rust project composer and
+retains its original concrete archives. Each composed namespace records the
+actual module declaration, name, inline body or external provider. Reload
+recomposes the archived sources and checks the stored witnesses and mappings
+without using original files. Both text and binary Links carry the same
+directory.
+
 ### Exact unsigned source document identities draft
 
 Source document factories now have a draft for explicit unsigned 64-bit link

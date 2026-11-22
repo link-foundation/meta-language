@@ -5,6 +5,7 @@ import {composeRustSourceProject,createRustSourceProjectProgramLinks,readRustSou
 import {readProgramConcreteSyntaxFacts} from '../program-representation.js';
 import {encodeStructuredDataLinks,decodeStructuredDataLinks} from '../structured-data-links.js';
 import {tokenize} from './lexer.js';
+import {testRustConcreteModuleDeclaration,testRustConcreteEntryOwnerKind} from './rust-concrete-source-rules.js';
 const fail=reason=>{throw new TypeError('Rust supplied module CST: '+reason);};
 const model='Rust supplied concrete module ownership 1',identifier=path=>'Rust supplied source '+path;
 function originalFacts(original){
@@ -21,7 +22,7 @@ function moduleWitnesses(composition,originals){
  const facts=new Map(originals.map(original=>[original.path,originalFacts(original)])),modules=[],namespaces=new Set();
  for(const actual of composition.modules){
   const source=facts.get(actual.path);if(!source)fail('composition refers to a foreign concrete source');
-  const candidates=source.syntax.filter(node=>node.term==='module_item'&&node.start<=actual.startUnit&&node.end===actual.endUnit);if(candidates.length!==1)fail('composition has no unique actual module CST declaration');
+  const candidates=source.syntax.filter(node=>testRustConcreteModuleDeclaration(node.term,node.start,node.end,actual.startUnit,actual.endUnit));if(candidates.length!==1)fail('composition has no unique actual module CST declaration');
   const declaration=candidates[0],name=source.field(declaration,'name'),body=source.field(declaration,'body'),token=name&&source.tokens.find(token=>token.kind==='identifier'&&token.start===name.start&&token.end===name.end),namespace=actual.module.split('::');
   if(!token||namespace.at(-1)!==token.value||namespace[0]!=='crate')fail('composed namespace differs from the actual module name field');
   if(namespaces.has(actual.module))fail('duplicate actual module namespace: '+actual.module);namespaces.add(actual.module);
@@ -54,7 +55,7 @@ export function readRustSuppliedModuleOwnership(network,root,{fileLimit=1024,mod
  const fields=network.fieldRelations().filter(edge=>edge.parent.asU64()===root.asU64()&&edge.label==='Rust module concrete ownership');if(fields.length!==1)fail('module ownership directory must retain its actual unique root');
  const graph=decodeStructuredDataLinks(network,fields[0].child,options);if(graph?.model!==model||typeof graph.crateRoot!=='string'||typeof graph.library!=='boolean')fail('unknown module ownership model or source entry');
  const originals=readRustSourceProjectConcreteGraphs(network,root,options),composition=composeRustSourceProject(originals.map(row=>({path:row.path,source:row.source})),graph.crateRoot,options),modules=moduleWitnesses(composition,originals),offsets=outputOffsets(composition.source,composition.mappings);
- const original=originals.find(row=>row.path===graph.crateRoot);if(!original)fail('missing original crate root');const facts=originalFacts(original),hasMain=facts.syntax.some(node=>{if(node.term!=='function_item')return false;const name=facts.field(node,'name'),token=name&&facts.tokens.find(token=>token.start===name.start&&token.end===name.end);return token?.value==='main'&&!facts.syntax.some(parent=>['module_item','function_item','implementation_item','trait_item'].includes(parent.term)&&parent.start<node.start&&parent.end>=node.end);});
+ const original=originals.find(row=>row.path===graph.crateRoot);if(!original)fail('missing original crate root');const facts=originalFacts(original),hasMain=facts.syntax.some(node=>{if(node.term!=='function_item')return false;const name=facts.field(node,'name'),token=name&&facts.tokens.find(token=>token.start===name.start&&token.end===name.end);return token?.value==='main'&&!facts.syntax.some(parent=>testRustConcreteEntryOwnerKind(parent.term)&&parent.start<node.start&&parent.end>=node.end);});
  const expected={model,crateRoot:graph.crateRoot,library:graph.library,entryNormalization:graph.library&&!hasMain?'empty frontend entry for a source library':'none',files:composition.files.map(file=>({path:file.path,identifier:identifier(file.path),bytes:file.sourceBytes,sha256:file.sourceSha256,selected:!composition.unusedSources.includes(file.path)})),modules,segments:composition.mappings.map(row=>({generatedStart:offsets.get(row.outputStart),generatedEnd:offsets.get(row.outputEnd),generatedByteStart:row.outputStart,generatedByteEnd:row.outputEnd,source:identifier(row.path),start:row.startUnit,end:row.endUnit,role:row.kind==='source'?'original':row.kind}))};
  if(!isDeepStrictEqual(graph,expected))fail('module ownership directory differs from its actual current concrete sources');return graph;
 }

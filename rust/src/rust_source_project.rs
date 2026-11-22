@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
-fn limit(options: &Value, name: &str, default: usize) -> Result<usize, String> {
+pub(crate) fn limit(options: &Value, name: &str, default: usize) -> Result<usize, String> {
     if !options.is_object() {
         return Err("Rust source project: expected a resource options record".to_owned());
     }
@@ -314,6 +314,14 @@ pub fn create_rust_source_project_program_links(
     entry: &str,
     options: &Value,
 ) -> Result<TypedProgramLinks, String> {
+    create_rust_source_project_packet(inputs, entry, options).map(|(packet, _, _)| packet)
+}
+
+pub(crate) fn create_rust_source_project_packet(
+    inputs: &Value,
+    entry: &str,
+    options: &Value,
+) -> Result<(TypedProgramLinks, Value, String), String> {
     let (composition, surface, normalization) = parse_rust_source_project(inputs, entry, options)?;
     let program = check_program(&surface).map_err(|error| error.to_string())?;
     let mut provenance = json!({"sourceProject":composition,"entryNormalization":normalization,"userProvenance":options.get("provenance").unwrap_or(&Value::Null)});
@@ -373,7 +381,7 @@ pub fn create_rust_source_project_program_links(
         "source project concrete archive",
         ids[&archive.root],
     );
-    Ok(packet)
+    Ok((packet, composition, normalization))
 }
 
 /// A source-qualified complete concrete graph reconstructed from its links.

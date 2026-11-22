@@ -13,6 +13,28 @@ fn text(value: &str) -> rules::ml_string::Text {
 fn graph_error(message: impl ToString) -> UnsignedLinksError {
     crate::unsigned_link_network::fail(message)
 }
+/// Transport of an exact-identity saved graph.
+pub enum UnsignedGraphSnapshot<'source> {
+    /// Canonical Links notation text.
+    Text(&'source str),
+    /// Complete binary Links archive.
+    Binary(&'source [u8]),
+}
+
+/// Read a saved graph in its supplied transport.
+///
+/// # Errors
+/// Rejects invalid framing, metadata, source text and configured resource bounds.
+pub fn read_unsigned_graph_snapshot(
+    source: UnsignedGraphSnapshot<'_>,
+    options: BinaryLinksOptions,
+) -> Result<LinkNetwork, UnsignedLinksError> {
+    match source {
+        UnsignedGraphSnapshot::Text(text) => read_unsigned_graph_snapshot_text(text, options),
+        UnsignedGraphSnapshot::Binary(bytes) => read_unsigned_graph_snapshot_binary(bytes, options),
+    }
+}
+
 /// Read canonical exact-ID Links text, retaining the complete graph.
 /// # Errors
 /// Rejects invalid metadata/text and configured byte/record/directory bounds.
@@ -167,9 +189,15 @@ where
     let result = (|| -> Result<Vec<u8>, String> {
         let options = BinaryLinksOptions::default();
         let mut network = if plan[1] == "binary" {
-            read_unsigned_graph_snapshot_binary(&read_bytes(&plan[0])?, options)
+            read_unsigned_graph_snapshot(
+                UnsignedGraphSnapshot::Binary(&read_bytes(&plan[0])?),
+                options,
+            )
         } else {
-            read_unsigned_graph_snapshot_text(&read_file(&plan[0])?, options)
+            read_unsigned_graph_snapshot(
+                UnsignedGraphSnapshot::Text(&read_file(&plan[0])?),
+                options,
+            )
         }
         .map_err(|error| error.to_string())?;
         let requested = if plan[4].is_empty() {

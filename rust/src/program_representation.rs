@@ -21,7 +21,7 @@ use crate::decorators::{DecoratorLevel, DecoratorSet, decorator_record, record_f
 use crate::{LinkNetwork, LinkType, ParseConfiguration, language_support};
 use analysis::{
     SemanticToken, effect_markers, extension_markers, module_markers, proof_markers,
-    resolve_bindings, scope_by_id, semantic_tokens, syntax_facts, unique_facts,
+    resolve_bindings, scope_by_id, semantic_tokens, syntax_fact_spans, syntax_facts, unique_facts,
     validate_identifier,
 };
 use module_resolution::{module_requests, project_has_module};
@@ -342,6 +342,8 @@ pub enum ProgramRepresentationError {
     InvalidSnapshot(String),
     /// Actual CST module name fields have no supported lexical role.
     InvalidModuleBindings(String),
+    /// Source text disagrees with the supplied concrete graph.
+    ConcreteSourceMismatch,
 }
 
 impl fmt::Display for ProgramRepresentationError {
@@ -377,6 +379,9 @@ impl fmt::Display for ProgramRepresentationError {
             }
             Self::InvalidEdit => formatter.write_str("structured edit does not reparse cleanly"),
             Self::InvalidModuleBindings(reason) => formatter.write_str(reason),
+            Self::ConcreteSourceMismatch => {
+                formatter.write_str("concrete source does not match the supplied graph")
+            }
             Self::InvalidSnapshot(reason) => {
                 write!(formatter, "invalid program snapshot: {reason}")
             }
@@ -385,6 +390,75 @@ impl fmt::Display for ProgramRepresentationError {
 }
 
 impl Error for ProgramRepresentationError {}
+
+/// Concrete syntax node coordinates retained from a supplied graph.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProgramConcreteSyntaxFact {
+    /// The original graph node.
+    pub link_id: crate::LinkId,
+    /// The node's actual term when present.
+    pub term: Option<String>,
+    /// Half-open UTF-16 offset of the first unit.
+    pub start: usize,
+    /// Half-open UTF-16 offset after the final unit.
+    pub end: usize,
+    /// Original half-open UTF-8 byte range.
+    pub byte_range: crate::ByteRange,
+}
+
+/// Read retained syntax facts without reparsing the source.
+///
+/// # Errors
+/// Rejects source text that differs from the graph's reconstructed source.
+pub fn read_program_concrete_syntax_facts(
+    network: &LinkNetwork,
+    source: &str,
+) -> Result<Vec<ProgramConcreteSyntaxFact>, ProgramRepresentationError> {
+    if network.reconstruct_text() != source {
+        return Err(ProgramRepresentationError::ConcreteSourceMismatch);
+    }
+    let spans = syntax_fact_spans(network).collect::<Vec<_>>();
+    let mut wanted = spans
+        .iter()
+        .flat_map(|(_, range)| [range.start(), range.end()])
+        .collect::<Vec<_>>();
+    wanted.sort_unstable();
+    wanted.dedup();
+    let mut offsets = BTreeMap::new();
+    let mut wanted = wanted.into_iter().peekable();
+    let mut units = 0;
+    for (byte, width) in source
+        .char_indices()
+        .map(|(byte, character)| (byte, character.len_utf16()))
+        .chain(std::iter::once((source.len(), 0)))
+    {
+        while let Some(&target) = wanted.peek() {
+            if target > byte {
+                break;
+            }
+            wanted.next();
+            if target == byte {
+                offsets.insert(byte, units);
+            }
+        }
+        if wanted.peek().is_none() {
+            break;
+        }
+        units += width;
+    }
+    Ok(spans
+        .into_iter()
+        .filter_map(|(link, byte_range)| {
+            Some(ProgramConcreteSyntaxFact {
+                link_id: link.id(),
+                term: link.metadata().term().map(str::to_owned),
+                start: *offsets.get(&byte_range.start())?,
+                end: *offsets.get(&byte_range.end())?,
+                byte_range,
+            })
+        })
+        .collect())
+}
 
 /// CST-backed resolved program model.
 #[derive(Clone, Debug)]
