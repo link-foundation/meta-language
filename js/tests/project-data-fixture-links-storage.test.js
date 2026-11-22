@@ -21,6 +21,8 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
   assert.equal(new Set(baselines.map(entry => entry.logicalPath)).size, baselines.length);
   const revisions = readProjectData(new URL('../../parity/fixtures/structured-data-migration-revisions.lino', import.meta.url));
   const contract = readProjectData(new URL('../../parity/fixtures/project-data-tooling-contract.lino', import.meta.url));
+  const inventory = readProjectData(new URL(contract.nativeInventory, root));
+  const catalog = readProjectData(new URL('js/src/data/language-catalog.lino', root));
   for (const { logicalPath, decodedSha256, sourceSha256 } of baselines) {
     const file = new URL(logicalPath, root);
     assert.equal(existsSync(file), false, `${logicalPath} has one authoritative Links representation`);
@@ -53,7 +55,14 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
         { cwd: fileURLToPath(root), encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
       assert.equal(hash(JSON.stringify(historical)), decodedSha256, `${logicalPath}: frozen original conversion`);
       for (const { language, provider } of refresh ?? []) {
-        const catalog = readProjectData(new URL('../../js/src/data/language-catalog.lino', import.meta.url));
+        const builtinGrammar = inventory.builtinGrammars[provider];
+        if (builtinGrammar) {
+          assert.equal(inventory.languages.find(entry => entry.name === language)?.builtinGrammar, provider);
+          assert.equal(protectedValue.languages[language].grammars[provider].version, builtinGrammar.version);
+          assert.equal(protectedValue.languages[language].grammars[provider].parserSha256,
+            hash(readFileSync(new URL(builtinGrammar.specification, root))));
+          continue;
+        }
         const grammar = catalog.languages.find(entry => entry.name === language).grammars.find(entry => entry.id === provider);
         assert.equal(protectedValue.languages[language].grammars[provider].parserSha256, grammar.parserSha256);
         for (const runtime of ['js', 'rust']) assert.equal(hash(readFileSync(new URL(`../../${runtime}/src/data/${catalog.nativeGrammars[provider].file}`, import.meta.url))), grammar.parserSha256);

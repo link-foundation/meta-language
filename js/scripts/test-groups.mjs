@@ -30,10 +30,11 @@ const schedulingProfiles = {
     ]),
   },
   'self-translation-report': {
-    file: new URL('../../parity/fixtures/ci-45049378352-self-translation-workload-costs.lino', import.meta.url),
+    file: new URL('../../parity/fixtures/ci-45055131879-self-translation-workload-costs.lino', import.meta.url),
     revisions: new Map([
       [39615628279, schedulingRevision],
       [45049378352, 'f39cd80cf682b33d18a8f35a7a5af6ae39e69f98'],
+      [45055131879, '81e9e733677877f2440018a09d65d3d7f5f1f113'],
     ]),
   },
 };
@@ -44,7 +45,7 @@ const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 export function partitionMeasuredWorkloads(files,count,{readSource,costs,group}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
- const profile = schedulingProfiles[group ?? (files.every(file => file.startsWith('js/src/')) ? 'self-translation-report' : 'grammar')];
+ const profile = schedulingProfiles[group ?? (count === 8 && files.every(file => file.startsWith('js/src/')) ? 'self-translation-report' : 'grammar')];
  assert.ok(profile);
  const measured=costs??readProjectData(profile.file);
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
@@ -171,13 +172,11 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Use measured costs for the six-way grammar and translation cohorts.
-  // The original three-way translation scopes and all other groups keep their owners.
-  if (count === 6) {
-    const group = files.includes('translation-scheduling-source-history.test.js') ? 'translation' : 'grammar';
-    if (group === 'translation' || files.includes('issue-195-interchange-api-cli.test.js')) {
-      return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { group })[index - 1].map(file => file.slice(9));
-    }
+  const translation = (count === 6 || count === 8) && files.includes('translation-scheduling-source-history.test.js');
+  const grammar = count === 6 && files.includes('issue-195-interchange-api-cli.test.js');
+  if (translation || grammar) {
+    const group = translation ? 'translation' : 'grammar';
+    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { group })[index - 1].map(file => file.slice(9));
   }
   return files.filter((_, offset) => offset % count === index - 1);
 }

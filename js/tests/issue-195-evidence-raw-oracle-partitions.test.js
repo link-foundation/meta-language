@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
+import {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';
 import {restoreRawOracleContractPartitionHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
@@ -70,7 +71,7 @@ test('the entire current test source retains every original call body hash and a
 
 test('two required raw contract cells preserve complete commands limits and the preceding whole workflow',()=>{
   const {history}=generateRawOracleContractPartitions({check:true}),path='.github/workflows/js.yml';
-  const currentSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const currentSource=restoreIntegrationSource(readFileSync(new URL('../../'+path,import.meta.url),'utf8'),path);
   const previousSource=history.sources.find(row=>row.path===path).source;
   assert.equal(restoreRawOracleContractPartitionHistory(currentSource,path),previousSource);
   const previous=parseWorkflow(previousSource),current=parseWorkflow(currentSource);

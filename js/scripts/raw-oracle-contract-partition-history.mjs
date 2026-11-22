@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreIntegrationSource} from './current-ci-repair-source-history.mjs';
 const archiveHash='97bc907646b4f88823015ce1c5775a2ca3a4a3d7b6f4da798a96bc2265e14f60';
 let history;
 
@@ -12,6 +13,7 @@ export function restoreRawOracleContractPartitionHistory(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
   const workflow=['.github/workflows/js.yml','.github/workflows/ci.yml','.github/workflows/rust.yml'].includes(path);
   if(!workflow&&path!=='experiments/original-link-complete-table-projection/raw-native-observations.test.mjs')return source;
+  if(workflow)source=restoreIntegrationSource(source,'.github/workflows/js.yml');
   if(!history){
     const bytes=readFileSync(new URL('../../parity/self-translation/raw-oracle-contract-partitions.lino',import.meta.url));
     assert.equal(createHash('sha256').update(bytes).digest('hex'),archiveHash);

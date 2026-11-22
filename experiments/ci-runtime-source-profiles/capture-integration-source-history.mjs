@@ -13,10 +13,12 @@ const inputs=[
     '3d0284e857dce164f4dcfc06784547b5e5e0312e93f581a40941e08e941efef8',
     '12f0f07a38e2d95ef60eaba218dde5f6d45c22fdbfed0234188a7f1131e896d4',
     '9a7bb59111b14608b029c592704c43fac2a708a18bfb2b8566fbe9c70d2282d2',
+    '015805e387c1de0e687fa65c179cba9350d12c9f990d7aa8423bd4c78869489e',
   ]],
   ['js/scripts/test-groups.mjs',mainPredecessor,[
     'eb3714069fc2701c0de60aaa7ecd211a192c6a1db40d8920f33a542dffed37fa',
     '417738dadaac55030c9c71ae61cf702d38c197815d9b4a4a59791a0fede8cf7e',
+    '1983d9d2a309cf439eff2ae8b2c27c7b7ba9ac5669bcfcdb7813f826820c91a4',
   ]],
   ['js/tests/issue-195-evidence-node-dependency.test.js',mainPredecessor,[
     '5c5ace4a4f3be5b60912ed5807655509aabe92ab74a160d15d6dcca17a657917',
@@ -29,6 +31,9 @@ const inputs=[
   ]],
   ['js/src/translation/types.js',mainPredecessor,[
     'e2b019e978a083ad378b9add056bab82bca5287ea885c3aaf1e325c110b81da0',
+  ]],
+  ['.github/workflows/js.yml',mainPredecessor,[
+    '0b1be4489eb7608d18e68cbd1f05f7562aa427451128ba5015129d610bbd374c',
   ]],
 ];
 
