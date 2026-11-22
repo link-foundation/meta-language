@@ -78,9 +78,11 @@ remaining default-branch checks still need CI evidence.
   borrowed-iterator assertions and all 15 array-object assertions from their
   actual sources. Generation of the mutable loan and callable rule libraries
   removes the initial authoring failures. The full native assertion author
-  still needs to translate every group before the aggregate can run.
-  See `ci-logs/baseline-native-policy-all-groups-autodetect.log` for the
-  per-group source trace. Native compilation and execution remain outstanding.
+  translated all 45 modules and registered their original fixture coordinates.
+  The per-module receipts retain exact canonical Links text with bounded
+  decoding and content hashes. See
+  `ci-logs/baseline-native-policy-complete-compressed-receipts.log` for the
+  completed source trace. Native compilation and execution remain outstanding.
 - The compact naming author refreshed the current callables pin with both
   historical inventories intact. With bounded Git object reuse, the
   additional author captured all 1,202 selected epochs in 23 seconds. The
@@ -138,9 +140,15 @@ from labelled token examples and disjoint delimiter pairs. Its draft library
 controls cover nested inputs outside the training examples, source bytes,
 crossed delimiters, contradictory merges and text and binary checkpoint replay.
 The shared planner, native counterpart and archive integration are drafted.
-Structural discovery through the CLI and its refinement journal, generalization
-beyond observed characters, attributed inference, installed-language semantic
-translation and executed held-out benchmark comparisons remain open.
+Structural discovery has CLI dispatch and a checkpoint refinement journal in
+both runtimes. Concrete parser observations constrain a finite native attribute
+action vocabulary. The draft also projects attributes from an installed grammar
+through checked Links programs to Rust and JavaScript source. Installed grammar
+merges retain their source-qualified inputs and production provenance and are
+rederived when the archive is loaded. The controls still need execution.
+Generalization beyond observed characters, broader attributed inference,
+translation across complete source languages and held-out benchmark measurements
+remain open.
 
 The pinned upstream link-cli importer reads one two-endpoint row per line.
 Its native binary store archive also stores doublets, with exact addresses and
@@ -184,8 +192,8 @@ arguments for each source pattern in its receipt. It brought the paired
 archive from 109,062 to 96,052 links. The catalog and Cargo include the complete
 archive. Source logs `ci-logs/javascript-error-class-source-direct-calls.log`
 and `ci-logs/error-class-source-publication.log` record the authoring commands.
-Native compilation, regression execution and the lint-policy assertions remain
-pending.
+Native compilation, regression execution and execution of the generated
+lint-policy assertions remain pending.
 
 The draft JSON holdout measures RPNI, EDSM or ALERGIA in a separate process
 against the same pinned JSONTestSuite corpus and budgets. It keeps training
@@ -193,8 +201,20 @@ examples out of scoring, reports resource refusals and oracle disagreements
 per file, and compares corpus labels with Node and Python parsing. It also
 measures byte reconstruction, leaf spans, grammar rules and bytes, query
 counts, process peak memory and elapsed time. The experiment source has been
-committed and awaits execution. Its regular learners are one baseline for
-the requested comparison. [Pinned JSONTestSuite corpus](https://github.com/nst/JSONTestSuite/tree/1ef36fa01286573e846ac449e8683f8833c5b26a)
+committed with a dedicated CI shard per strategy and artifact upload of
+the emitted grammar, rejection diagnostics and disagreements. It awaits
+execution. Its regular learners supply one baseline for the requested
+comparison. [Pinned JSONTestSuite corpus](https://github.com/nst/JSONTestSuite/tree/1ef36fa01286573e846ac449e8683f8833c5b26a)
+
+The XVada CI shard uses the same holdout with the upstream model-free
+TreeVada and HDD configuration, Lark 1.2.2, and a seeded Python process.
+XVada receives the positive training examples and queries a CPython JSON
+membership oracle. The regular learners receive explicit positive and
+negative examples. The report includes the actual XVada membership queries,
+the generated grammar, the repeat outcome and the result for every eligible
+holdout input. Training exhaustion leaves the comparison scores unmeasured.
+The two process memory figures cover different programs and are recorded as
+such. No XVada comparison has run yet.
 
 Reviewed the four exact paper revisions named by #224. The public artifact
 commits below were resolved independently on November 22, 2026. They identify

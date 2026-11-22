@@ -310,7 +310,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        strategy: [rpni, edsm, alergia]
+        strategy: [rpni, edsm, alergia, xvada]
     steps:
       - uses: actions/checkout@v7
 
@@ -332,13 +332,33 @@ jobs:
           git -C "$RUNNER_TEMP/JSONTestSuite" fetch --depth=1 --no-tags \
             https://github.com/nst/JSONTestSuite.git "$CORPUS_REVISION"
 
+      - name: Fetch the pinned deterministic XVada learner
+        if: ${{ matrix.strategy == 'xvada' }}
+        env:
+          XVADA_REVISION: 5221b183bc6e1ac583505299173fdbae0706da99
+        run: |
+          git init "$RUNNER_TEMP/xvada"
+          git -C "$RUNNER_TEMP/xvada" remote add origin https://github.com/rifatarefin/xvada.git
+          git -C "$RUNNER_TEMP/xvada" config remote.origin.promisor true
+          git -C "$RUNNER_TEMP/xvada" config remote.origin.partialclonefilter blob:none
+          git -C "$RUNNER_TEMP/xvada" fetch --depth=1 --no-tags --filter=blob:none origin "$XVADA_REVISION"
+          git -C "$RUNNER_TEMP/xvada" sparse-checkout set --no-cone '/*.py' /LICENSE
+          git -C "$RUNNER_TEMP/xvada" checkout --detach "$XVADA_REVISION"
+          python3 -m venv "$RUNNER_TEMP/grammar-inference-venv"
+          "$RUNNER_TEMP/grammar-inference-venv/bin/python" -m pip install --require-hashes --only-binary=:all: --no-deps \
+            -r experiments/grammar-inference/xvada-requirements.txt
+          printf '%s\n' "$RUNNER_TEMP/grammar-inference-venv/bin" >> "$GITHUB_PATH"
+
       - name: Measure the learner and independent oracles
         env:
           LEARNER_STRATEGY: ${{ matrix.strategy }}
         run: |
           mkdir -p grammar-inference-results
-          node --max-old-space-size=512 experiments/grammar-inference/json-holdout.mjs \
-            "$RUNNER_TEMP/JSONTestSuite" "$LEARNER_STRATEGY" \
+          arguments=("$RUNNER_TEMP/JSONTestSuite" "$LEARNER_STRATEGY")
+          if [[ "$LEARNER_STRATEGY" == xvada ]]; then
+            arguments+=("$RUNNER_TEMP/xvada" grammar-inference-results/training-queries.jsonl)
+          fi
+          node --max-old-space-size=512 experiments/grammar-inference/json-holdout.mjs "${arguments[@]}" \
             > grammar-inference-results/holdout.json.partial \
             2> grammar-inference-results/holdout.log
           mv grammar-inference-results/holdout.json.partial grammar-inference-results/holdout.json
