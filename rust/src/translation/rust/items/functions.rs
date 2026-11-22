@@ -93,6 +93,7 @@ impl RustParser {
         let mut params = Vec::new();
         let mut source_params = Vec::new();
         let mut mutable_params = Vec::new();
+        let mut exclusive_params = Vec::new();
         while !self.cursor.is(")") {
             let param_token = self.peek();
             if let Some((parameter, origin)) = self.inherent_receiver(&name, path, params.len())? {
@@ -118,7 +119,13 @@ impl RustParser {
             let callback_type = self.read_fn_mut_source_formal_type(path, &param_name, params.len())?;
             let ty = match callback_type {
                 Some(ty) => ty,
-                None => self.parse_type()?,
+                None => match self.read_fn_mut_source_exclusive_type()? {
+                    Some(ty) => {
+                        exclusive_params.push(params.len());
+                        ty
+                    }
+                    None => self.parse_type()?,
+                },
             };
             if mutable && self.fn_mut_source_header_read.is_none() {
                 mutable_params.push((
@@ -296,6 +303,7 @@ impl RustParser {
         if let Some(read) = &mut self.fn_mut_source_header_read {
             read.resolved = Some(super::super::fn_mut_source_headers::ResolvedFnMutSourceHeader {
                 parameters: source_params.clone(),
+                exclusive_parameters: exclusive_params,
                 result: source_result.clone(),
             });
         }

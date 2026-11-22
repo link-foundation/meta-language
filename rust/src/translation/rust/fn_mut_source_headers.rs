@@ -24,6 +24,7 @@ pub(super) struct CheckedCallbackHeader {
 
 pub(super) struct ResolvedFnMutSourceHeader {
     pub(super) parameters: Vec<SourceOrigin>,
+    pub(super) exclusive_parameters: Vec<usize>,
     pub(super) result: SourceOrigin,
 }
 
@@ -362,6 +363,33 @@ impl RustParser {
         Ok(Some(ty))
     }
 
+    pub(super) fn read_fn_mut_source_exclusive_type(&mut self) -> Result<Option<Type>> {
+        if self.fn_mut_source_header_read.is_none()
+            || !self.cursor.is("&")
+            || !self.cursor.is_at("mut", 1)
+        {
+            return Ok(None);
+        }
+        let start = self.cursor.advance();
+        self.cursor.advance();
+        let referent = self.parse_type()?;
+        let origin = &mut self.origins.current_type;
+        if !origin.proven
+            || !origin.wrappers.is_empty()
+            || matches!(&referent, Type::Function { .. })
+        {
+            return Err(unsupported(
+                "Rust source FnMut function",
+                "an actual exclusive formal needs one direct noncallable referent",
+                Some(start.span()),
+            ));
+        }
+        origin.wrappers.push("reference".to_owned());
+        origin.source_lifetimes.push(None);
+        origin.copy_evidence = None;
+        Ok(Some(referent))
+    }
+
     pub(super) fn finish_fn_mut_source_items(&mut self, items: &mut Vec<SItem>) -> Result<()> {
         let Some(directory) = &self.fn_mut_source_declarations else {
             return Ok(());
@@ -606,7 +634,7 @@ mod tests {
 
     #[test]
     fn the_actual_callback_type_positions_resolve_concrete_binders() {
-        let source = "fn apply<T>(value: u8, mut map: impl FnMut(&T, bool) -> T) -> T { map(&value, false) }";
+        let source = "fn apply<T>(value: &mut u8, mut map: impl FnMut(&T, bool) -> T) -> T { map(&*value, false) }";
         let tokens = Arc::new(tokenize(source, Language::Rust).unwrap().tokens);
         let directory = Rc::new(FnMutSourceDeclarations::new(source, Arc::clone(&tokens)).unwrap());
         let declaration = directory.capture(&[], &tokens[0]).unwrap().unwrap();
@@ -645,6 +673,8 @@ mod tests {
         assert_eq!(admitted.parameters[1].ty, Some(Type::Bool));
         assert_eq!(admitted.result.ty.as_ref(), Some(&expected));
         assert_eq!(header.parameters[0].ty.as_ref(), Some(&expected));
+        assert_eq!(header.exclusive_parameters, [0]);
+        assert_eq!(header.parameters[0].wrappers, ["reference"]);
         assert!(matches!(
             header.parameters[1].ty,
             Some(Type::Function { .. })
