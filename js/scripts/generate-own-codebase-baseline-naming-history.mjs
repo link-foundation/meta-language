@@ -51,6 +51,15 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'js/scripts/tooling-frozen-source-history.mjs','js/tests/self-translation.test.js','js/src/grammar-runtime/executor.js',
       'js/src/index.d.ts','js/scripts/generate-own-codebase-baseline-naming-history.mjs',
       'js/scripts/own-codebase-baseline-naming-history.mjs',
+      'js/scripts/continuation-source-history.mjs',
+      'js/scripts/generate-continuation-historical-inputs.mjs',
+      'js/tests/translation-continuation-historical-inputs.test.js',
+      'js/scripts/current-native-host-source-history.mjs',
+      'js/scripts/raw-consuming-snapshot-source-profile.mjs',
+      'js/src/translation/check.js',
+      'js/src/translation/emit-rust.js',
+      'rust/src/translation/check/expressions/branches.rs',
+      'experiments/binary-metadata-buffer/native-observations.mjs',
     ].map(path=>({path,revision:baseline})),
     {path:'js/scripts/scheduling-source-history.mjs',revision:'231c6610fc93225fccb1682ab2943729e0c0e52e'}];
     const additions=selections.filter(({path,revision})=>!sources.some(row=>row.file===path&&row.predecessor.revision===revision));
