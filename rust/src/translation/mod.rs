@@ -109,6 +109,8 @@ pub(crate) mod source_position_transport;
 pub(crate) mod source_expression_positions;
 pub mod source_loop_folds;
 pub mod source_state_transforms;
+pub(crate) mod rust_fnmut_source_abi_rules;
+pub(crate) mod source_fn_mut_specializations;
 pub mod source_vector_mutations;
 mod rust_vector_mutation_helper_surfaces;
 pub mod source_place_transforms;

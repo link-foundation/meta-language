@@ -25,7 +25,7 @@ pub(crate) fn canonical(version: &str) -> Result<String> {
     }
     Ok(spelling)
 }
-pub(super) fn minor(version: &str) -> Result<f64> {
+pub(crate) fn minor(version: &str) -> Result<f64> {
     let spelling = canonical(version)?;
     Ok(columns::read_source_version_columns(&columns::ml_string::Text::from_text(&spelling))[1])
 }

@@ -11,6 +11,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
     Ok(SItem::Fn(SFn {
         source_state_transform: function.source_state_transform.clone(),
         source_vector_mutation: function.source_vector_mutation.clone(),
+        source_fn_mut_specialization: function.source_fn_mut_specialization.clone(),
         source_finite_record_loop_helper: false,
         source_finite_record_loop_witness: None,
         semantic_ret,

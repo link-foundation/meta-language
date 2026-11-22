@@ -446,6 +446,7 @@ impl RocqParser {
         Ok(Definition::Fn(Box::new(SFn {
             source_state_transform: None,
             source_vector_mutation: None,
+            source_fn_mut_specialization: None,
             source_finite_record_loop_helper:false,
             source_finite_record_loop_witness:None,
             semantic_ret: None,

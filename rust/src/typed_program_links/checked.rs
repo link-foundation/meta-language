@@ -357,6 +357,17 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                 },
             ).map_err(|failure| error(failure.to_string()))?;
         }
+        if let Decl::Fn(function) = declaration
+            && let Some(facet) = function.source_fn_mut_specialization.as_deref()
+        {
+            crate::translation::source_fn_mut_specializations::validate_checked(
+                facet, function, program.source_language.as_str(),
+                |ty| match ty {
+                    crate::translation::types::Type::Data { name } => data_declarations.get(name.as_str()).copied(),
+                    _ => None,
+                },
+            ).map_err(|failure| error(failure.to_string()))?;
+        }
         if let Decl::Fn(function)=declaration
             && let Some(signature)=function.source_signature.as_ref()
         {

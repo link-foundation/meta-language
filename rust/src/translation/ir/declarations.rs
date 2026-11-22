@@ -128,6 +128,9 @@ pub struct FnDecl {
     /// Complete checked interface for a generated standard Vec mutation.
     #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "crate::translation::source_position_transport::read_present_box")]
     pub source_vector_mutation: Option<Box<crate::translation::source_vector_mutations::RustVectorMutation>>,
+    /// Complete checked interface for a specialized Rust mutable callback.
+    #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "crate::translation::source_position_transport::read_present_box")]
+    pub source_fn_mut_specialization: Option<Box<crate::translation::source_fn_mut_specializations::RustFnMutSpecialization>>,
     /// Optional owned source-header facts, checked against this signature.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_signature: Option<crate::translation::source_signatures::SourceSignature>,

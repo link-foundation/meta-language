@@ -110,6 +110,7 @@ impl Checker {
                     source_signature: None,
                     source_state_transform: None,
                     source_vector_mutation: None,
+                    source_fn_mut_specialization: None,
                     source_primitive_owners: function.source_primitive_owners.clone(),
                     source_empty_option: function.source_empty_option.as_deref().cloned(),
                     source_type_namespace: function.source_type_namespace.as_deref().cloned(),
@@ -310,6 +311,19 @@ impl Checker {
                     },
                 ).map(Box::new)
             }).transpose()?;
+            let source_fn_mut_specialization = item.source_fn_mut_specialization.as_deref().map(|facet| {
+                super::super::source_fn_mut_specializations::check_surface(
+                    facet, item, &params, &ret, self.language.as_str(),
+                    |ty| self.resolve_type(Some(ty), path, item.span),
+                    |ty| match ty {
+                        Type::Data { name } => match self.decls.get(name) {
+                            Some(Decl::Data(data)) => Some(data),
+                            _ => None,
+                        },
+                        _ => None,
+                    },
+                ).map(Box::new)
+            }).transpose()?;
             if let Some(annotation) = &annotated_ret
                 && !super::optional_values::annotation_compatible(&ret, annotation)
             {
@@ -323,6 +337,7 @@ impl Checker {
                 entry.source_signature = source_signature;
                 entry.source_state_transform = source_state_transform;
                 entry.source_vector_mutation = source_vector_mutation;
+                entry.source_fn_mut_specialization = source_fn_mut_specialization;
                 entry.params = params;
                 entry.ret = ret;
                 entry.semantic_ret.clone_from(&item.semantic_ret);
