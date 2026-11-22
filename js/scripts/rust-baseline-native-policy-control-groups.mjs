@@ -1,5 +1,7 @@
 // Authored generation inputs, not runtime observations. The future source
 // author must reconcile each selected fixture coordinate before publishing.
+import {nominalReferenceMatchSharingModel} from './source-boolean-match-sharing.mjs';
+
 const selection=(name,exportName)=>({path:'js/tests/fixtures/'+name+'.mjs',exportName});
 export const rustBaselineNativePolicyControlGroups=[
  {sourcePath:'js/src/translation/rust-borrowed-iterator-rules.js',moduleName:'authored_borrowed_iterator_controls',testName:'all_literal_borrowed_iterator_controls',fixtureSelections:[{...selection('rust-borrowed-iterators','rustBorrowedIteratorDecisions'),profile:'exact pure fixture data 2'}]},
@@ -7,14 +9,14 @@ export const rustBaselineNativePolicyControlGroups=[
  {sourcePath:'js/src/translation/rust-mutable-record-loan-rules.js',moduleName:'authored_mutable_record_loan_controls',testName:'all_literal_mutable_record_loan_controls',fixtureSelections:[selection('rust-mutable-record-loans','rustMutableRecordLoanDecisions')]},
  {sourcePath:'js/src/translation/rust-borrowed-source-region-rules.js',moduleName:'authored_borrowed_source_region_controls',testName:'all_literal_borrowed_source_region_controls',fixtureSelections:[selection('rust-borrowed-source-regions','rustBorrowedSourceRegionDecisions')]},
  {sourcePath:'js/src/translation/javascript-primitive-methods.js',moduleName:'authored_primitive_method_controls',testName:'all_literal_primitive_method_controls',aliases:true,fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveMethodDecisions'),profile:'exact pure fixture data 2'}]},
- {sourcePath:'js/src/translation/javascript-call-primitives.js',moduleName:'authored_primitive_addition_controls',testName:'all_literal_primitive_addition_controls',aliases:true,fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveAdditionDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/javascript-call-primitives.js',moduleName:'authored_primitive_addition_controls',testName:'all_literal_primitive_addition_controls',aliases:true,constructorMatchSharing:nominalReferenceMatchSharingModel,fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveAdditionDecisions'),profile:'exact pure fixture data 2'}]},
  {sourcePath:'js/src/translation/javascript-collection-rules.js',moduleName:'authored_inspectable_collection_controls',testName:'all_literal_inspectable_collection_controls',aliases:true,fixtureSelections:[{...selection('javascript-inspectable-collections','javascriptInspectableCollectionDecisions'),profile:'exact pure fixture data 2'}]},
  ...[
   ['javascript-source-text-rules','source_text_profile','javascriptSourceTextProfileDecisions',false],
   ['javascript-semantic-values','source_text_semantic','javascriptSourceTextSemanticDecisions',false],
   ['javascript-descriptor-conversion','source_text_boolean','javascriptSourceTextBooleanDecisions',true],
   ['javascript-call-primitives','source_text_primitive','javascriptSourceTextPrimitiveDecisions',true],
- ].map(([source,name,exportName,aliases])=>({sourcePath:'js/src/translation/'+source+'.js',moduleName:'authored_'+name+'_controls',testName:'all_literal_'+name+'_controls',aliases,fixtureSelections:[{...selection('javascript-source-text',exportName),profile:'exact pure fixture data 2'}]})),
+ ].map(([source,name,exportName,aliases])=>({sourcePath:'js/src/translation/'+source+'.js',moduleName:'authored_'+name+'_controls',testName:'all_literal_'+name+'_controls',aliases,...(aliases?{constructorMatchSharing:nominalReferenceMatchSharingModel}:{}),fixtureSelections:[{...selection('javascript-source-text',exportName),profile:'exact pure fixture data 2'}]})),
  {sourcePath:'js/src/translation/javascript-ordinary-class-rules.js',moduleName:'authored_ordinary_class_controls',testName:'all_literal_ordinary_class_controls',aliases:true,fixtureSelections:[selection('javascript-ordinary-class-source','javascriptOrdinaryClassDecisions')]},
  {sourcePath:'js/src/translation/javascript-host-capability-rules.js',moduleName:'authored_host_capability_mode_controls',testName:'all_literal_host_capability_mode_controls',fixtureSelections:[
   selection('javascript-host-capabilities','javascriptHostCapabilityDecisions'),

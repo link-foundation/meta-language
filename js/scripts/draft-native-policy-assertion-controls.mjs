@@ -12,6 +12,8 @@ import {structuredDataToLino} from '../src/structured-data-links.js';
 import {readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from './read-source-library-closure.mjs';
 import {readPortableLibraryRelocation} from './record-rule-library.mjs';
 import {readExactFixturePolicyControls} from './read-exact-fixture-data.mjs';
+import {partitionNativePolicyAssertions,pinNativePolicyAssertionFiles} from './native-policy-assertion-files.mjs';
+import {nominalReferenceMatchSharingModel,readNominalReferenceMatchSharingInputs,shareSourceClosedConstructorMatches} from './source-boolean-match-sharing.mjs';
 export {readExactFixtureExport,renderExactFixtureData} from './read-exact-fixture-data.mjs';
 
 const project=realpathSync(fileURLToPath(new URL('../../',import.meta.url)));
@@ -128,7 +130,7 @@ export function composeNativePolicyAssertionProgram(options){if('assignment' in 
 
 /** Translate once; no test/rule/represented program is executed and no file is
  * written. Root authoring owns atomic registration/publication of the result. */
-function translate({sourcePath,closure,fixtures,moduleName,testName,referenceSemantics,operationOwners=[],assignment=null}){
+function translate({sourcePath,closure,fixtures,moduleName,testName,referenceSemantics,constructorMatchSharing,operationOwners=[],assignment=null}){
  const program=compose({sourcePath,closure,fixtures,operationOwners,assignment,moduleName});
  let checked;
  try {
@@ -143,7 +145,8 @@ function translate({sourcePath,closure,fixtures,moduleName,testName,referenceSem
   throw error;
  }
  const sourceDeclarationOwners=readSourceLibraryDeclarationOwnership(closure,{...checked,main:null});
- const emitted=emitRust(checked,{arrayConsumption:true});
+ const shared=constructorMatchSharing?shareSourceClosedConstructorMatches(checked,{shareImmutableNominalReferences:true}):undefined;
+ const emitted=emitRust(shared?.program??checked,{arrayConsumption:true});
  if(process.env.META_LANGUAGE_TRACE_SOURCE_AUTHOR==='1'){
   const largest=emitted.definitions.map(source=>({bytes:Buffer.byteLength(source),head:source.slice(0,150)})).sort((left,right)=>right.bytes-left.bytes).slice(0,5);
   console.error('native source author output',moduleName,Buffer.byteLength(emitted.text),largest);
@@ -152,13 +155,15 @@ function translate({sourcePath,closure,fixtures,moduleName,testName,referenceSem
  const relocation=readPortableLibraryRelocation(emitted.text),tokens=tokenize(relocation.source,'Rust').tokens;if(tokens.some((token,index)=>token.value==='fn'&&tokens[index+1]?.value===testName))throw new TypeError('native assertion wrapper collides with an actual generated function');
  const rust=relocation.source+'\n#[test]\nfn '+testName+'() { main(); }\n',output='rust/tests/generated/'+moduleName+'.rs';
  limit(Buffer.byteLength(rust),8*1024*1024,'native assertion output with test entry exceeds 8 MiB');
+ const files=partitionNativePolicyAssertions(rust,moduleName);
  const excludedControls=assignment?fixtures.flatMap(fixture=>fixture.controls).filter(row=>assignment.get(row.fixture+'\0'+row.exportName+'\0'+row.index).moduleName!==moduleName).map(row=>({...row,assignedTo:assignment.get(row.fixture+'\0'+row.exportName+'\0'+row.index)})):[];
  const literalProfiles=[...new Set(fixtures.map(fixture=>fixture.profile??'').filter(Boolean))];
- const receipt={schemaVersion:1,model:'complete independently authored native policy assertions 1',...(literalProfiles.length?{literalProfiles}:{}),sourceRoot:sourcePath,sourceClosure:closure,sourceDeclarationOwners,fixtures,controls:program.controls,excludedControls,assertionProgram:{source:program.source,bytes:program.bytes,sha256:program.sourceSha256},translation:{language:'Rust',...(referenceSemantics?{referenceSemantics:true}:{}),source:emitted.text,bytes:Buffer.byteLength(emitted.text),sha256:digest(emitted.text)},relocation,output:{path:output,source:rust,bytes:Buffer.byteLength(rust),sha256:digest(rust)},testName};
- return {source:program.source,rust,output,receipt,receiptLino:boundedReceipt(receipt),registration:'#[path = "../generated/'+moduleName+'.rs"]\nmod '+moduleName+';\n'};
+ const sharing=shared&&{model:shared.proof.model,proofs:shared.proof.proofs.length,sha256:digest(JSON.stringify(shared.proof)),inputs:readNominalReferenceMatchSharingInputs()};
+ const receipt={schemaVersion:1,model:'complete independently authored native policy assertions 1',...(literalProfiles.length?{literalProfiles}:{}),sourceRoot:sourcePath,sourceClosure:closure,sourceDeclarationOwners,fixtures,controls:program.controls,excludedControls,assertionProgram:{source:program.source,bytes:program.bytes,sha256:program.sourceSha256},translation:{language:'Rust',...(referenceSemantics?{referenceSemantics:true}:{}),...(sharing?{constructorMatchSharing:sharing}:{}),source:emitted.text,bytes:Buffer.byteLength(emitted.text),sha256:digest(emitted.text)},relocation,output:{path:output,source:rust,bytes:Buffer.byteLength(rust),sha256:digest(rust)},...(files.length>1?{placement:pinNativePolicyAssertionFiles(files)}:{}),testName};
+ return {source:program.source,rust,output,files,receipt,receiptLino:boundedReceipt(receipt),registration:'#[path = "../generated/'+moduleName+'.rs"]\nmod '+moduleName+';\n'};
 }
 function readFixture(selection){const input=projectFile(selection.path);limit(statSync(input.absolute).size,4*1024*1024,'literal policy fixture exceeds 4 MiB');return readNativePolicyLiteralControls(readFileSync(input.absolute,'utf8'),{path:input.path,exportName:selection.exportName,profile:selection.profile??''});}
-function moduleRequest({moduleName,testName='native_policy_literal_assertions',aliases=false,referenceSemantics=false}){if(!/^[a-z][a-z_0-9]*$/u.test(moduleName)||!/^[a-z][a-z_0-9]*$/u.test(testName)||typeof aliases!=='boolean'||typeof referenceSemantics!=='boolean')throw new TypeError('invalid native policy assertion module');return {moduleName,testName,aliases,referenceSemantics};}
+function moduleRequest({moduleName,testName='native_policy_literal_assertions',aliases=false,referenceSemantics=false,constructorMatchSharing=''}){if(!/^[a-z][a-z_0-9]*$/u.test(moduleName)||!/^[a-z][a-z_0-9]*$/u.test(testName)||typeof aliases!=='boolean'||typeof referenceSemantics!=='boolean'||!['',nominalReferenceMatchSharingModel].includes(constructorMatchSharing))throw new TypeError('invalid native policy assertion module');return {moduleName,testName,aliases,referenceSemantics,constructorMatchSharing};}
 export function draftNativePolicyAssertionControls(options){
  const request=moduleRequest(options),{fixtureSelections,operationOwners=[]}=options;if(!Array.isArray(fixtureSelections)||fixtureSelections.length===0||fixtureSelections.length>128||fixtureSelections.some(selection=>'operations' in selection))throw new TypeError('single-root controls require complete bounded unfiltered fixture exports');
  const root=projectFile(options.sourcePath),closure=readSourceLibraryClosure(root.path,{aliases:request.aliases}),fixtures=fixtureSelections.map(readFixture);limit(fixtures.reduce((bytes,fixture)=>bytes+fixture.bytes,0),16*1024*1024,'native policy fixture selection exceeds 16 MiB');
@@ -191,7 +196,7 @@ export function draftNativePolicyAssertionBatch({groups}){
   prepared.push({...request,sourcePath:root.path,closure,fixtures:captures});
  }
  for(const fixture of fixtures.values())for(const row of fixture.controls)if(!assignment.has(row.fixture+'\0'+row.exportName+'\0'+row.index))throw new TypeError('unassigned original native policy fixture coordinate: '+row.fixture+'/'+row.exportName+'/'+row.index);
- const products=[];let outputBytes=0,receiptBytes=0;for(const group of prepared){const product=translate({...group,assignment});outputBytes+=Buffer.byteLength(product.rust);receiptBytes+=Buffer.byteLength(product.receiptLino);limit(outputBytes,16*1024*1024,'native assertion batch outputs exceed 16 MiB');limit(receiptBytes,32*1024*1024,'native assertion batch module receipts exceed 32 MiB');products.push(product);}
+ const products=[];let outputBytes=0,receiptBytes=0;for(const group of prepared){const product=translate({...group,assignment});outputBytes+=product.files.reduce((total,file)=>total+Buffer.byteLength(file.source),0);receiptBytes+=Buffer.byteLength(product.receiptLino);limit(outputBytes,16*1024*1024,'native assertion batch outputs exceed 16 MiB');limit(receiptBytes,32*1024*1024,'native assertion batch module receipts exceed 32 MiB');products.push(product);}
  const receipt={schemaVersion:1,model:'exhaustive original native policy assertion assignments 1',fixtures:[...fixtures.values()],assignments:[...assignment].map(([coordinate,owner])=>({coordinate,owner})),modules:products.map(product=>({path:product.output,sha256:digest(product.rust),receiptSha256:digest(product.receiptLino)}))};
  return {modules:products,registration:products.map(product=>product.registration).join('\n'),receipt,receiptLino:boundedReceipt(receipt)};
 }

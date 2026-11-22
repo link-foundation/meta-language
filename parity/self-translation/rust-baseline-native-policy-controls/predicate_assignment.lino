@@ -1495,7 +1495,7 @@
 (1495: 11 1494 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1496: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 163643a6421c965cb9adeaa0ec074d764cc04ef29072fef6d6fe996686f61a1a) (lang: meta-language%20structured%20data)))
 (1497: 1487 1496 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(1498: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 299599bdc36ff7b5d12b6e2dfa13258ebb206b3a30136044b45086a100531ec3) (lang: meta-language%20structured%20data)))
+(1498: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 30d1b47ba605f65ef459114728a301d3881483ae3f304b19e60ce67ac3f06be3) (lang: meta-language%20structured%20data)))
 (1499: 1490 1498 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1500: 1482 1483 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1501: 1 (meta: (t: semantic) (n: 1) (term: structured%20data) (def: 1) (lang: meta-language%20structured%20data)))

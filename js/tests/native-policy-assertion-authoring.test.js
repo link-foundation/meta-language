@@ -4,7 +4,9 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import {readSourceLibraryClosure} from '../scripts/read-source-library-closure.mjs';
 import {readNativePolicyLiteralControls,composeNativePolicyAssertionProgram,draftNativePolicyAssertionControls,draftNativePolicyAssertionBatch} from '../scripts/draft-native-policy-assertion-controls.mjs';
+import {partitionNativePolicyAssertions} from '../scripts/native-policy-assertion-files.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {tokenize} from '../src/translation/lexer.js';
 const sourcePath='js/tests/support/native-policy-authoring-rules.js',peerPath='js/tests/support/native-policy-authoring-peer-rules.js',path='js/tests/fixtures/native-policy-authoring-controls.mjs';
 const source=readFileSync(new URL('./fixtures/native-policy-authoring-controls.mjs',import.meta.url),'utf8');
 test('literal capture preserves special Number spellings constant provenance and every appended original index',()=>{
@@ -37,6 +39,25 @@ test('complete assertion program translates once into one same-file native test 
  const product=draftNativePolicyAssertionControls({sourcePath,fixtureSelections:[{path,exportName:'nativeLiteralAssertions'}],moduleName:'native_policy_authoring_controls'});
  assert.equal(product.receipt.controls.length,7);assert.match(product.rust,/#\[test\]\nfn native_policy_literal_assertions\(\) \{ main\(\); \}/u);assert.match(product.registration,/mod native_policy_authoring_controls;/u);
  const restored=readStructuredDataLino(product.receiptLino);assert.deepEqual(restored,product.receipt);assert.equal(restored.controls[3].expected.source,'-0');assert.equal(restored.controls[0].expected.source,'NaN');assert.equal(restored.assertionProgram.source,product.source);
+});
+test('placement keeps all native assertion items in their original module scopes',()=>{
+ const generated=Array.from({length:1000},(_,index)=>`    fn value_${index}() -> u8 { super::input() }`).join('\n');
+ const rust='#![allow(unused)]\nfn input() -> u8 { 1 }\nmod child {\n'
+  +'    #![allow(unused)]\n'+generated+'\n    pub fn result() -> u8 { self::value_999() }\n}\n'
+  +'#[test]\nfn assertion() { assert_eq!(child::result(), 1); }\n';
+ const files=partitionNativePolicyAssertions(rust,'authored_placement_controls');
+ assert.ok(files.length>3);
+ const paths=new Map(files.map(file=>[file.path,file.source])),visited=new Set();
+ function expand(path){
+  assert.ok(!visited.has(path));
+  visited.add(path);
+  const source=paths.get(path);
+  assert.ok(source.split('\n').length<=1000);
+  return source.replace(/^include!\("([^"]+)"\);$/gmu,(_,child)=>expand(path.slice(0,path.lastIndexOf('/')+1)+child));
+ }
+ const tokenBytes=source=>tokenize(source,'Rust').tokens.map(token=>token.raw);
+ assert.deepEqual(tokenBytes(expand(files[0].path)),tokenBytes(rust));
+ assert.equal(visited.size,files.length);
 });
 function group(moduleName,root,operations){return {moduleName,sourcePath:root,fixtureSelections:[{path,exportName:'mixedLiteralAssertions',operations}]};}
 test('explicit batch reconciles mixed original coordinates once and retains counterpart ownership on exclusions',()=>{

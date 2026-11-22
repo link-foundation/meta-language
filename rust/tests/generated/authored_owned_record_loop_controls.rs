@@ -167,6 +167,10 @@ pub fn read_rust_owned_record_loop_operation() -> String {
     String::from("rustOwnedRecordFiniteLoop")
 }
 
+pub fn read_rust_ordered_collection_loop_operation() -> String {
+    String::from("rustStandardCollectionOrderedLoop")
+}
+
 pub fn read_rust_owned_record_loop_chunk_size() -> f64 {
     8f64
 }
@@ -395,6 +399,34 @@ pub fn read_rust_owned_record_loop_residual_count_error(count: f64) -> String {
     } else {
         String::from("a propagated loop exit needs every actual produced residual branch within its source budget")
     }
+}
+
+pub fn accept_rust_source_region_span(start: f64, end: f64) -> bool {
+    (((((start >= (0f64)) && (((start % 1f64)) == (0f64))) && (end > start)) && (end <= (9007199254740991f64))) && (((end % 1f64)) == (0f64)))
+}
+
+pub fn accept_rust_source_state_binder(name_length: f64, identity_length: f64, start: f64, end: f64) -> bool {
+    (((((name_length > (0f64)) && (name_length <= (4096f64))) && (identity_length > (0f64))) && (identity_length <= (4096f64))) && self::accept_rust_source_region_span(start, end))
+}
+
+pub fn accept_rust_source_region_composition(signature: String, exclusive: String, callback: String) -> bool {
+    (((signature == "Rust source function signature 3") && (exclusive == "Rust exclusive source loans 1")) && (callback == "Rust closed source FnMut specializations 1"))
+}
+
+pub fn accept_rust_source_state_transition_model(language: String, model: String, operation: String) -> bool {
+    (((language == "Rust") && (model == "Rust source state transition 1")) && ((operation == "initialize") || (operation == "write")))
+}
+
+pub fn accept_rust_owned_vector_source_fold_model(language: String, model: String, slots: f64, start: f64, end: f64) -> bool {
+    (((((language == "Rust") && (model == "Rust owned vector source fold 1")) && (slots >= (0f64))) && (slots <= (512f64))) && self::accept_rust_source_region_span(start, end))
+}
+
+pub fn accept_rust_finite_loop_state_transform(language: String, model: String, name: String, generated: bool, slots: f64, start: f64, end: f64) -> bool {
+    (((((((language == "Rust") && (model == "Rust finite loop state transformation 1")) && generated) && self::test_rust_owned_record_loop_chunk_name(name.clone())) && (slots >= (1f64))) && (slots <= (512f64))) && self::accept_rust_source_region_span(start, end))
+}
+
+pub fn read_rust_owned_vector_source_fold_control_variants() -> Vec<String> {
+    vec![String::from("FunctionResult"), String::from("StatementContinuation"), String::from("LoopBreak"), String::from("LoopContinue")]
 }
 
 pub fn source_ml_source1_temporary_plan_rust_owned_record_loop_iterations_loop1(mut result: Vec<f64>, mut index: f64) -> Vec<f64> {

@@ -539,10 +539,18 @@ pub fn read_rust_owned_record_effect_form(kind: String, operation: String) -> St
         if ((kind == "math") && (operation == "rustOwnedRecordStateWrite")) {
             String::from("write state")
         } else {
-            if (kind == "propositionValue") {
-                String::from("proposition comparison")
+            if ((kind == "math") && (operation == "rustOwnedRecordStatePacket")) {
+                String::from("write state packet")
             } else {
-                self::read_rust_expression_completion_form(kind.clone(), operation.clone())
+                if ((kind == "math") && (operation == "rustExclusiveSourceCall")) {
+                    String::from("call state packet")
+                } else {
+                    if (kind == "propositionValue") {
+                        String::from("proposition comparison")
+                    } else {
+                        self::read_rust_expression_completion_form(kind.clone(), operation.clone())
+                    }
+                }
             }
         }
     }
@@ -602,7 +610,27 @@ pub fn read_rust_owned_record_effect_operation(operation: String) -> String {
         if (operation == "write") {
             String::from("rustOwnedRecordStateWrite")
         } else {
-            String::from("")
+            if (operation == "packet") {
+                String::from("rustOwnedRecordStatePacket")
+            } else {
+                if (operation == "call") {
+                    String::from("rustExclusiveSourceCall")
+                } else {
+                    String::from("")
+                }
+            }
+        }
+    }
+}
+
+pub fn read_rust_owned_record_effect_packet_position(role: String) -> f64 {
+    if (role == "result") {
+        0f64
+    } else {
+        if (role == "state") {
+            1f64
+        } else {
+            (-1f64)
         }
     }
 }
