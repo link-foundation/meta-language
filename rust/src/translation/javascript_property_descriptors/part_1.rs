@@ -1,9 +1,4 @@
 // Generated from complete js/src/translation/javascript-property-descriptors.js. Do not edit by hand.
-use super::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Result;
-use super::MlTemporaryTestJavaScriptSemanticSameValueLoop2Result;
-use super::source_ml_temporary_read_java_script_semantic_value_error_loop1;
-use super::source_ml_temporary_test_java_script_semantic_same_value_loop2;
-
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
     use std::cmp::Ordering;
@@ -341,6 +336,109 @@ pub mod ml {
     }
 }
 
+/// JavaScript's Number operations that Rust's f64 does not share.
+pub mod ml_number {
+    /// ECMAScript `Number::toString`: the shortest decimal that reads back as
+    /// the value, the even one on a tie, laid out as JavaScript prints it.
+    #[must_use]
+    pub fn js_number(x: f64) -> String {
+        if x.is_nan() {
+            return String::from("NaN");
+        }
+        if x.is_infinite() {
+            return String::from(if x > 0.0 { "Infinity" } else { "-Infinity" });
+        }
+        if x == 0.0 {
+            return String::from("0");
+        }
+        let (mut digits, n) = decimal(&format!("{:e}", x.abs()));
+        // Rust's shortest digits round a tie away from zero; ECMAScript takes the even neighbour.
+        let (exact, _) = decimal(&format!("{:.800e}", x.abs()));
+        let rest = &exact[digits.len().min(exact.len())..];
+        if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
+            let last = digits.as_bytes()[digits.len() - 1] - b'0';
+            let down = exact[..digits.len()].to_string();
+            let other = if digits == down {
+                increment(&down)
+            } else {
+                Some(down)
+            };
+            if let Some(other) = other {
+                let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
+                if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
+                    digits = other.trim_end_matches('0').to_string();
+                }
+            }
+        }
+        let k = i32::try_from(digits.len()).expect("binary64 significand length fits i32");
+        let body = if k <= n && n <= 21 {
+            format!("{digits}{}", "0".repeat((n - k) as usize))
+        } else if 0 < n && n <= 21 {
+            format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
+        } else if -6 < n && n <= 0 {
+            format!("0.{}{digits}", "0".repeat((-n) as usize))
+        } else {
+            let sign = if n - 1 < 0 { '-' } else { '+' };
+            let power = (n - 1).abs();
+            if k == 1 {
+                format!("{digits}e{sign}{power}")
+            } else {
+                format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
+            }
+        };
+        if x < 0.0 { format!("-{body}") } else { body }
+    }
+
+    /// What console.log prints: -0 as "-0", where String(-0) is "0".
+    #[must_use]
+    pub fn js_console(x: f64) -> String {
+        if x == 0.0 && x.is_sign_negative() {
+            String::from("-0")
+        } else {
+            js_number(x)
+        }
+    }
+
+    /// `SameValue`, as `Object.is` and `assert.strictEqual` compare: NaN equals
+    /// NaN, and 0 differs from -0.
+    #[must_use]
+    pub const fn same_value(a: f64, b: f64) -> bool {
+        if a.is_nan() || b.is_nan() {
+            a.is_nan() && b.is_nan()
+        } else {
+            a.to_bits() == b.to_bits()
+        }
+    }
+
+    /// A decimal digit string plus one, or None when it gains a digit.
+    fn increment(digits: &str) -> Option<String> {
+        let mut bytes = digits.as_bytes().to_vec();
+        for index in (0..bytes.len()).rev() {
+            if bytes[index] == b'9' {
+                bytes[index] = b'0';
+            } else {
+                bytes[index] += 1;
+                return String::from_utf8(bytes).ok();
+            }
+        }
+        None
+    }
+
+    /// The significant digits without trailing zeros, and the exponent n with
+    /// value 0.digits × 10^n, of Rust's {:e} text.
+    fn decimal(text: &str) -> (String, i32) {
+        let (mantissa, exponent) = text.split_once('e').expect("exponent");
+        let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
+        let digits = digits.trim_end_matches('0').to_string();
+        let digits = if digits.is_empty() {
+            String::from("0")
+        } else {
+            digits
+        };
+        (digits, exponent.parse::<i32>().expect("exponent") + 1)
+    }
+}
+
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
 pub mod ml_math {
     /// Math.round: the nearest integer, the one towards +Infinity on a tie,
@@ -535,347 +633,5 @@ pub mod ml_array {
             }
         }
         out
-    }
-}
-
-pub mod ml_source_exception {
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct SourceException {
-        pub class_name: String,
-        pub message_units: Vec<u16>,
-        pub message_present: bool,
-    }
-    impl SourceException {
-        #[must_use]
-        pub fn raise(self) -> ! {
-            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
-        }
-        #[must_use]
-        pub fn from_text(class_name: &str, message: &str) -> Self {
-            Self {
-                class_name: class_name.to_owned(),
-                message_units: message.encode_utf16().collect(),
-                message_present: true,
-            }
-        }
-    }
-    impl std::fmt::Display for SourceException {
-        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            out.write_str(&String::from_utf16_lossy(&self.message_units))
-        }
-    }
-    impl std::error::Error for SourceException {}
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptSemanticValue {
-    Undefined,
-    Null,
-    Boolean(bool),
-    Number(f64),
-    Integer(self::ml::Big),
-    Text(Vec<f64>),
-    Symbol(self::ml::Big),
-    Object(self::ml::Big, bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValue) -> String {
-    match value.clone() {
-        self::JavaScriptSemanticValue::Undefined => String::new(),
-        self::JavaScriptSemanticValue::Null => String::new(),
-        self::JavaScriptSemanticValue::Boolean(source_ml_source1_f1) => String::new(),
-        self::JavaScriptSemanticValue::Number(source_ml_source1_f2) => String::new(),
-        self::JavaScriptSemanticValue::Integer(source_ml_source1_f3) => String::new(),
-        self::JavaScriptSemanticValue::Text(units) => {
-            if (units.len() as f64) > 1_048_576f64 {
-                String::from("semantic text exceeds the explicit UTF16 unit budget")
-            } else {
-                {
-                    let at = 0f64;
-                    {
-                        let source_ml_source1_s5 =
-                            self::source_ml_temporary_read_java_script_semantic_value_error_loop1(
-                                &(units),
-                                at,
-                            );
-                        match source_ml_source1_s5 {
-                            self::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Done => {
-                                String::new()
-                            }
-                            self::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlTemporaryReadJavaScriptSemanticValueErrorLoop1Return(source_ml_temporary_result1) => {
-                                source_ml_temporary_result1.clone()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self::JavaScriptSemanticValue::Symbol(identity) => {
-            if (identity > (self::ml::Big::from_i128(0)))
-                && (identity <= (self::ml::Big::from_i128(18_446_744_073_709_551_615)))
-            {
-                String::new()
-            } else {
-                String::from("a symbol requires a positive unsigned64 global link identity")
-            }
-        }
-        self::JavaScriptSemanticValue::Object(identity_2, source_ml_source1_f4) => {
-            if (identity_2 > (self::ml::Big::from_i128(0)))
-                && (identity_2 <= (self::ml::Big::from_i128(18_446_744_073_709_551_615)))
-            {
-                String::new()
-            } else {
-                String::from("an object requires a positive unsigned64 global link identity")
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_java_script_semantic_same_value(
-    left: self::JavaScriptSemanticValue,
-    right: self::JavaScriptSemanticValue,
-) -> bool {
-    if (!(self::read_java_script_semantic_value_error(left.clone())).is_empty())
-        || (!(self::read_java_script_semantic_value_error(right.clone())).is_empty())
-    {
-        (self::ml_source_exception::SourceException {
-            class_name: String::from("TypeError"),
-            message_units: (String::from(
-                "SameValue requires two complete values in the declared semantic model",
-            ))
-            .encode_utf16()
-            .collect(),
-            message_present: true,
-        })
-        .raise()
-    } else {
-        match left.clone() {
-            self::JavaScriptSemanticValue::Undefined => match right.clone() {
-                self::JavaScriptSemanticValue::Undefined => true,
-                self::JavaScriptSemanticValue::Null => false,
-                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f7) => false,
-                self::JavaScriptSemanticValue::Number(source_ml_source1_f8) => false,
-                self::JavaScriptSemanticValue::Integer(source_ml_source1_f9) => false,
-                self::JavaScriptSemanticValue::Text(source_ml_source1_f10) => false,
-                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f11) => false,
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f12,
-                    source_ml_source1_f13,
-                ) => false,
-            },
-            self::JavaScriptSemanticValue::Null => match right.clone() {
-                self::JavaScriptSemanticValue::Undefined => false,
-                self::JavaScriptSemanticValue::Null => true,
-                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f14) => false,
-                self::JavaScriptSemanticValue::Number(source_ml_source1_f15) => false,
-                self::JavaScriptSemanticValue::Integer(source_ml_source1_f16) => false,
-                self::JavaScriptSemanticValue::Text(source_ml_source1_f17) => false,
-                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f18) => false,
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f19,
-                    source_ml_source1_f20,
-                ) => false,
-            },
-            self::JavaScriptSemanticValue::Boolean(left_value) => match right.clone() {
-                self::JavaScriptSemanticValue::Undefined => false,
-                self::JavaScriptSemanticValue::Null => false,
-                self::JavaScriptSemanticValue::Boolean(value) => left_value == value,
-                self::JavaScriptSemanticValue::Number(source_ml_source1_f21) => false,
-                self::JavaScriptSemanticValue::Integer(source_ml_source1_f22) => false,
-                self::JavaScriptSemanticValue::Text(source_ml_source1_f23) => false,
-                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f24) => false,
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f25,
-                    source_ml_source1_f26,
-                ) => false,
-            },
-            self::JavaScriptSemanticValue::Number(left_value_2) => match right.clone() {
-                self::JavaScriptSemanticValue::Undefined => false,
-                self::JavaScriptSemanticValue::Null => false,
-                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f27) => false,
-                self::JavaScriptSemanticValue::Number(value_2) => {
-                    if left_value_2 == value_2 {
-                        (left_value_2 != 0f64) || ((1f64 / left_value_2) == (1f64 / value_2))
-                    } else {
-                        left_value_2.is_nan() && value_2.is_nan()
-                    }
-                }
-                self::JavaScriptSemanticValue::Integer(source_ml_source1_f28) => false,
-                self::JavaScriptSemanticValue::Text(source_ml_source1_f29) => false,
-                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f30) => false,
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f31,
-                    source_ml_source1_f32,
-                ) => false,
-            },
-            self::JavaScriptSemanticValue::Integer(left_value_3) => match right.clone() {
-                self::JavaScriptSemanticValue::Undefined => false,
-                self::JavaScriptSemanticValue::Null => false,
-                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f33) => false,
-                self::JavaScriptSemanticValue::Number(source_ml_source1_f34) => false,
-                self::JavaScriptSemanticValue::Integer(value_3) => left_value_3 == value_3,
-                self::JavaScriptSemanticValue::Text(source_ml_source1_f35) => false,
-                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f36) => false,
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f37,
-                    source_ml_source1_f38,
-                ) => false,
-            },
-            self::JavaScriptSemanticValue::Text(left_units) => match right.clone() {
-                self::JavaScriptSemanticValue::Undefined => false,
-                self::JavaScriptSemanticValue::Null => false,
-                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f39) => false,
-                self::JavaScriptSemanticValue::Number(source_ml_source1_f40) => false,
-                self::JavaScriptSemanticValue::Integer(source_ml_source1_f41) => false,
-                self::JavaScriptSemanticValue::Text(units) => {
-                    let left_units_2 = left_units;
-                    {
-                        let right_units = units;
-                        {
-                            let ml_library_inequality_1 =
-                                (left_units_2.len() as f64) != (right_units.len() as f64);
-                            if ml_library_inequality_1 {
-                                false
-                            } else {
-                                {
-                                    let at = 0f64;
-                                    {
-                                        let source_ml_source1_s45 = self::source_ml_temporary_test_java_script_semantic_same_value_loop2(&(left_units_2), &(right_units), at);
-                                        match source_ml_source1_s45 {
-                                                self::MlTemporaryTestJavaScriptSemanticSameValueLoop2Result::MlTemporaryTestJavaScriptSemanticSameValueLoop2Done => {
-                                                    true
-                                                }
-                                                self::MlTemporaryTestJavaScriptSemanticSameValueLoop2Result::MlTemporaryTestJavaScriptSemanticSameValueLoop2Return(source_ml_temporary_result2) => {
-                                                    source_ml_temporary_result2
-                                                }
-                                            }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f42) => false,
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f43,
-                    source_ml_source1_f44,
-                ) => false,
-            },
-            self::JavaScriptSemanticValue::Symbol(left_identity) => match right.clone() {
-                self::JavaScriptSemanticValue::Undefined => false,
-                self::JavaScriptSemanticValue::Null => false,
-                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f46) => false,
-                self::JavaScriptSemanticValue::Number(source_ml_source1_f47) => false,
-                self::JavaScriptSemanticValue::Integer(source_ml_source1_f48) => false,
-                self::JavaScriptSemanticValue::Text(source_ml_source1_f49) => false,
-                self::JavaScriptSemanticValue::Symbol(identity) => left_identity == identity,
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f50,
-                    source_ml_source1_f51,
-                ) => false,
-            },
-            self::JavaScriptSemanticValue::Object(left_identity_2, source_ml_source1_f6) => {
-                match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => false,
-                    self::JavaScriptSemanticValue::Null => false,
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source1_f52) => false,
-                    self::JavaScriptSemanticValue::Number(source_ml_source1_f53) => false,
-                    self::JavaScriptSemanticValue::Integer(source_ml_source1_f54) => false,
-                    self::JavaScriptSemanticValue::Text(source_ml_source1_f55) => false,
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source1_f56) => false,
-                    self::JavaScriptSemanticValue::Object(identity_2, source_ml_source1_f57) => {
-                        left_identity_2 == identity_2
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_java_script_semantic_accessor(value: self::JavaScriptSemanticValue) -> bool {
-    {
-        let ml_library_inequality_1 =
-            (self::read_java_script_semantic_value_error(value.clone())) != "";
-        if ml_library_inequality_1 {
-            false
-        } else {
-            match value.clone() {
-                self::JavaScriptSemanticValue::Undefined => true,
-                self::JavaScriptSemanticValue::Null => false,
-                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f58) => {
-                    let source_ml_source1_f71 = source_ml_source1_f58;
-                    false
-                }
-                self::JavaScriptSemanticValue::Number(source_ml_source1_f59) => {
-                    let source_ml_source1_f78 = source_ml_source1_f59;
-                    false
-                }
-                self::JavaScriptSemanticValue::Integer(source_ml_source1_f60) => {
-                    let source_ml_source1_f85 = source_ml_source1_f60.clone();
-                    false
-                }
-                self::JavaScriptSemanticValue::Text(source_ml_source1_f61) => {
-                    let source_ml_source1_f92 = source_ml_source1_f61;
-                    false
-                }
-                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f62) => {
-                    let source_ml_source1_f99 = source_ml_source1_f62.clone();
-                    false
-                }
-                self::JavaScriptSemanticValue::Object(
-                    source_ml_source1_f63,
-                    source_ml_source1_f64,
-                ) => {
-                    let source_ml_source1_f106 = source_ml_source1_f63.clone();
-                    { source_ml_source1_f64 }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn read_java_script_property_descriptor_kind(
-    descriptor: (
-        bool,
-        bool,
-        bool,
-        bool,
-        self::JavaScriptSemanticValue,
-        bool,
-        self::JavaScriptSemanticValue,
-        bool,
-        self::JavaScriptSemanticValue,
-        bool,
-        bool,
-        bool,
-    ),
-) -> String {
-    {
-        let data = (descriptor.clone()).9 || (descriptor.clone()).11;
-        {
-            let accessor = (descriptor.clone()).5 || (descriptor.clone()).7;
-            if data && accessor {
-                String::from("invalid")
-            } else if data {
-                String::from("data")
-            } else if accessor {
-                String::from("accessor")
-            } else {
-                String::from("generic")
-            }
-        }
     }
 }

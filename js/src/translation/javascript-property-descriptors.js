@@ -1,10 +1,5 @@
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,testJavaScriptSemanticAccessor} from './javascript-semantic-values.js';
 
-/** An ordered property list preserves creation order independently of lookup.
- * Keys are actual UTF16 text or globally identified Symbols, never coerced here.
- * @typedef {{$:'ordinaryProperty',key:JavaScriptSemanticValue,descriptor:JavaScriptPropertyDescriptor}} JavaScriptOrdinaryProperty
- */
-
 /** A normalized Property Descriptor keeps field presence independent of value.
  * Its values belong to one checked semantic-value/global-identity context.
  * @typedef {{ configurablePresent:boolean, configurable:boolean,
@@ -12,6 +7,11 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,testJav
  * value:JavaScriptSemanticValue, writablePresent:boolean, writable:boolean,
  * getterPresent:boolean, getter:JavaScriptSemanticValue,
  * setterPresent:boolean, setter:JavaScriptSemanticValue }} JavaScriptPropertyDescriptor
+ */
+
+/** An ordered property list preserves creation order independently of lookup.
+ * Keys are actual UTF16 text or globally identified Symbols, never coerced here.
+ * @typedef {{$:'ordinaryProperty',key:JavaScriptSemanticValue,descriptor:JavaScriptPropertyDescriptor}} JavaScriptOrdinaryProperty
  */
 
 /** @param {JavaScriptPropertyDescriptor} descriptor @returns {string} */
@@ -25,9 +25,12 @@ export function readJavaScriptPropertyDescriptorKind(descriptor) {
  * for semantic values. Absent payloads do not establish a difference.
  * @param {JavaScriptPropertyDescriptor} left @param {JavaScriptPropertyDescriptor} right @returns {boolean} */
 export function testJavaScriptPropertyDescriptorsSameValue(left,right){
- for(const field of ['configurable','enumerable','writable'])if(left[field+'Present']!==right[field+'Present']||left[field+'Present']&&left[field]!==right[field])return false;
- for(const field of ['value','getter','setter'])if(left[field+'Present']!==right[field+'Present']||left[field+'Present']&&!testJavaScriptSemanticSameValue(left[field],right[field]))return false;
- return true;
+ return !(left.configurablePresent!==right.configurablePresent||left.configurablePresent&&left.configurable!==right.configurable
+  ||left.enumerablePresent!==right.enumerablePresent||left.enumerablePresent&&left.enumerable!==right.enumerable
+  ||left.writablePresent!==right.writablePresent||left.writablePresent&&left.writable!==right.writable
+  ||left.valuePresent!==right.valuePresent||left.valuePresent&&!testJavaScriptSemanticSameValue(left.value,right.value)
+  ||left.getterPresent!==right.getterPresent||left.getterPresent&&!testJavaScriptSemanticSameValue(left.getter,right.getter)
+  ||left.setterPresent!==right.setterPresent||left.setterPresent&&!testJavaScriptSemanticSameValue(left.setter,right.setter));
 }
 
 /** Validate only fields actually present; absent payloads carry no meaning.

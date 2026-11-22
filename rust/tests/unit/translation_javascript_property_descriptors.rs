@@ -4,6 +4,7 @@ mod native;
 use super::issue_195_translation_pairs::run;
 use meta_language::read_structured_data_lino;
 use native::JavaScriptSemanticValue as Value;
+use native::ml_string::Text;
 use serde_json::Value as Data;
 use std::process::Command;
 
@@ -120,13 +121,13 @@ fn source_generated_property_descriptors_preserve_complete_observations() {
         let expected = &row["result"];
         assert_eq!(
             disposition,
-            expected["disposition"].as_str().unwrap(),
+            Text::from_text(expected["disposition"].as_str().unwrap()),
             "{}",
             row["name"]
         );
         assert_eq!(
             error,
-            expected["error"].as_str().unwrap(),
+            Text::from_text(expected["error"].as_str().unwrap()),
             "{}",
             row["name"]
         );
@@ -136,7 +137,7 @@ fn source_generated_property_descriptors_preserve_complete_observations() {
                 .as_array()
                 .unwrap()
                 .iter()
-                .map(|field| field.as_str().unwrap().to_owned())
+                .map(|field| Text::from_text(field.as_str().unwrap()))
                 .collect::<Vec<_>>()
         );
         assert_descriptor(&actual, &expected["descriptor"]);
@@ -152,7 +153,7 @@ fn source_generated_property_descriptors_preserve_complete_observations() {
     for row in observations["invalidValues"].as_array().unwrap() {
         assert_eq!(
             native::read_java_script_semantic_value_error(value(&row["value"])),
-            row["actual"].as_str().unwrap(),
+            Text::from_text(row["actual"].as_str().unwrap()),
             "{}",
             row["name"]
         );
@@ -176,7 +177,7 @@ fn source_generated_property_descriptors_preserve_complete_observations() {
         let units = vec![65.0; usize::try_from(row["units"].as_u64().unwrap()).unwrap()];
         assert_eq!(
             native::read_java_script_semantic_value_error(Value::Text(units.clone())),
-            row["actual"].as_str().unwrap()
+            Text::from_text(row["actual"].as_str().unwrap())
         );
         if row["actual"] == "" {
             assert!(native::test_java_script_semantic_same_value(
