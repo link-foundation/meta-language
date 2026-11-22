@@ -43,7 +43,19 @@ export function readRustStandardCollectionSourceLoop(parser,path){
  try{
   const createdViews=[];parser.standardCollectionSourceIteratorReader=(receiver,method,args,path,span)=>{const node=createRustStandardCollectionSourceIterator(parser,receiver,method,args,path,span);createdViews.push(node);return node;};
   parser.ownedVectorSourceIteratorReader=(receiver,method,path,span)=>{const node=readRustOwnedVectorSourceIterationMethod(parser,receiver,method,path,span);if(node)createdViews.push(node);return node;};
-  const receiver=parser.expr(path,{noStruct:true});view=readRustStandardCollectionSourceIterator(parser,receiver)??readRustOwnedVectorSourceIteration(parser,receiver);if(!view){if(createdViews.length)fail('a private borrowed iterator must be the actual complete loop head, without intervening observation or publication',receiver.span??start);view=createRustOwnedVectorSourceIteration(parser,receiver,path,receiver.span??start);if(!view){const actual=parser.origins.origin(receiver,path);if(!actual.wrappers.length||!readRustStandardCollectionSourceOrigin(parser,actual)||!readRustStandardCollectionSourceStorage(parser,{...actual,wrappers:[]}))fail('for iteration requires the actual shared BTree reference or selected standard borrowed iterator',receiver.span??start);const node=createRustStandardCollectionSourceIterator(parser,receiver,{value:'iter'},[],path,receiver.span??start);view=readRustStandardCollectionSourceIterator(parser,node);}}
+  const receiver=parser.expr(path,{noStruct:true});
+  view=readRustStandardCollectionSourceIterator(parser,receiver)??readRustOwnedVectorSourceIteration(parser,receiver);
+  if(!view){
+   if(createdViews.length)fail('a private ordered iterator must be the actual complete loop head, without intervening observation or publication',receiver.span??start);
+   view=createRustOwnedVectorSourceIteration(parser,receiver,path,receiver.span??start);
+   if(!view){
+    const actual=parser.origins.origin(receiver,path);
+    if(!readRustStandardCollectionSourceOrigin(parser,actual)||!readRustStandardCollectionSourceStorage(parser,{...actual,wrappers:[]}))fail('for iteration requires the actual standard BTree owner, shared reference or selected iterator',receiver.span??start);
+    const method=actual.wrappers.length?'iter':'into_iter';
+    const node=createRustStandardCollectionSourceIterator(parser,receiver,{value:method},[],path,receiver.span??start);
+    view=readRustStandardCollectionSourceIterator(parser,node);
+   }
+  }
   if(view.owned)before=parser.origins.snapshotOwnedBindings();
   if(createdViews.some(node=>node!==view.node))fail('every created iterator head must belong to this actual sole ordered loop consumer',receiver.span??start);
   parser.standardCollectionSourceIteratorReader=previousReader;parser.ownedVectorSourceIteratorReader=previousOwnedReader;

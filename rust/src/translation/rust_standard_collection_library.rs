@@ -402,6 +402,12 @@ where
         "executeRustStandardCollectionOrderedBorrow",
         "/rust-standard-collection-ordered-borrow.js",
     )?;
+    let consuming = callable(
+        &program,
+        &owners,
+        "executeRustStandardCollectionOrderedMove",
+        "/rust-standard-collection-ordered-borrow.js",
+    )?;
     let equality = callable(
         &program,
         &owners,
@@ -426,7 +432,7 @@ where
         "executeRustStandardCollectionOrdering",
         "/rust-standard-collection-ordering.js",
     )?;
-    for callee in [kernel, ordered, borrowed] {
+    for callee in [kernel, ordered, borrowed, consuming] {
         require_call(packet, callee)?;
     }
     require_call(equality, equality_kernel)?;

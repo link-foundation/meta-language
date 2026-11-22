@@ -1647,7 +1647,7 @@ class RustParser {
         }
         const method = c.identifier('method');
         this.fnMutSourceObservationGuard?.(value,path,method.value,method);
-        if(method.value==='into_iter'&&this.ownedVectorSourceIteratorReader){const iterated=this.ownedVectorSourceIteratorReader(value,method,path,method);if(iterated){value=iterated;continue;}}
+        if(method.value==='into_iter'&&this.ownedVectorSourceIteratorReader&&this.standardCollectionSourceStorage?.({...this.origins.origin(value,path),wrappers:[]})!==true){const iterated=this.ownedVectorSourceIteratorReader(value,method,path,method);if(iterated){value=iterated;continue;}}
         const fnMutMethod=readRustFnMutSourceMethod(this,value,method,path,{start:value.span?.start??token.start});if(fnMutMethod){value=fnMutMethod;continue;}
         const sourceVectorSort=readRustSourceVectorSort(this,value,method,path);if(sourceVectorSort){value=sourceVectorSort;continue;}
         const sourceVectorPrimitiveSort=readRustSourceVectorPrimitiveSort(this,value,method,path);if(sourceVectorPrimitiveSort){value=sourceVectorPrimitiveSort;continue;}

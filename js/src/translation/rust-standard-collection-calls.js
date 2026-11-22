@@ -123,7 +123,8 @@ export function readRustStandardCollectionSourceCloneCall(parser,segments,args,p
 }
 export function readRustStandardCollectionSourceMethod(parser,receiver,method,args,span,path=parser.modulePath){
  const context=parser.standardCollectionSource;if(!context)return null;const actual=parser.origins.origin(receiver,path),row=readRustStandardCollectionSourceOrigin(parser,actual);if(!row)return null;
- if(parser.standardCollectionSourceIteratorReader&&['iter','keys','values'].includes(method.value))return parser.standardCollectionSourceIteratorReader(receiver,method,args,path,span);
+ if(parser.standardCollectionSourceIteratorReader&&['iter','keys','values','into_iter'].includes(method.value))return parser.standardCollectionSourceIteratorReader(receiver,method,args,path,span);
+ if(method.value==='into_iter')fail('ordered IntoIterator requires its actual consuming loop',span);
  const equality=readRustStandardCollectionSourceEqualityMethod(parser,receiver,method,args,path,span);if(equality)return equality;
  const operation=method.value,arity=readRustStandardCollectionMethodArity(row.origin.resolvedOwner,operation);if(arity<0)fail('collection iteration custom hashers and unimplemented methods retain their explicit refusal',span);if(['new','default'].includes(operation)||args.length!==arity)throw typeError('collection method requires its actual complete argument list',span);
  if(operation==='iter'&&readRustStandardCollectionKind(row.origin.resolvedOwner)==='map')fail('BTreeMap pair iterators require their actual shared loop consumer',span);

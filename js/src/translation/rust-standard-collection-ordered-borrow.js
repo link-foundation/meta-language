@@ -11,3 +11,11 @@ export function executeRustStandardCollectionOrderedBorrow(state,method,call){
  if(!testRustStandardCollectionOrdered(state.origin.resolvedOwner)||!(kind==='set'&&method==='iter'||kind==='map'&&['iter','keys','values'].includes(method)))return {$:'rustCollectionInvalid',reason:'a shared ordered iterator requires its actual standard BTree owner and projection'};
  return {$:'rustCollectionNormal',state,value:{$:'rustCollectionOrderedEntries',entries:state.entries},writeback:false};
 }
+
+/** @param {RustStandardCollectionState} state @param {RustStandardCollectionCallOrigin} call
+ * @returns {RustStandardCollectionTransition} */
+export function executeRustStandardCollectionOrderedMove(state,call){
+ const source=readRustStandardCollectionStateError(state);if(source!=='')return {$:'rustCollectionInvalid',reason:source};
+ const actual=readRustStandardCollectionCallOriginError(state.origin,state.root,'into_iter',0,call);if(actual!=='')return {$:'rustCollectionInvalid',reason:actual};
+ return {$:'rustCollectionNormal',state,value:{$:'rustCollectionOrderedEntries',entries:state.entries},writeback:false};
+}

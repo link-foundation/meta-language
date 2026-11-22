@@ -442,6 +442,7 @@ pub enum RustStandardCollectionCallOrigin {
             ),
         )>,
         Option<(Option<self::ml_string::Text>,)>,
+        Option<(Option<bool>,)>,
     ),
 }
 

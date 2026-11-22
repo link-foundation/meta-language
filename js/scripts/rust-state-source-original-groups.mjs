@@ -7,7 +7,7 @@ import {rustExclusiveCollectionSourceOriginals as exclusiveCollections} from '..
 import {rustStandardCollectionOriginals as collections} from '../tests/fixtures/rust-standard-collections.mjs';
 import {rustStandardCollectionEqualityOriginals as equality} from '../tests/fixtures/rust-standard-collection-equality.mjs';
 import {rustStandardOrderedCollectionOriginals as orderedCollections} from '../tests/fixtures/rust-standard-ordered-collections.mjs';
-import {rustStandardCollectionLoopOriginals as borrowedLoops} from '../tests/fixtures/rust-standard-collection-source-loops.mjs';
+import {rustStandardCollectionLoopOriginals as borrowedLoops,rustStandardCollectionConsumingLoopOriginals as consumingLoops} from '../tests/fixtures/rust-standard-collection-source-loops.mjs';
 import {rustSourceVectorSortOriginals as stableFieldSort} from '../tests/fixtures/rust-source-vector-sort.mjs';
 import {rustSourceStringCharacterPushOriginals as characterPush} from '../tests/fixtures/rust-source-string-character-push.mjs';
 import {rustOwnedVectorLoopOriginals as ownedVectorLoops} from '../tests/fixtures/rust-owned-vector-source-loops.mjs';
@@ -27,6 +27,7 @@ export const rustStateSourceOriginalGroups=[
  {id:'collection-equality',rows:equality,collections:true,sourceVersionRange},
  {id:'ordered-collections',rows:orderedCollections,collections:true,sourceVersionRange},
  {id:'borrowed-ordered-collection-loops',rows:borrowedLoops,collections:true,sourceVersionRange},
+ {id:'owned-ordered-collection-loops',rows:consumingLoops,collections:true,sourceVersionRange},
  {id:'stable-utf16-nominal-field-sort',rows:stableFieldSort,collections:false,sourceVersionRange},
  {id:'literal-character-string-push',rows:characterPush,collections:false,sourceVersionRange},
  {id:'owned-vector-into-loops',rows:ownedVectorLoops,collections:false,sourceVersionRange},

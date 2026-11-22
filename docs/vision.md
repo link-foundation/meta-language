@@ -253,6 +253,9 @@ collection storage carries no source iteration order. BTree storage retains
 the key ordering for borrowed and consuming traversal and lexicographic
 comparison. Owned insert/remove results and clone ownership are separate from
 root/revision-bound borrowed get results and copied/cloned projections.
+An owned BTree loop transfers the collection before checking the loop body.
+Its private iterator packet keeps key order and yields owned Set elements or
+Map key/value pairs. Empty traversal and early exit leave the source moved.
 
 Library admission recomposes the complete original modules and resolves their
 lexical imports before checking the source under the ordinary value profile.

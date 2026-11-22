@@ -8,7 +8,7 @@
 /** @typedef {{proven:boolean,wrappers:string[],sourceOwner:RustStandardCollectionScalarOwner,textSourceModel?:string}} RustStandardCollectionScalarOrigin */
 /** @typedef {{$:'rustStandardCollectionOrigin',ordinary:boolean,proven:boolean,shadowed:boolean,typeIdentity:string,resolvedOwner:string,sourceOwner:RustStandardCollectionTypeOwner,arguments:RustStandardCollectionScalarOrigin[],sourceVersionMinor:number,pointerWidth:number,customHasher:boolean,customEquality:boolean}} RustStandardCollectionOrigin */
 /** @typedef {{domain:string,proven:boolean,available:boolean,borrowed:boolean,ownedTransfer:boolean,sourceOwner:RustStandardCollectionScalarOwner}} RustStandardCollectionArgumentOrigin */
-/** @typedef {{$:'rustStandardCollectionCallOrigin',owner:string,typeIdentity:string,receiverRoot:string,method:string,dispatchOwner:string,proven:boolean,shadowed:boolean,mutable:boolean,available:boolean,overlappingLoan:boolean,arguments:RustStandardCollectionArgumentOrigin[],outputRoot?:string}} RustStandardCollectionCallOrigin */
+/** @typedef {{$:'rustStandardCollectionCallOrigin',owner:string,typeIdentity:string,receiverRoot:string,method:string,dispatchOwner:string,proven:boolean,shadowed:boolean,mutable:boolean,available:boolean,overlappingLoan:boolean,arguments:RustStandardCollectionArgumentOrigin[],outputRoot?:string,ownedReceiverTransfer?:boolean}} RustStandardCollectionCallOrigin */
 
 /** core has no standard collection declarations. Trait witnesses remain separate.
  * @param {string} path @param {boolean} ordinary @param {boolean} shadowed @returns {string} */
@@ -66,6 +66,7 @@ export function readRustStandardCollectionSourceOriginError(origin,keyDomain,val
 export function readRustStandardCollectionMethodArity(owner,method){
  const kind=readRustStandardCollectionKind(owner);if(kind==='')return -1;
  if(['new','default','len','is_empty','clear','clone'].includes(method))return 0;
+ if(method==='into_iter'&&testRustStandardCollectionOrdered(owner))return 0;
  if(testRustStandardCollectionOrdered(owner)&&(kind==='set'&&method==='iter'||kind==='map'&&['iter','keys','values'].includes(method)))return 0;
  if(method==='insert')return kind==='map'?2:1;
  if(method==='get'||method==='remove'||method===(kind==='map'?'contains_key':'contains'))return 1;
@@ -76,6 +77,7 @@ export function readRustStandardCollectionMethodResult(owner,method){
  if(readRustStandardCollectionMethodArity(owner,method)<0)return '';
  if(['new','default','clone'].includes(method))return 'owned collection';
  if(['iter','keys','values'].includes(method))return 'owned ordered values';
+ if(method==='into_iter')return 'owned ordered entries';
  if(method==='len')return 'usize';if(method==='clear')return 'unit';if(method==='get')return 'borrowed Option';
  return readRustStandardCollectionKind(owner)==='map'&&(method==='insert'||method==='remove')?'owned Option':'bool';
 }
@@ -89,6 +91,7 @@ export function readRustStandardCollectionCallOriginError(origin,root,method,arg
  const dispatch=call.dispatchOwner;
  if(method==='clone'){if(!['std::clone::Clone','core::clone::Clone'].includes(dispatch))return 'collection clone requires its actual standard Clone trait dispatch';if(typeof call.outputRoot!=='string'||call.outputRoot.length===0||call.outputRoot===root)return 'collection clone requires its independent fresh output binding root';}
  else if(method==='default'){if(!['std::default::Default','core::default::Default'].includes(dispatch))return 'collection default requires its actual standard Default trait dispatch';}
+ else if(method==='into_iter'){if(!['std::iter::IntoIterator','core::iter::IntoIterator'].includes(dispatch)||call.ownedReceiverTransfer!==true||call.overlappingLoan)return 'ordered IntoIterator requires its actual available owned receiver transfer and standard trait dispatch';}
  else if(resolveRustStandardCollectionOwner(dispatch,true,false)!==owner)return 'collection inherent calls require their actual resolved implementation owner';
  if(testRustStandardCollectionMutation(owner,method)&&(!call.mutable||call.overlappingLoan))return 'collection mutation requires an actual mutable available root without overlapping live loans';
  return '';

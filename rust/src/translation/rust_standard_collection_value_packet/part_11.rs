@@ -29,27 +29,27 @@ pub fn finish_rust_standard_collection_equality(
             self::RustStandardCollectionEqualityState::RustCollectionEqualityState(
                 _,
                 _,
-                source_ml_source2_data_property_value782,
+                source_ml_source2_data_property_value793,
                 _,
                 _,
                 _,
                 _,
             ) => {
-                let source_ml_source2_data_property_value782 =
-                    *source_ml_source2_data_property_value782;
-                source_ml_source2_data_property_value782.clone()
+                let source_ml_source2_data_property_value793 =
+                    *source_ml_source2_data_property_value793;
+                source_ml_source2_data_property_value793.clone()
             }
         } {
             self::RustStandardCollectionEqualityOrigin::RustStandardCollectionEqualityOrigin(
                 _,
                 _,
-                source_ml_source2_data_property_value783,
+                source_ml_source2_data_property_value794,
                 _,
                 _,
                 _,
                 _,
                 _,
-            ) => source_ml_source2_data_property_value783.clone(),
+            ) => source_ml_source2_data_property_value794.clone(),
         }) == (self::ml_string::Text::from_units(vec![
             110, 111, 116, 32, 101, 113, 117, 97, 108,
         ])) {
@@ -116,7 +116,7 @@ pub fn advance_rust_standard_collection_equality(
 ) -> self::RustStandardCollectionEqualityTransition {
     if ((match match state.clone() {
         self::RustStandardCollectionEqualityState::RustCollectionEqualityState(
-            source_ml_source2_data_property_value788,
+            source_ml_source2_data_property_value799,
             _,
             _,
             _,
@@ -124,9 +124,9 @@ pub fn advance_rust_standard_collection_equality(
             _,
             _,
         ) => {
-            let source_ml_source2_data_property_value788 =
-                *source_ml_source2_data_property_value788;
-            source_ml_source2_data_property_value788.clone()
+            let source_ml_source2_data_property_value799 =
+                *source_ml_source2_data_property_value799;
+            source_ml_source2_data_property_value799.clone()
         }
     } {
         self::RustStandardCollectionState::RustStandardCollectionState(
@@ -136,23 +136,23 @@ pub fn advance_rust_standard_collection_equality(
             _,
             _,
             _,
-            source_ml_source2_data_property_value789,
-        ) => source_ml_source2_data_property_value789,
+            source_ml_source2_data_property_value800,
+        ) => source_ml_source2_data_property_value800,
     })
     .len() as f64)
         != ((match match state.clone() {
             self::RustStandardCollectionEqualityState::RustCollectionEqualityState(
                 _,
-                source_ml_source2_data_property_value790,
+                source_ml_source2_data_property_value801,
                 _,
                 _,
                 _,
                 _,
                 _,
             ) => {
-                let source_ml_source2_data_property_value790 =
-                    *source_ml_source2_data_property_value790;
-                source_ml_source2_data_property_value790.clone()
+                let source_ml_source2_data_property_value801 =
+                    *source_ml_source2_data_property_value801;
+                source_ml_source2_data_property_value801.clone()
             }
         } {
             self::RustStandardCollectionState::RustStandardCollectionState(
@@ -162,8 +162,8 @@ pub fn advance_rust_standard_collection_equality(
                 _,
                 _,
                 _,
-                source_ml_source2_data_property_value791,
-            ) => source_ml_source2_data_property_value791,
+                source_ml_source2_data_property_value802,
+            ) => source_ml_source2_data_property_value802,
         })
         .len() as f64)
     {
@@ -173,14 +173,14 @@ pub fn advance_rust_standard_collection_equality(
             _,
             _,
             _,
-            source_ml_source2_data_property_value795,
+            source_ml_source2_data_property_value806,
             _,
             _,
             _,
-        ) => source_ml_source2_data_property_value795,
+        ) => source_ml_source2_data_property_value806,
     }) == ((match match state.clone() {
         self::RustStandardCollectionEqualityState::RustCollectionEqualityState(
-            source_ml_source2_data_property_value796,
+            source_ml_source2_data_property_value807,
             _,
             _,
             _,
@@ -188,9 +188,9 @@ pub fn advance_rust_standard_collection_equality(
             _,
             _,
         ) => {
-            let source_ml_source2_data_property_value796 =
-                *source_ml_source2_data_property_value796;
-            source_ml_source2_data_property_value796.clone()
+            let source_ml_source2_data_property_value807 =
+                *source_ml_source2_data_property_value807;
+            source_ml_source2_data_property_value807.clone()
         }
     } {
         self::RustStandardCollectionState::RustStandardCollectionState(
@@ -200,8 +200,8 @@ pub fn advance_rust_standard_collection_equality(
             _,
             _,
             _,
-            source_ml_source2_data_property_value797,
-        ) => source_ml_source2_data_property_value797,
+            source_ml_source2_data_property_value808,
+        ) => source_ml_source2_data_property_value808,
     })
     .len() as f64)
     {
@@ -212,23 +212,23 @@ pub fn advance_rust_standard_collection_equality(
             _,
             _,
             _,
-            source_ml_source2_data_property_value801,
+            source_ml_source2_data_property_value812,
             _,
             _,
-        ) => source_ml_source2_data_property_value801,
+        ) => source_ml_source2_data_property_value812,
     }) == ((match match state.clone() {
         self::RustStandardCollectionEqualityState::RustCollectionEqualityState(
             _,
-            source_ml_source2_data_property_value802,
+            source_ml_source2_data_property_value813,
             _,
             _,
             _,
             _,
             _,
         ) => {
-            let source_ml_source2_data_property_value802 =
-                *source_ml_source2_data_property_value802;
-            source_ml_source2_data_property_value802.clone()
+            let source_ml_source2_data_property_value813 =
+                *source_ml_source2_data_property_value813;
+            source_ml_source2_data_property_value813.clone()
         }
     } {
         self::RustStandardCollectionState::RustStandardCollectionState(
@@ -238,8 +238,8 @@ pub fn advance_rust_standard_collection_equality(
             _,
             _,
             _,
-            source_ml_source2_data_property_value803,
-        ) => source_ml_source2_data_property_value803,
+            source_ml_source2_data_property_value814,
+        ) => source_ml_source2_data_property_value814,
     })
     .len() as f64)
     {
@@ -257,8 +257,8 @@ pub fn advance_rust_standard_collection_equality(
                             _,
                             _,
                             _,
-                            source_ml_source2_data_property_value805,
-                        ) => source_ml_source2_data_property_value805,
+                            source_ml_source2_data_property_value816,
+                        ) => source_ml_source2_data_property_value816,
                     })
             {
                 self::RustStandardCollectionEqualityTransition::RustCollectionEqualityResourceLimit(
@@ -274,89 +274,89 @@ pub fn advance_rust_standard_collection_equality(
             } else {
                 {
                     let left = self::ml_array::optional_at(&match match state.clone() {
-                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value806, _, _, _, _, _, _) => {
-                                    let source_ml_source2_data_property_value806 = *source_ml_source2_data_property_value806;
-                                    source_ml_source2_data_property_value806.clone()
+                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value817, _, _, _, _, _, _) => {
+                                    let source_ml_source2_data_property_value817 = *source_ml_source2_data_property_value817;
+                                    source_ml_source2_data_property_value817.clone()
                                 }
                             } {
-                                self::RustStandardCollectionState::RustStandardCollectionState(_, _, _, _, _, _, source_ml_source2_data_property_value807) => {
-                                    source_ml_source2_data_property_value807
+                                self::RustStandardCollectionState::RustStandardCollectionState(_, _, _, _, _, _, source_ml_source2_data_property_value818) => {
+                                    source_ml_source2_data_property_value818
                                 }
                             }, self::ml_array::number_index(match state.clone() {
-                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value808, _, _, _) => {
-                                    source_ml_source2_data_property_value808
+                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value819, _, _, _) => {
+                                    source_ml_source2_data_property_value819
                                 }
                             }));
                     {
                         let right = self::ml_array::optional_at(&match match state.clone() {
-                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value809, _, _, _, _, _) => {
-                                        let source_ml_source2_data_property_value809 = *source_ml_source2_data_property_value809;
-                                        source_ml_source2_data_property_value809.clone()
+                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value820, _, _, _, _, _) => {
+                                        let source_ml_source2_data_property_value820 = *source_ml_source2_data_property_value820;
+                                        source_ml_source2_data_property_value820.clone()
                                     }
                                 } {
-                                    self::RustStandardCollectionState::RustStandardCollectionState(_, _, _, _, _, _, source_ml_source2_data_property_value810) => {
-                                        source_ml_source2_data_property_value810
+                                    self::RustStandardCollectionState::RustStandardCollectionState(_, _, _, _, _, _, source_ml_source2_data_property_value821) => {
+                                        source_ml_source2_data_property_value821
                                     }
                                 }, self::ml_array::number_index(match state.clone() {
-                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value811, _, _) => {
-                                        source_ml_source2_data_property_value811
+                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value822, _, _) => {
+                                        source_ml_source2_data_property_value822
                                     }
                                 }));
                         {
                             let next = {
-                                let source_ml_source2_nominal_spread813 = state.clone();
+                                let source_ml_source2_nominal_spread824 = state.clone();
                                 {
-                                    let source_ml_source2_nominal_field814 = match source_ml_source2_nominal_spread813.clone() {
-                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value815, _, _, _, _, _, _) => {
-                                                    let source_ml_source2_data_property_value815 = *source_ml_source2_data_property_value815;
-                                                    source_ml_source2_data_property_value815.clone()
+                                    let source_ml_source2_nominal_field825 = match source_ml_source2_nominal_spread824.clone() {
+                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value826, _, _, _, _, _, _) => {
+                                                    let source_ml_source2_data_property_value826 = *source_ml_source2_data_property_value826;
+                                                    source_ml_source2_data_property_value826.clone()
                                                 }
                                             };
                                     {
-                                        let source_ml_source2_nominal_field816 = match source_ml_source2_nominal_spread813.clone() {
-                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value817, _, _, _, _, _) => {
-                                                        let source_ml_source2_data_property_value817 = *source_ml_source2_data_property_value817;
-                                                        source_ml_source2_data_property_value817.clone()
+                                        let source_ml_source2_nominal_field827 = match source_ml_source2_nominal_spread824.clone() {
+                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value828, _, _, _, _, _) => {
+                                                        let source_ml_source2_data_property_value828 = *source_ml_source2_data_property_value828;
+                                                        source_ml_source2_data_property_value828.clone()
                                                     }
                                                 };
                                         {
-                                            let source_ml_source2_nominal_field818 = match source_ml_source2_nominal_spread813.clone() {
-                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value819, _, _, _, _) => {
-                                                            let source_ml_source2_data_property_value819 = *source_ml_source2_data_property_value819;
-                                                            source_ml_source2_data_property_value819.clone()
+                                            let source_ml_source2_nominal_field829 = match source_ml_source2_nominal_spread824.clone() {
+                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value830, _, _, _, _) => {
+                                                            let source_ml_source2_data_property_value830 = *source_ml_source2_data_property_value830;
+                                                            source_ml_source2_data_property_value830.clone()
                                                         }
                                                     };
                                             {
-                                                let source_ml_source2_nominal_field820 = match source_ml_source2_nominal_spread813.clone() {
-                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value821, _, _, _) => {
-                                                                source_ml_source2_data_property_value821
+                                                let source_ml_source2_nominal_field831 = match source_ml_source2_nominal_spread824.clone() {
+                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value832, _, _, _) => {
+                                                                source_ml_source2_data_property_value832
                                                             }
                                                         };
                                                 {
-                                                    let source_ml_source2_nominal_field822 = match source_ml_source2_nominal_spread813.clone() {
-                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value823, _, _) => {
-                                                                    source_ml_source2_data_property_value823
+                                                    let source_ml_source2_nominal_field833 = match source_ml_source2_nominal_spread824.clone() {
+                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value834, _, _) => {
+                                                                    source_ml_source2_data_property_value834
                                                                 }
                                                             };
                                                     {
-                                                        let source_ml_source2_nominal_field824 = match source_ml_source2_nominal_spread813.clone() {
-                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value825, _) => {
-                                                                        source_ml_source2_data_property_value825.clone()
+                                                        let source_ml_source2_nominal_field835 = match source_ml_source2_nominal_spread824.clone() {
+                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value836, _) => {
+                                                                        source_ml_source2_data_property_value836.clone()
                                                                     }
                                                                 };
                                                         {
-                                                            let source_ml_source2_nominal_field826 = match source_ml_source2_nominal_spread813.clone() {
-                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value827) => {
-                                                                            source_ml_source2_data_property_value827
+                                                            let source_ml_source2_nominal_field837 = match source_ml_source2_nominal_spread824.clone() {
+                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value838) => {
+                                                                            source_ml_source2_data_property_value838
                                                                         }
                                                                     };
                                                             {
-                                                                let source_ml_source2_nominal_override828 = match state.clone() {
-                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value812) => {
-                                                                                source_ml_source2_data_property_value812
+                                                                let source_ml_source2_nominal_override839 = match state.clone() {
+                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value823) => {
+                                                                                source_ml_source2_data_property_value823
                                                                             }
                                                                         } + cost;
-                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field814), Box::new(source_ml_source2_nominal_field816), Box::new(source_ml_source2_nominal_field818), source_ml_source2_nominal_field820, source_ml_source2_nominal_field822, source_ml_source2_nominal_field824, source_ml_source2_nominal_override828)
+                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field825), Box::new(source_ml_source2_nominal_field827), Box::new(source_ml_source2_nominal_field829), source_ml_source2_nominal_field831, source_ml_source2_nominal_field833, source_ml_source2_nominal_field835, source_ml_source2_nominal_override839)
                                                             }
                                                         }
                                                     }
@@ -367,17 +367,17 @@ pub fn advance_rust_standard_collection_equality(
                                 }
                             };
                             if (match state.clone() {
-                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value830, _) => {
-                                            source_ml_source2_data_property_value830.clone()
+                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value841, _) => {
+                                            source_ml_source2_data_property_value841.clone()
                                         }
                                     }) == (self::ml_string::Text::from_units(vec![118, 97, 108, 117, 101])) {
                                         {
                                             let left_value = {
-                                                let source_ml_source2_nullish_field_receiver831 = (left.clone(),);
-                                                if match (source_ml_source2_nullish_field_receiver831.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                                                let source_ml_source2_nullish_field_receiver842 = (left.clone(),);
+                                                if match (source_ml_source2_nullish_field_receiver842.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
                                                     {
-                                                        let source_ml_source2_nullish_field_present832 = ((source_ml_source2_nullish_field_receiver831.clone()).0).clone().expect("a proven present value");
-                                                        ((((source_ml_source2_nullish_field_present832).1).clone().unwrap_or_else(|| (None::<self::RustStandardCollectionScalar>,))).0).clone()
+                                                        let source_ml_source2_nullish_field_present843 = ((source_ml_source2_nullish_field_receiver842.clone()).0).clone().expect("a proven present value");
+                                                        ((((source_ml_source2_nullish_field_present843).1).clone().unwrap_or_else(|| (None::<self::RustStandardCollectionScalar>,))).0).clone()
                                                     }
                                                 } else {
                                                     (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 118, 97, 108, 117, 101, 39, 41])).0, message_present: true }).raise()
@@ -385,11 +385,11 @@ pub fn advance_rust_standard_collection_equality(
                                             };
                                             {
                                                 let right_value = {
-                                                    let source_ml_source2_nullish_field_receiver833 = (right.clone(),);
-                                                    if match (source_ml_source2_nullish_field_receiver833.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                                                    let source_ml_source2_nullish_field_receiver844 = (right.clone(),);
+                                                    if match (source_ml_source2_nullish_field_receiver844.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
                                                         {
-                                                            let source_ml_source2_nullish_field_present834 = ((source_ml_source2_nullish_field_receiver833.clone()).0).clone().expect("a proven present value");
-                                                            ((((source_ml_source2_nullish_field_present834).1).clone().unwrap_or_else(|| (None::<self::RustStandardCollectionScalar>,))).0).clone()
+                                                            let source_ml_source2_nullish_field_present845 = ((source_ml_source2_nullish_field_receiver844.clone()).0).clone().expect("a proven present value");
+                                                            ((((source_ml_source2_nullish_field_present845).1).clone().unwrap_or_else(|| (None::<self::RustStandardCollectionScalar>,))).0).clone()
                                                         }
                                                     } else {
                                                         (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 118, 97, 108, 117, 101, 39, 41])).0, message_present: true }).raise()
@@ -403,63 +403,63 @@ pub fn advance_rust_standard_collection_equality(
                                                             self::RustStandardCollectionEqualityTransition::RustCollectionEqualityInvalid(invalid.clone())
                                                         } else if (self::test_rust_standard_collection_scalar_equality(left_value.clone().expect("a proven present value"), right_value.clone().expect("a proven present value"))) {
                                                                 self::RustStandardCollectionEqualityTransition::RustCollectionEqualityContinue(Box::new({
-                                                                    let source_ml_source2_nominal_spread836 = next.clone();
+                                                                    let source_ml_source2_nominal_spread847 = next.clone();
                                                                     {
-                                                                        let source_ml_source2_nominal_field837 = match source_ml_source2_nominal_spread836.clone() {
-                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value838, _, _, _, _, _, _) => {
-                                                                                let source_ml_source2_data_property_value838 = *source_ml_source2_data_property_value838;
-                                                                                source_ml_source2_data_property_value838.clone()
+                                                                        let source_ml_source2_nominal_field848 = match source_ml_source2_nominal_spread847.clone() {
+                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value849, _, _, _, _, _, _) => {
+                                                                                let source_ml_source2_data_property_value849 = *source_ml_source2_data_property_value849;
+                                                                                source_ml_source2_data_property_value849.clone()
                                                                             }
                                                                         };
                                                                         {
-                                                                            let source_ml_source2_nominal_field839 = match source_ml_source2_nominal_spread836.clone() {
-                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value840, _, _, _, _, _) => {
-                                                                                    let source_ml_source2_data_property_value840 = *source_ml_source2_data_property_value840;
-                                                                                    source_ml_source2_data_property_value840.clone()
+                                                                            let source_ml_source2_nominal_field850 = match source_ml_source2_nominal_spread847.clone() {
+                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value851, _, _, _, _, _) => {
+                                                                                    let source_ml_source2_data_property_value851 = *source_ml_source2_data_property_value851;
+                                                                                    source_ml_source2_data_property_value851.clone()
                                                                                 }
                                                                             };
                                                                             {
-                                                                                let source_ml_source2_nominal_field841 = match source_ml_source2_nominal_spread836.clone() {
-                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value842, _, _, _, _) => {
-                                                                                        let source_ml_source2_data_property_value842 = *source_ml_source2_data_property_value842;
-                                                                                        source_ml_source2_data_property_value842.clone()
+                                                                                let source_ml_source2_nominal_field852 = match source_ml_source2_nominal_spread847.clone() {
+                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value853, _, _, _, _) => {
+                                                                                        let source_ml_source2_data_property_value853 = *source_ml_source2_data_property_value853;
+                                                                                        source_ml_source2_data_property_value853.clone()
                                                                                     }
                                                                                 };
                                                                                 {
-                                                                                    let source_ml_source2_nominal_field843 = match source_ml_source2_nominal_spread836.clone() {
-                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value844, _, _, _) => {
-                                                                                            source_ml_source2_data_property_value844
+                                                                                    let source_ml_source2_nominal_field854 = match source_ml_source2_nominal_spread847.clone() {
+                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value855, _, _, _) => {
+                                                                                            source_ml_source2_data_property_value855
                                                                                         }
                                                                                     };
                                                                                     {
-                                                                                        let source_ml_source2_nominal_field845 = match source_ml_source2_nominal_spread836.clone() {
-                                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value846, _, _) => {
-                                                                                                source_ml_source2_data_property_value846
+                                                                                        let source_ml_source2_nominal_field856 = match source_ml_source2_nominal_spread847.clone() {
+                                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value857, _, _) => {
+                                                                                                source_ml_source2_data_property_value857
                                                                                             }
                                                                                         };
                                                                                         {
-                                                                                            let source_ml_source2_nominal_field847 = match source_ml_source2_nominal_spread836.clone() {
-                                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value848, _) => {
-                                                                                                    source_ml_source2_data_property_value848.clone()
+                                                                                            let source_ml_source2_nominal_field858 = match source_ml_source2_nominal_spread847.clone() {
+                                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value859, _) => {
+                                                                                                    source_ml_source2_data_property_value859.clone()
                                                                                                 }
                                                                                             };
                                                                                             {
-                                                                                                let source_ml_source2_nominal_field849 = match source_ml_source2_nominal_spread836.clone() {
-                                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value850) => {
-                                                                                                        source_ml_source2_data_property_value850
+                                                                                                let source_ml_source2_nominal_field860 = match source_ml_source2_nominal_spread847.clone() {
+                                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value861) => {
+                                                                                                        source_ml_source2_data_property_value861
                                                                                                     }
                                                                                                 };
                                                                                                 {
-                                                                                                    let source_ml_source2_nominal_override851 = match state.clone() {
-                                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value835, _, _, _) => {
-                                                                                                            source_ml_source2_data_property_value835
+                                                                                                    let source_ml_source2_nominal_override862 = match state.clone() {
+                                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value846, _, _, _) => {
+                                                                                                            source_ml_source2_data_property_value846
                                                                                                         }
                                                                                                     } + 1f64;
                                                                                                     {
-                                                                                                        let source_ml_source2_nominal_override852 = 0f64;
+                                                                                                        let source_ml_source2_nominal_override863 = 0f64;
                                                                                                         {
-                                                                                                            let source_ml_source2_nominal_override853 = self::ml_string::Text::from_units(vec![115, 101, 97, 114, 99, 104]);
-                                                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field837), Box::new(source_ml_source2_nominal_field839), Box::new(source_ml_source2_nominal_field841), source_ml_source2_nominal_override851, source_ml_source2_nominal_override852, source_ml_source2_nominal_override853, source_ml_source2_nominal_field849)
+                                                                                                            let source_ml_source2_nominal_override864 = self::ml_string::Text::from_units(vec![115, 101, 97, 114, 99, 104]);
+                                                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field848), Box::new(source_ml_source2_nominal_field850), Box::new(source_ml_source2_nominal_field852), source_ml_source2_nominal_override862, source_ml_source2_nominal_override863, source_ml_source2_nominal_override864, source_ml_source2_nominal_field860)
                                                                                                         }
                                                                                                     }
                                                                                                 }
@@ -478,90 +478,90 @@ pub fn advance_rust_standard_collection_equality(
                                             }
                                         }
                                     } else if (self::test_rust_standard_collection_scalar_equality({
-                                            let source_ml_source2_nullish_field_receiver854 = (left.clone(),);
-                                            if match (source_ml_source2_nullish_field_receiver854.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                                            let source_ml_source2_nullish_field_receiver865 = (left.clone(),);
+                                            if match (source_ml_source2_nullish_field_receiver865.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
                                                 {
-                                                    let source_ml_source2_nullish_field_present855 = ((source_ml_source2_nullish_field_receiver854.clone()).0).clone().expect("a proven present value");
-                                                    (source_ml_source2_nullish_field_present855).0
+                                                    let source_ml_source2_nullish_field_present866 = ((source_ml_source2_nullish_field_receiver865.clone()).0).clone().expect("a proven present value");
+                                                    (source_ml_source2_nullish_field_present866).0
                                                 }
                                             } else {
                                                 (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 107, 101, 121, 39, 41])).0, message_present: true }).raise()
                                             }
                                         }, {
-                                            let source_ml_source2_nullish_field_receiver856 = (right.clone(),);
-                                            if match (source_ml_source2_nullish_field_receiver856.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
+                                            let source_ml_source2_nullish_field_receiver867 = (right.clone(),);
+                                            if match (source_ml_source2_nullish_field_receiver867.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
                                                 {
-                                                    let source_ml_source2_nullish_field_present857 = ((source_ml_source2_nullish_field_receiver856.clone()).0).clone().expect("a proven present value");
-                                                    (source_ml_source2_nullish_field_present857).0
+                                                    let source_ml_source2_nullish_field_present868 = ((source_ml_source2_nullish_field_receiver867.clone()).0).clone().expect("a proven present value");
+                                                    (source_ml_source2_nullish_field_present868).0
                                                 }
                                             } else {
                                                 (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 107, 101, 121, 39, 41])).0, message_present: true }).raise()
                                             }
                                         })) {if (self::read_rust_standard_collection_kind(&(self::resolve_rust_standard_collection_owner(&(match match match state.clone() {
-                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value878, _, _, _, _, _, _) => {
-                                                    let source_ml_source2_data_property_value878 = *source_ml_source2_data_property_value878;
-                                                    source_ml_source2_data_property_value878.clone()
+                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value889, _, _, _, _, _, _) => {
+                                                    let source_ml_source2_data_property_value889 = *source_ml_source2_data_property_value889;
+                                                    source_ml_source2_data_property_value889.clone()
                                                 }
                                             } {
-                                                self::RustStandardCollectionState::RustStandardCollectionState(source_ml_source2_data_property_value879, _, _, _, _, _, _) => {
-                                                    let source_ml_source2_data_property_value879 = *source_ml_source2_data_property_value879;
-                                                    source_ml_source2_data_property_value879.clone()
+                                                self::RustStandardCollectionState::RustStandardCollectionState(source_ml_source2_data_property_value890, _, _, _, _, _, _) => {
+                                                    let source_ml_source2_data_property_value890 = *source_ml_source2_data_property_value890;
+                                                    source_ml_source2_data_property_value890.clone()
                                                 }
                                             } {
-                                                self::RustStandardCollectionOrigin::RustStandardCollectionOrigin(_, _, _, _, source_ml_source2_data_property_value880, _, _, _, _, _, _) => {
-                                                    source_ml_source2_data_property_value880.clone()
+                                                self::RustStandardCollectionOrigin::RustStandardCollectionOrigin(_, _, _, _, source_ml_source2_data_property_value891, _, _, _, _, _, _) => {
+                                                    source_ml_source2_data_property_value891.clone()
                                                 }
                                             }), true, false)))) == (self::ml_string::Text::from_units(vec![109, 97, 112])) {
                                                 self::RustStandardCollectionEqualityTransition::RustCollectionEqualityContinue(Box::new({
-                                                    let source_ml_source2_nominal_spread881 = next.clone();
+                                                    let source_ml_source2_nominal_spread892 = next.clone();
                                                     {
-                                                        let source_ml_source2_nominal_field882 = match source_ml_source2_nominal_spread881.clone() {
-                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value883, _, _, _, _, _, _) => {
-                                                                let source_ml_source2_data_property_value883 = *source_ml_source2_data_property_value883;
-                                                                source_ml_source2_data_property_value883.clone()
+                                                        let source_ml_source2_nominal_field893 = match source_ml_source2_nominal_spread892.clone() {
+                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value894, _, _, _, _, _, _) => {
+                                                                let source_ml_source2_data_property_value894 = *source_ml_source2_data_property_value894;
+                                                                source_ml_source2_data_property_value894.clone()
                                                             }
                                                         };
                                                         {
-                                                            let source_ml_source2_nominal_field884 = match source_ml_source2_nominal_spread881.clone() {
-                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value885, _, _, _, _, _) => {
-                                                                    let source_ml_source2_data_property_value885 = *source_ml_source2_data_property_value885;
-                                                                    source_ml_source2_data_property_value885.clone()
+                                                            let source_ml_source2_nominal_field895 = match source_ml_source2_nominal_spread892.clone() {
+                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value896, _, _, _, _, _) => {
+                                                                    let source_ml_source2_data_property_value896 = *source_ml_source2_data_property_value896;
+                                                                    source_ml_source2_data_property_value896.clone()
                                                                 }
                                                             };
                                                             {
-                                                                let source_ml_source2_nominal_field886 = match source_ml_source2_nominal_spread881.clone() {
-                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value887, _, _, _, _) => {
-                                                                        let source_ml_source2_data_property_value887 = *source_ml_source2_data_property_value887;
-                                                                        source_ml_source2_data_property_value887.clone()
+                                                                let source_ml_source2_nominal_field897 = match source_ml_source2_nominal_spread892.clone() {
+                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value898, _, _, _, _) => {
+                                                                        let source_ml_source2_data_property_value898 = *source_ml_source2_data_property_value898;
+                                                                        source_ml_source2_data_property_value898.clone()
                                                                     }
                                                                 };
                                                                 {
-                                                                    let source_ml_source2_nominal_field888 = match source_ml_source2_nominal_spread881.clone() {
-                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value889, _, _, _) => {
-                                                                            source_ml_source2_data_property_value889
+                                                                    let source_ml_source2_nominal_field899 = match source_ml_source2_nominal_spread892.clone() {
+                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value900, _, _, _) => {
+                                                                            source_ml_source2_data_property_value900
                                                                         }
                                                                     };
                                                                     {
-                                                                        let source_ml_source2_nominal_field890 = match source_ml_source2_nominal_spread881.clone() {
-                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value891, _, _) => {
-                                                                                source_ml_source2_data_property_value891
+                                                                        let source_ml_source2_nominal_field901 = match source_ml_source2_nominal_spread892.clone() {
+                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value902, _, _) => {
+                                                                                source_ml_source2_data_property_value902
                                                                             }
                                                                         };
                                                                         {
-                                                                            let source_ml_source2_nominal_field892 = match source_ml_source2_nominal_spread881.clone() {
-                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value893, _) => {
-                                                                                    source_ml_source2_data_property_value893.clone()
+                                                                            let source_ml_source2_nominal_field903 = match source_ml_source2_nominal_spread892.clone() {
+                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value904, _) => {
+                                                                                    source_ml_source2_data_property_value904.clone()
                                                                                 }
                                                                             };
                                                                             {
-                                                                                let source_ml_source2_nominal_field894 = match source_ml_source2_nominal_spread881.clone() {
-                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value895) => {
-                                                                                        source_ml_source2_data_property_value895
+                                                                                let source_ml_source2_nominal_field905 = match source_ml_source2_nominal_spread892.clone() {
+                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value906) => {
+                                                                                        source_ml_source2_data_property_value906
                                                                                     }
                                                                                 };
                                                                                 {
-                                                                                    let source_ml_source2_nominal_override896 = self::ml_string::Text::from_units(vec![118, 97, 108, 117, 101]);
-                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field882), Box::new(source_ml_source2_nominal_field884), Box::new(source_ml_source2_nominal_field886), source_ml_source2_nominal_field888, source_ml_source2_nominal_field890, source_ml_source2_nominal_override896, source_ml_source2_nominal_field894)
+                                                                                    let source_ml_source2_nominal_override907 = self::ml_string::Text::from_units(vec![118, 97, 108, 117, 101]);
+                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field893), Box::new(source_ml_source2_nominal_field895), Box::new(source_ml_source2_nominal_field897), source_ml_source2_nominal_field899, source_ml_source2_nominal_field901, source_ml_source2_nominal_override907, source_ml_source2_nominal_field905)
                                                                                 }
                                                                             }
                                                                         }
@@ -573,61 +573,61 @@ pub fn advance_rust_standard_collection_equality(
                                                 }))
                                             } else {
                                                 self::RustStandardCollectionEqualityTransition::RustCollectionEqualityContinue(Box::new({
-                                                    let source_ml_source2_nominal_spread898 = next.clone();
+                                                    let source_ml_source2_nominal_spread909 = next.clone();
                                                     {
-                                                        let source_ml_source2_nominal_field899 = match source_ml_source2_nominal_spread898.clone() {
-                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value900, _, _, _, _, _, _) => {
-                                                                let source_ml_source2_data_property_value900 = *source_ml_source2_data_property_value900;
-                                                                source_ml_source2_data_property_value900.clone()
+                                                        let source_ml_source2_nominal_field910 = match source_ml_source2_nominal_spread909.clone() {
+                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value911, _, _, _, _, _, _) => {
+                                                                let source_ml_source2_data_property_value911 = *source_ml_source2_data_property_value911;
+                                                                source_ml_source2_data_property_value911.clone()
                                                             }
                                                         };
                                                         {
-                                                            let source_ml_source2_nominal_field901 = match source_ml_source2_nominal_spread898.clone() {
-                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value902, _, _, _, _, _) => {
-                                                                    let source_ml_source2_data_property_value902 = *source_ml_source2_data_property_value902;
-                                                                    source_ml_source2_data_property_value902.clone()
+                                                            let source_ml_source2_nominal_field912 = match source_ml_source2_nominal_spread909.clone() {
+                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value913, _, _, _, _, _) => {
+                                                                    let source_ml_source2_data_property_value913 = *source_ml_source2_data_property_value913;
+                                                                    source_ml_source2_data_property_value913.clone()
                                                                 }
                                                             };
                                                             {
-                                                                let source_ml_source2_nominal_field903 = match source_ml_source2_nominal_spread898.clone() {
-                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value904, _, _, _, _) => {
-                                                                        let source_ml_source2_data_property_value904 = *source_ml_source2_data_property_value904;
-                                                                        source_ml_source2_data_property_value904.clone()
+                                                                let source_ml_source2_nominal_field914 = match source_ml_source2_nominal_spread909.clone() {
+                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value915, _, _, _, _) => {
+                                                                        let source_ml_source2_data_property_value915 = *source_ml_source2_data_property_value915;
+                                                                        source_ml_source2_data_property_value915.clone()
                                                                     }
                                                                 };
                                                                 {
-                                                                    let source_ml_source2_nominal_field905 = match source_ml_source2_nominal_spread898.clone() {
-                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value906, _, _, _) => {
-                                                                            source_ml_source2_data_property_value906
+                                                                    let source_ml_source2_nominal_field916 = match source_ml_source2_nominal_spread909.clone() {
+                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value917, _, _, _) => {
+                                                                            source_ml_source2_data_property_value917
                                                                         }
                                                                     };
                                                                     {
-                                                                        let source_ml_source2_nominal_field907 = match source_ml_source2_nominal_spread898.clone() {
-                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value908, _, _) => {
-                                                                                source_ml_source2_data_property_value908
+                                                                        let source_ml_source2_nominal_field918 = match source_ml_source2_nominal_spread909.clone() {
+                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value919, _, _) => {
+                                                                                source_ml_source2_data_property_value919
                                                                             }
                                                                         };
                                                                         {
-                                                                            let source_ml_source2_nominal_field909 = match source_ml_source2_nominal_spread898.clone() {
-                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value910, _) => {
-                                                                                    source_ml_source2_data_property_value910.clone()
+                                                                            let source_ml_source2_nominal_field920 = match source_ml_source2_nominal_spread909.clone() {
+                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value921, _) => {
+                                                                                    source_ml_source2_data_property_value921.clone()
                                                                                 }
                                                                             };
                                                                             {
-                                                                                let source_ml_source2_nominal_field911 = match source_ml_source2_nominal_spread898.clone() {
-                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value912) => {
-                                                                                        source_ml_source2_data_property_value912
+                                                                                let source_ml_source2_nominal_field922 = match source_ml_source2_nominal_spread909.clone() {
+                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value923) => {
+                                                                                        source_ml_source2_data_property_value923
                                                                                     }
                                                                                 };
                                                                                 {
-                                                                                    let source_ml_source2_nominal_override913 = match state.clone() {
-                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value897, _, _, _) => {
-                                                                                            source_ml_source2_data_property_value897
+                                                                                    let source_ml_source2_nominal_override924 = match state.clone() {
+                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value908, _, _, _) => {
+                                                                                            source_ml_source2_data_property_value908
                                                                                         }
                                                                                     } + 1f64;
                                                                                     {
-                                                                                        let source_ml_source2_nominal_override914 = 0f64;
-                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field899), Box::new(source_ml_source2_nominal_field901), Box::new(source_ml_source2_nominal_field903), source_ml_source2_nominal_override913, source_ml_source2_nominal_override914, source_ml_source2_nominal_field909, source_ml_source2_nominal_field911)
+                                                                                        let source_ml_source2_nominal_override925 = 0f64;
+                                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field910), Box::new(source_ml_source2_nominal_field912), Box::new(source_ml_source2_nominal_field914), source_ml_source2_nominal_override924, source_ml_source2_nominal_override925, source_ml_source2_nominal_field920, source_ml_source2_nominal_field922)
                                                                                     }
                                                                                 }
                                                                             }
@@ -640,59 +640,59 @@ pub fn advance_rust_standard_collection_equality(
                                                 }))
                                             }} else {
                                             self::RustStandardCollectionEqualityTransition::RustCollectionEqualityContinue(Box::new({
-                                                let source_ml_source2_nominal_spread859 = next.clone();
+                                                let source_ml_source2_nominal_spread870 = next.clone();
                                                 {
-                                                    let source_ml_source2_nominal_field860 = match source_ml_source2_nominal_spread859.clone() {
-                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value861, _, _, _, _, _, _) => {
-                                                            let source_ml_source2_data_property_value861 = *source_ml_source2_data_property_value861;
-                                                            source_ml_source2_data_property_value861.clone()
+                                                    let source_ml_source2_nominal_field871 = match source_ml_source2_nominal_spread870.clone() {
+                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(source_ml_source2_data_property_value872, _, _, _, _, _, _) => {
+                                                            let source_ml_source2_data_property_value872 = *source_ml_source2_data_property_value872;
+                                                            source_ml_source2_data_property_value872.clone()
                                                         }
                                                     };
                                                     {
-                                                        let source_ml_source2_nominal_field862 = match source_ml_source2_nominal_spread859.clone() {
-                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value863, _, _, _, _, _) => {
-                                                                let source_ml_source2_data_property_value863 = *source_ml_source2_data_property_value863;
-                                                                source_ml_source2_data_property_value863.clone()
+                                                        let source_ml_source2_nominal_field873 = match source_ml_source2_nominal_spread870.clone() {
+                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, source_ml_source2_data_property_value874, _, _, _, _, _) => {
+                                                                let source_ml_source2_data_property_value874 = *source_ml_source2_data_property_value874;
+                                                                source_ml_source2_data_property_value874.clone()
                                                             }
                                                         };
                                                         {
-                                                            let source_ml_source2_nominal_field864 = match source_ml_source2_nominal_spread859.clone() {
-                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value865, _, _, _, _) => {
-                                                                    let source_ml_source2_data_property_value865 = *source_ml_source2_data_property_value865;
-                                                                    source_ml_source2_data_property_value865.clone()
+                                                            let source_ml_source2_nominal_field875 = match source_ml_source2_nominal_spread870.clone() {
+                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, source_ml_source2_data_property_value876, _, _, _, _) => {
+                                                                    let source_ml_source2_data_property_value876 = *source_ml_source2_data_property_value876;
+                                                                    source_ml_source2_data_property_value876.clone()
                                                                 }
                                                             };
                                                             {
-                                                                let source_ml_source2_nominal_field866 = match source_ml_source2_nominal_spread859.clone() {
-                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value867, _, _, _) => {
-                                                                        source_ml_source2_data_property_value867
+                                                                let source_ml_source2_nominal_field877 = match source_ml_source2_nominal_spread870.clone() {
+                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, source_ml_source2_data_property_value878, _, _, _) => {
+                                                                        source_ml_source2_data_property_value878
                                                                     }
                                                                 };
                                                                 {
-                                                                    let source_ml_source2_nominal_field868 = match source_ml_source2_nominal_spread859.clone() {
-                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value869, _, _) => {
-                                                                            source_ml_source2_data_property_value869
+                                                                    let source_ml_source2_nominal_field879 = match source_ml_source2_nominal_spread870.clone() {
+                                                                        self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value880, _, _) => {
+                                                                            source_ml_source2_data_property_value880
                                                                         }
                                                                     };
                                                                     {
-                                                                        let source_ml_source2_nominal_field870 = match source_ml_source2_nominal_spread859.clone() {
-                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value871, _) => {
-                                                                                source_ml_source2_data_property_value871.clone()
+                                                                        let source_ml_source2_nominal_field881 = match source_ml_source2_nominal_spread870.clone() {
+                                                                            self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, source_ml_source2_data_property_value882, _) => {
+                                                                                source_ml_source2_data_property_value882.clone()
                                                                             }
                                                                         };
                                                                         {
-                                                                            let source_ml_source2_nominal_field872 = match source_ml_source2_nominal_spread859.clone() {
-                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value873) => {
-                                                                                    source_ml_source2_data_property_value873
+                                                                            let source_ml_source2_nominal_field883 = match source_ml_source2_nominal_spread870.clone() {
+                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, _, _, source_ml_source2_data_property_value884) => {
+                                                                                    source_ml_source2_data_property_value884
                                                                                 }
                                                                             };
                                                                             {
-                                                                                let source_ml_source2_nominal_override874 = match state.clone() {
-                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value858, _, _) => {
-                                                                                        source_ml_source2_data_property_value858
+                                                                                let source_ml_source2_nominal_override885 = match state.clone() {
+                                                                                    self::RustStandardCollectionEqualityState::RustCollectionEqualityState(_, _, _, _, source_ml_source2_data_property_value869, _, _) => {
+                                                                                        source_ml_source2_data_property_value869
                                                                                     }
                                                                                 } + 1f64;
-                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field860), Box::new(source_ml_source2_nominal_field862), Box::new(source_ml_source2_nominal_field864), source_ml_source2_nominal_field866, source_ml_source2_nominal_override874, source_ml_source2_nominal_field870, source_ml_source2_nominal_field872)
+                                                                                self::RustStandardCollectionEqualityState::RustCollectionEqualityState(Box::new(source_ml_source2_nominal_field871), Box::new(source_ml_source2_nominal_field873), Box::new(source_ml_source2_nominal_field875), source_ml_source2_nominal_field877, source_ml_source2_nominal_override885, source_ml_source2_nominal_field881, source_ml_source2_nominal_field883)
                                                                             }
                                                                         }
                                                                     }
@@ -719,19 +719,19 @@ pub fn run_rust_standard_collection_equality(
 ) -> self::RustStandardCollectionEqualityTransition {
     if ((!(self::ml_math::is_safe_integer(budget)) || (budget < 0f64)) || (budget > 67_108_864f64))
         || {
-            let source_ml_source2_same_value_operand915 = budget;
+            let source_ml_source2_same_value_operand926 = budget;
             {
-                let source_ml_source2_same_value_operand916 = -0f64;
-                ((((source_ml_source2_same_value_operand915)
-                    .partial_cmp(&(source_ml_source2_same_value_operand916))
+                let source_ml_source2_same_value_operand927 = -0f64;
+                ((((source_ml_source2_same_value_operand926)
+                    .partial_cmp(&(source_ml_source2_same_value_operand927))
                     == Some(std::cmp::Ordering::Equal))
-                    && ((source_ml_source2_same_value_operand915 != 0f64)
-                        || ((1f64 / source_ml_source2_same_value_operand915)
-                            == (1f64 / source_ml_source2_same_value_operand916))))
-                    || ((source_ml_source2_same_value_operand915
-                        != source_ml_source2_same_value_operand915)
-                        && (source_ml_source2_same_value_operand916
-                            != source_ml_source2_same_value_operand916)))
+                    && ((source_ml_source2_same_value_operand926 != 0f64)
+                        || ((1f64 / source_ml_source2_same_value_operand926)
+                            == (1f64 / source_ml_source2_same_value_operand927))))
+                    || ((source_ml_source2_same_value_operand926
+                        != source_ml_source2_same_value_operand926)
+                        && (source_ml_source2_same_value_operand927
+                            != source_ml_source2_same_value_operand927)))
             }
         }
     {
@@ -786,16 +786,16 @@ pub fn execute_rust_standard_collection_equality(
                 self::run_rust_standard_collection_equality(state.clone(), budget)
             }
             self::RustStandardCollectionEqualityTransition::RustCollectionEqualityCompleted(
-                source_ml_source2_f917,
+                source_ml_source2_f928,
             ) => beginning.clone(),
             self::RustStandardCollectionEqualityTransition::RustCollectionEqualityInvalid(
-                source_ml_source2_f918,
+                source_ml_source2_f929,
             ) => beginning.clone(),
             self::RustStandardCollectionEqualityTransition::RustCollectionEqualityResourceLimit(
-                source_ml_source2_f919,
-                source_ml_source2_f920,
+                source_ml_source2_f930,
+                source_ml_source2_f931,
             ) => {
-                let source_ml_source2_f919 = *source_ml_source2_f919;
+                let source_ml_source2_f930 = *source_ml_source2_f930;
                 beginning.clone()
             }
         }
@@ -808,8 +808,8 @@ pub fn create_rust_standard_collection_packet(
     result: self::RustStandardCollectionTransition,
 ) -> self::RustStandardCollectionPacketTransition {
     match result.clone() {
-        self::RustStandardCollectionTransition::RustCollectionCreated(source_ml_source2_f921) => {
-            let source_ml_source2_f921 = *source_ml_source2_f921;
+        self::RustStandardCollectionTransition::RustCollectionCreated(source_ml_source2_f932) => {
+            let source_ml_source2_f932 = *source_ml_source2_f932;
             self::RustStandardCollectionPacketTransition::RustCollectionInvalid(
                 self::ml_string::Text::from_units(vec![
                     99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 32, 109, 101, 116, 104, 111,
@@ -846,21 +846,21 @@ pub fn create_rust_standard_collection_packet(
                 _ => false,
             } {
                 {
-                    let source_ml_source2_constructor_field922 = reason_2.clone();
+                    let source_ml_source2_constructor_field933 = reason_2.clone();
                     self::RustStandardCollectionPacketTransition::RustCollectionResourceLimit(
                         None::<(Option<self::RustStandardCollectionState>,)>,
-                        source_ml_source2_constructor_field922,
+                        source_ml_source2_constructor_field933,
                     )
                 }
             } else {
                 {
-                    let source_ml_source2_constructor_field923 =
+                    let source_ml_source2_constructor_field934 =
                         Some(state_2.clone().expect("a proven present value"));
                     {
-                        let source_ml_source2_constructor_field924 = reason_2.clone();
+                        let source_ml_source2_constructor_field935 = reason_2.clone();
                         self::RustStandardCollectionPacketTransition::RustCollectionResourceLimit(
-                            Some(source_ml_source2_constructor_field923),
-                            source_ml_source2_constructor_field924,
+                            Some(source_ml_source2_constructor_field934),
+                            source_ml_source2_constructor_field935,
                         )
                     }
                 }

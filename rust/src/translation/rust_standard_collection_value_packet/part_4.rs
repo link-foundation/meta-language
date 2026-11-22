@@ -1,5 +1,4 @@
 // Generated from complete js/src/translation/rust-standard-collection-value-packet.js. Do not edit by hand.
-use super::MlSource1TemporaryAcceptRustOwnedLocalTextUnitsLoop16Result;
 use super::MlSource1TemporaryCompareRustStandardCollectionTextUnitsLoop15Result;
 use super::MlSource1TemporaryReadRustStandardCollectionArgumentOriginErrorJoin13;
 use super::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9;
@@ -12,7 +11,6 @@ use super::ml_source_exception;
 use super::ml_string;
 use super::read_rust_standard_collection_method_arity;
 use super::resolve_rust_standard_collection_owner;
-use super::source_ml_source1_temporary_accept_rust_owned_local_text_units_loop16;
 use super::source_ml_source1_temporary_compare_rust_standard_collection_text_units_loop15;
 use super::source_ml_source1_temporary_plan_rust_standard_collection_state_packet_loop14;
 use super::test_rust_standard_collection_mutation;
@@ -92,7 +90,7 @@ pub fn read_rust_standard_collection_call_origin_error(
                     let source_ml_source1_temporary_optional_chain8 =
                         (source_ml_source2_optional_chain_receiver42).0;
                     match source_ml_source1_temporary_optional_chain8 {
-                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, _) => {
+                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, _, _) => {
                                 self::ml_string::Text::from_units(vec![114, 117, 115, 116, 83, 116, 97, 110, 100, 97, 114, 100, 67, 111, 108, 108, 101, 99, 116, 105, 111, 110, 67, 97, 108, 108, 79, 114, 105, 103, 105, 110])
                             }
                         }
@@ -114,6 +112,7 @@ pub fn read_rust_standard_collection_call_origin_error(
                     _,
                     _,
                     _,
+                    _,
                 ) => source_ml_source2_data_property_value43,
             })) || match call.clone() {
                 self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(
@@ -124,6 +123,7 @@ pub fn read_rust_standard_collection_call_origin_error(
                     _,
                     _,
                     source_ml_source2_data_property_value44,
+                    _,
                     _,
                     _,
                     _,
@@ -153,10 +153,12 @@ pub fn read_rust_standard_collection_call_origin_error(
                     _,
                     _,
                     _,
+                    _,
                 ) => source_ml_source2_data_property_value45,
             }))) || ((match call.clone() {
                 self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(
                     source_ml_source2_data_property_value47,
+                    _,
                     _,
                     _,
                     _,
@@ -174,6 +176,7 @@ pub fn read_rust_standard_collection_call_origin_error(
                     self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(
                         _,
                         source_ml_source2_data_property_value50,
+                        _,
                         _,
                         _,
                         _,
@@ -214,6 +217,7 @@ pub fn read_rust_standard_collection_call_origin_error(
                         _,
                         _,
                         _,
+                        _,
                     ) => source_ml_source2_data_property_value53.clone(),
                 }) != (*root)))
                 || ((match call.clone() {
@@ -222,6 +226,7 @@ pub fn read_rust_standard_collection_call_origin_error(
                         _,
                         _,
                         source_ml_source2_data_property_value55,
+                        _,
                         _,
                         _,
                         _,
@@ -247,6 +252,7 @@ pub fn read_rust_standard_collection_call_origin_error(
                         _,
                         source_ml_source2_data_property_value57,
                         _,
+                        _,
                     ) => source_ml_source2_data_property_value57.as_slice(),
                 })
                 .len() as f64)
@@ -264,12 +270,12 @@ pub fn read_rust_standard_collection_call_origin_error(
             } else {
                 {
                     let dispatch = match call.clone() {
-                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, source_ml_source2_data_property_value58, _, _, _, _, _, _, _) => {
+                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, source_ml_source2_data_property_value58, _, _, _, _, _, _, _, _) => {
                                 source_ml_source2_data_property_value58.clone()
                             }
                         };
                     {
-                        let source_ml_source2_s70 = if (*method)
+                        let source_ml_source2_s74 = if (*method)
                             == (self::ml_string::Text::from_units(vec![99, 108, 111, 110, 101]))
                         {
                             if (self::ml_array::includes(
@@ -289,32 +295,32 @@ pub fn read_rust_standard_collection_call_origin_error(
                                 |a, b| a == b,
                             )) {
                                 if (((match match call.clone() {
-                                        self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value72) => {
-                                            ((source_ml_source2_data_property_value72.clone().unwrap_or_else(|| (None::<self::ml_string::Text>,))).0).clone()
+                                        self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value76, _) => {
+                                            ((source_ml_source2_data_property_value76.clone().unwrap_or_else(|| (None::<self::ml_string::Text>,))).0).clone()
                                         }
                                     } { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) != (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) || (({
-                                        let source_ml_source2_nullish_field_receiver77 = (match call.clone() {
-                                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value76) => {
-                                                ((source_ml_source2_data_property_value76.clone().unwrap_or_else(|| (None::<self::ml_string::Text>,))).0).clone()
+                                        let source_ml_source2_nullish_field_receiver81 = (match call.clone() {
+                                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value80, _) => {
+                                                ((source_ml_source2_data_property_value80.clone().unwrap_or_else(|| (None::<self::ml_string::Text>,))).0).clone()
                                             }
                                         },);
-                                        if (match (source_ml_source2_nullish_field_receiver77.clone()).0 { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])) {
+                                        if (match (source_ml_source2_nullish_field_receiver81.clone()).0 { Some(ml_present) => { let _ = ml_present; self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]) }, None => self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]) }) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])) {
                                             {
-                                                let source_ml_source2_nullish_field_present78 = ((source_ml_source2_nullish_field_receiver77.clone()).0).clone().expect("a proven present value");
-                                                source_ml_source2_nullish_field_present78.length()
+                                                let source_ml_source2_nullish_field_present82 = ((source_ml_source2_nullish_field_receiver81.clone()).0).clone().expect("a proven present value");
+                                                source_ml_source2_nullish_field_present82.length()
                                             }
                                         } else {
                                             (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 108, 101, 110, 103, 116, 104, 39, 41])).0, message_present: true }).raise()
                                         }
                                     }) == 0f64)) || {
-                                        let source_ml_source2_comparison_operand80 = match call.clone() {
-                                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value79) => {
-                                                ((source_ml_source2_data_property_value79.clone().unwrap_or_else(|| (None::<self::ml_string::Text>,))).0).clone()
+                                        let source_ml_source2_comparison_operand84 = match call.clone() {
+                                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value83, _) => {
+                                                ((source_ml_source2_data_property_value83.clone().unwrap_or_else(|| (None::<self::ml_string::Text>,))).0).clone()
                                             }
                                         };
                                         {
-                                            let source_ml_source2_comparison_operand81 = root.clone();
-                                            match (source_ml_source2_comparison_operand80, source_ml_source2_comparison_operand81) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
+                                            let source_ml_source2_comparison_operand85 = root.clone();
+                                            match (source_ml_source2_comparison_operand84, source_ml_source2_comparison_operand85) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }
                                         }
                                     } {
                                         self::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9Return(self::ml_string::Text::from_units(vec![99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 32, 99, 108, 111, 110, 101, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 105, 116, 115, 32, 105, 110, 100, 101, 112, 101, 110, 100, 101, 110, 116, 32, 102, 114, 101, 115, 104, 32, 111, 117, 116, 112, 117, 116, 32, 98, 105, 110, 100, 105, 110, 103, 32, 114, 111, 111, 116]))
@@ -349,6 +355,30 @@ pub fn read_rust_standard_collection_call_origin_error(
                             } else {
                                 self::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9Return(self::ml_string::Text::from_units(vec![99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 32, 100, 101, 102, 97, 117, 108, 116, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 115, 116, 97, 110, 100, 97, 114, 100, 32, 68, 101, 102, 97, 117, 108, 116, 32, 116, 114, 97, 105, 116, 32, 100, 105, 115, 112, 97, 116, 99, 104]))
                             }
+                        } else if (*method)
+                            == (self::ml_string::Text::from_units(vec![
+                                105, 110, 116, 111, 95, 105, 116, 101, 114,
+                            ]))
+                        {
+                            if (!(self::ml_array::includes(&vec![self::ml_string::Text::from_units(vec![115, 116, 100, 58, 58, 105, 116, 101, 114, 58, 58, 73, 110, 116, 111, 73, 116, 101, 114, 97, 116, 111, 114]), self::ml_string::Text::from_units(vec![99, 111, 114, 101, 58, 58, 105, 116, 101, 114, 58, 58, 73, 110, 116, 111, 73, 116, 101, 114, 97, 116, 111, 114])], &dispatch.clone(), 0f64, false, |a, b| a == b)) || {
+                                            let source_ml_source2_comparison_operand87 = match call.clone() {
+                                                self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value86) => {
+                                                    ((source_ml_source2_data_property_value86.clone().unwrap_or_else(|| (None::<bool>,))).0).clone()
+                                                }
+                                            };
+                                            {
+                                                let source_ml_source2_comparison_operand88 = true;
+                                                !(match (source_ml_source2_comparison_operand87, source_ml_source2_comparison_operand88) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })
+                                            }
+                                        }) || match call.clone() {
+                                            self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value89, _, _, _) => {
+                                                source_ml_source2_data_property_value89
+                                            }
+                                        } {
+                                            self::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9Return(self::ml_string::Text::from_units(vec![111, 114, 100, 101, 114, 101, 100, 32, 73, 110, 116, 111, 73, 116, 101, 114, 97, 116, 111, 114, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 97, 118, 97, 105, 108, 97, 98, 108, 101, 32, 111, 119, 110, 101, 100, 32, 114, 101, 99, 101, 105, 118, 101, 114, 32, 116, 114, 97, 110, 115, 102, 101, 114, 32, 97, 110, 100, 32, 115, 116, 97, 110, 100, 97, 114, 100, 32, 116, 114, 97, 105, 116, 32, 100, 105, 115, 112, 97, 116, 99, 104]))
+                                        } else {
+                                            self::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9Next
+                                        }
                         } else {
                             let ml_library_inequality_1 =
                                 (self::resolve_rust_standard_collection_owner(
@@ -362,15 +392,15 @@ pub fn read_rust_standard_collection_call_origin_error(
                                 self::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9Next
                             }
                         };
-                        match source_ml_source2_s70 {
+                        match source_ml_source2_s74 {
                                 self::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9::MlSource1TemporaryReadRustStandardCollectionCallOriginErrorJoin9Next => {
                                     if self::test_rust_standard_collection_mutation(&(owner), method) && (!(match call.clone() {
-                                        self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, source_ml_source2_data_property_value82, _, _, _, _) => {
-                                            source_ml_source2_data_property_value82
+                                        self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, source_ml_source2_data_property_value90, _, _, _, _, _) => {
+                                            source_ml_source2_data_property_value90
                                         }
                                     }) || match call.clone() {
-                                        self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value83, _, _) => {
-                                            source_ml_source2_data_property_value83
+                                        self::RustStandardCollectionCallOrigin::RustStandardCollectionCallOrigin(_, _, _, _, _, _, _, _, _, source_ml_source2_data_property_value91, _, _, _) => {
+                                            source_ml_source2_data_property_value91
                                         }
                                     }) {
                                         self::ml_string::Text::from_units(vec![99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 32, 109, 117, 116, 97, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 110, 32, 97, 99, 116, 117, 97, 108, 32, 109, 117, 116, 97, 98, 108, 101, 32, 97, 118, 97, 105, 108, 97, 98, 108, 101, 32, 114, 111, 111, 116, 32, 119, 105, 116, 104, 111, 117, 116, 32, 111, 118, 101, 114, 108, 97, 112, 112, 105, 110, 103, 32, 108, 105, 118, 101, 32, 108, 111, 97, 110, 115])
@@ -421,11 +451,11 @@ pub fn read_rust_standard_collection_argument_origin_error(
         } {
             invalid.clone()
         } else if (!({
-            let source_ml_source2_optional_chain_receiver84 =
+            let source_ml_source2_optional_chain_receiver92 =
                 (argument.clone().expect("a proven present value"),);
             {
                 let source_ml_source1_temporary_optional_chain10 =
-                    (source_ml_source2_optional_chain_receiver84).0;
+                    (source_ml_source2_optional_chain_receiver92).0;
                 (source_ml_source1_temporary_optional_chain10).4
             }
         }) || !((argument.clone().expect("a proven present value")).0))
@@ -439,10 +469,10 @@ pub fn read_rust_standard_collection_argument_origin_error(
                     let owner = (argument.clone().expect("a proven present value")).5;
                     {
                         let path = {
-                            let source_ml_source2_optional_chain_receiver85 = (owner.clone(),);
+                            let source_ml_source2_optional_chain_receiver93 = (owner.clone(),);
                             {
                                 let source_ml_source1_temporary_optional_chain11 =
-                                    (source_ml_source2_optional_chain_receiver85).0;
+                                    (source_ml_source2_optional_chain_receiver93).0;
                                 self::ml_string::join(
                                     &(source_ml_source1_temporary_optional_chain11).2,
                                     &self::ml_string::Text::from_units(vec![58, 58]),
@@ -450,10 +480,10 @@ pub fn read_rust_standard_collection_argument_origin_error(
                             }
                         };
                         if (({
-                            let source_ml_source2_optional_chain_receiver87 = (owner.clone(),);
+                            let source_ml_source2_optional_chain_receiver95 = (owner.clone(),);
                             {
                                 let source_ml_source1_temporary_optional_chain12 =
-                                    (source_ml_source2_optional_chain_receiver87).0;
+                                    (source_ml_source2_optional_chain_receiver95).0;
                                 (((source_ml_source1_temporary_optional_chain12).0).len() as f64)
                             }
                         }) != 0f64)
@@ -478,7 +508,7 @@ pub fn read_rust_standard_collection_argument_origin_error(
                             ])
                         } else {
                             {
-                                let source_ml_source2_s88 = if domain
+                                let source_ml_source2_s96 = if domain
                                     == (self::ml_string::Text::from_units(vec![
                                         83, 116, 114, 105, 110, 103,
                                     ])) {
@@ -540,7 +570,7 @@ pub fn read_rust_standard_collection_argument_origin_error(
                                 } else {
                                     self::MlSource1TemporaryReadRustStandardCollectionArgumentOriginErrorJoin13::MlSource1TemporaryReadRustStandardCollectionArgumentOriginErrorJoin13Next
                                 };
-                                match source_ml_source2_s88 {
+                                match source_ml_source2_s96 {
                                         self::MlSource1TemporaryReadRustStandardCollectionArgumentOriginErrorJoin13::MlSource1TemporaryReadRustStandardCollectionArgumentOriginErrorJoin13Next => {
                                             self::ml_string::Text::from_units(vec![])
                                         }
@@ -708,9 +738,9 @@ pub fn compare_rust_standard_collection_scalars(
                     }
                 }
                 self::RustStandardCollectionScalar::RustCollectionInteger(
-                    source_ml_source2_f90,
+                    source_ml_source2_f98,
                 ) => 0f64,
-                self::RustStandardCollectionScalar::RustCollectionString(source_ml_source2_f91) => {
+                self::RustStandardCollectionScalar::RustCollectionString(source_ml_source2_f99) => {
                     0f64
                 }
             }
@@ -718,7 +748,7 @@ pub fn compare_rust_standard_collection_scalars(
         self::RustStandardCollectionScalar::RustCollectionInteger(left_value_2) => {
             match right.clone() {
                 self::RustStandardCollectionScalar::RustCollectionBoolean(
-                    source_ml_source2_f92,
+                    source_ml_source2_f100,
                 ) => 0f64,
                 self::RustStandardCollectionScalar::RustCollectionInteger(value_2) => {
                     if left_value_2 == value_2 {
@@ -729,19 +759,19 @@ pub fn compare_rust_standard_collection_scalars(
                         1f64
                     }
                 }
-                self::RustStandardCollectionScalar::RustCollectionString(source_ml_source2_f93) => {
-                    0f64
-                }
+                self::RustStandardCollectionScalar::RustCollectionString(
+                    source_ml_source2_f101,
+                ) => 0f64,
             }
         }
-        self::RustStandardCollectionScalar::RustCollectionString(source_ml_source2_f89) => {
-            let left_units = source_ml_source2_f89;
+        self::RustStandardCollectionScalar::RustCollectionString(source_ml_source2_f97) => {
+            let left_units = source_ml_source2_f97;
             match right.clone() {
                 self::RustStandardCollectionScalar::RustCollectionBoolean(
-                    source_ml_source2_f96,
+                    source_ml_source2_f104,
                 ) => 0f64,
                 self::RustStandardCollectionScalar::RustCollectionInteger(
-                    source_ml_source2_f97,
+                    source_ml_source2_f105,
                 ) => 0f64,
                 self::RustStandardCollectionScalar::RustCollectionString(units) => {
                     self::compare_rust_standard_collection_text_units(&(left_units), &(units))
@@ -759,8 +789,8 @@ pub fn compare_rust_standard_collection_text_units(left: &[f64], right: &[f64]) 
         {
             let second = 0f64;
             {
-                let source_ml_source2_s98 = self::source_ml_source1_temporary_compare_rust_standard_collection_text_units_loop15(left, right, first, second);
-                match source_ml_source2_s98 {
+                let source_ml_source2_s106 = self::source_ml_source1_temporary_compare_rust_standard_collection_text_units_loop15(left, right, first, second);
+                match source_ml_source2_s106 {
                     self::MlSource1TemporaryCompareRustStandardCollectionTextUnitsLoop15Result::MlSource1TemporaryCompareRustStandardCollectionTextUnitsLoop15Done(first_2, second_2) => {
                         if first_2 == (left.len() as f64) {
                             if second_2 == (right.len() as f64) {
@@ -879,26 +909,4 @@ pub const fn accept_rust_owned_local_source_span(
     offset_shape: bool,
 ) -> bool {
     !present || (record_shape && offset_shape)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_owned_local_text_units(units: &[f64]) -> bool {
-    {
-        let index = 0f64;
-        {
-            let source_ml_source2_s99 =
-                self::source_ml_source1_temporary_accept_rust_owned_local_text_units_loop16(
-                    units, index,
-                );
-            match source_ml_source2_s99 {
-                self::MlSource1TemporaryAcceptRustOwnedLocalTextUnitsLoop16Result::MlSource1TemporaryAcceptRustOwnedLocalTextUnitsLoop16Done => {
-                    true
-                }
-                self::MlSource1TemporaryAcceptRustOwnedLocalTextUnitsLoop16Result::MlSource1TemporaryAcceptRustOwnedLocalTextUnitsLoop16Return(source_ml_source1_temporary_result16) => {
-                    source_ml_source1_temporary_result16
-                }
-            }
-        }
-    }
 }

@@ -1,7 +1,7 @@
 // This executable library module depends only on shared scalar/state kernels.
 // Compiler graph linkage lives in the separate source call adapter.
 import {executeRustStandardCollectionOperation,projectRustStandardCollectionOption} from './rust-standard-collection-state.js';
-import {executeRustStandardCollectionOrderedBorrow} from './rust-standard-collection-ordered-borrow.js';
+import {executeRustStandardCollectionOrderedBorrow,executeRustStandardCollectionOrderedMove} from './rust-standard-collection-ordered-borrow.js';
 import {executeRustStandardCollectionOrderedSnapshot} from './rust-standard-collection-ordered-snapshot.js';
 import {executeRustStandardCollectionOrdering} from './rust-standard-collection-ordering.js';
 import {executeRustStandardCollectionEquality} from './rust-standard-collection-equality.js';
@@ -24,6 +24,10 @@ function createRustStandardCollectionPacket(result){
  * @param {RustStandardCollectionScalar[]} arguments_ @param {RustStandardCollectionCallOrigin} call
  * @param {string} projection @returns {RustStandardCollectionPacketTransition} */
 export function executeRustStandardCollectionValuePacket(state,method,arguments_,call,projection){
+ if(method==='into_iter'){
+  if(arguments_.length!==0||projection!=='owned')return {$:'rustCollectionInvalid',reason:'ordered IntoIterator retains its actual empty argument list and owned result'};
+  return createRustStandardCollectionPacket(executeRustStandardCollectionOrderedMove(state,call));
+ }
  const ordered=['iter','keys','values'].includes(method);
  if(ordered){if(arguments_.length!==0)return {$:'rustCollectionInvalid',reason:'ordered iterator projection retains its actual empty argument list'};const result=projection==='borrowed'?executeRustStandardCollectionOrderedBorrow(state,method,call):executeRustStandardCollectionOrderedSnapshot(state,method,call,projection);return createRustStandardCollectionPacket(result);}
  if(method==='get'&&!['copied','cloned'].includes(projection)||method!=='get'&&projection!=='')return {$:'rustCollectionInvalid',reason:'collection source packets require an actual immediate get copied/cloned projection or no projection'};

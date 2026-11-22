@@ -458,6 +458,13 @@ pub fn read_rust_standard_collection_method_arity(
             |a, b| a == b,
         ) {
             0f64
+        } else if ((*method)
+            == (self::ml_string::Text::from_units(vec![
+                105, 110, 116, 111, 95, 105, 116, 101, 114,
+            ])))
+            && self::test_rust_standard_collection_ordered(owner)
+        {
+            0f64
         } else if self::test_rust_standard_collection_ordered(owner)
             && (((kind == (self::ml_string::Text::from_units(vec![115, 101, 116])))
                 && ((*method) == (self::ml_string::Text::from_units(vec![105, 116, 101, 114]))))
@@ -538,6 +545,13 @@ pub fn read_rust_standard_collection_method_result(
         self::ml_string::Text::from_units(vec![
             111, 119, 110, 101, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 118, 97, 108, 117,
             101, 115,
+        ])
+    } else if (*method)
+        == (self::ml_string::Text::from_units(vec![105, 110, 116, 111, 95, 105, 116, 101, 114]))
+    {
+        self::ml_string::Text::from_units(vec![
+            111, 119, 110, 101, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 101, 110, 116, 114,
+            105, 101, 115,
         ])
     } else if (*method) == (self::ml_string::Text::from_units(vec![108, 101, 110])) {
         self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101])

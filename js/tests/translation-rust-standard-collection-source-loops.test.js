@@ -11,6 +11,7 @@ import {readRustStandardCollectionStateError} from '../src/translation/rust-stan
 import {readRustStandardCollectionSourceLoop,testRustStandardCollectionSourceLoopNode,readRustStandardCollectionSourceLoopOrigin,lowerRustStandardCollectionSourceLoop} from '../src/translation/rust-standard-collection-source-loops.js';
 import {readRustStandardCollectionSourceTestLibrary as actualLibrary} from './support/rust-standard-collection-library.js';
 import {rustStandardCollectionLoopVersions as versions,rustStandardCollectionLoopOriginals as originals,rustStandardCollectionLoopRefusals as refusals} from './fixtures/rust-standard-collection-source-loops.mjs';
+import {rustStandardCollectionConsumingLoopOriginals as consumingOriginals,rustStandardCollectionConsumingLoopRefusals as consumingRefusals} from './fixtures/rust-standard-collection-source-loops.mjs';
 const integer=value=>({$:'rustCollectionInteger',value:BigInt(value)}),text=value=>({$:'rustCollectionString',units:Array.from({length:value.length},(_,index)=>value.charCodeAt(index))});
 function state(kind,entries){const owner='std::collections::'+(kind==='set'?'BTreeSet':'BTreeMap'),domains=kind==='set'?['u8']:['u8','String'],sourceOwner=domain=>({kind:domain==='String'?'library':'primitive',path:domain==='String'?['std','string','String']:[domain],arguments:[]}),origin={$:'rustStandardCollectionOrigin',ordinary:true,proven:true,shadowed:false,typeIdentity:owner+'<'+domains.join(',')+'>@64',resolvedOwner:owner,sourceOwner:{kind:'library',path:owner.split('::'),arguments:domains.map(sourceOwner)},arguments:domains.map(domain=>({proven:true,wrappers:[],sourceOwner:sourceOwner(domain),...(domain==='String'?{textSourceModel:'owned string'}:{})})),sourceVersionMinor:90,pointerWidth:64,customHasher:false,customEquality:false},result={$:'rustStandardCollectionState',origin,root:'actual ordered root',keyDomain:'u8',valueDomain:kind==='set'?'unit':'String',pointerWidth:64,revision:1,entries};assert.equal(readRustStandardCollectionStateError(result),'');return result;}
 const call=(state,method)=>({$:'rustStandardCollectionCallOrigin',owner:state.origin.resolvedOwner,typeIdentity:state.origin.typeIdentity,receiverRoot:state.root,method,dispatchOwner:state.origin.resolvedOwner,proven:true,shadowed:false,mutable:false,available:true,overlappingLoan:false,arguments:[]});
@@ -22,6 +23,16 @@ test('the shared iterator kernel retains ordered Map pairs and actual readonly c
  const set=state('set',[{key:integer(1)},{key:integer(7)}]);assert.equal(executeRustStandardCollectionOrderedBorrow(set,'iter',call(set,'iter')).$,'rustCollectionNormal');assert.equal(executeRustStandardCollectionOrderedBorrow(set,'keys',call(set,'keys')).$,'rustCollectionInvalid');assert.equal(executeRustStandardCollectionValuePacket(set,'iter',[integer(9)],call(set,'iter'),'borrowed').$,'rustCollectionInvalid');
  const hash={...set,origin:{...set.origin,resolvedOwner:'std::collections::HashSet',typeIdentity:'std::collections::HashSet<u8>@64',sourceOwner:{...set.origin.sourceOwner,path:['std','collections','HashSet']}}};assert.equal(executeRustStandardCollectionOrderedBorrow(hash,'iter',call(hash,'iter')).$,'rustCollectionInvalid');
 });
+test('owned ordered entry packets require an actual standard IntoIterator transfer',()=>{
+ const map=state('map',[{key:integer(1),value:text('first')},{key:integer(7),value:text('later')}]);
+ const transfer={...call(map,'into_iter'),dispatchOwner:'core::iter::IntoIterator',ownedReceiverTransfer:true};
+ const result=executeRustStandardCollectionValuePacket(map,'into_iter',[],transfer,'owned');
+ assert.deepEqual(result,{$:'rustCollectionPacketNormal',values:[{$:'rustCollectionOrderedEntries',entries:map.entries},map],writeback:false});
+ for(const invalid of [{...transfer,ownedReceiverTransfer:false},{...transfer,overlappingLoan:true},{...transfer,dispatchOwner:map.origin.resolvedOwner}]){
+  assert.equal(executeRustStandardCollectionValuePacket(map,'into_iter',[],invalid,'owned').$,'rustCollectionInvalid');
+ }
+ assert.equal(executeRustStandardCollectionValuePacket(map,'into_iter',[],transfer,'borrowed').$,'rustCollectionInvalid');
+});
 test('a private loop descriptor cannot replace actual parsed lease and completion admission',()=>{
  const marker={k:'math',op:'rustStandardCollectionOrderedLoop',name:'0',args:[{value:{k:'unit'},spread:false},{value:{k:'unit'},spread:false}]};assert.equal(testRustStandardCollectionSourceLoopNode(marker),true);assert.equal(readRustStandardCollectionSourceLoopOrigin({},marker),null);assert.throws(()=>lowerRustStandardCollectionSourceLoop({},marker,new Map(),()=>{throw Error('not reached');},()=>{throw Error('not reached');}),/actual parsed source/);assert.equal(readRustStandardCollectionSourceLoop({standardCollectionSource:null,cursor:{is:()=>true}},[]),null);
 });
@@ -30,9 +41,17 @@ test('every borrowed ordered original checks and executes its actual emitted std
  for(const sourceVersion of ['1.90.0','1.99.0'])for(const row of originals){const surface=parseRust(row.source,options(library,sourceVersion));assert.ok(!nodes(surface).some(testRustStandardCollectionSourceLoopNode),row.name);const checked=checkProgram(surface);assert.equal(stdout(emitJavaScript(checked).text),row.stdout,row.name+'/'+sourceVersion);}
 });
 test('every retained refusal keeps its original source and rejects before a private iterator can escape',()=>{
- const library=actualLibrary();for(const row of refusals)assert.throws(()=>checkProgram(parseRust(row.source,options(library,'1.90.0'))),error=>['type','unsupported','syntax'].includes(error.kind),row.name);
+ const library=actualLibrary();for(const row of [...refusals,...consumingRefusals])assert.throws(()=>checkProgram(parseRust(row.source,options(library,'1.90.0'))),error=>['type','unsupported','syntax'].includes(error.kind),row.name);
 });
-test('actual shared-loop literals retain complete version and original stdout declarations',()=>{assert.equal(originals.length,34);assert.equal(refusals.length,18);for(const row of [...originals,...refusals]){assert.equal(row.sourceVersionRange,versions.rust);assert.match(row.source,/fn main/);}for(const row of originals)assert.equal(typeof row.stdout,'string');});
+test('actual ordered-loop literals retain complete version and original stdout declarations',()=>{assert.equal(originals.length,34);assert.equal(refusals.length,17);assert.equal(consumingOriginals.length,3);assert.equal(consumingRefusals.length,3);assert.equal(consumingOriginals[0].expectationHistory.length,1);for(const row of [...originals,...refusals,...consumingOriginals,...consumingRefusals]){assert.equal(row.sourceVersionRange,versions.rust);assert.match(row.source,/fn main/);}for(const row of [...originals,...consumingOriginals])assert.equal(typeof row.stdout,'string');});
+test('owned ordered loops preserve actual results and completion at both source boundaries',()=>{
+ const library=actualLibrary();
+ for(const sourceVersion of ['1.90.0','1.99.0'])for(const row of consumingOriginals){
+  const surface=parseRust(row.source,options(library,sourceVersion));
+  assert.ok(!nodes(surface).some(testRustStandardCollectionSourceLoopNode),row.name);
+  assert.equal(stdout(emitJavaScript(checkProgram(surface)).text),row.stdout,row.name+'/'+sourceVersion);
+ }
+});
 test('a copied source descriptor in an otherwise matching inventory cannot grant loop admission',()=>{
  const node={k:'math',op:'rustStandardCollectionOrderedLoop',name:'0',args:[{value:{k:'unit'},spread:false},{value:{k:'unit'},spread:false}]},parser={standardCollectionSourceLoops:[{view:{owned:true},slots:[],returns:[],span:{start:0,end:1}}]};assert.equal(readRustStandardCollectionSourceLoopOrigin(parser,node),null);assert.throws(()=>lowerRustStandardCollectionSourceLoop(parser,node,new Map(),()=>{throw Error('not reached');},()=>{throw Error('not reached');}),/actual parsed source/);
 });

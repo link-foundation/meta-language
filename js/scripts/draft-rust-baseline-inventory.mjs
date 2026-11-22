@@ -31,10 +31,14 @@ const profiles=[
   'js/src/translation/rust-standard-collection-source.js','js/src/translation/rust-standard-collection-calls.js',
   'js/src/translation/rust-standard-collection-equality-source.js','js/src/translation/rust-standard-collection-library.js',
   'js/tests/translation-rust-standard-collection-equality.test.js','examples/rust-standard-collections.rs',
+  'js/src/translation/rust-standard-collection-source-iterators.js','js/src/translation/rust-standard-collection-source-loops.js',
+  'js/src/translation/rust-standard-collection-ordered-borrow.js','js/tests/translation-rust-standard-collection-source-loops.test.js',
+  'js/tests/fixtures/rust-standard-collection-source-loops.mjs',
  ],rust:[
   'rust/src/translation/rust/source_profiles.rs','rust/src/translation/rust/standard_collections.rs',
   'rust/src/translation/rust/standard_collections/packets.rs','rust/src/translation/rust_standard_collection_carriers.rs',
   'rust/tests/unit/translation_rust_standard_collection_library.rs','examples/rust-standard-collections.rs',
+  'rust/src/translation/rust_standard_collection_value_packet.rs','rust/src/translation/rust_standard_collection_library.rs',
  ]},
  {id:'ordinary-transparent-rust-source-type-aliases',javascript:[
   'js/src/translation/rust-generic-type-alias-rules.js','js/src/translation/rust-generic-type-aliases.js',
