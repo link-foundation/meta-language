@@ -7,7 +7,12 @@ import {compareRustStandardCollectionScalars} from './rust-standard-collection-o
 /** @typedef {{$:'rustCollectionOrderingState',left:RustStandardCollectionState,right:RustStandardCollectionState,origin:RustStandardCollectionOrderingOrigin,index:number,phase:string,work:number}} RustStandardCollectionOrderingState */
 /** @typedef {{$:'rustCollectionOrderingContinue',state:RustStandardCollectionOrderingState}|{$:'rustCollectionOrderingCompleted',value:number}|{$:'rustCollectionOrderingInvalid',reason:string}|{$:'rustCollectionOrderingResourceLimit',state:RustStandardCollectionOrderingState,reason:string}} RustStandardCollectionOrderingTransition */
 /** @param {RustStandardCollectionScalar} left @param {RustStandardCollectionScalar} right @returns {number} */
-function orderingWork(left,right){return left.$==='rustCollectionString'&&right.$==='rustCollectionString'?Math.max(1,left.units.length+right.units.length):1;}
+function orderingWork(left,right){
+ if(left.$==='rustCollectionString'){
+  if(right.$==='rustCollectionString')return Math.max(1,left.units.length+right.units.length);
+ }
+ return 1;
+}
 /** @param {RustStandardCollectionState} left @param {RustStandardCollectionState} right @param {RustStandardCollectionOrderingOrigin} origin @returns {string} */
 export function readRustStandardCollectionOrderingOriginError(left,right,origin){
  const first=readRustStandardCollectionStateError(left);if(first!=='')return first;const second=readRustStandardCollectionStateError(right);if(second!=='')return second;
@@ -20,19 +25,47 @@ export function readRustStandardCollectionOrderingStateError(state){
  if(state?.$!=='rustCollectionOrderingState')return 'ordering retains its actual complete source state';const source=readRustStandardCollectionOrderingOriginError(state.left,state.right,state.origin);if(source!=='')return source;
  const length=Math.min(state.left.entries.length,state.right.entries.length),map=readRustStandardCollectionKind(state.left.origin.resolvedOwner)==='map';
  if(!Number.isSafeInteger(state.index)||state.index<0||state.index>length||Object.is(state.index,-0)||!Number.isSafeInteger(state.work)||state.work<0||Object.is(state.work,-0)||!['key','value'].includes(state.phase)||state.phase==='value'&&(!map||state.index===length))return 'ordering retains bounded exact cursors charged work and map value phase';
- let work=0;for(let index=0;index<state.index;index++){const first=state.left.entries[index],second=state.right.entries[index];if(compareRustStandardCollectionScalars(first.key,second.key)!==0)return 'ordering cursor cannot skip the first unequal key';work+=orderingWork(first.key,second.key);if(map){if(first.value===undefined||second.value===undefined||compareRustStandardCollectionScalars(first.value,second.value)!==0)return 'ordering cursor cannot skip the first unequal owned map value';work+=orderingWork(first.value,second.value);}}
+ let work=0;
+ for(let index=0;index<state.index;index++){
+  const first=state.left.entries[index],second=state.right.entries[index];
+  if(compareRustStandardCollectionScalars(first.key,second.key)!==0)return 'ordering cursor cannot skip the first unequal key';
+  work+=orderingWork(first.key,second.key);
+  if(map){
+   const firstValue=first.value,secondValue=second.value;
+   const invalid='ordering cursor cannot skip the first unequal owned map value';
+   if(firstValue===undefined)return invalid;
+   if(secondValue===undefined)return invalid;
+   if(compareRustStandardCollectionScalars(firstValue,secondValue)!==0)return invalid;
+   work+=orderingWork(firstValue,secondValue);
+  }
+ }
  if(state.phase==='value'){const first=state.left.entries[state.index],second=state.right.entries[state.index];if(compareRustStandardCollectionScalars(first.key,second.key)!==0)return 'ordering value phase retains actual equal selected keys';work+=orderingWork(first.key,second.key);}
  return work===state.work?'':'ordering charged work retains its actual complete equal prefix';
 }
 /** @param {RustStandardCollectionState} left @param {RustStandardCollectionState} right @param {RustStandardCollectionOrderingOrigin} origin @returns {RustStandardCollectionOrderingTransition} */
 export function beginRustStandardCollectionOrdering(left,right,origin){const state={$:'rustCollectionOrderingState',left,right,origin,index:0,phase:'key',work:0},error=readRustStandardCollectionOrderingStateError(state);return error===''?{$:'rustCollectionOrderingContinue',state}:{$:'rustCollectionOrderingInvalid',reason:error};}
 /** @param {RustStandardCollectionOrderingState} state @returns {number} */
-function readRustStandardCollectionOrderingWork(state){if(state.index===Math.min(state.left.entries.length,state.right.entries.length))return 0;const first=state.left.entries[state.index],second=state.right.entries[state.index];return state.phase==='value'&&first.value!==undefined&&second.value!==undefined?orderingWork(first.value,second.value):orderingWork(first.key,second.key);}
+function readRustStandardCollectionOrderingWork(state){
+ if(state.index===Math.min(state.left.entries.length,state.right.entries.length))return 0;
+ const first=state.left.entries[state.index],second=state.right.entries[state.index];
+ if(state.phase==='value'){
+  const firstValue=first.value,secondValue=second.value;
+  if(firstValue!==undefined){
+   if(secondValue!==undefined)return orderingWork(firstValue,secondValue);
+  }
+ }
+ return orderingWork(first.key,second.key);
+}
 /** @param {RustStandardCollectionOrderingState} state @returns {RustStandardCollectionOrderingTransition} */
 function advanceRustStandardCollectionOrdering(state){
  if(state.index===Math.min(state.left.entries.length,state.right.entries.length))return {$:'rustCollectionOrderingCompleted',value:state.left.entries.length===state.right.entries.length?0:state.left.entries.length<state.right.entries.length?-1:1};
  const first=state.left.entries[state.index],second=state.right.entries[state.index];let comparison;
- if(state.phase==='value'){if(first.value===undefined||second.value===undefined)return {$:'rustCollectionOrderingInvalid',reason:'map ordering retains actual owned values'};comparison=compareRustStandardCollectionScalars(first.value,second.value);}else comparison=compareRustStandardCollectionScalars(first.key,second.key);
+ if(state.phase==='value'){
+  const firstValue=first.value,secondValue=second.value,invalid='map ordering retains actual owned values';
+  if(firstValue===undefined)return {$:'rustCollectionOrderingInvalid',reason:invalid};
+  if(secondValue===undefined)return {$:'rustCollectionOrderingInvalid',reason:invalid};
+  comparison=compareRustStandardCollectionScalars(firstValue,secondValue);
+ }else comparison=compareRustStandardCollectionScalars(first.key,second.key);
  if(comparison!==0)return {$:'rustCollectionOrderingCompleted',value:comparison};
  const map=readRustStandardCollectionKind(state.left.origin.resolvedOwner)==='map',next={...state,work:state.work+readRustStandardCollectionOrderingWork(state),index:state.index+(state.phase==='value'||!map?1:0),phase:state.phase==='key'&&map?'value':'key'};
  return {$:'rustCollectionOrderingContinue',state:next};

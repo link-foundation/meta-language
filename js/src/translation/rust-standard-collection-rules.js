@@ -1,9 +1,13 @@
 // Closed standard Hash/BTree Map/Set decisions. Parser facts must come from actual
 // resolved imports, concrete type origins and lexical method/loan witnesses.
-/** @typedef {{kind:string,path:string[],arguments:RustStandardCollectionTypeOwner[]}} RustStandardCollectionTypeOwner */
-/** @typedef {{proven:boolean,wrappers:string[],sourceOwner:RustStandardCollectionTypeOwner,textSourceModel?:string}} RustStandardCollectionScalarOrigin */
+// Only the outer collection owner admits type arguments. A scalar owner's
+// child list is inspected for emptiness before the owner can be used.
+/** @typedef {{kind:string,path:string[]}} RustStandardCollectionRejectedChildOwner */
+/** @typedef {{kind:string,path:string[],arguments:RustStandardCollectionRejectedChildOwner[]}} RustStandardCollectionScalarOwner */
+/** @typedef {{kind:string,path:string[],arguments:RustStandardCollectionScalarOwner[]}} RustStandardCollectionTypeOwner */
+/** @typedef {{proven:boolean,wrappers:string[],sourceOwner:RustStandardCollectionScalarOwner,textSourceModel?:string}} RustStandardCollectionScalarOrigin */
 /** @typedef {{$:'rustStandardCollectionOrigin',ordinary:boolean,proven:boolean,shadowed:boolean,typeIdentity:string,resolvedOwner:string,sourceOwner:RustStandardCollectionTypeOwner,arguments:RustStandardCollectionScalarOrigin[],sourceVersionMinor:number,pointerWidth:number,customHasher:boolean,customEquality:boolean}} RustStandardCollectionOrigin */
-/** @typedef {{domain:string,proven:boolean,available:boolean,borrowed:boolean,ownedTransfer:boolean,sourceOwner:RustStandardCollectionTypeOwner}} RustStandardCollectionArgumentOrigin */
+/** @typedef {{domain:string,proven:boolean,available:boolean,borrowed:boolean,ownedTransfer:boolean,sourceOwner:RustStandardCollectionScalarOwner}} RustStandardCollectionArgumentOrigin */
 /** @typedef {{$:'rustStandardCollectionCallOrigin',owner:string,typeIdentity:string,receiverRoot:string,method:string,dispatchOwner:string,proven:boolean,shadowed:boolean,mutable:boolean,available:boolean,overlappingLoan:boolean,arguments:RustStandardCollectionArgumentOrigin[],outputRoot?:string}} RustStandardCollectionCallOrigin */
 
 /** core has no standard collection declarations. Trait witnesses remain separate.
@@ -49,10 +53,12 @@ export function readRustStandardCollectionSourceOriginError(origin,keyDomain,val
  if(origin.pointerWidth!==pointerWidth)return 'collection source and active target retain the same pointer width';
  for(const domain of kind==='map'?[keyDomain,valueDomain]:[keyDomain]){const error=readRustStandardCollectionDomainError(domain,pointerWidth);if(error!=='')return error;}
  if(kind==='set'&&valueDomain!=='unit')return 'standard Set retains only its actual key domain';
- const domains=kind==='map'?[keyDomain,valueDomain]:[keyDomain];
+ const invalidArgument='collection domain arguments require matching complete actual scalar TYPE owners';
  for(let index=0;index<count;index++){
   const child=origin.arguments[index],declared=source.arguments[index];
-  if(!acceptRustStandardCollectionScalarOrigin(child,domains[index])||declared.kind!==child.sourceOwner.kind||declared.path.join('::')!==child.sourceOwner.path.join('::')||declared.arguments.length!==0)return 'collection domain arguments require matching complete actual scalar TYPE owners';
+  if(child===undefined)return invalidArgument;
+  if(declared===undefined)return invalidArgument;
+  if(!acceptRustStandardCollectionScalarOrigin(child,index===0?keyDomain:valueDomain)||declared.kind!==child.sourceOwner.kind||declared.path.join('::')!==child.sourceOwner.path.join('::')||declared.arguments.length!==0)return invalidArgument;
  }
  return '';
 }
@@ -87,9 +93,11 @@ export function readRustStandardCollectionCallOriginError(origin,root,method,arg
  if(testRustStandardCollectionMutation(owner,method)&&(!call.mutable||call.overlappingLoan))return 'collection mutation requires an actual mutable available root without overlapping live loans';
  return '';
 }
-/** @param {RustStandardCollectionArgumentOrigin} argument @param {string} expected @param {boolean} borrowed @returns {string} */
+/** @param {RustStandardCollectionArgumentOrigin|undefined} argument @param {string} expected @param {boolean} borrowed @returns {string} */
 export function readRustStandardCollectionArgumentOriginError(argument,expected,borrowed){
- if(!argument?.proven||!argument.available||argument.borrowed!==borrowed)return 'collection arguments retain their actual available typed value or borrow';
+ const invalid='collection arguments retain their actual available typed value or borrow';
+ if(argument===undefined)return invalid;
+ if(!argument?.proven||!argument.available||argument.borrowed!==borrowed)return invalid;
  const domain=argument.domain,owner=argument.sourceOwner,path=owner?.path.join('::');
  if(owner?.arguments.length!==0||domain!==expected&&!(borrowed&&expected==='String'&&domain==='str'))return 'collection arguments retain exact closed domain identities without coercion';
  if(domain==='String'){if(owner.kind!=='library'||!['std::string::String','alloc::string::String'].includes(path))return 'String collection arguments retain their actual owned standard String type';if(!borrowed&&!argument.ownedTransfer)return 'String insertion requires its actual owned argument transfer';}

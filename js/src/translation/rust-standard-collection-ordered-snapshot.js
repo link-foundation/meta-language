@@ -2,6 +2,17 @@
 // iterators never escape this entry point and Hash storage order is unavailable.
 import {readRustStandardCollectionStateError} from './rust-standard-collection-state.js';
 import {readRustStandardCollectionCallOriginError,readRustStandardCollectionKind,testRustStandardCollectionOrdered} from './rust-standard-collection-rules.js';
+/** @param {RustStandardCollectionScalar} value @returns {RustStandardCollectionScalar} */
+function copyRustStandardCollectionSnapshotScalar(value){
+ if(value.$==='rustCollectionString')return {$:'rustCollectionString',units:value.units.slice()};
+ if(value.$==='rustCollectionBoolean')return {$:'rustCollectionBoolean',value:value.value};
+ return {$:'rustCollectionInteger',value:value.value};
+}
+/** @param {RustStandardCollectionEntry} entry @param {string} method @returns {RustStandardCollectionScalar|undefined} */
+function readRustStandardCollectionSnapshotScalar(entry,method){
+ if(method==='values')return entry.value;
+ return entry.key;
+}
 /** @param {RustStandardCollectionState} state @param {string} method
  * @param {RustStandardCollectionCallOrigin} call @param {string} projection
  * @returns {RustStandardCollectionTransition} */
@@ -13,6 +24,6 @@ export function executeRustStandardCollectionOrderedSnapshot(state,method,call,p
  const domain=method==='values'?state.valueDomain:state.keyDomain;
  if(!['copied','cloned'].includes(projection)||projection==='copied'&&domain==='String')return {$:'rustCollectionInvalid',reason:'ordered snapshots require actual primitive Copy or owned Clone before immediate Vec collection'};
  const values=[];
- for(const entry of state.entries){const value=method==='values'?entry.value:entry.key;if(value===undefined)return {$:'rustCollectionInvalid',reason:'ordered map values retain their actual owned scalar'};values.push(value.$==='rustCollectionString'?{$:'rustCollectionString',units:[...value.units]}:{...value});}
+ for(const entry of state.entries){const value=readRustStandardCollectionSnapshotScalar(entry,method);if(value===undefined)return {$:'rustCollectionInvalid',reason:'ordered map values retain their actual owned scalar'};values.push(copyRustStandardCollectionSnapshotScalar(value));}
  return {$:'rustCollectionNormal',state,value:{$:'rustCollectionOrderedValues',values},writeback:false};
 }

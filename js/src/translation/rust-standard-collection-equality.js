@@ -31,7 +31,19 @@ export function readRustStandardCollectionEqualityStateError(state){
  const map=readRustStandardCollectionKind(resolveRustStandardCollectionOwner(state.left.origin.resolvedOwner,true,false))==='map';let work=0;
  for(let index=0;index<state.leftIndex;index++){
   const left=state.left.entries[index];let found=false;
-  for(const right of state.right.entries){work+=readRustStandardCollectionScalarEqualityWork(left.key,right.key);if(testRustStandardCollectionScalarEquality(left.key,right.key)){if(map){if(left.value===undefined||right.value===undefined||!testRustStandardCollectionScalarEquality(left.value,right.value))return 'equality prefix retains actual equal owned values';work+=readRustStandardCollectionScalarEqualityWork(left.value,right.value);}found=true;break;}}
+  for(const right of state.right.entries){
+   work+=readRustStandardCollectionScalarEqualityWork(left.key,right.key);
+   if(testRustStandardCollectionScalarEquality(left.key,right.key)){
+    if(map){
+     const leftValue=left.value,rightValue=right.value,invalid='equality prefix retains actual equal owned values';
+     if(leftValue===undefined)return invalid;
+     if(rightValue===undefined)return invalid;
+     if(!testRustStandardCollectionScalarEquality(leftValue,rightValue))return invalid;
+     work+=readRustStandardCollectionScalarEqualityWork(leftValue,rightValue);
+    }
+    found=true;break;
+   }
+  }
   if(!found)return 'equality prefix retains actual complete equal membership';
  }
  if(state.leftIndex<state.left.entries.length){const left=state.left.entries[state.leftIndex];for(let index=0;index<state.rightIndex;index++){const right=state.right.entries[index];if(testRustStandardCollectionScalarEquality(left.key,right.key))return 'equality search cursor cannot skip its actual matching key';work+=readRustStandardCollectionScalarEqualityWork(left.key,right.key);}if(state.phase==='value')work+=readRustStandardCollectionScalarEqualityWork(left.key,state.right.entries[state.rightIndex].key);}
@@ -39,12 +51,23 @@ export function readRustStandardCollectionEqualityStateError(state){
  return '';
 }
 /** @param {RustStandardCollectionScalar} left @param {RustStandardCollectionScalar} right @returns {number} */
-function readRustStandardCollectionScalarEqualityWork(left,right){return left.$==='rustCollectionString'&&right.$==='rustCollectionString'?Math.max(1,left.units.length+right.units.length):1;}
+function readRustStandardCollectionScalarEqualityWork(left,right){
+ if(left.$==='rustCollectionString'){
+  if(right.$==='rustCollectionString')return Math.max(1,left.units.length+right.units.length);
+ }
+ return 1;
+}
 /** @param {RustStandardCollectionEqualityState} state @returns {number} */
 export function readRustStandardCollectionEqualityWork(state){
  if(state.left.entries.length!==state.right.entries.length||state.leftIndex===state.left.entries.length||state.rightIndex===state.right.entries.length)return 0;
  const left=state.left.entries[state.leftIndex],right=state.right.entries[state.rightIndex];
- return state.phase==='value'&&left.value!==undefined&&right.value!==undefined?readRustStandardCollectionScalarEqualityWork(left.value,right.value):readRustStandardCollectionScalarEqualityWork(left.key,right.key);
+ if(state.phase==='value'){
+  const leftValue=left.value,rightValue=right.value;
+  if(leftValue!==undefined){
+   if(rightValue!==undefined)return readRustStandardCollectionScalarEqualityWork(leftValue,rightValue);
+  }
+ }
+ return readRustStandardCollectionScalarEqualityWork(left.key,right.key);
 }
 /** @param {RustStandardCollectionEqualityState} state @param {boolean} equal @returns {RustStandardCollectionEqualityTransition} */
 function finishRustStandardCollectionEquality(state,equal){return {$:'rustCollectionEqualityCompleted',value:state.origin.operation==='not equal'?!equal:equal};}
@@ -69,8 +92,10 @@ function advanceRustStandardCollectionEquality(state){
  const cost=readRustStandardCollectionEqualityWork(state);if(cost>Number.MAX_SAFE_INTEGER-state.work)return {$:'rustCollectionEqualityResourceLimit',state,reason:'collection equality charged work exceeds exact source coordinates'};
  const left=state.left.entries[state.leftIndex],right=state.right.entries[state.rightIndex],next={...state,work:state.work+cost};
  if(state.phase==='value'){
-  if(left.value===undefined||right.value===undefined)return {$:'rustCollectionEqualityInvalid',reason:'map equality preserves actual owned values'};
-  if(!testRustStandardCollectionScalarEquality(left.value,right.value))return finishRustStandardCollectionEquality(state,false);
+  const leftValue=left.value,rightValue=right.value,invalid='map equality preserves actual owned values';
+  if(leftValue===undefined)return {$:'rustCollectionEqualityInvalid',reason:invalid};
+  if(rightValue===undefined)return {$:'rustCollectionEqualityInvalid',reason:invalid};
+  if(!testRustStandardCollectionScalarEquality(leftValue,rightValue))return finishRustStandardCollectionEquality(state,false);
   return {$:'rustCollectionEqualityContinue',state:{...next,leftIndex:state.leftIndex+1,rightIndex:0,phase:'search'}};
  }
  if(!testRustStandardCollectionScalarEquality(left.key,right.key))return {$:'rustCollectionEqualityContinue',state:{...next,rightIndex:state.rightIndex+1}};

@@ -5,7 +5,18 @@ import {executeRustStandardCollectionOrderedBorrow} from './rust-standard-collec
 import {executeRustStandardCollectionOrderedSnapshot} from './rust-standard-collection-ordered-snapshot.js';
 import {executeRustStandardCollectionOrdering} from './rust-standard-collection-ordering.js';
 import {executeRustStandardCollectionEquality} from './rust-standard-collection-equality.js';
-/** @typedef {{$:'rustCollectionPacketNormal',values:[RustStandardCollectionScalar|RustStandardCollectionOption|RustStandardCollectionState|{$:'rustCollectionOrderedValues',values:RustStandardCollectionScalar[]}|{$:'rustCollectionOrderedEntries',entries:RustStandardCollectionEntry[]}|{$:'rustCollectionUnit'},RustStandardCollectionState],writeback:boolean}|{$:'rustCollectionInvalid',reason:string}|{$:'rustCollectionResourceLimit',state?:RustStandardCollectionState,reason:string}} RustStandardCollectionPacketTransition */
+/** @typedef {{$:'rustCollectionPacketNormal',values:[RustStandardCollectionValue,RustStandardCollectionState],writeback:boolean}|{$:'rustCollectionInvalid',reason:string}|{$:'rustCollectionResourceLimit',state?:RustStandardCollectionState,reason:string}} RustStandardCollectionPacketTransition */
+/** @param {RustStandardCollectionTransition} result @returns {RustStandardCollectionPacketTransition} */
+function createRustStandardCollectionPacket(result){
+ if(result.$==='rustCollectionNormal')return {$:'rustCollectionPacketNormal',values:[result.value,result.state],writeback:result.writeback};
+ if(result.$==='rustCollectionInvalid')return {$:'rustCollectionInvalid',reason:result.reason};
+ if(result.$==='rustCollectionResourceLimit'){
+  const state=result.state;
+  if(state===undefined)return {$:'rustCollectionResourceLimit',reason:result.reason};
+  return {$:'rustCollectionResourceLimit',state,reason:result.reason};
+ }
+ return {$:'rustCollectionInvalid',reason:'collection method packets cannot substitute constructor completion'};
+}
 /** A real callable body for later automatic source-library projection. Both
  * reads and writes return the original result-zero/state-one tuple recipe.
  * Bare get references cannot escape this adapter; projection is immediate.
@@ -14,17 +25,17 @@ import {executeRustStandardCollectionEquality} from './rust-standard-collection-
  * @param {string} projection @returns {RustStandardCollectionPacketTransition} */
 export function executeRustStandardCollectionValuePacket(state,method,arguments_,call,projection){
  const ordered=['iter','keys','values'].includes(method);
- if(ordered){if(arguments_.length!==0)return {$:'rustCollectionInvalid',reason:'ordered iterator projection retains its actual empty argument list'};const result=projection==='borrowed'?executeRustStandardCollectionOrderedBorrow(state,method,call):executeRustStandardCollectionOrderedSnapshot(state,method,call,projection);return result.$==='rustCollectionNormal'?{$:'rustCollectionPacketNormal',values:[result.value,result.state],writeback:false}:result;}
+ if(ordered){if(arguments_.length!==0)return {$:'rustCollectionInvalid',reason:'ordered iterator projection retains its actual empty argument list'};const result=projection==='borrowed'?executeRustStandardCollectionOrderedBorrow(state,method,call):executeRustStandardCollectionOrderedSnapshot(state,method,call,projection);return createRustStandardCollectionPacket(result);}
  if(method==='get'&&!['copied','cloned'].includes(projection)||method!=='get'&&projection!=='')return {$:'rustCollectionInvalid',reason:'collection source packets require an actual immediate get copied/cloned projection or no projection'};
  const result=executeRustStandardCollectionOperation(state,method,arguments_,call);
- if(result.$==='rustCollectionInvalid'||result.$==='rustCollectionResourceLimit')return result;
- if(result.$!=='rustCollectionNormal')return {$:'rustCollectionInvalid',reason:'collection method packets cannot substitute constructor completion'};
+ if(result.$!=='rustCollectionNormal')return createRustStandardCollectionPacket(result);
  if(method==='get'){
   if(result.value.$!=='rustCollectionOption')return {$:'rustCollectionInvalid',reason:'get packets retain their actual borrowed Option result'};
   const projected=projectRustStandardCollectionOption(result.state,result.value,projection);
-  return projected.$==='rustCollectionNormal'?{$:'rustCollectionPacketNormal',values:[projected.value,projected.state],writeback:false}:projected.$==='rustCollectionResourceLimit'||projected.$==='rustCollectionInvalid'?projected:{$:'rustCollectionInvalid',reason:'collection projection retains an actual normal or refusal transition'};
+  if(projected.$==='rustCollectionCreated')return {$:'rustCollectionInvalid',reason:'collection projection retains an actual normal or refusal transition'};
+  return createRustStandardCollectionPacket(projected);
  }
- return {$:'rustCollectionPacketNormal',values:[result.value,result.state],writeback:result.writeback};
+ return createRustStandardCollectionPacket(result);
 }
 /** Exact boundary encoding of an actual owned Rust String. Its source domain
  * has already excluded lone surrogates; no Eq normalization is performed.
