@@ -131,14 +131,13 @@ impl Checker {
                 let cond = self.boolean_value(checked, span)?;
                 let mut then_expr =
                     self.expr_with_context(then, env, path, context, allow_literal)?;
-                let else_expected = expected
-                    .cloned()
-                    .or_else(|| (!then_expr.ty.is_literal()).then(|| then_expr.ty.clone()));
-                let else_context = if expected.is_some() || then_expr.ty.is_literal() {
-                    context
-                } else {
-                    ExpectedType::Concrete(else_expected.as_ref())
-                };
+                // Keep the declared optional element and all permitted absence tags in both branches.
+                let else_context =
+                    if matches!(expected, Some(Type::Option { .. })) || then_expr.ty.is_literal() {
+                        context
+                    } else {
+                        ExpectedType::Concrete(Some(&then_expr.ty))
+                    };
                 let mut else_expr =
                     self.expr_with_context(otherwise, env, path, else_context, allow_literal)?;
                 if then_expr.ty.is_literal() && !else_expr.ty.is_literal() {
