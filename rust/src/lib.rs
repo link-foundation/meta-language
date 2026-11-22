@@ -28,6 +28,11 @@ mod global_concept_rules;
 mod global_concept_space;
 pub mod grammar;
 mod grammar_active_learning_rules;
+mod grammar_attribute_inference_rules;
+pub use grammar::{
+    GrammarAttributeInference, GrammarAttributeInferenceRequest, GrammarAttributeObservation,
+    infer_grammar_attribute_action,
+};
 mod grammar_composition_batch;
 mod grammar_composition_batch_rules;
 pub use grammar_composition_batch::{

@@ -23,6 +23,7 @@
 //! assert_eq!(Grammar::from_links(&mut decoder, root).expect("grammar decodes"), grammar);
 //! ```
 
+mod attribute_inference;
 mod builder;
 pub mod concepts;
 pub mod decorators;
@@ -46,6 +47,10 @@ pub mod surface;
 pub mod translate;
 pub mod validate;
 
+pub use attribute_inference::{
+    GrammarAttributeInference, GrammarAttributeInferenceRequest, GrammarAttributeObservation,
+    infer_grammar_attribute_action,
+};
 pub use builder::{
     ExprBuilder, GrammarBuilder, RepetitionBoundsError, canonical_repeat, choice, sequence,
 };

@@ -3630,6 +3630,22 @@ fallback uses deterministic bounded sampling and reports that method with the
 hypothesis and query counts. It makes no claim of exact language equivalence.
 The hypothesis can be materialized as an ordinary right-linear grammar.
 
+Grammar attribute inference starts from an existing native grammar and
+independent concrete parser observations. Each observation identifies the
+input bytes, the child path with trivia included, the rule's UTF-8 span and
+the observed output attribute. Both runtimes replay the concrete selection
+before considering any action. The shared candidate definition supplies
+matched text, captured field text, their uppercase, length and integer
+projections, and direct or summed child attributes. Candidates run through
+the ordinary grammar executor. A uniquely matching candidate becomes a
+native `setAttribute` operation in the existing rule. The inference retains
+competing candidates, reports when the vocabulary has no match and preserves
+any authored action by refusing replacement. The selected expression is an
+observational hypothesis whose executable definition survives native listing
+reload. The `language infer-attribute` operation reads an existing grammar and
+structured Links observations and reports the same candidates and optional
+grammar listing. Observations alone cannot certify semantic equivalence.
+
 A new shared source draft supplies labelled prefix-tree construction, red/blue
 RPNI selection, evidence-driven selection and an ALERGIA-style compatibility
 worklist in both runtimes. First-observed symbol and state order explicitly

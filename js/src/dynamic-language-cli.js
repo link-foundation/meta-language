@@ -7,6 +7,7 @@ import {readMetaLanguageArchiveText, readMetaLanguageArchiveBinary,
   metaLanguageArchiveToLinkCliStore, readMetaLanguageArchiveLinkCliStore} from './meta-language-archive.js';
 import {readStructuredDataLino, structuredDataToLino} from './structured-data-links.js';
 import {inferRegularGrammar} from './grammar-inference.js';
+import {inferGrammarAttributeAction} from './grammar-attribute-inference.js';
 import {readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference,regularGrammarRefinementArchiveLimits} from './grammar-inference-refinement.js';
 import {inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference, structuralGrammarInferenceModelIdentifier} from './grammar-structural-inference.js';
 import {acceptDynamicLanguageCommand, readDynamicLanguageArgumentArity,
@@ -34,7 +35,11 @@ function argumentsOf(args) {
   if ((result.options.has('--input-binary') && result.options.has('--input-link-cli-store'))
     || (result.options.has('--binary') && result.options.has('--link-cli-store')))
     throw new TypeError('select one archive encoding per input or output');
-  if(command!=='prepare' && result.file===undefined) throw new TypeError(command==='discover'?'a labelled examples input is required':'a language archive input is required');
+  if(command!=='prepare' && result.file===undefined) {
+    if(command==='discover')throw new TypeError('a labelled examples input is required');
+    if(command==='infer-attribute')throw new TypeError('an attribute observations input is required');
+    throw new TypeError('a language archive input is required');
+  }
   return result;
 }
 
@@ -60,6 +65,30 @@ function labelledExamples(path,readFile,allowDiscoveryOptions) {
 function archiveInput(file,options,readFile,readBytes,limits) {
   if(options.has('--input-link-cli-store'))return readMetaLanguageArchiveLinkCliStore(readBytes(file),limits);
   return options.has('--input-binary')?readMetaLanguageArchiveBinary(readBytes(file),limits):readMetaLanguageArchiveText(readFile(file),limits);
+}
+
+function inferAttribute(file, grammarFile, readFile) {
+  if (grammarFile === undefined) throw new TypeError('infer-attribute needs a native grammar file');
+  const data = readStructuredDataLino(readFile(file));
+  const fields = (record, keys) => record && typeof record === 'object' && !Array.isArray(record)
+    && Object.keys(record).every(key => keys.includes(key));
+  const optionalText = value => value == null || typeof value === 'string';
+  const coordinate = value => Number.isSafeInteger(value) && value >= 0;
+  if (!fields(data, ['request', 'observations']) || !fields(data.request, ['rule', 'attribute', 'field', 'childAttribute'])
+    || typeof data.request.rule !== 'string' || typeof data.request.attribute !== 'string'
+    || !optionalText(data.request.field) || !optionalText(data.request.childAttribute)
+    || !Array.isArray(data.observations)
+    || !data.observations.every(row => fields(row, ['source', 'path', 'start', 'end', 'value'])
+      && typeof row.source === 'string' && Array.isArray(row.path) && row.path.every(coordinate)
+      && coordinate(row.start) && coordinate(row.end)
+      && (typeof row.value === 'string' || Number.isSafeInteger(row.value)))) {
+    throw new TypeError('attribute observations must contain an exact request and concrete occurrences');
+  }
+  const result = inferGrammarAttributeAction(parseGrammarLinks(readFile(grammarFile)), data.request, data.observations);
+  return structuredDataToLino({
+    candidates: result.candidates, diagnostic: result.diagnostic,
+    grammar: result.grammar === null ? null : renderGrammarLinks(result.grammar),
+  });
 }
 
 function archiveOutput(archive,options,limits) {
@@ -119,6 +148,7 @@ export function runDynamicLanguageCommand(args,{readFile,readBytes}) {
   if(['help','--help','-h'].includes(args[0]))return {exitCode:0,stdout:usage,stderr:''};
   try {
     const {command,sources,options,file}=argumentsOf(args);
+    if(command==='infer-attribute')return {exitCode:0,stdout:inferAttribute(file,options.get('--grammar'),readFile),stderr:''};
     if(command==='discover'||command==='refine'||command==='install') {
       const archive=discoveryArchive(command,file,options,readFile,readBytes);
       return {exitCode:0,stdout:archiveOutput(archive,options,command==='install'?undefined:regularGrammarRefinementArchiveLimits),stderr:''};

@@ -80,6 +80,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "grammar-active-learning-program.lino" => {
             Some(include_str!("../data/grammar-active-learning-program.lino"))
         }
+        "grammar-attribute-inference-program.lino" => Some(include_str!(
+            "../data/grammar-attribute-inference-program.lino"
+        )),
         "grammar-composition-batch-program.lino" => Some(include_str!(
             "../data/grammar-composition-batch-program.lino"
         )),
@@ -340,6 +343,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "rust-checked-integer-program.lino" => {
             Some(include_str!("../data/rust-checked-integer-program.lino"))
+        }
+        "rust-concrete-source-program.lino" => {
+            Some(include_str!("../data/rust-concrete-source-program.lino"))
         }
         "rust-constant-integer-program.lino" => {
             Some(include_str!("../data/rust-constant-integer-program.lino"))

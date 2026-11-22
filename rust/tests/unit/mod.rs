@@ -181,6 +181,7 @@ mod query_transform;
 mod record_property_order;
 mod recursive_embedded_regions;
 mod regular_grammar_inference;
+mod grammar_attribute_inference;
 mod resource_description_addresses;
 mod resource_description_graphs;
 mod resource_description_ntriples;

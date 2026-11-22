@@ -40,6 +40,7 @@ sources.push('js/src/translation/javascript-constructor-field-type-rules.js');
 sources.push('js/src/grammar-scanner-inference-rules.js', 'js/src/grammar-scanner-inference.js');
 sources.push('js/src/grammar-scanner-character-class-rules.js', 'js/src/grammar-scanner-mode-stack-rules.js',
  'js/src/grammar-structural-inference-rules.js', 'js/src/grammar-structural-inference.js');
+sources.push('js/src/grammar-attribute-inference-rules.js', 'js/src/grammar-attribute-inference.js');
 const archiveOperationNames = {
  readLinkCliArchiveStoreName: 'read link command line interface archive store name',
  readLinkCliArchiveStateName: 'read link command line interface archive state name',
@@ -71,6 +72,10 @@ const qualifiedOperationNames = {
  'js/src/grammar-structural-inference-rules.js': {
   testSameGrammarStructuralProduction: 'compare structural grammar productions',
  },
+ 'js/src/grammar-attribute-inference.js': {
+  selectTraceNode: 'select grammar attribute trace node',
+  actionGrammar: 'build grammar with inferred attribute action',
+ },
 };
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const declarationRevisions=[
@@ -84,6 +89,9 @@ const declarationRevisions=[
  ]],
  ['5157d52a189d66f07c45bcf6865a1f7ad6fa3179',[
   ['js/src/grammar-structural-inference.js',['inferStructuralGrammar','readStructuralGrammarInferenceLinks']],
+ ]],
+ ['6f59fe37b3fb0061a46c0efd5b1a2682582501ef',[
+  ['js/scripts/draft-source-library.mjs',['draftSourceLibrary']],
  ]],
 ];
 function retainQualifiedDeclarationRevisions(rows,expected){

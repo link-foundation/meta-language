@@ -26,6 +26,7 @@ export { acceptActiveGrammarWord, learnActiveGrammar, learnActiveGrammarAutomato
 export { inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference } from './grammar-structural-inference.js';
 export {refineRegularGrammarInference,readRefinedRegularGrammarInferenceLinks} from './grammar-inference-refinement.js';
 export { inferGrammarScanner, inferGrammarScannerClasses, inferGrammarScannerModeStack } from './grammar-scanner-inference.js';
+export { inferGrammarAttributeAction } from './grammar-attribute-inference.js';
 export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';
 export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
 export { UnsignedLinkId, UnsignedLink, UnsignedLinkNetwork, createDenseUnsignedLinkNetwork,

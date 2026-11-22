@@ -6,9 +6,10 @@ use crate::grammar_inference::{
 };
 use crate::{
     DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, GlobalConceptSource,
-    LoadedMetaLanguageArchive, MetaLanguageArchive, MetaLanguageArchiveLimits,
-    RegularGrammarInferenceOptions, StructuralGrammarInferenceOptions,
-    create_dynamic_meta_language, infer_regular_grammar, infer_structural_grammar,
+    GrammarAttributeInferenceRequest, GrammarAttributeObservation, LoadedMetaLanguageArchive,
+    MetaLanguageArchive, MetaLanguageArchiveLimits, OperationValue, RegularGrammarInferenceOptions,
+    StructuralGrammarInferenceOptions, create_dynamic_meta_language,
+    infer_grammar_attribute_action, infer_regular_grammar, infer_structural_grammar,
     meta_language_archive_to_binary, meta_language_archive_to_link_cli_store,
     meta_language_archive_to_text, parse_grammar_links, read_meta_language_archive_binary,
     read_meta_language_archive_link_cli_store, read_meta_language_archive_text,
@@ -83,6 +84,86 @@ fn labelled_examples(
         );
     }
     serde_json::from_value(value).map_err(|_| message())
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AttributeObservations {
+    request: AttributeRequest,
+    observations: Vec<ConcreteAttributeObservation>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct AttributeRequest {
+    rule: String,
+    attribute: String,
+    field: Option<String>,
+    child_attribute: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ConcreteAttributeObservation {
+    source: String,
+    path: Vec<usize>,
+    start: usize,
+    end: usize,
+    value: AttributeValue,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(untagged)]
+enum AttributeValue {
+    Integer(i64),
+    Text(String),
+}
+
+fn infer_attribute<T>(args: &Arguments, read_text: &mut T) -> Result<Vec<u8>, String>
+where
+    T: FnMut(&str) -> Result<String, String>,
+{
+    let grammar_file = args
+        .options
+        .get("--grammar")
+        .ok_or("infer-attribute needs a native grammar file")?;
+    let file = args
+        .file
+        .as_deref()
+        .ok_or("an attribute observations input is required")?;
+    let data: AttributeObservations = serde_json::from_value(read_structured_data_lino(
+        &read_text(file)?,
+    )?)
+    .map_err(|_| "attribute observations must contain an exact request and concrete occurrences")?;
+    let grammar =
+        parse_grammar_links(&read_text(grammar_file)?).map_err(|error| error.to_string())?;
+    let request = GrammarAttributeInferenceRequest {
+        rule: &data.request.rule,
+        attribute: &data.request.attribute,
+        field: data.request.field.as_deref(),
+        child_attribute: data.request.child_attribute.as_deref(),
+    };
+    let observations = data
+        .observations
+        .into_iter()
+        .map(|row| GrammarAttributeObservation {
+            source: row.source,
+            path: row.path,
+            start: row.start,
+            end: row.end,
+            value: match row.value {
+                AttributeValue::Integer(value) => OperationValue::Integer(value),
+                AttributeValue::Text(value) => OperationValue::Text(value),
+            },
+        })
+        .collect::<Vec<_>>();
+    let result = infer_grammar_attribute_action(&grammar, request, &observations)?;
+    let output = json!({
+        "candidates": result.candidates,
+        "diagnostic": result.diagnostic,
+        "grammar": result.grammar.as_ref().map(render_grammar_links),
+    });
+    Ok(structured_data_to_lino(&output)?.into_bytes())
 }
 
 fn archive_input<T, B>(
@@ -244,6 +325,9 @@ where
     B: FnMut(&str) -> Result<Vec<u8>, String>,
 {
     let limits = MetaLanguageArchiveLimits::default();
+    if args.command == "infer-attribute" {
+        return Ok(success(infer_attribute(args, read_text)?));
+    }
     if matches!(args.command.as_str(), "discover" | "refine" | "install") {
         let archive = discovery_archive(args, read_text, read_bytes)?;
         let output_limits = if args.command == "install" {

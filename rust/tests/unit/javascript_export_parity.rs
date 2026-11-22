@@ -585,6 +585,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "import_tree_sitter_json",
         "function",
     ),
+    (
+        "inferGrammarAttributeAction",
+        "infer_grammar_attribute_action",
+        "function",
+    ),
     ("inferGrammarScanner", "infer_grammar_scanner", "function"),
     (
         "inferGrammarScannerClasses",

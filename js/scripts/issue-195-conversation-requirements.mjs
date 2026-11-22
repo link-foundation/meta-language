@@ -26,6 +26,8 @@ const scannerModeStackFixture = 'parity/fixtures/regular-grammar-inference.lino'
 const scannerModeStackRequirement = 'I195-GRAMMAR-INFERENCE-SCANNER-MODE-STACK';
 const delimiterProductionsRequirement = 'I195-GRAMMAR-INFERENCE-DELIMITER-PRODUCTIONS';
 const structuralRefinementRequirement = 'I195-GRAMMAR-INFERENCE-STRUCTURAL-REFINEMENT';
+const concreteAttributeRequirement = 'I195-GRAMMAR-INFERENCE-CONCRETE-ATTRIBUTES';
+const concreteAttributeFixture = 'parity/fixtures/grammar-attribute-inference.lino';
 
 const sourceTooling = {
   'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK': [
@@ -210,6 +212,10 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  [concreteAttributeRequirement]: {
+    javascript: ['js/src/grammar-attribute-inference-rules.js', 'js/src/grammar-attribute-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/grammar-attribute-inference.test.js'],
+    rust: ['rust/src/grammar_attribute_inference_rules.rs', 'rust/src/grammar/attribute_inference.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/unit/grammar_attribute_inference.rs'],
+  },
   [structuralRefinementRequirement]: {
     javascript: ['js/src/grammar-structural-inference.js', 'js/src/dynamic-language-cli.js', 'js/tests/grammar-inference.test.js'],
     rust: ['rust/src/grammar_inference/structural.rs', 'rust/src/dynamic_language_cli.rs', 'rust/tests/unit/regular_grammar_inference.rs'],
@@ -270,6 +276,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     ...(id === scannerModeStackRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'regular-grammar-inference-scanner-mode-stack' } : {}),
     ...(id === delimiterProductionsRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'grammar-inference-delimiter-productions' } : {}),
     ...(id === structuralRefinementRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'grammar-inference-structural-refinement' } : {}),
+    ...(id === concreteAttributeRequirement ? { fixture: concreteAttributeFixture, fixtureId: 'grammar-attribute-inference' } : {}),
     ...(area === 'formal-concept-definitions' ? {
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
@@ -395,6 +402,8 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Both inference runtimes infer the exact ordered delimiter productions from the shared structural fixture. Native parsing accepts every listed nested control and rebuilds its source bytes while rejecting every negative control. Text and binary archives preserve and recheck the productions and grammar. The inference refuses malformed positive examples, a negative admitted by a proposed merge, and exhausted nesting and production limits.', ['recursiveDelimiterProductionsAndConcreteBytesMatch', 'recursiveDelimiterArchiveReplays', 'invalidAndUnboundedDelimiterMergesAreRefused']],
     [structuralRefinementRequirement, 'source-free refinement of recursive grammar candidates with retained labelled premises',
       'Both runtimes append new positive and negative samples to an archived structural candidate and retain each earlier revision identity and sample boundary. Text and binary reconstruction recheck earlier and current premises against the algorithm and executable candidate. Independent controls retain earlier accepted programs and negative labels, admit a newly observed production, and refuse contradictory labels and reused archived revision identities.', ['structuralRefinementReplaysExactEarlierPremises', 'structuralRefinementPreservesEarlierGrammarAndLabels', 'contradictoryLabelsAndReusedRevisionIdentitiesAreRefused']],
+    [concreteAttributeRequirement, 'native grammar attribute inference from selected concrete rule occurrences',
+      'Both runtimes infer a unique native action from the bounded shared fixture with UTF-8 byte spans and independent expected attributes. A text reload and linked edit affect ordinary parsing of an independent positive while preserving rejection and rule documentation. Competing candidates remain available and forged spans and unsupported observations remain explicit. The shared command returns the executable grammar or reports its surviving alternatives.', ['concreteAttributeObservationsInferNativeAction', 'reloadedActionAndLinkedEditExecuteOnHoldout', 'ambiguousForgedAndUnsupportedTracesRemainExplicit', 'attributeInferenceCommandReturnsExecutableActionsAndAlternatives']],
     ['I195-GRAMMAR-INFERENCE-GENERIC-UNION', 'generic structural and semantic discovery through the source-union pipeline',
       'Discover lexical classes, recursion and semantic relations generically, preserving every source production and provenance. Merge discovered definitions with the applicable official and mature grammars through the existing automatic native pipeline.', ['lexicalRecursiveAndSemanticDiscoveryExecuted', 'allSourceProductionsAndProvenanceRetained', 'discoveredAndOfficialGrammarsMerged']],
     ['I195-GRAMMAR-INFERENCE-FORMAL-CONCEPT-INTEGRATION', 'discovered concepts integrated with recursive formal definitions',

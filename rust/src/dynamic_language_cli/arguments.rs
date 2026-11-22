@@ -68,10 +68,10 @@ pub(super) fn parse(args: &[String]) -> Result<Arguments, String> {
         return Err("select one archive encoding per input or output".to_owned());
     }
     if command != "prepare" && result.file.is_none() {
-        let required = if command == "discover" {
-            "a labelled examples input is required"
-        } else {
-            "a language archive input is required"
+        let required = match command {
+            "discover" => "a labelled examples input is required",
+            "infer-attribute" => "an attribute observations input is required",
+            _ => "a language archive input is required",
         };
         return Err(required.to_owned());
     }
