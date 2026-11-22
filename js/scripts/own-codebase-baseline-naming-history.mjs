@@ -29,8 +29,8 @@ const policy={
         }
       ],
       "current": {
-        "bytes": 18170,
-        "sha256": "5560bd782fe102cf39a2b1c5cbe1762b84529f3ac1ee91de665c0af7c50c9768"
+        "bytes": 20413,
+        "sha256": "c6b6fcd928e82a7ed7fbd055ce523f024ce4ad20c142fbf925735e655304acfb"
       }
     },
     {
