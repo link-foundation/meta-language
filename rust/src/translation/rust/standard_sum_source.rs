@@ -494,7 +494,8 @@ impl RustParser {
             let mut arguments=Vec::new();
             for at in 0..count {
                 if at>0 { self.cursor.expect(",",Some("standard sum type arguments"))?; }
-                self.parse_type()?;arguments.push(self.origins.current_type.clone());
+                self.read_fn_mut_source_sum_argument(owner, at)?;
+                arguments.push(self.origins.current_type.clone());
             }
             self.cursor.eat(",");self.split_type_closing_token();self.cursor.expect(">",Some("standard sum type"))?;
             self.instantiate_standard_sum_source(owner,arguments,self.standard_sum_range(start))

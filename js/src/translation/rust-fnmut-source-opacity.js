@@ -2,16 +2,24 @@
 // Concrete u8/Clone choices are not evidence of universal Copy/Add/Clone bounds.
 import {unsupported} from './diagnostics.js';
 import {readRustStandardSumSourceFieldArgument} from './rust-standard-sum-source-rules.js';
+import {
+  acceptRustFnMutOpaqueObservation,
+  readRustFnMutOpaqueBinderError,
+  readRustFnMutOpaqueBodyTokenError,
+  selectRustFnMutOpaqueErrorPosition,
+} from './rust-fnmut-source-declaration-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust source FnMut opaque generic',reason,span);};
 function enabled(parser){return parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&parser.fnMutSourceSpecialization?.declaration.generics.length>0;}
 function tagKey(value){return value?String(value.declaration)+':'+value.name:'';}
 export function withRustFnMutSourceErrorType(parser,owner,index,read){
- if(!enabled(parser)||owner!=='std::result::Result'||index!==1)return read();
+ if(!enabled(parser)||!selectRustFnMutOpaqueErrorPosition(owner,index))return read();
  const context=parser.fnMutSourceSpecialization,scopes=context.opaqueErrorScopes??=[],scope={start:parser.cursor.peek().start,depth:parser.sourceOwnerFrames.length||1};scopes.push(scope);
  try{return read();}finally{scopes.pop();}
 }
 export function markRustFnMutSourceGenericType(parser,token,origin){
- const context=parser.fnMutSourceSpecialization,scopes=context?.opaqueErrorScopes,scope=scopes?.at(-1);if(!scope||scopes.length!==1||scope.depth!==1||scope.start!==token.start)fail('an unconstrained concrete type binder is admitted only as a bare standard Result error position',token);
+ const context=parser.fnMutSourceSpecialization,scopes=context?.opaqueErrorScopes,scope=scopes?.at(-1);
+ const error=readRustFnMutOpaqueBinderError(scopes?.length??0,scope?.depth??0,scope?.start===token.start);
+ if(error)fail(error,token);
  return {...origin,sourceFnMutGenericBinder:{declaration:context.declaration.range.start,name:token.value,concreteCopy:origin.copyEvidence===true}};
 }
 function tags(origin){
@@ -36,11 +44,11 @@ export function rustFnMutSourceArgumentError(parser,actual,expected){
  if(!enabled(parser)||!parser.fnMutSourceSpecialization.runtime||actual.diverging)return '';const left=tags(actual),right=tags(expected);return left.length!==right.length||left.some((value,index)=>value!==right[index])?'a generic Result error stays opaque across source argument, binding and return positions':'';
 }
 export function guardRustFnMutSourceObservation(parser,node,path,operation,span){
- if(!enabled(parser)||!parser.fnMutSourceSpecialization.runtime)return;const origin=parser.origins.origin(node,path);if(hasRustFnMutSourceOpacity(origin)&&!['is_ok','is_err','is_some','is_none'].includes(operation))fail('this generic body admits opaque Result propagation and discriminant queries; '+operation+' needs its real universal trait/ownership interpretation',span);
+ if(!enabled(parser)||!parser.fnMutSourceSpecialization.runtime)return;const origin=parser.origins.origin(node,path);if(hasRustFnMutSourceOpacity(origin)&&!acceptRustFnMutOpaqueObservation(operation))fail('this generic body admits opaque Result propagation and discriminant queries; '+operation+' needs its real universal trait/ownership interpretation',span);
 }
 export function guardRustFnMutSourceResidual(parser,operand,target,span){
  if(!enabled(parser))return;const a=tags(operand),b=tags(target);if(a.length!==b.length||a.some((value,index)=>value!==b[index]))fail('generic residual errors retain the same actual opaque binder without monomorphic From assumptions',span);
 }
 export function guardRustFnMutSourceBodyTokens(parser,declaration){
- if(!declaration.generics.length)return;for(const token of parser.sourceConstantTokens){if(token.start<declaration.bodyRange.start||token.end>declaration.bodyRange.end)continue;if(token.kind==='identifier'&&token.value==='Err'||token.kind==='macro'&&token.value==='vec')fail('explicit generic error extraction/construction and inferred vector aggregation need their separate universal source interpretation',token);}
+ if(!declaration.generics.length)return;for(const token of parser.sourceConstantTokens){if(token.start<declaration.bodyRange.start||token.end>declaration.bodyRange.end)continue;const error=readRustFnMutOpaqueBodyTokenError(token.kind,token.value);if(error)fail(error,token);}
 }

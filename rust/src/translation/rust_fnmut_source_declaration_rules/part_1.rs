@@ -120,3 +120,44 @@ pub fn read_rust_fn_mut_source_declaration_budget_error(
         String::new()
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn select_rust_fn_mut_opaque_error_position(owner: &str, index: f64) -> bool {
+    (owner == "std::result::Result") && (index == 1f64)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_fn_mut_opaque_binder_error(
+    scopes: f64,
+    depth: f64,
+    starts_argument: bool,
+) -> String {
+    if ((scopes == 1f64) && (depth == 1f64)) && starts_argument {
+        String::new()
+    } else {
+        String::from(
+            "an unconstrained concrete type binder is admitted only as a bare standard Result error position",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_fn_mut_opaque_body_token_error(kind: &str, value: &str) -> String {
+    if ((kind == "identifier") && (value == "Err")) || ((kind == "macro") && (value == "vec")) {
+        String::from(
+            "explicit generic error extraction/construction and inferred vector aggregation need their separate universal source interpretation",
+        )
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_fn_mut_opaque_observation(operation: &str) -> bool {
+    (((operation == "is_ok") || (operation == "is_err")) || (operation == "is_some"))
+        || (operation == "is_none")
+}

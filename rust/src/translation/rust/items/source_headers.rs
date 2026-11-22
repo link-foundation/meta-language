@@ -156,6 +156,10 @@ impl RustParser {
             .type_namespace_frames
             .pop()
             .expect("the type namespace frame is owned");
+        let primitive_children = self
+            .primitive_owner_frames
+            .pop()
+            .expect("the primitive owner frame is owned");
         let ty = result?;
         if !self.shared_array_handle_source_model.is_empty()
             && !self.origins.current_type.wrappers.is_empty()
@@ -166,10 +170,6 @@ impl RustParser {
                 None,
             ));
         }
-        let primitive_children = self
-            .primitive_owner_frames
-            .pop()
-            .expect("the primitive owner frame is owned");
         let primitive = self
             .read_standard_primitive_position(&head, &self.module_path)?
             .or_else(|| {

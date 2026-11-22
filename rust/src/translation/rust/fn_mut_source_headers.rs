@@ -9,8 +9,9 @@ use super::{
     unsupported,
 };
 use crate::translation::{
-    source_fn_mut_specializations::SourceDeclaration, source_loop_folds::SourceFoldSpan,
-    source_signatures::SourceOwner,
+    rust_fnmut_source_declaration_rules as declaration_rules,
+    source_diagnostic_attributes::token_kind, source_fn_mut_specializations::SourceDeclaration,
+    source_loop_folds::SourceFoldSpan, source_signatures::SourceOwner,
 };
 use std::{
     collections::{BTreeMap, HashSet},
@@ -168,6 +169,21 @@ impl RustParser {
                 None,
             )
         })?);
+        if body_replay && !declaration.generics.is_empty() {
+            for token in directory.read_tokens(&declaration.body) {
+                let error = declaration_rules::read_rust_fn_mut_opaque_body_token_error(
+                    token_kind(&token),
+                    &token.value,
+                );
+                if !error.is_empty() {
+                    return Err(unsupported(
+                        "Rust source FnMut opaque generic",
+                        &error,
+                        Some(token.span()),
+                    ));
+                }
+            }
+        }
         let mut module = declaration.owner.clone();
         let mut rooted = vec!["crate".to_owned()];
         rooted.extend(declaration.owner.iter().cloned());
@@ -561,11 +577,47 @@ impl RustParser {
                 Some(token.span()),
             ));
         }
+        let (start, depth) = self
+            .fn_mut_source_opaque_error_scopes
+            .last()
+            .copied()
+            .unwrap_or_default();
+        let error = declaration_rules::read_rust_fn_mut_opaque_binder_error(
+            self.fn_mut_source_opaque_error_scopes.len() as f64,
+            depth as f64,
+            start == token.start,
+        );
+        if !error.is_empty() {
+            return Err(unsupported(
+                "Rust source FnMut opaque generic",
+                &error,
+                Some(token.span()),
+            ));
+        }
         let mut origin = origin.clone();
         origin
             .expanded_source_owner
             .clone_from(&origin.source_owner);
         Ok(Some(origin))
+    }
+
+    pub(super) fn read_fn_mut_source_sum_argument(
+        &mut self,
+        owner: &str,
+        index: usize,
+    ) -> Result<Type> {
+        if self.fn_mut_source_type_bindings.is_empty()
+            || !declaration_rules::select_rust_fn_mut_opaque_error_position(owner, index as f64)
+        {
+            return self.parse_type();
+        }
+        self.fn_mut_source_opaque_error_scopes.push((
+            self.cursor.peek().start,
+            self.source_owner_frames.len().max(1),
+        ));
+        let parsed = self.parse_type();
+        self.fn_mut_source_opaque_error_scopes.pop();
+        parsed
     }
 
     pub(super) fn read_fn_mut_source_callback_header(
