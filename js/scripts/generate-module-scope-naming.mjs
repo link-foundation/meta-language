@@ -93,6 +93,11 @@ const declarationRevisions=[
  ['6f59fe37b3fb0061a46c0efd5b1a2682582501ef',[
   ['js/scripts/draft-source-library.mjs',['draftSourceLibrary']],
  ]],
+ ['31e0006ea8c06484dc30e6a2c529a5166e1bc504',[
+  ['js/scripts/draft-source-library.mjs',['draftSourceLibrary']],
+  ['js/src/translation/record-write-rules.js',['readRecordCompoundBinaryOperation']],
+  ['js/src/translation/record-writes.js',['checkRecordFieldWrite','checkSourceRecordFieldWrite']],
+ ]],
 ];
 function retainQualifiedDeclarationRevisions(rows,expected){
  const path='parity/naming/module-scope-bindings-registration.lino';
