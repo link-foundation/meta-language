@@ -68,8 +68,8 @@ export function executeJavaScriptSymbolRegistryOperation(heap,operation,input){
   if(input.$!=='symbol')return {$:'symbolRegistryError',heap,errorClass:'TypeError',reason:'Symbol.keyFor requires an actual primitive Symbol without coercion'};
   const fact=readJavaScriptSymbolRegistrationFact(heap,input.identity);if(fact===undefined)return {$:'symbolRegistryInvalid',heap,reason:'Symbol.keyFor requires actual registration authority for this Symbol'};
   if(!fact.registered)return {$:'symbolRegistryValue',heap,value:{$:'undefined'}};
-  if(fact.key===undefined)return {$:'symbolRegistryInvalid',heap,reason:'registered Symbol keyFor requires its exact actual registry key witness'};
-  return {$:'symbolRegistryValue',heap,value:fact.key};
+  const key=fact.key;if(key===undefined)return {$:'symbolRegistryInvalid',heap,reason:'registered Symbol keyFor requires its exact actual registry key witness'};
+  return {$:'symbolRegistryValue',heap,value:key};
  }
  if(operation!=='for'||input.$!=='text'&&input.$!=='sourceText')return {$:'symbolRegistryInvalid',heap,reason:'Symbol.for retains its actual completed implicit text conversion'};
  if(readJavaScriptSemanticTextLength(input)>1048576)return {$:'symbolRegistryResourceLimit',heap,reason:'Symbol registry keys exceed the selected 1048576 UTF16 unit profile'};
@@ -89,9 +89,9 @@ export function importJavaScriptSymbolRegistryWitness(heap,identity,key){
  if(key.$!=='undefined'&&key.$!=='text'&&key.$!=='sourceText')return {$:'symbolRegistryInvalid',heap,reason:'a Symbol registration witness retains its actual optional primitive text key'};
  const invalid=readJavaScriptOrdinaryValueError(heap,key);if(invalid!=='')return {$:'symbolRegistryInvalid',heap,reason:invalid};
  heap=initializeJavaScriptSymbolRegistryDirectory(heap);
- const registered=key.$!=='undefined',prior=readJavaScriptSymbolRegistrationFact(heap,identity);if(prior!==undefined&&(prior.registered!==registered||prior.key!==undefined&&(!registered||!testJavaScriptSemanticSameValue(prior.key,key))))return {$:'symbolRegistryInvalid',heap,reason:'Symbol registry witnesses preserve actual prior classification and exact key'};
+ const registered=key.$!=='undefined',prior=readJavaScriptSymbolRegistrationFact(heap,identity),priorKey=prior?.key;if(prior!==undefined&&(prior.registered!==registered||priorKey!==undefined&&(!registered||!testJavaScriptSemanticSameValue(priorKey,key))))return {$:'symbolRegistryInvalid',heap,reason:'Symbol registry witnesses preserve actual prior classification and exact key'};
  const at=registered?findJavaScriptSymbolRegistryKey(heap,key):-1,entry=heap.symbolRegistry?.[at];if(entry!==undefined&&entry.identity!==identity)return {$:'symbolRegistryInvalid',heap,reason:'one actual global registry key has one canonical Symbol identity'};
- if(prior!==undefined&&prior.registered===registered&&(!registered||prior.key!==undefined&&testJavaScriptSemanticSameValue(prior.key,key)&&entry?.identity===identity))return {$:'symbolRegistryValue',heap,value:{$:'symbol',identity}};
+ if(prior!==undefined&&prior.registered===registered&&(!registered||priorKey!==undefined&&testJavaScriptSemanticSameValue(priorKey,key)&&entry?.identity===identity))return {$:'symbolRegistryValue',heap,value:{$:'symbol',identity}};
  let next=heap;if(!heap.symbols.includes(identity)){const added=registerJavaScriptOrdinarySymbol(heap,identity);if(!added.success)return {$:'symbolRegistryInvalid',heap,reason:added.error};next=added.heap;}
  const fact=registered?{$:'symbolRegistrationFact',identity,registered,key}:{$:'symbolRegistrationFact',identity,registered};
  const classified=retainJavaScriptSymbolRegistration(next,fact);

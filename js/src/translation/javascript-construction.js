@@ -198,7 +198,7 @@ export function stepJavaScriptConstruction(program,heap,directory,state){
   if(state.phase==='newTarget'){
    if(!['strict','ordinary class','bound function','Array','Number','Boolean','String','Object','Map','Set','WeakMap','WeakSet'].includes(state.mode))return requestJavaScriptConstructionImplementation(heap,state,'Construct','the actual constructor kind requires its own derived or exotic implementation');
    const fn=readJavaScriptExecutableCallFunction(program,heap,fact.identity),kind=readJavaScriptConstructionMode(program,heap,fact);
-   if(fact.intrinsicKind!==undefined&&!['Array','Object','Number','Boolean','String','Map','Set','WeakMap','WeakSet'].includes(kind)||kind!=='bound function'&&fact.intrinsicKind===undefined&&!fact.intrinsicArray&&fn!==undefined&&!['strict','ordinary class','primitive intrinsic'].includes(fn.receiverMode))return requestJavaScriptConstructionImplementation(heap,state,'newTarget prototype and realm','the actual newTarget kind requires its derived or Proxy prototype/realm protocol');
+   if(fact.intrinsicKind!==undefined&&!['Array','Object','Number','Boolean','String','Map','Set','WeakMap','WeakSet'].includes(kind??'')||kind!=='bound function'&&fact.intrinsicKind===undefined&&!fact.intrinsicArray&&fn!==undefined&&!['strict','ordinary class','primitive intrinsic'].includes(fn.receiverMode))return requestJavaScriptConstructionImplementation(heap,state,'newTarget prototype and realm','the actual newTarget kind requires its derived or Proxy prototype/realm protocol');
   }
   return {$:'constructionContinue',heap,state:state.phase==='target'?{...state,phase:'newTarget',mode:readJavaScriptConstructionMode(program,heap,fact)}:{...state,phase:'initialize'}};
  }
