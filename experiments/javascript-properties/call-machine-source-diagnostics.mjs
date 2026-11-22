@@ -4,18 +4,29 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { readSourceLibraryClosure } from '../../js/scripts/read-source-library-closure.mjs';
 import { parseJavaScript } from '../../js/src/translation/javascript.js';
 import { checkProgram } from '../../js/src/translation/check.js';
+import { readProjectData } from '../../js/scripts/project-data.mjs';
 
 const [mode, snapshot, ...rest] = process.argv.slice(2);
-if (!['compose', 'check'].includes(mode) || !snapshot || rest.length) {
-  throw new TypeError('use compose or check followed by a scratch snapshot path');
+if (!['compose', 'check', 'predecessor'].includes(mode) || !snapshot || rest.length) {
+  throw new TypeError('use compose, check or predecessor followed by a scratch snapshot path');
 }
 
+let owners = [];
 if (mode === 'compose') {
-  const { source } = readSourceLibraryClosure(
+  const { source, inputs } = readSourceLibraryClosure(
     'js/src/translation/javascript-call-machine.js',
     { aliases: true }
   );
   writeFileSync(snapshot, source, { flag: 'wx' });
+  owners = inputs.map(({ path, closureRange }) => ({ path, ...closureRange }));
+}
+if (mode === 'predecessor') {
+  const receipt = readProjectData(new URL(
+    '../../parity/self-translation/javascript-call-machine-native.lino', import.meta.url
+  ));
+  const { source, inputs } = receipt.sourceClosure;
+  writeFileSync(snapshot, source, { flag: 'wx' });
+  owners = inputs.map(({ path, closureRange }) => ({ path, ...closureRange }));
 }
 
 const source = readFileSync(snapshot, 'utf8');
@@ -49,6 +60,17 @@ function countExactStructures(root) {
   return structures.size;
 }
 
+function measureSourceOwners(items, ranges) {
+  const counts = new Map();
+  const seen = new WeakSet();
+  for (const item of items) {
+    const owner = ranges.find(range => range.start <= item.span?.start && item.span.start < range.end);
+    const path = owner?.path ?? 'No original module at the declaration span';
+    counts.set(path, (counts.get(path) ?? 0) + countContainers(item, seen));
+  }
+  return [...counts].sort((left, right) => right[1] - left[1]);
+}
+
 try {
   const started = performance.now();
   const parsed = parseJavaScript(source);
@@ -56,6 +78,7 @@ try {
   console.log(`Surface stores ${countContainers(parsed)} distinct containers`);
   const sizes = parsed.items.map(item => [item.name ?? item.k, countContainers(item)]);
   console.table(sizes.sort((left, right) => right[1] - left[1]).slice(0, 24));
+  if (owners.length) console.table(measureSourceOwners(parsed.items, owners).slice(0, 24));
   console.log(`Surface has ${countExactStructures(parsed)} distinct enumerable structures`);
   const program = checkProgram(parsed);
   console.log(`Checked ${program.declarations.size} authored declarations in ${snapshot}`);
