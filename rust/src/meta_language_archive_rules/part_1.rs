@@ -118,7 +118,7 @@ pub fn read_meta_language_archive_record_fields(role: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_meta_language_archive_kind(kind: &str) -> bool {
-    (((((((((((((kind == "concrete syntax") || (kind == "abstract syntax"))
+    ((((((((((((((kind == "concrete syntax") || (kind == "abstract syntax"))
         || (kind == "grammar"))
         || (kind == "language configuration"))
         || (kind == "global concept space"))
@@ -130,7 +130,8 @@ pub fn accept_meta_language_archive_kind(kind: &str) -> bool {
         || (kind == "typed program"))
         || (kind == "discovered concepts"))
         || (kind == "decorators"))
-        || (kind == "grammar inference")
+        || (kind == "grammar inference"))
+        || (kind == "grammar merge")
 }
 
 /// Execute the checked shared source algorithm.

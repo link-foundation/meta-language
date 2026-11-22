@@ -10,9 +10,11 @@ import {inferRegularGrammar} from './grammar-inference.js';
 import {inferGrammarAttributeAction} from './grammar-attribute-inference.js';
 import {readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference,regularGrammarRefinementArchiveLimits} from './grammar-inference-refinement.js';
 import {inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference, structuralGrammarInferenceModelIdentifier} from './grammar-structural-inference.js';
+import {readDynamicMetaLanguageIdentifier} from './dynamic-meta-language-rules.js';
 import {acceptDynamicLanguageCommand, readDynamicLanguageArgumentArity,
   readDynamicLanguageProjection, acceptDynamicLanguageConfigurationField,
-  readDynamicLanguageResourceField, readDynamicLanguageCommandUsage} from './dynamic-language-command-rules.js';
+  readDynamicLanguageResourceField, readDynamicLanguageCommandUsage,
+  acceptDynamicLanguageBaseEncoding} from './dynamic-language-command-rules.js';
 
 const usage = readDynamicLanguageCommandUsage();
 
@@ -96,6 +98,23 @@ function archiveOutput(archive,options,limits) {
   return options.has('--binary')?metaLanguageArchiveToBinary(archive,limits):metaLanguageArchiveToText(archive,limits);
 }
 
+function installMergedDiscovery(source, checkpoint, options, readFile, readBytes) {
+  const base = options.get('--base'), mergeWith = options.get('--merge-with');
+  const identifier = options.get('--identifier'), encoding = options.get('--base-encoding') ?? 'text';
+  if (base === undefined || mergeWith === undefined || identifier === undefined) {
+    throw new TypeError('merged grammar installation needs a base archive, a source identity and a result identity');
+  }
+  if (!acceptDynamicLanguageBaseEncoding(encoding)) throw new TypeError('unknown base archive encoding');
+  const archive = encoding === 'binary' ? readMetaLanguageArchiveBinary(readBytes(base))
+    : encoding === 'link-cli-store' ? readMetaLanguageArchiveLinkCliStore(readBytes(base))
+      : readMetaLanguageArchiveText(readFile(base));
+  const session = new DynamicMetaLanguage(archive).extend([source], {
+    entries: [{ identifier: readDynamicMetaLanguageIdentifier('grammar inference') + source.id,
+      kind: 'grammar inference', ...checkpoint }],
+  });
+  return session.mergeInstalledGrammars([mergeWith, source.id], identifier).archive;
+}
+
 function discoveryArchive(command,file,options,readFile,readBytes) {
   const identifier=options.get('--identifier');
   if(command==='discover') {
@@ -113,6 +132,9 @@ function discoveryArchive(command,file,options,readFile,readBytes) {
   }
   const readInference=structural?readStructuralGrammarInferenceLinks:readRefinedRegularGrammarInferenceLinks;
   const selected=readInference(network,root);
+  if (['--base', '--base-encoding', '--merge-with', '--identifier'].some(option => options.has(option))) {
+    return installMergedDiscovery(selected.source, {network, root}, options, readFile, readBytes);
+  }
   return createDynamicMetaLanguage([selected.source]).archive;
 }
 function configuration(path,readFile) {

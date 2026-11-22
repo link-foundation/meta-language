@@ -39,6 +39,14 @@ test('one shared command sequence retains concrete trees, recursive definitions 
   if(step.archive){
    const archive=step.binary?readMetaLanguageArchiveBinary(output.stdout):readMetaLanguageArchiveText(output.stdout);
    const session=new DynamicMetaLanguage(archive);
+   if (step.merge) {
+    const report = session.grammarMerge(step.merge.result);
+    assert.deepEqual(report.sources, step.merge.sources, step.name);
+    const aliases = session.sources.filter(source => step.merge.sources.includes(source.id))
+      .flatMap(source => [...source.grammar.rules.keys()].map(rule => `${source.id}:${rule}`));
+    assert.deepEqual(report.sourceProductions.map(production => production.alias).sort(), aliases.sort(), step.name);
+    assert.equal(session.entries.find(entry => entry.identifier === step.merge.checkpoint)?.kind, 'grammar inference', step.name);
+   }
    if(step.concrete){
     const entry=session.entries.find(entry=>entry.identifier===step.concrete);
     assert.equal(entry.kind,'concrete syntax',step.name);

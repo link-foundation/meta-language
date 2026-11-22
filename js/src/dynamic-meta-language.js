@@ -12,7 +12,8 @@ import { createHash } from 'node:crypto';
 import { readDynamicMetaLanguageIdentifier, acceptDynamicSyntaxProjection,
   readDynamicConcreteSyntaxVersion, readDynamicParserOptionOrder,
   acceptDynamicParserOption, readDynamicSnapshotIdentifier,
-  readDynamicConcreteIdentifier } from './dynamic-meta-language-rules.js';
+  readDynamicConcreteIdentifier, readInstalledGrammarMergeVersion,
+  acceptInstalledGrammarMergeSourceCount } from './dynamic-meta-language-rules.js';
 import { decoratorSet } from './decorators.js';
 import { createAbstractSyntaxLinks, readAbstractSyntaxLinks } from './syntax-projection.js';
 import { readDynamicAbstractIdentifier } from './dynamic-meta-language-rules.js';
@@ -20,9 +21,12 @@ import { checkProgram } from './translation/check.js';
 import { FLOAT } from './translation/types.js';
 import { emitTypedProgramLinks, encodeTypedProgramLinks } from './typed-program-links.js';
 import { acceptGrammarAttributeSelectionNames, acceptGrammarAttributeTranslationTarget } from './grammar-attribute-inference-rules.js';
+import { assertMergeComplete, mergeGrammars } from './grammar-merge.js';
+import { renderGrammarLinks } from './grammar-links.js';
 
 const discoveryIdentifier = readDynamicMetaLanguageIdentifier('definitions');
 const configurationIdentifier = readDynamicMetaLanguageIdentifier('configuration');
+const mergeIdentifierPrefix = readDynamicMetaLanguageIdentifier('grammar merge');
 const fail = message => { throw new TypeError(`dynamic meta-language: ${message}`); };
 
 function dynamicLimits(options) {
@@ -30,6 +34,48 @@ function dynamicLimits(options) {
     byteLimit: options.byteLimit ?? 128 * 1024 * 1024, depthLimit: options.depthLimit ?? 256 };
   if (Object.values(limits).some(value => !Number.isSafeInteger(value) || value < 1)) fail('invalid resource limit');
   return limits;
+}
+
+function deriveInstalledGrammarMerge(sources, identifiers) {
+  if (!Array.isArray(identifiers) || !acceptInstalledGrammarMergeSourceCount(identifiers.length)
+    || identifiers.some(id => typeof id !== 'string')
+    || new Set(identifiers).size !== identifiers.length) fail('grammar merge needs distinct installed sources');
+  const indexed = new Map(sources.map(source => [source.id, source]));
+  const selected = identifiers.map((id, precedence) => {
+    const source = indexed.get(id);
+    if (!source) fail('unknown source-qualified grammar identifier');
+    return { ...source, precedence };
+  });
+  if (selected.some(source => source.language !== selected[0].language || source.edition !== selected[0].edition)) {
+    fail('grammar merge needs one language edition');
+  }
+  return assertMergeComplete(mergeGrammars(selected, { reconcile: true })).groups[0];
+}
+
+function readInstalledGrammarMerges(entries, sources, limits) {
+  const reports = new Map(), positions = new Map(sources.map(({id}, index) => [id, index]));
+  for (const entry of entries) {
+    if (entry.kind !== 'grammar merge') continue;
+    const value = decodeStructuredDataLinks(island(entry.network, entry.root, limits), entry.root, limits);
+    if (!value || value.schemaVersion !== readInstalledGrammarMergeVersion()
+      || !Array.isArray(value.sources) || typeof value.result !== 'string' || typeof value.fingerprint !== 'string'
+      || Object.keys(value).length !== 4 || entry.identifier !== mergeIdentifierPrefix + value.result) {
+      fail('invalid installed grammar merge certificate');
+    }
+    const position = positions.get(value.result);
+    if (position === undefined || value.sources.some(id => !(positions.get(id) < position))) {
+      fail('grammar merge inputs must precede their installed result');
+    }
+    const report = deriveInstalledGrammarMerge(sources, value.sources);
+    const actual = sources[position];
+    if (value.fingerprint !== report.fingerprint || actual.language !== report.language
+      || actual.edition !== report.edition
+      || renderGrammarLinks(actual.grammar) !== renderGrammarLinks(report.grammar)) {
+      fail('stale installed grammar merge certificate');
+    }
+    reports.set(value.result, value.sources);
+  }
+  return reports;
 }
 
 // Exported views own their IDs and metadata objects. Parser caches derive only
@@ -205,6 +251,7 @@ export class DynamicMetaLanguage {
   #configuration;
   #limits;
   #grammars;
+  #grammarMerges;
   #definitionContext;
   #configurationContext;
   #definitionFingerprint;
@@ -221,6 +268,7 @@ export class DynamicMetaLanguage {
     const config = decodeStructuredDataLinks(island(settings.network, settings.root, limits), settings.root, limits);
     if (config?.schemaVersion !== 1 || !Array.isArray(config.records) || !Array.isArray(config.equivalences)) fail('invalid language configuration');
     const discovered = readDiscoveredConceptLinks(island(definition.network, definition.root, limits), definition.root);
+    this.#grammarMerges = readInstalledGrammarMerges(restored.entries, discovered.sources, limits);
     const count = restored.entries.length;
     this.#definitionContext = pinContext(restored.entries, definition, 'definition snapshot');
     this.#configurationContext = pinContext(restored.entries, settings, 'configuration snapshot');
@@ -244,6 +292,24 @@ export class DynamicMetaLanguage {
   get formalDefinitions() { return this.#readDiscoveryView().formalDefinitions; }
   get configuration() { return structuredClone(this.#configuration); }
   get limits() { return { ...this.#limits }; }
+
+  /** Read the original productions, aliases and decisions for an installed merge. */
+  grammarMerge(identifier) {
+    const sources = this.#grammarMerges.get(identifier);
+    return sources === undefined ? null : deriveInstalledGrammarMerge(this.sources, sources);
+  }
+
+  /** Apply the ordinary grammar merge with input identifiers in precedence order. */
+  mergeInstalledGrammars(identifiers, result) {
+    if (typeof result !== 'string' || result.length === 0 || this.#grammars.has(result)) {
+      fail('grammar merge needs a new result identity');
+    }
+    const report = deriveInstalledGrammarMerge(this.#sources, identifiers);
+    const source = { id: result, language: report.language, edition: report.edition, grammar: report.grammar };
+    const receipt = graph({ schemaVersion: readInstalledGrammarMergeVersion(), sources: identifiers,
+      result, fingerprint: report.fingerprint }, this.#limits);
+    return this.extend([source], { entries: [{ identifier: mergeIdentifierPrefix + result, kind: 'grammar merge', ...receipt }] });
+  }
 
   #readDiscoveryView() {
     const entry = this.entries.find(entry => entry.identifier === discoveryIdentifier);

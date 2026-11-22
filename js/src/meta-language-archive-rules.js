@@ -31,7 +31,8 @@ export function acceptMetaLanguageArchiveKind(kind) {
     || kind === 'global concept space' || kind === 'formal concept definition'
     || kind === 'ontology' || kind === 'taxonomy' || kind === 'resource description graph'
     || kind === 'resource description dataset' || kind === 'typed program'
-    || kind === 'discovered concepts' || kind === 'decorators' || kind === 'grammar inference';
+    || kind === 'discovered concepts' || kind === 'decorators' || kind === 'grammar inference'
+    || kind === 'grammar merge';
 }
 
 /** @param {number} version @returns {boolean} */

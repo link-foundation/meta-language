@@ -231,6 +231,49 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
             };
             let session =
                 DynamicMetaLanguage::new(&archive, &DynamicMetaLanguageOptions::default()).unwrap();
+            if let Some(merge) = step.get("merge") {
+                let result = session
+                    .grammar_merge(merge["result"].as_str().unwrap())
+                    .unwrap()
+                    .unwrap();
+                let sources = merge["sources"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|source| source.as_str().unwrap())
+                    .collect::<Vec<_>>();
+                assert_eq!(result.sources, sources);
+                let mut aliases = session
+                    .sources()
+                    .iter()
+                    .filter(|source| sources.contains(&source.id.as_str()))
+                    .flat_map(|source| {
+                        source
+                            .grammar
+                            .rules()
+                            .iter()
+                            .map(|rule| format!("{}:{}", source.id, rule.name))
+                    })
+                    .collect::<Vec<_>>();
+                let mut retained = result
+                    .source_productions
+                    .into_iter()
+                    .map(|production| production.alias)
+                    .collect::<Vec<_>>();
+                aliases.sort_unstable();
+                retained.sort_unstable();
+                assert_eq!(retained, aliases);
+                assert_eq!(
+                    session
+                        .entries()
+                        .iter()
+                        .find(
+                            |entry| Some(entry.identifier.as_str()) == merge["checkpoint"].as_str()
+                        )
+                        .map(|entry| entry.kind.as_str()),
+                    Some("grammar inference")
+                );
+            }
             if let Some(name) = step["concrete"].as_str() {
                 let entry = session
                     .entries()

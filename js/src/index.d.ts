@@ -2260,7 +2260,7 @@ export type MetaLanguageArchiveKind = 'concrete syntax' | 'abstract syntax' | 'g
   | 'language configuration'
   | 'global concept space' | 'formal concept definition' | 'ontology' | 'taxonomy'
   | 'resource description graph' | 'resource description dataset' | 'typed program'
-  | 'discovered concepts' | 'decorators' | 'grammar inference';
+  | 'discovered concepts' | 'decorators' | 'grammar inference' | 'grammar merge';
 export interface MetaLanguageArchiveEntry {
   identifier: string;
   kind: MetaLanguageArchiveKind;
@@ -2296,6 +2296,16 @@ export interface DynamicMetaLanguageOptions extends MetaLanguageArchiveLimits {
   equivalences?: [string, string][];
   entries?: MetaLanguageArchiveEntry[];
 }
+export interface DynamicAttributeSelection {
+  path: readonly number[];
+  kind: string;
+  attribute: string;
+}
+export interface DynamicAttributeTranslation {
+  parsed: GrammarParseOutcome & { projection: 'concrete syntax'; archive: MetaLanguageArchive };
+  links: TypedProgramLinks;
+  output: TypedProgramLinksEmission;
+}
 export class DynamicMetaLanguage {
   constructor(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits);
   readonly archive: MetaLanguageArchive;
@@ -2310,6 +2320,10 @@ export class DynamicMetaLanguage {
     parseTree(input: string, overrides?: Record<string, unknown>): unknown;
   };
   parse(sourceIdentifier: string, input: string, options?: Record<string, unknown>): unknown;
+  translateAttributes(sourceIdentifier: string, input: string | Uint8Array, target: 'JavaScript' | 'Rust',
+    selections: readonly DynamicAttributeSelection[], options?: GrammarParserOptions): DynamicAttributeTranslation;
+  grammarMerge(identifier: string): MergedGrammarGroup | null;
+  mergeInstalledGrammars(identifiers: readonly string[], result: string): DynamicMetaLanguage;
   extend(additions: GlobalConceptSource[], options?: DynamicMetaLanguageOptions & { replace?: boolean }): DynamicMetaLanguage;
 }
 export function createDynamicMetaLanguage(sources: GlobalConceptSource[], options?: DynamicMetaLanguageOptions): DynamicMetaLanguage;
@@ -2498,7 +2512,7 @@ export interface GrammarMergeSource {
   grammar: Grammar;
 }
 export interface GrammarMergeDecision {
-  kind: 'merged' | 'kept-unique' | 'renamed-for-collision' | 'homonym-kept-distinct' | 'uncertain' | 'declaration-conflict';
+  kind: 'merged' | 'reconciled' | 'kept-unique' | 'renamed-for-collision' | 'homonym-kept-distinct' | 'uncertain' | 'declaration-conflict';
   name: string;
   members: string[];
   basis: string;
@@ -2527,6 +2541,8 @@ export interface MergedGrammarGroup {
   sources: string[];
   grammar: Grammar;
   identities: Record<string, string>;
+  sourceProductions: Array<{ alias: string; canonical: string; sourceFormat: string;
+    rule: GrammarRuleValue; renamedRule: GrammarRuleValue }>;
   decisions: GrammarMergeDecision[];
   nominations: GrammarMergeNomination[];
   alternatives: GrammarMergeAlternative[];

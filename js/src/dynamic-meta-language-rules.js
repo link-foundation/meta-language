@@ -5,6 +5,8 @@ export function readDynamicMetaLanguageIdentifier(role) {
   if (role === 'configuration') return 'language configuration';
   if (role === 'definition snapshot') return 'language definition snapshot ';
   if (role === 'configuration snapshot') return 'language configuration snapshot ';
+  if (role === 'grammar merge') return 'grammar merge:';
+  if (role === 'grammar inference') return 'grammar inference:';
   return '';
 }
 /** @param {string} projection @returns {boolean} */
@@ -46,4 +48,12 @@ export function readDynamicConcreteIdentifier(identifiers, source) {
 /** @param {string} concrete @returns {string} */
 export function readDynamicAbstractIdentifier(concrete) {
   return 'abstract syntax:' + concrete;
+}
+
+/** @returns {number} */
+export function readInstalledGrammarMergeVersion() { return 1; }
+
+/** @param {number} count @returns {boolean} */
+export function acceptInstalledGrammarMergeSourceCount(count) {
+  return count >= 2 && count <= 64;
 }

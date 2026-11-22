@@ -3680,6 +3680,19 @@ replacement reruns the same pipeline on the new action. A certificate for an old
 must still verify against the new formal premises before it can establish
 equivalence. Whole-program semantic discovery remains a separate obligation.
 
+The dynamic session merges ordered, installed grammars within a language
+edition through the ordinary grammar merge. It installs the result under its
+own identity and retains every input grammar. The first input provides the
+start rule identity, and the merge admits the other source roots through the
+ordinary reconciliation choices. A linked certificate records the ordered
+inputs and their fingerprint. Loading the archive reruns the merge and checks
+the result grammar against the installation. The report recovers original
+productions, aliases, alternatives and the basis of each decision. Replacing
+an input with a different grammar invalidates the certificate. The `language
+install` command can take an existing archive and merge a discovered grammar
+with one of its installed sources. The extended archive retains the complete
+inference checkpoint and earlier concrete snapshots.
+
 A new shared source draft supplies labelled prefix-tree construction, red/blue
 RPNI selection, evidence-driven selection and an ALERGIA-style compatibility
 worklist in both runtimes. First-observed symbol and state order explicitly

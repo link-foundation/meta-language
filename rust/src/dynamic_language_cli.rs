@@ -21,6 +21,7 @@ use crate::{
 };
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 mod arguments;
 mod configuration;
@@ -205,6 +206,56 @@ fn archive_output(
     }
 }
 
+fn install_merged_discovery<T, B>(
+    args: &Arguments,
+    source: GlobalConceptSource,
+    checkpoint: MetaLanguageArchive,
+    read_text: &mut T,
+    read_bytes: &mut B,
+) -> Result<MetaLanguageArchive, String>
+where
+    T: FnMut(&str) -> Result<String, String>,
+    B: FnMut(&str) -> Result<Vec<u8>, String>,
+{
+    let [Some(base), Some(existing), Some(result)] =
+        ["--base", "--merge-with", "--identifier"].map(|option| args.options.get(option))
+    else {
+        return Err("merged grammar installation needs a base archive, a source identity and a result identity".to_owned());
+    };
+    let encoding = args
+        .options
+        .get("--base-encoding")
+        .map_or("text", String::as_str);
+    if !rules::accept_dynamic_language_base_encoding(encoding) {
+        return Err("unknown base archive encoding".to_owned());
+    }
+    let limits = MetaLanguageArchiveLimits::default();
+    let base_archive = match encoding {
+        "binary" => read_meta_language_archive_binary(&read_bytes(base)?, limits)?,
+        "link-cli-store" => read_meta_language_archive_link_cli_store(&read_bytes(base)?, limits)?,
+        _ => read_meta_language_archive_text(&read_text(base)?, limits)?,
+    };
+    let source_id = source.id.clone();
+    let prefix = crate::dynamic_meta_language_rules::read_dynamic_meta_language_identifier(
+        "grammar inference",
+    );
+    let options = DynamicMetaLanguageOptions {
+        entries: vec![crate::MetaLanguageArchiveEntry {
+            identifier: format!("{prefix}{source_id}"),
+            kind: "grammar inference".to_owned(),
+            network: Arc::new(checkpoint.network),
+            root: checkpoint.root,
+        }],
+        ..DynamicMetaLanguageOptions::default()
+    };
+    let session = DynamicMetaLanguage::new(&base_archive, &DynamicMetaLanguageOptions::default())?
+        .extend(&[source], &options)?;
+    Ok(session
+        .merge_installed_grammars(&[existing.clone(), source_id], result)?
+        .archive()
+        .clone())
+}
+
 fn discovery_archive<T, B>(
     args: &Arguments,
     read_text: &mut T,
@@ -278,6 +329,18 @@ where
             } else {
                 read_refined_regular_grammar_inference_links(&archive.network, archive.root)?.source
             };
+            if ["--base", "--merge-with", "--identifier", "--base-encoding"]
+                .iter()
+                .any(|option| args.options.contains_key(*option))
+            {
+                return install_merged_discovery(
+                    args,
+                    source,
+                    archive.archive,
+                    read_text,
+                    read_bytes,
+                );
+            }
             return Ok(create_dynamic_meta_language(
                 &[source],
                 &DynamicMetaLanguageOptions::default(),

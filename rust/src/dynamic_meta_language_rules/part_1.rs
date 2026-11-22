@@ -230,6 +230,10 @@ pub fn read_dynamic_meta_language_identifier(role: &str) -> String {
         String::from("language definition snapshot ")
     } else if role == "configuration snapshot" {
         String::from("language configuration snapshot ")
+    } else if role == "grammar merge" {
+        String::from("grammar merge:")
+    } else if role == "grammar inference" {
+        String::from("grammar inference:")
     } else {
         String::new()
     }
@@ -274,8 +278,11 @@ pub fn read_dynamic_snapshot_identifier(identifiers: &[String], prefix: &str) ->
     {
         let ordinal = 1f64;
         {
-            let ordinal_2 =
-                self::ml_read_dynamic_snapshot_identifier_loop1(identifiers, prefix, ordinal);
+            let ordinal_2 = self::source_ml_temporary_read_dynamic_snapshot_identifier_loop1(
+                identifiers,
+                prefix,
+                ordinal,
+            );
             format!(
                 "{}{}",
                 prefix.to_owned(),
@@ -295,7 +302,7 @@ pub fn read_dynamic_concrete_identifier(identifiers: &[String], source: &str) ->
             {
                 let ordinal = 2f64;
                 {
-                    self::ml_read_dynamic_concrete_identifier_loop2(
+                    self::source_ml_temporary_read_dynamic_concrete_identifier_loop2(
                         identifiers,
                         &(prefix),
                         selected,
@@ -315,7 +322,19 @@ pub fn read_dynamic_abstract_identifier(concrete: &str) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_dynamic_snapshot_identifier_loop1(
+pub fn read_installed_grammar_merge_version() -> f64 {
+    1f64
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_installed_grammar_merge_source_count(count: f64) -> bool {
+    (2f64..=64f64).contains(&count)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_dynamic_snapshot_identifier_loop1(
     identifiers: &[String],
     prefix: &str,
     mut ordinal: f64,
@@ -346,7 +365,7 @@ pub fn ml_read_dynamic_snapshot_identifier_loop1(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_dynamic_concrete_identifier_loop2(
+pub fn source_ml_temporary_read_dynamic_concrete_identifier_loop2(
     identifiers: &[String],
     prefix: &str,
     mut selected: String,

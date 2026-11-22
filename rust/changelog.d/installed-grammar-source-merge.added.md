@@ -1,0 +1,1 @@
+Merge a discovered grammar with an installed grammar in the same language edition. The resulting archive keeps both original grammars, the discovery checkpoint, and the merge certificate with its original production aliases.

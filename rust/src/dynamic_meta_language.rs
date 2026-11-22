@@ -23,6 +23,7 @@ use std::sync::Arc;
 mod attribute_translation;
 mod contexts;
 mod extension;
+mod grammar_merges;
 mod public_tree;
 mod settings;
 pub use attribute_translation::{DynamicAttributeSelection, DynamicAttributeTranslation};
@@ -104,6 +105,7 @@ pub struct DynamicMetaLanguage {
     archive: MetaLanguageArchive,
     entries: Vec<MetaLanguageArchiveEntry>,
     sources: Vec<GlobalConceptSource>,
+    grammar_merges: BTreeMap<String, Vec<String>>,
     space: Value,
     formal_definitions: BTreeMap<String, FormalConceptArchive>,
     configuration: Value,
@@ -210,6 +212,8 @@ impl DynamicMetaLanguage {
             limits.node_limit,
         )?;
         let discovered = read_discovered_concept_links(&definition_network, definition.root)?;
+        let grammar_merges =
+            grammar_merges::read(&entries, &discovered.sources, limits, depth_limit)?;
         let count = entries.len();
         let definition_context = contexts::pin(&mut entries, &definition, "definition snapshot");
         let configuration_context =
@@ -226,6 +230,7 @@ impl DynamicMetaLanguage {
             archive: snapshot,
             entries,
             sources: discovered.sources,
+            grammar_merges,
             space: discovered.space,
             formal_definitions: discovered.formal_definitions,
             configuration,

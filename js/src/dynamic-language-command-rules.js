@@ -22,7 +22,10 @@ export function readDynamicLanguageArgumentArity(command, option) {
   if (option === '--input-binary' || option === '--input-link-cli-store') return command === 'prepare' || command === 'discover' ? -1 : 0;
   if (command === 'discover') return option === '--identifier' || option === '--language' || option === '--edition' ? 1 : -1;
   if (command === 'refine') return option === '--examples' || option === '--identifier' ? 1 : -1;
-  if (command === 'install') return -1;
+  if (command === 'install') {
+    return option === '--base' || option === '--base-encoding' || option === '--merge-with'
+      || option === '--identifier' ? 1 : -1;
+  }
   if (option === '--source') return command === 'prepare' || command === 'extend' ? 4 : 1;
   if (option === '--configuration') return command === 'prepare' || command === 'extend' ? 1 : -1;
   if (option === '--replace') return command === 'extend' ? 0 : -1;
@@ -53,6 +56,10 @@ export function readDynamicLanguageResourceField(option) {
   if (option === '--max-repairs') return 'maxRepairs';
   return '';
 }
+/** @param {string} encoding @returns {boolean} */
+export function acceptDynamicLanguageBaseEncoding(encoding) {
+  return encoding === 'text' || encoding === 'binary' || encoding === 'link-cli-store';
+}
 /** @returns {string} */
 export function readDynamicLanguageCommandUsage() {
   return 'usage: meta-language language prepare --source <id> <language> <edition> <grammar.lino> ... [--configuration <links-file>] [--binary]\n'
@@ -64,6 +71,7 @@ export function readDynamicLanguageCommandUsage() {
     + '       meta-language language discover <examples.lino> [--identifier <id>] [--language <name>] [--edition <edition>] [--binary]\n'
     + '       meta-language language refine <checkpoint> --examples <examples.lino> [--identifier <id>] [--input-binary] [--binary]\n'
     + '       meta-language language install <checkpoint> [--input-binary] [--binary]\n'
+    + '         [--base <archive> --merge-with <source> --identifier <merged> [--base-encoding text|binary|link-cli-store]]\n'
     + '       meta-language language infer-attribute <observations.lino> --grammar <grammar.lino>\n'
     + '       meta-language language translate-attributes <archive> --source <id> --input <file> --target JavaScript|Rust --selections <selections.lino> [--input-binary]\n'
     + 'Use --link-cli-store or --input-link-cli-store in place of the corresponding binary option for native link-cli stores.\n'
