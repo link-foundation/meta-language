@@ -236,10 +236,23 @@ where
         _ => read_meta_language_archive_text(&read_text(base)?, limits)?,
     };
     let source_id = source.id.clone();
+    let options = inference_checkpoint_options(&source_id, checkpoint);
+    let session = DynamicMetaLanguage::new(&base_archive, &DynamicMetaLanguageOptions::default())?
+        .extend(&[source], &options)?;
+    Ok(session
+        .merge_installed_grammars(&[existing.clone(), source_id], result)?
+        .archive()
+        .clone())
+}
+
+fn inference_checkpoint_options(
+    source_id: &str,
+    checkpoint: MetaLanguageArchive,
+) -> DynamicMetaLanguageOptions {
     let prefix = crate::dynamic_meta_language_rules::read_dynamic_meta_language_identifier(
         "grammar inference",
     );
-    let options = DynamicMetaLanguageOptions {
+    DynamicMetaLanguageOptions {
         entries: vec![crate::MetaLanguageArchiveEntry {
             identifier: format!("{prefix}{source_id}"),
             kind: "grammar inference".to_owned(),
@@ -247,13 +260,7 @@ where
             root: checkpoint.root,
         }],
         ..DynamicMetaLanguageOptions::default()
-    };
-    let session = DynamicMetaLanguage::new(&base_archive, &DynamicMetaLanguageOptions::default())?
-        .extend(&[source], &options)?;
-    Ok(session
-        .merge_installed_grammars(&[existing.clone(), source_id], result)?
-        .archive()
-        .clone())
+    }
 }
 
 fn discovery_archive<T, B>(
@@ -341,12 +348,8 @@ where
                     read_bytes,
                 );
             }
-            return Ok(create_dynamic_meta_language(
-                &[source],
-                &DynamicMetaLanguageOptions::default(),
-            )?
-            .archive()
-            .clone());
+            let options = inference_checkpoint_options(&source.id, archive.archive);
+            return Ok(create_dynamic_meta_language(&[source], &options)?.archive().clone());
         }
         let file = args
             .options

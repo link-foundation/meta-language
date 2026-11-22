@@ -98,6 +98,14 @@ function archiveOutput(archive,options,limits) {
   return options.has('--binary')?metaLanguageArchiveToBinary(archive,limits):metaLanguageArchiveToText(archive,limits);
 }
 
+function inferenceCheckpoint(source, checkpoint) {
+  return {
+    identifier: readDynamicMetaLanguageIdentifier('grammar inference') + source.id,
+    kind: 'grammar inference',
+    ...checkpoint,
+  };
+}
+
 function installMergedDiscovery(source, checkpoint, options, readFile, readBytes) {
   const base = options.get('--base'), mergeWith = options.get('--merge-with');
   const identifier = options.get('--identifier'), encoding = options.get('--base-encoding') ?? 'text';
@@ -109,8 +117,7 @@ function installMergedDiscovery(source, checkpoint, options, readFile, readBytes
     : encoding === 'link-cli-store' ? readMetaLanguageArchiveLinkCliStore(readBytes(base))
       : readMetaLanguageArchiveText(readFile(base));
   const session = new DynamicMetaLanguage(archive).extend([source], {
-    entries: [{ identifier: readDynamicMetaLanguageIdentifier('grammar inference') + source.id,
-      kind: 'grammar inference', ...checkpoint }],
+    entries: [inferenceCheckpoint(source, checkpoint)],
   });
   return session.mergeInstalledGrammars([mergeWith, source.id], identifier).archive;
 }
@@ -135,7 +142,9 @@ function discoveryArchive(command,file,options,readFile,readBytes) {
   if (['--base', '--base-encoding', '--merge-with', '--identifier'].some(option => options.has(option))) {
     return installMergedDiscovery(selected.source, {network, root}, options, readFile, readBytes);
   }
-  return createDynamicMetaLanguage([selected.source]).archive;
+  return createDynamicMetaLanguage([selected.source], {
+    entries: [inferenceCheckpoint(selected.source, {network, root})],
+  }).archive;
 }
 function configuration(path,readFile) {
   if(path===undefined)return {};

@@ -3715,10 +3715,10 @@ into this same regular learner. `language refine` reopens its complete text or
 binary checkpoint and appends labelled counterexamples. `language install`
 rechecks the selected checkpoint and prepares its grammar through the dynamic
 language library. The resulting language archive uses the existing list,
-extension and parsing commands, and the inference checkpoint retains the
-training journal for further refinement. The command controls delete the input
-example files after use and cover byte reconstruction and rejection after
-installation.
+extension and parsing commands. It retains the exact selected checkpoint and
+training journal as a separate root for further refinement. The command controls
+delete the input example files after use and cover byte reconstruction and
+rejection after installation.
 The discovery examples may include `scannerObservations`. Their labelled
 sequences name the scanner's external tokens. Version 2 of the discovery
 model retains the trace and its exact typed algorithm as separate archive

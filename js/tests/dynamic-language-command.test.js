@@ -28,6 +28,7 @@ test('one shared command sequence retains concrete trees, recursive definitions 
  const files=new Map(fixture.files.map(file=>[file.path,encoder.encode(file.text)]));
  const host={readFile:path=>decoder.decode(files.get(path)??assert.fail('missing fixture file '+path)),readBytes:path=>files.get(path)??assert.fail('missing fixture file '+path)};
  for(const step of fixture.steps){
+  const checkpointBytes=step.archive&&step.args[0]==='install'?host.readBytes(step.args[1]):null;
   const output=runDynamicLanguageCommand(step.args,host);
   assert.equal(output.exitCode,step.exit,step.name+' '+output.stderr);
   if(step.error)assert.ok(output.stderr.includes(step.error),step.name);
@@ -37,8 +38,17 @@ test('one shared command sequence retains concrete trees, recursive definitions 
   if(step.inventory)assert.deepEqual(readStructuredDataLino(output.stdout).map(row=>row.identifier),step.inventory,step.name);
   if(step.grammar)assert.deepEqual(parseGrammarLinks(output.stdout).normalized(),parseGrammarLinks(host.readFile(step.grammar)).normalized(),step.name);
   if(step.archive){
-   const archive=step.binary?readMetaLanguageArchiveBinary(output.stdout):readMetaLanguageArchiveText(output.stdout);
+   const archive=step.args.includes('--link-cli-store')?readMetaLanguageArchiveLinkCliStore(output.stdout)
+    :step.binary?readMetaLanguageArchiveBinary(output.stdout):readMetaLanguageArchiveText(output.stdout);
    const session=new DynamicMetaLanguage(archive);
+   if (checkpointBytes) {
+    const original = step.args.includes('--input-link-cli-store') ? readMetaLanguageArchiveLinkCliStore(checkpointBytes)
+      : step.args.includes('--input-binary') ? readMetaLanguageArchiveBinary(checkpointBytes)
+      : readMetaLanguageArchiveText(decoder.decode(checkpointBytes));
+    const saved = session.entries.filter(entry => entry.kind === 'grammar inference');
+    assert.ok(saved.some(entry => entry.root.equals(original.root)
+      && entry.network.toLino() === original.network.toLino()), step.name);
+   }
    if (step.merge) {
     const report = session.grammarMerge(step.merge.result);
     assert.deepEqual(report.sources, step.merge.sources, step.name);

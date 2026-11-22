@@ -152,6 +152,8 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
             .iter()
             .map(|value| value.as_str().unwrap().to_owned())
             .collect::<Vec<_>>();
+        let checkpoint_bytes =
+            (step["archive"] == true && args[0] == "install").then(|| files[&args[1]].clone());
         let output = run_dynamic_language_command(
             &args,
             |path| {
@@ -217,7 +219,11 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
         }
         if step["archive"] == true {
             let limits = MetaLanguageArchiveLimits::default();
-            let archive = if step["binary"] == true {
+            let archive = if args.iter().any(|arg| arg == "--link-cli-store") {
+                read_meta_language_archive_link_cli_store(&output.stdout, limits)
+                    .unwrap()
+                    .archive
+            } else if step["binary"] == true {
                 read_meta_language_archive_binary(&output.stdout, limits)
                     .unwrap()
                     .archive
@@ -231,6 +237,26 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
             };
             let session =
                 DynamicMetaLanguage::new(&archive, &DynamicMetaLanguageOptions::default()).unwrap();
+            if let Some(bytes) = checkpoint_bytes {
+                let original = if args.iter().any(|arg| arg == "--input-link-cli-store") {
+                    read_meta_language_archive_link_cli_store(&bytes, limits)
+                } else if args.iter().any(|arg| arg == "--input-binary") {
+                    read_meta_language_archive_binary(&bytes, limits)
+                } else {
+                    read_meta_language_archive_text(std::str::from_utf8(&bytes).unwrap(), limits)
+                }
+                .unwrap()
+                .archive;
+                assert!(
+                    session.entries().iter().any(|entry| {
+                        entry.kind == "grammar inference"
+                            && entry.root == original.root
+                            && entry.network.to_lino() == original.network.to_lino()
+                    }),
+                    "{}",
+                    step["name"]
+                );
+            }
             if let Some(merge) = step.get("merge") {
                 let result = session
                     .grammar_merge(merge["result"].as_str().unwrap())
