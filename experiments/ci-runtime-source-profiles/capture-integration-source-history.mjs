@@ -37,6 +37,7 @@ const inputs=[
   ['.github/workflows/js.yml',mainPredecessor,[
     '0b1be4489eb7608d18e68cbd1f05f7562aa427451128ba5015129d610bbd374c',
     'cfa9aa626f7e92b76590fd860fabd8a552fa2e0df29ee0e7aef4560f4647726b',
+    'ab4a7d80460af7519f419b3cd0dc63bcbae8b037a8d0171ed7d03781af502472',
   ]],
   ['.github/workflows/ci.yml','f1c7cb555e37b9ddf09c10f772b0adebf4f6e587',[
     '3bc9784ef73d8e69cd693ce23884ff8d4454c7d8b9be8c98e4ebccccae331b3a',

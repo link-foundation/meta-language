@@ -46,12 +46,23 @@ test('the live translation workflow retains all original commands and requires e
   const file='.github/workflows/js.yml',current=read(file),previous=restoreIntegrationSource(current,file);
   const matrix=count=>Array.from({length:count},(_,index)=>
     `          - {group: translation, partition: ${index+1}, shards: ${count}}\n`).join('');
+  const packageCheckout=[
+    '          - group: raw-borrowed-emission',
+    '            generated_slice: first',
+    '    steps:',
+    '      - uses: actions/checkout@v7',
+    '        with:',
+    '          fetch-depth: 0',
+    '',
+  ].join('\n');
   const edits=[[matrix(6),matrix(8)],
     ['pattern: translation-test-feedback-${{ github.sha }}-*-of-6','pattern: translation-test-feedback-${{ github.sha }}-*-of-8'],
     ['            --partitions 6 \\\n','            --partitions 8 \\\n'],
     ['Self-Translation Report (${{ matrix.shard }}/8)','Self-Translation Report (${{ matrix.shard }}/12)'],
     ['shard: [1, 2, 3, 4, 5, 6, 7, 8]','shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]'],
-    ['--shard ${{ matrix.shard }}/8 --out-dir','--shard ${{ matrix.shard }}/12 --out-dir']];
+    ['--shard ${{ matrix.shard }}/8 --out-dir','--shard ${{ matrix.shard }}/12 --out-dir'],
+    [packageCheckout,packageCheckout.replace('          fetch-depth: 0\n',
+      "          fetch-depth: 0\n          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n")]];
   let expected=previous;
   for(const [before,after] of edits){
     assert.equal(expected.split(before).length,2);
