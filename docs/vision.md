@@ -3686,6 +3686,12 @@ supplied negative. Tokenization requires nonempty, prefix-free spellings.
 The checkpoint stores the labelled inputs, bounded parameters, inferred
 productions, typed learner and executable grammar with concept provenance.
 Reload recomputes the productions and compares each archived entry.
+The `discover` command selects this learner when the labelled input includes
+delimiter pairs. The `refine` and `install` commands recover the learner from
+the checkpoint. Refinement appends labelled samples and stores a journal of
+earlier source identities and sample prefix lengths. Reload replays every
+recorded prefix and checks the current candidate. A rejected refinement leaves
+the earlier checkpoint usable.
 
 The complete typed algorithm, declared inputs, selected parameters, actual model,
 recursive candidate grammar and common concept definitions serialize together

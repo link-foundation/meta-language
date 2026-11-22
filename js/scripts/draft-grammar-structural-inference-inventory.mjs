@@ -30,6 +30,7 @@ else inventory.features[previous] = feature;
 for (const [javascript, rust] of Object.entries({
   inferStructuralGrammar: 'infer_structural_grammar',
   readStructuralGrammarInferenceLinks: 'read_structural_grammar_inference_links',
+  refineStructuralGrammarInference: 'refine_structural_grammar_inference',
 })) inventory.javascriptExports[javascript] = { rust, kind: 'function' };
 inventory.javascriptExports = Object.fromEntries(
   Object.entries(inventory.javascriptExports).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0),

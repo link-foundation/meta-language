@@ -288,6 +288,7 @@ use meta_language::read_translation_provenance as _;
 use meta_language::read_typed_program_binding_identities as _;
 use meta_language::reconstruct_grammar as _;
 use meta_language::refine_regular_grammar_inference as _;
+use meta_language::refine_structural_grammar_inference as _;
 use meta_language::rename_grammar_rule as _;
 use meta_language::render_declaration_links as _;
 use meta_language::render_grammar_layout_links as _;

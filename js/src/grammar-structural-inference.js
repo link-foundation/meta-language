@@ -5,9 +5,10 @@ import { encodeStructuredDataLinks, decodeStructuredDataLinks } from './structur
 import { createMetaLanguageArchive, readMetaLanguageArchive } from './meta-language-archive.js';
 import { createSourceDefinitionProgramLinks } from './source-definition-catalog.js';
 import { inferGrammarStructuralProductions } from './grammar-structural-inference-rules.js';
+import { acceptRegularGrammarRefinementCount, readRegularGrammarRefinementIdentifier } from './grammar-inference-refinement-rules.js';
 
 const algorithm = 'recursive grammar inference from labelled delimiter productions 1';
-const modelIdentifier = 'structural-discovery-model';
+export const structuralGrammarInferenceModelIdentifier = 'structural-discovery-model';
 const grammarIdentifier = 'structural-discovery-grammar';
 const algorithmIdentifier = 'structural-discovery-algorithm';
 const fail = message => { throw new TypeError('grammar structural inference: ' + message); };
@@ -83,11 +84,46 @@ function grammarFromProductions(productions, alphabet, delimiters) {
 
 const definition = () => createSourceDefinitionProgramLinks('meta-language/source-program/grammar-structural-inference-program');
 
+function inferStructuralProductionRows(input, limits) {
+  const productions = inferGrammarStructuralProductions(input.accepted, input.rejected, input.openingGroups, input.closingGroups, limits.depthLimit, limits.productionLimit);
+  const reason = productions[0][0];
+  if (reason < 0) fail({
+    [-1]: 'unbalanced delimiters in a positive example',
+    [-2]: 'delimiter nesting limit exceeded',
+    [-3]: 'production limit exceeded',
+    [-4]: 'recursive production merge accepts a negative example',
+  }[reason]);
+  return productions;
+}
+
+function replayStructuralRefinementHistory(history, positives, negatives, delimiters, limits, identifier) {
+  if (!Array.isArray(history) || !acceptRegularGrammarRefinementCount(history.length)) fail('invalid refinement history limit');
+  const identifiers = new Set([identifier]);
+  let positiveCount = 0, negativeCount = 0;
+  for (const step of history) {
+    if (!step || !sourceText(step.identifier) || identifiers.has(step.identifier)
+      || !Number.isSafeInteger(step.positiveCount) || !Number.isSafeInteger(step.negativeCount)
+      || step.positiveCount < positiveCount || step.positiveCount > positives.length
+      || step.negativeCount < negativeCount || step.negativeCount > negatives.length
+      || step.positiveCount + step.negativeCount <= positiveCount + negativeCount
+      || step.positiveCount + step.negativeCount >= positives.length + negatives.length) fail('invalid refinement history step');
+    identifiers.add(step.identifier);
+    positiveCount = step.positiveCount;
+    negativeCount = step.negativeCount;
+    const input = indexObservations(positives.slice(0, positiveCount), negatives.slice(0, negativeCount), delimiters, limits.symbolLimit, limits.byteLimit);
+    inferStructuralProductionRows(input, limits);
+  }
+}
+
 /**
  * Infer recursive productions from labelled token examples and disjoint
  * delimiter pairs. All premises and the executable grammar travel together.
  */
 export function inferStructuralGrammar(positives, negatives = [], options = {}) {
+  return buildStructuralGrammarInference(positives, negatives, options, []);
+}
+
+function buildStructuralGrammarInference(positives, negatives, options, history) {
   const { delimiters, identifier = 'inferred-structure', language = 'Inferred language', edition = 'structural discovery 1' } = options;
   if (![identifier, language, edition].every(sourceText)) fail('invalid source identity');
   const limits = {
@@ -97,21 +133,16 @@ export function inferStructuralGrammar(positives, negatives = [], options = {}) 
     byteLimit: limit(options.byteLimit ?? 262144, 1048576),
   };
   const input = indexObservations(positives, negatives, delimiters, limits.symbolLimit, limits.byteLimit);
-  const productions = inferGrammarStructuralProductions(input.accepted, input.rejected, input.openingGroups, input.closingGroups, limits.depthLimit, limits.productionLimit);
-  const reason = productions[0][0];
-  if (reason < 0) fail({
-    [-1]: 'unbalanced delimiters in a positive example',
-    [-2]: 'delimiter nesting limit exceeded',
-    [-3]: 'production limit exceeded',
-    [-4]: 'recursive production merge accepts a negative example',
-  }[reason]);
+  const productions = inferStructuralProductionRows(input, limits);
+  replayStructuralRefinementHistory(history, positives, negatives, delimiters, limits, identifier);
   const grammar = grammarFromProductions(productions, input.alphabet, delimiters);
   const source = { id: identifier, language, edition, grammar };
   const model = { schemaVersion: 1, algorithm, identifier, language, edition, options: limits,
     delimiters: delimiters.map(pair => [...pair]), positives: positives.map(example => [...example]),
-    negatives: negatives.map(example => [...example]), alphabet: input.alphabet, productions };
+    negatives: negatives.map(example => [...example]), alphabet: input.alphabet, productions,
+    ...(history.length ? {history: history.map(({identifier, positiveCount, negativeCount}) => ({identifier, positiveCount, negativeCount}))} : {}) };
   const archive = createMetaLanguageArchive([
-    { identifier: modelIdentifier, kind: 'grammar inference', ...encodeStructuredDataLinks(model) },
+    { identifier: structuralGrammarInferenceModelIdentifier, kind: 'grammar inference', ...encodeStructuredDataLinks(model) },
     { identifier: algorithmIdentifier, kind: 'typed program', ...definition() },
     { identifier: grammarIdentifier, kind: 'discovered concepts', ...createDiscoveredConceptLinks([source]) },
   ]);
@@ -120,18 +151,37 @@ export function inferStructuralGrammar(positives, negatives = [], options = {}) 
 
 /** Reload and check the grammar against the complete archived observations. */
 export function readStructuralGrammarInferenceLinks(network, root) {
+  return readStructuralCheckpoint(network, root).inference;
+}
+
+function readStructuralCheckpoint(network, root) {
   const entries = readMetaLanguageArchive(network, root).entries;
-  const premise = entries.find(entry => entry.identifier === modelIdentifier && entry.kind === 'grammar inference');
+  const premise = entries.find(entry => entry.identifier === structuralGrammarInferenceModelIdentifier && entry.kind === 'grammar inference');
   if (!premise || entries.length !== 3) fail('invalid structural discovery checkpoint');
   const model = decodeStructuredDataLinks(premise.network, premise.root);
   if (model?.schemaVersion !== 1 || model.algorithm !== algorithm || !model.options) fail('unsupported structural discovery model');
-  const result = inferStructuralGrammar(model.positives, model.negatives, { ...model.options, delimiters: model.delimiters,
-    identifier: model.identifier, language: model.language, edition: model.edition });
+  const result = buildStructuralGrammarInference(model.positives, model.negatives, { ...model.options, delimiters: model.delimiters,
+    identifier: model.identifier, language: model.language, edition: model.edition }, model.history ?? []);
   const expected = readMetaLanguageArchive(result.network, result.root).entries;
   for (const entry of expected) {
     const actual = entries.find(candidate => candidate.identifier === entry.identifier);
     if (actual?.kind !== entry.kind || !actual.root.equals(entry.root) || actual.network.toLino() !== entry.network.toLino())
       fail('checkpoint differs from its actual structural discovery model');
   }
-  return { ...result, network, root: LinkId.from(root) };
+  return { inference: { ...result, network, root: LinkId.from(root) }, model };
+}
+
+/** Append labelled counterexamples to the archived discovery premises. */
+export function refineStructuralGrammarInference(network, root, positives = [], negatives = [], {identifier} = {}) {
+  const {model} = readStructuralCheckpoint(network, root);
+  if (!Array.isArray(positives) || !Array.isArray(negatives) || positives.length + negatives.length === 0)
+    fail('refinement needs additional labelled examples');
+  if (model.positives.length + model.negatives.length + positives.length + negatives.length > model.options.symbolLimit)
+    fail('expected bounded labelled examples with at least one positive');
+  const history = [...(model.history ?? []), {identifier: model.identifier, positiveCount: model.positives.length, negativeCount: model.negatives.length}];
+  const nextIdentifier = identifier ?? readRegularGrammarRefinementIdentifier(model.identifier, history.length);
+  if (!acceptRegularGrammarRefinementCount(history.length)) fail('invalid refinement history limit');
+  return buildStructuralGrammarInference([...model.positives, ...positives], [...model.negatives, ...negatives], {
+    ...model.options, delimiters: model.delimiters, language: model.language, edition: model.edition, identifier: nextIdentifier,
+  }, history);
 }

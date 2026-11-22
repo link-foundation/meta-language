@@ -30,10 +30,11 @@ pub(crate) use refinement::limits as regular_grammar_refinement_archive_limits;
 pub use refinement::{
     read_refined_regular_grammar_inference_links, refine_regular_grammar_inference,
 };
+pub(crate) use structural::STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER;
 pub use structural::{
     StructuralGrammarInference, StructuralGrammarInferenceLimits,
     StructuralGrammarInferenceOptions, infer_structural_grammar,
-    read_structural_grammar_inference_links,
+    read_structural_grammar_inference_links, refine_structural_grammar_inference,
 };
 
 /// Explicit deterministic learner and resource parameters, shared with JavaScript.

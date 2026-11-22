@@ -9,8 +9,8 @@ use meta_language::{
     infer_grammar_scanner_classes, infer_grammar_scanner_mode_stack, infer_regular_grammar,
     infer_structural_grammar, parse_grammar_links, read_refined_regular_grammar_inference_links,
     read_regular_grammar_inference_links, read_structural_grammar_inference_links,
-    read_structured_data_lino, refine_regular_grammar_inference, render_grammar_links,
-    serialize_grammar,
+    read_structured_data_lino, refine_regular_grammar_inference,
+    refine_structural_grammar_inference, render_grammar_links, serialize_grammar,
 };
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -118,6 +118,135 @@ fn observed_delimiter_productions_recur_preserve_source_and_refuse_negative_merg
             "invalidAndUnboundedDelimiterMergesAreRefused",
         ],
         test_name: "observed_delimiter_productions_recur_preserve_source_and_refuse_negative_merges",
+    });
+}
+
+#[test]
+fn structural_refinement_replays_earlier_revisions_and_preserves_their_grammars() {
+    versions();
+    let data = fixture();
+    let fixture = &data["structural"];
+    let control = &fixture["refinement"];
+    let options = StructuralGrammarInferenceOptions {
+        delimiters: serde_json::from_value(fixture["delimiters"].clone()).unwrap(),
+        ..Default::default()
+    };
+    let original = infer_structural_grammar(
+        &examples(&fixture["positives"]),
+        &examples(&fixture["negatives"]),
+        &options,
+    )
+    .unwrap();
+    let contradiction = serde_json::from_value(fixture["counterexample"].clone()).unwrap();
+    assert!(
+        refine_structural_grammar_inference(
+            &original.network,
+            original.root,
+            &[],
+            &[contradiction],
+            None
+        )
+        .unwrap_err()
+        .contains("merge accepts a negative")
+    );
+    let added_positives = examples(&control["positives"]);
+    let first = refine_structural_grammar_inference(
+        &original.network,
+        original.root,
+        &added_positives,
+        &examples(&control["negatives"]),
+        None,
+    )
+    .unwrap();
+    assert_eq!(first.source.id, "inferred-structure@refinement-1");
+    let later_negatives = examples(&control["laterNegatives"]);
+    assert!(
+        refine_structural_grammar_inference(
+            &first.network,
+            first.root,
+            &[],
+            &later_negatives,
+            Some(&original.source.id)
+        )
+        .unwrap_err()
+        .contains("invalid refinement history step")
+    );
+    let second = refine_structural_grammar_inference(
+        &first.network,
+        first.root,
+        &[],
+        &later_negatives,
+        Some("reviewed structure"),
+    )
+    .unwrap();
+    assert_eq!(second.source.id, "reviewed structure");
+    let parse_options = FeatureParseOptions::default();
+    let parse_original =
+        compile_feature_grammar(&original.grammar, None, parse_options.clone()).unwrap();
+    let accepted = control["accepted"].as_str().unwrap();
+    assert!(
+        !parse_original
+            .parse_tree(accepted.as_bytes(), &parse_options)
+            .unwrap()
+            .ok
+    );
+    let text = LinkNetwork::from_lino(&second.network.to_lino()).unwrap();
+    let bytes = encode_link_network_binary(&second.network, BinaryLinksOptions::default()).unwrap();
+    let binary = decode_link_network_binary(&bytes, BinaryLinksOptions::default()).unwrap();
+    let updated_example = added_positives[0].join("");
+    let malformed = later_negatives[0].join("");
+    for network in [text, binary] {
+        let restored = read_structural_grammar_inference_links(&network, second.root).unwrap();
+        assert_eq!(restored.source.id, second.source.id);
+        assert_eq!(
+            serialize_grammar(&restored.grammar),
+            serialize_grammar(&second.grammar)
+        );
+        let parser =
+            compile_feature_grammar(&restored.grammar, None, parse_options.clone()).unwrap();
+        for input in fixture["accepted"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap())
+            .chain([accepted])
+        {
+            assert!(
+                parser
+                    .parse_tree(input.as_bytes(), &parse_options)
+                    .unwrap()
+                    .ok,
+                "{input}"
+            );
+        }
+        for input in fixture["rejected"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap())
+            .filter(|input| *input != updated_example)
+            .chain([control["rejected"].as_str().unwrap(), &malformed])
+        {
+            assert!(
+                !parser
+                    .parse_tree(input.as_bytes(), &parse_options)
+                    .unwrap()
+                    .ok,
+                "{input}"
+            );
+        }
+    }
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-STRUCTURAL-REFINEMENT",
+        suffix: "behavior",
+        fixture_id: "grammar-inference-structural-refinement",
+        fixture_file: "parity/fixtures/regular-grammar-inference.lino",
+        assertions: &[
+            "structuralRefinementReplaysExactEarlierPremises",
+            "structuralRefinementPreservesEarlierGrammarAndLabels",
+            "contradictoryLabelsAndReusedRevisionIdentitiesAreRefused",
+        ],
+        test_name: "structural_refinement_replays_earlier_revisions_and_preserves_their_grammars",
     });
 }
 

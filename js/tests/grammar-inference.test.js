@@ -8,7 +8,7 @@ import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-ne
 import { createDynamicMetaLanguage } from '../src/dynamic-meta-language.js';
 import { inferGrammarScanner, inferGrammarScannerClasses, inferGrammarScannerModeStack } from '../src/grammar-scanner-inference.js';
 import { readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference } from '../src/grammar-inference-refinement.js';
-import { inferStructuralGrammar, readStructuralGrammarInferenceLinks } from '../src/index.js';
+import { inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference } from '../src/index.js';
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { createGrammarParser as compileGrammar, renderSyntaxTree } from '../src/grammar-runtime.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -74,6 +74,34 @@ test('observed delimiter productions recur, preserve source bytes and refuse con
     requirementId: 'I195-GRAMMAR-INFERENCE-DELIMITER-PRODUCTIONS', suffix: 'behavior',
     fixtureId: 'grammar-inference-delimiter-productions', fixtureFile: 'parity/fixtures/regular-grammar-inference.lino',
     assertions: ['recursiveDelimiterProductionsAndConcreteBytesMatch', 'recursiveDelimiterArchiveReplays', 'invalidAndUnboundedDelimiterMergesAreRefused'],
+    testName: context.name,
+  });
+});
+
+test('structural refinement replays both earlier revisions and preserves their grammars', context => {
+  const fixture = fixtures.structural;
+  const control = fixture.refinement;
+  const original = inferStructuralGrammar(fixture.positives, fixture.negatives, {delimiters: fixture.delimiters});
+  assert.throws(() => refineStructuralGrammarInference(original.network, original.root, [], [fixture.counterexample]), /merge accepts a negative/u);
+  const first = refineStructuralGrammarInference(original.network, original.root, control.positives, control.negatives);
+  assert.equal(first.source.id, 'inferred-structure@refinement-1');
+  assert.throws(() => refineStructuralGrammarInference(first.network, first.root, [], control.laterNegatives, {identifier: original.source.id}), /invalid refinement history step/u);
+  const second = refineStructuralGrammarInference(first.network, first.root, [], control.laterNegatives, {identifier: 'reviewed structure'});
+  assert.equal(second.source.id, 'reviewed structure');
+  assert.equal(compileGrammar(original.grammar).parseTree(control.accepted).ok, false);
+  for (const network of [LinkNetwork.fromLino(second.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(second.network))]) {
+    const restored = readStructuralGrammarInferenceLinks(network, second.root);
+    assert.equal(restored.source.id, second.source.id);
+    assert.deepEqual(restored.grammar.normalized(), second.grammar.normalized());
+    const parser = compileGrammar(restored.grammar);
+    for (const accepted of [...fixture.accepted, control.accepted]) assert.equal(parser.parseTree(accepted).ok, true, accepted);
+    for (const rejected of [...fixture.rejected.filter(input => input !== control.positives[0].join('')), control.rejected, control.laterNegatives[0].join('')])
+      assert.equal(parser.parseTree(rejected).ok, false, rejected);
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-GRAMMAR-INFERENCE-STRUCTURAL-REFINEMENT', suffix: 'behavior',
+    fixtureId: 'grammar-inference-structural-refinement', fixtureFile: 'parity/fixtures/regular-grammar-inference.lino',
+    assertions: ['structuralRefinementReplaysExactEarlierPremises', 'structuralRefinementPreservesEarlierGrammarAndLabels', 'contradictoryLabelsAndReusedRevisionIdentitiesAreRefused'],
     testName: context.name,
   });
 });

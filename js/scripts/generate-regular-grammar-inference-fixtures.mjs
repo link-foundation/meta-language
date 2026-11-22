@@ -79,6 +79,13 @@ writeProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino',
     productions: [[1, 1], [0, -1], [1, -1], [2, 4], [1, -2]],
     counterexample: ['[', '[', '[', '🙂', ']', ']', ']'],
     unbalanced: ['[', '(', 'é', ']', ')'],
+    refinement: {
+      positives: [['[', '(', '🙂', ')', ']']],
+      negatives: [['[', '(', '🙂', '🙂', ')', ']']],
+      laterNegatives: [['[', '(', '🙂', ')']],
+      accepted: '[[[(🙂)]]]',
+      rejected: '[(🙂🙂)]',
+    },
   },
   refusals: [
     { name: 'contradictory labels', positives: [['a']], negatives: [['a']], options: {}, reason: 'contradictory positive and negative grammar inference samples' },

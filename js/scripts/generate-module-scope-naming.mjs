@@ -64,6 +64,9 @@ const qualifiedOperationNames = {
   sourceText: 'validate structural grammar source text',
   indexObservations: 'index structural grammar observations',
   grammarFromProductions: 'build grammar from structural productions',
+  replayStructuralRefinementHistory: 'replay structural grammar refinement history',
+  buildStructuralGrammarInference: 'build structural grammar inference checkpoint',
+  readStructuralCheckpoint: 'read structural grammar inference checkpoint',
  },
  'js/src/grammar-structural-inference-rules.js': {
   testSameGrammarStructuralProduction: 'compare structural grammar productions',
@@ -78,6 +81,9 @@ const declarationRevisions=[
   ['js/src/grammar-inference.js',['inferRegularGrammar','readRegularGrammarInferenceLinks']],
   ['js/src/grammar-scanner-inference.js',['inferGrammarScanner']],
   ['js/scripts/draft-source-library.mjs',['draftSourceLibrary']],
+ ]],
+ ['5157d52a189d66f07c45bcf6865a1f7ad6fa3179',[
+  ['js/src/grammar-structural-inference.js',['inferStructuralGrammar','readStructuralGrammarInferenceLinks']],
  ]],
 ];
 function retainQualifiedDeclarationRevisions(rows,expected){

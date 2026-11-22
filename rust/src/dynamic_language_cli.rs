@@ -1,16 +1,20 @@
 //! Command transport over the existing dynamic grammar/definition algorithms.
 //! The shared source-generated vocabulary owns argument admission.
 use crate::dynamic_language_command_rules as rules;
-use crate::grammar_inference::regular_grammar_refinement_archive_limits;
+use crate::grammar_inference::{
+    STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER, regular_grammar_refinement_archive_limits,
+};
 use crate::{
     DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, GlobalConceptSource,
-    MetaLanguageArchive, MetaLanguageArchiveLimits, RegularGrammarInferenceOptions,
-    create_dynamic_meta_language, infer_regular_grammar, meta_language_archive_to_binary,
-    meta_language_archive_to_link_cli_store, meta_language_archive_to_text, parse_grammar_links,
-    read_meta_language_archive_binary, read_meta_language_archive_link_cli_store,
-    read_meta_language_archive_text, read_refined_regular_grammar_inference_links,
-    read_structured_data_lino, refine_regular_grammar_inference, render_grammar_links,
-    structured_data_to_lino,
+    LoadedMetaLanguageArchive, MetaLanguageArchive, MetaLanguageArchiveLimits,
+    RegularGrammarInferenceOptions, StructuralGrammarInferenceOptions,
+    create_dynamic_meta_language, infer_regular_grammar, infer_structural_grammar,
+    meta_language_archive_to_binary, meta_language_archive_to_link_cli_store,
+    meta_language_archive_to_text, parse_grammar_links, read_meta_language_archive_binary,
+    read_meta_language_archive_link_cli_store, read_meta_language_archive_text,
+    read_refined_regular_grammar_inference_links, read_structural_grammar_inference_links,
+    read_structured_data_lino, refine_regular_grammar_inference,
+    refine_structural_grammar_inference, render_grammar_links, structured_data_to_lino,
 };
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -35,26 +39,48 @@ pub struct DynamicLanguageCommandOutput {
 struct LabelledExamples {
     positives: Vec<Vec<String>>,
     negatives: Vec<Vec<String>>,
+    delimiters: Option<Vec<[String; 2]>>,
     scanner_observations: Option<Vec<crate::GrammarScannerObservation>>,
     #[serde(default)]
     scanner_character_classes: bool,
     scanner_mode_stack_observations: Option<Vec<crate::GrammarScannerModeStackObservation>>,
 }
 
-fn labelled_examples(text: &str, allow_scanner: bool) -> Result<LabelledExamples, String> {
+fn labelled_examples(
+    text: &str,
+    allow_discovery_options: bool,
+) -> Result<LabelledExamples, String> {
     let value = read_structured_data_lino(text)?;
     let message =
         || "labelled examples must contain positive and negative symbol sequences".to_owned();
-    if ["scannerObservations", "scannerModeStackObservations"]
-        .into_iter()
-        .any(|field| {
-            value
-                .get(field)
-                .is_some_and(|scanner| !allow_scanner || scanner.is_null())
-        })
-        || (!allow_scanner && value.get("scannerCharacterClasses").is_some())
+    let scanner_fields = [
+        "scannerObservations",
+        "scannerModeStackObservations",
+        "scannerCharacterClasses",
+    ];
+    if [
+        "delimiters",
+        "scannerObservations",
+        "scannerModeStackObservations",
+    ]
+    .into_iter()
+    .any(|field| {
+        value
+            .get(field)
+            .is_some_and(|observations| !allow_discovery_options || observations.is_null())
+    }) || (!allow_discovery_options && value.get("scannerCharacterClasses").is_some())
     {
         return Err(message());
+    }
+    if value.get("delimiters").is_some()
+        && scanner_fields
+            .iter()
+            .any(|field| value.get(*field).is_some())
+    {
+        return Err(
+            "structural delimiters and scanner observations require separate discovery inputs"
+                .to_owned(),
+        );
     }
     serde_json::from_value(value).map_err(|_| message())
 }
@@ -64,7 +90,7 @@ fn archive_input<T, B>(
     read_text: &mut T,
     read_bytes: &mut B,
     limits: MetaLanguageArchiveLimits,
-) -> Result<MetaLanguageArchive, String>
+) -> Result<LoadedMetaLanguageArchive, String>
 where
     T: FnMut(&str) -> Result<String, String>,
     B: FnMut(&str) -> Result<Vec<u8>, String>,
@@ -74,11 +100,11 @@ where
         .as_deref()
         .ok_or("a language archive input is required")?;
     if args.options.contains_key("--input-link-cli-store") {
-        Ok(read_meta_language_archive_link_cli_store(&read_bytes(file)?, limits)?.archive)
+        read_meta_language_archive_link_cli_store(&read_bytes(file)?, limits)
     } else if args.options.contains_key("--input-binary") {
-        Ok(read_meta_language_archive_binary(&read_bytes(file)?, limits)?.archive)
+        read_meta_language_archive_binary(&read_bytes(file)?, limits)
     } else {
-        Ok(read_meta_language_archive_text(&read_text(file)?, limits)?.archive)
+        read_meta_language_archive_text(&read_text(file)?, limits)
     }
 }
 
@@ -112,6 +138,30 @@ where
             .as_deref()
             .ok_or("a labelled examples input is required")?;
         let examples = labelled_examples(&read_text(file)?, true)?;
+        if let Some(delimiters) = examples.delimiters {
+            let defaults = StructuralGrammarInferenceOptions::default();
+            let options = StructuralGrammarInferenceOptions {
+                delimiters,
+                identifier: identifier.cloned().unwrap_or(defaults.identifier),
+                language: args
+                    .options
+                    .get("--language")
+                    .cloned()
+                    .unwrap_or(defaults.language),
+                edition: args
+                    .options
+                    .get("--edition")
+                    .cloned()
+                    .unwrap_or(defaults.edition),
+                ..defaults
+            };
+            let result =
+                infer_structural_grammar(&examples.positives, &examples.negatives, &options)?;
+            return Ok(MetaLanguageArchive {
+                network: result.network,
+                root: result.root,
+            });
+        }
         let mut options = RegularGrammarInferenceOptions::default();
         options.identifier = identifier.cloned().unwrap_or(options.identifier);
         options.language = args
@@ -135,11 +185,18 @@ where
             read_bytes,
             regular_grammar_refinement_archive_limits(),
         )?;
+        let structural = archive
+            .entries
+            .iter()
+            .any(|entry| entry.identifier == STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER);
         if args.command == "install" {
-            let selected =
-                read_refined_regular_grammar_inference_links(&archive.network, archive.root)?;
+            let source = if structural {
+                read_structural_grammar_inference_links(&archive.network, archive.root)?.source
+            } else {
+                read_refined_regular_grammar_inference_links(&archive.network, archive.root)?.source
+            };
             return Ok(create_dynamic_meta_language(
-                &[selected.source],
+                &[source],
                 &DynamicMetaLanguageOptions::default(),
             )?
             .archive()
@@ -150,6 +207,19 @@ where
             .get("--examples")
             .ok_or("refine needs a labelled examples input")?;
         let examples = labelled_examples(&read_text(file)?, false)?;
+        if structural {
+            let result = refine_structural_grammar_inference(
+                &archive.network,
+                archive.root,
+                &examples.positives,
+                &examples.negatives,
+                identifier.map(String::as_str),
+            )?;
+            return Ok(MetaLanguageArchive {
+                network: result.network,
+                root: result.root,
+            });
+        }
         refine_regular_grammar_inference(
             &archive.network,
             archive.root,

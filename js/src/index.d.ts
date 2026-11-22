@@ -1128,6 +1128,7 @@ export interface StructuralGrammarInference extends TypedProgramLinks {
 }
 export function inferStructuralGrammar(positives: readonly (readonly string[])[], negatives: readonly (readonly string[])[] | undefined, options: StructuralGrammarInferenceOptions): StructuralGrammarInference;
 export function readStructuralGrammarInferenceLinks(network: LinkNetwork, root: LinkIdValue): StructuralGrammarInference;
+export function refineStructuralGrammarInference(network: LinkNetwork, root: LinkIdValue, positives?: readonly (readonly string[])[], negatives?: readonly (readonly string[])[], options?: { identifier?: string }): StructuralGrammarInference;
 export interface GrammarScannerObservation {
   mode: string;
   spelling: string;

@@ -4,7 +4,7 @@ import {structuredDataToLino} from '../src/structured-data-links.js';
 import {grammarSelectionFixture} from '../tests/support/grammar-selection-cases.js';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const recursive=grammarSelectionFixture();
-const scanner=readProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino',import.meta.url)).scanner;
+const {scanner,structural}=readProjectData(new URL('../../parity/fixtures/regular-grammar-inference.lino',import.meta.url));
 const scannerSequences=[['short','begin','content','end','suffix'],['long','begin','content','end','suffix']];
 const files=[{path:'configuration.lino',text:structuredDataToLino({records:[]})},
   {path:'first.lino',text:'(grammar (start document))\n(rule document normal (literal first))\n'},
@@ -19,6 +19,13 @@ const files=[{path:'configuration.lino',text:structuredDataToLino({records:[]})}
   {path:'scanner-counterexamples.lino',text:structuredDataToLino({positives:[scannerSequences[1]],negatives:[['begin']]})},
   {path:'scanner-source.txt',text:scanner.accepted[1].input},
   {path:'scanner-rejection.txt',text:'==[x]🙂'},
+  {path:'structural-examples.lino',text:structuredDataToLino({positives:structural.positives,negatives:structural.negatives,delimiters:structural.delimiters})},
+  {path:'mixed-discovery.lino',text:structuredDataToLino({positives:structural.positives,negatives:structural.negatives,delimiters:structural.delimiters,scannerCharacterClasses:false})},
+  {path:'structural-counterexamples.lino',text:structuredDataToLino({positives:structural.refinement.positives,negatives:structural.refinement.negatives})},
+  {path:'structural-later-negatives.lino',text:structuredDataToLino({positives:[],negatives:structural.refinement.laterNegatives})},
+  {path:'structural-contradiction.lino',text:structuredDataToLino({positives:[],negatives:[structural.counterexample]})},
+  {path:'structural-source.txt',text:structural.refinement.accepted},
+  {path:'structural-rejection.txt',text:structural.refinement.rejected},
   ...recursive.grammars.slice(0,4).map(value=>({path:value.name+'.lino',text:value.listing}))];
 const source=['--source','first-source','Example language','authored-1','first.lino'];
 const recursiveSources=recursive.grammars.slice(0,4).flatMap(value=>['--source',value.name,value.name,recursive.chain.edition,value.name+'.lino']);
@@ -54,10 +61,21 @@ const steps=[
  {name:'install the refined scanner and grammar',args:['install','scanner-refined.lino','--binary'],exit:0,save:'scanner-installed.bin',archive:true,binary:true,remove:['scanner-refined.lino']},
  {name:'the scanner installed from Links reconstructs Unicode source bytes',args:['parse','scanner-installed.bin','--input-binary','--source','scanner-refined','--input','scanner-source.txt','--identifier','scanner document'],exit:0,archive:true,concrete:'scanner document',text:scanner.accepted[1].input},
  {name:'installed scanner rejects an unobserved spelling',args:['parse','scanner-installed.bin','--input-binary','--source','scanner-refined','--input','scanner-rejection.txt'],exit:1,rejection:true},
+ {name:'mixed structural and scanner discovery input refuses',args:['discover','mixed-discovery.lino'],exit:2,error:'structural delimiters and scanner observations require separate discovery inputs'},
+ {name:'discover recursive structural grammar into a binary checkpoint',args:['discover','structural-examples.lino','--identifier','structure-original','--binary'],exit:0,save:'structural.bin',remove:['structural-examples.lino']},
+ {name:'incompatible structural refinement refuses without replacing the checkpoint',args:['refine','structural.bin','--input-binary','--examples','structural-contradiction.lino'],exit:2,error:'merge accepts a negative'},
+ {name:'first structural refinement retains the new production in a link-cli store',args:['refine','structural.bin','--input-binary','--examples','structural-counterexamples.lino','--link-cli-store'],exit:0,save:'structural.store',remove:['structural-counterexamples.lino']},
+ {name:'second structural refinement replays earlier premises into text',args:['refine','structural.store','--input-link-cli-store','--examples','structural-later-negatives.lino','--identifier','structure-refined'],exit:0,save:'structural-refined.lino',remove:['structural-later-negatives.lino','structural.store']},
+ {name:'install original structural checkpoint separately',args:['install','structural.bin','--input-binary'],exit:0,save:'structural-original.lino',remove:['structural.bin'],archive:true},
+ {name:'original structural grammar still rejects the new production',args:['parse','structural-original.lino','--source','structure-original','--input','structural-source.txt'],exit:1,rejection:true},
+ {name:'install the refined structural grammar source-free',args:['install','structural-refined.lino','--binary'],exit:0,save:'structural-installed.bin',remove:['structural-refined.lino'],archive:true,binary:true},
+ {name:'inventory the installed structural identity',args:['list','structural-installed.bin','--input-binary'],exit:0,inventory:['structure-refined']},
+ {name:'refined structure accepts a nested input and preserves its Unicode bytes',args:['parse','structural-installed.bin','--input-binary','--source','structure-refined','--input','structural-source.txt','--identifier','structural document'],exit:0,archive:true,concrete:'structural document',text:structural.refinement.accepted},
+ {name:'refined structure retains the new negative label',args:['parse','structural-installed.bin','--input-binary','--source','structure-refined','--input','structural-rejection.txt'],exit:1,rejection:true},
 ];
 writeProjectData(new URL('../../parity/fixtures/dynamic-language-command.lino',import.meta.url),{
  schemaVersion:1,model:'dynamic language command source-free snapshots 1',files,steps,
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0; ECMAScript 2025',Rust:'>=1.90.0 <1.100.0; edition 2024',linksNotation:'>=0.22.0 <0.23.0'},
- assertions:['sameCompleteCommandSequenceBothRuntimes','actualExitCodeAndDiagnostics','sourceQualifiedInventory','archivedGrammarExport','concreteDefaultAndByteReconstruction','explicitAbstractRetainsConcrete','sourceFreeTextAndBinaryReload','recursiveGrammarResolution','extensionAndPinnedReplacementContexts','strictArgumentsAndLimits','regularDiscoveryCheckpointRefinementAndInstallation','scannerDiscoveryCheckpointRefinementAndInstallation'],
+ assertions:['sameCompleteCommandSequenceBothRuntimes','actualExitCodeAndDiagnostics','sourceQualifiedInventory','archivedGrammarExport','concreteDefaultAndByteReconstruction','explicitAbstractRetainsConcrete','sourceFreeTextAndBinaryReload','recursiveGrammarResolution','extensionAndPinnedReplacementContexts','strictArgumentsAndLimits','regularDiscoveryCheckpointRefinementAndInstallation','scannerDiscoveryCheckpointRefinementAndInstallation','structuralDiscoveryCheckpointRefinementAndInstallation'],
  boundary:'Authored future controls only. Miniature labelled grammars exercise generic dispatch, not complete catalog-language support. No command or grammar executes during fixture authoring.',
 });

@@ -8,6 +8,7 @@ import {readMetaLanguageArchiveText, readMetaLanguageArchiveBinary,
 import {readStructuredDataLino, structuredDataToLino} from './structured-data-links.js';
 import {inferRegularGrammar} from './grammar-inference.js';
 import {readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference,regularGrammarRefinementArchiveLimits} from './grammar-inference-refinement.js';
+import {inferStructuralGrammar, readStructuralGrammarInferenceLinks, refineStructuralGrammarInference, structuralGrammarInferenceModelIdentifier} from './grammar-structural-inference.js';
 import {acceptDynamicLanguageCommand, readDynamicLanguageArgumentArity,
   readDynamicLanguageProjection, acceptDynamicLanguageConfigurationField,
   readDynamicLanguageResourceField, readDynamicLanguageCommandUsage} from './dynamic-language-command-rules.js';
@@ -37,14 +38,21 @@ function argumentsOf(args) {
   return result;
 }
 
-function labelledExamples(path,readFile,allowScanner) {
+const scannerObservationFields=['scannerObservations','scannerCharacterClasses','scannerModeStackObservations'];
+
+function labelledExamples(path,readFile,allowDiscoveryOptions) {
   if(path===undefined)throw new TypeError('refine needs a labelled examples input');
   const examples=readStructuredDataLino(readFile(path));
   const sequences=value=>Array.isArray(value)&&value.every(sequence=>Array.isArray(sequence)&&sequence.every(symbol=>typeof symbol==='string'));
   if(!examples||typeof examples!=='object'||Array.isArray(examples)
-    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowScanner&&['scannerObservations','scannerCharacterClasses','scannerModeStackObservations'].includes(key)))
+    ||Object.keys(examples).some(key=>key!=='positives'&&key!=='negatives'&&!(allowDiscoveryOptions&&(key==='delimiters'||scannerObservationFields.includes(key))))
+    ||(Object.hasOwn(examples,'delimiters')&&(!Array.isArray(examples.delimiters)
+      ||!examples.delimiters.every(pair=>Array.isArray(pair)&&pair.length===2&&pair.every(token=>typeof token==='string'))))
     ||!sequences(examples.positives)||!sequences(examples.negatives)) {
     throw new TypeError('labelled examples must contain positive and negative symbol sequences');
+  }
+  if(Object.hasOwn(examples,'delimiters')&&scannerObservationFields.some(key=>Object.hasOwn(examples,key))) {
+    throw new TypeError('structural delimiters and scanner observations require separate discovery inputs');
   }
   return examples;
 }
@@ -62,15 +70,20 @@ function archiveOutput(archive,options,limits) {
 function discoveryArchive(command,file,options,readFile,readBytes) {
   const identifier=options.get('--identifier');
   if(command==='discover') {
-    const {positives,negatives,scannerObservations,scannerCharacterClasses,scannerModeStackObservations}=labelledExamples(file,readFile,true);
-    return inferRegularGrammar(positives,negatives,{identifier,language:options.get('--language'),edition:options.get('--edition'),scannerObservations,scannerCharacterClasses,scannerModeStackObservations});
+    const {positives,negatives,delimiters,scannerObservations,scannerCharacterClasses,scannerModeStackObservations}=labelledExamples(file,readFile,true);
+    const source={identifier,language:options.get('--language'),edition:options.get('--edition')};
+    if(delimiters!==undefined)return inferStructuralGrammar(positives,negatives,{...source,delimiters});
+    return inferRegularGrammar(positives,negatives,{...source,scannerObservations,scannerCharacterClasses,scannerModeStackObservations});
   }
-  const {network,root}=archiveInput(file,options,readFile,readBytes,regularGrammarRefinementArchiveLimits);
+  const {network,root,entries}=archiveInput(file,options,readFile,readBytes,regularGrammarRefinementArchiveLimits);
+  const structural=entries.some(entry=>entry.identifier===structuralGrammarInferenceModelIdentifier);
   if(command==='refine') {
     const {positives,negatives}=labelledExamples(options.get('--examples'),readFile);
-    return refineRegularGrammarInference(network,root,positives,negatives,{identifier});
+    const refine=structural?refineStructuralGrammarInference:refineRegularGrammarInference;
+    return refine(network,root,positives,negatives,{identifier});
   }
-  const selected=readRefinedRegularGrammarInferenceLinks(network,root);
+  const readInference=structural?readStructuralGrammarInferenceLinks:readRefinedRegularGrammarInferenceLinks;
+  const selected=readInference(network,root);
   return createDynamicMetaLanguage([selected.source]).archive;
 }
 function configuration(path,readFile) {

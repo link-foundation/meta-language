@@ -1,9 +1,12 @@
 //! Native grammar and archive allocation around the shared structural learner.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use super::{index, number};
 use crate::grammar::{Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarRule};
+use crate::grammar_inference_refinement_rules::{
+    accept_regular_grammar_refinement_count, read_regular_grammar_refinement_identifier,
+};
 use crate::grammar_structural_inference_rules::infer_grammar_structural_productions;
 use crate::{
     GlobalConceptSource, LinkId, LinkNetwork, MetaLanguageArchiveEntry, MetaLanguageArchiveLimits,
@@ -15,7 +18,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 
 const ALGORITHM: &str = "recursive grammar inference from labelled delimiter productions 1";
-const MODEL: &str = "structural-discovery-model";
+pub(crate) const STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER: &str = "structural-discovery-model";
 const GRAMMAR: &str = "structural-discovery-grammar";
 const DEFINITION: &str = "structural-discovery-algorithm";
 const START: &str = "inferred_structure";
@@ -103,6 +106,16 @@ struct Model {
     negatives: Vec<Vec<String>>,
     alphabet: Vec<String>,
     productions: Vec<Vec<f64>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    history: Vec<RefinementStep>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RefinementStep {
+    identifier: String,
+    positive_count: usize,
+    negative_count: usize,
 }
 
 #[derive(Default)]
@@ -271,20 +284,15 @@ pub fn infer_structural_grammar(
     negatives: &[Vec<String>],
     options: &StructuralGrammarInferenceOptions,
 ) -> Result<StructuralGrammarInference, String> {
-    if [&options.identifier, &options.language, &options.edition]
-        .iter()
-        .any(|text| !source_text(text))
-    {
-        return Err(fail("invalid source identity"));
-    }
+    build_structural_inference(positives, negatives, options, &[])
+}
+
+fn infer_structural_production_rows(
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    options: &StructuralGrammarInferenceOptions,
+) -> Result<(Vec<String>, Vec<Vec<f64>>), String> {
     let limits = &options.limits;
-    if !(1..=64).contains(&limits.depth_limit)
-        || !(1..=512).contains(&limits.production_limit)
-        || !(1..=4096).contains(&limits.symbol_limit)
-        || !(1..=1048576).contains(&limits.byte_limit)
-    {
-        return Err(fail("invalid resource limit"));
-    }
     if positives.is_empty() || positives.len().saturating_add(negatives.len()) > limits.symbol_limit
     {
         return Err(fail(
@@ -317,8 +325,65 @@ pub fn infer_structural_grammar(
         }
         _ => {}
     }
-    let grammar =
-        grammar_from_productions(&productions, &observations.alphabet, &options.delimiters);
+    Ok((observations.alphabet, productions))
+}
+
+fn replay_structural_refinement_history(
+    history: &[RefinementStep],
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    options: &StructuralGrammarInferenceOptions,
+) -> Result<(), String> {
+    if !accept_regular_grammar_refinement_count(number(history.len())) {
+        return Err(fail("invalid refinement history limit"));
+    }
+    let mut identifiers = HashSet::from([options.identifier.as_str()]);
+    let (mut positive_count, mut negative_count) = (0, 0);
+    for step in history {
+        if !source_text(&step.identifier)
+            || !identifiers.insert(&step.identifier)
+            || step.positive_count < positive_count
+            || step.positive_count > positives.len()
+            || step.negative_count < negative_count
+            || step.negative_count > negatives.len()
+            || step.positive_count + step.negative_count <= positive_count + negative_count
+            || step.positive_count + step.negative_count >= positives.len() + negatives.len()
+        {
+            return Err(fail("invalid refinement history step"));
+        }
+        (positive_count, negative_count) = (step.positive_count, step.negative_count);
+        infer_structural_production_rows(
+            &positives[..positive_count],
+            &negatives[..negative_count],
+            options,
+        )?;
+    }
+    Ok(())
+}
+
+fn build_structural_inference(
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    options: &StructuralGrammarInferenceOptions,
+    history: &[RefinementStep],
+) -> Result<StructuralGrammarInference, String> {
+    if [&options.identifier, &options.language, &options.edition]
+        .iter()
+        .any(|text| !source_text(text))
+    {
+        return Err(fail("invalid source identity"));
+    }
+    let limits = &options.limits;
+    if !(1..=64).contains(&limits.depth_limit)
+        || !(1..=512).contains(&limits.production_limit)
+        || !(1..=4096).contains(&limits.symbol_limit)
+        || !(1..=1_048_576).contains(&limits.byte_limit)
+    {
+        return Err(fail("invalid resource limit"));
+    }
+    let (alphabet, productions) = infer_structural_production_rows(positives, negatives, options)?;
+    replay_structural_refinement_history(history, positives, negatives, options)?;
+    let grammar = grammar_from_productions(&productions, &alphabet, &options.delimiters);
     let source = GlobalConceptSource {
         id: options.identifier.clone(),
         language: options.language.clone(),
@@ -335,8 +400,9 @@ pub fn infer_structural_grammar(
         delimiters: options.delimiters.clone(),
         positives: positives.to_vec(),
         negatives: negatives.to_vec(),
-        alphabet: observations.alphabet.clone(),
+        alphabet: alphabet.clone(),
         productions: productions.clone(),
+        history: history.to_vec(),
     };
     let data = encode_structured_data_links(
         &serde_json::to_value(model).map_err(|error| error.to_string())?,
@@ -348,7 +414,12 @@ pub fn infer_structural_grammar(
         create_discovered_concept_links(std::slice::from_ref(&source), &Default::default())?;
     let archive = create_meta_language_archive(
         &[
-            entry(MODEL, "grammar inference", data.network, data.root),
+            entry(
+                STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER,
+                "grammar inference",
+                data.network,
+                data.root,
+            ),
             entry(DEFINITION, "typed program", bundled.network, bundled.root),
             entry(
                 GRAMMAR,
@@ -362,7 +433,7 @@ pub fn infer_structural_grammar(
     Ok(StructuralGrammarInference {
         grammar,
         source,
-        alphabet: observations.alphabet,
+        alphabet,
         productions,
         network: archive.network,
         root: archive.root,
@@ -377,12 +448,19 @@ pub fn read_structural_grammar_inference_links(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<StructuralGrammarInference, String> {
+    Ok(read_structural_checkpoint(network, root)?.0)
+}
+
+fn read_structural_checkpoint(
+    network: &LinkNetwork,
+    root: LinkId,
+) -> Result<(StructuralGrammarInference, Model), String> {
     let entries =
         read_meta_language_archive(network, root, MetaLanguageArchiveLimits::default())?.entries;
-    let Some(premise) = entries
-        .iter()
-        .find(|entry| entry.identifier == MODEL && entry.kind == "grammar inference")
-    else {
+    let Some(premise) = entries.iter().find(|entry| {
+        entry.identifier == STRUCTURAL_GRAMMAR_INFERENCE_MODEL_IDENTIFIER
+            && entry.kind == "grammar inference"
+    }) else {
         return Err(fail("invalid structural discovery checkpoint"));
     };
     if entries.len() != 3 {
@@ -397,13 +475,14 @@ pub fn read_structural_grammar_inference_links(
         return Err(fail("unsupported structural discovery model"));
     }
     let options = StructuralGrammarInferenceOptions {
-        delimiters: model.delimiters,
-        identifier: model.identifier,
-        language: model.language,
-        edition: model.edition,
-        limits: model.options,
+        delimiters: model.delimiters.clone(),
+        identifier: model.identifier.clone(),
+        language: model.language.clone(),
+        edition: model.edition.clone(),
+        limits: model.options.clone(),
     };
-    let mut result = infer_structural_grammar(&model.positives, &model.negatives, &options)?;
+    let mut result =
+        build_structural_inference(&model.positives, &model.negatives, &options, &model.history)?;
     let expected = read_meta_language_archive(
         &result.network,
         result.root,
@@ -426,5 +505,56 @@ pub fn read_structural_grammar_inference_links(
     }
     result.network = network.clone();
     result.root = root;
-    Ok(result)
+    Ok((result, model))
+}
+
+/// Append labelled examples and preserve each prior set of discovery premises.
+/// # Errors
+/// Refuses invalid checkpoints, empty updates, incompatible examples and resource exhaustion.
+pub fn refine_structural_grammar_inference(
+    network: &LinkNetwork,
+    root: LinkId,
+    positives: &[Vec<String>],
+    negatives: &[Vec<String>],
+    identifier: Option<&str>,
+) -> Result<StructuralGrammarInference, String> {
+    let (_, mut model) = read_structural_checkpoint(network, root)?;
+    if positives.is_empty() && negatives.is_empty() {
+        return Err(fail("refinement needs additional labelled examples"));
+    }
+    let count = number(model.history.len() + 1);
+    if !accept_regular_grammar_refinement_count(count) {
+        return Err(fail("invalid refinement history limit"));
+    }
+    let identifier = identifier.map_or_else(
+        || read_regular_grammar_refinement_identifier(&model.identifier, count),
+        str::to_owned,
+    );
+    model.history.push(RefinementStep {
+        identifier: model.identifier,
+        positive_count: model.positives.len(),
+        negative_count: model.negatives.len(),
+    });
+    if model
+        .positives
+        .len()
+        .saturating_add(model.negatives.len())
+        .saturating_add(positives.len())
+        .saturating_add(negatives.len())
+        > model.options.symbol_limit
+    {
+        return Err(fail(
+            "expected bounded labelled examples with at least one positive",
+        ));
+    }
+    model.positives.extend_from_slice(positives);
+    model.negatives.extend_from_slice(negatives);
+    let options = StructuralGrammarInferenceOptions {
+        identifier,
+        language: model.language,
+        edition: model.edition,
+        delimiters: model.delimiters,
+        limits: model.options,
+    };
+    build_structural_inference(&model.positives, &model.negatives, &options, &model.history)
 }

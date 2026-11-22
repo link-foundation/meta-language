@@ -813,6 +813,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "refine_regular_grammar_inference",
         "function",
     ),
+    (
+        "refineStructuralGrammarInference",
+        "refine_structural_grammar_inference",
+        "function",
+    ),
     ("rejectPredicateHost", "RejectPredicateHost", "type"),
     ("renameGrammarRule", "rename_grammar_rule", "function"),
     (
