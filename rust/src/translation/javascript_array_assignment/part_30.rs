@@ -19,10 +19,10 @@ pub fn source_ml_source1_temporary_convert_java_script_string_big_integer_units_
         if (end > start)
             && self::accept_java_script_whitespace_unit(
                 ({
-                    let source_ml_source2_array_read_index21773 = end - 1f64;
+                    let source_ml_source2_array_read_index20463 = end - 1f64;
                     {
                         let ml_reference_array350 = units.clone();
-                        let ml_reference_position350 = source_ml_source2_array_read_index21773;
+                        let ml_reference_position350 = source_ml_source2_array_read_index20463;
                         self::ml_array::optional_at(
                             &*ml_reference_array350.borrow(),
                             self::ml_array::number_index(ml_reference_position350),
@@ -258,7 +258,7 @@ pub fn source_ml_source1_temporary_read_java_script_call_integer_text_loop192(
         {
             {
                 let text_2 = text.concat(&{
-                    let source_ml_source2_character_argument21803 = ({
+                    let source_ml_source2_character_argument20493 = ({
                         let ml_reference_array356 = units.clone();
                         let ml_reference_position356 = index;
                         self::ml_array::optional_at(
@@ -270,7 +270,7 @@ pub fn source_ml_source1_temporary_read_java_script_call_integer_text_loop192(
                     .unwrap_or_else(|| 0f64);
                     self::ml_string::Text::from_units(
                         self::ml_utf16_text::character_units_utf16_text(&vec![
-                            source_ml_source2_character_argument21803,
+                            source_ml_source2_character_argument20493,
                         ])
                         .into_iter()
                         .map(|ml_unit| ml_unit as u16)
@@ -308,9 +308,9 @@ pub fn source_ml_source1_temporary_execute_java_script_call_text_conversion_loop
                 let source_ml_source1_temporary_execute_java_script_call_text_conversion_ignored195 = {
                     let ml_method_owner357 = units.clone();
                     let ml_method_argument357_0 = {
-                        let source_ml_source2_string_unit_operand21804 = text.clone();
+                        let source_ml_source2_string_unit_operand20494 = text.clone();
                         {
-                            let source_ml_source2_string_unit_operand21805 = index;
+                            let source_ml_source2_string_unit_operand20495 = index;
                             (std::rc::Rc::new(
                                 move |text_2: self::ml_string::Text, position: f64| -> f64 {
                                     {
@@ -323,33 +323,33 @@ pub fn source_ml_source1_temporary_execute_java_script_call_text_conversion_loop
                                             f64::NAN
                                         } else {
                                             ({
-                                    let source_ml_source2_string_unit_operand21811 = {
-                                        let source_ml_source2_string_range_operand21806 = text_2.clone();
+                                    let source_ml_source2_string_unit_operand20501 = {
+                                        let source_ml_source2_string_range_operand20496 = text_2.clone();
                                         {
-                                            let source_ml_source2_string_range_operand21807 = index_2;
+                                            let source_ml_source2_string_range_operand20497 = index_2;
                                             {
-                                                let source_ml_source2_string_range_operand21808 = index_2 + 1f64;
+                                                let source_ml_source2_string_range_operand20498 = index_2 + 1f64;
                                                 {
-                                                    let source_ml_source2_string_range_position21809 = source_ml_source2_string_range_operand21807;
+                                                    let source_ml_source2_string_range_position20499 = source_ml_source2_string_range_operand20497;
                                                     {
-                                                        let source_ml_source2_string_range_position21810 = source_ml_source2_string_range_operand21808;
-                                                        source_ml_source2_string_range_operand21806.slice(source_ml_source2_string_range_position21809, source_ml_source2_string_range_position21810)
+                                                        let source_ml_source2_string_range_position20500 = source_ml_source2_string_range_operand20498;
+                                                        source_ml_source2_string_range_operand20496.slice(source_ml_source2_string_range_position20499, source_ml_source2_string_range_position20500)
                                                     }
                                                 }
                                             }
                                         }
                                     };
                                     {
-                                        let source_ml_source2_string_unit_operand21812 = 0f64;
-                                        source_ml_source2_string_unit_operand21811.code_point_at(source_ml_source2_string_unit_operand21812)
+                                        let source_ml_source2_string_unit_operand20502 = 0f64;
+                                        source_ml_source2_string_unit_operand20501.code_point_at(source_ml_source2_string_unit_operand20502)
                                     }
                                 }).clone().unwrap_or_else(|| f64::NAN)
                                         }
                                     }
                                 },
                             ))(
-                                source_ml_source2_string_unit_operand21804,
-                                source_ml_source2_string_unit_operand21805,
+                                source_ml_source2_string_unit_operand20494,
+                                source_ml_source2_string_unit_operand20495,
                             )
                         }
                     };

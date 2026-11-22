@@ -346,10 +346,10 @@ pub fn source_ml_source1_temporary_accept_string_number_infinity_loop157(
                 ml_reference_array335.borrow().len() as f64
             }) {
             if (({
-                let source_ml_source2_array_read_index21747 = start + index;
+                let source_ml_source2_array_read_index20437 = start + index;
                 {
                     let ml_reference_array336 = units.clone();
-                    let ml_reference_position336 = source_ml_source2_array_read_index21747;
+                    let ml_reference_position336 = source_ml_source2_array_read_index20437;
                     self::ml_array::optional_at(
                         &*ml_reference_array336.borrow(),
                         self::ml_array::number_index(ml_reference_position336),
@@ -430,10 +430,10 @@ pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop1
         if (end > start)
             && self::accept_java_script_whitespace_unit(
                 ({
-                    let source_ml_source2_array_read_index21753 = end - 1f64;
+                    let source_ml_source2_array_read_index20443 = end - 1f64;
                     {
                         let ml_reference_array339 = units.clone();
-                        let ml_reference_position339 = source_ml_source2_array_read_index21753;
+                        let ml_reference_position339 = source_ml_source2_array_read_index20443;
                         self::ml_array::optional_at(
                             &*ml_reference_array339.borrow(),
                             self::ml_array::number_index(ml_reference_position339),
@@ -482,11 +482,11 @@ pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop1
                     {
                         let mantissa_2 = (mantissa.mul(&self::ml::Big::from_i128(10))).add(
                             &({
-                                let source_ml_source2_array_read_index21757 = unit - 48f64;
+                                let source_ml_source2_array_read_index20447 = unit - 48f64;
                                 {
                                     let ml_reference_array341 = integer_digits.clone();
                                     let ml_reference_position341 =
-                                        source_ml_source2_array_read_index21757;
+                                        source_ml_source2_array_read_index20447;
                                     self::ml_array::optional_at(
                                         &*ml_reference_array341.borrow(),
                                         self::ml_array::number_index(ml_reference_position341),
@@ -537,10 +537,10 @@ pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop1
         return if mantissa_end > start {
             {
                 let unit = ({
-                    let source_ml_source2_array_read_index21759 = mantissa_end - 1f64;
+                    let source_ml_source2_array_read_index20449 = mantissa_end - 1f64;
                     {
                         let ml_reference_array342 = units.clone();
-                        let ml_reference_position342 = source_ml_source2_array_read_index21759;
+                        let ml_reference_position342 = source_ml_source2_array_read_index20449;
                         self::ml_array::optional_at(
                             &*ml_reference_array342.borrow(),
                             self::ml_array::number_index(ml_reference_position342),

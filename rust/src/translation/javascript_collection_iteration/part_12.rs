@@ -87,18 +87,18 @@ pub fn advance_java_script_branded_collection_iterator(
                             self::JavaScriptSemanticValue::Object(identity, _) => {
                                 {
                                     let iterator = {
-                                        let source_ml_source1_array_read_value18229 = match heap.clone() {
-                                            self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value18227, _, _, _, _, _) => {
-                                                source_ml_source1_data_property_value18227.clone()
+                                        let source_ml_source1_array_read_value16919 = match heap.clone() {
+                                            self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value16917, _, _, _, _, _) => {
+                                                source_ml_source1_data_property_value16917.clone()
                                             }
                                         };
                                         {
-                                            let source_ml_source1_array_read_index18230 = self::find_java_script_ordinary_object(match heap.clone() {
-                                                self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value18228, _, _, _, _, _) => {
-                                                    source_ml_source1_data_property_value18228.clone()
+                                            let source_ml_source1_array_read_index16920 = self::find_java_script_ordinary_object(match heap.clone() {
+                                                self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value16918, _, _, _, _, _) => {
+                                                    source_ml_source1_data_property_value16918.clone()
                                                 }
                                             }, identity.clone());
-                                            { let ml_reference_array96 = source_ml_source1_array_read_value18229; let ml_reference_position96 = source_ml_source1_array_read_index18230; self::ml_array::optional_at(&*ml_reference_array96.borrow(), self::ml_array::number_index(ml_reference_position96)) }
+                                            { let ml_reference_array96 = source_ml_source1_array_read_value16919; let ml_reference_position96 = source_ml_source1_array_read_index16920; self::ml_array::optional_at(&*ml_reference_array96.borrow(), self::ml_array::number_index(ml_reference_position96)) }
                                         }
                                     };
                                     if match (iterator.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
@@ -200,16 +200,16 @@ pub fn source_ml_temporary_read_java_script_weak_key_eligibility_loop2(
                         (None, None) => true,
                         _ => false,
                     }) && {
-                        let source_ml_source1_comparison_operand18330 =
+                        let source_ml_source1_comparison_operand17020 =
                             match row.clone().expect("a proven present value") {
                                 self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
-                                    source_ml_source1_data_property_value18327,
+                                    source_ml_source1_data_property_value17017,
                                     _,
                                     _,
-                                ) => source_ml_source1_data_property_value18327.clone(),
+                                ) => source_ml_source1_data_property_value17017.clone(),
                             };
                         {
-                            let source_ml_source1_comparison_operand18331 = match value.clone() {
+                            let source_ml_source1_comparison_operand17021 = match value.clone() {
                                 self::JavaScriptSemanticValue::Undefined => None::<self::ml::Big>,
                                 self::JavaScriptSemanticValue::Null => None::<self::ml::Big>,
                                 self::JavaScriptSemanticValue::Boolean(_) => None::<self::ml::Big>,
@@ -220,15 +220,15 @@ pub fn source_ml_temporary_read_java_script_weak_key_eligibility_loop2(
                                     None::<self::ml::Big>
                                 }
                                 self::JavaScriptSemanticValue::Symbol(
-                                    source_ml_source1_data_property_value18328,
-                                ) => Some(source_ml_source1_data_property_value18328.clone()),
+                                    source_ml_source1_data_property_value17018,
+                                ) => Some(source_ml_source1_data_property_value17018.clone()),
                                 self::JavaScriptSemanticValue::Object(
-                                    source_ml_source1_data_property_value18329,
+                                    source_ml_source1_data_property_value17019,
                                     _,
-                                ) => Some(source_ml_source1_data_property_value18329.clone()),
+                                ) => Some(source_ml_source1_data_property_value17019.clone()),
                             };
                             if match (
-                                source_ml_source1_comparison_operand18331.clone(),
+                                source_ml_source1_comparison_operand17021.clone(),
                                 None::<self::ml::Big>,
                             ) {
                                 (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
@@ -236,12 +236,12 @@ pub fn source_ml_temporary_read_java_script_weak_key_eligibility_loop2(
                                 _ => false,
                             } {
                                 {
-                                    let source_ml_source1_comparison_order18332 = self::ml_big_integer_conversion::compare_java_script_number_big_integer(f64::NAN,source_ml_source1_comparison_operand18330.clone());
-                                    (source_ml_source1_comparison_order18332 == 1f64)
+                                    let source_ml_source1_comparison_order17022 = self::ml_big_integer_conversion::compare_java_script_number_big_integer(f64::NAN,source_ml_source1_comparison_operand17020.clone());
+                                    (source_ml_source1_comparison_order17022 == 1f64)
                                 }
                             } else {
-                                source_ml_source1_comparison_operand18330
-                                    < (source_ml_source1_comparison_operand18331
+                                source_ml_source1_comparison_operand17020
+                                    < (source_ml_source1_comparison_operand17021
                                         .clone()
                                         .expect("a proven present value"))
                             }
@@ -343,12 +343,12 @@ pub fn source_ml_temporary_test_java_script_semantic_text_equal_loop4(
                     })
                     .clone()
                     .unwrap_or_else(|| -1f64),
-                    self::JavaScriptSemanticValue::SourceText(_, source_ml_source1_f18339) => {
-                        let text = source_ml_source1_f18339.clone();
+                    self::JavaScriptSemanticValue::SourceText(_, source_ml_source1_f17029) => {
+                        let text = source_ml_source1_f17029.clone();
                         {
-                            let source_ml_source1_string_unit_operand18393 = text;
+                            let source_ml_source1_string_unit_operand17083 = text;
                             {
-                                let source_ml_source1_string_unit_operand18394 = at;
+                                let source_ml_source1_string_unit_operand17084 = at;
                                 (std::rc::Rc::new(
                                     move |text_2: self::ml_string::Text, position: f64| -> f64 {
                                         {
@@ -361,33 +361,33 @@ pub fn source_ml_temporary_test_java_script_semantic_text_equal_loop4(
                                                 f64::NAN
                                             } else {
                                                 ({
-                                                let source_ml_source1_string_unit_operand18400 = {
-                                                    let source_ml_source1_string_range_operand18395 = text_2.clone();
+                                                let source_ml_source1_string_unit_operand17090 = {
+                                                    let source_ml_source1_string_range_operand17085 = text_2.clone();
                                                     {
-                                                        let source_ml_source1_string_range_operand18396 = index;
+                                                        let source_ml_source1_string_range_operand17086 = index;
                                                         {
-                                                            let source_ml_source1_string_range_operand18397 = index + 1f64;
+                                                            let source_ml_source1_string_range_operand17087 = index + 1f64;
                                                             {
-                                                                let source_ml_source1_string_range_position18398 = source_ml_source1_string_range_operand18396;
+                                                                let source_ml_source1_string_range_position17088 = source_ml_source1_string_range_operand17086;
                                                                 {
-                                                                    let source_ml_source1_string_range_position18399 = source_ml_source1_string_range_operand18397;
-                                                                    source_ml_source1_string_range_operand18395.slice(source_ml_source1_string_range_position18398, source_ml_source1_string_range_position18399)
+                                                                    let source_ml_source1_string_range_position17089 = source_ml_source1_string_range_operand17087;
+                                                                    source_ml_source1_string_range_operand17085.slice(source_ml_source1_string_range_position17088, source_ml_source1_string_range_position17089)
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 };
                                                 {
-                                                    let source_ml_source1_string_unit_operand18401 = 0f64;
-                                                    source_ml_source1_string_unit_operand18400.code_point_at(source_ml_source1_string_unit_operand18401)
+                                                    let source_ml_source1_string_unit_operand17091 = 0f64;
+                                                    source_ml_source1_string_unit_operand17090.code_point_at(source_ml_source1_string_unit_operand17091)
                                                 }
                                             }).clone().unwrap_or_else(|| f64::NAN)
                                             }
                                         }
                                     },
                                 ))(
-                                    source_ml_source1_string_unit_operand18393,
-                                    source_ml_source1_string_unit_operand18394,
+                                    source_ml_source1_string_unit_operand17083,
+                                    source_ml_source1_string_unit_operand17084,
                                 )
                             }
                         }
@@ -406,12 +406,12 @@ pub fn source_ml_temporary_test_java_script_semantic_text_equal_loop4(
                         })
                         .clone()
                         .unwrap_or_else(|| -1f64),
-                        self::JavaScriptSemanticValue::SourceText(_, source_ml_source1_f18422) => {
-                            let text_2 = source_ml_source1_f18422.clone();
+                        self::JavaScriptSemanticValue::SourceText(_, source_ml_source1_f17112) => {
+                            let text_2 = source_ml_source1_f17112.clone();
                             {
-                                let source_ml_source1_string_unit_operand18476 = text_2.clone();
+                                let source_ml_source1_string_unit_operand17166 = text_2.clone();
                                 {
-                                    let source_ml_source1_string_unit_operand18477 = at;
+                                    let source_ml_source1_string_unit_operand17167 = at;
                                     (std::rc::Rc::new(
                                         move |text_3: self::ml_string::Text,
                                               position: f64|
@@ -426,33 +426,33 @@ pub fn source_ml_temporary_test_java_script_semantic_text_equal_loop4(
                                                     f64::NAN
                                                 } else {
                                                     ({
-                                                    let source_ml_source1_string_unit_operand18483 = {
-                                                        let source_ml_source1_string_range_operand18478 = text_3.clone();
+                                                    let source_ml_source1_string_unit_operand17173 = {
+                                                        let source_ml_source1_string_range_operand17168 = text_3.clone();
                                                         {
-                                                            let source_ml_source1_string_range_operand18479 = index;
+                                                            let source_ml_source1_string_range_operand17169 = index;
                                                             {
-                                                                let source_ml_source1_string_range_operand18480 = index + 1f64;
+                                                                let source_ml_source1_string_range_operand17170 = index + 1f64;
                                                                 {
-                                                                    let source_ml_source1_string_range_position18481 = source_ml_source1_string_range_operand18479;
+                                                                    let source_ml_source1_string_range_position17171 = source_ml_source1_string_range_operand17169;
                                                                     {
-                                                                        let source_ml_source1_string_range_position18482 = source_ml_source1_string_range_operand18480;
-                                                                        source_ml_source1_string_range_operand18478.slice(source_ml_source1_string_range_position18481, source_ml_source1_string_range_position18482)
+                                                                        let source_ml_source1_string_range_position17172 = source_ml_source1_string_range_operand17170;
+                                                                        source_ml_source1_string_range_operand17168.slice(source_ml_source1_string_range_position17171, source_ml_source1_string_range_position17172)
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     };
                                                     {
-                                                        let source_ml_source1_string_unit_operand18484 = 0f64;
-                                                        source_ml_source1_string_unit_operand18483.code_point_at(source_ml_source1_string_unit_operand18484)
+                                                        let source_ml_source1_string_unit_operand17174 = 0f64;
+                                                        source_ml_source1_string_unit_operand17173.code_point_at(source_ml_source1_string_unit_operand17174)
                                                     }
                                                 }).clone().unwrap_or_else(|| f64::NAN)
                                                 }
                                             }
                                         },
                                     ))(
-                                        source_ml_source1_string_unit_operand18476,
-                                        source_ml_source1_string_unit_operand18477,
+                                        source_ml_source1_string_unit_operand17166,
+                                        source_ml_source1_string_unit_operand17167,
                                     )
                                 }
                             }
@@ -561,12 +561,12 @@ pub fn source_ml_temporary_find_java_script_property_descriptor_entry_loop9(
                 }) && self::test_java_script_semantic_same_value(
                     match property.clone().expect("a proven present value") {
                         self::JavaScriptOrdinaryProperty::OrdinaryProperty(
-                            source_ml_source1_data_property_value18506,
+                            source_ml_source1_data_property_value17196,
                             _,
                         ) => {
-                            let source_ml_source1_data_property_value18506 =
-                                *source_ml_source1_data_property_value18506;
-                            source_ml_source1_data_property_value18506.clone()
+                            let source_ml_source1_data_property_value17196 =
+                                *source_ml_source1_data_property_value17196;
+                            source_ml_source1_data_property_value17196.clone()
                         }
                     },
                     key.clone(),

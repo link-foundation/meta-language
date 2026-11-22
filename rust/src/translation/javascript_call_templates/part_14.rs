@@ -193,12 +193,12 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                             heap.clone(),
                             match entry.clone() {
                                 self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(
-                                    source_ml_source1_data_property_value19256,
+                                    source_ml_source1_data_property_value17946,
                                     _,
                                 ) => {
-                                    let source_ml_source1_data_property_value19256 =
-                                        *source_ml_source1_data_property_value19256;
-                                    source_ml_source1_data_property_value19256.clone()
+                                    let source_ml_source1_data_property_value17946 =
+                                        *source_ml_source1_data_property_value17946;
+                                    source_ml_source1_data_property_value17946.clone()
                                 }
                             },
                         );
@@ -208,11 +208,11 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                 match entry.clone() {
                                     self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(
                                         _,
-                                        source_ml_source1_data_property_value19257,
+                                        source_ml_source1_data_property_value17947,
                                     ) => {
-                                        let source_ml_source1_data_property_value19257 =
-                                            *source_ml_source1_data_property_value19257;
-                                        source_ml_source1_data_property_value19257.clone()
+                                        let source_ml_source1_data_property_value17947 =
+                                            *source_ml_source1_data_property_value17947;
+                                        source_ml_source1_data_property_value17947.clone()
                                     }
                                 },
                             );
@@ -228,12 +228,12 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                 heap.clone(),
                                 match entry.clone() {
                                     self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(
-                                        source_ml_source1_data_property_value19260,
+                                        source_ml_source1_data_property_value17950,
                                         _,
                                     ) => {
-                                        let source_ml_source1_data_property_value19260 =
-                                            *source_ml_source1_data_property_value19260;
-                                        source_ml_source1_data_property_value19260.clone()
+                                        let source_ml_source1_data_property_value17950 =
+                                            *source_ml_source1_data_property_value17950;
+                                        source_ml_source1_data_property_value17950.clone()
                                     }
                                 },
                             )) != (self::ml_string::Text::from_units(vec![
@@ -242,32 +242,32 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                 self::MlTemporaryReadJavaScriptWeakCollectionObjectErrorLoop71Result::MlTemporaryReadJavaScriptWeakCollectionObjectErrorLoop71Return(self::ml_string::Text::from_units(vec![119, 101, 97, 107, 32, 115, 108, 111, 116, 115, 32, 114, 101, 113, 117, 105, 114, 101, 32, 97, 99, 116, 117, 97, 108, 32, 101, 108, 105, 103, 105, 98, 108, 101, 32, 79, 98, 106, 101, 99, 116, 32, 111, 114, 32, 110, 111, 110, 114, 101, 103, 105, 115, 116, 101, 114, 101, 100, 32, 83, 121, 109, 98, 111, 108, 32, 107, 101, 121, 115]))
                             } else {
                                 if ({
-                                    let source_ml_source1_s19262 = match entry.clone() {
-                                            self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value19272, _) => {
-                                                let source_ml_source1_data_property_value19272 = *source_ml_source1_data_property_value19272;
-                                                source_ml_source1_data_property_value19272.clone()
+                                    let source_ml_source1_s17952 = match entry.clone() {
+                                            self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value17962, _) => {
+                                                let source_ml_source1_data_property_value17962 = *source_ml_source1_data_property_value17962;
+                                                source_ml_source1_data_property_value17962.clone()
                                             }
                                         };
-                                    match source_ml_source1_s19262 {
+                                    match source_ml_source1_s17952 {
                                         self::JavaScriptSemanticValue::Object(_, _) => false,
                                         _ => true,
                                     }
                                 } && {
-                                    let source_ml_source1_s19274 = match entry.clone() {
-                                            self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value19284, _) => {
-                                                let source_ml_source1_data_property_value19284 = *source_ml_source1_data_property_value19284;
-                                                source_ml_source1_data_property_value19284.clone()
+                                    let source_ml_source1_s17964 = match entry.clone() {
+                                            self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value17974, _) => {
+                                                let source_ml_source1_data_property_value17974 = *source_ml_source1_data_property_value17974;
+                                                source_ml_source1_data_property_value17974.clone()
                                             }
                                         };
-                                    match source_ml_source1_s19274 {
+                                    match source_ml_source1_s17964 {
                                         self::JavaScriptSemanticValue::Symbol(_) => false,
                                         _ => true,
                                     }
                                 }) || {
-                                    let source_ml_source1_comparison_operand19288 = match match entry.clone() {
-                                            self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value19285, _) => {
-                                                let source_ml_source1_data_property_value19285 = *source_ml_source1_data_property_value19285;
-                                                source_ml_source1_data_property_value19285.clone()
+                                    let source_ml_source1_comparison_operand17978 = match match entry.clone() {
+                                            self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value17975, _) => {
+                                                let source_ml_source1_data_property_value17975 = *source_ml_source1_data_property_value17975;
+                                                source_ml_source1_data_property_value17975.clone()
                                             }
                                         } {
                                             self::JavaScriptSemanticValue::Undefined => {
@@ -291,15 +291,15 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                             self::JavaScriptSemanticValue::SourceText(_, _) => {
                                                 None::<self::ml::Big>
                                             }
-                                            self::JavaScriptSemanticValue::Symbol(source_ml_source1_data_property_value19286) => {
-                                                Some(source_ml_source1_data_property_value19286.clone())
+                                            self::JavaScriptSemanticValue::Symbol(source_ml_source1_data_property_value17976) => {
+                                                Some(source_ml_source1_data_property_value17976.clone())
                                             }
-                                            self::JavaScriptSemanticValue::Object(source_ml_source1_data_property_value19287, _) => {
-                                                Some(source_ml_source1_data_property_value19287.clone())
+                                            self::JavaScriptSemanticValue::Object(source_ml_source1_data_property_value17977, _) => {
+                                                Some(source_ml_source1_data_property_value17977.clone())
                                             }
                                         };
                                     if match (
-                                        source_ml_source1_comparison_operand19288.clone(),
+                                        source_ml_source1_comparison_operand17978.clone(),
                                         None::<self::ml::Big>,
                                     ) {
                                         (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
@@ -315,9 +315,9 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                             (f64::NAN) <= (f64::NAN)
                                         } else {
                                             {
-                                                let source_ml_source1_comparison_order19291 = self::ml_big_integer_conversion::compare_java_script_number_big_integer(f64::NAN,previous_weak_key.clone().expect("a proven present value"));
-                                                ((source_ml_source1_comparison_order19291 == -1f64)
-                                                    || (source_ml_source1_comparison_order19291
+                                                let source_ml_source1_comparison_order17981 = self::ml_big_integer_conversion::compare_java_script_number_big_integer(f64::NAN,previous_weak_key.clone().expect("a proven present value"));
+                                                ((source_ml_source1_comparison_order17981 == -1f64)
+                                                    || (source_ml_source1_comparison_order17981
                                                         == 0f64))
                                             }
                                         }
@@ -330,13 +330,13 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                         _ => false,
                                     } {
                                         {
-                                            let source_ml_source1_comparison_order19290 = self::ml_big_integer_conversion::compare_java_script_number_big_integer(f64::NAN,source_ml_source1_comparison_operand19288.clone().expect("a proven present value"));
-                                            ((source_ml_source1_comparison_order19290 == 1f64)
-                                                || (source_ml_source1_comparison_order19290
+                                            let source_ml_source1_comparison_order17980 = self::ml_big_integer_conversion::compare_java_script_number_big_integer(f64::NAN,source_ml_source1_comparison_operand17978.clone().expect("a proven present value"));
+                                            ((source_ml_source1_comparison_order17980 == 1f64)
+                                                || (source_ml_source1_comparison_order17980
                                                     == 0f64))
                                         }
                                     } else {
-                                        (source_ml_source1_comparison_operand19288
+                                        (source_ml_source1_comparison_operand17978
                                             .clone()
                                             .expect("a proven present value"))
                                             <= (previous_weak_key
@@ -348,9 +348,9 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                 } else {
                                     {
                                         let previous_weak_key_2 = match match entry.clone() {
-                                                self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value19292, _) => {
-                                                    let source_ml_source1_data_property_value19292 = *source_ml_source1_data_property_value19292;
-                                                    source_ml_source1_data_property_value19292.clone()
+                                                self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(source_ml_source1_data_property_value17982, _) => {
+                                                    let source_ml_source1_data_property_value17982 = *source_ml_source1_data_property_value17982;
+                                                    source_ml_source1_data_property_value17982.clone()
                                                 }
                                             } {
                                                 self::JavaScriptSemanticValue::Undefined => {
@@ -374,11 +374,11 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                                 self::JavaScriptSemanticValue::SourceText(_, _) => {
                                                     None::<self::ml::Big>
                                                 }
-                                                self::JavaScriptSemanticValue::Symbol(source_ml_source1_data_property_value19293) => {
-                                                    Some(source_ml_source1_data_property_value19293.clone())
+                                                self::JavaScriptSemanticValue::Symbol(source_ml_source1_data_property_value17983) => {
+                                                    Some(source_ml_source1_data_property_value17983.clone())
                                                 }
-                                                self::JavaScriptSemanticValue::Object(source_ml_source1_data_property_value19294, _) => {
-                                                    Some(source_ml_source1_data_property_value19294.clone())
+                                                self::JavaScriptSemanticValue::Object(source_ml_source1_data_property_value17984, _) => {
+                                                    Some(source_ml_source1_data_property_value17984.clone())
                                                 }
                                             };
                                         if match object.clone() {
@@ -392,13 +392,13 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                             ) => true,
                                             _ => false,
                                         } && {
-                                            let source_ml_source1_s19391 = match entry.clone() {
-                                                    self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(_, source_ml_source1_data_property_value19401) => {
-                                                        let source_ml_source1_data_property_value19401 = *source_ml_source1_data_property_value19401;
-                                                        source_ml_source1_data_property_value19401.clone()
+                                            let source_ml_source1_s18081 = match entry.clone() {
+                                                    self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(_, source_ml_source1_data_property_value18091) => {
+                                                        let source_ml_source1_data_property_value18091 = *source_ml_source1_data_property_value18091;
+                                                        source_ml_source1_data_property_value18091.clone()
                                                     }
                                                 };
-                                            match source_ml_source1_s19391 {
+                                            match source_ml_source1_s18081 {
                                                 self::JavaScriptSemanticValue::Undefined => false,
                                                 _ => true,
                                             }
@@ -411,9 +411,9 @@ pub fn source_ml_temporary_read_java_script_weak_collection_object_error_loop71(
                                                     let ml_field_previous129 =
                                                         ml_field_owner129.borrow().3;
                                                     let ml_field_value129 = self::ml_math::max(0f64, self::read_java_script_semantic_text_length(match entry.clone() {
-                                                        self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(_, source_ml_source1_data_property_value19402) => {
-                                                            let source_ml_source1_data_property_value19402 = *source_ml_source1_data_property_value19402;
-                                                            source_ml_source1_data_property_value19402.clone()
+                                                        self::JavaScriptWeakCollectionEntry::WeakCollectionEntry(_, source_ml_source1_data_property_value18092) => {
+                                                            let source_ml_source1_data_property_value18092 = *source_ml_source1_data_property_value18092;
+                                                            source_ml_source1_data_property_value18092.clone()
                                                         }
                                                     }));
                                                     ml_field_owner129.borrow_mut().3 =
@@ -481,10 +481,10 @@ pub fn source_ml_temporary_read_java_script_strong_collection_object_error_loop7
             }) {
             {
                 let prior = {
-                    let source_ml_source1_array_read_index19404 = at - 1f64;
+                    let source_ml_source1_array_read_index18094 = at - 1f64;
                     {
                         let ml_reference_array132 = ordered_keys.clone();
-                        let ml_reference_position132 = source_ml_source1_array_read_index19404;
+                        let ml_reference_position132 = source_ml_source1_array_read_index18094;
                         self::ml_array::optional_at(
                             &*ml_reference_array132.borrow(),
                             self::ml_array::number_index(ml_reference_position132),
@@ -575,12 +575,12 @@ pub fn source_ml_temporary_read_java_script_strong_collection_object_error_loop7
                 } || match entry.clone() {
                     self::JavaScriptCollectionEntry::CollectionEntry(_, _, _) => false,
                 }) || (({
-                    let source_ml_source1_type_query_operand19415 = match entry.clone() {
+                    let source_ml_source1_type_query_operand18105 = match entry.clone() {
                         self::JavaScriptCollectionEntry::CollectionEntry(
                             _,
                             _,
-                            source_ml_source1_data_property_value19414,
-                        ) => source_ml_source1_data_property_value19414,
+                            source_ml_source1_data_property_value18104,
+                        ) => source_ml_source1_data_property_value18104,
                     };
                     self::ml_string::Text::from_units(vec![98, 111, 111, 108, 101, 97, 110])
                 }) != (self::ml_string::Text::from_units(vec![
@@ -593,13 +593,13 @@ pub fn source_ml_temporary_read_java_script_strong_collection_object_error_loop7
                             heap.clone(),
                             match entry.clone() {
                                 self::JavaScriptCollectionEntry::CollectionEntry(
-                                    source_ml_source1_data_property_value19416,
+                                    source_ml_source1_data_property_value18106,
                                     _,
                                     _,
                                 ) => {
-                                    let source_ml_source1_data_property_value19416 =
-                                        *source_ml_source1_data_property_value19416;
-                                    source_ml_source1_data_property_value19416.clone()
+                                    let source_ml_source1_data_property_value18106 =
+                                        *source_ml_source1_data_property_value18106;
+                                    source_ml_source1_data_property_value18106.clone()
                                 }
                             },
                         );
@@ -609,12 +609,12 @@ pub fn source_ml_temporary_read_java_script_strong_collection_object_error_loop7
                                 match entry.clone() {
                                     self::JavaScriptCollectionEntry::CollectionEntry(
                                         _,
-                                        source_ml_source1_data_property_value19417,
+                                        source_ml_source1_data_property_value18107,
                                         _,
                                     ) => {
-                                        let source_ml_source1_data_property_value19417 =
-                                            *source_ml_source1_data_property_value19417;
-                                        source_ml_source1_data_property_value19417.clone()
+                                        let source_ml_source1_data_property_value18107 =
+                                            *source_ml_source1_data_property_value18107;
+                                        source_ml_source1_data_property_value18107.clone()
                                     }
                                 },
                             );
@@ -635,14 +635,14 @@ if ml_library_inequality_1 {
                                         let ml_field_owner136 = budget.clone();
                                         let ml_field_previous136 = ml_field_owner136.borrow().3;
                                         let ml_field_value136 = self::ml_math::max(0f64, self::read_java_script_semantic_text_length(match entry.clone() {
-                                        self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value19418, _, _) => {
-                                            let source_ml_source1_data_property_value19418 = *source_ml_source1_data_property_value19418;
-                                            source_ml_source1_data_property_value19418.clone()
+                                        self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value18108, _, _) => {
+                                            let source_ml_source1_data_property_value18108 = *source_ml_source1_data_property_value18108;
+                                            source_ml_source1_data_property_value18108.clone()
                                         }
                                     })) + self::ml_math::max(0f64, self::read_java_script_semantic_text_length(match entry.clone() {
-                                        self::JavaScriptCollectionEntry::CollectionEntry(_, source_ml_source1_data_property_value19419, _) => {
-                                            let source_ml_source1_data_property_value19419 = *source_ml_source1_data_property_value19419;
-                                            source_ml_source1_data_property_value19419.clone()
+                                        self::JavaScriptCollectionEntry::CollectionEntry(_, source_ml_source1_data_property_value18109, _) => {
+                                            let source_ml_source1_data_property_value18109 = *source_ml_source1_data_property_value18109;
+                                            source_ml_source1_data_property_value18109.clone()
                                         }
                                     }));
                                         ml_field_owner136.borrow_mut().3 =
@@ -654,13 +654,13 @@ if ml_library_inequality_1 {
                                     } else {
                                         {
                                             let key = match entry.clone() {
-                                                self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value19420, _, _) => {
-                                                    let source_ml_source1_data_property_value19420 = *source_ml_source1_data_property_value19420;
-                                                    source_ml_source1_data_property_value19420.clone()
+                                                self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value18110, _, _) => {
+                                                    let source_ml_source1_data_property_value18110 = *source_ml_source1_data_property_value18110;
+                                                    source_ml_source1_data_property_value18110.clone()
                                                 }
                                             };
                                             {
-                                                let source_ml_source1_s19431 = match key {
+                                                let source_ml_source1_s18121 = match key {
                                                     self::JavaScriptSemanticValue::Undefined => {
                                                         self::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79Next
                                                     }
@@ -672,8 +672,8 @@ if ml_library_inequality_1 {
                                                     }
                                                     self::JavaScriptSemanticValue::Number(value) => {
                                                         if {
-                                                            let source_ml_source1_same_value_operand19441 = -0f64;
-                                                            (((value == source_ml_source1_same_value_operand19441) && ((value != 0f64) || ((1f64 / value) == (1f64 / source_ml_source1_same_value_operand19441)))) || ((value != value) && (source_ml_source1_same_value_operand19441 != source_ml_source1_same_value_operand19441)))
+                                                            let source_ml_source1_same_value_operand18131 = -0f64;
+                                                            (((value == source_ml_source1_same_value_operand18131) && ((value != 0f64) || ((1f64 / value) == (1f64 / source_ml_source1_same_value_operand18131)))) || ((value != value) && (source_ml_source1_same_value_operand18131 != source_ml_source1_same_value_operand18131)))
                                                         } {
                                                             self::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79Return(self::ml_string::Text::from_units(vec![99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 32, 115, 116, 111, 114, 101, 100, 32, 107, 101, 121, 115, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 32, 110, 101, 103, 97, 116, 105, 118, 101, 32, 78, 117, 109, 98, 101, 114, 32, 122, 101, 114, 111]))
                                                         } else {
@@ -696,7 +696,7 @@ if ml_library_inequality_1 {
                                                         self::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79Next
                                                     }
                                                 };
-                                                match source_ml_source1_s19431 {
+                                                match source_ml_source1_s18121 {
                                                     self::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79::MlTemporaryReadJavaScriptStrongCollectionObjectErrorJoin79Next => {
                                                         if match object.clone() {
                                                             self::JavaScriptOrdinaryObject::SetObject(_, _, _, _, _, _) => {
@@ -706,27 +706,27 @@ if ml_library_inequality_1 {
                                                                 false
                                                             }
                                                         } && !(self::test_java_script_semantic_same_value(match entry.clone() {
-                                                            self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value19537, _, _) => {
-                                                                let source_ml_source1_data_property_value19537 = *source_ml_source1_data_property_value19537;
-                                                                source_ml_source1_data_property_value19537.clone()
+                                                            self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value18227, _, _) => {
+                                                                let source_ml_source1_data_property_value18227 = *source_ml_source1_data_property_value18227;
+                                                                source_ml_source1_data_property_value18227.clone()
                                                             }
                                                         }, match entry.clone() {
-                                                            self::JavaScriptCollectionEntry::CollectionEntry(_, source_ml_source1_data_property_value19538, _) => {
-                                                                let source_ml_source1_data_property_value19538 = *source_ml_source1_data_property_value19538;
-                                                                source_ml_source1_data_property_value19538.clone()
+                                                            self::JavaScriptCollectionEntry::CollectionEntry(_, source_ml_source1_data_property_value18228, _) => {
+                                                                let source_ml_source1_data_property_value18228 = *source_ml_source1_data_property_value18228;
+                                                                source_ml_source1_data_property_value18228.clone()
                                                             }
                                                         })) {
                                                             self::MlTemporaryReadJavaScriptStrongCollectionObjectErrorLoop76Result::MlTemporaryReadJavaScriptStrongCollectionObjectErrorLoop76Return(self::ml_string::Text::from_units(vec![83, 101, 116, 32, 101, 110, 116, 114, 105, 101, 115, 32, 114, 101, 116, 97, 105, 110, 32, 116, 104, 101, 32, 115, 97, 109, 101, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 107, 101, 121, 32, 97, 110, 100, 32, 118, 97, 108, 117, 101]))
                                                         } else if match entry.clone() {
-                                                                self::JavaScriptCollectionEntry::CollectionEntry(_, _, source_ml_source1_data_property_value19539) => {
-                                                                    source_ml_source1_data_property_value19539
+                                                                self::JavaScriptCollectionEntry::CollectionEntry(_, _, source_ml_source1_data_property_value18229) => {
+                                                                    source_ml_source1_data_property_value18229
                                                                 }
                                                             } {
                                                                 {
                                                                     let source_ml_temporary_read_java_script_strong_collection_object_error_written80 = { let ml_field_owner138 = budget.clone(); let ml_field_previous138 = ml_field_owner138.borrow().2; let ml_field_value138 = self::ml_math::max(0f64, self::read_java_script_semantic_text_length(match entry.clone() {
-                                                                        self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value19540, _, _) => {
-                                                                            let source_ml_source1_data_property_value19540 = *source_ml_source1_data_property_value19540;
-                                                                            source_ml_source1_data_property_value19540.clone()
+                                                                        self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value18230, _, _) => {
+                                                                            let source_ml_source1_data_property_value18230 = *source_ml_source1_data_property_value18230;
+                                                                            source_ml_source1_data_property_value18230.clone()
                                                                         }
                                                                     })); ml_field_owner138.borrow_mut().2 = ml_field_previous138 + ml_field_value138; () };
                                                                     if (({ budget.borrow().clone() }).2) > 16_777_216f64 {
@@ -734,9 +734,9 @@ if ml_library_inequality_1 {
                                                                     } else {
                                                                         {
                                                                             let source_ml_temporary_read_java_script_strong_collection_object_error_ignored81 = { let ml_method_owner140 = keys.clone(); let ml_method_argument140_0 = match entry.clone() {
-                                                                                self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value19541, _, _) => {
-                                                                                    let source_ml_source1_data_property_value19541 = *source_ml_source1_data_property_value19541;
-                                                                                    source_ml_source1_data_property_value19541.clone()
+                                                                                self::JavaScriptCollectionEntry::CollectionEntry(source_ml_source1_data_property_value18231, _, _) => {
+                                                                                    let source_ml_source1_data_property_value18231 = *source_ml_source1_data_property_value18231;
+                                                                                    source_ml_source1_data_property_value18231.clone()
                                                                                 }
                                                                             }; let ml_inserted = vec![ml_method_argument140_0]; let mut ml_method_values140 = ml_method_owner140.borrow_mut(); let ml_length = ml_method_values140.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4_294_967_295usize).expect("Invalid array length"); ml_method_values140.extend(ml_inserted); ml_length as f64 };
                                                                             {
@@ -836,12 +836,12 @@ pub fn source_ml_temporary_read_java_script_ordinary_object_descriptor_error_loo
                             heap.clone(),
                             match property.clone().expect("a proven present value") {
                                 self::JavaScriptOrdinaryProperty::OrdinaryProperty(
-                                    source_ml_source1_data_property_value19544,
+                                    source_ml_source1_data_property_value18234,
                                     _,
                                 ) => {
-                                    let source_ml_source1_data_property_value19544 =
-                                        *source_ml_source1_data_property_value19544;
-                                    source_ml_source1_data_property_value19544.clone()
+                                    let source_ml_source1_data_property_value18234 =
+                                        *source_ml_source1_data_property_value18234;
+                                    source_ml_source1_data_property_value18234.clone()
                                 }
                             },
                         );
@@ -854,12 +854,12 @@ pub fn source_ml_temporary_read_java_script_ordinary_object_descriptor_error_loo
                                 properties.clone(),
                                 match property.clone().expect("a proven present value") {
                                     self::JavaScriptOrdinaryProperty::OrdinaryProperty(
-                                        source_ml_source1_data_property_value19546,
+                                        source_ml_source1_data_property_value18236,
                                         _,
                                     ) => {
-                                        let source_ml_source1_data_property_value19546 =
-                                            *source_ml_source1_data_property_value19546;
-                                        source_ml_source1_data_property_value19546.clone()
+                                        let source_ml_source1_data_property_value18236 =
+                                            *source_ml_source1_data_property_value18236;
+                                        source_ml_source1_data_property_value18236.clone()
                                     }
                                 },
                             )) != at
@@ -868,8 +868,8 @@ pub fn source_ml_temporary_read_java_script_ordinary_object_descriptor_error_loo
                             } else {
                                 {
                                     let descriptor_error = self::read_java_script_ordinary_descriptor_value_error(heap.clone(), match property.clone().expect("a proven present value") {
-                                        self::JavaScriptOrdinaryProperty::OrdinaryProperty(_, source_ml_source1_data_property_value19547) => {
-                                            source_ml_source1_data_property_value19547.clone()
+                                        self::JavaScriptOrdinaryProperty::OrdinaryProperty(_, source_ml_source1_data_property_value18237) => {
+                                            source_ml_source1_data_property_value18237.clone()
                                         }
                                     });
                                     {

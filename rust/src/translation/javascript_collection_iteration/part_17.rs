@@ -45,10 +45,10 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                     )
                 };
                 if (((({
-                    let source_ml_source1_optional_chain_receiver20231 = (entry.clone(),);
+                    let source_ml_source1_optional_chain_receiver18921 = (entry.clone(),);
                     {
                         let source_ml_temporary_optional_chain84 =
-                            (source_ml_source1_optional_chain_receiver20231).0;
+                            (source_ml_source1_optional_chain_receiver18921).0;
                         match source_ml_temporary_optional_chain84 {
                             self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(_, _) => {
                                 self::ml_string::Text::from_units(vec![
@@ -65,33 +65,33 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                     match heap.clone() {
                         self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                             _,
-                            source_ml_source1_data_property_value20232,
+                            source_ml_source1_data_property_value18922,
                             _,
                             _,
                             _,
                             _,
-                        ) => source_ml_source1_data_property_value20232.clone(),
+                        ) => source_ml_source1_data_property_value18922.clone(),
                     },
                     match entry.clone() {
                         self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
-                            source_ml_source1_data_property_value20233,
+                            source_ml_source1_data_property_value18923,
                             _,
-                        ) => source_ml_source1_data_property_value20233.clone(),
+                        ) => source_ml_source1_data_property_value18923.clone(),
                     },
                 ))) || ((({
-                    let source_ml_source1_optional_chain_receiver20237 = (match entry.clone() {
+                    let source_ml_source1_optional_chain_receiver18927 = (match entry.clone() {
                         self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
                             _,
-                            source_ml_source1_data_property_value20236,
+                            source_ml_source1_data_property_value18926,
                         ) => {
-                            let source_ml_source1_data_property_value20236 =
-                                *source_ml_source1_data_property_value20236;
-                            source_ml_source1_data_property_value20236.clone()
+                            let source_ml_source1_data_property_value18926 =
+                                *source_ml_source1_data_property_value18926;
+                            source_ml_source1_data_property_value18926.clone()
                         }
                     },);
                     {
                         let source_ml_temporary_optional_chain85 =
-                            (source_ml_source1_optional_chain_receiver20237).0;
+                            (source_ml_source1_optional_chain_receiver18927).0;
                         match source_ml_temporary_optional_chain85 {
                             self::JavaScriptSemanticValue::Undefined => {
                                 self::ml_string::Text::from_units(vec![
@@ -132,20 +132,20 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                     }
                 }) != (self::ml_string::Text::from_units(vec![116, 101, 120, 116])))
                     && (({
-                        let source_ml_source1_optional_chain_receiver20241 =
+                        let source_ml_source1_optional_chain_receiver18931 =
                             (match entry.clone() {
                                 self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
                                     _,
-                                    source_ml_source1_data_property_value20240,
+                                    source_ml_source1_data_property_value18930,
                                 ) => {
-                                    let source_ml_source1_data_property_value20240 =
-                                        *source_ml_source1_data_property_value20240;
-                                    source_ml_source1_data_property_value20240.clone()
+                                    let source_ml_source1_data_property_value18930 =
+                                        *source_ml_source1_data_property_value18930;
+                                    source_ml_source1_data_property_value18930.clone()
                                 }
                             },);
                         {
                             let source_ml_temporary_optional_chain86 =
-                                (source_ml_source1_optional_chain_receiver20241).0;
+                                (source_ml_source1_optional_chain_receiver18931).0;
                             match source_ml_temporary_optional_chain86 {
                                 self::JavaScriptSemanticValue::Undefined => {
                                     self::ml_string::Text::from_units(vec![
@@ -198,11 +198,11 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                         match entry.clone() {
                             self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
                                 _,
-                                source_ml_source1_data_property_value20243,
+                                source_ml_source1_data_property_value18933,
                             ) => {
-                                let source_ml_source1_data_property_value20243 =
-                                    *source_ml_source1_data_property_value20243;
-                                source_ml_source1_data_property_value20243.clone()
+                                let source_ml_source1_data_property_value18933 =
+                                    *source_ml_source1_data_property_value18933;
+                                source_ml_source1_data_property_value18933.clone()
                             }
                         },
                     )) != (self::ml_string::Text::from_units(vec![])))
@@ -214,21 +214,21 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                             + self::read_java_script_semantic_text_length(match entry.clone() {
                                 self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
                                     _,
-                                    source_ml_source1_data_property_value20244,
+                                    source_ml_source1_data_property_value18934,
                                 ) => {
-                                    let source_ml_source1_data_property_value20244 =
-                                        *source_ml_source1_data_property_value20244;
-                                    source_ml_source1_data_property_value20244.clone()
+                                    let source_ml_source1_data_property_value18934 =
+                                        *source_ml_source1_data_property_value18934;
+                                    source_ml_source1_data_property_value18934.clone()
                                 }
                             });
                         if ((self::read_java_script_semantic_text_length(match entry.clone() {
                             self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
                                 _,
-                                source_ml_source1_data_property_value20246,
+                                source_ml_source1_data_property_value18936,
                             ) => {
-                                let source_ml_source1_data_property_value20246 =
-                                    *source_ml_source1_data_property_value20246;
-                                source_ml_source1_data_property_value20246.clone()
+                                let source_ml_source1_data_property_value18936 =
+                                    *source_ml_source1_data_property_value18936;
+                                source_ml_source1_data_property_value18936.clone()
                             }
                         })) > 1_048_576f64)
                             || (units_2 > 16_777_216f64)
@@ -242,11 +242,11 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                             match entry.clone() {
                                 self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
                                     _,
-                                    source_ml_source1_data_property_value20257,
+                                    source_ml_source1_data_property_value18947,
                                 ) => {
-                                    let source_ml_source1_data_property_value20257 =
-                                        *source_ml_source1_data_property_value20257;
-                                    source_ml_source1_data_property_value20257.clone()
+                                    let source_ml_source1_data_property_value18947 =
+                                        *source_ml_source1_data_property_value18947;
+                                    source_ml_source1_data_property_value18947.clone()
                                 }
                             },
                         )) >= 0f64)
@@ -257,11 +257,11 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                                 let previous_key_2 = match entry.clone() {
                                     self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(
                                         _,
-                                        source_ml_source1_data_property_value20258,
+                                        source_ml_source1_data_property_value18948,
                                     ) => {
-                                        let source_ml_source1_data_property_value20258 =
-                                            *source_ml_source1_data_property_value20258;
-                                        source_ml_source1_data_property_value20258.clone()
+                                        let source_ml_source1_data_property_value18948 =
+                                            *source_ml_source1_data_property_value18948;
+                                        source_ml_source1_data_property_value18948.clone()
                                     }
                                 };
                                 {
@@ -285,38 +285,38 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop109(
                                                     )
                                                 };
                                                 if (match (fact.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } || ((match fact.clone().expect("a proven present value") {
-                                                        self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(source_ml_source1_data_property_value20263, _, _) => {
-                                                            source_ml_source1_data_property_value20263.clone()
+                                                        self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(source_ml_source1_data_property_value18953, _, _) => {
+                                                            source_ml_source1_data_property_value18953.clone()
                                                         }
                                                     }) != (match entry.clone() {
-                                                        self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(source_ml_source1_data_property_value20264, _) => {
-                                                            source_ml_source1_data_property_value20264.clone()
+                                                        self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(source_ml_source1_data_property_value18954, _) => {
+                                                            source_ml_source1_data_property_value18954.clone()
                                                         }
                                                     }))) || !(match fact.clone().expect("a proven present value") {
-                                                        self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(_, source_ml_source1_data_property_value20265, _) => {
-                                                            source_ml_source1_data_property_value20265
+                                                        self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(_, source_ml_source1_data_property_value18955, _) => {
+                                                            source_ml_source1_data_property_value18955
                                                         }
                                                     }) {
                                                         self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop109Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop109Return(self::ml_string::Text::from_units(vec![114, 101, 103, 105, 115, 116, 114, 121, 32, 107, 101, 121, 32, 101, 110, 116, 114, 105, 101, 115, 32, 114, 101, 116, 97, 105, 110, 32, 116, 104, 101, 105, 114, 32, 109, 97, 116, 99, 104, 105, 110, 103, 32, 101, 120, 97, 99, 116, 32, 97, 99, 116, 117, 97, 108, 32, 114, 101, 103, 105, 115, 116, 114, 97, 116, 105, 111, 110, 32, 119, 105, 116, 110, 101, 115, 115]))
                                                     } else {
                                                         {
                                                             let key = match fact.clone().expect("a proven present value") {
-                                                                self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(_, _, source_ml_source1_data_property_value20266) => {
-                                                                    ((source_ml_source1_data_property_value20266.clone().unwrap_or_else(|| (None::<self::JavaScriptSemanticValue>,))).0).clone()
+                                                                self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(_, _, source_ml_source1_data_property_value18956) => {
+                                                                    ((source_ml_source1_data_property_value18956.clone().unwrap_or_else(|| (None::<self::JavaScriptSemanticValue>,))).0).clone()
                                                                 }
                                                             };
                                                             if match (key.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } || !(self::test_java_script_semantic_same_value(key.clone().expect("a proven present value"), match entry.clone() {
-                                                                self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(_, source_ml_source1_data_property_value20267) => {
-                                                                    let source_ml_source1_data_property_value20267 = *source_ml_source1_data_property_value20267;
-                                                                    source_ml_source1_data_property_value20267.clone()
+                                                                self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(_, source_ml_source1_data_property_value18957) => {
+                                                                    let source_ml_source1_data_property_value18957 = *source_ml_source1_data_property_value18957;
+                                                                    source_ml_source1_data_property_value18957.clone()
                                                                 }
                                                             })) {
                                                                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop109Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop109Return(self::ml_string::Text::from_units(vec![114, 101, 103, 105, 115, 116, 114, 121, 32, 107, 101, 121, 32, 101, 110, 116, 114, 105, 101, 115, 32, 114, 101, 116, 97, 105, 110, 32, 116, 104, 101, 105, 114, 32, 109, 97, 116, 99, 104, 105, 110, 103, 32, 101, 120, 97, 99, 116, 32, 97, 99, 116, 117, 97, 108, 32, 114, 101, 103, 105, 115, 116, 114, 97, 116, 105, 111, 110, 32, 119, 105, 116, 110, 101, 115, 115]))
                                                             } else {
                                                                 {
                                                                     let source_ml_temporary_read_java_script_ordinary_heap_error_ignored114 = { let ml_method_owner170 = identities.clone(); let ml_method_argument170_0 = self::JavaScriptSemanticValue::Symbol(match entry.clone() {
-                                                                        self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(source_ml_source1_data_property_value20268, _) => {
-                                                                            source_ml_source1_data_property_value20268.clone()
+                                                                        self::JavaScriptSymbolRegistryEntry::SymbolRegistryEntry(source_ml_source1_data_property_value18958, _) => {
+                                                                            source_ml_source1_data_property_value18958.clone()
                                                                         }
                                                                     }); let ml_inserted = vec![ml_method_argument170_0]; let mut ml_method_values170 = ml_method_owner170.borrow_mut(); let ml_length = ml_method_values170.len().checked_add(ml_inserted.len()).filter(|length| *length <= 4_294_967_295usize).expect("Invalid array length"); ml_method_values170.extend(ml_inserted); ml_length as f64 };
                                                                     {
@@ -451,8 +451,8 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop96(
                         self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
                             _,
                             _,
-                            source_ml_source1_data_property_value20273,
-                        ) => ((source_ml_source1_data_property_value20273
+                            source_ml_source1_data_property_value18963,
+                        ) => ((source_ml_source1_data_property_value18963
                             .clone()
                             .unwrap_or_else(|| (None::<self::JavaScriptSemanticValue>,)))
                         .0)
@@ -545,10 +545,10 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop116(
                     )
                 };
                 if ((((({
-                    let source_ml_source1_optional_chain_receiver20277 = (fact.clone(),);
+                    let source_ml_source1_optional_chain_receiver18967 = (fact.clone(),);
                     {
                         let source_ml_temporary_optional_chain80 =
-                            (source_ml_source1_optional_chain_receiver20277).0;
+                            (source_ml_source1_optional_chain_receiver18967).0;
                         match source_ml_temporary_optional_chain80 {
                             self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
                                 _,
@@ -564,24 +564,24 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop116(
                     115, 121, 109, 98, 111, 108, 82, 101, 103, 105, 115, 116, 114, 97, 116, 105,
                     111, 110, 70, 97, 99, 116,
                 ]))) || (({
-                    let source_ml_source1_type_query_operand20281 = match fact.clone() {
+                    let source_ml_source1_type_query_operand18971 = match fact.clone() {
                         self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
                             _,
-                            source_ml_source1_data_property_value20280,
+                            source_ml_source1_data_property_value18970,
                             _,
-                        ) => source_ml_source1_data_property_value20280,
+                        ) => source_ml_source1_data_property_value18970,
                     };
                     self::ml_string::Text::from_units(vec![98, 111, 111, 108, 101, 97, 110])
                 }) != (self::ml_string::Text::from_units(vec![
                     98, 111, 111, 108, 101, 97, 110,
                 ]))))
                     || (({
-                        let source_ml_source1_type_query_operand20285 = match fact.clone() {
+                        let source_ml_source1_type_query_operand18975 = match fact.clone() {
                             self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
-                                source_ml_source1_data_property_value20284,
+                                source_ml_source1_data_property_value18974,
                                 _,
                                 _,
-                            ) => source_ml_source1_data_property_value20284.clone(),
+                            ) => source_ml_source1_data_property_value18974.clone(),
                         };
                         self::ml_string::Text::from_units(vec![98, 105, 103, 105, 110, 116])
                     }) != (self::ml_string::Text::from_units(vec![
@@ -589,28 +589,28 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop116(
                     ]))))
                     || ((match fact.clone() {
                         self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
-                            source_ml_source1_data_property_value20287,
+                            source_ml_source1_data_property_value18977,
                             _,
                             _,
-                        ) => source_ml_source1_data_property_value20287.clone(),
+                        ) => source_ml_source1_data_property_value18977.clone(),
                     }) <= prior))
                     || !(self::test_java_script_ordinary_symbol(
                         match heap.clone() {
                             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                 _,
-                                source_ml_source1_data_property_value20288,
+                                source_ml_source1_data_property_value18978,
                                 _,
                                 _,
                                 _,
                                 _,
-                            ) => source_ml_source1_data_property_value20288.clone(),
+                            ) => source_ml_source1_data_property_value18978.clone(),
                         },
                         match fact.clone() {
                             self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
-                                source_ml_source1_data_property_value20289,
+                                source_ml_source1_data_property_value18979,
                                 _,
                                 _,
-                            ) => source_ml_source1_data_property_value20289.clone(),
+                            ) => source_ml_source1_data_property_value18979.clone(),
                         },
                     ))
                 {
@@ -619,18 +619,18 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop116(
                     {
                         let prior_2 = match fact.clone() {
                             self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
-                                source_ml_source1_data_property_value20290,
+                                source_ml_source1_data_property_value18980,
                                 _,
                                 _,
-                            ) => source_ml_source1_data_property_value20290.clone(),
+                            ) => source_ml_source1_data_property_value18980.clone(),
                         };
                         {
                             let key = match fact.clone() {
                                 self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
                                     _,
                                     _,
-                                    source_ml_source1_data_property_value20291,
-                                ) => ((source_ml_source1_data_property_value20291
+                                    source_ml_source1_data_property_value18981,
+                                ) => ((source_ml_source1_data_property_value18981
                                     .clone()
                                     .unwrap_or_else(|| (None::<self::JavaScriptSemanticValue>,)))
                                 .0)
@@ -643,9 +643,9 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop116(
                             }) && (((!(match fact.clone() {
                                 self::JavaScriptSymbolRegistrationFact::SymbolRegistrationFact(
                                     _,
-                                    source_ml_source1_data_property_value20292,
+                                    source_ml_source1_data_property_value18982,
                                     _,
-                                ) => source_ml_source1_data_property_value20292,
+                                ) => source_ml_source1_data_property_value18982,
                             }) || (match key.clone().expect("a proven present value") {
                                 self::JavaScriptSemanticValue::Text(_) => false,
                                 _ => true,
@@ -719,13 +719,13 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop94(
                     || ((self::find_java_script_ordinary_object(
                         match heap.clone() {
                             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
-                                source_ml_source1_data_property_value20314,
+                                source_ml_source1_data_property_value19004,
                                 _,
                                 _,
                                 _,
                                 _,
                                 _,
-                            ) => source_ml_source1_data_property_value20314.clone(),
+                            ) => source_ml_source1_data_property_value19004.clone(),
                         },
                         symbol.clone(),
                     )) >= 0f64)
