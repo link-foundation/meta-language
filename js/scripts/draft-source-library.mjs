@@ -23,6 +23,13 @@ import {draftJavaScriptErrorSourceClosure} from './draft-javascript-error-source
 
 const root = new URL('../../', import.meta.url);
 export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, publishSourceReceipt=false, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceErrorClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
+  const traceEnabled = process.env.META_LANGUAGE_TRACE_SOURCE_AUTHOR === '1';
+  const started = traceEnabled ? performance.now() : 0;
+  const trace = stage => {
+    if (!traceEnabled) return;
+    const { heapUsed, rss } = process.memoryUsage();
+    console.error(`source author ${sourcePath} ${stage} elapsed=${Math.round(performance.now() - started)}ms heap=${heapUsed}B rss=${rss}B`);
+  };
   if(typeof publishSourceReceipt!=='boolean'||publishSourceReceipt&&(!sourceDependencies||programAsset===undefined||sourceErrorClasses!==''||programEntryPoints!==''||booleanMatchSharing!==''||constructorMatchSharing!==''||conditionalConstructorSharing!==''))throw new TypeError('published source receipts require a complete untransformed dependency program asset');
   if(sourceErrorClasses!==''){
     if(moduleName!==undefined||nativeEntryPoints!==''||programEntryPoints!=='')throw new TypeError('semantic Error source assets use their interpreted module entry ownership; an ordinary generated native library or export projection is not implied');
@@ -36,9 +43,11 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath,{aliases:sourceAliases,classes:sourceClasses,reExports:sourceReExports}) : null;
   const source = sourceClosure?.source ?? readFileSync(new URL(sourcePath, root), 'utf8');
   const sourceSyntax=parseAuthoredJavaScriptModule(source,sourcePath);
+  trace('read declarations');
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
   const originalProgram = checkProgram(parseJavaScript(source, { referenceSemantics }));
   const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,originalProgram) : null;
+  trace('checked declarations');
   if(booleanMatchSharing!==''&&booleanMatchSharing!=='literal Boolean constructor match arms 1')throw new TypeError('unknown source Boolean match sharing selection');
   if(constructorMatchSharing!==''&&constructorMatchSharing!=='closed constructor match sharing 1'||constructorMatchSharing&&booleanMatchSharing)throw new TypeError('unknown or conflicting constructor match sharing selection');
   const sharedMatches=constructorMatchSharing?shareSourceClosedConstructorMatches(originalProgram):booleanMatchSharing?shareSourceBooleanConstructorMatches(originalProgram):undefined;
@@ -55,20 +64,25 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     if(programEntryPoints!==''&&programEntryPoints!=='source module exports 1')throw new TypeError('unknown source program entry-point selection');
     const selected=programEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};programProjection=selected.projection;
     const linked=encodeTypedProgramLinks(selected.program,{valueSharing,recordShapes,...(sourceAliases?{provenance:{sourceModel:model,sourceClosure,sourceDeclarationOwners}}:{})});
+    trace('encoded typed links');
     programText=linked.network.toLino();
+    trace('rendered typed links');
   }
   globalThis.gc?.();
   const emitted = emitRust(nativeSelection.program, { arrayConsumption: true });
+  trace('emitted Rust');
   const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
   if (!header) throw new TypeError('the source translator omitted its library attributes');
   const relocation = readPortableLibraryRelocation([header, ...emitted.preludes, ...emitted.definitions].join('\n\n'));
   const names = [...relocation.source.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
   const loans = readPortableSourceParameterStyles(relocation.source, { publicNames: names });
+  trace('applied Rust parameter styles');
   if (!['apply', 'preserve'].includes(sourceLints)) throw new TypeError('unknown source lint authoring selection');
   // Retain complete unstylized output when the existing style producer cannot
   // distinguish its generated contexts. Its guard and every CI gate stay exact;
   // authoring this source does not report the deferred style as repaired.
   const styles = sourceLints === 'preserve' ? { source: loans.source, actions: [] } : readPortableSourceLintStyles(loans.source);
+  trace('selected Rust lint styles');
   if (!['rustfmt', 'preserve'].includes(sourceFormatting)) throw new TypeError('unknown source formatting selection');
   let output;
   try { output = sourceFormatting === 'preserve' ? styles.source : formatProductRuleSource(styles.source); }
@@ -81,6 +95,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   }
   const files = partitionPortableRustLibrary(output, { directory: moduleName,
     notice: '// Generated from complete ' + sourcePath + '. Do not edit by hand.\n' });
+  trace('formatted and partitioned Rust');
   const base = new URL('rust/src/' + (directory ? directory + '/' : ''), root);
   const stem = 'parity/self-translation/' + moduleName.replaceAll('_', '-');
   const recipeFile=new URL(stem+'-native.lino',root),removedFiles=[];
@@ -130,5 +145,6 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     ...(removedFiles.length?{removedFiles}:{}),
     boundary: 'Complete automatic source generation only. No fixture, behavior comparison, archive replay, product execution or native compilation.',
   });
+  trace('published source files');
   return { files, program:nativeSelection.program, emitted };
 }
