@@ -27,3 +27,13 @@ export function pdfTextOperatorKind(operator) {
 export function pdfDrawingOperator(operator) {
   return operator === 'q' || operator === 'Q' || operator === 'cm' || operator === 'm' || operator === 'l' || operator === 'c' || operator === 're' || operator === 'S' || operator === 's' || operator === 'f' || operator === 'f*' || operator === 'F' || operator === 'B' || operator === 'B*' || operator === 'b' || operator === 'b*' || operator === 'n' || operator === 'sh';
 }
+
+/** @param {string} type @returns {number} */
+export function wordprocessingRelationshipOrder(type) {
+  if (type === 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument' || type === 'http://purl.oclc.org/ooxml/officeDocument/relationships/officeDocument') return 0;
+  if (type === 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/header' || type === 'http://purl.oclc.org/ooxml/officeDocument/relationships/header') return 1;
+  if (type === 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer' || type === 'http://purl.oclc.org/ooxml/officeDocument/relationships/footer') return 2;
+  if (type === 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes' || type === 'http://purl.oclc.org/ooxml/officeDocument/relationships/footnotes' ||
+      type === 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes' || type === 'http://purl.oclc.org/ooxml/officeDocument/relationships/endnotes') return 3;
+  return 4;
+}

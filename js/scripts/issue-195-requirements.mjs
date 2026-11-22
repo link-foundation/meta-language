@@ -457,6 +457,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/visible_document_text/document_package.rs', 'rust/src/link_network/visible_document_text/mod.rs', 'rust/tests/unit/document_containers.rs'],
       },
     },
+    {
+      id: 'I195-I239-PACKAGE-RELATIONSHIPS',
+      source: ISSUE_195_SOURCES.pdfStreamNullCharacters,
+      language: 'WordprocessingML',
+      version: 'ECMA-376 Open Packaging Conventions and transitional or strict WordprocessingML relationship types',
+      construct: 'WordprocessingML package relationship targets',
+      expectedBehavior: 'Package and main-part relationships select the internal WordprocessingML parts, including custom locations, document-relative and package-absolute references. Both input modes retain the selected parts and original coordinates. External, unrelated and foreign-namespace relationships contribute no text. A missing or invalid internal target reports the original relationship entry range.',
+      fixture: 'parity/fixtures/wordprocessing-relationships.lino',
+      selector: 'stored and deflated custom part locations with relative, absolute, external and wrong-namespace relationships, plus an invalid internal target',
+      assertions: ['opcRelationshipsResolveInternalParts', 'opcRelationshipsKeepSourceRanges', 'invalidOpcTargetKeepsRelationshipRange'],
+      implementationEntryPoints: {
+        javascript: ['js/src/open-packaging-conventions.js', 'js/src/visible-document-text.js', 'js/tests/wordprocessing-package.test.js'],
+        rust: ['rust/src/link_network/visible_document_text/document_package.rs', 'rust/tests/unit/document_containers.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I235-GRAMMAR-SEARCH-SPANS',

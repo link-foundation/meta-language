@@ -169,12 +169,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
     }
 }
 
-#[test]
-fn wordprocessing_packages_keep_parts_and_character_ranges() {
-    let fixture = read_project_data(include_str!(
-        "../../../parity/fixtures/wordprocessing-package.lino"
-    ))
-    .expect("WordprocessingML packages");
+fn check_wordprocessing_parts(fixture: &Value, visible: &str, relationship_selected: bool) {
     let cases = fixture["cases"].as_array().expect("ZIP cases");
     let names = fixture["names"].as_array().expect("part names");
     let parts = fixture["parts"].as_array().expect("part texts");
@@ -227,7 +222,6 @@ fn wordprocessing_packages_keep_parts_and_character_ranges() {
                 fixture["expectedText"].as_str().expect("package text")
             );
             let part_start = offset(&ranges[0][0]);
-            let visible = "Кошка";
             let (start, end) = if compression == "stored" {
                 let start = part_start
                     + parts[0]
@@ -246,17 +240,35 @@ fn wordprocessing_packages_keep_parts_and_character_ranges() {
             let all = projection
                 .source_range(0, projection.text.len())
                 .expect("covering range");
-            assert!(
-                all.start() <= coordinate(offset(&ranges[1][0]) + 200)
-                    && all.end() >= coordinate(offset(&ranges[3][0]))
-            );
+            if relationship_selected {
+                for range in ranges {
+                    assert!(
+                        all.start() < coordinate(offset(&range[1]))
+                            && all.end() > coordinate(offset(&range[0]))
+                    );
+                }
+            } else {
+                assert!(
+                    all.start() <= coordinate(offset(&ranges[1][0]) + 200)
+                        && all.end() >= coordinate(offset(&ranges[3][0]))
+                );
+            }
         }
     }
+}
+
+#[test]
+fn wordprocessing_packages_keep_parts_and_character_ranges() {
+    let fixture = read_project_data(include_str!(
+        "../../../parity/fixtures/wordprocessing-package.lino"
+    ))
+    .expect("WordprocessingML packages");
+    check_wordprocessing_parts(&fixture, "Кошка", false);
     let damaged = octets(&fixture["corrupt"]);
     let network = LinkNetwork::parse_bytes(&damaged, "DOCX");
     assert!(!network.verify_full_match(None).is_clean());
     assert_eq!(network.reconstruct_bytes(), damaged);
-    let range = &cases[0]["ranges"][0];
+    let range = &fixture["cases"][0]["ranges"][0];
     assert!(network.links().any(|link| {
         link.metadata().flags().is_error()
             && link
@@ -268,6 +280,7 @@ fn wordprocessing_packages_keep_parts_and_character_ranges() {
             })
     }));
     let surviving = network.derived_documents();
+    let names = fixture["names"].as_array().expect("part names");
     assert_eq!(surviving.len(), names.len() - 1);
     assert!(
         surviving
@@ -286,5 +299,60 @@ fn wordprocessing_packages_keep_parts_and_character_ranges() {
             "corruptOpcPartKeepsLocatedError",
         ],
         test_name: "wordprocessing_packages_keep_parts_and_character_ranges",
+    });
+}
+
+#[test]
+fn wordprocessing_relationships_select_named_parts_and_resolve_internal_targets() {
+    const FIXTURE: &str = "parity/fixtures/wordprocessing-relationships.lino";
+    let fixture = read_project_data(include_str!(
+        "../../../parity/fixtures/wordprocessing-relationships.lino"
+    ))
+    .expect("WordprocessingML relationships");
+    check_wordprocessing_parts(&fixture, "Корпус", true);
+    let missing = &fixture["missing"];
+    let bytes = octets(&missing["archive"]);
+    let network = LinkNetwork::parse_bytes(&bytes, "DOCX");
+    assert!(!network.verify_full_match(None).is_clean());
+    assert_eq!(network.reconstruct_bytes(), bytes);
+    let range = &missing["relationshipRange"];
+    assert!(network.links().any(|link| {
+        let metadata = link.metadata();
+        metadata.flags().is_error()
+            && metadata.term() == Some("ERROR")
+            && metadata
+                .definition()
+                .is_some_and(|text| text.contains("../../../outside.xml"))
+            && metadata.span().is_some_and(|span| {
+                span.byte_range() == ByteRange::new(offset(&range[0]), offset(&range[1]))
+            })
+    }));
+    let names: Vec<_> = fixture["names"]
+        .as_array()
+        .expect("part names")
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| *index != 1)
+        .map(|(_, name)| name.as_str().expect("part name"))
+        .collect();
+    assert_eq!(
+        network
+            .derived_documents()
+            .iter()
+            .map(|document| document.name.as_str())
+            .collect::<Vec<_>>(),
+        names
+    );
+    record(&Observation {
+        requirement_id: "I195-I239-PACKAGE-RELATIONSHIPS",
+        suffix: "behavior",
+        fixture_id: "i195-i239-package-relationships",
+        fixture_file: FIXTURE,
+        assertions: &[
+            "opcRelationshipsResolveInternalParts",
+            "opcRelationshipsKeepSourceRanges",
+            "invalidOpcTargetKeepsRelationshipRange",
+        ],
+        test_name: "wordprocessing_relationships_select_named_parts_and_resolve_internal_targets",
     });
 }

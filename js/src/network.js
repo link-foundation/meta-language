@@ -47,7 +47,7 @@ import {
 } from './translation/embedded-region-rules.js';
 import { acceptNetworkProjection, acceptNetworkProjectionLink } from './network-projection-rules.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
-import { projectVisibleDocumentText } from './visible-document-text.js';
+import { projectVisibleDocumentText, readPackageRelationships } from './visible-document-text.js';
 import { hasZipHeader, readBinaryString, readWordprocessingPackage } from './open-packaging-conventions.js';
 import { binaryStringCoordinates } from './binary-string-source.js';
 import { readPdfDocument } from './pdf-document.js';
@@ -231,7 +231,8 @@ export class LinkNetwork {
   }
 
   _insertWordprocessingPackage(bytes, language, coordinates, configuration, encoding) {
-    const { parts, errors } = readWordprocessingPackage(bytes);
+    const { parts, errors } = readWordprocessingPackage(bytes, text =>
+      readPackageRelationships(LinkNetwork._parseWithLinks(text, 'DOCX', configuration).network, text));
     const recovery = errors.map(diagnostic => {
       const span = coordinates(diagnostic.offset, diagnostic.end ?? Math.min(bytes.length, diagnostic.offset + 1));
       return this.insertLink([], new LinkMetadata({ linkType: LinkType.Syntax, term: 'ERROR', language,

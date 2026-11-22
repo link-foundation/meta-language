@@ -45,6 +45,48 @@ function markupName(tag, read, kinds) {
   return name ? read(name.start, name.end) : '';
 }
 
+export function readPackageRelationships(network, text) {
+  if (!network.verifyFullMatch().isClean()) throw new Error('invalid OPC relationships XML');
+  const bytes = utf8.encode(text);
+  const read = (start, end) => readUtf8.decode(bytes.subarray(start, end));
+  const document = syntaxLinks(network).find(record => record.term === 'element');
+  const openTag = element => element?.children.find(child => child.term === 'STag' || child.term === 'EmptyElemTag');
+  const attributes = tag => new Map(tag.children.filter(child => child.term === 'Attribute').map(attribute => {
+    const name = markupName(attribute, read, ['Name']);
+    const value = attribute.children.find(child => child.term === 'AttValue');
+    const content = value ? read(value.start + 1, value.end - 1) : '';
+    const decoded = content.replace(/&[^&;]*;|&/gu, entity => {
+      const reference = documentCharacterReference(entity, 0, 'xml');
+      if (reference?.end !== entity.length) throw new Error('invalid OPC relationship attribute');
+      return reference.text;
+    });
+    return [name, decoded];
+  }));
+  const namespace = 'http://schemas.openxmlformats.org/package/2006/relationships';
+  const describe = tag => {
+    const qualified = markupName(tag, read, ['Name']);
+    const colon = qualified.indexOf(':');
+    return { name: qualified.slice(colon + 1), binding: colon === -1 ? 'xmlns' : `xmlns:${qualified.slice(0, colon)}` };
+  };
+  const root = openTag(document);
+  if (!root) throw new Error('missing OPC relationships element');
+  const rootName = describe(root);
+  const bindings = attributes(root);
+  if (rootName.name !== 'Relationships' || bindings.get(rootName.binding) !== namespace) throw new Error('invalid OPC relationships element');
+  const content = document.children.find(child => child.term === 'content');
+  const relationships = [];
+  for (const child of content?.children ?? []) {
+    if (child.term !== 'element') continue;
+    const tag = openTag(child);
+    if (!tag) continue;
+    const { name, binding } = describe(tag);
+    const fields = attributes(tag);
+    if (name !== 'Relationship' || (fields.get(binding) ?? bindings.get(binding)) !== namespace) continue;
+    relationships.push({ type: fields.get('Type'), target: fields.get('Target'), mode: fields.get('TargetMode') });
+  }
+  return relationships;
+}
+
 function htmlName(tag, read) {
   return markupName(tag, read, ['tag_name', 'erroneous_end_tag_name']).toLowerCase();
 }

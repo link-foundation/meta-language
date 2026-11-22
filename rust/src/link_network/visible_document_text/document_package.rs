@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::str;
 
 use miniz_oxide::inflate::decompress_to_vec_with_limit;
@@ -6,7 +6,10 @@ use miniz_oxide::inflate::decompress_to_vec_with_limit;
 use super::document_container::{
     BinaryStringCoordinates, binary_string_bytes, insert_derived_document, text_source_span,
 };
-use super::document_container_policy::document_stream_fits_budget;
+use super::document_container_policy::{
+    document_stream_fits_budget, wordprocessing_relationship_order,
+};
+use super::{DocumentSyntax, ReferenceSyntax, SyntaxRecord, character_reference};
 use crate::line_index::LineIndex;
 use crate::{
     LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, SourceSpan,
@@ -69,6 +72,7 @@ pub(crate) fn parse_package_string(
     network
 }
 
+#[derive(Clone, Copy)]
 struct Entry<'name> {
     name: &'name str,
     start: usize,
@@ -253,6 +257,265 @@ fn decode_part(
         .map_err(|_| error("invalid UTF-8 OPC part"))
 }
 
+struct Relationship {
+    kind: String,
+    target: String,
+    mode: Option<String>,
+}
+
+fn relationship_attributes<'source>(
+    syntax: &DocumentSyntax<'source>,
+    tag: &SyntaxRecord<'source>,
+) -> Result<BTreeMap<&'source str, String>, &'static str> {
+    let mut fields = BTreeMap::new();
+    for attribute in tag.children.iter().filter_map(|id| syntax.records.get(id)) {
+        if attribute.term != "Attribute" {
+            continue;
+        }
+        let Some(name) = syntax.child(attribute, |term| term == "Name") else {
+            continue;
+        };
+        let value = syntax
+            .child(attribute, |term| term == "AttValue")
+            .map_or("", |value| {
+                let text = syntax.read(value.range);
+                text.get(1..text.len().saturating_sub(1))
+                    .unwrap_or_default()
+            });
+        let mut decoded = String::new();
+        let mut rest = value;
+        while let Some(index) = rest.find('&') {
+            decoded.push_str(&rest[..index]);
+            let (size, reference) = character_reference(&rest[index..], ReferenceSyntax::Xml)
+                .ok_or("invalid OPC relationship attribute")?;
+            decoded.push_str(&reference);
+            rest = &rest[index + size..];
+        }
+        decoded.push_str(rest);
+        fields.insert(syntax.read(name.range), decoded);
+    }
+    Ok(fields)
+}
+
+fn relationship_name<'source>(
+    syntax: &DocumentSyntax<'source>,
+    tag: &SyntaxRecord<'source>,
+) -> (&'source str, String) {
+    let name = syntax
+        .child(tag, |term| term == "Name")
+        .map_or("", |name| syntax.read(name.range));
+    name.split_once(':').map_or_else(
+        || (name, "xmlns".to_owned()),
+        |(prefix, local)| (local, format!("xmlns:{prefix}")),
+    )
+}
+
+fn package_relationships(
+    text: &str,
+    configuration: ParseConfiguration,
+) -> Result<Vec<Relationship>, &'static str> {
+    const NAMESPACE: &str = "http://schemas.openxmlformats.org/package/2006/relationships";
+    let network = crate::docx_parser::parse_xml(text, "DOCX", configuration);
+    if !network.verify_full_match(None).is_clean() {
+        return Err("invalid OPC relationships XML");
+    }
+    let syntax = DocumentSyntax::new(&network, text);
+    let records = syntax.in_language(Some("DOCX"));
+    let document = records
+        .into_iter()
+        .find(|record| record.term == "element")
+        .ok_or("missing OPC relationships element")?;
+    let open_tag = |term: &str| matches!(term, "STag" | "EmptyElemTag");
+    let root = syntax
+        .child(document, open_tag)
+        .ok_or("missing OPC relationships element")?;
+    let (name, binding) = relationship_name(&syntax, root);
+    let bindings = relationship_attributes(&syntax, root)?;
+    if name != "Relationships"
+        || bindings.get(binding.as_str()).map(String::as_str) != Some(NAMESPACE)
+    {
+        return Err("invalid OPC relationships element");
+    }
+    let mut result = Vec::new();
+    if let Some(content) = syntax.child(document, |term| term == "content") {
+        for child in content
+            .children
+            .iter()
+            .filter_map(|id| syntax.records.get(id))
+        {
+            if child.term != "element" {
+                continue;
+            }
+            let Some(tag) = syntax.child(child, open_tag) else {
+                continue;
+            };
+            let (name, binding) = relationship_name(&syntax, tag);
+            let mut fields = relationship_attributes(&syntax, tag)?;
+            let binding = binding.as_str();
+            if name == "Relationship"
+                && fields
+                    .get(binding)
+                    .or_else(|| bindings.get(binding))
+                    .map(String::as_str)
+                    == Some(NAMESPACE)
+            {
+                result.push(Relationship {
+                    kind: fields.remove("Type").unwrap_or_default(),
+                    target: fields.remove("Target").unwrap_or_default(),
+                    mode: fields.remove("TargetMode"),
+                });
+            }
+        }
+    }
+    Ok(result)
+}
+
+fn resolve_package_target(source_name: &str, target: &str) -> Option<String> {
+    if target.is_empty()
+        || target
+            .bytes()
+            .any(|byte| byte <= 0x20 || matches!(byte, 0x7f | b'\\' | b':' | b'#' | b'?'))
+    {
+        return None;
+    }
+    let mut segments = Vec::new();
+    if !target.starts_with('/')
+        && let Some((directory, _)) = source_name.rsplit_once('/')
+    {
+        segments.extend(directory.split('/'));
+    }
+    for segment in target.strip_prefix('/').unwrap_or(target).split('/') {
+        match segment {
+            "" => return None,
+            "." => continue,
+            ".." => {
+                segments.pop()?;
+            }
+            _ => segments.push(segment),
+        }
+    }
+    (!segments.is_empty()).then(|| segments.join("/"))
+}
+
+fn relationship_targets<'entries, 'source>(
+    source: &[u8],
+    entries: &'entries BTreeMap<&'source str, Entry<'source>>,
+    entry: &Entry<'_>,
+    source_name: &str,
+    configuration: ParseConfiguration,
+    decoded_bytes: &mut usize,
+    errors: &mut Vec<PackageError>,
+) -> Vec<(u8, &'entries Entry<'source>)> {
+    let relationships = decode_part(source, entry, decoded_bytes).and_then(|text| {
+        package_relationships(&text, configuration)
+            .map_err(|message| PackageError::part(entry, message))
+    });
+    let relationships = match relationships {
+        Ok(relationships) => relationships,
+        Err(error) => {
+            errors.push(error);
+            return Vec::new();
+        }
+    };
+    let mut result = Vec::new();
+    for relation in relationships {
+        let order = wordprocessing_relationship_order(&relation.kind);
+        let mode = relation.mode.as_deref();
+        if order >= 4 || (order == 0) != source_name.is_empty() || mode == Some("External") {
+            continue;
+        }
+        let target = if matches!(mode, None | Some("Internal")) {
+            resolve_package_target(source_name, &relation.target)
+        } else {
+            None
+        };
+        if let Some(selected) = target.as_deref().and_then(|name| entries.get(name)) {
+            result.push((order, selected));
+        } else {
+            errors.push(PackageError::part(
+                entry,
+                &format!(
+                    "missing or invalid WordprocessingML relationship target: {}",
+                    relation.target
+                ),
+            ));
+        }
+    }
+    result
+}
+
+fn select_wordprocessing_parts<'entries, 'source>(
+    source: &[u8],
+    entries: &'entries BTreeMap<&'source str, Entry<'source>>,
+    configuration: ParseConfiguration,
+    decoded_bytes: &mut usize,
+    errors: &mut Vec<PackageError>,
+) -> Vec<(u8, &'entries Entry<'source>)> {
+    let package = entries.get("_rels/.rels");
+    let main = if let Some(package) = package {
+        let root = relationship_targets(
+            source,
+            entries,
+            package,
+            "",
+            configuration,
+            decoded_bytes,
+            errors,
+        );
+        if root.len() > 1 {
+            errors.push(PackageError::part(
+                package,
+                "multiple WordprocessingML document relationships",
+            ));
+        }
+        if let [(_, main)] = root.as_slice() {
+            Some(*main)
+        } else {
+            None
+        }
+    } else {
+        entries.get("word/document.xml")
+    };
+    let mut selected = Vec::new();
+    if let Some(main) = main {
+        selected.push((0, main));
+        let (directory, name) = main
+            .name
+            .rsplit_once('/')
+            .map_or(("", main.name), |(directory, name)| (directory, name));
+        let relationship = if directory.is_empty() {
+            format!("_rels/{name}.rels")
+        } else {
+            format!("{directory}/_rels/{name}.rels")
+        };
+        if let Some(entry) = entries.get(relationship.as_str()) {
+            let mut names = HashSet::from([main.name]);
+            selected.extend(
+                relationship_targets(
+                    source,
+                    entries,
+                    entry,
+                    main.name,
+                    configuration,
+                    decoded_bytes,
+                    errors,
+                )
+                .into_iter()
+                .filter(|(_, candidate)| names.insert(candidate.name)),
+            );
+            return selected;
+        }
+    }
+    if package.is_none() {
+        selected.extend(entries.values().filter_map(|entry| {
+            part_order(entry.name)
+                .filter(|order| *order > 0)
+                .map(|order| (order, entry))
+        }));
+    }
+    selected
+}
+
 pub(crate) fn attach_wordprocessing_package(
     network: &mut LinkNetwork,
     parent: LinkId,
@@ -267,20 +530,29 @@ pub(crate) fn attach_wordprocessing_package(
     match directory(source) {
         Ok(entries) => {
             let mut decoded_bytes = 0;
-            for entry in entries {
-                let Some(order) = part_order(entry.name) else {
-                    continue;
-                };
-                match decode_part(source, &entry, &mut decoded_bytes) {
+            let entries = entries
+                .into_iter()
+                .map(|entry| (entry.name, entry))
+                .collect();
+            let mut selected = select_wordprocessing_parts(
+                source,
+                &entries,
+                configuration,
+                &mut decoded_bytes,
+                &mut errors,
+            );
+            selected.sort_by_key(|(order, entry)| (*order, entry.start));
+            for (order, entry) in selected {
+                match decode_part(source, entry, &mut decoded_bytes) {
                     Ok(text) => {
                         let document = crate::docx_parser::parse_xml(&text, "DOCX", configuration);
                         let clean = document.verify_full_match(None).is_clean();
-                        parts.push((order, entry, document, clean));
+                        parts.push((order, *entry, document, clean));
                     }
                     Err(error) => errors.push(error),
                 }
             }
-            if !parts.iter().any(|(order, _, _, _)| *order == 0) {
+            if !parts.iter().any(|(order, ..)| *order == 0) {
                 errors.push(PackageError::at(
                     source,
                     0,
@@ -318,7 +590,6 @@ pub(crate) fn attach_wordprocessing_package(
                 .with_flags(LinkFlags::error()),
         );
     }
-    parts.sort_by_key(|(order, entry, _, _)| (*order, entry.start));
     for (_, entry, document, clean) in parts {
         let compression = if entry.method == 8 {
             "deflate"

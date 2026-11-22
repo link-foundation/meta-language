@@ -1,5 +1,5 @@
 import { inflateRawSync } from 'node:zlib';
-import { documentStreamFitsBudget } from './document-container-policy.js';
+import { documentStreamFitsBudget, wordprocessingRelationshipOrder } from './document-container-policy.js';
 
 const localHeader = 0x04034b50;
 const centralHeader = 0x02014b50;
@@ -114,35 +114,82 @@ export function readNamedZipEntries(bytes, names) {
   return result;
 }
 
-export function readWordprocessingPackage(bytes) {
+export function readWordprocessingPackage(bytes, parseRelationships) {
   const directory = zipDirectory(bytes);
   if (directory.error) return { parts: [], errors: [directory] };
   const parts = [];
   const errors = [];
   let textBytes = 0;
-  for (const entry of directory.entries) {
-    if (!/^word\/(?:document|header\d*|footer\d*|footnotes|endnotes)\.xml$/u.test(entry.name)) continue;
+  const entries = new Map(directory.entries.map(entry => [entry.name, entry]));
+  function readPart(entry) {
+    const { start, end, uncompressed } = entry;
+    if (!documentStreamFitsBudget(end - start, uncompressed, textBytes)) throw new Error('OPC part exceeds the decoded size limit');
+    // Charge the announced output before decoding so corrupt parts also use the budget.
+    textBytes += uncompressed;
+    const decoded = decodeZipEntry(bytes, entry);
+    try { return packageText.decode(decoded); }
+    catch { throw new Error('invalid UTF-8 OPC part'); }
+  }
+  const diagnostics = (entry, error) => errors.push({ error: `${entry.name}: ${error.message}`, offset: entry.start, end: entry.end });
+  const readRelations = (entry, accept, sourceName) => {
+    const targets = [];
     try {
-      const { name, start, end, method, uncompressed } = entry;
-      if (!documentStreamFitsBudget(end - start, uncompressed, textBytes)) throw new Error('OPC part exceeds the decoded size limit');
-      // Charge the announced output before decoding so corrupt parts also use the budget.
-      textBytes += uncompressed;
-      const decoded = decodeZipEntry(bytes, entry);
-      let text;
-      try { text = packageText.decode(decoded); }
-      catch { throw new Error('invalid UTF-8 OPC part'); }
-      parts.push({ name, start, end, compression: method === 8 ? 'deflate' : 'stored', text });
-    } catch (error) {
-      errors.push({ error: `${entry.name}: ${error.message}`, offset: entry.start, end: entry.end });
+      for (const { type, target, mode } of parseRelationships(readPart(entry))) {
+        const order = wordprocessingRelationshipOrder(type ?? '');
+        if (!accept(order) || mode === 'External') continue;
+        const name = mode === undefined || mode === 'Internal' ? resolvePackageTarget(sourceName, target) : null;
+        if (!name || !entries.has(name)) {
+          diagnostics(entry, new Error(`missing or invalid WordprocessingML relationship target: ${target ?? ''}`));
+          continue;
+        }
+        targets.push({ name, order });
+      }
+    } catch (error) { diagnostics(entry, error); }
+    return targets;
+  };
+  const packageRelationships = entries.get('_rels/.rels');
+  const mainTargets = packageRelationships ? readRelations(packageRelationships, order => order === 0, '') : [];
+  if (mainTargets.length > 1) diagnostics(packageRelationships, new Error('multiple WordprocessingML document relationships'));
+  const main = packageRelationships ? (mainTargets.length === 1 ? mainTargets[0].name : null) : 'word/document.xml';
+  const slash = main?.lastIndexOf('/') ?? -1;
+  const partRelationships = main && entries.get(`${main.slice(0, slash + 1)}_rels/${main.slice(slash + 1)}.rels`);
+  const selected = new Map();
+  if (main && entries.has(main)) selected.set(main, 0);
+  if (partRelationships) {
+    for (const { name, order } of readRelations(partRelationships, value => value > 0 && value < 4, main)) {
+      if (!selected.has(name)) selected.set(name, order);
+    }
+  } else if (!packageRelationships) {
+    for (const name of entries.keys()) {
+      if (/^word\/(?:header\d*|footer\d*|footnotes|endnotes)\.xml$/u.test(name)) selected.set(name, wordPartOrder(name));
     }
   }
-  if (!parts.some(part => part.name === 'word/document.xml')) errors.push({ error: 'missing WordprocessingML document part', offset: 0 });
-  parts.sort((left, right) => wordPartOrder(left.name) - wordPartOrder(right.name) || left.start - right.start);
+  const ordered = [...selected].map(([name, order]) => ({ entry: entries.get(name), order }));
+  ordered.sort((left, right) => left.order - right.order || left.entry.start - right.entry.start);
+  for (const { entry, order } of ordered) {
+    const { name, start, end, method } = entry;
+    try { parts.push({ name, order, start, end, compression: method === 8 ? 'deflate' : 'stored', text: readPart(entry) }); }
+    catch (error) { diagnostics(entry, error); }
+  }
+  if (!parts.some(part => part.order === 0)) errors.push({ error: 'missing WordprocessingML document part', offset: 0 });
   return { parts, errors };
 }
 
+function resolvePackageTarget(sourceName, target) {
+  if (!target || /[\u0000-\u0020\u007f\\:#?]/u.test(target)) return null;
+  const segments = target.startsWith('/') || !sourceName ? [] : sourceName.split('/').slice(0, -1);
+  for (const segment of target.replace(/^\//u, '').split('/')) {
+    if (!segment) return null;
+    if (segment === '.') continue;
+    if (segment === '..') {
+      if (!segments.length) return null;
+      segments.pop();
+    } else segments.push(segment);
+  }
+  return segments.join('/') || null;
+}
+
 function wordPartOrder(name) {
-  if (name === 'word/document.xml') return 0;
   if (name.startsWith('word/header')) return 1;
   if (name.startsWith('word/footer')) return 2;
   return 3;

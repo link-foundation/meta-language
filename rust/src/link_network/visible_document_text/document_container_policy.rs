@@ -47,3 +47,19 @@ pub(super) fn pdf_drawing_operator(operator: &str) -> bool {
             | "sh"
     )
 }
+
+pub(super) fn wordprocessing_relationship_order(kind: &str) -> u8 {
+    match kind {
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+        | "http://purl.oclc.org/ooxml/officeDocument/relationships/officeDocument" => 0,
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header"
+        | "http://purl.oclc.org/ooxml/officeDocument/relationships/header" => 1,
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer"
+        | "http://purl.oclc.org/ooxml/officeDocument/relationships/footer" => 2,
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes"
+        | "http://purl.oclc.org/ooxml/officeDocument/relationships/footnotes"
+        | "http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes"
+        | "http://purl.oclc.org/ooxml/officeDocument/relationships/endnotes" => 3,
+        _ => 4,
+    }
+}

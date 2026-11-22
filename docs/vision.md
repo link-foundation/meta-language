@@ -1811,7 +1811,9 @@ coordinates belong to the child network. Uncompressed selections can resolve
 to individual physical spans. Compressed selections resolve to the covering
 encoded stream or ZIP entry. Optional PDF decoding uses bounded filters and
 keeps the original content bytes. Invalid streams and package entries carry
-diagnostics with a physical source span.
+diagnostics with a physical source span. WordprocessingML package relationships
+select the main part and its internal headers, footers, and notes. A package
+without relationship metadata can use conventional part names.
 
 An inspectable linked `any-grammar` or `all-grammar` selection rule invokes
 supported grammar definitions recursively through the same algorithms and
