@@ -59,6 +59,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/scripts/test-groups.mjs',
     'js/scripts/tooling-frozen-source-history.mjs',
     'js/tests/issue-195-evidence-node-dependency.test.js',
+    'js/tests/issue-195-evidence-node-test-placement.test.js',
     'js/tests/issue-195-evidence-tooling-frozen-sources.test.js',
     'js/tests/self-translation.test.js',
     'js/tests/test-groups.test.js',
