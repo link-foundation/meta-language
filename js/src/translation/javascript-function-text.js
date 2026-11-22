@@ -14,7 +14,12 @@ export function readJavaScriptFunctionSourceSpanError(sources,span){
 export function readJavaScriptFunctionSourceDirectoryError(program){
  /** @type {JavaScriptCallSourceUnit[]} */const emptySources=[];
  const retainedSources=program.sources;
- /** @type {JavaScriptCallSourceUnit[]} */const sources=retainedSources===undefined?emptySources:retainedSources;if(!Array.isArray(sources)||sources.length>4096)return 'function source units exceed their shared static directory budget';let total=0;
+ if(retainedSources===undefined)return readJavaScriptFunctionSourceDirectoryEntriesError(program,emptySources);
+ return readJavaScriptFunctionSourceDirectoryEntriesError(program,retainedSources);
+}
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallSourceUnit[]} sources @returns {string} */
+function readJavaScriptFunctionSourceDirectoryEntriesError(program,sources){
+ if(!Array.isArray(sources)||sources.length>4096)return 'function source units exceed their shared static directory budget';let total=0;
  for(let index=0;index<sources.length;index++){const row=sources[index];if(row===null||typeof row!=='object'||row.$!=='callSourceUnit'||typeof row.identifier!=='string'||row.identifier.length===0||row.identifier.length>8192||sources.slice(0,index).some(prior=>prior.identifier===row.identifier)||row.text===null||typeof row.text!=='object'||row.text.$!=='text'&&row.text.$!=='sourceText'||readJavaScriptSemanticValueError(row.text)!=='')return 'function source units retain unique complete supplied source identifiers and text';total+=readJavaScriptSemanticTextLength(row.text);if(total>16777216)return 'function source units exceed their shared UTF16 storage profile';}
  for(const fn of program.functions){const source=fn.source;if(source===undefined)continue;const error=readJavaScriptFunctionSourceSpanError(sources,source);if(error!=='')return error;if(!['strict','ordinary class','derived Error'].includes(fn.receiverMode))return 'portable intrinsic bodies do not establish original function source text';}
  for(const template of program.templates??[]){const source=template.source;if(source===undefined)continue;const error=readJavaScriptFunctionSourceSpanError(sources,source);if(error!=='')return error;const owner=program.functions[findJavaScriptCallCodeFunction(program,template.owner)];if(owner?.source===undefined||owner.source.unit!==source.unit||source.start<owner.source.start||source.end>owner.source.end)return 'lexical source sites remain inside their actual original source owner';}

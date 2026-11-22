@@ -81,10 +81,12 @@ export function stepJavaScriptInstanceOf(heap,state){
  }
  if(state.phase==='prototype'){
   if(right.$!=='object'||!right.callable)return finishJavaScriptInstanceOf(heap,state,false);
-  const bound=heap.objects[findJavaScriptOrdinaryObject(heap.objects,right.identity)];if(bound!==undefined&&bound.$==='boundFunctionObject'){
+  const identity=right.identity;
+  if(identity===undefined)return {$:'instanceOfInvalid',heap,reason:'instanceof requires an actual callable object identity'};
+  const bound=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];if(bound!==undefined&&bound.$==='boundFunctionObject'){
    /** @type {bigint[]} */const emptyPath=[];const retainedPath=state.boundPath,boundPath=retainedPath===undefined?emptyPath:retainedPath;
    if(boundPath.length>=4096)return {$:'instanceOfResourceLimit',heap,state,reason:'bound instanceof delegation exceeds its explicit target path budget'};
-   return {$:'instanceOfContinue',heap,state:{...state,phase:'method',candidate:bound.boundTarget,boundPath:boundPath.concat([right.identity]),prototype:{$:'undefined'},cursor:{$:'undefined'},visited:[]}};
+   return {$:'instanceOfContinue',heap,state:{...state,phase:'method',candidate:bound.boundTarget,boundPath:boundPath.concat([identity]),prototype:{$:'undefined'},cursor:{$:'undefined'},visited:[]}};
   }
   if(state.left.$!=='object')return finishJavaScriptInstanceOf(heap,state,false);
   const get=planJavaScriptOrdinaryGet(heap,right.identity,{$:'text',units:[112,114,111,116,111,116,121,112,101]},right);if(get.error!=='')return {$:'instanceOfInvalid',heap,reason:get.error};
