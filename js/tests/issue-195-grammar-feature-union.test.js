@@ -367,7 +367,7 @@ test('no JavaScript source module imports peggy, which is only a development dep
   }
   const manifest = readProjectData(new URL('js/package.json', repositoryRoot));
   assert.equal(manifest.dependencies.peggy, undefined);
-  assert.equal(manifest.devDependencies.peggy, '5.1.0');
+  assert.equal(manifest.devDependencies.peggy, '5.1.1');
 });
 
 test('node kinds no rule defines keep their source names in the links form', () => {

@@ -2,7 +2,7 @@
 //!
 //! The links are read from the built-in lossless `LiNo` CST
 //! ([`parse_lino_cst`]) with the transformation the official links-notation
-//! 0.22 `Parser` applies to its raw parse (`links-notation/src/Parser.js`): an
+//! `Parser` applies to its raw parse (`links-notation/src/Parser.js`): an
 //! indented id takes the lines below it as its values, a line with values and
 //! indented lines is combined with each of them, and a parenthesized group
 //! holding one link is that link. Every link becomes a Relation spanning its
@@ -18,7 +18,7 @@ use serde::ser::{Serialize, SerializeSeq, Serializer};
 
 use crate::builtin_grammar::GrammarNode;
 use crate::line_index::LineIndex;
-use crate::lino_grammar::{parse_lino_cst, quoted_reference_value};
+use crate::lino_grammar::{parse_lino_cst, quoted_reference_value, reference_literal_prefix_end};
 use crate::{
     ByteRange, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, SourceSpan,
     structured_text_parser,
@@ -219,7 +219,10 @@ fn quote_name(name: &str) -> String {
         matches!(character, ' ' | '\t' | '\n' | '\r' | '(' | ')' | ':')
             || QUOTES.contains(&character)
     };
-    if !name.contains(special) && !name.starts_with('#') {
+    if !name.contains(special)
+        && !name.starts_with('#')
+        && reference_literal_prefix_end(name.as_bytes()).is_none()
+    {
         return name.to_owned();
     }
     let quote = QUOTES
@@ -357,7 +360,8 @@ impl<'a> LinoSemantics<'a> {
         let (start, end) = (node.start, node.end);
         match node.term {
             "reference" => RawItem::Reference {
-                id: self.text[start..end].to_owned(),
+                id: links_notation::decode_reference_literal(&self.text[start..end])
+                    .unwrap_or_else(|_| self.text[start..end].to_owned()),
                 start,
                 end,
             },

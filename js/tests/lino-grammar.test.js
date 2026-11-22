@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
 import { LinkNetwork, LinkType } from '../src/index.js';
+import { decodeReferenceLiteral, hasReferenceLiteralPrefix } from 'links-notation/src/ReferenceLiteral.js';
 
 const { cases } = readProjectData(new URL('../../parity/fixtures/lino-grammar-cases.json', import.meta.url));
 
@@ -70,7 +71,7 @@ function decodeQuoted(text) {
  */
 function officialShape(node, bytes) {
   const text = decoder.decode(bytes.slice(node.span.byteRange.start, node.span.byteRange.end));
-  if (node.term === 'reference') return { id: text, values: [], children: [] };
+  if (node.term === 'reference') return { id: hasReferenceLiteralPrefix(text) ? decodeReferenceLiteral(text) : text, values: [], children: [] };
   if (node.term === 'quoted_reference') return { id: decodeQuoted(text), values: [], children: [] };
   const children = node.children.filter((child) => child.field === 'child').map((child) => officialShape(child, bytes));
   if (node.term === 'group') {

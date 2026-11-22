@@ -15,8 +15,13 @@
 // reference is a link with an id and no values or children; a parenthesized
 // group is {nested, children} with the links read inside the parentheses.
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
+import { selfTranslate } from '../src/self-translation.js';
 
 import { DEFAULT_MAX_DEPTH } from 'links-notation/src/Parser.js';
 import { stripComments } from 'links-notation/src/comments.js';
@@ -55,6 +60,10 @@ const HAND_WRITTEN = [
   `${'('.repeat(DEFAULT_MAX_DEPTH + 1)}a${')'.repeat(DEFAULT_MAX_DEPTH + 1)}\n`,
   staircase(DEFAULT_MAX_DEPTH + 1), staircase(DEFAULT_MAX_DEPTH + 2),
   `${'"'.repeat(40)}x${'"'.repeat(40)}\n`, `${'"'.repeat(41)}\n`, `${'(a '.repeat(30)}\n`,
+  // Version 1 reference literals encode exact UTF-8 and reserve the prefix.
+  '~1{61}: ~1{c3a9}\n', '~1{}\n', '~1{00}\n', '~1{efbbbf}\n',
+  '~1{gg}\n', '~1{ff}\n', '~2{61}\n', '~1{6}\n', '~1{61\n', '"~1{61}"\n',
+  '(a)" #kept" # π discarded\n', '~1{61}" #kept"\n',
 ];
 
 // A fixed linear congruential generator keeps the generated cases stable.
@@ -84,24 +93,69 @@ const normalize = (link) => (link.nested !== undefined
 
 function official(source) {
   try {
-    return parse(stripComments(source), { maxDepth: DEFAULT_MAX_DEPTH }).map(normalize);
+    return parse(stripComments(source), { maxDepth: DEFAULT_MAX_DEPTH, source }).map(normalize);
   } catch {
     return null;
   }
 }
 
 // The conformance sources of the language inventory are always cases.
-const inventory = readProjectData(join(root, 'parity/language-grammar-inventory.json'));
+const inventoryPath = join(root, 'parity/language-grammar-inventory.json');
+const inventory = readProjectData(inventoryPath);
+const specification = `parity/grammars/links-notation-${version}.pegjs`;
+const installedGrammar = createRequire(import.meta.url).resolve('links-notation/src/grammar.pegjs');
+if (!readExternalGrammarAsset(specification).equals(readFileSync(installedGrammar))) {
+  throw new Error('the authenticated Links Notation grammar differs from the installed package');
+}
+const declaration = { version, specification, reference: `links-notation@${version} src/grammar.pegjs` };
 const { source: inventorySource, recoverySource } = inventory.languages.find(({ name }) => name === 'LiNo');
 const sources = [...new Set([inventorySource, recoverySource, ...HAND_WRITTEN, ...generated(600)])];
 const expected = {
   schemaVersion: 2,
-  oracle: `links-notation@${version} src/parser-generated.js parse(stripComments(source), { maxDepth: ${DEFAULT_MAX_DEPTH} })`,
+  oracle: `links-notation@${version} src/parser-generated.js parse(stripComments(source), { maxDepth: ${DEFAULT_MAX_DEPTH}, source })`,
   cases: sources.map((source) => ({ source, links: official(source) })),
+  historicalOracles: [{
+    dependency: 'links-notation',
+    versionRange: '=0.22.0',
+    source: '(a)"b #c"\n',
+    links: [{
+      id: null,
+      values: [
+        { nested: [{ id: null, values: [{ id: 'a', values: [], children: [] }], children: [] }], children: [] },
+        { id: '"b', values: [], children: [] },
+      ],
+      children: [],
+    }],
+    upstreamIssue: 'https://github.com/link-foundation/links-notation/issues/377',
+  }],
 };
+const ruleSource = readFileSync(join(root, 'js/src/lino-reference-literal-rules.js'), 'utf8');
+const ruleTranslation = selfTranslate(ruleSource, 'JavaScript', 'Rust');
+if (ruleTranslation.items.some(({ status }) => status !== 'translated')
+  || selfTranslate(ruleTranslation.code, 'Rust', 'JavaScript').code !== ruleSource) {
+  throw new Error('the versioned reference boundary must translate to Rust and back losslessly');
+}
+const rustRulesPath = join(root, 'rust/src/lino_reference_literal_rules.rs');
+const formattedRules = formatProductRuleSource(ruleTranslation.code);
+// Rebind the single translated function after rustfmt so the checked-in file
+// retains the exact restoration witness for its executable Rust source.
+const rustFunction = /^pub fn advance_reference_literal\([\s\S]+/mu.exec(formattedRules)?.[0].trimEnd();
+if (!rustFunction) throw new Error('the translated reference boundary function is missing');
+const rustHash = createHash('sha256').update(rustFunction).digest('hex');
+const rustRules = formattedRules.replace(
+  /^(\/\/ meta-language:translated JavaScript export_statement items=1 sha256=)[a-f0-9]{64}$/mu,
+  `$1${rustHash}`,
+);
+if (selfTranslate(rustRules, 'Rust', 'JavaScript').code !== ruleSource) {
+  throw new Error('the formatted Rust reference boundary must restore its JavaScript source');
+}
 
 if (process.argv.includes('--check')) {
   try {
+    if (JSON.stringify(inventory.builtinGrammars['links-notation']) !== JSON.stringify(declaration)) {
+      throw new Error('the recorded Links Notation grammar declaration differs from the installed package');
+    }
+    if (readFileSync(rustRulesPath, 'utf8') !== rustRules) throw new Error('the Rust reference literal rules are stale');
     checkProjectData(outputPath, expected);
   } catch {
     console.error(`${outputPath} is stale; run node js/scripts/generate-lino-grammar-cases.mjs`);
@@ -109,6 +163,9 @@ if (process.argv.includes('--check')) {
   }
   console.log(`lino grammar cases: ${sources.length} cases match the official parser`);
 } else {
+  inventory.builtinGrammars['links-notation'] = declaration;
+  writeProjectData(inventoryPath, inventory);
   writeProjectData(outputPath, expected);
+  writeFileSync(rustRulesPath, rustRules);
   console.log(`wrote ${sources.length} cases to ${outputPath}`);
 }

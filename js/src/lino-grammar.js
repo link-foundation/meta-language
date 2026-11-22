@@ -1,4 +1,7 @@
 import { anonymous, errorNode, extra, fillExtras, node, propagateErrors, spanning, withField } from './builtin-grammar.js';
+import { decodeReferenceLiteral } from 'links-notation/src/ReferenceLiteral.js';
+import { stripComments } from 'links-notation/src/comments.js';
+import { advanceReferenceLiteral } from './lino-reference-literal-rules.js';
 
 /**
  * How deep LiNo links may nest: every parenthesized group and every
@@ -12,7 +15,7 @@ export const LINO_MAX_DEPTH = 64;
  *
  * The recursive descent below mirrors, rule for rule and with the same
  * ordered choices, backtracking, indentation side effects and depth limit, the
- * official links-notation 0.22 PEG grammar (`links-notation/src/grammar.pegjs`)
+ * official links-notation PEG grammar (`links-notation/src/grammar.pegjs`)
  * as the official `Parser` reads a document: comments are blanked first
  * (`links-notation/src/comments.js`) and quoted references follow
  * `links-notation/src/quotes.js`. Every document the official parser accepts
@@ -37,9 +40,9 @@ export const LINO_MAX_DEPTH = 64;
  * computes the same tree over UTF-8 byte offsets.
  */
 export function parseLinoCst(text) {
-  const comments = commentRanges(text);
-  const blanked = blankRanges(text, comments);
-  const references = new DelimitedReferences(blanked);
+  const blanked = stripComments(text);
+  const comments = commentRanges(text, blanked);
+  const references = new DelimitedReferences(text);
   const children = [];
   let position = 0;
   while (position < blanked.length) {
@@ -303,8 +306,26 @@ class LinoGrammarParser {
     return spanning('link', [withField(id, 'id'), colon]);
   }
 
-  // reference = quotedReference / simpleReference
+  // A versioned reference literal reserves its prefix even when malformed.
   reference() {
+    const start = this.position;
+    const prefix = this.text[start] === '~' ? referenceLiteralPrefixEnd(this.text, start) : null;
+    if (prefix !== null) {
+      let end = prefix;
+      let state = 3;
+      while (end < this.text.length && state === 3) {
+        state = advanceReferenceLiteral(state, this.text.charCodeAt(end));
+        end++;
+      }
+      if (state !== 4) return null;
+      try {
+        decodeReferenceLiteral(this.text.slice(start, end));
+      } catch {
+        return null;
+      }
+      this.position = end;
+      return node('reference', start, end);
+    }
     return this.quotedReference() ?? this.simpleReference();
   }
 
@@ -437,24 +458,17 @@ class LinoGrammarParser {
 
 const COMMENT = '#';
 const QUOTES = ['"', "'", '`'];
-const BEFORE_REFERENCE = [' ', '\t', '\n', '\r', '(', ':'];
-const BEFORE_COMMENT = [' ', '\t', '\n', '\r'];
 
 /**
  * The [start, end] ranges of the comments of `text`: a `#` that opens a token
  * starts a comment that runs to the end of its line, and a `#` inside a token
  * or a quoted reference is an ordinary character.
  */
-export function commentRanges(text) {
+export function commentRanges(text, blanked = stripComments(text)) {
   const ranges = [];
-  const references = new DelimitedReferences(text);
   let position = 0;
   while (position < text.length) {
-    const character = text[position];
-    if (QUOTES.includes(character) && follows(text, position, BEFORE_REFERENCE)) {
-      const reading = references.readAt(position);
-      position = reading === null ? position + 1 : position + reading.length;
-    } else if (character === COMMENT && follows(text, position, BEFORE_COMMENT)) {
+    if (text[position] === COMMENT && blanked[position] === ' ') {
       const start = position;
       while (position < text.length && text[position] !== '\n' && text[position] !== '\r') position += 1;
       ranges.push([start, position]);
@@ -465,19 +479,15 @@ export function commentRanges(text) {
   return ranges;
 }
 
-function follows(text, position, allowed) {
-  return position === 0 || allowed.includes(text[position - 1]);
-}
-
-/** `text` with every character of the given ranges replaced by a space. */
-export function blankRanges(text, ranges) {
-  let blanked = '';
-  let position = 0;
-  for (const [start, end] of ranges) {
-    blanked += text.slice(position, start) + ' '.repeat(end - start);
-    position = end;
+/** The end of the reserved prefix, or null where a plain reference can start. */
+export function referenceLiteralPrefixEnd(text, start = 0) {
+  let state = 0;
+  for (let position = start; position < text.length; position++) {
+    state = advanceReferenceLiteral(state, text.charCodeAt(position));
+    if (state === 3) return position + 1;
+    if (state < 0) break;
   }
-  return blanked + text.slice(position);
+  return null;
 }
 
 // ---- Quoted references, as `links-notation/src/quotes.js` reads them --------

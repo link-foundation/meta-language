@@ -210,15 +210,17 @@ test('the original Unicode policy remains unchanged when concrete ANTLR observat
 test('Peggy optimizer assertions admit only the actual pinned inclusive singleton release', () => {
   const policy = assertionVersionPolicy().assertions.find(({ id }) => id === 'peggy-optimized-character-set-shape');
   assert.deepEqual(policy.comparison, { kind: 'release', precision: 3 });
-  assert.equal(policy.expectations.length, 1);
-  const expected = policy.expectations[0];
-  assert.deepEqual([expected.minimum, expected.maximum, expected.includeMinimum, expected.includeMaximum],
-    ['5.1.0', '5.1.0', true, true]);
+  assert.deepEqual(policy.expectations.map(({ minimum, maximum, includeMinimum, includeMaximum }) =>
+    [minimum, maximum, includeMinimum, includeMaximum]), [
+    ['5.1.0', '5.1.0', true, true],
+    ['5.1.1', '5.1.1', true, true],
+  ]);
+  const expected = policy.expectations[1];
   const selected = selectPeggyOptimizerAssertion();
-  assert.equal(selected.activeVersion, '5.1.0');
+  assert.equal(selected.activeVersion, '5.1.1');
   assert.equal(selected.sourceVersion, expected.expected);
   assert.equal(selected.expectation, expected.id);
-  for (const version of ['5.0.9', '5.1.1', '5.2.0', '6.0.0']) {
+  for (const version of ['5.0.9', '5.1.2', '5.2.0', '6.0.0']) {
     assert.throws(() => selectVersionedAssertion(policy, version), /uncovered active version/u);
   }
 });

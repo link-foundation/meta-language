@@ -88,6 +88,7 @@ Makefile.coq.conf
 /parity/grammars/candidates/elm/
 /parity/grammars/reconcile/
 /parity/grammars/links-notation-0.22.0.pegjs
+/parity/grammars/links-notation-0.31.8.pegjs
 /rust/benches/corpora/arvada/lark-examples/
 /rust/benches/corpora/treevada/lark-examples/
 

@@ -1980,7 +1980,10 @@ jobs:
         working-directory: js
 
       - name: Provision the authenticated grammar input for manifest validation
-        run: node js/scripts/external-grammar-cache.mjs --asset parity/grammars/links-notation-0.22.0.pegjs --materialize
+        run: >-
+          node js/scripts/external-grammar-cache.mjs
+          --asset parity/grammars/links-notation-0.22.0.pegjs
+          --asset parity/grammars/links-notation-0.31.8.pegjs --materialize
 
       - name: Identify admitted Rust physical profiles
         id: rust-physical-admission

@@ -1,19 +1,24 @@
 #!/usr/bin/env node
 // Temporary, authenticated upstream assets. The manifest stores metadata only;
-// downloads reproduce the original bytes without compiling external grammars.
+// exact historical downloads and pinned registry builds reproduce the expected bytes.
 import { createHash, randomUUID } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { promisify } from 'node:util';
+import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
+import { compileGrammarWebAssembly, compressGrammarWebAssembly } from './compile-grammar-webassembly.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const MANIFEST = 'parity/grammars/external-assets.lino';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const manifests = new Map();
+const run = promisify(execFile);
 
 function readManifest(root) {
   const path = join(root, MANIFEST);
@@ -36,7 +41,7 @@ function settings(options = {}) {
   const cacheRoot = resolve(options.cacheRoot ?? process.env.META_LANGUAGE_EXTERNAL_GRAMMAR_CACHE ?? join(root, '.external-grammars'));
   const manifest = options.manifest ?? readManifest(root);
   if (manifest.schemaVersion !== 1 || !manifest.assets || Array.isArray(manifest.assets)) throw new Error('invalid external grammar asset manifest');
-  return { root, cacheRoot, manifest };
+  return { root, cacheRoot, manifest, previousBuild: Promise.resolve() };
 }
 
 function record(path, context) {
@@ -237,6 +242,43 @@ function storeAcquired(path, bytes, context, options) {
   if (options.materialize && !existing) save(context.root, path, bytes);
 }
 
+function treeSitterCommand(version) {
+  if (process.env.TREE_SITTER_CLI) return [process.env.TREE_SITTER_CLI];
+  const args = ['--yes', '--package', `tree-sitter-cli@${version}`, 'tree-sitter'];
+  return process.platform === 'win32' ? ['cmd.exe', '/d', '/c', 'npx.cmd', ...args] : ['npx', ...args];
+}
+
+async function acquireRegistryBuild(path, asset, options) {
+  const { crate, url, bytes, sha256, directory, id, cli } = asset.build;
+  if (!/^[a-z0-9_-]+-\d+\.\d+\.\d+$/u.test(crate) || !/^[a-f0-9]{64}$/u.test(sha256)
+    || !Number.isSafeInteger(bytes) || bytes <= 0 || !/^[a-z0-9_]+$/u.test(id)
+    || !/^\d+\.\d+\.\d+$/u.test(cli) || (directory !== '.' && !/^[\w-]+(?:\/[\w-]+)*$/u.test(directory))
+    || new URL(url).origin !== 'https://static.crates.io') {
+    throw new Error(`invalid external grammar build pin: ${path}`);
+  }
+  const archive = await downloadBytesWithRetries(url, bytes, options);
+  if (archive.length !== bytes || digest(archive) !== sha256) throw new Error(`external grammar crate checksum mismatch: ${path}`);
+  const work = makeScratchDirectory(`external-grammar-${id}-`);
+  try {
+    const archivePath = join(work, 'source.crate');
+    await writeFile(archivePath, archive);
+    await run('tar', ['-xzf', 'source.crate'], { cwd: work });
+    const treeSitter = treeSitterCommand(cli);
+    const [command, ...prefix] = treeSitter;
+    const { stdout } = await run(command, [...prefix, '--version'], { cwd: work });
+    if (stdout.trim().split(/\s+/u).slice(0, 2).join(' ') !== `tree-sitter ${cli}`) {
+      throw new Error(`expected Tree-sitter CLI ${cli} for ${path}, received ${stdout.trim()}`);
+    }
+    const raw = await compileGrammarWebAssembly(work, join(crate, directory), id, treeSitter);
+    if (raw.length !== asset.decodedBytes || digest(raw) !== asset.decodedSha256) {
+      throw new Error(`decoded external grammar build checksum mismatch: ${path}`);
+    }
+    return compressGrammarWebAssembly(raw);
+  } finally {
+    await rm(work, { recursive: true, force: true });
+  }
+}
+
 async function acquire(path, context, options) {
   const asset = record(path, context);
   // Reuse authenticated local bytes; a corrupt existing copy is a refusal.
@@ -273,6 +315,14 @@ async function acquire(path, context, options) {
         throw new Error(`cannot download authenticated external grammar asset ${path}: ${errors.join('; ')}`, { cause: error });
       }
     }
+  }
+  if (asset.build) {
+    // Serialize compilers, including their first-time toolchain installation.
+    const build = context.previousBuild.then(() => acquireRegistryBuild(path, asset, options));
+    context.previousBuild = build.catch(() => {});
+    const bytes = verify(await build, asset, path);
+    storeAcquired(path, bytes, context, options);
+    return { path, reused: false };
   }
   throw new Error(`cannot download authenticated external grammar asset ${path}: ${errors.join('; ')}`);
 }

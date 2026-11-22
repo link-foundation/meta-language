@@ -1493,6 +1493,13 @@ comments, blank lines or the spelling of a quote, the native lossless LiNo
 grammar ([`js/src/lino-grammar.js`](../js/src/lino-grammar.js),
 [`rust/src/lino_grammar.rs`](../rust/src/lino_grammar.rs)) keeps it in the
 concrete syntax tree.
+With Links Notation 0.31.8 the CST preserves the written form of versioned
+reference literals and exposes their decoded UTF-8 values. A malformed literal
+with a reserved prefix produces a recovery node. Comments are found in the
+original source, including where a quoted reference follows a closed group or
+another delimited reference. The 0.22.0 oracle interpreted the `#` in
+`(a)"b #c"` as a comment. The retained input now expects `b #c` following the
+[upstream boundary fix](https://github.com/link-foundation/links-notation/issues/377).
 
 The upstream findings of
 [relative-meta-logic](https://github.com/link-foundation/relative-meta-logic/pull/184)
@@ -2647,6 +2654,11 @@ Prefer pinned original encoded downloads before reconstruction from raw source,
 preserving mirror order within each group. Reconstruction checks the raw decoded
 pins before compression and retains the exact encoded pins afterward. Different
 compression implementations can produce different bytes from the same source.
+An updated registry grammar without a historical binary distribution is built
+from the crates.io archive locked by Rust. Acquisition checks the archive against
+its pinned size and checksum, runs the exact Tree-sitter CLI in a temporary
+directory, and verifies both WebAssembly representations before caching. The
+manifest preserves the superseded distribution receipts.
 
 CI provisions required inputs before checks and artifact construction. Temporary
 compiled fallback assets can still accompany an installed artifact while the
@@ -2687,7 +2699,16 @@ that a tree-sitter release pins. Every holder must itself be delivered, and an
 external holder must be at its newest release. A pin behind its newest
 compatible release is stale, as is anything built from it. In CI the delivery
 gate retains the complete current-dependency policy. Pull request checks use
-the recorded pre-merge audit. The scheduled registry refresh runs only on main
+the recorded pre-merge audit. A direct dependency in the JavaScript package,
+Rust crate, Rust oracle crates or Rust web package that falls behind its stable
+release must link an open GitHub blocker from its pin. Cargo records it with
+`# blocked: https://github.com/owner/repository/issues/number` on each affected
+dependency line. The JSON package manifest records it in `dependencyBlockers`,
+keyed by dependency section and package name, with the exact `requirement` and
+the `issue` URL. The registry refresh verifies the issue state and records it in
+the audit. A closed or missing blocker fails the freshness check. The scheduled
+report also runs `npm outdated` and `cargo update --dry-run` for both Rust locks.
+The scheduled registry refresh runs only on main
 as a non-blocking live report: it preserves the actual audit outcome, complete
 log and refreshed audit artifact, and opens or updates the repair PR even when
 new upstream releases leave unresolved findings. The PR body and job summary

@@ -38,6 +38,11 @@ export function assertionVersionPolicy() {
         minimum: '5.1.0', maximum: '5.1.0', includeMinimum: true, includeMaximum: true,
         expected: 'Peggy 5.1.0',
         evidence: 'js/package.json and js/package-lock.json pin Peggy 5.1.0. Its actual generate(..., { output: ast }) optimizer merges the retained BMP, ASCII and astral literal alternatives into class nodes; js/tests/grammar-interchange-tools.test.js executes the optimizer and retains every source lexer, offset and tampering assertion.',
+      }, {
+        id: 'peggy-5-1-1-character-set-shape',
+        minimum: '5.1.1', maximum: '5.1.1', includeMinimum: true, includeMaximum: true,
+        expected: 'Peggy 5.1.1',
+        evidence: 'js/tests/grammar-interchange-tools.test.js tests the installed Peggy 5.1.1 optimizer against the same BMP, ASCII and astral inputs and checks the original source lexer, offsets and tampering refusals.',
       }],
     }, {
       id: 'typescript-const-model-rejection-diagnostic',

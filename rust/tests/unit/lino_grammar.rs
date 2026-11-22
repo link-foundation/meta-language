@@ -138,7 +138,11 @@ fn official_shape(node: &Node, source: &str) -> Value {
             .collect::<Vec<_>>()
     };
     match node.term.as_str() {
-        "reference" => json!({"id": text, "values": [], "children": []}),
+        "reference" => {
+            let id =
+                links_notation::decode_reference_literal(text).unwrap_or_else(|_| text.to_owned());
+            json!({"id": id, "values": [], "children": []})
+        }
         "quoted_reference" => json!({"id": decode_quoted(text), "values": [], "children": []}),
         "group" => json!({"nested": with_field("link"), "children": with_field("child")}),
         term => {
