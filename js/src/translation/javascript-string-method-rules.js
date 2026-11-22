@@ -4,8 +4,6 @@ import {readJavaScriptArrayIndex,testJavaScriptArrayLengthKey} from './javascrip
 // Converted String operands share exact UTF16 access and explicit work bounds.
 import {readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit,readJavaScriptSemanticTextString,constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 import {readUtf16TextInteger} from './utf16-text-rules.js';
-/** @param {string} operation @returns {number} */
-export function readJavaScriptStringMethodPrimitiveArity(operation){return ['test well formed String','copy well formed String','convert character code text','convert code point text'].includes(operation)?1:['map lower String case','map upper String case','require String receiver','read String code unit','test String own key','read String own key'].includes(operation)?2:['substring String units','substr String units','test String prefix at','test String suffix at','test String inclusion at'].includes(operation)?3:-1;}
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptStringMethodPrimitive(operation,values){
  const receiver=values[0]??{$:'undefined'},second=values[1]??{$:'undefined'},third=values[2]??{$:'undefined'};
@@ -46,11 +44,13 @@ export function executeJavaScriptStringMethodPrimitive(operation,values){
   if(second.$!=='number')return {$:'primitiveInvalid',reason:'String code units retain their actual completed numeric position'};const position=readUtf16TextInteger(second.value);return {$:'primitiveValue',value:{$:'number',value:position<0||position>=length?NaN:readJavaScriptSemanticTextUnit(receiver,position)}};
  }
  if(operation==='substring String units'||operation==='substr String units'){
-  if(second.$!=='number'||third.$!=='number')return {$:'primitiveInvalid',reason:'String slices retain their actual completed numeric bounds'};
+  if(second.$!=='number')return {$:'primitiveInvalid',reason:'String slices retain their actual completed numeric bounds'};
+  if(third.$!=='number')return {$:'primitiveInvalid',reason:'String slices retain their actual completed numeric bounds'};
   const first=readUtf16TextInteger(second.value),last=readUtf16TextInteger(third.value),start=operation==='substr String units'?first<0?Math.max(length+first,0):Math.min(first,length):Math.min(Math.max(first,0),length),end=operation==='substr String units'?start+Math.min(Math.max(last,0),length-start):Math.min(Math.max(last,0),length),low=Math.min(start,end),high=Math.max(start,end);
   if(high-low>1048576)return {$:'primitiveResourceLimit',reason:'String slicing exceeds its explicit UTF16 output budget'};const units=[];for(let at=low;at<high;at++)units.push(readJavaScriptSemanticTextUnit(receiver,at));return {$:'primitiveValue',value:{$:'text',units}};
  }
- if(second.$!=='text'&&second.$!=='sourceText'||third.$!=='number')return {$:'primitiveInvalid',reason:'String searches retain actual converted search text and numeric position'};
+ if(second.$!=='text'&&second.$!=='sourceText')return {$:'primitiveInvalid',reason:'String searches retain actual converted search text and numeric position'};
+ if(third.$!=='number')return {$:'primitiveInvalid',reason:'String searches retain actual converted search text and numeric position'};
  const needleLength=readJavaScriptSemanticTextLength(second),position=Math.min(Math.max(readUtf16TextInteger(third.value),0),length),start=operation==='test String suffix at'?position-needleLength:position;
  if(operation==='test String prefix at'||operation==='test String suffix at'){
   if(needleLength>1048576)return {$:'primitiveResourceLimit',reason:'String boundary comparisons exceed the explicit UTF16 work budget'};let matches=start>=0&&start+needleLength<=length;for(let at=0;matches&&at<needleLength;at++)if(readJavaScriptSemanticTextUnit(receiver,start+at)!==readJavaScriptSemanticTextUnit(second,at))matches=false;return {$:'primitiveValue',value:{$:'boolean',value:matches}};

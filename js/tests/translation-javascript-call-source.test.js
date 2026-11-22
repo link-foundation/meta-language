@@ -8,6 +8,7 @@ import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import {compileJavaScriptCallSource} from '../src/translation/javascript-call-source.js';
 import {sourceExceptionFixture,observeCallSourceException,observeCallSourceExceptionRefusal} from '../../experiments/javascript-properties/call-source-exception-controls.mjs';
+import {decodeJavaScriptCallSource,encodeJavaScriptCallSource} from '../../experiments/javascript-properties/call-source-codecs.mjs';
 assertVersions();
 for(const row of callSourceFixture.rows)test(row.name,()=>observeCallSource(row));
 for(const row of callSourceFixture.refusals)test(row.name,()=>observeCallSourceRefusal(row));
@@ -17,6 +18,14 @@ test('unowned references and duplicate parameter owners never yield executable p
  for(const result of [compileJavaScriptCallSource({$:'sourceBinding',identity:1},[]),compileJavaScriptCallSource({$:'sourceConstant',value:{$:'undefined'}},[0,0])]){
   assert.notEqual(result.error,'');assert.deepEqual(result.instructions,[]);assert.equal(result.registers,0);
  }
+});
+test('the call source fixture codec preserves missing and explicitly undefined properties in argument lists',()=>{
+ const property={$:'sourceGet',object:{$:'sourceReceiver'},key:{$:'sourceConstant',value:{$:'undefined'}}};
+ const source={$:'sourcePrimitive',operation:'identity',arguments:[property,{...property,receiver:undefined}]};
+ const wire=encodeJavaScriptCallSource(source);
+ assert.equal(Object.hasOwn(wire.arguments[0],'receiver'),false);
+ assert.deepEqual(wire.arguments[1].receiver,{fieldPresence:'undefined'});
+ assert.deepEqual(decodeJavaScriptCallSource(wire),source);
 });
 test('actual compiler graph retains both codecs and all target emissions',()=>{
  const packet=createSourceDefinitionProgramLinks('meta-language/source-program/javascript-call-source-program');

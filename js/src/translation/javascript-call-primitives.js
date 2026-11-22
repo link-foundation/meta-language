@@ -1,12 +1,13 @@
+import {readJavaScriptCallIntegerArity,readJavaScriptNumericParsingArity,readJavaScriptStringMethodPrimitiveArity,readJavaScriptCallPrimitiveArityError,testJavaScriptCallUnaryNumberOperation} from './javascript-call-primitive-arity-rules.js';
 import {constructJavaScriptSymbolDescriptiveText} from './javascript-string-conversion-call-source.js';
-import {readJavaScriptNumericParsingArity,executeJavaScriptNumericParsing} from './javascript-numeric-parsing-rules.js';
+import {executeJavaScriptNumericParsing} from './javascript-numeric-parsing-rules.js';
 import {multiplyJavaScriptSignedIntegerBits,countJavaScriptLeadingZeroBits,roundJavaScriptBinary32} from './number-bitwise-rules.js';
-import {readJavaScriptStringMethodPrimitiveArity,executeJavaScriptStringMethodPrimitive} from './javascript-string-method-rules.js';
+import {executeJavaScriptStringMethodPrimitive} from './javascript-string-method-rules.js';
 // Reuse the existing complete UTF16 definitions; adapters never substitute
 // host scalar strings for code units or reimplement native operation bodies.
 import {readJavaScriptArrayLikeLength} from './javascript-array-index-rules.js';
 import {readJavaScriptSemanticValueError,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextString,constructJavaScriptSemanticTextUnits,constructJavaScriptSourceText} from './javascript-semantic-values.js';
-import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive,readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
+import {executeJavaScriptCallIntegerPrimitive,readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
 import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
 import {executeJavaScriptCallIntegerConversion} from './javascript-call-integer-conversion.js';
 import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
@@ -17,29 +18,6 @@ import {replaceUtf16Text,planUtf16TextSubstitution,sliceUtf16Text,codePointUtf16
  * {$:'primitiveInvalid',reason:string} | {$:'primitiveError',errorClass:string,reason:string} |
  * {$:'primitiveResourceLimit',reason:string}} JavaScriptCallPrimitiveResult */
 
-/** @param {string} operation @returns {boolean} */
-export function testJavaScriptCallUnaryNumberOperation(operation){
- return ['test NaN number','test finite number','negate number','truncate number','read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation);
-}
-/** Operations consume already checked primitive values. Unmodeled coercions,
- * wrappers and replacement intrinsics need their own source lowering.
- * @param {string} operation @param {number} count @returns {string} */
-export function readJavaScriptCallPrimitiveArityError(operation,count){
- const parsingArity=readJavaScriptNumericParsingArity(operation);if(parsingArity>=0)return count===parsingArity?'':'numeric parsing retains every converted operand';
- const stringArity=readJavaScriptStringMethodPrimitiveArity(operation);if(stringArity>=0)return count===stringArity?'':'String operations retain every actual converted operand';
- if(!Number.isSafeInteger(count)||count<0||count>4096)return 'primitive operands exceed their explicit call register budget';
- if(operation==='throw restricted Function access')return count===0?'':'restricted Function access ignores receiver and arguments';
- if(readJavaScriptSourceExceptionClass(operation)!=='')return count===2?'':'a source Error requires its actual text message and own-message presence';
- const integerArity=readJavaScriptCallIntegerArity(operation);
- if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
- if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
- if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
- const unary=['require Array creation length','require V8 array join length','construct Symbol descriptive text','round binary32 number','count leading zero bits','read integer index','require callable target','require array like arguments Object','require Object assign target','require Object reflection target','require nonnull Object input','require object for in','require ordinary property object','require array method object','read array like length','require delete success','require collection adder','require Map entry object','require object coercible','test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
- const binary=['read array deletion count','read checked array replacement index','multiply signed integer bits','read relative array index','read checked array append length','compare relational values','subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power','repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
- const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
- const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
- return arity<0?'primitive instructions require their actual registered operation':count!==arity?'primitive instructions require every actual operand coordinate':'';
-}
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallNumericPrimitive(operation,values){
  // A Number-only array can canonicalize NaNs in supported engines. Unary
@@ -181,23 +159,37 @@ export function executeJavaScriptCallPrimitive(operation,values){
  if(operation==='throw restricted Function access')return {$:'primitiveError',errorClass:'TypeError',reason:"'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
  if(operation==='require Array creation length'){
-  const value=values[0]??{$:'undefined'};if(value.$!=='number'||!Number.isSafeInteger(value.value)||value.value<0||Object.is(value.value,-0))return {$:'primitiveInvalid',reason:'ArrayCreate length follows actual ToLength'};
+  const value=values[0]??{$:'undefined'};const invalid={$:'primitiveInvalid',reason:'ArrayCreate length follows actual ToLength'};if(value.$!=='number')return invalid;if(!Number.isSafeInteger(value.value)||value.value<0||Object.is(value.value,-0))return invalid;
   return value.value>4294967295?{$:'primitiveError',errorClass:'RangeError',reason:'Invalid array length'}:{$:'primitiveValue',value};
  }
  if(operation==='read checked array replacement index'){
-  const length=values[0]??{$:'undefined'},value=values[1]??{$:'undefined'};if(length.$!=='number'||!Number.isSafeInteger(length.value)||length.value<0||Object.is(length.value,-0)||value.$!=='number')return {$:'primitiveInvalid',reason:'replacement indices retain actual ToLength and completed ToNumber'};
+  const length=values[0]??{$:'undefined'},value=values[1]??{$:'undefined'};
+  const invalid={$:'primitiveInvalid',reason:'replacement indices retain actual ToLength and completed ToNumber'};
+  if(length.$!=='number')return invalid;
+  if(!Number.isSafeInteger(length.value)||length.value<0||Object.is(length.value,-0))return invalid;
+  if(value.$!=='number')return invalid;
   const integer=Number.isNaN(value.value)||value.value===0?0:Math.trunc(value.value),index=integer<0?length.value+integer:integer;
   return index<0||index>=length.value?{$:'primitiveError',errorClass:'RangeError',reason:'Invalid index'}:{$:'primitiveValue',value:{$:'number',value:index===0?0:index}};
  }
  if(operation==='read array deletion count'){
-  const maximum=values[0]??{$:'undefined'},value=values[1]??{$:'undefined'};if(maximum.$!=='number'||!Number.isSafeInteger(maximum.value)||maximum.value<0||Object.is(maximum.value,-0)||value.$!=='number')return {$:'primitiveInvalid',reason:'array deletion count retains captured remaining length and completed ToNumber'};
+  const maximum=values[0]??{$:'undefined'},value=values[1]??{$:'undefined'};
+  const invalid={$:'primitiveInvalid',reason:'array deletion count retains captured remaining length and completed ToNumber'};
+  if(maximum.$!=='number')return invalid;
+  if(!Number.isSafeInteger(maximum.value)||maximum.value<0||Object.is(maximum.value,-0))return invalid;
+  if(value.$!=='number')return invalid;
   const integer=Number.isNaN(value.value)||value.value===0?0:Math.trunc(value.value);return {$:'primitiveValue',value:{$:'number',value:Math.min(Math.max(integer,0),maximum.value)}};
  }
  if(operation==='construct Symbol descriptive text')return constructJavaScriptSymbolDescriptiveText(values[0]??{$:'undefined'});
  if(readJavaScriptNumericParsingArity(operation)>=0)return executeJavaScriptNumericParsing(operation,values);
  if(operation==='round binary32 number'){const value=values[0]??{$:'undefined'};return value.$==='number'?{$:'primitiveValue',value:{$:'number',value:roundJavaScriptBinary32(value.value)}}:{$:'primitiveInvalid',reason:'binary32 rounding requires its completed Number operand'};}
  if(operation==='count leading zero bits'){const value=values[0]??{$:'undefined'};return value.$==='number'?{$:'primitiveValue',value:{$:'number',value:countJavaScriptLeadingZeroBits(value.value)}}:{$:'primitiveInvalid',reason:'leading zero count requires its converted Number operand'};}
- if(operation==='multiply signed integer bits'){const left=values[0]??{$:'undefined'},right=values[1]??{$:'undefined'};return left.$==='number'&&right.$==='number'?{$:'primitiveValue',value:{$:'number',value:multiplyJavaScriptSignedIntegerBits(left.value,right.value)}}:{$:'primitiveInvalid',reason:'integer multiplication requires its converted Number operands'};}
+ if(operation==='multiply signed integer bits'){
+  const left=values[0]??{$:'undefined'},right=values[1]??{$:'undefined'};
+  const invalid={$:'primitiveInvalid',reason:'integer multiplication requires its converted Number operands'};
+  if(left.$!=='number')return invalid;
+  if(right.$!=='number')return invalid;
+  return {$:'primitiveValue',value:{$:'number',value:multiplyJavaScriptSignedIntegerBits(left.value,right.value)}};
+ }
  if(readJavaScriptStringMethodPrimitiveArity(operation)>=0)return executeJavaScriptStringMethodPrimitive(operation,values);
  if(operation==='increment numeric value'||operation==='decrement numeric value'||operation==='negate numeric value')return executeJavaScriptCallNumericUpdate(operation,values[0]??{$:'undefined'});
  if(['subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power'].includes(operation))return executeJavaScriptCallNumericBinary(operation,values[0]??{$:'undefined'},values[1]??{$:'undefined'});
@@ -207,8 +199,8 @@ export function executeJavaScriptCallPrimitive(operation,values){
  if(operation==='require array method object'||operation==='require ordinary property object'){
   const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert undefined or null to object'}:{$:'primitiveInvalid',reason:operation==='require array method object'?'Array method receiver requires its actual primitive boxing protocol':'ordinary property receiver requires its actual primitive boxing protocol'};
  }
- if(operation==='require V8 array join length'){const value=values[0]??{$:'undefined'};if(value.$!=='number'||!Number.isSafeInteger(value.value)||value.value<0||Object.is(value.value,-0))return {$:'primitiveInvalid',reason:'V8 join length follows actual ToLength'};return value.value>4294967295?{$:'primitiveError',errorClass:'TypeError',reason:'Invalid array length'}:{$:'primitiveValue',value};}
- if(operation==='require callable target'){const value=values[0]??{$:'undefined'};return value.$==='object'&&value.callable?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'Function invocation requires a callable target'};}
+ if(operation==='require V8 array join length'){const value=values[0]??{$:'undefined'};const invalid={$:'primitiveInvalid',reason:'V8 join length follows actual ToLength'};if(value.$!=='number')return invalid;if(!Number.isSafeInteger(value.value)||value.value<0||Object.is(value.value,-0))return invalid;return value.value>4294967295?{$:'primitiveError',errorClass:'TypeError',reason:'Invalid array length'}:{$:'primitiveValue',value};}
+ if(operation==='require callable target'){const value=values[0]??{$:'undefined'};const invalid={$:'primitiveError',errorClass:'TypeError',reason:'Function invocation requires a callable target'};if(value.$!=='object')return invalid;return value.callable?{$:'primitiveValue',value}:invalid;}
  if(operation==='require array like arguments Object'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'CreateListFromArrayLike requires an Object argument list'};}
  if(operation==='require Object assign target'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert undefined or null to object'}:{$:'primitiveInvalid',reason:'Object.assign primitive targets require actual wrapper allocation and internal slots'};}
  if(operation==='require Object reflection target'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'Reflect property operations require an Object target'};}
@@ -221,15 +213,23 @@ export function executeJavaScriptCallPrimitive(operation,values){
  }
  if(operation==='read array like length'){const value=values[0]??{$:'undefined'};return value.$==='number'?{$:'primitiveValue',value:{$:'number',value:readJavaScriptArrayLikeLength(value.value)}}:{$:'primitiveInvalid',reason:'ToLength consumes its completed ToNumber value'};}
  if(operation==='read relative array index'){
-  const length=values[0]??{$:'undefined'},number=values[1]??{$:'undefined'};if(length.$!=='number'||!Number.isSafeInteger(length.value)||length.value<0||number.$!=='number')return {$:'primitiveInvalid',reason:'relative Array indices retain actual ToLength and completed ToNumber operands'};
+  const length=values[0]??{$:'undefined'},number=values[1]??{$:'undefined'};
+  const invalid={$:'primitiveInvalid',reason:'relative Array indices retain actual ToLength and completed ToNumber operands'};
+  if(length.$!=='number')return invalid;
+  if(!Number.isSafeInteger(length.value)||length.value<0)return invalid;
+  if(number.$!=='number')return invalid;
   const integer=Number.isNaN(number.value)||number.value===0?0:Math.trunc(number.value),index=integer===-Infinity?0:integer<0?Math.max(length.value+integer,0):Math.min(integer,length.value);return {$:'primitiveValue',value:{$:'number',value:index}};
  }
  if(operation==='read checked array append length'){
-  const length=values[0]??{$:'undefined'},count=values[1]??{$:'undefined'};if(length.$!=='number'||count.$!=='number'||!Number.isSafeInteger(length.value)||length.value<0||!Number.isSafeInteger(count.value)||count.value<0)return {$:'primitiveInvalid',reason:'Array append length retains actual ToLength and argument count coordinates'};
+  const length=values[0]??{$:'undefined'},count=values[1]??{$:'undefined'};
+  const invalid={$:'primitiveInvalid',reason:'Array append length retains actual ToLength and argument count coordinates'};
+  if(length.$!=='number')return invalid;
+  if(count.$!=='number')return invalid;
+  if(!Number.isSafeInteger(length.value)||length.value<0||!Number.isSafeInteger(count.value)||count.value<0)return invalid;
   return length.value>9007199254740991-count.value?{$:'primitiveError',errorClass:'TypeError',reason:'Array-like length exceeds the maximum safe integer'}:{$:'primitiveValue',value:{$:'number',value:length.value+count.value}};
  }
  if(operation==='require delete success'){const value=values[0]??{$:'undefined'};return value.$!=='boolean'?{$:'primitiveInvalid',reason:'strict deletion consumes its actual Boolean result'}:value.value?{$:'primitiveValue',value:{$:'undefined'}}:{$:'primitiveError',errorClass:'TypeError',reason:'Cannot delete a non-configurable property'};}
- if(operation==='require collection adder'){const value=values[0]??{$:'undefined'};return value.$==='object'&&value.callable?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'Collection adder is not callable'};}
+ if(operation==='require collection adder'){const value=values[0]??{$:'undefined'};const invalid={$:'primitiveError',errorClass:'TypeError',reason:'Collection adder is not callable'};if(value.$!=='object')return invalid;return value.callable?{$:'primitiveValue',value}:invalid;}
  if(operation==='require Map entry object'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'Iterator value is not an entry object'};}
  if(operation==='require object coercible'){const value=values[0]??{$:'undefined'};return value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot destructure null or undefined'}:{$:'primitiveValue',value:{$:'undefined'}};}
  if(operation==='test object value')return {$:'primitiveValue',value:{$:'boolean',value:(values[0]??{$:'undefined'}).$==='object'}};
@@ -267,8 +267,11 @@ export function executeJavaScriptCallPrimitiveAddition(left,right){
  if(left.$==='integer'&&right.$==='integer')return executeJavaScriptCallIntegerPrimitive('add integers',[left,right]);
  if(left.$==='integer'||right.$==='integer')return {$:'primitiveError',errorClass:'TypeError',reason:'Cannot mix BigInt and other types, use explicit conversions'};
  const first=executeJavaScriptCallNumberConversion('coerce primitive number',left);if(first.$!=='primitiveValue')return first;const second=executeJavaScriptCallNumberConversion('coerce primitive number',right);if(second.$!=='primitiveValue')return second;
- if(first.value.$!=='number'||second.value.$!=='number')return {$:'primitiveInvalid',reason:'numeric addition retains its actual Number conversion results'};
- return {$:'primitiveValue',value:{$:'number',value:first.value.value+second.value.value}};
+ const firstNumber=first.value,secondNumber=second.value;
+ const invalid={$:'primitiveInvalid',reason:'numeric addition retains its actual Number conversion results'};
+ if(firstNumber.$!=='number')return invalid;
+ if(secondNumber.$!=='number')return invalid;
+ return {$:'primitiveValue',value:{$:'number',value:firstNumber.value+secondNumber.value}};
 }
 
 /** Primitive ToString uses the existing scalar formatting definitions. Symbol
@@ -312,7 +315,9 @@ export function executeJavaScriptCallNumericBinary(operation,left,right){
  if(!['number','integer'].includes(left.$)||!['number','integer'].includes(right.$))return {$:'primitiveInvalid',reason:'numeric arithmetic retains both actual completed ToNumeric operands'};
  if(left.$!==right.$)return {$:'primitiveError',errorClass:'TypeError',reason:'Cannot mix BigInt and other types, use explicit conversions'};
  if(left.$==='integer'&&right.$==='integer')return executeJavaScriptCallIntegerPrimitive(operation==='subtract numeric values'?'subtract integers':operation==='multiply numeric values'?'multiply integers':operation==='divide numeric values'?'divide integers':operation==='read numeric remainder'?'read integer remainder':'raise integer power',[left,right]);
- if(left.$!=='number'||right.$!=='number')return {$:'primitiveInvalid',reason:'numeric arithmetic retains matching Number or BigInt operands'};
+ const invalid={$:'primitiveInvalid',reason:'numeric arithmetic retains matching Number or BigInt operands'};
+ if(left.$!=='number')return invalid;
+ if(right.$!=='number')return invalid;
  const a=left.value,b=right.value;return {$:'primitiveValue',value:{$:'number',value:operation==='subtract numeric values'?a-b:operation==='multiply numeric values'?a*b:operation==='divide numeric values'?a/b:operation==='read numeric remainder'?a%b:a**b}};
 }
 
@@ -330,11 +335,15 @@ export function executeJavaScriptCallRelationalComparison(left,right){
  if(a.$==='integer'&&b.$==='integer')return executeJavaScriptCallIntegerPrimitive('compare integers',[a,b]);
  if(a.$==='number'&&b.$==='integer')return executeJavaScriptCallIntegerPrimitive('compare number integer',[a,b]);
  if(a.$==='integer'&&b.$==='number')return invertJavaScriptCallRelationalComparison(executeJavaScriptCallIntegerPrimitive('compare number integer',[b,a]));
- if(a.$!=='number'||b.$!=='number')return {$:'primitiveInvalid',reason:'relational comparison retains its completed numeric operands'};
+ const invalid={$:'primitiveInvalid',reason:'relational comparison retains its completed numeric operands'};
+ if(a.$!=='number')return invalid;
+ if(b.$!=='number')return invalid;
  return {$:'primitiveValue',value:{$:'number',value:Number.isNaN(a.value)||Number.isNaN(b.value)?2:a.value<b.value?-1:a.value>b.value?1:0}};
 }
 /** @param {JavaScriptCallPrimitiveResult} result @returns {JavaScriptCallPrimitiveResult} */
 export function invertJavaScriptCallRelationalComparison(result){
- if(result.$!=='primitiveValue')return result;if(result.value.$!=='number')return {$:'primitiveInvalid',reason:'relational comparison inversion retains its actual ordering code'};
- const value=result.value.value;return {$:'primitiveValue',value:{$:'number',value:value===2?2:value===0?0:-value}};
+ if(result.$!=='primitiveValue')return result;
+ const order=result.value;
+ if(order.$!=='number')return {$:'primitiveInvalid',reason:'relational comparison inversion retains its actual ordering code'};
+ const value=order.value;return {$:'primitiveValue',value:{$:'number',value:value===2?2:value===0?0:-value}};
 }

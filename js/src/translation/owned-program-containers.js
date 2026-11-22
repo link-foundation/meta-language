@@ -28,7 +28,7 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
   function visit(value, depth = 0) {
     if (!value || typeof value !== 'object' && typeof value !== 'function' || visited.has(value)) return;
     if (depth > 256 || ++visits > 100_000) {
-      fail('the owned container graph exceeds its resource limit');
+      fail('the owned container graph exceeds its resource limit (depth ' + depth + ', visited ' + visits + ')');
     }
     visited.add(value);
     const keys = Reflect.ownKeys(value);

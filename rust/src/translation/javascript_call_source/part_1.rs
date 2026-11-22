@@ -288,6 +288,102 @@ pub mod ml {
     }
 }
 
+/// JavaScript's Number operations that Rust's f64 does not share.
+pub mod ml_number {
+    /// ECMAScript Number::toString: the shortest decimal that reads back as
+    /// the value, the even one on a tie, laid out as JavaScript prints it.
+    pub fn js_number(x: f64) -> String {
+        if x.is_nan() {
+            return String::from("NaN");
+        }
+        if x.is_infinite() {
+            return String::from(if x > 0.0 { "Infinity" } else { "-Infinity" });
+        }
+        if x == 0.0 {
+            return String::from("0");
+        }
+        let (mut digits, n) = decimal(&format!("{:e}", x.abs()));
+        // Rust's shortest digits round a tie away from zero; ECMAScript takes the even neighbour.
+        let (exact, _) = decimal(&format!("{:.800e}", x.abs()));
+        let rest = &exact[digits.len().min(exact.len())..];
+        if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
+            let last = digits.as_bytes()[digits.len() - 1] - b'0';
+            let down = exact[..digits.len()].to_string();
+            let other = if digits == down { increment(&down) } else { Some(down) };
+            if let Some(other) = other {
+                let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
+                if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
+                    digits = other.trim_end_matches('0').to_string();
+                }
+            }
+        }
+        let k = digits.len() as i32;
+        let body = if k <= n && n <= 21 {
+            format!("{digits}{}", "0".repeat((n - k) as usize))
+        } else if 0 < n && n <= 21 {
+            format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
+        } else if -6 < n && n <= 0 {
+            format!("0.{}{digits}", "0".repeat((-n) as usize))
+        } else {
+            let sign = if n - 1 < 0 { '-' } else { '+' };
+            let power = (n - 1).abs();
+            if k == 1 {
+                format!("{digits}e{sign}{power}")
+            } else {
+                format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
+            }
+        };
+        if x < 0.0 {
+            format!("-{body}")
+        } else {
+            body
+        }
+    }
+
+    /// What console.log prints: -0 as "-0", where String(-0) is "0".
+    pub fn js_console(x: f64) -> String {
+        if x == 0.0 && x.is_sign_negative() {
+            String::from("-0")
+        } else {
+            js_number(x)
+        }
+    }
+
+    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
+    /// NaN, and 0 differs from -0.
+    pub fn same_value(a: f64, b: f64) -> bool {
+        if a.is_nan() || b.is_nan() {
+            a.is_nan() && b.is_nan()
+        } else {
+            a.to_bits() == b.to_bits()
+        }
+    }
+
+    /// A decimal digit string plus one, or None when it gains a digit.
+    fn increment(digits: &str) -> Option<String> {
+        let mut bytes = digits.as_bytes().to_vec();
+        for index in (0..bytes.len()).rev() {
+            if bytes[index] == b'9' {
+                bytes[index] = b'0';
+            } else {
+                bytes[index] += 1;
+                return String::from_utf8(bytes).ok();
+            }
+        }
+        None
+    }
+
+    /// The significant digits without trailing zeros, and the exponent n with
+    /// value 0.digits × 10^n, of Rust's {:e} text.
+    fn decimal(text: &str) -> (String, i32) {
+        let (mantissa, exponent) = text.split_once('e').expect("exponent");
+        let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
+        let digits = digits.trim_end_matches('0').to_string();
+        let digits = if digits.is_empty() { String::from("0") } else { digits };
+        (digits, exponent.parse::<i32>().expect("exponent") + 1)
+    }
+}
+
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
 pub mod ml_math {
     /// Math.round: the nearest integer, the one towards +Infinity on a tie,
@@ -468,9 +564,35 @@ pub enum JavaScriptSemanticValue {
     Boolean(bool),
     Number(f64),
     Integer(self::ml::Big),
-    Text(Vec<f64>),
+    Text(std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    SourceText(String, String),
     Symbol(self::ml::Big),
     Object(self::ml::Big, bool),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum JavaScriptArrayConstructorFact {
+    ArrayConstructorFact(self::ml::Big, bool, self::ml::Big, bool, Option<(Option<String>,)>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptConstructorRealm {
+    ConstructorRealm(self::ml::Big, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptSemanticValue>,)>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptArraySpeciesDirectory {
+    ArraySpeciesDirectory(self::ml::Big, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptArrayConstructorFact>>>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptConstructorRealm>>>>,)>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallSourceUnit {
+    CallSourceUnit(String, Box<self::JavaScriptSemanticValue>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallSourceSpan {
+    CallSourceSpan(String, f64, f64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -478,9 +600,52 @@ pub enum JavaScriptCallInstruction {
     Constant(f64, Box<self::JavaScriptSemanticValue>),
     Copy(f64, f64),
     Argument(f64, f64),
+    ArgumentCount(f64),
+    ArgumentAt(f64, f64),
+    FunctionBind(f64),
+    BoundFunctionCall(f64),
+    FunctionToString(f64),
+    PushFinally(f64),
+    FinishFinally,
+    CompleteJump(f64, f64),
     Jump(f64),
     Branch(f64, f64, f64),
-    Call(f64, f64, f64, Vec<f64>),
+    Call(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    ArgumentListOpen(f64),
+    ArgumentListAppend(f64, f64),
+    ArgumentListCall(f64, f64, f64, f64, String),
+    Construct(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    ConstructorCheck(f64, f64, bool),
+    ReadNewTarget(f64),
+    ArrayJoinEnter(f64, f64),
+    ArrayJoinLeave(f64),
+    ConstructErrorClass(f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    CallClassConstructor(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    ConstructCollection(f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    CollectionAllocate(f64, f64, String),
+    CollectionIteratorAllocate(f64, f64, String, String, Option<(Option<f64>,)>),
+    ArgumentRest(f64, f64, f64, self::ml::Big),
+    IteratorProtocol(f64, f64, f64, f64, f64, String, self::ml::Big, Option<(Option<bool>,)>),
+    CollectionIteratorResult(f64, String, f64, f64),
+    CollectionOperation(f64, String),
+    PrimitiveMethod(f64, String),
+    CollectionForEach(f64, String),
+    ArrayConcatenation(f64, Option<(Option<f64>,)>, f64, Box<self::JavaScriptArraySpeciesDirectory>),
+    ArraySlice(f64, Option<(Option<f64>,)>, Box<self::JavaScriptArraySpeciesDirectory>),
+    ArrayCreation(f64, String, f64, f64),
+    ArrayCallback(f64, String, Option<(Option<f64>,)>),
+    ArraySearch(f64, String, Option<(Option<f64>,)>),
+    ArrayTransform(f64, String, Box<self::JavaScriptArraySpeciesDirectory>, Option<(Option<f64>,)>),
+    ObjectEnumeration(f64, String, f64),
+    PropertyDefinitions(f64, String, f64, f64),
+    PropertyReflection(f64, String, f64, f64, f64, f64),
+    InstanceOf(f64, f64, f64, f64, String),
+    ObjectObservation(f64, String, f64, f64),
+    CollectionCopy(f64, f64, f64, f64, f64, f64, f64, f64),
+    ConstructErrorValue(f64, f64, f64, f64, f64, f64, self::ml::Big, String, bool),
+    ReadDerivedReceiver(f64),
+    InvokeErrorIntrinsic(f64),
+    InvokeHostCapability(f64),
     Return(f64),
     Throw(f64),
     PushHandler(f64, f64),
@@ -489,59 +654,167 @@ pub enum JavaScriptCallInstruction {
     SameValue(f64, f64, f64),
     StrictEqual(f64, f64, f64),
     RequireWrite(f64),
-    Primitive(f64, String, Vec<f64>),
+    Primitive(f64, String, std::rc::Rc<std::cell::RefCell<Vec<f64>>>),
+    OrdinaryAllocate(f64, f64),
+    LiteralPrototype(f64, f64, f64),
+    LiteralAccessor(f64, f64, f64, f64, String, self::ml::Big),
+    ObjectFromEntries(f64, f64, f64, f64),
+    PrimitiveWrapper(f64, f64, f64),
+    SymbolAllocate(f64, f64),
+    SymbolDescription(f64, f64),
+    SymbolRegistry(f64, f64, String),
+    FunctionName(f64, f64, f64, String, self::ml::Big),
+    ArrayAllocate(f64, f64, f64),
+    ClosureAllocate(f64, self::ml::Big, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>, f64),
+    ArraySpread(f64, f64, f64, f64, f64, self::ml::Big),
+    ObjectSpread(f64, f64, f64, self::ml::Big, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<f64>>>>,)>, Option<(Option<String>,)>),
+    OrdinaryDataProperty(f64, f64, f64, f64, self::ml::Big),
     OrdinaryGet(f64, f64, f64, f64),
+    OrdinaryDelete(f64, f64, f64),
+    OrdinaryHas(f64, f64, f64),
     OrdinarySet(f64, f64, f64, f64, f64),
+    OrdinaryDefine(f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<f64>>>, self::ml::Big),
     PropertyKey(f64, f64, self::ml::Big),
-    PropertyDefinition(f64, f64, f64, f64, self::ml::Big),
+    PropertyDefinition(f64, f64, f64, f64, self::ml::Big, Option<(Option<String>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallFunction {
-    CallFunction(self::ml::Big, self::ml::Big, String, Box<self::JavaScriptSemanticValue>, f64, f64, Vec<self::JavaScriptSemanticValue>, Vec<self::JavaScriptCallInstruction>),
+    CallFunction(self::ml::Big, self::ml::Big, String, Box<self::JavaScriptSemanticValue>, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptSemanticValue>>>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallInstruction>>>, Option<(Option<self::JavaScriptSemanticValue>,)>, Option<(Option<self::JavaScriptCallSourceSpan>,)>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallTemplate {
+    CallTemplate(self::ml::Big, f64, self::ml::Big, f64, f64, f64, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallInstruction>>>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, f64, Option<(Option<String>,)>, Option<(Option<self::JavaScriptCallSourceSpan>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallProgram {
-    CallProgram(Vec<self::JavaScriptCallFunction>, Vec<self::ml::Big>, Box<self::JavaScriptSemanticValue>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallPrimitiveResult {
-    PrimitiveValue(Box<self::JavaScriptSemanticValue>),
-    PrimitiveInvalid(String),
-    PrimitiveError(String, String),
-    PrimitiveResourceLimit(String),
+    CallProgram(std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallFunction>>>, std::rc::Rc<std::cell::RefCell<Vec<self::ml::Big>>>, Box<self::JavaScriptSemanticValue>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallTemplate>>>>,)>, Option<(Option<self::JavaScriptArraySpeciesDirectory>,)>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceUnit>>>>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallSource {
     SourceConstant(Box<self::JavaScriptSemanticValue>),
+    SourceNewTarget,
     SourceReceiver,
     SourceArgument(f64),
+    SourceDerivedReceiver,
+    SourceErrorIntrinsic,
+    SourceConstruct(Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+    SourceConstructErrorClass(Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+    SourceClassConstructorCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+    SourceConstructCollection(Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+    SourceVariadicCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>, String, bool),
+    SourceArgumentSpread(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, self::ml::Big),
+    SourceConstructErrorValue(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, self::ml::Big, String, bool),
     SourceThrow(Box<self::JavaScriptCallSource>),
+    SourceReturn(Box<self::JavaScriptCallSource>),
+    SourceAssignBinding(f64, Box<self::JavaScriptCallSource>),
+    SourceImmutableBindingWrite(Box<self::JavaScriptCallSource>),
+    SourceWhile(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Option<(Option<f64>,)>, Option<(Option<self::JavaScriptCallSource>,)>, Option<(Option<bool>,)>, Option<(Option<self::JavaScriptCallSource>,)>),
+    SourceCloneBindingCell(f64, self::ml::Big, Option<(Option<bool>,)>),
+    SourceControlJump(f64, bool),
+    SourceControlBlock(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceSwitch(f64, Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceSwitchClause>>>, Box<self::JavaScriptCallSource>),
+    SourceBindingScope(std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallBindingDeclaration>>>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceLexicalScope(std::rc::Rc<std::cell::RefCell<Vec<f64>>>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<f64>>>>,)>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallCellInitializer>>>>,)>, self::ml::Big, Box<self::JavaScriptCallSource>),
+    SourceWriteExisting(f64, bool, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceInitializeCell(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceInitializeBinding(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceIteratorBinding(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, self::ml::Big),
+    SourceIteratorStep(f64, self::ml::Big, bool),
+    SourceIteratorRemainder(f64, Box<self::JavaScriptCallSource>, self::ml::Big),
+    SourceForOf(f64, f64, f64, bool, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, self::ml::Big, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<f64>>>>,)>),
+    SourceIteratorLoop(f64, f64, f64, bool, Box<self::JavaScriptCallSource>, self::ml::Big, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<f64>>>>,)>),
+    SourceIteratorClose(f64, self::ml::Big),
+    SourceFinally(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceTry(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceBinding(f64),
     SourceLet(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceLocalLet(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, bool),
+    SourceArgumentRest(f64, Box<self::JavaScriptCallSource>, self::ml::Big),
+    SourceParameterRest(f64, f64, Box<self::JavaScriptCallSource>, self::ml::Big, Box<self::JavaScriptCallSource>),
+    SourceParameterDefault(f64, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceIf(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceNumberBinary(String, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceSameValue(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceStrictEqual(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourcePrimitive(String, Vec<self::JavaScriptCallSource>),
-    SourceRecur(Vec<self::JavaScriptCallSource>),
+    SourceSnapshotStrictEqual(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourcePrimitive(String, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+    SourceRecur(std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+    SourceAllocate(Box<self::JavaScriptCallSource>),
+    SourceClosure(self::ml::Big, f64, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>, Box<self::JavaScriptCallSource>),
+    SourceObject(Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceProperty>>>, self::ml::Big),
+    SourceArrayAccumulation(Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallArrayPart>>>, Box<self::JavaScriptCallSource>, self::ml::Big),
+    SourceArray(Box<self::JavaScriptCallSource>, f64, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceArrayElement>>>, self::ml::Big),
+    SourcePropertyKey(Box<self::JavaScriptCallSource>, self::ml::Big),
+    SourcePropertyDefinition(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, self::ml::Big),
     SourceSet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceGet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
-    SourceCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Vec<self::JavaScriptCallSource>),
+    SourceSnapshotSet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceStringGet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceGet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Option<(Option<self::JavaScriptCallSource>,)>),
+    SourceInstanceOf(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceDelete(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceHas(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+    SourceSnapshotCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallSourceProperty {
+    SourceObjectProperty(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Option<(Option<bool>,)>),
+    SourceObjectAccessor(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, String, Option<(Option<bool>,)>),
+    SourceLiteralPrototype(Box<self::JavaScriptCallSource>),
+    SourceObjectSpread(Box<self::JavaScriptCallSource>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSource>>>>,)>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallArrayPart {
+    SourceArrayValue(Box<self::JavaScriptCallSource>),
+    SourceArraySpread(Box<self::JavaScriptCallSource>),
+    SourceArrayHole,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallSourceArrayElement {
+    SourceArrayElement(f64, Box<self::JavaScriptCallSource>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallSourceSwitchClause {
+    SourceSwitchCase(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceSwitchDefault(Box<self::JavaScriptCallSource>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallSourceControlScope {
+    SourceControlScope(f64, String, f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallSourceControlTransfer {
+    SourceControlTransfer(f64, f64, bool),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallCellInitializer {
+    SourceCellInitializer(f64, Box<self::JavaScriptCallSource>, bool),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallBindingDeclaration {
+    SourceBindingDeclaration(f64, bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallSourceBinding {
-    SourceBindingRegister(f64, f64),
+    SourceBindingRegister(f64, f64, bool, Option<(Option<bool>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallSourceBuilder {
-    SourceBuilder(Vec<self::JavaScriptCallInstruction>, f64, f64, f64, f64, String),
+    SourceBuilder(std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallInstruction>>>, f64, f64, f64, f64, String, Option<(Option<bool>,)>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<f64>>>>,)>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceControlScope>>>>,)>, Option<(Option<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceControlTransfer>>>>,)>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -551,36 +824,35 @@ pub enum JavaScriptCallSourceResult {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallSourceCompilation {
-    SourceCompiled(Vec<self::JavaScriptCallInstruction>, f64, String),
+    SourceCompiled(std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallInstruction>>>, f64, String),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_source_text_profile_error(profile: &str, length: f64) -> String {
+    if (profile != "inspectable UTF16 source text 1") {
+        String::from("source text requires its explicit inspectable UTF16 resource profile")
+    } else {
+        if (((!(self::ml_math::is_safe_integer(length)) || (length < (0f64))) || (length > (16777216f64))) || ((length == (0f64)) && (((1f64 / length)) < (0f64)))) {
+            String::from("source text exceeds the explicit 16777216 UTF16 unit budget")
+        } else {
+            String::from("")
+        }
+    }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValue) -> String {
     match value.clone() {
-        self::JavaScriptSemanticValue::Undefined => {
-            String::from("")
-        }
-        self::JavaScriptSemanticValue::Null => {
-            String::from("")
-        }
-        self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1) => {
-            String::from("")
-        }
-        self::JavaScriptSemanticValue::Number(source_ml_source2_f2) => {
-            String::from("")
-        }
-        self::JavaScriptSemanticValue::Integer(source_ml_source2_f3) => {
-            String::from("")
-        }
         self::JavaScriptSemanticValue::Text(units) => {
-            if (((units.len() as f64)) > (1048576f64)) {
+            if (({ let ml_reference_array1 = units.clone(); let ml_reference_projection1 = ml_reference_array1.borrow().len() as f64; ml_reference_projection1 }) > (1048576f64)) {
                 String::from("semantic text exceeds the explicit UTF16 unit budget")
             } else {
                 {
                     let at = 0f64;
                     {
-                        let source_ml_source2_s5 = self::source_ml_source1_temporary_read_java_script_semantic_value_error_loop1(&(units), at);
+                        let source_ml_source2_s5 = self::source_ml_source1_temporary_read_java_script_semantic_value_error_loop1(units.clone(), at);
                         match source_ml_source2_s5.clone() {
                             self::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Done => {
                                 String::from("")
@@ -593,6 +865,9 @@ pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValu
                 }
             }
         }
+        self::JavaScriptSemanticValue::SourceText(profile, text) => {
+            self::read_java_script_source_text_profile_error(&(profile), (text.encode_utf16().count() as f64))
+        }
         self::JavaScriptSemanticValue::Symbol(identity) => {
             if ((identity > (self::ml::Big::from_i128(0))) && (identity <= (self::ml::Big::from_i128(18446744073709551615)))) {
                 String::from("")
@@ -600,205 +875,27 @@ pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValu
                 String::from("a symbol requires a positive unsigned64 global link identity")
             }
         }
-        self::JavaScriptSemanticValue::Object(identity_2, source_ml_source2_f4) => {
+        self::JavaScriptSemanticValue::Object(identity_2, _) => {
             if ((identity_2 > (self::ml::Big::from_i128(0))) && (identity_2 <= (self::ml::Big::from_i128(18446744073709551615)))) {
                 String::from("")
             } else {
                 String::from("an object requires a positive unsigned64 global link identity")
             }
         }
+        _ => {
+            String::from("")
+        }
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn test_java_script_call_code_coordinate(value: f64, limit: f64) -> bool {
+pub fn test_java_script_source_coordinate(value: f64, limit: f64) -> bool {
     (((self::ml_math::is_safe_integer(value) && (value >= (0f64))) && (value < limit)) && ((value != (0f64)) || (((1f64 / value)) > (0f64))))
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_java_script_call_constant_error(value: self::JavaScriptSemanticValue) -> String {
-    self::read_java_script_semantic_value_error(value.clone())
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_call_integer_arity(operation: &str) -> f64 {
-    if (((operation == "negate integer") || (operation == "complement integer bits")) || (operation == "complement number bits")) {
-        1f64
-    } else {
-        if self::ml_array::includes(&vec![String::from("add integers"), String::from("subtract integers"), String::from("multiply integers"), String::from("divide integers"), String::from("read integer remainder"), String::from("raise integer power"), String::from("compare integers"), String::from("compare number integer"), String::from("compare text integer"), String::from("conjoin integer bits"), String::from("disjoin integer bits"), String::from("exclude equal integer bits"), String::from("shift integer bits left"), String::from("shift integer bits right"), String::from("conjoin number bits"), String::from("disjoin number bits"), String::from("exclude equal number bits"), String::from("shift number bits left"), String::from("shift number bits right"), String::from("shift number bits right unsigned")], &operation.to_owned(), 0f64, false, |a, b| a == b) {
-            2f64
-        } else {
-            0f64
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_source_exception_class(operation: &str) -> String {
-    if (operation == "raiseJavaScriptError") {
-        String::from("Error")
-    } else {
-        if (operation == "raiseJavaScriptTypeError") {
-            String::from("TypeError")
-        } else {
-            if (operation == "raiseJavaScriptRangeError") {
-                String::from("RangeError")
-            } else {
-                if (operation == "raiseJavaScriptSyntaxError") {
-                    String::from("SyntaxError")
-                } else {
-                    if (operation == "raiseJavaScriptReferenceError") {
-                        String::from("ReferenceError")
-                    } else {
-                        if (operation == "raiseJavaScriptURIError") {
-                            String::from("URIError")
-                        } else {
-                            if (operation == "raiseJavaScriptEvalError") {
-                                String::from("EvalError")
-                            } else {
-                                String::from("")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_java_script_call_unary_number_operation(operation: &str) -> bool {
-    self::ml_array::includes(&vec![String::from("negate number"), String::from("truncate number"), String::from("read absolute number"), String::from("floor number"), String::from("ceil number"), String::from("round number"), String::from("read number sign"), String::from("read square root"), String::from("test integer number"), String::from("test safe integer number")], &operation.to_owned(), 0f64, false, |a, b| a == b)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_call_primitive_arity_error(operation: &str, count: f64) -> String {
-    if ((!(self::ml_math::is_safe_integer(count)) || (count < (0f64))) || (count > (4096f64))) {
-        String::from("primitive operands exceed their explicit call register budget")
-    } else {
-        if ((self::read_java_script_source_exception_class(operation)) != "") {
-            if (count == (2f64)) {
-                String::from("")
-            } else {
-                String::from("a source Error requires its actual text message and own-message presence")
-            }
-        } else {
-            {
-                let integer_arity = self::read_java_script_call_integer_arity(operation);
-                if (integer_arity != (0f64)) {
-                    if (count == integer_arity) {
-                        String::from("")
-                    } else {
-                        String::from("primitive instructions require every actual operand coordinate")
-                    }
-                } else {
-                    if (((operation == "read minimum number") || (operation == "read maximum number")) || (operation == "construct text units")) {
-                        String::from("")
-                    } else {
-                        if self::test_java_script_call_unary_number_operation(operation) {
-                            if (count == (1f64)) {
-                                String::from("")
-                            } else {
-                                String::from("primitive instructions require every actual operand coordinate")
-                            }
-                        } else {
-                            {
-                                let unary = vec![String::from("read text length"), String::from("trim text"), String::from("trim text start"), String::from("trim text end"), String::from("convert explicit number"), String::from("coerce primitive number"), String::from("convert primitive text"), String::from("convert explicit integer"), String::from("coerce primitive integer")];
-                                {
-                                    let binary = vec![String::from("repeat text"), String::from("read text code point"), String::from("read text character"), String::from("read relative text character"), String::from("concatenate text"), String::from("compare text"), String::from("test text prefix"), String::from("test text suffix"), String::from("test text inclusion")];
-                                    {
-                                        let ternary = vec![String::from("pad text start"), String::from("pad text end"), String::from("slice text"), String::from("find text"), String::from("find last text"), String::from("replace text"), String::from("replace all text")];
-                                        {
-                                            let arity = if self::ml_array::includes(&unary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
-                                                1f64
-                                            } else {
-                                                if self::ml_array::includes(&binary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
-                                                    2f64
-                                                } else {
-                                                    if self::ml_array::includes(&ternary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
-                                                        3f64
-                                                    } else {
-                                                        (-1f64)
-                                                    }
-                                                }
-                                            };
-                                            if (arity < (0f64)) {
-                                                String::from("primitive instructions require their actual registered operation")
-                                            } else {
-                                                if (count != arity) {
-                                                    String::from("primitive instructions require every actual operand coordinate")
-                                                } else {
-                                                    String::from("")
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_java_script_call_source(builder: self::JavaScriptCallSourceBuilder, error: &str) -> self::JavaScriptCallSourceResult {
-    self::JavaScriptCallSourceResult::SourceResult(Box::new({
-        let source_ml_source2_nominal_spread361 = builder.clone();
-        {
-            let source_ml_source2_nominal_field362 = match source_ml_source2_nominal_spread361.clone() {
-                self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_data_property_value363, _, _, _, _, _) => {
-                    source_ml_source2_data_property_value363
-                }
-            };
-            {
-                let source_ml_source2_nominal_field364 = match source_ml_source2_nominal_spread361.clone() {
-                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value365, _, _, _, _) => {
-                        source_ml_source2_data_property_value365
-                    }
-                };
-                {
-                    let source_ml_source2_nominal_field366 = match source_ml_source2_nominal_spread361.clone() {
-                        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, source_ml_source2_data_property_value367, _, _, _) => {
-                            source_ml_source2_data_property_value367
-                        }
-                    };
-                    {
-                        let source_ml_source2_nominal_field368 = match source_ml_source2_nominal_spread361.clone() {
-                            self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, source_ml_source2_data_property_value369, _, _) => {
-                                source_ml_source2_data_property_value369
-                            }
-                        };
-                        {
-                            let source_ml_source2_nominal_field370 = match source_ml_source2_nominal_spread361.clone() {
-                                self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, source_ml_source2_data_property_value371, _) => {
-                                    source_ml_source2_data_property_value371
-                                }
-                            };
-                            {
-                                let source_ml_source2_nominal_field372 = match source_ml_source2_nominal_spread361.clone() {
-                                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, _, source_ml_source2_data_property_value373) => {
-                                        source_ml_source2_data_property_value373.clone()
-                                    }
-                                };
-                                {
-                                    let source_ml_source2_nominal_override374 = error.to_owned();
-                                    self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_nominal_field362, source_ml_source2_nominal_field364, source_ml_source2_nominal_field366, source_ml_source2_nominal_field368, source_ml_source2_nominal_field370, source_ml_source2_nominal_override374.clone())
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }), 0f64)
+pub fn test_java_script_call_code_coordinate(value: f64, limit: f64) -> bool {
+    self::test_java_script_source_coordinate(value, limit)
 }

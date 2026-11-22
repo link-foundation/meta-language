@@ -1,3 +1,4 @@
+import {readJavaScriptNumericParsingArity} from './javascript-call-primitive-arity-rules.js';
 // Numeric prefix grammars operate on exact UTF16 and reuse exact rational
 // rounding. Host parseInt/parseFloat are never represented execution fallbacks.
 import {acceptJavaScriptWhitespaceUnit} from './javascript-whitespace-rules.js';
@@ -32,8 +33,6 @@ export function parseJavaScriptFloatPrefix(units){
  const mantissaEnd=at;if((units[at]??-1)===69||(units[at]??-1)===101){at+=1;if((units[at]??-1)===43||(units[at]??-1)===45)at+=1;const exponentStart=at;while((units[at]??-1)>=48&&(units[at]??-1)<=57)at+=1;if(at===exponentStart)at=mantissaEnd;}
  return convertJavaScriptStringNumberUnits(units.slice(start,at));
 }
-/** @param {string} operation @returns {number} */
-export function readJavaScriptNumericParsingArity(operation){return operation==='parse integer text prefix'?2:operation==='parse float text prefix'?1:-1;}
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptNumericParsing(operation,values){
  const arity=readJavaScriptNumericParsingArity(operation),input=values[0]??{$:'undefined'},radix=values[1]??{$:'undefined'},length=readJavaScriptSemanticTextLength(input);

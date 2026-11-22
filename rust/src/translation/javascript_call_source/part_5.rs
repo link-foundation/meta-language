@@ -1,64 +1,302 @@
 // Generated from complete js/src/translation/javascript-call-source.js. Do not edit by hand.
+use super::JavaScriptCallCellInitializer;
 use super::JavaScriptCallInstruction;
 use super::JavaScriptCallSource;
 use super::JavaScriptCallSourceBinding;
 use super::JavaScriptCallSourceBuilder;
-use super::JavaScriptCallSourceCompilation;
 use super::JavaScriptCallSourceResult;
+use super::JavaScriptSemanticValue;
+use super::MlSource1TemporaryLowerJavaScriptCallSourceLexicalCellExpressionLoop17Result;
 use super::allocate_java_script_call_source_register;
 use super::append_java_script_call_source_instruction;
 use super::lower_java_script_call_source_expression;
 use super::ml;
 use super::ml_array;
-use super::test_java_script_call_code_coordinate;
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop105Result {
-    MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop105Done(Box<self::JavaScriptCallSourceBuilder>, Vec<f64>),
-}
+use super::refuse_java_script_call_source;
+use super::source_ml_source1_temporary_lower_java_script_call_source_lexical_cell_expression_loop17;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_source1_temporary_lower_java_script_call_source_expression_loop105(mut bindings: Vec<self::JavaScriptCallSourceBinding>, mut depth: f64, mut current: self::JavaScriptCallSourceBuilder, mut arguments_: Vec<f64>, mut source_ml_source1_temporary_values101: Vec<self::JavaScriptCallSource>, mut source_ml_source1_temporary_index101: self::ml::Big) -> self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop105Result {
-    loop {
-        return if (source_ml_source1_temporary_index101 < (self::ml::Big::from_u128(source_ml_source1_temporary_values101.len() as u128))) {
+pub fn lower_java_script_call_source_lexical_cell_expression(source: self::JavaScriptCallSource, bindings: std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallSourceBinding>>>, state: self::JavaScriptCallSourceBuilder, depth: f64) -> self::JavaScriptCallSourceResult {
+    match source.clone() {
+        self::JavaScriptCallSource::SourceConstant(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceNewTarget => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceReceiver => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceArgument(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceDerivedReceiver => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceErrorIntrinsic => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceConstruct(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceConstructErrorClass(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceClassConstructorCall(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceConstructCollection(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceVariadicCall(_, _, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceArgumentSpread(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceConstructErrorValue(_, _, _, _, _, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceThrow(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceReturn(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceAssignBinding(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceImmutableBindingWrite(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceWhile(_, _, _, _, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceCloneBindingCell(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceControlJump(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceControlBlock(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceSwitch(_, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceBindingScope(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceLexicalScope(identities, source_existing, source_initializers, realm, body) => {
+            let body = *body;
             {
-                let argument = self::ml_array::at(&source_ml_source1_temporary_values101, source_ml_source1_temporary_index101.to_index());
-                {
-                    let value = self::lower_java_script_call_source_expression(argument.clone(), bindings.clone(), current.clone(), (depth + 1f64));
+                let existing = (((source_existing.clone().unwrap_or_else(|| (None::<std::rc::Rc<std::cell::RefCell<Vec<f64>>>>,))).0).clone()).clone().unwrap_or_else(|| std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new())));
+                if ((((((({ let ml_reference_array23 = identities.clone(); let ml_reference_projection23 = ml_reference_array23.borrow().len() as f64; ml_reference_projection23 }) > (4096f64)) || (({ let ml_reference_array24 = existing.clone(); let ml_reference_projection24 = ml_reference_array24.borrow().len() as f64; ml_reference_projection24 }) > ({ let ml_reference_array25 = identities.clone(); let ml_reference_projection25 = ml_reference_array25.borrow().len() as f64; ml_reference_projection25 }))) || ((({ let ml_reference_array26 = existing.clone(); let ml_reference_projection26 = ml_reference_array26.borrow().len() as f64; ml_reference_projection26 }) > (0f64)) && {
+                    let source_ml_source2_comparison_operand3887 = match state.clone() {
+                        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, _, _, source_ml_source2_data_property_value3886, _, _, _) => {
+                            ((source_ml_source2_data_property_value3886.clone().unwrap_or_else(|| (None::<bool>,))).0).clone()
+                        }
+                    };
+                    !(match (source_ml_source2_comparison_operand3887.clone(), true) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })
+                })) || (realm <= (self::ml::Big::from_i128(0)))) || (realm > (self::ml::Big::from_i128(18446744073709551615)))) || { let ml_values27 = { let ml_reference_value28 = existing.borrow().clone(); ml_reference_value28 }; let ml_callback27 = { let identities = identities.clone(); let existing = existing.clone(); std::rc::Rc::new(move |identity: f64, index: f64| -> bool { (!(self::ml_array::includes(&{ let ml_reference_value29 = identities.borrow().clone(); ml_reference_value29 }, &identity, 0f64, false, |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()))) || ((self::ml_array::index_of(&{ let ml_reference_value30 = existing.borrow().clone(); ml_reference_value30 }, &identity, 0f64, false, |a, b| a == b)) != index)) }) }; ml_values27.iter().cloned().enumerate().any(|(ml_index27, ml_value27)| ml_callback27(ml_value27, (ml_index27 as f64))) }) {
+                    self::refuse_java_script_call_source(state.clone(), "lexical scope retains bounded actual cells and formal register replacements")
+                } else {
                     {
-                        let captured = self::allocate_java_script_call_source_register(match value.clone() {
-                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value875, _) => {
-                                let source_ml_source2_data_property_value875 = *source_ml_source2_data_property_value875;
-                                source_ml_source2_data_property_value875.clone()
+                        let initializers = (((source_initializers.clone().unwrap_or_else(|| (None::<std::rc::Rc<std::cell::RefCell<Vec<self::JavaScriptCallCellInitializer>>>>,))).0).clone()).clone().unwrap_or_else(|| std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptCallCellInitializer>::new())));
+                        if ((({ let ml_reference_array31 = initializers.clone(); let ml_reference_projection31 = ml_reference_array31.borrow().len() as f64; ml_reference_projection31 }) > ({ let ml_reference_array32 = identities.clone(); let ml_reference_projection32 = ml_reference_array32.borrow().len() as f64; ml_reference_projection32 })) || { let ml_values33 = { let ml_reference_value34 = initializers.borrow().clone(); ml_reference_value34 }; let ml_callback33 = { let identities = identities.clone(); let initializers = initializers.clone(); std::rc::Rc::new(move |row: self::JavaScriptCallCellInitializer, index: f64| -> bool { (((match row.clone() {
+                            self::JavaScriptCallCellInitializer::SourceCellInitializer(_, _, _) => {
+                                false
+                            }
+                        } || !(self::ml_array::includes(&{ let ml_reference_value35 = identities.borrow().clone(); ml_reference_value35 }, &match row.clone() {
+                            self::JavaScriptCallCellInitializer::SourceCellInitializer(source_ml_source2_data_property_value3892, _, _) => {
+                                source_ml_source2_data_property_value3892
+                            }
+                        }, 0f64, false, |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan())))) || (({ let ml_values36 = { let ml_reference_value37 = initializers.borrow().clone(); ml_reference_value37 }; let ml_callback36 = { let row = row.clone(); std::rc::Rc::new(move |prior: self::JavaScriptCallCellInitializer| -> bool { ((match prior.clone() {
+                            self::JavaScriptCallCellInitializer::SourceCellInitializer(source_ml_source2_data_property_value3899, _, _) => {
+                                source_ml_source2_data_property_value3899
+                            }
+                        }) == (match row.clone() {
+                            self::JavaScriptCallCellInitializer::SourceCellInitializer(source_ml_source2_data_property_value3900, _, _) => {
+                                source_ml_source2_data_property_value3900
+                            }
+                        })) }) }; ml_values36.iter().cloned().enumerate().position(|(ml_index36, ml_value36)| ml_callback36(ml_value36)).map_or(-1f64, |ml_position| ml_position as f64) }) != index)) || (({
+                            let source_ml_source2_type_query_operand3904 = match row.clone() {
+                                self::JavaScriptCallCellInitializer::SourceCellInitializer(_, _, source_ml_source2_data_property_value3903) => {
+                                    source_ml_source2_data_property_value3903
+                                }
+                            };
+                            String::from("boolean")
+                        }) != "boolean")) }) }; ml_values33.iter().cloned().enumerate().any(|(ml_index33, ml_value33)| ml_callback33(ml_value33, (ml_index33 as f64))) }) {
+                            self::refuse_java_script_call_source(state.clone(), "cell initializers retain distinct actual owned coordinates and initialization flags")
+                        } else {
+                            {
+                                let current = state.clone();
+                                {
+                                    let entries = std::rc::Rc::new(std::cell::RefCell::new(Vec::<self::JavaScriptCallSourceBinding>::new()));
+                                    {
+                                        let at = 0f64;
+                                        {
+                                            let source_ml_source2_s3905 = self::source_ml_source1_temporary_lower_java_script_call_source_lexical_cell_expression_loop17(bindings.clone(), depth, realm.clone(), identities.clone(), existing.clone(), initializers.clone(), current.clone(), entries.clone(), at);
+                                            match source_ml_source2_s3905.clone() {
+                                                self::MlSource1TemporaryLowerJavaScriptCallSourceLexicalCellExpressionLoop17Result::MlSource1TemporaryLowerJavaScriptCallSourceLexicalCellExpressionLoop17Done(current_2, entries_2) => {
+                                                    let current_2 = *current_2;
+                                                    self::lower_java_script_call_source_expression(body.clone(), std::rc::Rc::new(std::cell::RefCell::new(self::ml_array::append(self::ml_array::append(Vec::<self::JavaScriptCallSourceBinding>::new(), { let ml_reference_value38 = bindings.borrow().clone(); ml_reference_value38 }), { let ml_reference_value39 = entries_2.borrow().clone(); ml_reference_value39 }))), current_2.clone(), (depth + 1f64))
+                                                }
+                                                self::MlSource1TemporaryLowerJavaScriptCallSourceLexicalCellExpressionLoop17Result::MlSource1TemporaryLowerJavaScriptCallSourceLexicalCellExpressionLoop17Return(source_ml_source1_temporary_result17) => {
+                                                    let source_ml_source1_temporary_result17 = *source_ml_source1_temporary_result17;
+                                                    source_ml_source1_temporary_result17.clone()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self::JavaScriptCallSource::SourceWriteExisting(_, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceInitializeCell(identity, source_value, body_2) => {
+            let source_value = *source_value;
+            let body_2 = *body_2;
+            {
+                let cell = self::lower_java_script_call_source_expression(self::JavaScriptCallSource::SourceBinding(identity), bindings.clone(), state.clone(), (depth + 1f64));
+                {
+                    let value = self::lower_java_script_call_source_expression(source_value.clone(), bindings.clone(), match cell.clone() {
+                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value3908, _) => {
+                            let source_ml_source2_data_property_value3908 = *source_ml_source2_data_property_value3908;
+                            source_ml_source2_data_property_value3908.clone()
+                        }
+                    }, (depth + 1f64));
+                    {
+                        let held = self::allocate_java_script_call_source_register(match value.clone() {
+                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value3909, _) => {
+                                let source_ml_source2_data_property_value3909 = *source_ml_source2_data_property_value3909;
+                                source_ml_source2_data_property_value3909.clone()
                             }
                         });
                         {
-                            let current_2 = self::append_java_script_call_source_instruction(match captured.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value876, _) => {
-                                    let source_ml_source2_data_property_value876 = *source_ml_source2_data_property_value876;
-                                    source_ml_source2_data_property_value876.clone()
+                            let saved = self::append_java_script_call_source_instruction(match held.clone() {
+                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value3910, _) => {
+                                    let source_ml_source2_data_property_value3910 = *source_ml_source2_data_property_value3910;
+                                    source_ml_source2_data_property_value3910.clone()
                                 }
-                            }, self::JavaScriptCallInstruction::Copy(match captured.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value877) => {
-                                    source_ml_source2_data_property_value877
+                            }, self::JavaScriptCallInstruction::Copy(match held.clone() {
+                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3911) => {
+                                    source_ml_source2_data_property_value3911
                                 }
                             }, match value.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value878) => {
-                                    source_ml_source2_data_property_value878
+                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3912) => {
+                                    source_ml_source2_data_property_value3912
                                 }
                             }));
                             {
-                                let arguments__2 = { let (ml_append_right, ml_append_left) = (vec![match captured.clone() {
-                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value879) => {
-                                        source_ml_source2_data_property_value879
-                                    }
-                                }], arguments_); self::ml_array::append(ml_append_left, ml_append_right) };
+                                let key = self::allocate_java_script_call_source_register(saved.clone());
                                 {
-                                    let source_ml_source1_temporary_index101_2 = source_ml_source1_temporary_index101.add(&self::ml::Big::from_i128(1));
+                                    let written = self::allocate_java_script_call_source_register(match key.clone() {
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value3913, _) => {
+                                            let source_ml_source2_data_property_value3913 = *source_ml_source2_data_property_value3913;
+                                            source_ml_source2_data_property_value3913.clone()
+                                        }
+                                    });
                                     {
-                                        (current, arguments_, source_ml_source1_temporary_index101) = (current_2.clone(), arguments__2, source_ml_source1_temporary_index101_2.clone());
-                                        continue;
+                                        let flag = self::allocate_java_script_call_source_register(match written.clone() {
+                                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value3914, _) => {
+                                                let source_ml_source2_data_property_value3914 = *source_ml_source2_data_property_value3914;
+                                                source_ml_source2_data_property_value3914.clone()
+                                            }
+                                        });
+                                        {
+                                            let current_3 = self::append_java_script_call_source_instruction(match flag.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value3915, _) => {
+                                                    let source_ml_source2_data_property_value3915 = *source_ml_source2_data_property_value3915;
+                                                    source_ml_source2_data_property_value3915.clone()
+                                                }
+                                            }, self::JavaScriptCallInstruction::Constant(match key.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3916) => {
+                                                    source_ml_source2_data_property_value3916
+                                                }
+                                            }, Box::new(self::JavaScriptSemanticValue::Text(std::rc::Rc::new(std::cell::RefCell::new(vec![118f64, 97f64, 108f64, 117f64, 101f64]))))));
+                                            {
+                                                let current_4 = self::append_java_script_call_source_instruction(current_3.clone(), self::JavaScriptCallInstruction::OrdinarySet(match written.clone() {
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3917) => {
+                                                        source_ml_source2_data_property_value3917
+                                                    }
+                                                }, match cell.clone() {
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3918) => {
+                                                        source_ml_source2_data_property_value3918
+                                                    }
+                                                }, match key.clone() {
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3919) => {
+                                                        source_ml_source2_data_property_value3919
+                                                    }
+                                                }, match held.clone() {
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3920) => {
+                                                        source_ml_source2_data_property_value3920
+                                                    }
+                                                }, match cell.clone() {
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3921) => {
+                                                        source_ml_source2_data_property_value3921
+                                                    }
+                                                }));
+                                                {
+                                                    let current_5 = self::append_java_script_call_source_instruction(current_4.clone(), self::JavaScriptCallInstruction::RequireWrite(match written.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3922) => {
+                                                            source_ml_source2_data_property_value3922
+                                                        }
+                                                    }));
+                                                    {
+                                                        let current_6 = self::append_java_script_call_source_instruction(current_5.clone(), self::JavaScriptCallInstruction::Constant(match key.clone() {
+                                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3923) => {
+                                                                source_ml_source2_data_property_value3923
+                                                            }
+                                                        }, Box::new(self::JavaScriptSemanticValue::Text(std::rc::Rc::new(std::cell::RefCell::new(vec![105f64, 110f64, 105f64, 116f64, 105f64, 97f64, 108f64, 105f64, 122f64, 101f64, 100f64]))))));
+                                                        {
+                                                            let current_7 = self::append_java_script_call_source_instruction(current_6.clone(), self::JavaScriptCallInstruction::Constant(match flag.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3924) => {
+                                                                    source_ml_source2_data_property_value3924
+                                                                }
+                                                            }, Box::new(self::JavaScriptSemanticValue::Boolean(true))));
+                                                            {
+                                                                let current_8 = self::append_java_script_call_source_instruction(current_7.clone(), self::JavaScriptCallInstruction::OrdinarySet(match written.clone() {
+                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3925) => {
+                                                                        source_ml_source2_data_property_value3925
+                                                                    }
+                                                                }, match cell.clone() {
+                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3926) => {
+                                                                        source_ml_source2_data_property_value3926
+                                                                    }
+                                                                }, match key.clone() {
+                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3927) => {
+                                                                        source_ml_source2_data_property_value3927
+                                                                    }
+                                                                }, match flag.clone() {
+                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3928) => {
+                                                                        source_ml_source2_data_property_value3928
+                                                                    }
+                                                                }, match cell.clone() {
+                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3929) => {
+                                                                        source_ml_source2_data_property_value3929
+                                                                    }
+                                                                }));
+                                                                {
+                                                                    let current_9 = self::append_java_script_call_source_instruction(current_8.clone(), self::JavaScriptCallInstruction::RequireWrite(match written.clone() {
+                                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value3930) => {
+                                                                            source_ml_source2_data_property_value3930
+                                                                        }
+                                                                    }));
+                                                                    self::lower_java_script_call_source_expression(body_2.clone(), bindings.clone(), current_9.clone(), (depth + 1f64))
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -66,83 +304,120 @@ pub fn source_ml_source1_temporary_lower_java_script_call_source_expression_loop
                     }
                 }
             }
-        } else {
-            self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop105Result::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop105Done(Box::new(current.clone()), arguments_)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop107Result {
-    MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop107Done(Box<self::JavaScriptCallSourceBuilder>, Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_lower_java_script_call_source_expression_loop107(mut bindings: Vec<self::JavaScriptCallSourceBinding>, mut depth: f64, mut current: self::JavaScriptCallSourceBuilder, mut arguments_: Vec<f64>, mut source_ml_source1_temporary_values102: Vec<self::JavaScriptCallSource>, mut source_ml_source1_temporary_index102: self::ml::Big) -> self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop107Result {
-    loop {
-        return if (source_ml_source1_temporary_index102 < (self::ml::Big::from_u128(source_ml_source1_temporary_values102.len() as u128))) {
-            {
-                let argument = self::ml_array::at(&source_ml_source1_temporary_values102, source_ml_source1_temporary_index102.to_index());
-                {
-                    let value = self::lower_java_script_call_source_expression(argument.clone(), bindings.clone(), current.clone(), (depth + 1f64));
-                    {
-                        let current_2 = match value.clone() {
-                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value880, _) => {
-                                let source_ml_source2_data_property_value880 = *source_ml_source2_data_property_value880;
-                                source_ml_source2_data_property_value880.clone()
-                            }
-                        };
-                        {
-                            let arguments__2 = { let (ml_append_right, ml_append_left) = (vec![match value.clone() {
-                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value881) => {
-                                    source_ml_source2_data_property_value881
-                                }
-                            }], arguments_); self::ml_array::append(ml_append_left, ml_append_right) };
-                            {
-                                let source_ml_source1_temporary_index102_2 = source_ml_source1_temporary_index102.add(&self::ml::Big::from_i128(1));
-                                {
-                                    (current, arguments_, source_ml_source1_temporary_index102) = (current_2.clone(), arguments__2, source_ml_source1_temporary_index102_2.clone());
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop107Result::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop107Done(Box::new(current.clone()), arguments_)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryCompileJavaScriptCallSourceLoop108Result {
-    MlSource1TemporaryCompileJavaScriptCallSourceLoop108Done,
-    MlSource1TemporaryCompileJavaScriptCallSourceLoop108Return(Box<self::JavaScriptCallSourceCompilation>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_compile_java_script_call_source_loop108(parameters: &[f64], mut index: f64) -> self::MlSource1TemporaryCompileJavaScriptCallSourceLoop108Result {
-    loop {
-        return if (index < ((parameters.len() as f64))) {
-            {
-                let owner = (self::ml_array::optional_at(parameters, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
-                if (!(self::test_java_script_call_code_coordinate(owner, 65536f64)) || ((self::ml_array::index_of(parameters, &owner, 0f64, false, |a, b| a == b)) != index)) {
-                    self::MlSource1TemporaryCompileJavaScriptCallSourceLoop108Result::MlSource1TemporaryCompileJavaScriptCallSourceLoop108Return(Box::new(self::JavaScriptCallSourceCompilation::SourceCompiled(Vec::<self::JavaScriptCallInstruction>::new(), 0f64, String::from("source parameters require distinct actual lexical owners"))))
-                } else {
-                    {
-                        let index_2 = (index + 1f64);
-                        {
-                            index = index_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryCompileJavaScriptCallSourceLoop108Result::MlSource1TemporaryCompileJavaScriptCallSourceLoop108Done
-        };
+        }
+        self::JavaScriptCallSource::SourceInitializeBinding(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceIteratorBinding(_, _, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceIteratorStep(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceIteratorRemainder(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceForOf(_, _, _, _, _, _, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceIteratorLoop(_, _, _, _, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceIteratorClose(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceFinally(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceTry(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceBinding(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceLet(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceLocalLet(_, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceArgumentRest(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceParameterRest(_, _, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceParameterDefault(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceIf(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceNumberBinary(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceSameValue(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceStrictEqual(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceSnapshotStrictEqual(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourcePrimitive(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceRecur(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceAllocate(_) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceClosure(_, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceObject(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceArrayAccumulation(_, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceArray(_, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourcePropertyKey(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourcePropertyDefinition(_, _, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceSet(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceSnapshotSet(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceStringGet(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceGet(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceInstanceOf(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceDelete(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceHas(_, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceCall(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
+        self::JavaScriptCallSource::SourceSnapshotCall(_, _, _) => {
+            self::refuse_java_script_call_source(state.clone(), "source lexicalcell lowering requires its actual expression kind")
+        }
     }
 }

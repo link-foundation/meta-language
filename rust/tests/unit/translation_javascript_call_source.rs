@@ -6,7 +6,23 @@ mod native;
 use super::issue_195_translation_pairs::run;
 use codecs::*;
 use meta_language::read_structured_data_lino;
+use serde_json::json;
+use std::cell::RefCell;
 use std::process::Command;
+use std::rc::Rc;
+
+#[test]
+fn call_source_fixture_wire_preserves_optional_property_presence() {
+    let missing = json!({"$":"sourceGet", "object":{"$":"sourceReceiver"},
+        "key":{"$":"sourceConstant", "value":{"$":"undefined"}}});
+    let mut present = missing.clone();
+    present["receiver"] = json!({"fieldPresence":"undefined"});
+    let wire =
+        json!({"$":"sourcePrimitive", "operation":"identity", "arguments":[missing,present]});
+    let source = decode_java_script_call_source(&wire);
+    assert_eq!(encode_java_script_call_source(&source), wire);
+}
+
 #[test]
 fn all_actual_source_functions_compile_to_the_same_complete_instructions() {
     let version = run(Command::new("rustc").arg("--version"));
@@ -39,7 +55,8 @@ fn all_actual_source_functions_compile_to_the_same_complete_instructions() {
                 .iter()
                 .map(|value| value.as_f64().unwrap())
                 .collect::<Vec<_>>();
-            let actual = native::compile_java_script_call_source(source, &parameters);
+            let actual =
+                native::compile_java_script_call_source(source, Rc::new(RefCell::new(parameters)));
             assert_eq!(
                 encode_java_script_call_source_compilation(&actual),
                 unit["compilation"],
@@ -64,7 +81,8 @@ fn all_actual_source_functions_compile_to_the_same_complete_instructions() {
             .iter()
             .map(|value| value.as_f64().unwrap())
             .collect::<Vec<_>>();
-        let actual = native::compile_java_script_call_source(source, &parameters);
+        let actual =
+            native::compile_java_script_call_source(source, Rc::new(RefCell::new(parameters)));
         assert_eq!(
             encode_java_script_call_source_compilation(&actual),
             row["compilation"],

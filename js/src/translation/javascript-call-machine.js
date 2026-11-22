@@ -44,7 +44,8 @@ import {testJavaScriptCollectionIteratorIntrinsicMode} from './javascript-collec
 import {readJavaScriptIntegerProtocolOperationError} from './javascript-call-integer-conversion.js';
 import {readJavaScriptTextProtocolOperationError} from './javascript-text-conversion-protocol.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
-import {readJavaScriptCallPrimitiveArityError,executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
+import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive-arity-rules.js';
+import {executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
 import {testJavaScriptCallCodeCoordinate,findJavaScriptCallCodeFunction,readJavaScriptCallCodeRegisters,readJavaScriptCallCodeDestination,testJavaScriptCallStrictEqual} from './javascript-call-code.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition,insertJavaScriptOrdinaryObject,createJavaScriptOrdinarySetDescriptor,setJavaScriptOrdinaryPrototype,deleteJavaScriptOrdinaryProperty,readJavaScriptOrdinaryKeyError} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue,readJavaScriptSemanticTextLength} from './javascript-semantic-values.js';

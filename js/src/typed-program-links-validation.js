@@ -104,14 +104,32 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   checkRustOwnedLocalStateProof(program);
   // Shared records can describe exponentially many expression paths. Bound
   // the semantic walk as well as the number of unique structural records.
+  const semanticLimit = 100_000;
+  const semanticLimitError = 'the linked program exceeds its semantic resource limit';
   let semanticVisits = 0;
   function visit() {
-    if (++semanticVisits > 100_000) throw new TypeError('the linked program exceeds its semantic resource limit');
+    if (++semanticVisits > semanticLimit) throw new TypeError(semanticLimitError);
   }
+  // Type validation depends only on the program's declaration and reference
+  // tables. The structural walk already rejected cycles. The expression walk
+  // charges each occurrence, and each distinct type is checked and charged once.
+  // Also retain the expanded size of each type. Downstream type equality can
+  // revisit a shared child along multiple paths, even after validation.
+  const validatedTypes = new WeakMap();
   function type(value) {
-    visit();
     if (!value || typeof value !== 'object' || typeof value.kind !== 'string') throw new TypeError('the linked program contains a malformed type');
-    if (primitives.has(value.kind)) return;
+    const known = validatedTypes.get(value);
+    if (known !== undefined) return known;
+    visit();
+    let size = 1;
+    function validateChild(child) {
+      size += type(child);
+      if (size > semanticLimit) throw new TypeError(semanticLimitError);
+    }
+    if (primitives.has(value.kind)) {
+      validatedTypes.set(value, size);
+      return size;
+    }
     if (value.kind === 'fixed') {
       if (!acceptProgramIntegralMetadata(value.kind, 'bits', value.bits, Object.is(value.bits, -0)) || typeof value.signed !== 'boolean') throw new TypeError('the linked program contains an invalid machine integer type');
     } else if (value.kind === 'data') {
@@ -121,15 +139,15 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       const target = targetOf(value, 'datatype');
       if (target && target !== declaration) throw new TypeError('a linked data type targets a different datatype declaration');
     } else if (['array', 'set', 'option', 'cell'].includes(value.kind)) {
-      type(value.element);
+      validateChild(value.element);
       if (value.kind === 'option' && !acceptProgramOptionalAbsence(value.absence ?? 'both')) throw new TypeError('a linked optional type has an invalid absence policy');
     } else if (value.kind === 'tuple') {
       if (!Array.isArray(value.elements) || Object.keys(value).some(field => !['kind', 'elements'].includes(field))) throw new TypeError('a linked tuple type has a malformed element layout');
-      value.elements.forEach(type);
+      value.elements.forEach(validateChild);
     } else if (value.kind === 'union') {
       if (!Array.isArray(value.alternatives) || !acceptUnionTypeCount(value.alternatives.length)
         || Object.keys(value).some(field => !acceptUnionTypeField(field))) throw new TypeError('a linked union type has a malformed ordered alternative layout');
-      for (const alternative of value.alternatives) type(alternative);
+      for (const alternative of value.alternatives) validateChild(alternative);
     }
     else if (value.kind === 'record') {
       if(Object.hasOwn(value,'sourceClassOwner')&&(typeof value.sourceClassOwner!=='string'||value.sourceClassOwner.length===0))throw new TypeError('a linked class record needs its actual nonempty constructor owner');
@@ -138,11 +156,13 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         if(declaration?.k!=='fn'||target&&target!==declaration)throw new TypeError('a linked class record must target its actual owned constructor declaration');
       }
       if(value.ordered!==undefined&&typeof value.ordered!=='boolean')throw new TypeError('a linked record ordered facet must be a boolean');
-      value.fields.forEach((field) => type(field.type));
+      value.fields.forEach((field) => validateChild(field.type));
     }
-    else if (value.kind === 'map') { type(value.key); type(value.value); }
-    else if (value.kind === 'function') { value.params.forEach(type); type(value.ret); }
+    else if (value.kind === 'map') { validateChild(value.key); validateChild(value.value); }
+    else if (value.kind === 'function') { value.params.forEach(validateChild); validateChild(value.ret); }
     else throw new TypeError(`the linked program contains unsupported type ${value.kind}`);
+    validatedTypes.set(value, size);
+    return size;
   }
   const declarations=checkProgramDeclarationOwners(program,visit);
   const constructorOwners = new WeakMap();

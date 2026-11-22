@@ -6,9 +6,11 @@ import {writeProjectData} from './project-data.mjs';
 import {createHash} from 'node:crypto';
 import {draftJavaScriptModelCodecs} from './draft-javascript-model-codecs.mjs';
 import {modelTextWirePolicy} from './model-text-wire.mjs';
-export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,receipt,javascriptOutput}){
+import {isJavaScriptOptionalConstructorFieldType,javaScriptConstructorFieldValueType} from '../src/translation/javascript-constructor-presence.js';
+export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,receipt,javascriptOutput,referenceWire=''}){
  const root=new URL('../../',import.meta.url);
  if(program.sourceLanguage!=='JavaScript')throw new TypeError('this separately qualified model transport uses the checked JavaScript tuple-constructor layout');
+ if(!['','source value tree 1'].includes(referenceWire))throw new TypeError('unregistered native reference wire profile');
  if(!Array.isArray(roots)||roots.length===0||roots.length>16||!/^rust\/tests\/unit\/[a-z][a-z0-9_]*\.rs$/u.test(output)||!/^parity\/self-translation\/[a-z][a-z0-9-]*\.lino$/u.test(receipt))throw new TypeError('explicit bounded model codec roots and owned outputs are required');
  const data=new Map([...program.declarations].filter(([,entry])=>entry.k==='data'));
  const mapping=(kind,name)=>{const row=emitted.mappings.find(row=>row.kind===kind&&row.source===name);if(!row||!/^[A-Za-z_][A-Za-z0-9_.]*$/u.test(row.target))throw new TypeError('a native model needs its actual declared target mapping: '+name);return row.target.replaceAll('.','::');};
@@ -21,10 +23,11 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   if(depth>64)throw new RangeError('model codec type depth exceeds its explicit budget');
   if(type.kind==='data'){
    if(selected.has(type.name))return;const declaration=data.get(type.name);if(!declaration||declaration.ctors.length===0||declaration.ctors.length>256)throw new TypeError('a complete bounded native declaration is required');
-   selected.set(type.name,declaration);for(const ctor of declaration.ctors){if(ctor.fields.length>128)throw new RangeError('model codec field budget');for(const field of ctor.fields)collect(field.type,depth+1);}return;
+   selected.set(type.name,declaration);for(const ctor of declaration.ctors){if(ctor.fields.length>128)throw new RangeError('model codec field budget');for(const field of ctor.fields){if(field.optional&&!isJavaScriptOptionalConstructorFieldType(field.type))throw new TypeError('a model optional field needs its actual checked presence carrier');collect(javaScriptConstructorFieldValueType(field),depth+1);}}return;
   }
-  if(type.kind==='array'){if(type.reference)throw new TypeError('mutable array wire transport requires its actual identity model');collect(type.element,depth+1);return;}
-  if(type.kind==='record'){if(type.reference||type.ordered||type.fields.length>128)throw new TypeError('noncanonical record wire layout needs a separate profile');for(const field of type.fields)collect(field.type,depth+1);return;}
+  if(type.reference&&(!referenceWire||!['array','record'].includes(type.kind)))throw new TypeError('mutable wire transport requires its actual container profile');
+  if(type.kind==='array'||type.kind==='option'){collect(type.element,depth+1);return;}
+  if(type.kind==='record'){if(type.ordered||type.fields.length>128)throw new TypeError('noncanonical record wire layout needs a separate profile');for(const field of type.fields)collect(field.type,depth+1);return;}
   if(!['bool','float','int','nat','string','unit'].includes(type.kind))throw new TypeError('unregistered model wire type '+type.kind);
  }
  for(const name of roots){if(!data.has(name))throw new TypeError('model root does not identify its actual declaration: '+name);collect({kind:'data',name});}
@@ -35,7 +38,9 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   if(!field||field.type.kind!=='float'||!selected.has(rule.owner))throw new TypeError('a wire override must target its actual selected primitive field');q(rule.wire);return rule;
  });
  if(new Set(overrides.map(rule=>rule.owner+'\0'+rule.constructor+'\0'+rule.field)).size!==overrides.length)throw new TypeError('a model field can have only one qualified wire override');
- function decode(type,value,borrowed=false){switch(type.kind){
+ function decode(type,value,borrowed=false){
+  if(type.reference)return 'std::rc::Rc::new(std::cell::RefCell::new('+decode({...type,reference:false},value,borrowed)+'))';
+  switch(type.kind){
   case 'bool':return value+'.as_bool().expect("model Boolean")';
   case 'float':return value+'.as_f64().expect("model Number")';
   case 'int':case 'nat':return 'native::ml::Big::parse('+value+'.as_str().expect("model exact integer"))';
@@ -44,8 +49,16 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   case 'data':return 'decode_'+names.get(type.name)+'('+(borrowed?'':'&')+value+')';
   case 'array':return value+'.as_array().expect("model array").iter().map('+(type.element.kind==='data'?'decode_'+names.get(type.element.name):'|wire_value|'+decode(type.element,'wire_value',true))+').collect()';
   case 'record':return '('+type.fields.map(field=>decode(field.type,value+'['+q(field.name)+']')).join(',')+',)';
+  case 'option':{
+   const present=decode(type.element,value,borrowed),undefinedValue='is_wire_undefined(&'+value+')';
+   if(type.absence==='both')return 'if '+undefinedValue+' { native::MlOptional::Undefined } else if '+value+'.is_null() { native::MlOptional::Null } else { native::MlOptional::Value('+present+') }';
+   const absent=type.absence==='null'?value+'.is_null()':undefinedValue;
+   return 'if '+absent+' { None } else { Some('+present+') }';
+  }
   default:throw new TypeError('unknown model wire type');}}
- function encode(type,value,borrowed=true){switch(type.kind){
+ function encode(type,value,borrowed=true){
+  if(type.reference)return '{ let wire_reference = '+value+'.borrow(); '+encode({...type,reference:false},'wire_reference',true)+' }';
+  switch(type.kind){
   case 'bool':return 'Data::Bool('+(borrowed?'*':'')+value+')';
   case 'float':return 'wire_number('+(borrowed?'*':'')+value+')';
   case 'int':case 'nat':return 'Data::String('+value+'.to_string())';
@@ -54,6 +67,11 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   case 'data':return 'encode_'+names.get(type.name)+'('+(borrowed?'':'&')+value+')';
   case 'array':return 'Data::Array('+value+'.iter().map('+(type.element.kind==='data'?'encode_'+names.get(type.element.name):'|wire_value|'+encode(type.element,'wire_value'))+').collect())';
   case 'record':return 'json!({'+type.fields.map((field,index)=>q(field.name)+':'+encode(field.type,value+'.'+index,false)).join(',')+'})';
+  case 'option':{
+   const payload=encode(type.element,'wire_present'),selected=borrowed?value:'&'+value;
+   if(type.absence==='both')return 'match '+selected+' { native::MlOptional::Undefined => wire_undefined(), native::MlOptional::Null => Data::Null, native::MlOptional::Value(wire_present) => '+payload+' }';
+   return 'match '+selected+' { None => '+(type.absence==='null'?'Data::Null':'wire_undefined()')+', Some(wire_present) => '+payload+' }';
+  }
   default:throw new TypeError('unknown model wire type');}}
  let source='// Generated from actual checked source declarations and target mappings.\n// Transport only; no source operation semantics are implemented here.\nuse super::native;\nuse serde_json::{Value as Data,json};\nfn wire_number(value:f64)->Data {\n if value.to_bits()==0x8000_0000_0000_0000 {return Data::Number(serde_json::Number::from_f64(value).unwrap());}\n Data::Number(value.to_string().parse().expect("finite model Number"))\n}\n';
  source+=`fn wire_text_units(value:&Data)->Vec<u16> {
@@ -74,27 +92,38 @@ fn wire_text(units:&[u16])->Data {
 `;
  writeProjectData(new URL('parity/translation/model-text-wire.lino',root),{schemaVersion:1,...modelTextWirePolicy});
  const layout=[];
+ let optionalWire=false;
  for(const [name,declaration]of selected){
   const native='native::'+mapping('data',name),decoded=[],encoded=[];
   for(const ctor of declaration.ctors){
    const keys=['$',...ctor.fields.map(field=>overrides.find(rule=>rule.owner===name&&rule.constructor===ctor.name&&rule.field===field.name)?.wire??field.name)];
    if(new Set(keys).size!==keys.length)throw new TypeError('different declared fields cannot collapse to one wire key');
-   const target='native::'+mapping('constructor',name+'.'+ctor.name),fields=[],values=[];
+   const target='native::'+mapping('constructor',name+'.'+ctor.name),fields=[],values=[],optional=[];
    for(const [index,field]of ctor.fields.entries()){
     const override=overrides.find(rule=>rule.owner===name&&rule.constructor===ctor.name&&rule.field===field.name);
-    let decoded=override?'f64::from_bits(u64::from_str_radix(data['+q(override.wire)+'].as_str().expect("model IEEE bits"),16).expect("complete model IEEE bits"))':decode(field.type,'data['+q(field.name)+']');
+    const key=q(override?.wire??field.name),binding='wire_field_'+index;
+    if(field.optional){
+     const type=javaScriptConstructorFieldValueType(field);
+     fields.push('data.get('+key+').map(|wire_value|('+decode(type,'wire_value',true)+',))');
+     optional.push('if let Some((wire_present,)) = '+binding+' { fields.insert('+key+'.into(), '+encode(type,'wire_present')+'); }');
+     continue;
+    }
+    let decoded=override?'f64::from_bits(u64::from_str_radix(data['+key+'].as_str().expect("model IEEE bits"),16).expect("complete model IEEE bits"))':decode(field.type,'data['+key+']');
     if(field.type.kind==='data')decoded='Box::new('+decoded+')';fields.push(decoded);
-    values.push(q(override?.wire??field.name)+':'+(override?'Data::String(format!("{:016x}",wire_field_'+index+'.to_bits()))':encode(field.type,'wire_field_'+index)));
+    values.push(key+':'+(override?'Data::String(format!("{:016x}",'+binding+'.to_bits()))':encode(field.type,binding)));
    }
    decoded.push(q(ctor.name)+'=>'+target+(fields.length?'('+fields.join(',')+')':''));
-   encoded.push(target+(fields.length?'('+fields.map((_,index)=>'wire_field_'+index).join(',')+')':'')+'=>json!({"$":'+q(ctor.name)+(values.length?','+values.join(','):'')+'})');
+   const object='json!({"$":'+q(ctor.name)+(values.length?','+values.join(','):'')+'})';
+   optionalWire ||= optional.length>0;
+   encoded.push(target+(fields.length?'('+fields.map((_,index)=>'wire_field_'+index).join(',')+')':'')+'=>'+(optional.length?'{ let mut result = '+object+'; let fields = result.as_object_mut().expect("model constructor object"); '+optional.join(' ')+' result }':object));
   }
   source+='pub(super) fn decode_'+names.get(name)+'(data:&Data)->'+native+' {match data["$"].as_str().expect("model constructor"){'+decoded.join(',')+',_=>panic!("unregistered actual model constructor")}}\n';
   source+='pub(super) fn encode_'+names.get(name)+'(value:&'+native+')->Data {match value{'+encoded.join(',')+'}}\n';
   layout.push({name,target:mapping('data',name),constructors:declaration.ctors.map(ctor=>({name:ctor.name,target:mapping('constructor',name+'.'+ctor.name),fields:ctor.fields}))});
  }
+ if(optionalWire||source.includes('wire_undefined('))source+='fn wire_undefined()->Data { json!({"fieldPresence":"undefined"}) }\nfn is_wire_undefined(value:&Data)->bool { value.as_object().is_some_and(|fields|fields.len()==1&&fields.get("fieldPresence").and_then(Data::as_str)==Some("undefined")) }\n';
  source=formatProductRuleSource(source);writeFileSync(new URL(output,root),source);
  const javascript=javascriptOutput===undefined?undefined:draftJavaScriptModelCodecs({selected,overrides,output:javascriptOutput});
  writeProjectData(new URL(receipt,root),{schemaVersion:1,model:'checked native nominal model wire transport 1',roots,wireRules,textWire:modelTextWirePolicy,layout,output,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),
-  ...(javascript?{javascript}:{}),boundary:'Actual source type/constructor/target transport only, preserving explicit IEEE-bit overrides. No fixture decoding, modeled operation, behavior comparison, native compilation or execution observation.'});
+  ...(javascript?{javascript}:{}),...(referenceWire?{referenceWire}:{}),boundary:'Actual source type/constructor/target transport only, preserving explicit IEEE-bit overrides. No fixture decoding, modeled operation, behavior comparison, native compilation or execution observation.'});
 }

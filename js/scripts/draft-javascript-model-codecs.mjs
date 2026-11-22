@@ -3,6 +3,7 @@
 import {writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {modelTextWirePolicy,encodeModelText,decodeModelText} from './model-text-wire.mjs';
+import {javaScriptConstructorFieldValueType} from '../src/translation/javascript-constructor-presence.js';
 export function draftJavaScriptModelCodecs({selected,overrides,output}){
  if(!/^experiments\/[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*\.mjs$/u.test(output))throw new TypeError('a JavaScript model adapter needs its explicit owned experimental output');
  const name=value=>value.replaceAll('.','_');
@@ -21,21 +22,32 @@ export function draftJavaScriptModelCodecs({selected,overrides,output}){
   case 'data':return (decode?'decode':'encode')+name(type.name)+'('+value+')';
   case 'array':return value+'.map(value=>'+field(type.element,'value',decode)+')';
   case 'record':return '({'+type.fields.map(entry=>JSON.stringify(entry.name)+':'+field(entry.type,value+'['+JSON.stringify(entry.name)+']',decode)).join(',')+'})';
+  case 'option':{
+   const present=field(type.element,value,decode);
+   const withNull=type.absence==='null'||type.absence==='both'?'('+value+'===null?null:'+present+')':present;
+   if(type.absence==='null')return withNull;
+   return decode?'(isWireUndefined('+value+')?undefined:'+withNull+')':'('+value+'===undefined?{fieldPresence:"undefined"}:'+withNull+')';
+  }
   default:throw new TypeError('unregistered JavaScript model field '+type.kind);
  }}
+ let optionalWire=false;
  for(const [owner,declaration]of selected){
   for(const decode of [true,false]){
    source+='export function '+(decode?'decode':'encode')+name(owner)+'(value){switch(value.$){\n';
    for(const ctor of declaration.ctors){
     source+='case '+JSON.stringify(ctor.name)+':return {$:'+JSON.stringify(ctor.name);
     for(const entry of ctor.fields){const override=overrides.find(rule=>rule.owner===owner&&rule.constructor===ctor.name&&rule.field===entry.name),input=decode?(override?.wire??entry.name):entry.name,output=decode?entry.name:(override?.wire??entry.name);
-     source+=','+JSON.stringify(output)+':'+(override?(decode?'fromBits':'toBits')+'(value['+JSON.stringify(input)+'])':field(entry.type,'value['+JSON.stringify(input)+']',decode));
+     const inputKey=JSON.stringify(input),outputKey=JSON.stringify(output);
+     const converted=override?(decode?'fromBits':'toBits')+'(value['+inputKey+'])':field(javaScriptConstructorFieldValueType(entry),'value['+inputKey+']',decode);
+     if(entry.optional){optionalWire=true;source+=',...(Object.hasOwn(value,'+inputKey+')?{'+outputKey+':'+converted+'}:{})';}
+     else source+=','+outputKey+':'+converted;
     }
     source+='};\n';
    }
    source+='default:throw new TypeError("unregistered actual model constructor");}}\n';
   }
  }
+ if(optionalWire||source.includes('isWireUndefined('))source+='function isWireUndefined(value){return value!==null&&typeof value==="object"&&Object.keys(value).length===1&&Object.hasOwn(value,"fieldPresence")&&value.fieldPresence==="undefined";}\n';
  writeFileSync(new URL('../../'+output,import.meta.url),source);
  return {output,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')};
 }
