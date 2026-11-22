@@ -15,7 +15,13 @@ const root=new URL('../../../',import.meta.url),options={aliases:true,classes:'c
 export async function readOrdinaryClassClosureOriginalDiagnostic(definition){
  const diagnostic=createControlDiagnostics(),attempt=diagnostic.attempt,attemptAsync=diagnostic.attemptAsync;
  const modules=attempt('complete supplied original module bytes',()=>definition.modules??definition.paths.map(path=>({path,source:readFileSync(new URL(path,root),'utf8')})));
- const moduleConcrete=(modules??definition.modules??[]).map(module=>({path:module.path,concrete:attempt('original module '+module.path+'/default CST exact bytes',()=>readCollectionCopyConcreteControl(module.source)))}));
+ const moduleConcrete = (modules ?? definition.modules ?? []).map(module => ({
+  path: module.path,
+  concrete: attempt(
+   'original module ' + module.path + '/default CST exact bytes',
+   () => readCollectionCopyConcreteControl(module.source),
+  ),
+ }));
  const archive=attempt('actual complete supplied CST alias/re-export composition',()=>captureJavaScriptOrdinaryClassSourceClosure(readSuppliedSourceLibraryClosure(definition.entryPath,product(modules,'complete supplied original module bytes'),options),{entryPath:definition.entryPath}));
  const sourceAnchor=definition.scopeSource?attempt('exact whole original Scope declaration anchor',()=>{
   const selected=product(modules,'complete supplied original module bytes').find(module=>module.path===definition.scopeSource),original=readFileSync(new URL(definition.completeOriginalScopeModule,root),'utf8'),program=analyzeProgram(selected.source,'JavaScript'),binding=program.bindings.find(row=>row.kind==='class'&&row.name===definition.className),syntax=binding&&program.sourceMappings.find(node=>node.term==='class_declaration'&&node.start<=binding.declaration.start&&node.end>=binding.declaration.end);assert.ok(syntax);const declaration=selected.source.slice(syntax.start,syntax.end);assert.ok(original.includes(declaration));return {path:definition.completeOriginalScopeModule,source:original,declaration,concrete:readCollectionCopyConcreteControl(original)};
