@@ -321,6 +321,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-module-value-program.lino" => {
             Some(include_str!("../data/rust-module-value-program.lino"))
         }
+        "rust-mutable-record-loan-program.lino" => Some(include_str!(
+            "../data/rust-mutable-record-loan-program.lino"
+        )),
         "rust-named-formatting-program.lino" => {
             Some(include_str!("../data/rust-named-formatting-program.lino"))
         }
@@ -333,6 +336,12 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-owned-binding-program.lino" => {
             Some(include_str!("../data/rust-owned-binding-program.lino"))
         }
+        "rust-owned-record-loop-program.lino" => {
+            Some(include_str!("../data/rust-owned-record-loop-program.lino"))
+        }
+        "rust-owned-record-update-program.lino" => Some(include_str!(
+            "../data/rust-owned-record-update-program.lino"
+        )),
         "rust-panic-value-program.lino" => {
             Some(include_str!("../data/rust-panic-value-program.lino"))
         }

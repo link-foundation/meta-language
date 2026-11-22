@@ -30,7 +30,11 @@ export function testRustOwnedRecordFieldDescendant(root,identity){let parent=rea
 export function readRustOwnedRecordWholeError(root,identities,states){
  if(identities.length!==states.length)return 'record field availability needs every actual source state';
  if(root==='')return '';
- for(let index=0;index<identities.length;index+=1)if(testRustOwnedRecordFieldDescendant(root,identities[index])&&states[index]!=='available')return 'a partially moved record cannot be used as a whole value';
+ let index=0;
+ for(const identity of identities){
+  if(testRustOwnedRecordFieldDescendant(root,identity)&&states[index]!=='available')return 'a partially moved record cannot be used as a whole value';
+  index+=1;
+ }
  return '';
 }
 /** @param {string} root @param {string} field @returns {string} */

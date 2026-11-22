@@ -22,7 +22,18 @@ export function testRustOwnedRecordLoopContinuingExit(kind){return kind==='value
 /** @param {string} kind @returns {boolean} */
 export function acceptRustOwnedRecordLoopExit(kind){return kind==='value'||kind==='continue'||kind==='break'||kind==='return'||kind==='abort';}
 /** @param {string[]} exits @param {number[]} counts @returns {string} */
-export function readRustOwnedRecordLoopProgressError(exits,counts){if(exits.length!==counts.length||exits.length===0||exits.length>256)return 'the complete record loop exits exceed their finite source budget';for(let index=0;index<exits.length;index+=1){if(!acceptRustOwnedRecordLoopExit(exits[index])||!acceptRustOwnedRecordLoopCount(counts[index])||counts[index]>256)return 'the complete record loop exits exceed their finite source budget';if(testRustOwnedRecordLoopContinuingExit(exits[index])&&counts[index]!==1)return 'every continuing record loop path must decrement its actual counter exactly once';}return '';}
+export function readRustOwnedRecordLoopProgressError(exits,counts){
+ const budgetError='the complete record loop exits exceed their finite source budget';
+ if(exits.length!==counts.length||exits.length===0||exits.length>256)return budgetError;
+ for(let index=0;index<exits.length;index+=1){
+  const exit=exits[index],count=counts[index];
+  if(exit===undefined)return budgetError;
+  if(count===undefined)return budgetError;
+  if(!acceptRustOwnedRecordLoopExit(exit)||!acceptRustOwnedRecordLoopCount(count)||count>256)return budgetError;
+  if(testRustOwnedRecordLoopContinuingExit(exit)&&count!==1)return 'every continuing record loop path must decrement its actual counter exactly once';
+ }
+ return '';
+}
 /** Finite nonnegative safe integers, with negative zero rejected explicitly.
  * @param {number} value @returns {boolean} */
 export function acceptRustOwnedRecordLoopCount(value){return value>=0&&value<=9007199254740991&&value%1===0&&(value!==0||1/value>0);}
