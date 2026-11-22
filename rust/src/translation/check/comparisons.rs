@@ -1,7 +1,7 @@
 //! Actual typed comparison construction; shared rules own source decisions.
 use super::{
     BOOL, BinaryOp, Checker, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result, SArrayItem,
-    Span, Type, UNIT, UnaryOp, binary_node, type_error, unsupported,
+    Semantics, Span, Type, UNIT, UnaryOp, binary_node, type_error, unsupported,
 };
 use crate::translation::javascript_comparison_rules as rules;
 
@@ -197,7 +197,7 @@ impl Checker {
                             } else {
                                 Some(FLOAT)
                             },
-                            None,
+                            (operation == BinaryOp::Div).then_some(Semantics::Ieee),
                             None,
                             None,
                         ),

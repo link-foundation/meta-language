@@ -43,3 +43,20 @@ test('the exact numeric kernel agrees with independent Number for every transpor
   for(const bytes of [[128],[192,128],[224,128,128],[237,160,128],[244,144,128,128],[240,159],[256]])assert.ok(Number.isNaN(convertJavaScriptUtf8StringNumberUnits(bytes)));
   assert.throws(()=>convertJavaScriptStringNumber(7),/actual string/u);
 });
+
+test('Object.is round trips the signed-zero IEEE division through both Links codecs',()=>{
+  const source='/** @param {number} left @param {number} right @returns {boolean} */\nexport function same(left,right){ return Object.is(left,right); }';
+  const program=checkProgram(parseJavaScript(source));
+  const packet=encodeTypedProgramLinks(program);
+  const rust=emitTypedProgramLinks(packet.network,packet.root,'Rust');
+  const networks=[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))];
+  for(const network of networks){
+    assert.deepEqual(emitTypedProgramLinks(network,packet.root,'Rust'),rust);
+    const output=emitTypedProgramLinks(network,packet.root,'JavaScript');
+    const name=output.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='same').target;
+    const same=runInNewContext(output.code.replace(/^export /gmu,'')+'\n'+name,{}, {timeout:1000});
+    for(const left of [NaN,-0,0,1,Infinity])for(const right of [NaN,-0,0,1,Infinity]){
+      assert.equal(same(left,right),Object.is(left,right));
+    }
+  }
+});

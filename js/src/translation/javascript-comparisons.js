@@ -104,7 +104,8 @@ function sameValue(checker,left,right){
   if(operation==='left'||operation==='right'){stack.push(operation==='left'?left:right);continue;}
   if(operation==='one'||operation==='zero'){stack.push(literal(FLOAT,operation==='one'?'1':'0'));continue;}
   const b=stack.pop(),a=stack.pop(),boolean=operation==='and'||operation==='or';
-  stack.push({k:'binary',op:operation,left:a,right:b,type:operation==='div'?FLOAT:BOOL,...(!boolean&&{domain:FLOAT})});
+  stack.push({k:'binary',op:operation,left:a,right:b,type:operation==='div'?FLOAT:BOOL,
+   ...(!boolean&&{domain:FLOAT}),...(operation==='div'&&{semantics:'ieee'})});
  }
  return stack[0];
 }
