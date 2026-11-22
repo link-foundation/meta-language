@@ -42,6 +42,13 @@ impl RustParser{
  fn require_record_state_storage(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{
   let mut pending=vec![(origin.clone(),0_usize,Vec::<String>::new())];let mut nodes=0_usize;
   while let Some((origin,depth,active))=pending.pop(){nodes+=1;let error=rules::read_rust_owned_record_state_storage_error(nodes as f64,depth as f64);if !error.is_empty(){return Err(fail(&error,span));}
+   if self.exclusive_source_enabled && !origin.wrappers.is_empty() {
+    let facts = self.origins.owned_container_facts(&origin);
+    let payload = self.origins.peel_closed_owned_box_state(&origin).filter(|_| facts.profile == "owned" && facts.closed)
+     .ok_or_else(|| fail("mutable Box storage retains actual canonical destructor-free closed payload ownership",span))?;
+    pending.push((payload, depth + origin.wrappers.len(), active));
+    continue;
+   }
    if self.standard_collection_origin(&origin).is_some()&&origin.wrappers.is_empty(){continue;}
    let source_owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());let role=self.origins.standard_sum_ownership_facts(&origin).profile;let disposition=rules::read_rust_owned_record_state_storage_disposition(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,&role);if disposition=="refuse"||!rules::accept_rust_owned_record_state_storage_owner(source_owner.map_or("",|owner|owner.kind.as_str()),&source_owner.map(|owner|owner.path.join("::")).unwrap_or_default()){return Err(fail("mutable record state requires actual direct storage without callable, reference or Box fields",span));}if disposition=="leaf"{continue;}
    match origin.ty.as_ref(){
@@ -75,8 +82,8 @@ impl RustParser{
  fn register_exclusive_owned_state_binding(&mut self, source: &str, span: Option<Span>) -> Result<String> {
   let mut origin = self.origins.scope.get(source).cloned().ok_or_else(|| fail("mutable state needs its actual source binding", span))?;
   let frame = self.owned_record_state.frames.last().map(|frame| frame.id).ok_or_else(|| fail("mutable state needs its actual source block frame", span))?;
-  if !origin.wrappers.is_empty() || origin.source_borrowed_place {
-   return Err(fail("owned mutable state needs its actual direct source owner", span));
+  if origin.source_borrowed_place || (!origin.wrappers.is_empty() && self.origins.peel_closed_owned_box_state(&origin).is_none()) {
+   return Err(fail("owned mutable state needs its actual direct or canonical Box source owner", span));
   }
   let sequence = self.owned_record_state.next;
   self.owned_record_state.next += 1;

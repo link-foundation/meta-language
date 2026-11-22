@@ -57,6 +57,27 @@ fn detached(mut value:SourceOrigin)->SourceOrigin{value.source_lexical_binding_i
 fn payload_borrows(value:&SourceOrigin)->Vec<String>{let mut result=super::copy_closure_lifetimes::value_borrows(value);if value.wrappers.iter().any(|layer|layer=="reference"){result=loan_rules::merge_rust_owned_loan_bindings(&result,&loan_rules::merge_rust_owned_loan_bindings(&loan_rules::project_rust_owned_loan_bindings(value.source_binding_identity.as_deref().unwrap_or(""),&value.source_loan_binding_identities),&loan_rules::project_rust_owned_loan_bindings(value.source_place_binding_identity.as_deref().unwrap_or(""),&value.source_place_loan_binding_identities)));}result}
 pub(super) fn measure_owned_container_copies(values:&[&SourceOrigin])->Result<(MetadataCost,bool)>{let cost=measure_origins(values).map_err(|error|failure(&error,None))?;let mut counter=RuntimeCost{cost,active:HashSet::new(),borrowed:false};for value in values{counter.origin(value,0)?;}Ok((counter.cost,counter.borrowed))}
 impl SourceOrigins{
+ pub(super) fn peel_closed_owned_box_state(&self, origin: &SourceOrigin) -> Option<SourceOrigin> {
+  if !self.owned_container_source_enabled || origin.source_borrowed_place
+      || origin.array_element_position.is_some() || !origin.source_lifetimes.is_empty()
+      || origin.wrappers.len() > 256 || origin.wrappers.iter().any(|layer| layer != "box") {
+   return None;
+  }
+  let mut result = origin.clone();
+  while !result.wrappers.is_empty() {
+   let source = owner(&result)?;
+   if !rules::accept_rust_owned_box_type_node(
+    source_policy_column(&["box".into()]), &source.kind, &source.path.join("::"), source.arguments.len() as f64,
+   ) {
+    return None;
+   }
+   result = self.peel_owned_box(&result);
+  }
+  let source = owner(&result)?;
+  (!rules::accept_rust_owned_box_type_node(
+   source_policy_column(&["box".into()]), &source.kind, &source.path.join("::"), source.arguments.len() as f64,
+  )).then_some(result)
+ }
  pub(super) fn owned_box_call_result(&self,node:&SExpr,path:&[String],origin:SourceOrigin)->SourceOrigin{
   let facts=self.owned_container_facts(&origin);let names=match &node.node{SNode::Name{path}=>Some(path),SNode::App{func,..}=>match &func.node{SNode::Name{path}=>Some(path),_=>None},_=>None};
   let result=names.and_then(|names|self.lookup_value_owner(names,path)).and_then(|entry|match entry.declaration{super::SourceDeclaration::Function{result,..}=>Some(result),_=>None});let actual=result.as_ref().map(|result|self.owned_container_facts(result)).unwrap_or_default();

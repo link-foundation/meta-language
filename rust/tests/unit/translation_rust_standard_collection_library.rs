@@ -92,6 +92,42 @@ fn actual_owned_vector_heads_use_the_same_ordered_loop_transport() {
     }
 }
 
+#[test]
+fn whole_box_assignment_preserves_the_actual_closed_owner_layers() {
+    let rust = run(Command::new("rustc").arg("--version"));
+    assert!(rust.ok, "{}", rust.stderr);
+    let version = rust.stdout.split_whitespace().nth(1).unwrap();
+    let source = r#"fn main() {
+        let mut value: Box<Box<u16>> = Box::new(Box::new(7u16));
+        println!("{}", **value);
+        value = Box::new(Box::new(11u16));
+        println!("{}", **value);
+    }"#;
+    let model = "Rust exclusive source loans 1";
+    let packet =
+        create_typed_program_links_with_rust_exclusive_source_model(source, model, version, None)
+            .unwrap_or_else(|error| panic!("closed Box state under Rust {version}: {error}"));
+    let checked = decode_typed_program_links_with_limits(
+        &packet.network,
+        packet.root,
+        TypedProgramLinksLimits::default(),
+    )
+    .unwrap();
+    let original = compile_and_observe(source);
+    assert_eq!(original, "7\n11\n");
+    assert_eq!(
+        compile_and_observe(&emit_rust(&checked).unwrap().text),
+        original
+    );
+    let replaced = source.replace("Box::new(Box::new(11u16))", "Box::new(11u16)");
+    assert!(
+        create_typed_program_links_with_rust_exclusive_source_model(
+            &replaced, model, version, None,
+        )
+        .is_err()
+    );
+}
+
 fn abort() -> SExpr {
     SExpr::new(
         SNode::Abort {
