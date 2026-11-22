@@ -9244,8 +9244,11 @@ Validated integer identities use an owned numeric sequence with the same
 increasing-identity shortcut and duplicate/cache membership decisions. The
 complete eight-function source closure, every generated continuation and both
 typed-program archive replays produce the native library automatically, using
-the existing checked final-use policy for buffer moves. Historical sources and
-compiler/style receipts remain separate mandatory checks. Full-grammar native
+the existing checked final-use policy for buffer moves. The four reviewed
+compiler corrections also apply to the exact emitted successor after reversing
+its generated identifier changes and one call's formatting to recover the
+entire reviewed function. Historical sources and compiler/style receipts
+remain separate mandatory checks. Full-grammar native
 round trips and resource fit still require CI observations.
 JavaScript bulk concept-record seeding derives semantic-pair lookup from the
 actual links once per synchronous scope. Exact reference identities, term and
