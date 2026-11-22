@@ -169,8 +169,31 @@ export function buildJsonDecoderBase() {
 
 function finiteConstants(rules) {
   if (rules === false) return [];
+  if (rules === null || typeof rules !== 'object') return undefined;
   if (Object.hasOwn(rules, 'const')) return [rules.const];
   return rules.enum;
+}
+
+function branchesUseDisjointTypes(branches) {
+  if (branches.length < 2) return true;
+  const seen = new Set();
+  for (const branch of branches) {
+    if (branch === null || !['object', 'boolean'].includes(typeof branch) || Array.isArray(branch)) return false;
+    const constants = finiteConstants(branch);
+    let types;
+    if (Array.isArray(constants)) {
+      types = constants.map(value => value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value);
+    } else {
+      if (branch.$ref !== undefined || branch.anyOf !== undefined || branch.oneOf !== undefined) return false;
+      types = Array.isArray(branch.type) ? branch.type : branch.type === undefined ? jsonTypes : [branch.type];
+    }
+    const families = new Set(types.map(type => type === 'integer' ? 'number' : type));
+    for (const family of families) {
+      if (!jsonTypes.includes(family) || seen.has(family)) return false;
+      seen.add(family);
+    }
+  }
+  return true;
 }
 
 function formatRule(format) {
@@ -389,7 +412,9 @@ export function importJsonSchema(schema) {
       const keyword = rules.anyOf ? 'anyOf' : 'oneOf';
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== keyword && !referenceKeys.has(key));
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
-      if (keyword === 'oneOf') report(pointer, keyword, 'Exclusive branch selection is checked during document validation.');
+      if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives)) {
+        report(pointer, keyword, 'Exclusive branch selection is checked during document validation.');
+      }
       const entries = alternatives.map((child, index) => named(child, pointerChild(pointerChild(pointer, keyword), index))).filter(Boolean);
       return entries.length > 0 ? choice(...entries) : null;
     }

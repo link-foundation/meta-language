@@ -393,7 +393,7 @@ impl<'schema> Importer<'schema> {
                 {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
                 }
-                if keyword == "oneOf" {
+                if keyword == "oneOf" && !branches_use_disjoint_types(branches) {
                     self.report(
                         pointer,
                         keyword,
@@ -766,4 +766,53 @@ fn finite_constants(schema: &Value) -> Option<Vec<&Value>> {
             .as_array()
             .map(|values| values.iter().collect())
     }
+}
+
+fn branches_use_disjoint_types(branches: &[Value]) -> bool {
+    const JSON_TYPES: [&str; 6] = ["object", "array", "string", "number", "boolean", "null"];
+    if branches.len() < 2 {
+        return true;
+    }
+    let mut seen = HashSet::new();
+    for branch in branches {
+        if !branch.is_object() && !branch.is_boolean() {
+            return false;
+        }
+        let families = if let Some(constants) = finite_constants(branch) {
+            constants
+                .iter()
+                .map(|value| match value {
+                    Value::Array(_) => "array",
+                    Value::Bool(_) => "boolean",
+                    Value::Null => "null",
+                    Value::Number(_) => "number",
+                    Value::Object(_) => "object",
+                    Value::String(_) => "string",
+                })
+                .collect::<HashSet<_>>()
+        } else if ["$ref", "anyOf", "oneOf"]
+            .iter()
+            .any(|key| branch.get(*key).is_some())
+        {
+            return false;
+        } else if let Some(declared) = branch.get("type") {
+            types(declared)
+                .iter()
+                .map(|value| match value.as_str() {
+                    Some("integer") => "number",
+                    Some(name) => name,
+                    None => "",
+                })
+                .collect()
+        } else {
+            JSON_TYPES.into_iter().collect()
+        };
+        if !families
+            .into_iter()
+            .all(|family| JSON_TYPES.contains(&family) && seen.insert(family))
+        {
+            return false;
+        }
+    }
+    true
 }

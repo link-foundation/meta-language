@@ -199,7 +199,13 @@ test('degenerate substring repetition is reported without editing valid JSON', (
 });
 
 test('shared JSON Schema fixtures validate decoders and locate document errors', context => {
-  for (const [schema, cases] of shared.grammars) {
+  for (const [schema, cases, diagnostics] of shared.grammars) {
+    if (diagnostics !== undefined) {
+      assert.deepEqual(importJsonSchema(schema).schemaDiagnostics.map(issue => issue.pointer), diagnostics);
+      if (diagnostics.length === 0) {
+        for (const [source, accepted] of cases) assert.equal(validateJson(source, schema).valid, accepted, source);
+      }
+    }
     for (const parser of schemaParsers(schema)) {
       for (const [source, accepted] of cases) assert.equal(parser.parseTree(source).ok, accepted, source);
     }
@@ -226,7 +232,7 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   recordIssue195Observations({
     requirementId: 'I195-I240-JSON-SCHEMA', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema', fixtureFile,
-    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip'],
+    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual'],
     testName: context.name,
   });
 });

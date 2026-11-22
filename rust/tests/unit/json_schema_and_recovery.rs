@@ -24,6 +24,30 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
     let fixture = fixture();
     for row in fixture["grammars"].as_array().unwrap() {
         let imported = import_json_schema(&row[0]).unwrap();
+        if let Some(expected) = row.get(2).and_then(Value::as_array) {
+            let actual: Vec<_> = imported
+                .diagnostics
+                .iter()
+                .map(|issue| issue.pointer.as_str())
+                .collect();
+            assert_eq!(
+                actual,
+                expected
+                    .iter()
+                    .map(|pointer| pointer.as_str().expect("diagnostic pointer"))
+                    .collect::<Vec<_>>()
+            );
+            if expected.is_empty() {
+                for case in row[1].as_array().unwrap() {
+                    let source = case[0].as_str().unwrap();
+                    assert_eq!(
+                        Some(validate_json(source, &row[0]).valid),
+                        case[1].as_bool(),
+                        "{source}"
+                    );
+                }
+            }
+        }
         let (gbnf, _) = emit_gbnf(&imported.grammar).unwrap();
         let (lark, _) = emit_lark(&imported.grammar).unwrap();
         for grammar in [
@@ -115,6 +139,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "decoderGrammarsConstrainSchema",
             "schemaDiagnosticsRetainSyntaxLinks",
             "grammarAndSchemaRoundTrip",
+            "decoderDisjointExclusiveBranchesHaveNoResidual",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });
