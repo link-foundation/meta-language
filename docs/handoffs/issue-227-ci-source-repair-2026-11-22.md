@@ -76,3 +76,16 @@ remaining default-branch checks still need CI evidence.
   points for at least one required runtime, including twelve in grammar
   inference. The exact-commit tests, native compilation, package installation,
   downstream workloads and acceptance observations remain outstanding.
+
+## Grammar discovery research inputs
+
+Reviewed the four exact paper revisions named by #224. The public artifact
+commits below were resolved independently on November 22, 2026. They identify
+inputs for a comparison run. Benchmark results and portability remain open.
+
+| Method | Pinned artifact and review findings |
+| --- | --- |
+| XVada | [Implementation and experiments](https://github.com/rifatarefin/xvada/tree/5221b183bc6e1ac583505299173fdbae0706da99), MIT. The repository ships training seeds and filename-based parser oracles, and the evaluator supports held-out inputs and a per-input memory cap. Its generated-sample precision is distinct from precision on a fixed labelled holdout. [Paper v4](https://arxiv.org/abs/2607.08959v4) |
+| Crucio | [Implementation](https://github.com/Sinpersrect/crucio/tree/ce913637763f0b25017d38e0e01944f54cf86d38) and [benchmark](https://github.com/Sinpersrect/gi-benchmarks/tree/aab9b09e1af68eed73fb07231b8e0bbd4870cdf2). GitHub reports no SPDX license for either repository, and neither pinned root contains a license file. The paper used ANTLR grammars for the larger language oracles and removed comments from their samples. Preserve independent trivia-bearing controls for the Links CST requirements. [Paper v1](https://arxiv.org/abs/2601.12385v1) |
+| NatGI | [Implementation and experiments](https://github.com/rifatarefin/natgi/tree/561f35a9bc9fa02c62de6d2ebfbc6266357fe414), MIT. The paper describes occasional non-determinism with temperature zero and seed 101. Reproducing the model-assisted mode needs the exact proposal transcripts or the model and a record of every resulting proposal. Oracle acceptance and checked concept equivalence remain separate. [Paper v2](https://arxiv.org/abs/2509.26616v2) |
+| Attributed inference | The reviewed preprint and conference entry provide the method and seven preliminary subjects. Neither links the authors' implementation or held-out input files. The evaluated extraction covers successful paths of recursive-descent parsers and misses some semantic behaviors, including exception paths. The project still needs its own pinned implementation and separate exceptional-behavior controls. [Paper v1](https://arxiv.org/abs/2507.13117v1) · [Conference entry](https://conf.researchr.org/details/icsme-2025/icsme-2025-nier/6/Inferring-Attributed-Grammars-from-Parser-Implementations) |
