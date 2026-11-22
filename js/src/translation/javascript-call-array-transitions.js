@@ -227,7 +227,7 @@ export function extendJavaScriptCallArrayAuthority(program,machine,directory){
 }
 
 /** @param {JavaScriptCallPending} pending @returns {JavaScriptSpeciesConstructionState | undefined} */
-function readJavaScriptPendingSpeciesConstruction(pending){
+export function readJavaScriptPendingSpeciesConstruction(pending){
  switch(pending.$){
   case 'waitArrayTransform':return pending.construction;
   case 'waitArraySlice':return pending.construction;
