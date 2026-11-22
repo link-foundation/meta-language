@@ -202,6 +202,26 @@ struct TextRun {
     separated: bool,
     start: usize,
     end: usize,
+    position: Option<TextPosition>,
+}
+
+#[derive(Clone, Copy)]
+struct TextPosition {
+    x: f64,
+    y: f64,
+    horizontal_scale: f64,
+    vertical_scale: f64,
+}
+
+impl Default for TextPosition {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            horizontal_scale: 1.0,
+            vertical_scale: 1.0,
+        }
+    }
 }
 
 #[derive(Default)]
@@ -216,6 +236,9 @@ struct TextState {
     separated: bool,
     font: Option<Rc<PdfFont>>,
     ordinate: Option<f64>,
+    position: Option<TextPosition>,
+    leading: f64,
+    orderable: bool,
 }
 
 impl TextState {
@@ -225,8 +248,58 @@ impl TextState {
             separated: true,
             font: None,
             ordinate: None,
+            position: None,
+            leading: 0.0,
+            orderable: true,
         }
     }
+
+    fn advance_line(&mut self) {
+        self.position = self
+            .position
+            .filter(|_| self.leading.is_finite())
+            .map(|mut position| {
+                position.y -= self.leading * position.vertical_scale;
+                position
+            });
+    }
+}
+
+fn order_page_text(runs: &mut Vec<TextRun>, start: usize) {
+    let mut positions = Vec::new();
+    for run in runs[start..].iter().filter(|run| run.separated) {
+        let Some(position) = run
+            .position
+            .filter(|position| position.x.is_finite() && position.y.is_finite())
+        else {
+            return;
+        };
+        positions.push(position);
+    }
+    let mut lines = Vec::<(TextPosition, Vec<TextRun>)>::new();
+    let mut positions = positions.into_iter();
+    for run in runs.drain(start..) {
+        if run.separated {
+            lines.push((positions.next().expect("validated text line"), Vec::new()));
+        }
+        lines
+            .last_mut()
+            .expect("each page starts with a text line")
+            .1
+            .push(run);
+    }
+    lines.sort_by(|(left, _), (right, _)| {
+        right
+            .y
+            .partial_cmp(&left.y)
+            .expect("finite vertical positions")
+            .then_with(|| {
+                left.x
+                    .partial_cmp(&right.x)
+                    .expect("finite horizontal positions")
+            })
+    });
+    runs.extend(lines.into_iter().flat_map(|(_, runs)| runs));
 }
 
 struct PdfReader<'source> {
@@ -481,12 +554,21 @@ impl<'source> PdfReader<'source> {
     ) {
         let source = &stream.source;
         let operator = text_of(source, field(Some(operation), "operator"));
-        let mut operands = operation
+        let operands = operation
             .children
             .iter()
             .filter(|child| child.field == Some("operand"));
-        let first = operands.next();
-        let last = operands.next_back().or(first);
+        let first = operands.clone().next();
+        let last = operands.clone().next_back();
+        let numeric_operand = |operand: &GrammarNode| {
+            if !matches!(operand.term, "integer" | "real") {
+                return None;
+            }
+            text_of(source, Some(operand))
+                .parse::<f64>()
+                .ok()
+                .filter(|value| value.is_finite())
+        };
         match pdf_text_operator_kind(operator) {
             1 => {
                 state.font =
@@ -498,6 +580,9 @@ impl<'source> PdfReader<'source> {
                 if self.kind(dictionary, "Subtype") == "Form" {
                     let font = state.font.clone();
                     let ordinate = state.ordinate;
+                    let position = state.position;
+                    let leading = state.leading;
+                    state.orderable = false;
                     self.visit_content(
                         form,
                         self.get(dictionary, "Resources").or(resources),
@@ -506,6 +591,8 @@ impl<'source> PdfReader<'source> {
                     );
                     state.font = font;
                     state.ordinate = ordinate;
+                    state.position = position;
+                    state.leading = leading;
                 }
             }
             3 => self.show_text(stream, last, state),
@@ -532,12 +619,17 @@ impl<'source> PdfReader<'source> {
             }
             5 => {
                 state.separated = true;
+                state.advance_line();
                 self.show_text(stream, last, state);
             }
             6 => {
                 state.separated = true;
                 if operator == "BT" {
                     state.ordinate = None;
+                    state.position = None;
+                }
+                if operator == "T*" {
+                    state.advance_line();
                 }
             }
             7 => {
@@ -552,7 +644,37 @@ impl<'source> PdfReader<'source> {
                 } else {
                     state.ordinate.unwrap_or_default() + ordinate
                 });
+                let values = operands.map(numeric_operand).collect::<Option<Vec<_>>>();
+                match (operator, values.as_deref()) {
+                    ("Tm", Some(&[a, b, c, d, x, y]))
+                        if a > 0.0 && b == 0.0 && c == 0.0 && d > 0.0 =>
+                    {
+                        state.position = Some(TextPosition {
+                            x,
+                            y,
+                            horizontal_scale: a,
+                            vertical_scale: d,
+                        });
+                    }
+                    ("Td" | "TD", Some(&[x, y])) => {
+                        let mut position = state.position.unwrap_or_default();
+                        position.x += x * position.horizontal_scale;
+                        position.y += y * position.vertical_scale;
+                        state.position = Some(position);
+                        if operator == "TD" {
+                            state.leading = -y;
+                        }
+                    }
+                    _ => state.orderable = false,
+                }
             }
+            _ if operator == "TL" => {
+                state.leading = first
+                    .filter(|_| operands.count() == 1)
+                    .and_then(numeric_operand)
+                    .unwrap_or(f64::NAN);
+            }
+            _ if operator == "cm" => state.orderable = false,
             _ => {}
         }
     }
@@ -593,6 +715,7 @@ impl<'source> PdfReader<'source> {
             separated: state.separated,
             start,
             end,
+            position: state.position,
         });
         state.separated = false;
     }
@@ -627,12 +750,16 @@ impl<'source> PdfReader<'source> {
                     "Page" => {
                         let contents = self.get(Some(node), "Contents");
                         let mut state = TextState::new();
+                        let page_start = self.output.text_runs.len();
                         if contents.is_some_and(|node| node.term == "array") {
                             for item in array_elements(contents) {
                                 self.visit_content(self.resolve(item), resources, &mut state, 0);
                             }
                         } else {
                             self.visit_content(contents, resources, &mut state, 0);
+                        }
+                        if state.orderable {
+                            order_page_text(&mut self.output.text_runs, page_start);
                         }
                     }
                     _ => {}

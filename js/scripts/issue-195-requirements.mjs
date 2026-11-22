@@ -427,9 +427,9 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       {
         id: 'I195-I239-PDF-FONT-UNICODE',
         construct: 'font Unicode mappings and decoded visible text in page order',
-        expectedBehavior: 'The visible PDF projection follows the page tree and show-text operators, maps glyph codes through ToUnicode CMaps and simple-font encodings, and returns the covering original stream or literal source range.',
-        selector: 'reverse physical page order, an inherited Identity-H font with bfchar and bfrange, and a WinAnsi Difference',
-        assertions: ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges'],
+        expectedBehavior: 'The visible PDF projection follows the page tree and show-text operators, maps glyph codes through ToUnicode CMaps and simple-font encodings, and returns the covering original stream or literal source range. Explicitly positioned horizontal lines follow their page coordinates while retaining their original source ranges.',
+        selector: 'reverse physical page order, an inherited Identity-H font with bfchar and bfrange, a WinAnsi Difference, and horizontal text lines drawn out of reading order',
+        assertions: ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges'],
       },
     ].map(entry => ({
       ...entry,

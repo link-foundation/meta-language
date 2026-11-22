@@ -124,7 +124,10 @@ export function readPdfDocument(text, tree, decodeStreams) {
       if (!['literal_string', 'hex_string'].includes(value?.term)) return;
       const visible = decodePdfFontText(pdfStringBytes(textOf(source, value)), state.font);
       if (!visible) return;
-      textRuns.push({ text: visible, start: startOf(value), end: endOf(value), separated: state.separated });
+      textRuns.push({
+        text: visible, start: startOf(value), end: endOf(value),
+        separated: state.separated, position: state.position,
+      });
       state.separated = false;
     }
     for (const operation of content.children) {
@@ -140,9 +143,14 @@ export function readPdfDocument(text, tree, decodeStreams) {
         if (nameOf(text, get(dictionary, 'Subtype')) === 'Form') {
           const font = state.font;
           const ordinate = state.ordinate;
+          const position = state.position;
+          const leading = state.leading;
+          state.orderable = false;
           visitContent(form, get(dictionary, 'Resources') ?? resources, state, depth + 1);
           state.font = font;
           state.ordinate = ordinate;
+          state.position = position;
+          state.leading = leading;
         }
       } else if (kind === 3) {
         show(argumentsList.at(-1));
@@ -154,22 +162,49 @@ export function readPdfDocument(text, tree, decodeStreams) {
         }
       } else if (kind === 5) {
         state.separated = true;
+        advanceLine(state);
         show(argumentsList.at(-1));
       } else if (kind === 6) {
         state.separated = true;
-        if (operator === 'BT') state.ordinate = null;
+        if (operator === 'BT') {
+          state.ordinate = null;
+          state.position = null;
+        }
+        if (operator === 'T*') advanceLine(state);
       } else if (kind === 7) {
         const ordinate = Number(textOf(source, argumentsList.at(-1)));
         if (operator === 'Tm' ? ordinate !== state.ordinate : ordinate !== 0) state.separated = true;
         state.ordinate = operator === 'Tm' ? ordinate : (state.ordinate ?? 0) + ordinate;
+        const values = argumentsList.map(numericOperand);
+        if (operator === 'Tm') {
+          const [a, b, c, d, x, y] = values;
+          if (values.length === 6 && values.every(Number.isFinite) && a > 0 && b === 0 && c === 0 && d > 0) {
+            state.position = { x, y, horizontalScale: a, verticalScale: d };
+          } else state.orderable = false;
+        } else if (values.length === 2 && values.every(Number.isFinite)) {
+          const [x, y] = values;
+          const previous = state.position ?? { x: 0, y: 0, horizontalScale: 1, verticalScale: 1 };
+          state.position = {
+            ...previous, x: previous.x + x * previous.horizontalScale, y: previous.y + y * previous.verticalScale,
+          };
+          if (operator === 'TD') state.leading = -y;
+        } else state.orderable = false;
+      } else if (operator === 'TL') {
+        state.leading = argumentsList.length === 1 ? numericOperand(argumentsList[0]) : NaN;
+      } else if (operator === 'cm') {
+        state.orderable = false;
       }
     }
     state.active.delete(node);
 
+    function numericOperand(value) {
+      return value.term === 'integer' || value.term === 'real' ? Number(textOf(source, value)) : NaN;
+    }
+
     function showSpace(value) {
       const previous = textRuns.at(-1);
       if (previous && !state.separated && !previous.text.endsWith(' ')) {
-        textRuns.push({ text: ' ', start: startOf(value), end: endOf(value), separated: false });
+        textRuns.push({ text: ' ', start: startOf(value), end: endOf(value), separated: false, position: state.position });
       }
     }
   }
@@ -189,9 +224,11 @@ export function readPdfDocument(text, tree, decodeStreams) {
     } else if (type === 'Page') {
       const contents = get(node, 'Contents');
       const state = newTextState();
+      const pageStart = textRuns.length;
       if (contents?.term === 'array') {
         for (const content of arrayElements(contents)) visitContent(resolve(content), resources, state);
       } else visitContent(contents, resources, state);
+      if (state.orderable) orderPageText(textRuns, pageStart);
     }
   }
   if (!root) {
@@ -207,7 +244,33 @@ export function readPdfDocument(text, tree, decodeStreams) {
 }
 
 function newTextState() {
-  return { active: new Set(), separated: true, font: null, ordinate: null };
+  return {
+    active: new Set(), separated: true, font: null, ordinate: null,
+    position: null, leading: 0, orderable: true,
+  };
+}
+
+function advanceLine(state) {
+  if (!state.position || !Number.isFinite(state.leading)) {
+    state.position = null;
+    return;
+  }
+  state.position = { ...state.position, y: state.position.y - state.leading * state.position.verticalScale };
+}
+
+function orderPageText(runs, start) {
+  const lines = [];
+  for (let index = start; index < runs.length; index += 1) {
+    if (runs[index].separated) {
+      const position = runs[index].position;
+      if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) return;
+      lines.push({ position, start: index, end: index });
+    }
+    lines.at(-1).end = index + 1;
+  }
+  lines.sort((left, right) => right.position.y - left.position.y || left.position.x - right.position.x);
+  const ordered = lines.flatMap(line => runs.slice(line.start, line.end));
+  for (const [index, run] of ordered.entries()) runs[start + index] = run;
 }
 
 function pageOperator(source, operation) {

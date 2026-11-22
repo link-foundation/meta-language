@@ -32,6 +32,45 @@ fn check_reconstruction(network: &LinkNetwork, raw: bool, bytes: &[u8], text: &s
     }
 }
 
+fn check_reading_order(fixture: &Value) {
+    let page = fixture["page"].as_str().expect("positioned PDF");
+    let text = fixture["text"].as_str().expect("positioned text");
+    let ranges = fixture["ranges"].as_array().expect("positioned PDF ranges");
+    for (raw, input) in [
+        (true, LinkNetwork::parse_bytes(page.as_bytes(), "PDF")),
+        (
+            false,
+            LinkNetwork::parse(page, "PDF", ParseConfiguration::default()),
+        ),
+    ] {
+        let network = LinkNetwork::from_lino(&input.to_lino()).expect("positioned PDF round trip");
+        assert!(network.verify_full_match(None).is_clean());
+        check_reconstruction(&network, raw, page.as_bytes(), page);
+        let projection = network.visible_text(VisibleDocumentTextOptions::default());
+        assert_eq!(projection.text, text);
+        for range in ranges {
+            let selected = range[0].as_str().expect("selected text");
+            let anchors = range[1].as_array().expect("source anchors");
+            let first = anchors[0].as_str().expect("first operand");
+            let last = anchors
+                .last()
+                .and_then(Value::as_str)
+                .expect("last operand");
+            let start = projection
+                .text
+                .find(selected)
+                .expect("visible positioned text");
+            assert_eq!(
+                projection.source_range(start, start + selected.len()),
+                Some(ByteRange::new(
+                    page.find(first).expect("first source offset"),
+                    page.find(last).expect("last source offset") + last.len(),
+                )),
+            );
+        }
+    }
+}
+
 #[test]
 fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
     let fixture = read_project_data(include_str!("../../../parity/fixtures/pdf-document.lino"))
@@ -141,6 +180,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
             .text,
         "A€é"
     );
+    check_reading_order(&fixture["readingOrder"]);
     for (requirement_id, assertions) in [
         (
             "I195-I239-PDF-CONTENT-STREAMS",
@@ -155,6 +195,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
             &[
                 "pdfTextUsesFontMappingsAndPageOrder",
                 "pdfVisibleTextKeepsEncodedAndLiteralRanges",
+                "pdfPositionedLinesKeepReadingOrderAndRanges",
             ][..],
         ),
     ] {

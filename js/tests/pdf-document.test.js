@@ -58,13 +58,35 @@ function checkCorruptDecoding() {
   assert.equal(network.visibleText().text, 'A€é');
 }
 
+function checkReadingOrder() {
+  const { page, text, ranges } = fixture.readingOrder;
+  const bytes = Buffer.from(page);
+  for (const [raw, input] of [[false, LinkNetwork.parse(page, 'PDF')], [true, LinkNetwork.parseBytes(bytes, 'PDF')]]) {
+    const network = LinkNetwork.fromLino(input.toLino());
+    assert.equal(network.verifyFullMatch().isClean(), true);
+    if (raw) assert.deepEqual(Buffer.from(network.reconstructBytes()), bytes);
+    else assert.equal(network.reconstructText(), page);
+    const projection = network.visibleText();
+    assert.equal(projection.text, text);
+    for (const [selected, anchors] of ranges) {
+      const start = projection.text.indexOf(selected);
+      assert.ok(start >= 0, selected);
+      assert.deepEqual(projection.sourceRange(start, start + selected.length), {
+        start: page.indexOf(anchors[0]),
+        end: page.indexOf(anchors.at(-1)) + anchors.at(-1).length,
+      });
+    }
+  }
+}
+
 test('PDF streams and font Unicode keep the original ranges with both byte entry points', () => {
   checkPdfContent();
   checkDisabledDecoding();
   checkCorruptDecoding();
+  checkReadingOrder();
   for (const [requirementId, assertions] of [
     ['I195-I239-PDF-CONTENT-STREAMS', ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError']],
-    ['I195-I239-PDF-FONT-UNICODE', ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges']],
+    ['I195-I239-PDF-FONT-UNICODE', ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges']],
   ]) {
     recordIssue195Observations({ requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(),
       fixtureFile, assertions, testName: 'PDF streams and font Unicode keep the original ranges with both byte entry points' });
