@@ -775,7 +775,6 @@ for(const [source,target] of [
  ['javascript-construction-source','javascript-construction-source'],
  ['javascript-array-creation','javascript-array-creation'],
  ['javascript-object-from-entries-source','javascript-object-from-entries-source'],
- ['javascript-primitive-wrappers','javascript-primitive-wrappers'],
  ['javascript-wrapper-materialization','javascript-wrapper-materialization'],
  ['javascript-source-controls','javascript-source-controls'],
  ['javascript-ordinary-class-closures','javascript-ordinary-class-closures'],
@@ -830,6 +829,16 @@ const nativeLiteralSource=readFileSync(new URL(nativeLiteralPath,root),'utf8');
 writeProjectData(new URL('parity/fixtures/native-policy-authoring-controls.lino',root),{
  schemaVersion:1,model:'literal native policy assertion source controls 1',boundary,
  selections:['nativeLiteralAssertions','mixedLiteralAssertions'].map(exportName=>readNativePolicyLiteralControls(nativeLiteralSource,{path:nativeLiteralPath,exportName})),
+});
+const wrapperFixturePath='js/tests/fixtures/javascript-primitive-wrappers.mjs';
+const wrapperFixtureSource=readFileSync(new URL(wrapperFixturePath,root),'utf8');
+const {javascriptPrimitiveWrapperSourceVersions,javascriptPrimitiveWrapperOriginals}=await import('../tests/fixtures/javascript-primitive-wrappers.mjs');
+const wrapperAllocationCapture=readExactFixtureExport(wrapperFixtureSource,{
+ path:wrapperFixturePath,exportName:'javascriptPrimitiveWrapperAllocations',profile:'exact pure fixture data 2',
+});
+writeProjectData(new URL('parity/fixtures/javascript-primitive-wrappers.lino',root),{
+ schemaVersion:1,model:'javascript-primitive-wrappers source literals 1',boundary,
+ declarations:{javascriptPrimitiveWrapperSourceVersions,javascriptPrimitiveWrapperOriginals},exactAllocations:wrapperAllocationCapture,
 });
 // Keep nonfinite inputs as exact authored literal descriptors, alongside the
 // complete finite source inventories. Never coerce NaN/Infinity to JSON null.

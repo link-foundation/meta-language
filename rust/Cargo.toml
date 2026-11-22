@@ -258,6 +258,7 @@ include = [
     "src/data/rust-source-version-program.lino",
     "src/data/rust-standard-owned-call-program.lino",
     "src/data/rust-standard-string-view-program.lino",
+    "src/data/rust-standard-sum-method-program.lino",
     "src/data/rust-string-addition-program.lino",
     "src/data/rust-string-byte-kernel-program.lino",
     "src/data/rust-string-byte-length-controls.lino",
