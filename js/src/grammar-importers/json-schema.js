@@ -4,7 +4,7 @@ import { collectReferences } from '../grammar-emitters/structural.js';
 import { parseGrammarLinks } from '../grammar-links.js';
 import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-document.js';
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
-import { lowerLarkRegex } from './lark-regex.js';
+import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-patterns.js';
 import { additionalPropertyName } from './json-schema-property-names.js';
 import { signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
@@ -200,46 +200,6 @@ function formatRule(format) {
   return `json_format_${format.replaceAll('-', '_')}`;
 }
 
-function safeStringPattern(expression) {
-  const escaped = /["\\\u0000-\u001f\ud800-\udfff]/u;
-  const safeRange = ({ start, end }) => {
-    const first = start.codePointAt(0);
-    const last = end.codePointAt(0);
-    return ![[0, 31], [34, 34], [92, 92], [0xd800, 0xdfff]].some(([low, high]) => first <= high && last >= low);
-  };
-  if (expression.kind === 'literal') return !escaped.test(expression.value);
-  if (expression.kind === 'charRange') return safeRange(expression);
-  if (expression.kind === 'charClass' && !expression.negated) {
-    return expression.items?.every(item => {
-      if (item.kind === 'char') return !escaped.test(item.value);
-      return item.kind === 'range' && safeRange(item);
-    });
-  }
-  if (expression.items) return expression.items.every(safeStringPattern);
-  return expression.item ? safeStringPattern(expression.item) : expression.kind === 'empty';
-}
-
-function lowerStringPattern(pattern) {
-  if (!pattern.startsWith('^') || !pattern.endsWith('$')) return null;
-  const source = pattern.slice(1, -1);
-  const atom = /(\[(?:\\.|[^\\\]])*\]|[^()[\]{}*+?.|^$\\])(?:(\{(\d+)(?:,(\d*))?\})|([?+*]))?/uy;
-  const terms = [];
-  for (let offset = 0; offset < source.length;) {
-    atom.lastIndex = offset;
-    const match = atom.exec(source);
-    if (!match) return null;
-    const [, spelling, counted, minimum, maximum, suffix] = match;
-    const term = emitterExpression(lowerLarkRegex(spelling + (suffix ?? ''), '', offset));
-    if (!safeStringPattern(term)) return null;
-    const min = Number(minimum);
-    const max = maximum === undefined ? min : maximum === '' ? null : Number(maximum);
-    if (counted && (min > 1024 || (max !== null && (max > 1024 || min > max)))) return null;
-    terms.push(counted ? repeat(term, min, max) : term);
-    offset = atom.lastIndex;
-  }
-  return seq(...terms);
-}
-
 /** Import a draft 2020-12 schema into a constrained-decoding grammar. */
 export function importJsonSchema(schema) {
   const analysis = analyzeJsonSchema(schema);
@@ -252,6 +212,16 @@ export function importJsonSchema(schema) {
     keyword, pointer: pointerChild(pointer, keyword), message,
   });
   let next = 1;
+  const patternRules = new Map();
+  function patternRule(expression) {
+    const key = JSON.stringify(expression);
+    if (!patternRules.has(key)) {
+      const name = `json_pattern_part_${patternRules.size + 1}`;
+      builder.rule(name, expression);
+      patternRules.set(key, ref(name));
+    }
+    return patternRules.get(key);
+  }
   function named(rules, pointer) {
     if (compiled.has(rules)) return ref(compiled.get(rules));
     const name = `schema_${next++}`;
@@ -358,15 +328,8 @@ export function importJsonSchema(schema) {
     }
     if (rules.format !== undefined) report(pointer, 'format', 'The format constraint combined with a pattern is checked during document validation.');
     if (rules.pattern !== undefined) {
-      try {
-        const expression = lowerStringPattern(rules.pattern);
-        if (expression) {
-          report(pointer, 'pattern', 'The decoder generates direct character spellings. Validation also accepts equivalent JSON escapes.');
-          return seq(literal('"'), expression, literal('"'));
-        }
-      } catch {
-        // The constrained grammar must stay in the emitters' shared subset.
-      }
+      const result = lowerJsonStringPattern(rules.pattern, patternRule);
+      if (result) return result.expression && seq(literal('"'), result.expression, literal('"'));
       report(pointer, 'pattern', 'This pattern is checked during document validation.');
     }
     return ref('string');
@@ -430,6 +393,7 @@ export function importJsonSchema(schema) {
   }
   const start = named(schema, '');
   if (!start) throw new RangeError('The JSON Schema has no generatable document');
+  builder.rule('json_pattern_character', anyJsonPatternCharacter());
   builder.rule('start', seq(space, start, space));
   const grammar = builder.build();
   const reachable = new Set();

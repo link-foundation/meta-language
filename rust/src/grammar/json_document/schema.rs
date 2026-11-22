@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use serde_json::Value;
 
+use super::patterns::validation_pattern;
 use super::{JsonSchemaIssue, pointer_child};
 
 const POLICY: &str = include_str!("../../data/json-document/schema.lino");
@@ -229,7 +230,7 @@ impl<'schema> Analysis<'schema> {
                 let Some(pattern) = value.as_str() else {
                     return Some("an ECMA-262 regular expression");
                 };
-                match Regex::new(pattern) {
+                match validation_pattern(pattern) {
                     Ok(pattern) => {
                         self.patterns.insert(std::ptr::from_ref(schema), pattern);
                     }

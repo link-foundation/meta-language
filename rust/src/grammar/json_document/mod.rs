@@ -4,6 +4,8 @@ mod document;
 mod emit;
 mod import;
 mod numeric_ranges;
+mod pattern_policy;
+mod patterns;
 mod property_names;
 mod recovery;
 mod schema;

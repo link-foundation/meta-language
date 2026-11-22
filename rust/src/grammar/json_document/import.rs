@@ -1,14 +1,13 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::LazyLock;
 
-use regex::Regex;
 use serde_json::Value;
 
 use super::super::{
-    CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule, import::lower_lark_regex,
-    parse_grammar_links,
+    CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule, parse_grammar_links,
 };
 use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_range};
+use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
 use super::{JsonSchemaIssue, pointer_child};
@@ -131,70 +130,6 @@ fn constant(value: &Value) -> Expression {
     }
 }
 
-fn safe_range(first: char, last: char) -> bool {
-    [('\\', '\\'), ('"', '"'), ('\0', '\x1f')]
-        .into_iter()
-        .all(|(low, high)| first > high || last < low)
-}
-
-fn safe_pattern(expression: &Expression) -> bool {
-    match expression {
-        Expression::Empty => true,
-        Expression::Terminal(value) => value.chars().all(|value| safe_range(value, value)),
-        Expression::CharRange(first, last) => safe_range(*first, *last),
-        Expression::CharClass {
-            negated: false,
-            items,
-        } => items.iter().all(|item| match *item {
-            CharClassItem::Char(value) => safe_range(value, value),
-            CharClassItem::Range(first, last) => safe_range(first, last),
-        }),
-        Expression::Sequence(items)
-        | Expression::Choice {
-            alternatives: items,
-            ..
-        } => items.iter().all(safe_pattern),
-        Expression::Optional(child)
-        | Expression::ZeroOrMore(child)
-        | Expression::OneOrMore(child)
-        | Expression::Repeat { expr: child, .. } => safe_pattern(child),
-        _ => false,
-    }
-}
-
-fn lower_string_pattern(source: &str) -> Option<Expression> {
-    static ATOM: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(
-        r"\A(\[(?:\\.|[^\\\]])*\]|[^()\[\]{}*+?.|^$\\])(?:(\{([0-9]+)(?:,([0-9]*))?\})|([?+*]))?"
-    ).expect("JSON pattern production")
-    });
-    let mut source = source.strip_prefix('^')?.strip_suffix('$')?;
-    let mut terms = Vec::new();
-    while !source.is_empty() {
-        let parts = ATOM.captures(source)?;
-        let suffix = parts.get(5).map_or("", |item| item.as_str());
-        let mut term = lower_lark_regex(&format!("{}{suffix}", &parts[1]), "", 0).ok()?;
-        if !safe_pattern(&term) {
-            return None;
-        }
-        if parts.get(2).is_some() {
-            let min = parts[3].parse().ok()?;
-            let max = match parts.get(4).map(|item| item.as_str()) {
-                None => Some(min),
-                Some("") => None,
-                Some(value) => Some(value.parse().ok()?),
-            };
-            if min > 1024 || max.is_some_and(|max| max > 1024 || max < min) {
-                return None;
-            }
-            term = EXPRESSION.repeat(term, min, max);
-        }
-        terms.push(term);
-        source = &source[parts.get(0)?.end()..];
-    }
-    Some(EXPRESSION.seq(terms))
-}
-
 /// A constrained grammar with explicit residual schema constraints.
 #[derive(Clone, Debug)]
 pub struct JsonSchemaGrammar {
@@ -247,12 +182,17 @@ pub fn import_json_schema(schema: &Value) -> Result<JsonSchemaGrammar, JsonSchem
         compiled: HashMap::new(),
         diagnostics: Analysis::new(schema).issues,
         next: 1,
+        pattern_rules: Vec::new(),
     };
     let Some(start) = importer.named(schema, "") else {
         return Err(JsonSchemaImportError {
             diagnostics: importer.diagnostics,
         });
     };
+    importer.grammar.add_rule(GrammarRule::new(
+        "json_pattern_character",
+        any_json_pattern_character(),
+    ));
     importer.grammar.add_rule(GrammarRule::new(
         "start",
         EXPRESSION.seq([
@@ -312,6 +252,7 @@ struct Importer<'schema> {
     compiled: HashMap<*const Value, String>,
     diagnostics: Vec<JsonSchemaIssue>,
     next: usize,
+    pattern_rules: Vec<GrammarExpr>,
 }
 
 impl<'schema> Importer<'schema> {
@@ -422,7 +363,7 @@ impl<'schema> Importer<'schema> {
             .filter_map(|name| match name {
                 "object" => self.object(schema, pointer),
                 "array" => self.array(schema, pointer),
-                "string" => Some(self.string(schema, pointer)),
+                "string" => self.string(schema, pointer),
                 "integer" | "number" => self.number(name, schema, pointer),
                 "boolean" | "null" => Some(reference_expression(name)),
                 _ => None,
@@ -660,19 +601,40 @@ impl<'schema> Importer<'schema> {
             .then(|| collection("[", "]", EXPRESSION.choice_unordered(alternatives)))
     }
 
-    fn string(&mut self, schema: &Value, pointer: &str) -> Expression {
+    fn pattern_rule(&mut self, expression: GrammarExpr) -> GrammarExpr {
+        if let Some(index) = self
+            .pattern_rules
+            .iter()
+            .position(|entry| expression == *entry)
+        {
+            return EXPRESSION.nt(format!("json_pattern_part_{}", index + 1));
+        }
+        self.pattern_rules.push(expression.clone());
+        let name = format!("json_pattern_part_{}", self.pattern_rules.len());
+        self.grammar.add_rule(GrammarRule::new(&name, expression));
+        EXPRESSION.nt(name)
+    }
+
+    fn string(&mut self, schema: &Value, pointer: &str) -> Option<Expression> {
         let pattern = schema.get("pattern");
         if let Some(format) = schema["format"].as_str() {
             if formats(format).is_some() && pattern.is_none() {
                 self.report(pointer, "format", "The decoder generates direct character spellings in the supported format. Validation also checks escaped strings.");
-                return EXPRESSION.nt(format!("json_format_{}", format.replace('-', "_")));
+                return Some(EXPRESSION.nt(format!("json_format_{}", format.replace('-', "_"))));
             }
             self.report(pointer, "format", "The format constraint combined with a pattern is checked during document validation.");
         }
         if let Some(pattern) = pattern.and_then(Value::as_str) {
-            if let Some(expression) = lower_string_pattern(pattern) {
-                self.report(pointer, "pattern", "The decoder generates direct character spellings. Validation also accepts equivalent JSON escapes.");
-                return EXPRESSION.seq([EXPRESSION.term("\""), expression, EXPRESSION.term("\"")]);
+            match lower_json_string_pattern(pattern, |expression| self.pattern_rule(expression)) {
+                Some(PatternLowering::Match(expression)) => {
+                    return Some(EXPRESSION.seq([
+                        EXPRESSION.term("\""),
+                        expression,
+                        EXPRESSION.term("\""),
+                    ]));
+                }
+                Some(PatternLowering::Impossible) => return None,
+                None => {}
             }
             self.report(
                 pointer,
@@ -680,7 +642,7 @@ impl<'schema> Importer<'schema> {
                 "This pattern is checked during document validation.",
             );
         }
-        reference_expression("string")
+        Some(reference_expression("string"))
     }
 
     fn number(&mut self, name: &str, schema: &Value, pointer: &str) -> Option<Expression> {

@@ -140,6 +140,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "schemaDiagnosticsRetainSyntaxLinks",
             "grammarAndSchemaRoundTrip",
             "decoderDisjointExclusiveBranchesHaveNoResidual",
+            "decoderPatternsRespectDecodedStrings",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });

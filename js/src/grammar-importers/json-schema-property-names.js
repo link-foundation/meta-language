@@ -1,4 +1,5 @@
 import { GrammarBuilder as Expression } from '../grammar.js';
+import { intersectScalarIntervals, surrogatePairBoundaries } from './json-schema-pattern-policy.js';
 
 const { charClass, seq, choice, literal, repeat, repeat0, empty } = Expression;
 const range = (start, end) => ({ kind: 'range', start, end });
@@ -39,6 +40,49 @@ function hexInterval(first, last, digits = 4) {
   if (lower + 1 < upper) alternatives.push(seq(hexDigits(lower + 1, upper - 1), repeat(hexDigits(0, 15), digits - 1, digits - 1)));
   alternatives.push(seq(hexDigits(upper, upper), hexInterval(0, last % base, digits - 1)));
   return choice(...alternatives);
+}
+
+function unicodeInterval(first, last) {
+  return seq(literal('\\u'), hexInterval(first, last));
+}
+
+function surrogatePairInterval(first, last) {
+  const [firstHigh, firstLow, lastHigh, lastLow] = surrogatePairBoundaries(first, last);
+  if (firstHigh === lastHigh) return seq(hexUnit(firstHigh), unicodeInterval(firstLow, lastLow));
+  const alternatives = [
+    seq(hexUnit(firstHigh), unicodeInterval(firstLow, 0xdfff)),
+    seq(hexUnit(lastHigh), unicodeInterval(0xdc00, lastLow)),
+  ];
+  if (firstHigh + 1 < lastHigh) {
+    alternatives.push(seq(unicodeInterval(firstHigh + 1, lastHigh - 1), unicodeInterval(0xdc00, 0xdfff)));
+  }
+  return choice(...alternatives);
+}
+
+/** Match every JSON spelling of one Unicode scalar in the given intervals. */
+export function jsonStringCharacter(ranges) {
+  const direct = [];
+  const escaped = [];
+  for (const [first, last] of ranges) {
+    if (first === last) {
+      escaped.push(exactCharacter(String.fromCodePoint(first)));
+      continue;
+    }
+    for (const [low, high] of [[32, 33], [35, 91], [93, 0xd7ff], [0xe000, 0x10ffff]]) {
+      const [start, end] = intersectScalarIntervals(first, last, low, high);
+      if (start <= end) direct.push(range(String.fromCodePoint(start), String.fromCodePoint(end)));
+    }
+    for (const [low, high] of [[0, 0xd7ff], [0xe000, 0xffff], [0x10000, 0x10ffff]]) {
+      const [start, end] = intersectScalarIntervals(first, last, low, high);
+      if (start <= end) escaped.push(start < 0x10000 ? unicodeInterval(start, end) : surrogatePairInterval(start, end));
+    }
+    for (const [value, escape] of shortEscapes) {
+      const point = value.codePointAt(0);
+      if (first <= point && point <= last) escaped.push(literal(`\\${escape}`));
+    }
+  }
+  if (direct.length) escaped.unshift(charClass(direct));
+  return escaped.length ? choice(...escaped) : null;
 }
 
 function unitsExcept(first, last, excluded) {

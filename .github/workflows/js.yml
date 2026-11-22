@@ -449,6 +449,11 @@ jobs:
         run: npm run check:builtin-cst
         working-directory: js
 
+      - name: Check the self-translated JSON Schema pattern policy
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node scripts/build-json-schema-pattern-policy.mjs --check
+        working-directory: js
+
       - name: Check the shared language catalog
         if: ${{ !cancelled() && matrix.group == 'grammar' }}
         run: npm run check:language-catalog

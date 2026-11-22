@@ -599,10 +599,10 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       language: 'JSON with draft 2020-12 schemas',
       version: 'RFC 8259 JSON, RFC 6901 pointer and JSON Schema draft 2020-12 semantics',
       construct: 'schema import, decoder grammar export, located validation and reverse inference',
-      expectedBehavior: 'Import named and referenced schema constraints and emit interoperable decoder grammars. Lower exclusive alternatives with disjoint instance types exactly and report unsupported constraints. Validation preserves syntax links, UTF-8 spans and pointers at schema violations and malformed JSON. Emit the original schema or infer a schema from bounded finite productions.',
+      expectedBehavior: 'Import named and referenced schema constraints and emit interoperable decoder grammars. Lower exclusive alternatives with disjoint instance types exactly and report unsupported constraints. Match supported string patterns against decoded Unicode scalars regardless of their JSON escape spelling. Validation preserves syntax links, UTF-8 spans and pointers at schema violations and malformed JSON. Emit the original schema or infer a schema from bounded finite productions.',
       fixture: 'parity/fixtures/json-schema-and-recovery.lino',
-      selector: 'answer schema, closed records, tuple bounds, local references, formats, integer ranges, finite and disjoint exclusive alternatives, unsupported keywords, malformed answers and inferred constants',
-      assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual'],
+      selector: 'answer schema, closed records, tuple bounds, local references, formats, integer ranges, finite and disjoint exclusive alternatives, unsupported keywords, malformed answers, inferred constants, and anchored and unanchored patterns with raw and escaped Unicode',
+      assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings'],
       implementationEntryPoints: {
         javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/json-schema-validation.js', 'js/tests/grammar-json-document.test.js'],
         rust: ['rust/src/grammar/json_document/import.rs', 'rust/src/grammar/json_document/validation.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
