@@ -179,6 +179,7 @@ test('the remaining-scope issue is checked and refreshed independently of the or
 });
 
 test('source discovery includes every original and follow-up discussion endpoint', async () => {
+  const followUpIssues = [232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244];
   const endpoints = [];
   const discussion = await fetchLiveDiscussion({ request: async (endpoint) => {
     endpoints.push(endpoint);
@@ -194,12 +195,13 @@ test('source discovery includes every original and follow-up discussion endpoint
     'issues/195', 'issues/195/comments?per_page=100',
     'issues/199', 'issues/199/comments?per_page=100',
     'issues/224', 'issues/224/comments?per_page=100',
+    ...followUpIssues.flatMap(number => [`issues/${number}`, `issues/${number}/comments?per_page=100`]),
     'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
     'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
     'issues/226/comments?per_page=100', 'pulls/226/comments?per_page=100', 'pulls/226/reviews?per_page=100',
   ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
   assert.equal(discussion.issue.number, 195);
-  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224]);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224, ...followUpIssues]);
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/226/comments')));

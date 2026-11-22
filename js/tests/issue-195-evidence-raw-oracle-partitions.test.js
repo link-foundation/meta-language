@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
-import {restoreRawOracleContractPartitionHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
+import {restoreRawOracleContractPartitionHistory,restoreReportScheduleHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
@@ -73,13 +73,15 @@ test('two required raw contract cells preserve complete commands limits and the 
   const currentSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
   const previousSource=history.sources.find(row=>row.path===path).source;
   assert.equal(restoreRawOracleContractPartitionHistory(currentSource,path),previousSource);
-  const previous=parseWorkflow(previousSource),current=parseWorkflow(currentSource);
+  const previous=parseWorkflow(previousSource),current=parseWorkflow(restoreReportScheduleHistory(currentSource));
   assert.equal(current.length,previous.length);
   const before=previous.find(row=>row.id==='package-checks'),after=current.find(row=>row.id==='package-checks');
   assert.equal(after.steps.length,before.steps.length+1);
   const old=before.steps.find(row=>row.name==='Run complete original link raw native oracle contracts');
   const plan=after.steps.find(row=>row.name===old.name);
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
+  const live=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
+  assert.deepEqual(live,after);
   assert.equal(plan.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'",''),old.text);
   assert.equal(schema.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'",'')
     .replace('Run complete original link raw schema and consumer contracts',old.name)
