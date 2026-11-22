@@ -29,7 +29,8 @@ export function readJavaScriptFunctionBindStateError(heap,state){
  if(state.target.$!=='object'||!state.target.callable)return 'binding retains its actual callable target';
  if(state.phase!=='prototype'&&state.prototype.$!=='object'&&state.prototype.$!=='null')return 'binding retains its actual selected target prototype';
  if(!['prototype','allocate'].includes(state.phase)){
-  const object=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;
+  if(state.receiver.$!=='object')return 'binding metadata retains its actual fresh receiver and immutable internal slots';
+  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)];
   if(object===undefined||object.$!=='boundFunctionObject'||!testJavaScriptSemanticSameValue(object.boundTarget,state.target)||!testJavaScriptSemanticSameValue(object.boundThis,state.boundThis)||!testJavaScriptSemanticSameValue(object.prototype,state.prototype)||object.boundArguments.length!==state.arguments.length||object.boundArguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,state.arguments[index]??{$:'undefined'})))return 'binding metadata retains its actual fresh receiver and immutable internal slots';
  }
  if(state.call!==undefined){if(!['length getter','name getter'].includes(state.phase)||!testJavaScriptFunctionBindMetadataCall(state.call,state.target))return 'binding retains its actual selected metadata getter and receiver';}

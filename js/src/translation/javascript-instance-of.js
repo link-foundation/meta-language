@@ -19,7 +19,13 @@ export function readJavaScriptInstanceOfStateError(heap,state){
  for(const value of [state.left,state.right,state.key,state.prototype,state.cursor]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
  if(state.candidate!==undefined||state.boundPath!==undefined){
   if(state.operation==='prototype contains'||state.candidate===undefined||state.boundPath===undefined||state.boundPath.length===0||state.boundPath.length>4096||readJavaScriptOrdinaryValueError(heap,state.candidate)!=='')return 'bound instanceof retains its original operands and bounded actual delegated target path';
-  let target=state.right;for(const identity of state.boundPath){const bound=target.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)]:undefined;if(bound===undefined||bound.$!=='boundFunctionObject'||bound.identity!==identity)return 'bound instanceof delegation follows only actual immutable target links';target=bound.boundTarget;}
+  let target=state.right;
+  for(const identity of state.boundPath){
+   if(target.$!=='object')return 'bound instanceof delegation follows only actual immutable target links';
+   const bound=heap.objects[findJavaScriptOrdinaryObject(heap.objects,target.identity)];
+   if(bound===undefined||bound.$!=='boundFunctionObject'||bound.identity!==identity)return 'bound instanceof delegation follows only actual immutable target links';
+   target=bound.boundTarget;
+  }
   if(!testJavaScriptSemanticSameValue(target,state.candidate))return 'bound instanceof retains its exact selected delegated target';
  }
  if(state.key.$!=='symbol')return 'instanceof retains the actual realm well-known Symbol';
@@ -31,7 +37,8 @@ export function readJavaScriptInstanceOfStateError(heap,state){
   const right=state.candidate??state.right;if(call.callee.$!=='object'||!call.callee.callable||!testJavaScriptSemanticSameValue(call.receiver,right))return 'instanceof retains the actual selected getter or method receiver';
   if(state.phase==='method value'){const argument=call.arguments[0];if(call.arguments.length!==1||argument===undefined||!testJavaScriptSemanticSameValue(argument,state.left))return 'instanceof method retains its actual left operand';}
   else if(call.arguments.length!==0){
-   const owner=right.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,right.identity)]:undefined,expected=state.phase==='method getter'?state.key:{$:'text',units:[112,114,111,116,111,116,121,112,101]};
+   if(right.$!=='object')return 'opaque instanceof Get retains its actual registered host Get callback';
+   const owner=heap.objects[findJavaScriptOrdinaryObject(heap.objects,right.identity)],expected=state.phase==='method getter'?state.key:{$:'text',units:[112,114,111,116,111,116,121,112,101]};
    const key=call.arguments[0],receiver=call.arguments[1];
    if(owner===undefined||owner.$!=='hostErrorObject'&&owner.$!=='hostURLObject'&&owner.$!=='hostArrayObject'&&owner.$!=='hostByteBufferObject'||!testJavaScriptSemanticSameValue(call.callee,owner.hostGet)||call.arguments.length!==2||key===undefined||receiver===undefined||!testJavaScriptSemanticSameValue(key,expected)||!testJavaScriptSemanticSameValue(receiver,right))return 'opaque instanceof Get retains its actual registered host Get callback';
   }}
