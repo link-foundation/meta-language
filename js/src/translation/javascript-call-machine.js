@@ -980,9 +980,11 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
             if(target===undefined||!testJavaScriptSemanticSameValue(target,pending.state.target))return invalidTarget;
             if(operation!=='Reflect.defineProperty'||instruction.destination!==pending.destination||instruction.realm!==pending.realm)return invalidOperation;
             const operands=readJavaScriptDescriptorOperands(instruction.fields.map(coordinate=>frame.registers[coordinate]??{$:'undefined'}));
-            const descriptor=pending.state.$==='propertyDefinitionArray'?pending.state.assignment.definition.descriptor:pending.state.$==='propertyDefinitionReady'?pending.state.descriptor:undefined;
-            const key=pending.state.$==='propertyDefinitionArray'||pending.state.$==='propertyDefinitionReady'?pending.state.key:undefined;
-            if(operands.error!==''||descriptor===undefined||key===undefined||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},key)||!testJavaScriptPropertyDescriptorsSameValue(descriptor,operands.descriptor))return 'internal definitions retain their actual key and complete preconverted descriptor operands';
+            const wrongDescriptor='internal definitions retain their actual key and complete preconverted descriptor operands';
+            const state=pending.state;
+            if(operands.error!==''||state.$!=='propertyDefinitionArray'&&state.$!=='propertyDefinitionReady')return wrongDescriptor;
+            const descriptor=state.$==='propertyDefinitionArray'?state.assignment.definition.descriptor:state.descriptor;
+            if(!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},state.key)||!testJavaScriptPropertyDescriptorsSameValue(descriptor,operands.descriptor))return wrongDescriptor;
             break;
           }
           case 'propertyDefinition':{
