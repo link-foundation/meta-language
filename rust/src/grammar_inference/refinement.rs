@@ -50,7 +50,7 @@ mod tests {
 fn fail(message: impl std::fmt::Display) -> String {
     format!("grammar inference refinement: {message}")
 }
-fn limits() -> MetaLanguageArchiveLimits {
+pub(crate) fn limits() -> MetaLanguageArchiveLimits {
     MetaLanguageArchiveLimits {
         node_limit: index(rules::read_regular_grammar_refinement_resource_limit(
             "nodes",

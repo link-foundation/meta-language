@@ -11,7 +11,7 @@ const fail=message=>{throw new TypeError('grammar inference refinement: '+messag
 const modelIdentifier='regular-discovery-model',grammarIdentifier='regular-discovery-grammar',algorithmIdentifier='regular-discovery-algorithm',journalIdentifier='regular-discovery-refinement-journal';
 const refinementIdentifier='regular-discovery-refinement-algorithm';
 const refinementDefinition=()=>createSourceDefinitionProgramLinks('meta-language/source-program/grammar-inference-refinement-program');
-const limits={nodeLimit:readRegularGrammarRefinementResourceLimit('nodes'),referenceLimit:readRegularGrammarRefinementResourceLimit('references'),byteLimit:readRegularGrammarRefinementResourceLimit('bytes')};
+export const regularGrammarRefinementArchiveLimits=Object.freeze({nodeLimit:readRegularGrammarRefinementResourceLimit('nodes'),referenceLimit:readRegularGrammarRefinementResourceLimit('references'),byteLimit:readRegularGrammarRefinementResourceLimit('bytes')});
 function select(entries,identifier,kind){const entry=entries.find(entry=>entry.identifier===identifier);if(!entry||entry.kind!==kind)fail('missing '+identifier);return entry;}
 function model(entry){return decodeStructuredDataLinks(entry.network,entry.root);}
 function base(entries,modelEntry,grammarEntry){
@@ -28,7 +28,7 @@ function journalOf(entries){
  return journal;
 }
 function readCheckpoint(network,root){
- const entries=readMetaLanguageArchive(network,root,limits).entries,journal=journalOf(entries);
+ const entries=readMetaLanguageArchive(network,root,regularGrammarRefinementArchiveLimits).entries,journal=journalOf(entries);
  const hasJournal=entries.some(entry=>entry.identifier===journalIdentifier),storedDefinition=entries.find(entry=>entry.identifier===refinementIdentifier);
  if(hasJournal){const bundled=refinementDefinition();if(!storedDefinition||storedDefinition.kind!=='typed program'||!storedDefinition.root.equals(bundled.root)||storedDefinition.network.toLino()!==bundled.network.toLino())fail('the selected refinement definition differs from its versioned implementation');}
  else if(storedDefinition)fail('a refinement definition needs its actual journal');
@@ -73,6 +73,6 @@ export function refineRegularGrammarInference(network,root,positives=[],negative
   {...previous.currentGrammar,identifier:readRegularGrammarRefinementEntryName(ordinal,'grammar')},
   {identifier:journalIdentifier,kind:'grammar inference',...data},
   previous.entries.find(entry=>entry.identifier===refinementIdentifier)??{identifier:refinementIdentifier,kind:'typed program',...refinementDefinition()}];
- const archive=createMetaLanguageArchive(entries,limits);
+ const archive=createMetaLanguageArchive(entries,regularGrammarRefinementArchiveLimits);
  return {...next,...archive};
 }

@@ -121,6 +121,11 @@ fn shared_dynamic_command_sequence_retains_complete_archive_contexts() {
         if let Some(save) = step["save"].as_str() {
             files.insert(save.to_owned(), output.stdout.clone());
         }
+        if let Some(paths) = step["remove"].as_array() {
+            for path in paths {
+                assert!(files.remove(path.as_str().unwrap()).is_some());
+            }
+        }
         if let Some(expected) = step["inventory"].as_array() {
             let rows =
                 read_structured_data_lino(std::str::from_utf8(&output.stdout).unwrap()).unwrap();

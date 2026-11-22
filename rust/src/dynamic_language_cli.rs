@@ -1,11 +1,14 @@
 //! Command transport over the existing dynamic grammar/definition algorithms.
 //! The shared source-generated vocabulary owns argument admission.
 use crate::dynamic_language_command_rules as rules;
+use crate::grammar_inference::regular_grammar_refinement_archive_limits;
 use crate::{
     DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, GlobalConceptSource,
-    MetaLanguageArchiveLimits, create_dynamic_meta_language, meta_language_archive_to_binary,
+    MetaLanguageArchive, MetaLanguageArchiveLimits, RegularGrammarInferenceOptions,
+    create_dynamic_meta_language, infer_regular_grammar, meta_language_archive_to_binary,
     meta_language_archive_to_text, parse_grammar_links, read_meta_language_archive_binary,
-    read_meta_language_archive_text, read_structured_data_lino, render_grammar_links,
+    read_meta_language_archive_text, read_refined_regular_grammar_inference_links,
+    read_structured_data_lino, refine_regular_grammar_inference, render_grammar_links,
     structured_data_to_lino,
 };
 use serde_json::{Value, json};
@@ -26,6 +29,117 @@ pub struct DynamicLanguageCommandOutput {
     pub stderr: String,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LabelledExamples {
+    positives: Vec<Vec<String>>,
+    negatives: Vec<Vec<String>>,
+}
+
+fn labelled_examples(text: &str) -> Result<LabelledExamples, String> {
+    serde_json::from_value(read_structured_data_lino(text)?).map_err(|_| {
+        "labelled examples must contain positive and negative symbol sequences".to_owned()
+    })
+}
+
+fn archive_input<T, B>(
+    args: &Arguments,
+    read_text: &mut T,
+    read_bytes: &mut B,
+    limits: MetaLanguageArchiveLimits,
+) -> Result<MetaLanguageArchive, String>
+where
+    T: FnMut(&str) -> Result<String, String>,
+    B: FnMut(&str) -> Result<Vec<u8>, String>,
+{
+    let file = args
+        .file
+        .as_deref()
+        .ok_or("a language archive input is required")?;
+    if args.options.contains_key("--input-binary") {
+        Ok(read_meta_language_archive_binary(&read_bytes(file)?, limits)?.archive)
+    } else {
+        Ok(read_meta_language_archive_text(&read_text(file)?, limits)?.archive)
+    }
+}
+
+fn archive_output(
+    archive: &MetaLanguageArchive,
+    args: &Arguments,
+    limits: MetaLanguageArchiveLimits,
+) -> Result<Vec<u8>, String> {
+    if args.options.contains_key("--binary") {
+        meta_language_archive_to_binary(archive, limits)
+    } else {
+        Ok(meta_language_archive_to_text(archive, limits)?.into_bytes())
+    }
+}
+
+fn discovery_archive<T, B>(
+    args: &Arguments,
+    read_text: &mut T,
+    read_bytes: &mut B,
+) -> Result<MetaLanguageArchive, String>
+where
+    T: FnMut(&str) -> Result<String, String>,
+    B: FnMut(&str) -> Result<Vec<u8>, String>,
+{
+    let identifier = args.options.get("--identifier");
+    let result = if args.command == "discover" {
+        let file = args
+            .file
+            .as_deref()
+            .ok_or("a labelled examples input is required")?;
+        let examples = labelled_examples(&read_text(file)?)?;
+        let mut options = RegularGrammarInferenceOptions::default();
+        options.identifier = identifier.cloned().unwrap_or(options.identifier);
+        options.language = args
+            .options
+            .get("--language")
+            .cloned()
+            .unwrap_or(options.language);
+        options.edition = args
+            .options
+            .get("--edition")
+            .cloned()
+            .unwrap_or(options.edition);
+        infer_regular_grammar(&examples.positives, &examples.negatives, &options)?
+    } else {
+        let archive = archive_input(
+            args,
+            read_text,
+            read_bytes,
+            regular_grammar_refinement_archive_limits(),
+        )?;
+        if args.command == "install" {
+            let selected =
+                read_refined_regular_grammar_inference_links(&archive.network, archive.root)?;
+            return Ok(create_dynamic_meta_language(
+                &[selected.source],
+                &DynamicMetaLanguageOptions::default(),
+            )?
+            .archive()
+            .clone());
+        }
+        let file = args
+            .options
+            .get("--examples")
+            .ok_or("refine needs a labelled examples input")?;
+        let examples = labelled_examples(&read_text(file)?)?;
+        refine_regular_grammar_inference(
+            &archive.network,
+            archive.root,
+            &examples.positives,
+            &examples.negatives,
+            identifier.map(String::as_str),
+        )?
+    };
+    Ok(MetaLanguageArchive {
+        network: result.network,
+        root: result.root,
+    })
+}
+
 fn execute<T, B>(
     args: &Arguments,
     read_text: &mut T,
@@ -35,6 +149,16 @@ where
     T: FnMut(&str) -> Result<String, String>,
     B: FnMut(&str) -> Result<Vec<u8>, String>,
 {
+    let limits = MetaLanguageArchiveLimits::default();
+    if matches!(args.command.as_str(), "discover" | "refine" | "install") {
+        let archive = discovery_archive(args, read_text, read_bytes)?;
+        let output_limits = if args.command == "install" {
+            limits
+        } else {
+            regular_grammar_refinement_archive_limits()
+        };
+        return Ok(success(archive_output(&archive, args, output_limits)?));
+    }
     let options = configuration::read(args.options.get("--configuration"), read_text)?;
     let additions = args
         .sources
@@ -49,22 +173,13 @@ where
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
-    let limits = MetaLanguageArchiveLimits::default();
     let session = if args.command == "prepare" {
         if additions.is_empty() {
             return Err("prepare needs complete source grammars".to_owned());
         }
         create_dynamic_meta_language(&additions, &options)?
     } else {
-        let file = args
-            .file
-            .as_deref()
-            .ok_or("a language archive input is required")?;
-        let archive = if args.options.contains_key("--input-binary") {
-            read_meta_language_archive_binary(&read_bytes(file)?, limits)?.archive
-        } else {
-            read_meta_language_archive_text(&read_text(file)?, limits)?.archive
-        };
+        let archive = archive_input(args, read_text, read_bytes, limits)?;
         let session = DynamicMetaLanguage::new(&archive, &DynamicMetaLanguageOptions::default())?;
         if args.command == "extend" {
             if additions.is_empty() {
@@ -125,11 +240,7 @@ where
         };
         archive = saved;
     }
-    let stdout = if args.options.contains_key("--binary") {
-        meta_language_archive_to_binary(&archive, limits)?
-    } else {
-        meta_language_archive_to_text(&archive, limits)?.into_bytes()
-    };
+    let stdout = archive_output(&archive, args, limits)?;
     Ok(DynamicLanguageCommandOutput {
         exit_code,
         stdout,

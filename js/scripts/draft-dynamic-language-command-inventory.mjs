@@ -7,8 +7,8 @@ const file=new URL('../../parity/language-features.lino',import.meta.url),value=
 const id='dynamic-language-command-archives';
 const common=['parity/fixtures/dynamic-language-command.lino','parity/self-translation/dynamic-language-command-rules-native.lino'];
 const row={id,required:true,
- javascript:{status:'implemented',evidence:['js/src/dynamic-language-cli.js','js/src/dynamic-language-command-rules.js','js/src/dynamic-language-command-program.js','js/tests/dynamic-language-command.test.js',...common]},
- rust:{status:'implemented',evidence:['rust/src/dynamic_language_cli.rs','rust/src/dynamic_language_cli/arguments.rs','rust/src/dynamic_language_cli/configuration.rs','rust/src/dynamic_language_command_rules.rs','rust/src/dynamic_language_command_program.rs','rust/tests/dynamic_language_command.rs',...common]},
+ javascript:{status:'implemented',evidence:['js/src/dynamic-language-cli.js','js/src/dynamic-language-command-rules.js','js/src/dynamic-language-command-program.js','js/src/grammar-inference.js','js/src/grammar-inference-refinement.js','js/tests/dynamic-language-command.test.js',...common]},
+ rust:{status:'implemented',evidence:['rust/src/dynamic_language_cli.rs','rust/src/dynamic_language_cli/arguments.rs','rust/src/dynamic_language_cli/configuration.rs','rust/src/dynamic_language_command_rules.rs','rust/src/dynamic_language_command_program.rs','rust/src/grammar_inference.rs','rust/src/grammar_inference/refinement.rs','rust/tests/dynamic_language_command.rs',...common]},
 };
 const previous=value.features.findIndex(entry=>entry.id===id);
 if(previous<0)value.features.push(row);else value.features[previous]=row;

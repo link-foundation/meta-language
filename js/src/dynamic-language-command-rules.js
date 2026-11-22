@@ -2,14 +2,18 @@
 /** @param {string} command @returns {boolean} */
 export function acceptDynamicLanguageCommand(command) {
   return command === 'prepare' || command === 'extend' || command === 'parse'
-    || command === 'list' || command === 'grammar';
+    || command === 'list' || command === 'grammar' || command === 'discover'
+    || command === 'refine' || command === 'install';
 }
 /** A negative arity refuses an option in that operation.
  * @param {string} command @param {string} option @returns {number} */
 export function readDynamicLanguageArgumentArity(command, option) {
   if (!acceptDynamicLanguageCommand(command)) return -1;
   if (option === '--binary') return command === 'list' || command === 'grammar' ? -1 : 0;
-  if (option === '--input-binary') return command === 'prepare' ? -1 : 0;
+  if (option === '--input-binary') return command === 'prepare' || command === 'discover' ? -1 : 0;
+  if (command === 'discover') return option === '--identifier' || option === '--language' || option === '--edition' ? 1 : -1;
+  if (command === 'refine') return option === '--examples' || option === '--identifier' ? 1 : -1;
+  if (command === 'install') return -1;
   if (option === '--source') return command === 'prepare' || command === 'extend' ? 4 : 1;
   if (option === '--configuration') return command === 'prepare' || command === 'extend' ? 1 : -1;
   if (option === '--replace') return command === 'extend' ? 0 : -1;
@@ -48,5 +52,8 @@ export function readDynamicLanguageCommandUsage() {
     + '         [--step-limit <n>] [--memory-limit <n>] [--max-depth <n>] [--memo-limit <n>] [--max-repairs <n>]\n'
     + '         [--error-recovery] [--accept-recovery] [--reject-ambiguity] [--input-binary] [--binary]\n'
     + '       meta-language language list|grammar <archive> [--source <id>] [--input-binary]\n'
+    + '       meta-language language discover <examples.lino> [--identifier <id>] [--language <name>] [--edition <edition>] [--binary]\n'
+    + '       meta-language language refine <checkpoint> --examples <examples.lino> [--identifier <id>] [--input-binary] [--binary]\n'
+    + '       meta-language language install <checkpoint> [--input-binary] [--binary]\n'
     + 'Parse writes the complete extended archive; CST is the default. AST retains its original CST. Configuration is structured Links data.\n';
 }

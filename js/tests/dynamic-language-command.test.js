@@ -32,6 +32,7 @@ test('one shared command sequence retains concrete trees, recursive definitions 
   if(step.error)assert.ok(output.stderr.includes(step.error),step.name);
   if(step.rejection)assert.ok(readStructuredDataLino(output.stderr).rejection,step.name);
   if(step.save)files.set(step.save,typeof output.stdout==='string'?encoder.encode(output.stdout):output.stdout);
+  for(const path of step.remove??[])assert.ok(files.delete(path),step.name);
   if(step.inventory)assert.deepEqual(readStructuredDataLino(output.stdout).map(row=>row.identifier),step.inventory,step.name);
   if(step.grammar)assert.deepEqual(parseGrammarLinks(output.stdout).normalized(),parseGrammarLinks(host.readFile(step.grammar)).normalized(),step.name);
   if(step.archive){

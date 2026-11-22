@@ -9,6 +9,10 @@ const files=[{path:'configuration.lino',text:structuredDataToLino({records:[]})}
   {path:'second.lino',text:'(grammar (start document))\n(rule document normal (literal second))\n'},
   {path:'first.txt',text:'first'}, {path:'second.txt',text:'second'},
   {path:'recursive.txt',text:recursive.chain.source},
+  {path:'labelled.lino',text:structuredDataToLino({positives:[['a'],['b']],negatives:[['x']]})},
+  {path:'counterexamples.lino',text:structuredDataToLino({positives:[['c']],negatives:[['y']]})},
+  {path:'invalid-examples.lino',text:structuredDataToLino({positives:['a'],negatives:[]})},
+  {path:'discovered.txt',text:'c'}, {path:'rejected.txt',text:'x'},
   ...recursive.grammars.slice(0,4).map(value=>({path:value.name+'.lino',text:value.listing}))];
 const source=['--source','first-source','Example language','authored-1','first.lino'];
 const recursiveSources=recursive.grammars.slice(0,4).flatMap(value=>['--source',value.name,value.name,recursive.chain.edition,value.name+'.lino']);
@@ -32,10 +36,17 @@ const steps=[
  {name:'invalid limit spelling refuses',args:['parse','prepared.lino','--source','first-source','--input','first.txt','--step-limit','01'],exit:2,error:'a parser limit needs a nonnegative safe integer'},
  {name:'unrepresented resolver override refuses',args:['parse','prepared.lino','--source','first-source','--input','first.txt','--resolve-grammar','foreign'],exit:2,error:'unexpected or incomplete language argument --resolve-grammar'},
  {name:'unknown projection refuses',args:['parse','prepared.lino','--source','first-source','--input','first.txt','--projection','invented'],exit:2,error:'unknown syntax projection'},
+ {name:'invalid discovery corpus refuses',args:['discover','invalid-examples.lino'],exit:2,error:'labelled examples must contain positive and negative symbol sequences'},
+ {name:'discover a grammar from labelled samples',args:['discover','labelled.lino','--identifier','regular-original','--binary'],exit:0,save:'discovered.bin',remove:['labelled.lino']},
+ {name:'refine the stored binary checkpoint without training files',args:['refine','discovered.bin','--input-binary','--examples','counterexamples.lino','--identifier','regular-refined'],exit:0,save:'refined.lino',remove:['counterexamples.lino','discovered.bin']},
+ {name:'install the rechecked text checkpoint without sample files',args:['install','refined.lino','--binary'],exit:0,save:'installed.bin',archive:true,binary:true},
+ {name:'inventory the dynamically installed source',args:['list','installed.bin','--input-binary'],exit:0,inventory:['regular-refined']},
+ {name:'parse a counterexample from the installed grammar',args:['parse','installed.bin','--input-binary','--source','regular-refined','--input','discovered.txt','--identifier','refined document'],exit:0,archive:true,concrete:'refined document',text:'c'},
+ {name:'a negative observation still rejects after installation',args:['parse','installed.bin','--input-binary','--source','regular-refined','--input','rejected.txt'],exit:1,rejection:true},
 ];
 writeProjectData(new URL('../../parity/fixtures/dynamic-language-command.lino',import.meta.url),{
  schemaVersion:1,model:'dynamic language command source-free snapshots 1',files,steps,
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0; ECMAScript 2025',Rust:'>=1.90.0 <1.100.0; edition 2024',linksNotation:'>=0.22.0 <0.23.0'},
- assertions:['sameCompleteCommandSequenceBothRuntimes','actualExitCodeAndDiagnostics','sourceQualifiedInventory','archivedGrammarExport','concreteDefaultAndByteReconstruction','explicitAbstractRetainsConcrete','sourceFreeTextAndBinaryReload','recursiveGrammarResolution','extensionAndPinnedReplacementContexts','strictArgumentsAndLimits'],
+ assertions:['sameCompleteCommandSequenceBothRuntimes','actualExitCodeAndDiagnostics','sourceQualifiedInventory','archivedGrammarExport','concreteDefaultAndByteReconstruction','explicitAbstractRetainsConcrete','sourceFreeTextAndBinaryReload','recursiveGrammarResolution','extensionAndPinnedReplacementContexts','strictArgumentsAndLimits','regularDiscoveryCheckpointRefinementAndInstallation'],
  boundary:'Authored future controls only. Miniature labelled grammars exercise generic dispatch, not complete catalog-language support. No command or grammar executes during fixture authoring.',
 });

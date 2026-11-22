@@ -61,7 +61,12 @@ pub(super) fn parse(args: &[String]) -> Result<Arguments, String> {
         index += count + 1;
     }
     if command != "prepare" && result.file.is_none() {
-        return Err("a language archive input is required".to_owned());
+        let required = if command == "discover" {
+            "a labelled examples input is required"
+        } else {
+            "a language archive input is required"
+        };
+        return Err(required.to_owned());
     }
     Ok(result)
 }

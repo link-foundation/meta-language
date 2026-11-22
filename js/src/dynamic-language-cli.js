@@ -5,6 +5,8 @@ import {parseGrammarLinks, renderGrammarLinks} from './grammar-links.js';
 import {readMetaLanguageArchiveText, readMetaLanguageArchiveBinary,
   metaLanguageArchiveToText, metaLanguageArchiveToBinary} from './meta-language-archive.js';
 import {readStructuredDataLino, structuredDataToLino} from './structured-data-links.js';
+import {inferRegularGrammar} from './grammar-inference.js';
+import {readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference,regularGrammarRefinementArchiveLimits} from './grammar-inference-refinement.js';
 import {acceptDynamicLanguageCommand, readDynamicLanguageArgumentArity,
   readDynamicLanguageProjection, acceptDynamicLanguageConfigurationField,
   readDynamicLanguageResourceField, readDynamicLanguageCommandUsage} from './dynamic-language-command-rules.js';
@@ -27,8 +29,41 @@ function argumentsOf(args) {
       result.options.set(option,values[0]??true);
     }
   }
-  if(command!=='prepare' && result.file===undefined) throw new TypeError('a language archive input is required');
+  if(command!=='prepare' && result.file===undefined) throw new TypeError(command==='discover'?'a labelled examples input is required':'a language archive input is required');
   return result;
+}
+
+function labelledExamples(path,readFile) {
+  if(path===undefined)throw new TypeError('refine needs a labelled examples input');
+  const examples=readStructuredDataLino(readFile(path));
+  const sequences=value=>Array.isArray(value)&&value.every(sequence=>Array.isArray(sequence)&&sequence.every(symbol=>typeof symbol==='string'));
+  if(!examples||typeof examples!=='object'||Object.keys(examples).length!==2||!sequences(examples.positives)||!sequences(examples.negatives)) {
+    throw new TypeError('labelled examples must contain positive and negative symbol sequences');
+  }
+  return examples;
+}
+
+function archiveInput(file,options,readFile,readBytes,limits) {
+  return options.has('--input-binary')?readMetaLanguageArchiveBinary(readBytes(file),limits):readMetaLanguageArchiveText(readFile(file),limits);
+}
+
+function archiveOutput(archive,options,limits) {
+  return options.has('--binary')?metaLanguageArchiveToBinary(archive,limits):metaLanguageArchiveToText(archive,limits);
+}
+
+function discoveryArchive(command,file,options,readFile,readBytes) {
+  const identifier=options.get('--identifier');
+  if(command==='discover') {
+    const {positives,negatives}=labelledExamples(file,readFile);
+    return inferRegularGrammar(positives,negatives,{identifier,language:options.get('--language'),edition:options.get('--edition')});
+  }
+  const {network,root}=archiveInput(file,options,readFile,readBytes,regularGrammarRefinementArchiveLimits);
+  if(command==='refine') {
+    const {positives,negatives}=labelledExamples(options.get('--examples'),readFile);
+    return refineRegularGrammarInference(network,root,positives,negatives,{identifier});
+  }
+  const selected=readRefinedRegularGrammarInferenceLinks(network,root);
+  return createDynamicMetaLanguage([selected.source]).archive;
 }
 function configuration(path,readFile) {
   if(path===undefined)return {};
@@ -63,6 +98,10 @@ export function runDynamicLanguageCommand(args,{readFile,readBytes}) {
   if(['help','--help','-h'].includes(args[0]))return {exitCode:0,stdout:usage,stderr:''};
   try {
     const {command,sources,options,file}=argumentsOf(args);
+    if(command==='discover'||command==='refine'||command==='install') {
+      const archive=discoveryArchive(command,file,options,readFile,readBytes);
+      return {exitCode:0,stdout:archiveOutput(archive,options,command==='install'?undefined:regularGrammarRefinementArchiveLimits),stderr:''};
+    }
     const config=configuration(options.get('--configuration'),readFile);
     let session;
     const additions=sources.map(([id,language,edition,path])=>({id,language,edition,grammar:parseGrammarLinks(readFile(path))}));
@@ -70,7 +109,7 @@ export function runDynamicLanguageCommand(args,{readFile,readBytes}) {
       if(!additions.length)throw new TypeError('prepare needs complete source grammars');
       session=createDynamicMetaLanguage(additions,config);
     } else {
-      const archive=options.has('--input-binary')?readMetaLanguageArchiveBinary(readBytes(file)):readMetaLanguageArchiveText(readFile(file));
+      const archive=archiveInput(file,options,readFile,readBytes);
       session=new DynamicMetaLanguage(archive);
       if(command==='extend') {
         if(!additions.length)throw new TypeError('extend needs complete source grammars');
@@ -96,6 +135,6 @@ export function runDynamicLanguageCommand(args,{readFile,readBytes}) {
       archive=parsed.archive;
       if(!parsed.ok){exitCode=1;stderr=structuredDataToLino({rejection:parsed.rejection??null});}
     }
-    return {exitCode,stdout:options.has('--binary')?metaLanguageArchiveToBinary(archive):metaLanguageArchiveToText(archive),stderr};
+    return {exitCode,stdout:archiveOutput(archive,options),stderr};
   } catch(error) {return {exitCode:2,stdout:'',stderr:'error: '+error.message+'\n'+usage};}
 }

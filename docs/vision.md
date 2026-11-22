@@ -3603,6 +3603,16 @@ explicit limits and actual transition/final frequencies. Without a separate
 lexer definition, token texts must be nonempty, well-formed and prefix-free;
 Unicode character examples satisfy that condition. Missing transitions reject.
 The resulting right-linear grammar uses the normal full CST parser path.
+The `meta-language language discover` command feeds structured Links examples
+into this same regular learner. `language refine` reopens its complete text or
+binary checkpoint and appends labelled counterexamples. `language install`
+rechecks the selected checkpoint and prepares its grammar through the dynamic
+language library. The resulting language archive uses the existing list,
+extension and parsing commands, and the inference checkpoint retains the
+training journal for further refinement. The command controls delete the input
+example files after use and cover byte reconstruction and rejection after
+installation. Their runtime verification and the broader scanner, attributed
+semantics and link-cli requirements remain outstanding.
 
 The complete typed algorithm, declared inputs, selected parameters, actual model,
 recursive candidate grammar and common concept definitions serialize together

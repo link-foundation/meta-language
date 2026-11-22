@@ -17,6 +17,7 @@ use crate::{
 
 const ALGORITHM: &str = "labelled regular grammar discovery 1";
 mod refinement;
+pub(crate) use refinement::limits as regular_grammar_refinement_archive_limits;
 pub use refinement::{
     read_refined_regular_grammar_inference_links, refine_regular_grammar_inference,
 };
