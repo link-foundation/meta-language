@@ -58,9 +58,11 @@ function readDatatypeConstructivePlan(kinds,ends,edges,references,roots,root,mut
   work+=count*4;if(work>1048576)return ['error','callable data graph reasoning exceeds its finite source profile'];
   const pending=[readRequiredNumberFact(roots,declaration)],domains=[false],crossings=[false],seen=[];for(let at=0;at<count*4;at+=1)seen.push(false);
   while(pending.length>0){
-   if(++work>1048576)return ['error','callable data graph reasoning exceeds its finite source profile'];
+   work+=1;
+   if(work>1048576)return ['error','callable data graph reasoning exceeds its finite source profile'];
    const at=readRequiredNumberFact(pending,pending.length-1),domain=readRequiredBooleanFact(domains,domains.length-1),crossed=readRequiredBooleanFact(crossings,crossings.length-1),key=at*4+(domain?2:0)+(crossed?1:0);pending.pop();domains.pop();crossings.pop();
-   if(readRequiredBooleanFact(seen,key))continue;seen[key]=true;
+   if(readRequiredBooleanFact(seen,key))continue;
+   seen.splice(key,1,true);
    const reference=readRequiredNumberFact(references,at);
    if(reference>=0){
     if(reference===declaration){if(domain)return ['error','recursive callable data in a function domain lacks strict positivity'];if(crossed&&!mutual)return ['error','mutually recursive callable data needs a mutual-inductive backend profile'];recursive=true;continue;}
@@ -74,14 +76,21 @@ function readDatatypeConstructivePlan(kinds,ends,edges,references,roots,root,mut
  while(changed){
   changed=false;rank+=1;const values=[];
   for(let at=0;at<count;at+=1){
-   if(++work>1048576)return ['error','callable data graph reasoning exceeds its finite source profile'];
+   work+=1;
+   if(work>1048576)return ['error','callable data graph reasoning exceeds its finite source profile'];
    const start=at===0?0:readRequiredNumberFact(ends,at-1),children=[];for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)children.push(readRequiredBooleanFact(values,readRequiredNumberFact(edges,edge)));
    const reference=readRequiredNumberFact(references,at),kind=readRequiredTextFact(kinds,at);
    values.push(reference>=0?readRequiredBooleanFact(known,reference):kind==='data'?children.some(value=>value):kind==='function'?children.length>0&&readRequiredBooleanFact(children,children.length-1):['array','option','set','map'].includes(kind)?true:acceptCallableDataConstructiveNode(kind,children));
   }
   for(let declaration=0;declaration<roots.length;declaration+=1)if(!readRequiredBooleanFact(known,declaration)){
    const at=readRequiredNumberFact(roots,declaration),start=at===0?0:readRequiredNumberFact(ends,at-1);
-   for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)if(readRequiredBooleanFact(values,readRequiredNumberFact(edges,edge))){known[declaration]=true;witnesses[declaration]=edge-start;ranks[declaration]=rank;changed=true;break;}
+   for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)if(readRequiredBooleanFact(values,readRequiredNumberFact(edges,edge))){
+    known.splice(declaration,1,true);
+    witnesses.splice(declaration,1,edge-start);
+    ranks.splice(declaration,1,rank);
+    changed=true;
+    break;
+   }
   }
  }
  if(!known.every(value=>value))return ['error','callable data has no finite constructive witness for every referenced datatype'];

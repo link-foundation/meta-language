@@ -58,7 +58,7 @@ export const rustBaselineNativePolicyControlGroups=[
  {sourcePath:'js/src/translation/formal-datatype-alias-rules.js',moduleName:'authored_formal_datatype_alias_controls',testName:'all_literal_formal_datatype_alias_controls',fixtureSelections:[
   selection('formal-datatype-aliases','formalDatatypeAliasDecisions'),
  ]},
- {sourcePath:'js/src/translation/callable-data-derivation-rules.js',moduleName:'authored_formal_mutual_datatype_controls',testName:'all_literal_formal_mutual_datatype_controls',fixtureSelections:[
+ {sourcePath:'js/src/translation/callable-data-derivation-rules.js',moduleName:'authored_formal_mutual_datatype_controls',testName:'all_literal_formal_mutual_datatype_controls',referenceSemantics:true,fixtureSelections:[
   selection('formal-mutual-datatypes','formalMutualDatatypeDecisions'),
  ]},
  {sourcePath:'js/src/translation/rust-owned-record-state-rules.js',moduleName:'authored_owned_record_state_controls',testName:'all_literal_owned_record_state_controls',fixtureSelections:[

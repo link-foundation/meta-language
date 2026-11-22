@@ -34,8 +34,19 @@ fn callable_data_actual_originals_emit_without_identity_debug_or_equality_instan
 }
 #[test]
 fn recursive_callable_default_is_a_real_finite_constructor_witness(){
-    let kinds=["fixed","fixed","function","reference","constructor","constructor","data","reference"].map(str::to_owned);
-    assert_eq!(rules::read_callable_data_recursive_plan(&kinds,&[0.0,0.0,2.0,2.0,4.0,4.0,6.0,6.0],&[0.0,1.0,2.0,3.0,4.0,5.0],&[-1.0,-1.0,-1.0,0.0,-1.0,-1.0,-1.0,0.0],&[6.0],7.0),["profile","true","true","true","1"].map(str::to_owned));
+    fn shared<T, const LENGTH: usize>(values: [T; LENGTH]) -> std::rc::Rc<std::cell::RefCell<Vec<T>>> {
+        std::rc::Rc::new(std::cell::RefCell::new(Vec::from(values)))
+    }
+    let kinds = ["fixed", "fixed", "function", "reference", "constructor", "constructor", "data", "reference"];
+    let plan = rules::read_callable_data_recursive_plan(
+        shared(kinds.map(str::to_owned)),
+        shared([0.0, 0.0, 2.0, 2.0, 4.0, 4.0, 6.0, 6.0]),
+        shared([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
+        shared([-1.0, -1.0, -1.0, 0.0, -1.0, -1.0, -1.0, 0.0]),
+        shared([6.0]),
+        7.0,
+    );
+    assert_eq!(plan.borrow().as_slice(), ["profile", "true", "true", "true", "1"].map(str::to_owned).as_slice());
     assert_eq!(rules::render_callable_data_lean_default("Chain","Chain.End",0.0),"instance : Inhabited Chain := ⟨Chain.End⟩");
     assert!(!rules::read_callable_data_profile_error(true,false,true).is_empty());
 }

@@ -29,6 +29,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "boolean-constructor-match-program.lino" => Some(include_str!(
             "../data/boolean-constructor-match-program.lino"
         )),
+        "callable-data-derivation-program.lino" => Some(include_str!(
+            "../data/callable-data-derivation-program.lino"
+        )),
         "callable-source-program.lino" => {
             Some(include_str!("../data/callable-source-program.lino"))
         }
