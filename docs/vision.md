@@ -1842,6 +1842,14 @@ Every catalog language parses by default, through its alias and extension
 dispatch and its embedded-language paths. Merely listing a language, keeping its
 text or requiring caller registration is not default support.
 
+The standalone parser availability query reports every canonical catalog name
+in order, with missing grammar asset paths for its default parser. JavaScript
+checks the installed files and authenticated download cache locations without
+loading a grammar. It checks both Markdown components. The parser verifies
+asset digests on load. Rust compiles its default parsers into the runtime and
+has no missing asset paths. A host document may separately need parsers for
+languages in its actual embedded regions.
+
 Complete JavaScript, Markdown, Rust and TypeScript grammars are the initial
 delivery priority, followed by the other languages used by these projects.
 They produce full concrete syntax by default and are exercised on the projects'

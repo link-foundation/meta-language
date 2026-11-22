@@ -2,7 +2,7 @@ import { Parser as WebTreeSitterParser } from 'web-tree-sitter';
 import './tree-sitter-runtime.js';
 
 import { isToken } from './builtin-grammar.js';
-import { canonicalLanguageName, languageEntry } from './language-catalog.js';
+import { canonicalLanguageName, languageEntry, LANGUAGE_CATALOG } from './language-catalog.js';
 import { parseLinoCst } from './lino-grammar.js';
 import { parsePdfCst } from './pdf-grammar.js';
 import { parseNaturalLanguageCst, parsePlainTextCst } from './text-grammar.js';
@@ -11,7 +11,7 @@ import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 import { loadGrammarLanguage } from './grammar-tiering.js';
 import { isNativeGrammar, nativeAdapter, parseNative } from './native-grammar-parser.js';
 import { sourceBoundaries } from './source-boundaries.js';
-import { readCompressedGrammarAsset } from './grammar-asset-path.js';
+import { hasCompressedGrammarAsset, readCompressedGrammarAsset } from './grammar-asset-path.js';
 import { readRuntimeProjectData } from './project-data-loader.js';
 
 const encoder = new TextEncoder();
@@ -36,6 +36,10 @@ export const GRAMMAR_LOCK = Object.freeze(
 // grammar-tiering.js for how grammar code is compiled.
 const GRAMMARS = new Map();
 
+function grammarAssetPath(id) {
+  return `js/src/vendor/grammars/${id}.wasm.gz`;
+}
+
 // The oracle grammars of the languages a native grammar parses are development
 // files the package does not ship, so their ids load nothing.
 function grammarLanguage(id) {
@@ -43,7 +47,7 @@ function grammarLanguage(id) {
   let language = GRAMMARS.get(id);
   if (!language) {
     const binary = readCompressedGrammarAsset(
-      `js/src/vendor/grammars/${id}.wasm.gz`,
+      grammarAssetPath(id),
       new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY),
       GRAMMAR_LOCK.grammars[id].wasmSha256,
     );
@@ -51,6 +55,22 @@ function grammarLanguage(id) {
     GRAMMARS.set(id, language);
   }
   return language;
+}
+
+/** Availability of each catalog language's standalone default parser. */
+export function languageParserAvailability() {
+  return LANGUAGE_CATALOG.languages.map(({ name, grammars }) => {
+    const missingGrammarAssets = [];
+    for (const { id } of grammars) {
+      const pin = Object.hasOwn(GRAMMAR_LOCK.grammars, id) && GRAMMAR_LOCK.grammars[id];
+      if (!pin || pin.oracle || GRAMMARS.has(id)) continue;
+      const path = grammarAssetPath(id);
+      if (!hasCompressedGrammarAsset(path, new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY))) {
+        missingGrammarAssets.push(path);
+      }
+    }
+    return { language: name, available: missingGrammarAssets.length === 0, missingGrammarAssets };
+  });
 }
 
 /** Ids of the grammars this process has loaded so far, in load order. */

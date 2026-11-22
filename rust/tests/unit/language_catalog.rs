@@ -57,6 +57,22 @@ fn rust_ships_the_language_catalog_the_javascript_package_ships() {
 }
 
 #[test]
+fn standalone_default_parsers_are_available_in_catalog_order() {
+    let availability = LinkNetwork::language_parser_availability();
+    let names: Vec<_> = availability.iter().map(|entry| entry.language).collect();
+    let catalog_names: Vec<_> = language_catalog()
+        .iter()
+        .map(|entry| entry.name.as_str())
+        .collect();
+    assert_eq!(names, catalog_names);
+    assert!(
+        availability
+            .iter()
+            .all(|entry| entry.available && entry.missing_grammar_assets.is_empty())
+    );
+}
+
+#[test]
 fn rust_catalog_retains_source_provenance_embedding_and_edition_metadata() {
     let catalog: Value = super::project_data::read_project_data(&repository_file(
         "js/src/data/language-catalog.json",

@@ -1,5 +1,6 @@
 
 import {
+  languageParserAvailability,
   parseEmbeddedProgrammingLanguage,
   parseProgrammingLanguage,
 } from './programming-language-parser.js';
@@ -101,6 +102,11 @@ export class LinkNetwork {
 
   static parse(text, language, configuration = ParseConfiguration.default()) {
     return LinkNetwork._parseWithLinks(text, language, configuration).network;
+  }
+
+  /** Lists the availability of standalone default parsers in catalog order. */
+  static languageParserAvailability() {
+    return languageParserAvailability();
   }
 
   /**

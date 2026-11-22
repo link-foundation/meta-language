@@ -1116,9 +1116,16 @@ export function constructProgramFromFragments(
 /** A reference is its name; a link is its name or null followed by its values. */
 export type LinksNotationReading = string | [string | null, ...LinksNotationReading[]];
 
+export interface LanguageParserAvailability {
+  language: string;
+  available: boolean;
+  missingGrammarAssets: string[];
+}
+
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
+  static languageParserAvailability(): LanguageParserAvailability[];
   static parseLinksNotation(
     text: string,
     configuration?: ParseConfiguration,

@@ -2,17 +2,25 @@
 // parsing. Source checkouts can read the same pinned artifacts from the ignored
 // download cache without copying external grammars into tracked runtime data.
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 
-export function readCompressedGrammarAsset(logicalPath, packagedFile, expectedSha256) {
+function grammarAssetCandidates(logicalPath, packagedFile) {
   const configured = process.env.META_LANGUAGE_EXTERNAL_GRAMMAR_CACHE;
   if (configured !== undefined && !isAbsolute(configured)) throw new Error('META_LANGUAGE_EXTERNAL_GRAMMAR_CACHE must be absolute');
   const cache = configured ?? fileURLToPath(new URL('../../.external-grammars/', import.meta.url));
-  const candidates = [packagedFile, resolve(cache, logicalPath)];
-  for (const file of candidates) {
+  return [packagedFile, resolve(cache, logicalPath)];
+}
+
+export function hasCompressedGrammarAsset(logicalPath, packagedFile) {
+  return grammarAssetCandidates(logicalPath, packagedFile)
+    .some((file) => statSync(file, { throwIfNoEntry: false })?.isFile());
+}
+
+export function readCompressedGrammarAsset(logicalPath, packagedFile, expectedSha256) {
+  for (const file of grammarAssetCandidates(logicalPath, packagedFile)) {
     let stored;
     try { stored = readFileSync(file); }
     catch (error) {

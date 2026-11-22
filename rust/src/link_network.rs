@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
-use crate::language_catalog::{GrammarProvenance, grammar_provenance};
+use crate::language_catalog::{GrammarProvenance, grammar_provenance, language_catalog};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
@@ -20,6 +20,18 @@ use crate::substitution::{
 
 mod trivia;
 mod verification;
+
+/// Availability of a registered language's standalone default parser.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LanguageParserAvailability {
+    /// Canonical catalog name.
+    pub language: &'static str,
+    /// Whether the default parser is available in the runtime.
+    pub available: bool,
+    /// Unavailable runtime asset paths, in grammar order.
+    pub missing_grammar_assets: Vec<String>,
+}
+
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LinkId(pub(crate) u64);
@@ -307,6 +319,19 @@ impl LinkNetwork {
             output.push('\n');
         }
         output
+    }
+
+    /// Lists standalone default parser availability in catalog order.
+    #[must_use]
+    pub fn language_parser_availability() -> Vec<LanguageParserAvailability> {
+        language_catalog()
+            .iter()
+            .map(|entry| LanguageParserAvailability {
+                language: &entry.name,
+                available: true,
+                missing_grammar_assets: Vec::new(),
+            })
+            .collect()
     }
 
     /// Parses plain source text into a lossless token network.

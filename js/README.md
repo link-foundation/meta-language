@@ -2,7 +2,7 @@
 
 [![JavaScript](https://github.com/link-foundation/meta-language/actions/workflows/js.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/js.yml)
 [![npm](https://img.shields.io/npm/v/meta-language?label=npm&style=flat)](https://www.npmjs.com/package/meta-language)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-blue.svg)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D22-blue.svg)](https://nodejs.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://unlicense.org/)
 
 JavaScript implementation of the `meta-language` links-network core. It is the
@@ -41,6 +41,27 @@ full delivery checklist and remaining fallback paths are tracked in
 [`../docs/issue-195-requirement-ledger.md`](../docs/issue-195-requirement-ledger.md).
 
 ## Usage
+
+The JavaScript package requires Node.js 22 or later. From a Git checkout, run
+these commands to install dependencies and provision the pinned WebAssembly
+grammars used by Markdown, YAML, Kotlin and other fallback parsers.
+
+```bash
+cd js
+npm ci
+npm run grammars:provision
+```
+
+The provisioning command verifies downloaded files against their recorded
+checksums and keeps them in the ignored `.external-grammars/` directory at the
+repository root. It needs no credentials. Release packaging stages those assets
+in the npm tarball for offline parsing after installation.
+
+Use `LinkNetwork.languageParserAvailability()` to check the current install.
+Each entry has `language`, `available` and `missingGrammarAssets`. For example,
+`LinkNetwork.languageParserAvailability().filter(({ available }) => !available)`
+lists standalone parsers that need additional assets. A document with embedded
+languages may also need the corresponding child parsers.
 
 ```js
 import {
