@@ -31,12 +31,13 @@ export const OVERLAY_PROVIDER_APPEND_REVIEW=Object.freeze({
 export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-reference-provider-review.lino',import.meta.url)));
 export const OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-optional-domain-provider-review.lino',import.meta.url)));
 export const OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-shared-array-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_ORDERED_SOURCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-ordered-source-provider-review.lino',import.meta.url)));
 export function readReviewedOverlayProviderReview(previous){
-  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW].filter(row=>row.previous===previous);
+  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW,OVERLAY_PROVIDER_ORDERED_SOURCE_REVIEW].filter(row=>row.previous===previous);
   assert.equal(reviews.length,1,'a source epoch requires exactly one independently reviewed predecessor');
   return reviews[0];
 }
-const packetSha256='4e701b0f6bbb1ab6c4486bf35715174235c327256110e8e959d7dde8562db215';
+const packetSha256='3261c7d665db701bf8cf5f945d9f7a3e7a389b50981bf90390b41f8050ef2210';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
