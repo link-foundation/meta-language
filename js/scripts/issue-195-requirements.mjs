@@ -141,6 +141,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt',
   checkpointContinuationIssue:
     'https://github.com/link-foundation/meta-language/issues/227',
+  continuePlannedDelivery:
+    'https://github.com/link-foundation/meta-language/pull/228#issuecomment-7068240410',
 });
 
 // The rows the audit of c39470d0 lists as open work.

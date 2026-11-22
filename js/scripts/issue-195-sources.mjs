@@ -371,6 +371,19 @@ export function refreshRegister(register, { issue, issues = [], comments }) {
       role:'Complete continuation of all original ledger obligations, CI repairs and preserved drafts; the priority is complete JavaScript and Rust parsing, emission and bidirectional own-codebase translation.',
       ledgerCoverage:['I195-'],...revisionOf(continuation)});
   }
+  const continuationReminder = comments.find(source => source.id === 7068240410);
+  if (continuationReminder && !requirementSources.some(source => source.id === 7068240410)) {
+    requirementSources.push({
+      id: 7068240410,
+      key: 'continuePlannedDelivery',
+      kind: 'comment',
+      url: 'https://github.com/link-foundation/meta-language/pull/228#issuecomment-7068240410',
+      title: 'Continue the planned delivery',
+      role: 'Reaffirms the complete inherited delivery scope in issue 227 without changing any requirement.',
+      ledgerCoverage: ['I195-'],
+      ...revisionOf(continuationReminder),
+    });
+  }
   return {
     ...register,
     requirementSources,
