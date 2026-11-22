@@ -1033,6 +1033,7 @@ name = "meta-language"
 version = "1.0.0"
 dependencies = [
  "agda-layout-source-oracle",
+ "base64",
  "clap",
  "cmake-source-oracle",
  "crc32fast",

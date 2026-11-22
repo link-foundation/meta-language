@@ -21,6 +21,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
   grammarSearch: 'https://github.com/link-foundation/meta-language/issues/235',
   naturalLanguageValues: 'https://github.com/link-foundation/meta-language/issues/242',
+  openVocabularyMorphology: 'https://github.com/link-foundation/meta-language/issues/236',
   normalizedTextLocation: 'https://github.com/link-foundation/meta-language/issues/243',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
@@ -560,6 +561,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/grammar/import/pest.rs', 'rust/tests/unit/grammar_import_pest.rs'],
       },
     })),
+    {
+      id: 'I195-I236-OPEN-VOCABULARY-MORPHOLOGY',
+      source: ISSUE_195_SOURCES.openVocabularyMorphology,
+      language: 'Natural-language word morphology with an OpenCorpora Russian vocabulary',
+      version: 'Universal Dependencies v2 tags, OpenCorpora source revision 417150 and corpus revision 4580142',
+      construct: 'scored morphology readings, inverse inflection and cardinal agreement',
+      expectedBehavior: 'Each segmented word has lemma, part of speech and feature links at its UTF-8 span. Scored alternatives preserve ambiguous readings. Suffix prediction covers unseen words. Inflection selects vocabulary forms and cardinal agreement uses the requested number.',
+      fixture: 'parity/fixtures/natural-language-morphology.lino',
+      selector: 'the reported Russian sentence, dictionary ambiguity, an invented instrumental plural, and Russian and English inflections and number agreement',
+      assertions: ['everyWordHasLinkedReading', 'ambiguousReadingsAreScored', 'unseenWordsHaveSuffixReadings', 'inflectionAndNumberAgreement'],
+      implementationEntryPoints: {
+        javascript: ['js/src/morphology.js', 'js/tests/natural-language-morphology.test.js'],
+        rust: ['rust/src/link_network/morphology/mod.rs', 'rust/tests/unit/natural_language_morphology.rs'],
+      },
+    },
     {
       id: 'I195-I242-NATURAL-LANGUAGE-VALUES',
       source: ISSUE_195_SOURCES.naturalLanguageValues,

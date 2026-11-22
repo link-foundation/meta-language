@@ -36,6 +36,7 @@ export * from './language-profile.js';
 export * from './language-support.js';
 export * from './network.js';
 export { naturalLanguageValues } from './natural-language-values.js';
+export { analyzeMorphology, inflect, agreeWithNumber } from './morphology.js';
 export * from './parser-registry.js';
 export { grammarNames } from './programming-language-parser.js';
 export * from './program-representation.js';

@@ -1,0 +1,14 @@
+OpenCorpora contributors, Russian morphological dictionary and corpus.
+https://opencorpora.org/
+
+The Russian vocabulary in russian.lino is a selection of the OpenCorpora
+dictionary, source revision 417150, and tag probabilities from corpus
+revision 4580142. The compiled snapshot is pymorphy3-dicts-ru
+2.4.417150.4580142. The Links vocabulary selects complete inflection paradigms
+and keeps the tags and probabilities of attested readings of each selected
+spelling. The derived vocabulary and the optional upstream data are licensed
+under Creative Commons Attribution-ShareAlike 3.0 Unported.
+https://creativecommons.org/licenses/by-sa/3.0/
+
+Upstream distribution and attribution notice:
+https://pypi.org/project/pymorphy3-dicts-ru/2.4.417150.4580142/

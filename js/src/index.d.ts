@@ -1893,6 +1893,17 @@ export interface NaturalLanguageValue {
 }
 export function naturalLanguageValues(text: string, language: string): NaturalLanguageValue[];
 
+export interface MorphologyReading {
+  readonly lemma: string;
+  readonly upos: string;
+  readonly features: readonly string[];
+  readonly score: number;
+  readonly source: 'dictionary' | 'suffix' | 'shape' | 'identity';
+}
+export function analyzeMorphology(word: string, language?: string): MorphologyReading[];
+export function inflect(lemma: string, features: Readonly<Record<string, string>>, language?: string): string | undefined;
+export function agreeWithNumber(lemma: string, quantity: number, language?: string): string | undefined;
+
 export type TextNormalization = 'nfkc' | 'quotes' | 'dashes' | 'yo' | 'case' | 'softHyphen' | 'whitespace';
 
 export interface TextLocationRange {

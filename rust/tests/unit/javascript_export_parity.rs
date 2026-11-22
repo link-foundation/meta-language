@@ -230,6 +230,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("accessModeIsMutable", "AccessMode::is_mutable", "method"),
     ("accessModeIsReadOnly", "AccessMode::is_read_only", "method"),
     ("accessModeLabel", "AccessMode::label", "method"),
+    (
+        "agreeWithNumber",
+        "link_network::morphology::agree_with_number",
+        "function",
+    ),
+    (
+        "analyzeMorphology",
+        "link_network::morphology::analyze_morphology",
+        "function",
+    ),
     ("analyzeProgram", "analyze_program", "function"),
     ("analyze_program", "analyze_program", "function"),
     ("asReadOnly", "LinkNetwork::as_read_only", "method"),
@@ -504,6 +514,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "import_tree_sitter_json",
         "function",
     ),
+    ("inflect", "link_network::morphology::inflect", "function"),
     (
         "insertConceptRecord",
         "LinkNetwork::insert_concept_record",

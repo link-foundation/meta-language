@@ -1571,6 +1571,22 @@ the same global space as programming languages, and reuse requires the same
 checked meaning correspondence. Tests distinguish native representation and
 source preservation from any richer linguistic capability they verify.
 
+Each segmented word has a set of scored morphology readings with the source
+token, lemma, Universal Dependencies part of speech, and feature assignments.
+The readings retain the token's original UTF-8 span. An empty feature bundle
+uses the CoNLL-U `_` marker. Shared Links data records the language-specific
+tag mapping, lexical forms, suffix predictions, and agreement exceptions.
+Inflection selects an attested form that satisfies the requested features.
+Cardinal agreement applies the language's number and case rules before
+inflection. The Russian profile loads a compact OpenCorpora selection on first
+use. A caller can explicitly install the complete pinned OpenCorpora snapshot
+with `npm run morphology:provision -- DIRECTORY` from `js/` and set
+`META_LANGUAGE_MORPHOLOGY_DATA=DIRECTORY` in either runtime. That snapshot adds
+the complete dictionary, corpus-derived ambiguity scores, and suffix
+prediction. Profiles for the other catalog languages apply their shared
+lexical and suffix data and return an unspecified part of speech when the
+available evidence cannot identify one.
+
 Value annotations use grammar search over the source and keep each successful
 interpretation as a semantic link at its original UTF-8 extent. The shared
 Links grammars recognize the shape of numeric expressions, currencies,

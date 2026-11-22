@@ -24,6 +24,7 @@ use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
 };
 
+pub mod morphology;
 pub mod natural_language_values;
 pub mod text_location;
 mod trivia;

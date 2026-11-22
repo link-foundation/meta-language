@@ -90,6 +90,30 @@ function zipChecksum(bytes) {
   return (remainder ^ 0xffffffff) >>> 0;
 }
 
+function decodeZipEntry(bytes, { start, end, method, flags, uncompressed, checksum }) {
+  if ((flags & 0x2041) || (method !== 0 && method !== 8)) throw new Error('unsupported OPC part compression or encryption');
+  let decoded = bytes.subarray(start, end);
+  if (method === 8) {
+    try { decoded = inflateRawSync(decoded, { maxOutputLength: uncompressed + 1 }); }
+    catch { throw new Error('invalid or oversized deflated OPC part'); }
+  }
+  if (decoded.length !== uncompressed || zipChecksum(decoded) !== checksum) throw new Error('OPC part size or checksum mismatch');
+  return decoded;
+}
+
+export function readNamedZipEntries(bytes, names) {
+  const directory = zipDirectory(bytes);
+  if (directory.error) throw new Error(directory.error);
+  const result = new Map();
+  for (const entry of directory.entries) {
+    if (!names.has(entry.name)) continue;
+    if (entry.uncompressed !== names.get(entry.name)) throw new Error(`unexpected ZIP size for ${entry.name}`);
+    result.set(entry.name, decodeZipEntry(bytes, entry));
+  }
+  if (result.size !== names.size) throw new Error('missing requested ZIP entries');
+  return result;
+}
+
 export function readWordprocessingPackage(bytes) {
   const directory = zipDirectory(bytes);
   if (directory.error) return { parts: [], errors: [directory] };
@@ -99,18 +123,11 @@ export function readWordprocessingPackage(bytes) {
   for (const entry of directory.entries) {
     if (!/^word\/(?:document|header\d*|footer\d*|footnotes|endnotes)\.xml$/u.test(entry.name)) continue;
     try {
-      const { name, start, end, method, flags, uncompressed, checksum } = entry;
-      if ((flags & 0x2041) || (method !== 0 && method !== 8)) throw new Error('unsupported OPC part compression or encryption');
+      const { name, start, end, method, uncompressed } = entry;
       if (!documentStreamFitsBudget(end - start, uncompressed, textBytes)) throw new Error('OPC part exceeds the decoded size limit');
       // Charge the announced output before decoding so corrupt parts also use the budget.
       textBytes += uncompressed;
-      const data = bytes.subarray(start, end);
-      let decoded = data;
-      if (method === 8) {
-        try { decoded = inflateRawSync(data, { maxOutputLength: uncompressed + 1 }); }
-        catch { throw new Error('invalid or oversized deflated OPC part'); }
-      }
-      if (decoded.length !== uncompressed || zipChecksum(decoded) !== checksum) throw new Error('OPC part size or checksum mismatch');
+      const decoded = decodeZipEntry(bytes, entry);
       let text;
       try { text = packageText.decode(decoded); }
       catch { throw new Error('invalid UTF-8 OPC part'); }
