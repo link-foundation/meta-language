@@ -133,9 +133,14 @@ now supply the finite observations for native push, pop and replace. Shared
 controls exercise nested pushes, the same pop restoring different parents,
 conflicting effects and source-free archive replay with counterexamples. The
 portable planner and its Rust counterpart are generated, and both controls
-still require execution. Generalization beyond observed characters, attributed
-inference, installed-language semantic translation and executed held-out
-benchmark comparisons remain open.
+still require execution. A second shared learner derives recursive productions
+from labelled token examples and disjoint delimiter pairs. Its draft library
+controls cover nested inputs outside the training examples, source bytes,
+crossed delimiters, contradictory merges and text and binary checkpoint replay.
+The shared planner, native counterpart and archive integration are drafted.
+Structural discovery through the CLI and its refinement journal, generalization
+beyond observed characters, attributed inference, installed-language semantic
+translation and executed held-out benchmark comparisons remain open.
 
 The pinned upstream link-cli importer reads one two-endpoint row per line.
 Its native binary store archive also stores doublets, with exact addresses and

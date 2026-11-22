@@ -3675,6 +3675,18 @@ The shared controls combine the generated scanner with native syntax rules and
 check text round trips, token kinds, exact bytes and rejected inputs. The
 source draft has generated the native implementation and typed program.
 
+The structural learner accepts labelled token sequences and an explicit list
+of disjoint delimiter pairs. It shares one automatically translated algorithm
+between JavaScript and Rust. Each closed group contributes an ordered
+production whose nested groups refer to their own productions. The root
+contributes the remaining top-level sequence. The same group can thus nest
+inside itself or another group when those production paths were observed.
+The learner refuses a candidate if its grouped productions would admit a
+supplied negative. Tokenization requires nonempty, prefix-free spellings.
+The checkpoint stores the labelled inputs, bounded parameters, inferred
+productions, typed learner and executable grammar with concept provenance.
+Reload recomputes the productions and compares each archived entry.
+
 The complete typed algorithm, declared inputs, selected parameters, actual model,
 recursive candidate grammar and common concept definitions serialize together
 in a complete-network archive. Reload checks the exact versioned algorithm

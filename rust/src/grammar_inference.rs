@@ -25,9 +25,15 @@ use crate::{
 
 const ALGORITHM: &str = "labelled regular grammar discovery 1";
 mod refinement;
+mod structural;
 pub(crate) use refinement::limits as regular_grammar_refinement_archive_limits;
 pub use refinement::{
     read_refined_regular_grammar_inference_links, refine_regular_grammar_inference,
+};
+pub use structural::{
+    StructuralGrammarInference, StructuralGrammarInferenceLimits,
+    StructuralGrammarInferenceOptions, infer_structural_grammar,
+    read_structural_grammar_inference_links,
 };
 
 /// Explicit deterministic learner and resource parameters, shared with JavaScript.

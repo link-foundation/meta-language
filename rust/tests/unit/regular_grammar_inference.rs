@@ -1,12 +1,14 @@
 //! Future CI controls; not executed during the complete source draft phase.
 use super::issue_195_observations::{Observation, record};
 use meta_language::{
-    BinaryLinksOptions, FeatureParseOptions, GrammarScannerModeStackObservation,
-    GrammarScannerObservation, LinkNetwork, RegularGrammarInferenceOptions,
-    accept_inferred_grammar_symbols, compile_feature_grammar, decode_link_network_binary,
-    encode_link_network_binary, infer_grammar_scanner, infer_grammar_scanner_classes,
-    infer_grammar_scanner_mode_stack, infer_regular_grammar, parse_grammar_links,
-    read_refined_regular_grammar_inference_links, read_regular_grammar_inference_links,
+    BinaryLinksOptions, DynamicParseOptions, FeatureParseOptions,
+    GrammarScannerModeStackObservation, GrammarScannerObservation, LinkNetwork,
+    RegularGrammarInferenceOptions, StructuralGrammarInferenceOptions,
+    accept_inferred_grammar_symbols, compile_feature_grammar, create_dynamic_meta_language,
+    decode_link_network_binary, encode_link_network_binary, infer_grammar_scanner,
+    infer_grammar_scanner_classes, infer_grammar_scanner_mode_stack, infer_regular_grammar,
+    infer_structural_grammar, parse_grammar_links, read_refined_regular_grammar_inference_links,
+    read_regular_grammar_inference_links, read_structural_grammar_inference_links,
     read_structured_data_lino, refine_regular_grammar_inference, render_grammar_links,
     serialize_grammar,
 };
@@ -19,6 +21,104 @@ fn fixture() -> Value {
         "../../../parity/fixtures/regular-grammar-inference.lino"
     ))
     .unwrap()
+}
+
+#[test]
+fn observed_delimiter_productions_recur_preserve_source_and_refuse_negative_merges() {
+    versions();
+    let data = fixture();
+    let fixture = &data["structural"];
+    let positives = examples(&fixture["positives"]);
+    let negatives = examples(&fixture["negatives"]);
+    let counterexample: Vec<String> =
+        serde_json::from_value(fixture["counterexample"].clone()).unwrap();
+    let expected: Vec<Vec<f64>> = serde_json::from_value(fixture["productions"].clone()).unwrap();
+    let options = StructuralGrammarInferenceOptions {
+        delimiters: serde_json::from_value(fixture["delimiters"].clone()).unwrap(),
+        ..Default::default()
+    };
+    let original = infer_structural_grammar(&positives, &negatives, &options).unwrap();
+    let text = LinkNetwork::from_lino(&original.network.to_lino()).unwrap();
+    let bytes =
+        encode_link_network_binary(&original.network, BinaryLinksOptions::default()).unwrap();
+    let binary = decode_link_network_binary(&bytes, BinaryLinksOptions::default()).unwrap();
+    for network in [text, binary] {
+        let model = read_structural_grammar_inference_links(&network, original.root).unwrap();
+        assert_eq!(model.productions, expected);
+        assert_eq!(
+            serialize_grammar(&model.grammar),
+            serialize_grammar(&original.grammar)
+        );
+        let library =
+            create_dynamic_meta_language(std::slice::from_ref(&model.source), &Default::default())
+                .unwrap();
+        for input in fixture["accepted"].as_array().unwrap() {
+            let input = input.as_str().unwrap();
+            let parsed = library
+                .parse(
+                    &model.source.id,
+                    input.as_bytes(),
+                    &DynamicParseOptions::default(),
+                )
+                .unwrap();
+            assert_eq!(parsed.projection, "concrete syntax");
+            assert!(parsed.archive.is_some());
+            assert_eq!(
+                super::issue_195_native_grammar_rows::rebuilt(&parsed.outcome.tree.unwrap()),
+                input
+            );
+        }
+        let parse_options = FeatureParseOptions::default();
+        let parser = compile_feature_grammar(&model.grammar, None, parse_options.clone()).unwrap();
+        for input in fixture["rejected"].as_array().unwrap() {
+            let input = input.as_str().unwrap();
+            assert!(
+                !parser
+                    .parse_tree(input.as_bytes(), &parse_options)
+                    .unwrap()
+                    .ok,
+                "{input}"
+            );
+        }
+    }
+    assert!(
+        infer_structural_grammar(&positives, &[counterexample], &options)
+            .unwrap_err()
+            .contains("merge accepts a negative")
+    );
+    let mut malformed = positives.clone();
+    malformed.push(serde_json::from_value(fixture["unbalanced"].clone()).unwrap());
+    assert!(
+        infer_structural_grammar(&malformed, &[], &options)
+            .unwrap_err()
+            .contains("unbalanced delimiters")
+    );
+    let mut depth = options.clone();
+    depth.limits.depth_limit = 1;
+    assert!(
+        infer_structural_grammar(&positives, &negatives, &depth)
+            .unwrap_err()
+            .contains("nesting limit")
+    );
+    let mut capped = options;
+    capped.limits.production_limit = 1;
+    assert!(
+        infer_structural_grammar(&positives, &negatives, &capped)
+            .unwrap_err()
+            .contains("production limit")
+    );
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-INFERENCE-DELIMITER-PRODUCTIONS",
+        suffix: "behavior",
+        fixture_id: "grammar-inference-delimiter-productions",
+        fixture_file: "parity/fixtures/regular-grammar-inference.lino",
+        assertions: &[
+            "recursiveDelimiterProductionsAndConcreteBytesMatch",
+            "recursiveDelimiterArchiveReplays",
+            "invalidAndUnboundedDelimiterMergesAreRefused",
+        ],
+        test_name: "observed_delimiter_productions_recur_preserve_source_and_refuse_negative_merges",
+    });
 }
 
 #[test]

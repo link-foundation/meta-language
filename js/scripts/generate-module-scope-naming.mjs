@@ -38,6 +38,8 @@ sources.push('js/src/resource-description-address-rules.js', 'js/src/resource-de
 sources.push('js/src/link-cli-archive-topology-rules.js', 'js/src/link-cli-archive-command.js');
 sources.push('js/src/translation/javascript-constructor-field-type-rules.js');
 sources.push('js/src/grammar-scanner-inference-rules.js', 'js/src/grammar-scanner-inference.js');
+sources.push('js/src/grammar-scanner-character-class-rules.js', 'js/src/grammar-scanner-mode-stack-rules.js',
+ 'js/src/grammar-structural-inference-rules.js', 'js/src/grammar-structural-inference.js');
 const archiveOperationNames = {
  readLinkCliArchiveStoreName: 'read link command line interface archive store name',
  readLinkCliArchiveStateName: 'read link command line interface archive state name',
@@ -53,21 +55,47 @@ const archiveOperationNames = {
 const qualifiedOperationNames = {
  'js/src/dynamic-meta-language.js': { configuration: 'configure dynamic meta language' },
  'js/src/grammar-inference.js': { configuration: 'configure grammar inference' },
+ 'js/src/grammar-scanner-inference.js': {
+  inferScanner: 'infer scanner from token observations',
+  readScannerListing: 'read inferred scanner grammar listing',
+ },
+ 'js/src/grammar-structural-inference.js': {
+  limit: 'limit structural grammar inference resources',
+  sourceText: 'validate structural grammar source text',
+  indexObservations: 'index structural grammar observations',
+  grammarFromProductions: 'build grammar from structural productions',
+ },
+ 'js/src/grammar-structural-inference-rules.js': {
+  testSameGrammarStructuralProduction: 'compare structural grammar productions',
+ },
 };
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
-const scannerCheckpointParent='2e1af9f2a6f31a829981a6bcb4faea95e9d3bf88';
-function retainScannerCheckpointBindings(rows,expected){
- const source='js/src/grammar-inference.js';
- const revised=new Set(['samples','grammarFromTable','inferRegularGrammar','readRegularGrammarInferenceLinks']);
+const declarationRevisions=[
+ ['2e1af9f2a6f31a829981a6bcb4faea95e9d3bf88',[
+  ['js/src/grammar-inference.js',['samples','grammarFromTable','inferRegularGrammar','readRegularGrammarInferenceLinks']],
+ ]],
+ ['e04c5a0648546df65e9eba38a79b59fbfe781e14',[
+  ['js/src/grammar-inference.js',['inferRegularGrammar','readRegularGrammarInferenceLinks']],
+  ['js/src/grammar-scanner-inference.js',['inferGrammarScanner']],
+  ['js/scripts/draft-source-library.mjs',['draftSourceLibrary']],
+ ]],
+];
+function retainQualifiedDeclarationRevisions(rows,expected){
  const path='parity/naming/module-scope-bindings-registration.lino';
- const captured=captureGitArtifactCertificate(scannerCheckpointParent,path);
- verifyGitArtifactCertificate(captured.certificate,captured.blob,{revision:scannerCheckpointParent,path});
- const historical=new Map(readBootstrapStructuredDataLino(captured.blob.toString('utf8')).additions
-  .filter(row=>row.source===source&&revised.has(row.name)).map(row=>[row.id,row]));
- assert.equal(historical.size,revised.size);
+ const historical=declarationRevisions.flatMap(([revision,sources])=>{
+  const captured=captureGitArtifactCertificate(revision,path);
+  verifyGitArtifactCertificate(captured.certificate,captured.blob,{revision,path});
+  const additions=readBootstrapStructuredDataLino(captured.blob.toString('utf8')).additions;
+  return sources.flatMap(([source,names])=>names.map(name=>{
+   const row=additions.find(item=>item.source===source&&item.name===name);
+   assert.ok(row,'missing certified declaration '+name);
+   return row;
+  }));
+ });
  return rows.map((row,index)=>{
-  const earlier=historical.get(row.id),current=expected[index];
-  if(!earlier||row.source!==source||row.sourceText!==earlier.sourceText)return row;
+  const earlier=historical.find(value=>value.id===row.id&&value.source===row.source&&value.sourceText===row.sourceText);
+  if(!earlier)return row;
+  const current=expected[index];
   assert.deepEqual(row,earlier);
   assert.deepEqual({...current,sourceText:earlier.sourceText},earlier);
   return current;
@@ -142,7 +170,7 @@ export function generateModuleScopeNaming({section,check=false}={}){
   const preceding=list.slice(first);assert.ok(preceding.length<=additions.length);
   const retained=section==='bindings'?restoreModuleScopeDeclarationBindings(preceding):preceding;
   const expected=section==='bindings'?restoreModuleScopeDeclarationBindings(additions.slice(0,preceding.length)):additions.slice(0,preceding.length);
-  const evolved=section==='bindings'?retainScannerCheckpointBindings(retained,expected):retained;
+  const evolved=section==='bindings'?retainQualifiedDeclarationRevisions(retained,expected):retained;
   assert.deepEqual(evolved,expected,'registered identities and their certified declaration revisions must survive');
   list.splice(first);
  }

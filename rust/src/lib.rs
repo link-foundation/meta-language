@@ -41,11 +41,15 @@ mod grammar_scanner_character_class_rules;
 mod grammar_scanner_inference;
 mod grammar_scanner_inference_rules;
 mod grammar_scanner_mode_stack_rules;
+mod grammar_structural_inference_rules;
 pub use grammar_inference::{
     RegularGrammarInference, RegularGrammarInferenceOptions, RegularGrammarInferenceParameters,
-    accept_inferred_grammar_symbols, create_regular_grammar_inference_program_links,
-    infer_regular_grammar, read_refined_regular_grammar_inference_links,
-    read_regular_grammar_inference_links, refine_regular_grammar_inference,
+    StructuralGrammarInference, StructuralGrammarInferenceLimits,
+    StructuralGrammarInferenceOptions, accept_inferred_grammar_symbols,
+    create_regular_grammar_inference_program_links, infer_regular_grammar,
+    infer_structural_grammar, read_refined_regular_grammar_inference_links,
+    read_regular_grammar_inference_links, read_structural_grammar_inference_links,
+    refine_regular_grammar_inference,
 };
 pub use grammar_scanner_inference::{
     GrammarScannerModeStackObservation, GrammarScannerObservation, InferredGrammarScanner,

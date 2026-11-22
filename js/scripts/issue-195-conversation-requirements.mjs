@@ -24,6 +24,7 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 const scannerModeStackFixture = 'parity/fixtures/regular-grammar-inference.lino';
 const scannerModeStackRequirement = 'I195-GRAMMAR-INFERENCE-SCANNER-MODE-STACK';
+const delimiterProductionsRequirement = 'I195-GRAMMAR-INFERENCE-DELIMITER-PRODUCTIONS';
 
 const sourceTooling = {
   'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK': [
@@ -208,6 +209,10 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  [delimiterProductionsRequirement]: {
+    javascript: ['js/src/grammar-structural-inference-rules.js', 'js/src/grammar-structural-inference.js', 'js/tests/grammar-inference.test.js'],
+    rust: ['rust/src/grammar_structural_inference_rules.rs', 'rust/src/grammar_inference/structural.rs', 'rust/tests/unit/regular_grammar_inference.rs'],
+  },
   [scannerModeStackRequirement]: {
     javascript: ['js/src/grammar-scanner-mode-stack-rules.js', 'js/src/grammar-scanner-inference.js', 'js/src/grammar-inference.js', 'js/tests/grammar-inference.test.js'],
     rust: ['rust/src/grammar_scanner_mode_stack_rules.rs', 'rust/src/grammar_scanner_inference.rs', 'rust/src/grammar_inference.rs', 'rust/tests/unit/regular_grammar_inference.rs'],
@@ -258,6 +263,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     id, construct, expectedBehavior, assertions, sourceKey, fixture,
     fixtureId: `conversation-contract:${sourceKey}`,
     ...(id === scannerModeStackRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'regular-grammar-inference-scanner-mode-stack' } : {}),
+    ...(id === delimiterProductionsRequirement ? { fixture: scannerModeStackFixture, fixtureId: 'grammar-inference-delimiter-productions' } : {}),
     ...(area === 'formal-concept-definitions' ? {
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
@@ -379,6 +385,8 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Discovery emits executable Links grammars with lossless CST structure, lexer and scanner state, precedence, ambiguity, recovery and attributed semantic actions. Foreign parser blobs, opaque sources and host callbacks cannot stand in for native operational definitions.', ['discoveredGrammarNativeAndExecutable', 'discoveredCstAndScannerSemanticsPreserved', 'attributedActionsAndRecoveryExplicit']],
     [scannerModeStackRequirement, 'finite scanner mode stack operations from bounded pre-token and post-token observations',
       'Both discovery runtimes lower observed unchanged, replace, push and pop transitions to native scanner operations for the shared scannerModeStack fixture. Exact trees and rejected inputs exercise the restored parent and optional observed character classes. The stored definitions replay through text reload and binary refinement, and incompatible stack deltas and competing effects are refused.', ['scannerModeStackTreesAndRejectionsMatch', 'scannerModeStackArchiveReplaysAndRefines', 'unsupportedScannerModeStackEffectsAreRefused']],
+    [delimiterProductionsRequirement, 'recursive delimiter productions from bounded labelled token observations',
+      'Both inference runtimes infer the exact ordered delimiter productions from the shared structural fixture. Native parsing accepts every listed nested control and rebuilds its source bytes while rejecting every negative control. Text and binary archives preserve and recheck the productions and grammar. The inference refuses malformed positive examples, a negative admitted by a proposed merge, and exhausted nesting and production limits.', ['recursiveDelimiterProductionsAndConcreteBytesMatch', 'recursiveDelimiterArchiveReplays', 'invalidAndUnboundedDelimiterMergesAreRefused']],
     ['I195-GRAMMAR-INFERENCE-GENERIC-UNION', 'generic structural and semantic discovery through the source-union pipeline',
       'Discover lexical classes, recursion and semantic relations generically, preserving every source production and provenance. Merge discovered definitions with the applicable official and mature grammars through the existing automatic native pipeline.', ['lexicalRecursiveAndSemanticDiscoveryExecuted', 'allSourceProductionsAndProvenanceRetained', 'discoveredAndOfficialGrammarsMerged']],
     ['I195-GRAMMAR-INFERENCE-FORMAL-CONCEPT-INTEGRATION', 'discovered concepts integrated with recursive formal definitions',

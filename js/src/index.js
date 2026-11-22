@@ -22,6 +22,7 @@ export * from './global-concept-space.js';
 export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
 export { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGrammarSymbols,
   createRegularGrammarInferenceProgramLinks } from './grammar-inference.js';
+export { inferStructuralGrammar, readStructuralGrammarInferenceLinks } from './grammar-structural-inference.js';
 export {refineRegularGrammarInference,readRefinedRegularGrammarInferenceLinks} from './grammar-inference-refinement.js';
 export { inferGrammarScanner, inferGrammarScannerClasses, inferGrammarScannerModeStack } from './grammar-scanner-inference.js';
 export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';

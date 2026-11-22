@@ -586,7 +586,17 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "infer_grammar_scanner_classes",
         "function",
     ),
+    (
+        "inferGrammarScannerModeStack",
+        "infer_grammar_scanner_mode_stack",
+        "function",
+    ),
     ("inferRegularGrammar", "infer_regular_grammar", "function"),
+    (
+        "inferStructuralGrammar",
+        "infer_structural_grammar",
+        "function",
+    ),
     (
         "insertConceptRecord",
         "LinkNetwork::insert_concept_record",
@@ -772,6 +782,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("readSourceTextUnits", "read_source_text_units", "function"),
+    (
+        "readStructuralGrammarInferenceLinks",
+        "read_structural_grammar_inference_links",
+        "function",
+    ),
     (
         "readStructuredDataLino",
         "read_structured_data_lino",

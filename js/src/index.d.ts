@@ -1110,6 +1110,24 @@ export function readRegularGrammarInferenceLinks(network: LinkNetwork, root: Lin
 export function refineRegularGrammarInference(network:LinkNetwork,root:LinkIdValue,positives?:readonly (readonly string[])[],negatives?:readonly (readonly string[])[],options?:{identifier?:string}):RegularGrammarInference;
 export function readRefinedRegularGrammarInferenceLinks(network:LinkNetwork,root:LinkIdValue):RegularGrammarInference;
 export function acceptInferredGrammarSymbols(model: RegularGrammarInference, symbols: readonly string[]): boolean;
+export interface StructuralGrammarInferenceOptions {
+  delimiters: readonly (readonly [string, string])[];
+  identifier?: string;
+  language?: string;
+  edition?: string;
+  depthLimit?: number;
+  productionLimit?: number;
+  symbolLimit?: number;
+  byteLimit?: number;
+}
+export interface StructuralGrammarInference extends TypedProgramLinks {
+  grammar: Grammar;
+  source: GlobalConceptSource;
+  alphabet: string[];
+  productions: number[][];
+}
+export function inferStructuralGrammar(positives: readonly (readonly string[])[], negatives: readonly (readonly string[])[] | undefined, options: StructuralGrammarInferenceOptions): StructuralGrammarInference;
+export function readStructuralGrammarInferenceLinks(network: LinkNetwork, root: LinkIdValue): StructuralGrammarInference;
 export interface GrammarScannerObservation {
   mode: string;
   spelling: string;

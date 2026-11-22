@@ -8,6 +8,7 @@ import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-ne
 import { createDynamicMetaLanguage } from '../src/dynamic-meta-language.js';
 import { inferGrammarScanner, inferGrammarScannerClasses, inferGrammarScannerModeStack } from '../src/grammar-scanner-inference.js';
 import { readRefinedRegularGrammarInferenceLinks, refineRegularGrammarInference } from '../src/grammar-inference-refinement.js';
+import { inferStructuralGrammar, readStructuralGrammarInferenceLinks } from '../src/index.js';
 import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { createGrammarParser as compileGrammar, renderSyntaxTree } from '../src/grammar-runtime.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -43,6 +44,38 @@ for (const fixture of fixtures.cases) test(fixture.name + ': observations, indep
 
 for (const fixture of fixtures.refusals) test(fixture.name + ' remains an explicit refusal', () => {
   assert.throws(() => inferRegularGrammar(fixture.positives, fixture.negatives, fixture.options), error => error.message.includes(fixture.reason));
+});
+
+test('observed delimiter productions recur, preserve source bytes and refuse contradictory merges', context => {
+  const fixture = fixtures.structural;
+  const options = {delimiters: fixture.delimiters};
+  const original = inferStructuralGrammar(fixture.positives, fixture.negatives, options);
+  const text = LinkNetwork.fromLino(original.network.toLino());
+  const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(original.network));
+  const renderTree = tree => tree.type === 'node' ? tree.children.map(renderTree).join('') : tree.text;
+  for (const network of [text, binary]) {
+    const model = readStructuralGrammarInferenceLinks(network, original.root);
+    assert.deepEqual(model.productions, fixture.productions);
+    assert.deepEqual(model.grammar.normalized(), original.grammar.normalized());
+    const library = createDynamicMetaLanguage([model.source]);
+    const parser = compileGrammar(model.grammar);
+    for (const input of fixture.accepted) {
+      const result = library.parse(model.source.id, input);
+      assert.equal(result.projection, 'concrete syntax');
+      assert.equal(renderTree(result.tree), input);
+    }
+    for (const input of fixture.rejected) assert.equal(parser.parseTree(input).ok, false, input);
+  }
+  assert.throws(() => inferStructuralGrammar(fixture.positives, [fixture.counterexample], options), /merge accepts a negative/u);
+  assert.throws(() => inferStructuralGrammar([...fixture.positives, fixture.unbalanced], [], options), /unbalanced delimiters/u);
+  assert.throws(() => inferStructuralGrammar(fixture.positives, fixture.negatives, {...options, depthLimit: 1}), /nesting limit/u);
+  assert.throws(() => inferStructuralGrammar(fixture.positives, fixture.negatives, {...options, productionLimit: 1}), /production limit/u);
+  recordIssue195Observations({
+    requirementId: 'I195-GRAMMAR-INFERENCE-DELIMITER-PRODUCTIONS', suffix: 'behavior',
+    fixtureId: 'grammar-inference-delimiter-productions', fixtureFile: 'parity/fixtures/regular-grammar-inference.lino',
+    assertions: ['recursiveDelimiterProductionsAndConcreteBytesMatch', 'recursiveDelimiterArchiveReplays', 'invalidAndUnboundedDelimiterMergesAreRefused'],
+    testName: context.name,
+  });
 });
 
 test('scanner trace inference emits executable mode transitions and preserves source bytes', () => {
