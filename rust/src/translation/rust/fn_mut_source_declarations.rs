@@ -8,6 +8,10 @@ use crate::translation::{
     },
     source_diagnostic_attributes::token_kind,
 };
+use crate::translation::{
+    source_fn_mut_specializations::{GenericBinder, OriginalCallback, SourceDeclaration},
+    source_loop_folds::SourceFoldSpan,
+};
 use std::{ops::Range, sync::Arc};
 
 #[derive(Clone, Debug)]
@@ -66,6 +70,64 @@ impl FnMutSourceDeclarations {
             values: tokens.iter().map(|token| token.value.clone()).collect(),
             tokens,
         })
+    }
+
+    pub(super) fn position(&self, range: &Range<usize>) -> SourceFoldSpan {
+        SourceFoldSpan {
+            start: self.tokens[range.start].start,
+            end: self.tokens[range.end - 1].end,
+        }
+    }
+
+    pub(super) fn checked_owner(&self, declaration: &FnMutSourceDeclaration) -> SourceDeclaration {
+        let callback = &declaration.callback;
+        let binder = &self.tokens[callback.binder];
+        let path = declaration
+            .owner
+            .iter()
+            .cloned()
+            .chain(std::iter::once(declaration.name.clone()))
+            .collect();
+        SourceDeclaration {
+            path,
+            range: self.position(&declaration.declaration),
+            body_range: self.position(&declaration.body),
+            generics: declaration
+                .generics
+                .iter()
+                .map(|index| {
+                    let binder = &self.tokens[*index];
+                    GenericBinder {
+                        name: binder.value.clone(),
+                        start: binder.start,
+                        end: binder.end,
+                    }
+                })
+                .collect(),
+            formal_count: declaration.formal_count,
+            callback: OriginalCallback {
+                index: callback.parameter,
+                name: binder.value.clone(),
+                mode: if callback.exclusive {
+                    "exclusive"
+                } else {
+                    "value"
+                }
+                .to_owned(),
+                mutable: callback.mutable,
+                binder: SourceFoldSpan {
+                    start: binder.start,
+                    end: binder.end,
+                },
+                type_range: self.position(&callback.callback_type),
+                parameter_ranges: callback
+                    .parameters
+                    .iter()
+                    .map(|range| self.position(range))
+                    .collect(),
+                result_range: self.position(&callback.result),
+            },
+        }
     }
 
     pub(super) fn capture(
@@ -211,6 +273,21 @@ mod tests {
             .capture(&["sample".to_owned()], &tokens[0])
             .unwrap()
             .unwrap();
+        let checked = directory.checked_owner(&declaration);
+        let spelling = crate::translation::lexer::Source::new(source);
+        assert_eq!(checked.path, ["sample", "apply"]);
+        assert_eq!(
+            spelling.slice(checked.callback.binder.start, checked.callback.binder.end),
+            "action"
+        );
+        assert_eq!(
+            spelling.slice(
+                checked.callback.result_range.start,
+                checked.callback.result_range.end
+            ),
+            "Result<T, Option<E>>"
+        );
+        assert_eq!(checked.range.end, source.encode_utf16().count());
         let spellings = |position: std::ops::Range<usize>| {
             directory
                 .source
