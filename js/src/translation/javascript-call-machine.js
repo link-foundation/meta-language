@@ -968,10 +968,38 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
       case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';return '';
       case 'waitDefinition':{
         if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';const invalid=readJavaScriptPropertyDefinitionStateError(heap,pending.state);if(invalid!=='')return invalid;
-        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,target=instruction?.$==='propertyDefinition'||instruction?.$==='ordinaryDefine'?frame.registers[instruction.target]:instruction?.$==='ordinaryDataProperty'||instruction?.$==='literalAccessor'?frame.registers[instruction.object]:undefined;
-        if(target===undefined||!testJavaScriptSemanticSameValue(target,pending.state.target))return 'property definition retains its actual selected source target';
-        const operation=instruction?.$==='ordinaryDefine'?'Reflect.defineProperty':instruction?.$==='propertyDefinition'?instruction.operation:undefined;if((operation??'Object.defineProperty')!==(pending.state.operation??'Object.defineProperty')||instruction?.destination!==pending.destination||instruction?.realm!==pending.realm)return 'property definition retains its actual source result policy destination and realm';
-        if(instruction?.$==='ordinaryDefine'){const operands=readJavaScriptDescriptorOperands(instruction.fields.map(coordinate=>frame.registers[coordinate]??{$:'undefined'})),descriptor=pending.state.$==='propertyDefinitionArray'?pending.state.assignment.definition.descriptor:pending.state.$==='propertyDefinitionReady'?pending.state.descriptor:undefined,key=pending.state.$==='propertyDefinitionArray'||pending.state.$==='propertyDefinitionReady'?pending.state.key:undefined;if(operands.error!==''||descriptor===undefined||key===undefined||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},key)||!testJavaScriptPropertyDescriptorsSameValue(descriptor,operands.descriptor))return 'internal definitions retain their actual key and complete preconverted descriptor operands';}
+        const invalidTarget='property definition retains its actual selected source target';
+        const invalidOperation='property definition retains its actual source result policy destination and realm';
+        if(!(frame.position>0))return invalidTarget;
+        const instruction=fn.instructions[frame.position-1];
+        if(instruction===undefined)return invalidTarget;
+        const operation=pending.state.operation??'Object.defineProperty';
+        switch(instruction.$){
+          case 'ordinaryDefine':{
+            const target=frame.registers[instruction.target];
+            if(target===undefined||!testJavaScriptSemanticSameValue(target,pending.state.target))return invalidTarget;
+            if(operation!=='Reflect.defineProperty'||instruction.destination!==pending.destination||instruction.realm!==pending.realm)return invalidOperation;
+            const operands=readJavaScriptDescriptorOperands(instruction.fields.map(coordinate=>frame.registers[coordinate]??{$:'undefined'}));
+            const descriptor=pending.state.$==='propertyDefinitionArray'?pending.state.assignment.definition.descriptor:pending.state.$==='propertyDefinitionReady'?pending.state.descriptor:undefined;
+            const key=pending.state.$==='propertyDefinitionArray'||pending.state.$==='propertyDefinitionReady'?pending.state.key:undefined;
+            if(operands.error!==''||descriptor===undefined||key===undefined||!testJavaScriptSemanticSameValue(frame.registers[instruction.key]??{$:'undefined'},key)||!testJavaScriptPropertyDescriptorsSameValue(descriptor,operands.descriptor))return 'internal definitions retain their actual key and complete preconverted descriptor operands';
+            break;
+          }
+          case 'propertyDefinition':{
+            const target=frame.registers[instruction.target];
+            if(target===undefined||!testJavaScriptSemanticSameValue(target,pending.state.target))return invalidTarget;
+            if(operation!==(instruction.operation??'Object.defineProperty')||instruction.destination!==pending.destination||instruction.realm!==pending.realm)return invalidOperation;
+            break;
+          }
+          case 'ordinaryDataProperty':
+          case 'literalAccessor':{
+            const target=frame.registers[instruction.object];
+            if(target===undefined||!testJavaScriptSemanticSameValue(target,pending.state.target))return invalidTarget;
+            if(operation!=='Object.defineProperty'||instruction.destination!==pending.destination||instruction.realm!==pending.realm)return invalidOperation;
+            break;
+          }
+          default:return invalidTarget;
+        }
         if(suspended&&(pending.state.$==='propertyDefinitionReady'||pending.state.operation==='Reflect.defineProperty'&&pending.state.call===undefined))return 'a definition suspension retains its actual selected child rather than a completed descriptor';
         if(pending.state.$==='propertyDefinitionArray'&&!testJavaScriptSemanticSameValue(pending.state.assignment.exoticKey,program.exoticKey))return 'Array definition retains its actual primitive conversion Symbol';
         if(pending.state.$==='propertyDefinitionKey'&&!testJavaScriptSemanticSameValue(pending.state.conversion.exoticKey,program.exoticKey)||pending.state.$==='propertyDefinitionDescriptor'&&pending.state.exoticKey!==undefined&&!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'property definition retains its actual primitive conversion authority';
