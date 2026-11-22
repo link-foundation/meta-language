@@ -258,10 +258,7 @@ pub use language_support::{
     translation_contract, translation_contracts,
 };
 pub use link_flags::LinkFlags;
-pub use link_network::{
-    LanguageParserAvailability, Link, LinkId, LinkMetadata, LinkNetwork, LinkType,
-    NetworkProjection,
-};
+pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use link_network_binary::{
     BinaryLinksError, BinaryLinksOptions, decode_link_network_binary, encode_link_network_binary,
 };
