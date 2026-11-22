@@ -60,14 +60,14 @@ they are.
 | Category | Items | Current | Behind | Not applicable |
 |---|---|---|---|---|
 | JavaScript engines | 1 | 1 | 0 | 0 |
-| npm packages | 38 | 38 | 0 | 0 |
+| npm packages | 39 | 39 | 0 | 0 |
 | Rust package settings | 9 | 9 | 0 | 0 |
 | Rust crates | 309 | 282 | 24 | 3 |
 | Experiment manifests | 6 | 6 | 0 | 0 |
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 254 | 253 | 1 | 0 |
+| Generators | 255 | 254 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -122,6 +122,7 @@ they are.
 | `typescript` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `7.0.2` | direct, development | `7.0.2` | 7.0.2 (npm registry, typescript latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `web-tree-sitter` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.27.0` | direct, runtime | `0.27.0` | 0.27.0 (npm registry, web-tree-sitter latest) | version | current |  |
 | `wordnet-db` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `3.1.14` | direct, development | `3.1.14` | 3.1.14 (npm registry, wordnet-db latest) | version | current |  |
+| `franc` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `6.2.0` | direct, development | `6.2.0` | 6.2.0 (npm registry, franc latest) | version | current |  |
 
 ## Rust package settings
 
@@ -801,6 +802,7 @@ they are.
 | `js/scripts/generate-javascript-identifier-models.mjs` | `js/scripts/generate-javascript-identifier-models.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-language-identification-confidence.mjs` | `js/scripts/build-language-identification-confidence.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
