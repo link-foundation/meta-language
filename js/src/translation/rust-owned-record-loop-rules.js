@@ -70,3 +70,29 @@ export function readRustOwnedRecordNestedCompletionError(admitted,overlap){retur
 export function readRustOwnedRecordLoopFootprintError(nodes,text){return !acceptRustOwnedRecordLoopCount(nodes)||!acceptRustOwnedRecordLoopCount(text)||nodes>100000||text>16777216?'the complete loop write footprint exceeds its source budget':'';}
 /** @param {number} count @returns {string} */
 export function readRustOwnedRecordLoopResidualCountError(count){return acceptRustOwnedRecordLoopCount(count)&&count>=1&&count<=256?'':'a propagated loop exit needs every actual produced residual branch within its source budget';}
+
+/** Source span coordinates use the same UTF-16 positions as tokens.
+ * @param {number} start @param {number} end @returns {boolean} */
+export function acceptRustSourceRegionSpan(start,end){
+ return start>=0&&start%1===0&&end>start&&end<=9007199254740991&&end%1===0;
+}
+
+/** @param {number} nameLength @param {number} identityLength @param {number} start @param {number} end @returns {boolean} */
+export function acceptRustSourceStateBinder(nameLength,identityLength,start,end){
+ return nameLength>0&&nameLength<=4096&&identityLength>0&&identityLength<=4096&&acceptRustSourceRegionSpan(start,end);
+}
+
+/** @param {string} language @param {string} model @param {string} operation @returns {boolean} */
+export function acceptRustSourceStateTransitionModel(language,model,operation){
+ return language==='Rust'&&model==='Rust source state transition 1'&&(operation==='initialize'||operation==='write');
+}
+
+/** @param {string} language @param {string} model @param {number} slots @param {number} start @param {number} end @returns {boolean} */
+export function acceptRustOwnedVectorSourceFoldModel(language,model,slots,start,end){
+ return language==='Rust'&&model==='Rust owned vector source fold 1'&&slots>=0&&slots<=512&&acceptRustSourceRegionSpan(start,end);
+}
+
+/** @returns {string[]} */
+export function readRustOwnedVectorSourceFoldControlVariants(){
+ return ['FunctionResult','StatementContinuation','LoopBreak','LoopContinue'];
+}

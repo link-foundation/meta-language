@@ -8,8 +8,9 @@ import {qualifyRustStandardSumSourceOrigin} from './rust-standard-sum-source.js'
 import {createRustBorrowedVectorElementPosition} from './rust-borrowed-vectors.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {readRustRecordPlaceOwner} from './rust-record-place-owner-rules.js';
+import {acceptRustSourceStateBinder,acceptRustSourceStateTransitionModel} from './rust-owned-record-loop-rules.js';
 const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
-function binder(value){return exact(value,['name','identity','start','end'])&&typeof value.name==='string'&&value.name.length>0&&value.name.length<=4096&&typeof value.identity==='string'&&value.identity.length>0&&value.identity.length<=4096&&Number.isSafeInteger(value.start)&&Number.isSafeInteger(value.end)&&value.start>=0&&value.end>value.start;}
+function binder(value){return exact(value,['name','identity','start','end'])&&typeof value.name==='string'&&typeof value.identity==='string'&&typeof value.start==='number'&&typeof value.end==='number'&&acceptRustSourceStateBinder(value.name.length,value.identity.length,value.start,value.end);}
 export function attachRustSourceStateTransition(parser,node,slot,operation){
  if(!hasRustSourceRegionComposition(parser)||!retainRustSourceRegionState(parser))return node;
  const actual=slot&&readRustOwnedRecordStateDeclarations(parser).get(slot.currentName),tokens=parser.sourceConstantTokens;if(!Array.isArray(tokens)||tokens.length>1000000)throw unsupported('Rust source state transition','state publication needs its bounded original source token inventory',node.span);let first=0,last=tokens.length;while(first<last){const middle=Math.floor((first+last)/2);if(tokens[middle].start<(slot?.sourceBinder?.start??-1))first=middle+1;else last=middle;}const token=tokens[first];
@@ -18,6 +19,6 @@ export function attachRustSourceStateTransition(parser,node,slot,operation){
  return parser.origins.reuseExpressionOrigin(node,{...node,sourceStateTransition:{model:'Rust source state transition 1',operation,binder:{...slot.sourceBinder},position:createRustBorrowedVectorElementPosition(origin)}});
 }
 export function checkRustSourceStateTransition(facet,type,language,resolveType=value=>value,resolveData=()=>null){
- if(language!=='Rust'||!exact(facet,['model','operation','binder','position'])||facet.model!=='Rust source state transition 1'||!['initialize','write'].includes(facet.operation)||!binder(facet.binder))throw typeError('a source state transition retains its exact Rust model, operation and actual source binder');
+ if(!exact(facet,['model','operation','binder','position'])||!acceptRustSourceStateTransitionModel(language,facet.model,facet.operation)||!binder(facet.binder))throw typeError('a source state transition retains its exact Rust model, operation and actual source binder');
  const checked=checkRustSourceSignature({model:'Rust source function signature 2',language:'Rust',parameters:[],result:facet.position,lifetimeBindings:[]},[],type,language,resolveType,resolveData);if(checked.result.lifetimes.length||checked.result.arrayElementPosition||!readRustRecordPlaceOwner(checked.result,false))throw typeError('a source state transition publishes its actual closed owned referent with every canonical Box layer');return {...facet,binder:{...facet.binder},position:checked.result};
 }

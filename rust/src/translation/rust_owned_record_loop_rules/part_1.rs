@@ -563,6 +563,63 @@ pub fn read_rust_owned_record_loop_residual_count_error(count: f64) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_source_region_span(start: f64, end: f64) -> bool {
+    ((((start >= 0f64) && ((start % 1f64) == 0f64)) && (end > start))
+        && (end <= 9_007_199_254_740_991f64))
+        && ((end % 1f64) == 0f64)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_state_binder(
+    name_length: f64,
+    identity_length: f64,
+    start: f64,
+    end: f64,
+) -> bool {
+    ((((name_length > 0f64) && (name_length <= 4096f64)) && (identity_length > 0f64))
+        && (identity_length <= 4096f64))
+        && self::accept_rust_source_region_span(start, end)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_state_transition_model(
+    language: &str,
+    model: &str,
+    operation: &str,
+) -> bool {
+    ((language == "Rust") && (model == "Rust source state transition 1"))
+        && ((operation == "initialize") || (operation == "write"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_owned_vector_source_fold_model(
+    language: &str,
+    model: &str,
+    slots: f64,
+    start: f64,
+    end: f64,
+) -> bool {
+    ((((language == "Rust") && (model == "Rust owned vector source fold 1")) && (slots >= 0f64))
+        && (slots <= 512f64))
+        && self::accept_rust_source_region_span(start, end)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_owned_vector_source_fold_control_variants() -> Vec<String> {
+    vec![
+        String::from("FunctionResult"),
+        String::from("StatementContinuation"),
+        String::from("LoopBreak"),
+        String::from("LoopContinue"),
+    ]
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_plan_rust_owned_record_loop_iterations_loop1(
     mut result: Vec<f64>,
     mut index: f64,
