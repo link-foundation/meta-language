@@ -1,6 +1,16 @@
 // Live insertion cursors belong to inspectable global heap objects. Deletions
 // retain ordinals, additions remain visible, and exhaustion releases the source.
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,replaceJavaScriptOrdinaryObject,testJavaScriptOrdinarySymbol} from './javascript-ordinary-heap.js';
+/** Rebuild the already validated Map or Set iterator with its next internal cursor.
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptOrdinaryObject|undefined} iterator
+ * @param {bigint} collection @param {number} cursor @returns {JavaScriptOrdinaryHeap} */
+function moveJavaScriptCollectionIteratorCursor(heap,iterator,collection,cursor){
+ if(iterator===undefined)return heap;
+ if(iterator.$!=='collectionIteratorObject')return heap;
+ return replaceJavaScriptOrdinaryObject(heap,{$:'collectionIteratorObject',identity:iterator.identity,prototype:iterator.prototype,
+  extensible:iterator.extensible,callable:iterator.callable,properties:iterator.properties,
+  collection,cursor,kind:iterator.kind,collectionKind:iterator.collectionKind});
+}
 /** Validate the receiver BEFORE asking an external allocator for an identity.
  * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} receiver
  * @param {string} collectionKind @returns {{error:string,typeError:boolean}} */
@@ -8,7 +18,8 @@ export function readJavaScriptCollectionIteratorReceiverError(heap,receiver,coll
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {error,typeError:false};
  if(!['Map','Set'].includes(collectionKind))return {error:'iterator creation needs its actual registered collection kind',typeError:false};
  const invalid=readJavaScriptOrdinaryValueError(heap,receiver);if(invalid!=='')return {error:invalid,typeError:false};
- const collection=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
+ if(receiver.$!=='object')return {error:'iterator creation needs its actual '+collectionKind+' internal-slot receiver',typeError:true};
+ const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];
  if(collection===undefined||!(collectionKind==='Map'&&collection.$==='mapObject'||collectionKind==='Set'&&collection.$==='setObject'))return {error:'iterator creation needs its actual '+collectionKind+' internal-slot receiver',typeError:true};
  return {error:'',typeError:false};
 }
@@ -26,7 +37,8 @@ export function allocateJavaScriptCollectionIterator(heap,identity,prototype,rec
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'collectionIterationInvalid',heap,reason:error};
  if(!['keys','values','entries'].includes(kind)||!['Map','Set'].includes(collectionKind))return {$:'collectionIterationInvalid',heap,reason:'collection iteration needs its actual registered operation kind'};
  for(const value of [prototype,receiver]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return {$:'collectionIterationInvalid',heap,reason:invalid};}
- const collection=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
+ if(receiver.$!=='object')return {$:'collectionIterationTypeError',heap,reason:'collection iteration needs its actual branded collection receiver'};
+ const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];
  if(collection===undefined||!(collectionKind==='Map'&&collection.$==='mapObject'||collectionKind==='Set'&&collection.$==='setObject'))return {$:'collectionIterationTypeError',heap,reason:'collection iteration needs its actual branded collection receiver'};
  if(prototype.$!=='null'&&prototype.$!=='object')return {$:'collectionIterationInvalid',heap,reason:'collection iterators retain their actual registered prototype'};
  if(typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n||findJavaScriptOrdinaryObject(heap.objects,identity)>=0||testJavaScriptOrdinarySymbol(heap.symbols,identity))return {$:'collectionIterationInvalid',heap,reason:'iterator allocation needs its fresh external global identity'};
@@ -42,17 +54,22 @@ export function allocateJavaScriptCollectionIterator(heap,identity,prototype,rec
 export function advanceJavaScriptCollectionIterator(heap,receiver){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'collectionIterationInvalid',heap,reason:error};
  const invalid=readJavaScriptOrdinaryValueError(heap,receiver);if(invalid!=='')return {$:'collectionIterationInvalid',heap,reason:invalid};
- const iterator=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
- if(iterator===undefined||iterator.$!=='collectionIteratorObject'||!['Map','Set'].includes(iterator.collectionKind))return {$:'collectionIterationTypeError',heap,reason:'collection iterator next needs its actual Map or Set internal-slot receiver'};
- if(iterator.collection===0n)return {$:'collectionIteration',heap,done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
- const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,iterator.collection)];
+ if(receiver.$!=='object')return {$:'collectionIterationTypeError',heap,reason:'collection iterator next needs its actual Map or Set internal-slot receiver'};
+ const iterator=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];
+ if(iterator===undefined)return {$:'collectionIterationTypeError',heap,reason:'collection iterator next needs its actual Map or Set internal-slot receiver'};
+ if(iterator.$!=='collectionIteratorObject')return {$:'collectionIterationTypeError',heap,reason:'collection iterator next needs its actual Map or Set internal-slot receiver'};
+ if(!['Map','Set'].includes(iterator.collectionKind))return {$:'collectionIterationTypeError',heap,reason:'collection iterator next needs its actual Map or Set internal-slot receiver'};
+ const collectionIdentity=iterator.collection,kind=iterator.kind,cursorStart=iterator.cursor;
+ if(collectionIdentity===0n)return {$:'collectionIteration',heap,done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
+ const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,collectionIdentity)];
  if(collection===undefined||collection.$!=='mapObject'&&collection.$!=='setObject')return {$:'collectionIterationInvalid',heap,reason:'the iterator source must remain in the actual shared heap'};
- for(let cursor=iterator.cursor;cursor<collection.entries.length;cursor++){
-  const entry=collection.entries[cursor];if(entry===undefined||!entry.present)continue;
-  const updated=replaceJavaScriptOrdinaryObject(heap,{...iterator,cursor:cursor+1});
-  return {$:'collectionIteration',heap:updated,done:false,key:entry.key,value:iterator.kind==='keys'?entry.key:entry.value,entry:iterator.kind==='entries'};
+ const entries=collection.entries;
+ for(let cursor=cursorStart;cursor<entries.length;cursor++){
+  const entry=entries[cursor];if(entry===undefined||!entry.present)continue;
+  const updated=moveJavaScriptCollectionIteratorCursor(heap,iterator,collectionIdentity,cursor+1);
+  return {$:'collectionIteration',heap:updated,done:false,key:entry.key,value:kind==='keys'?entry.key:entry.value,entry:kind==='entries'};
  }
- return {$:'collectionIteration',heap:replaceJavaScriptOrdinaryObject(heap,{...iterator,collection:0n,cursor:0}),done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
+ return {$:'collectionIteration',heap:moveJavaScriptCollectionIteratorCursor(heap,iterator,0n,0),done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
 }
 
 /** The brand survives exhaustion; one prototype's next cannot resume another
@@ -63,7 +80,10 @@ export function advanceJavaScriptBrandedCollectionIterator(heap,receiver,collect
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'collectionIterationInvalid',heap,reason:error};
  if(!['Map','Set'].includes(collectionKind))return {$:'collectionIterationInvalid',heap,reason:'iterator next needs its actual registered operation brand'};
  const invalid=readJavaScriptOrdinaryValueError(heap,receiver);if(invalid!=='')return {$:'collectionIterationInvalid',heap,reason:invalid};
- const iterator=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
- if(iterator===undefined||iterator.$!=='collectionIteratorObject'||iterator.collectionKind!==collectionKind)return {$:'collectionIterationTypeError',heap,reason:'iterator next requires its actual '+collectionKind+' iterator internal brand'};
+ if(receiver.$!=='object')return {$:'collectionIterationTypeError',heap,reason:'iterator next requires its actual '+collectionKind+' iterator internal brand'};
+ const iterator=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];
+ if(iterator===undefined)return {$:'collectionIterationTypeError',heap,reason:'iterator next requires its actual '+collectionKind+' iterator internal brand'};
+ if(iterator.$!=='collectionIteratorObject')return {$:'collectionIterationTypeError',heap,reason:'iterator next requires its actual '+collectionKind+' iterator internal brand'};
+ if(iterator.collectionKind!==collectionKind)return {$:'collectionIterationTypeError',heap,reason:'iterator next requires its actual '+collectionKind+' iterator internal brand'};
  return advanceJavaScriptCollectionIterator(heap,receiver);
 }
