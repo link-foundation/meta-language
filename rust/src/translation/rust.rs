@@ -625,6 +625,8 @@ struct RustParser {
     source_constant_tokens: Arc<Vec<Token>>,
     fn_mut_source_declarations: Option<Rc<fn_mut_source_declarations::FnMutSourceDeclarations>>,
     fn_mut_source_type_bindings: Vec<(String, SourceOrigin)>,
+    fn_mut_source_header_read: Option<fn_mut_source_headers::FnMutSourceHeaderRead>,
+    fn_mut_source_instances: Vec<fn_mut_source_headers::FnMutSourceInstance>,
     shared_array_handle_source_model: String,
     shared_array_state: shared_array_handles::SharedArrayState,
     standard_collections: Option<standard_collections::StandardCollectionSource>,
@@ -724,6 +726,8 @@ impl RustParser {
             source_constant_tokens,
             fn_mut_source_declarations: None,
             fn_mut_source_type_bindings: Vec::new(),
+            fn_mut_source_header_read: None,
+            fn_mut_source_instances: Vec::new(),
             source_version_minor: 0.0,
             exclusive_source_enabled: !profiles.exclusive_source.is_empty(),
             source_regions_composed: super::rust_owned_record_loop_rules::accept_rust_source_region_composition(

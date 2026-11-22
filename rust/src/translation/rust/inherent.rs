@@ -186,6 +186,9 @@ impl RustParser {
                     &name,
                     span(self.cursor.peek(), self.cursor.peek_at(1)),
                 )?;
+                if self.capture_fn_mut_source_item(&owner)? {
+                    continue;
+                }
                 let function = self.function(&owner)?;
                 let key = owner
                     .iter()

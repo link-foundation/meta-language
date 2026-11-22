@@ -121,7 +121,7 @@ impl TypeNamespaceCatalog {
                 SourceDeclaration::Module => "module",
                 SourceDeclaration::Constructor { .. } => "ctor",
                 SourceDeclaration::ExternalCrate => "externalCrate",
-                SourceDeclaration::Function { .. } => "fn",
+                SourceDeclaration::Function { .. } | SourceDeclaration::FnMutTemplate(_) => "fn",
                 SourceDeclaration::Constant { .. } => "const",
             };
             (value.full_name, kind)

@@ -50,8 +50,9 @@ impl RustParser {
                 ));
             }
         }
+        let fn_mut_replay = self.consume_fn_mut_source_generics(path, &name, &function_keyword)?;
         let mut source_lifetime_bindings = Vec::new();
-        if self.cursor.is("<") {
+        if !fn_mut_replay && self.cursor.is("<") {
             let generic = self.cursor.advance();
             while !self.cursor.is(">") {
                 if self.cursor.eat("'").is_none() {
@@ -114,8 +115,12 @@ impl RustParser {
             self.require_nonconstant_binding(&param_name, path, Some(param_token.span()))?;
             self.cursor.expect(":", Some("parameter"))?;
             let type_token = self.peek();
-            let ty = self.parse_type()?;
-            if mutable {
+            let callback_type = self.read_fn_mut_source_formal_type(path, &param_name, params.len())?;
+            let ty = match callback_type {
+                Some(ty) => ty,
+                None => self.parse_type()?,
+            };
+            if mutable && self.fn_mut_source_header_read.is_none() {
                 mutable_params.push((
                     param_token.clone(),
                     type_token,
@@ -260,14 +265,16 @@ impl RustParser {
             if let Type::Array { element, .. } = &ret { element.kind() } else { "" },
             source_result.array_element_copy_evidence,
         );
-        self.origins.declaration(
-            &name,
-            path,
-            SourceDeclaration::Function {
-                parameters: source_params.clone(),
-                result: source_result.clone(),
-            },
-        )?;
+        if !fn_mut_replay {
+            self.origins.declaration(
+                &name,
+                path,
+                SourceDeclaration::Function {
+                    parameters: source_params.clone(),
+                    result: source_result.clone(),
+                },
+            )?;
+        }
         if self.cursor.is("where") {
             return Err(unsupported(
                 "where clause",
@@ -275,7 +282,7 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
-        if self.ordinary_completion_context() {
+        if !fn_mut_replay && self.ordinary_completion_context() {
             self.capture_source_constant_function(
                 &name,
                 path,
@@ -286,7 +293,13 @@ impl RustParser {
             );
         }
         // Private inventory only; these bodies are never emitted or returned publicly.
-        if self.header_discovery {
+        if let Some(read) = &mut self.fn_mut_source_header_read {
+            read.resolved = Some(super::super::fn_mut_source_headers::ResolvedFnMutSourceHeader {
+                parameters: source_params.clone(),
+                result: source_result.clone(),
+            });
+        }
+        if self.header_discovery || fn_mut_replay {
             let close = self.declaration_body_boundary()?;
             return Ok(SFn {
                 source_state_transform: None,

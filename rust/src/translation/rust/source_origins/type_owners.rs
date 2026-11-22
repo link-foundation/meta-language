@@ -3,7 +3,7 @@ use super::{SourceDeclaration, SourceLookup, SourceOrigins};
 use crate::translation::rust_source_namespace_rules as namespace;
 
 pub(super) fn namespace_kind(entry:&SourceDeclaration)->&'static str{
-    match entry{SourceDeclaration::ExternalCrate=>"externalCrate",SourceDeclaration::Module=>"module",SourceDeclaration::Data=>"data",SourceDeclaration::Constructor {..}=>"ctor",SourceDeclaration::Function {..}=>"fn",SourceDeclaration::Constant {..}=>"const"}
+    match entry{SourceDeclaration::ExternalCrate=>"externalCrate",SourceDeclaration::Module=>"module",SourceDeclaration::Data=>"data",SourceDeclaration::Constructor {..}=>"ctor",SourceDeclaration::Function {..}|SourceDeclaration::FnMutTemplate(_)=>"fn",SourceDeclaration::Constant {..}=>"const"}
 }
 
 #[cfg(test)]

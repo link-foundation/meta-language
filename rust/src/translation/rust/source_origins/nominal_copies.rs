@@ -229,6 +229,7 @@ impl SourceOrigins {
             SourceDeclaration::Constant { result } => self.retain_nominal_copy_origin(result),
             SourceDeclaration::Data
             | SourceDeclaration::Module
+            | SourceDeclaration::FnMutTemplate(_)
             | SourceDeclaration::ExternalCrate => {}
         }
     }

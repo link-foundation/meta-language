@@ -26,6 +26,7 @@ impl RustParser {
         self.inner_attributes()?;
         let mut items = self.items(&[], ItemsEnd::File)?;
         self.finish_type_aliases()?;
+        self.finish_fn_mut_source_items(&mut items)?;
         self.install_ordinary_completion_declarations(&mut items)?;
         self.finish_standard_sum_source(&mut items)?;
         let main = self.main.take();
@@ -245,6 +246,9 @@ impl RustParser {
                     continue;
                 }
                 let item = if c.is("fn") {
+                    if self.capture_fn_mut_source_item(path)? {
+                        continue;
+                    }
                     self.function(path)?
                 } else {
                     self.const_item(path)?

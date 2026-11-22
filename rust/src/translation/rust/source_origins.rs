@@ -359,6 +359,7 @@ pub(super) enum SourceDeclaration {
         parameters: Vec<SourceOrigin>,
         result: SourceOrigin,
     },
+    FnMutTemplate(Box<super::fn_mut_source_declarations::FnMutSourceDeclaration>),
     Constant {
         result: SourceOrigin,
     },
@@ -616,6 +617,20 @@ impl SourceOrigins {
             let mut full_path = path.to_vec();
             full_path.push(name.to_owned());
             let key = full_path.join(".");
+            if let Some(existing) = self.namespace_entry(&key, "value") {
+                let compatible = match (existing, &entry) {
+                    (SourceDeclaration::FnMutTemplate(left), SourceDeclaration::FnMutTemplate(right)) => {
+                        left.declaration == right.declaration
+                    }
+                    (SourceDeclaration::FnMutTemplate(_), _) | (_, SourceDeclaration::FnMutTemplate(_)) => {
+                        type_owners::namespace_role(&entry) != "value"
+                    }
+                    _ => true,
+                };
+                if !compatible {
+                    return Err(super::type_error(format!("duplicate source declaration {key}"), None));
+                }
+            }
             if let Some(existing) = self.namespace_entry(&key,"type") {
                 if !crate::translation::rust_source_namespace_rules::accept_rust_source_namespace_declaration_pair(type_owners::namespace_kind(existing),type_owners::namespace_kind(&entry)) {
                     return Err(unsupported(
@@ -673,6 +688,7 @@ impl SourceOrigins {
                 }
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module
+                | SourceDeclaration::FnMutTemplate(_)
                 | SourceDeclaration::Data => {}
             }
         }
@@ -859,6 +875,7 @@ impl SourceOrigins {
                 SourceDeclaration::Constructor { result, .. } => return result,
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module
+                | SourceDeclaration::FnMutTemplate(_)
                 | SourceDeclaration::Data => {}
             }
         }
