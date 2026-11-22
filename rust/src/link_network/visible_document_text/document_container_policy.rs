@@ -75,6 +75,15 @@ pub(super) fn pdf_text_operator_kind(operator: &str) -> u8 {
     }
 }
 
+pub(super) fn pdf_marked_content_operator(operator: &str) -> u8 {
+    match operator {
+        "BMC" => 1,
+        "BDC" => 2,
+        "EMC" => 3,
+        _ => 0,
+    }
+}
+
 pub(super) fn pdf_drawing_operator(operator: &str) -> bool {
     matches!(
         operator,

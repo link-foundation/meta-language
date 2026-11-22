@@ -10,7 +10,8 @@ use super::document_container::{
 };
 use super::document_container_policy::{
     compose_pdf_matrices, document_stream_fits_budget, pdf_drawing_operator, pdf_lzw_code_width,
-    pdf_stream_filter_kind, pdf_text_operator_kind, translate_pdf_matrix,
+    pdf_marked_content_operator, pdf_stream_filter_kind, pdf_text_operator_kind,
+    translate_pdf_matrix,
 };
 use super::pdf_text_fonts::{
     PdfFont, decode_font_text, glyph_name, hex_bytes, pdf_whitespace, predefined_encoding,
@@ -187,6 +188,9 @@ fn name_of<'source>(source: &'source str, node: Option<&GrammarNode>) -> Cow<'so
 }
 
 type ObjectReference = (u64, u64);
+type MarkedContentOrder = HashMap<i32, usize>;
+type PageStructureOrder = HashMap<usize, MarkedContentOrder>;
+type PdfStructureOrder = HashMap<usize, PageStructureOrder>;
 
 fn object_reference(text: &str, node: &GrammarNode) -> Option<ObjectReference> {
     Some((
@@ -205,12 +209,15 @@ struct PdfStream<'source> {
     filter: String,
 }
 
+#[derive(Default)]
 struct TextRun {
     text: String,
     separated: bool,
     start: usize,
     end: usize,
     position: Option<TextPosition>,
+    rank: Option<usize>,
+    paint_order: usize,
 }
 
 #[derive(Clone, Copy)]
@@ -236,6 +243,25 @@ fn numeric_operand(source: &str, operand: &GrammarNode) -> Option<f64> {
         .filter(|value| value.is_finite())
 }
 
+fn dictionary_value<'node>(
+    source: &str,
+    node: Option<&'node GrammarNode>,
+    key: &str,
+) -> Option<&'node GrammarNode> {
+    let entry = node?.children.iter().find(|entry| {
+        entry.term == "dictionary_entry" && name_of(source, field(Some(entry), "key")) == key
+    })?;
+    field(Some(entry), "value")
+}
+
+fn marked_content_id(source: &str, node: Option<&GrammarNode>) -> Option<i32> {
+    let node = node.filter(|node| node.term == "integer")?;
+    text_of(source, Some(node))
+        .parse::<i32>()
+        .ok()
+        .filter(|id| *id >= 0)
+}
+
 fn transformation_matrix(
     values: impl Iterator<Item = Option<f64>>,
 ) -> Option<PdfTransformationMatrix> {
@@ -253,7 +279,7 @@ struct PdfDocument<'source> {
     errors: Vec<(&'source GrammarNode, &'static str)>,
 }
 
-struct TextState {
+struct TextState<'structure> {
     active: HashSet<usize>,
     separated: bool,
     ordinate: Option<f64>,
@@ -261,9 +287,12 @@ struct TextState {
     graphics: GraphicsState,
     saved_graphics: Vec<GraphicsState>,
     orderable: bool,
+    page: Option<usize>,
+    structure: Option<&'structure PageStructureOrder>,
+    rank: Option<usize>,
 }
 
-impl TextState {
+impl TextState<'_> {
     fn new(transform: PdfTransformationMatrix) -> Self {
         Self {
             active: HashSet::new(),
@@ -277,6 +306,9 @@ impl TextState {
             },
             saved_graphics: Vec::new(),
             orderable: true,
+            page: None,
+            structure: None,
+            rank: None,
         }
     }
 
@@ -306,7 +338,7 @@ impl TextState {
     }
 }
 
-fn order_page_text(runs: &mut Vec<TextRun>, start: usize) {
+fn order_positioned_page_text(runs: &mut Vec<TextRun>, start: usize) {
     let mut positions = Vec::new();
     for run in runs[start..].iter().filter(|run| run.separated) {
         let Some(position) = run
@@ -341,6 +373,32 @@ fn order_page_text(runs: &mut Vec<TextRun>, start: usize) {
             })
     });
     runs.extend(lines.into_iter().flat_map(|(_, runs)| runs));
+}
+
+fn order_page_text(runs: &mut Vec<TextRun>, start: usize, orderable: bool, has_structure: bool) {
+    if orderable {
+        order_positioned_page_text(runs, start);
+    }
+    if !has_structure {
+        return;
+    }
+    let mut positions = Vec::new();
+    let mut tagged = Vec::new();
+    for (offset, run) in runs[start..].iter_mut().enumerate() {
+        if let Some(rank) = run.rank {
+            positions.push(start + offset);
+            tagged.push((rank, run.paint_order, std::mem::take(run)));
+        }
+    }
+    if tagged.is_empty() {
+        return;
+    }
+    // Keep stream order within each marked sequence and preserve untagged slots.
+    tagged.sort_unstable_by_key(|(rank, paint_order, _)| (*rank, *paint_order));
+    for (position, (_, _, run)) in positions.into_iter().zip(tagged) {
+        runs[position] = run;
+    }
+    runs[start].separated = true;
 }
 
 struct PdfReader<'source> {
@@ -395,15 +453,66 @@ impl<'source> PdfReader<'source> {
     }
 
     fn get(&self, node: Option<&'source GrammarNode>, key: &str) -> Option<&'source GrammarNode> {
-        let dictionary = self.resolve(node?)?;
-        let entry = dictionary.children.iter().find(|entry| {
-            entry.term == "dictionary_entry" && name_of(self.text, field(Some(entry), "key")) == key
-        })?;
-        self.resolve(field(Some(entry), "value")?)
+        self.resolve(dictionary_value(self.text, self.resolve(node?), key)?)
     }
 
     fn kind(&self, node: Option<&'source GrammarNode>, key: &str) -> Cow<'source, str> {
         name_of(self.text, self.get(node, key))
+    }
+
+    fn read_structure_order(&self, catalog: Option<&'source GrammarNode>) -> PdfStructureOrder {
+        let mut pages = PdfStructureOrder::new();
+        let Some(first) = self.get(self.get(catalog, "StructTreeRoot"), "K") else {
+            return pages;
+        };
+        let mut visited = HashSet::new();
+        let mut pending = vec![(first, None)];
+        let mut next = 0;
+        while let Some((node, inherited)) = pending.pop() {
+            match node.term {
+                "array" if visited.insert(node.start) => {
+                    pending.extend(
+                        array_elements(Some(node))
+                            .rev()
+                            .filter_map(|child| self.resolve(child).map(|item| (item, inherited))),
+                    );
+                }
+                "dictionary" if self.kind(Some(node), "Type") != "MCR" => {
+                    if visited.insert(node.start)
+                        && let Some(children) = self.get(Some(node), "K")
+                    {
+                        pending.push((children, self.get(Some(node), "Pg").or(inherited)));
+                    }
+                }
+                "integer" | "dictionary" => {
+                    let Some(page) = self.get(Some(node), "Pg").or(inherited) else {
+                        continue;
+                    };
+                    let stream = self.get(Some(node), "Stm").unwrap_or(page);
+                    let identifier = if node.term == "integer" {
+                        Some(node)
+                    } else {
+                        self.get(Some(node), "MCID")
+                    };
+                    let Some(id) = marked_content_id(self.text, identifier) else {
+                        continue;
+                    };
+                    pages
+                        .entry(page.start)
+                        .or_default()
+                        .entry(stream.start)
+                        .or_default()
+                        .entry(id)
+                        .or_insert_with(|| {
+                            let rank = next;
+                            next += 1;
+                            rank
+                        });
+                }
+                _ => {}
+            }
+        }
+        pages
     }
 
     fn stream(&mut self, node: Option<&'source GrammarNode>) -> Option<Rc<PdfStream<'source>>> {
@@ -571,7 +680,7 @@ impl<'source> PdfReader<'source> {
         &mut self,
         node: Option<&'source GrammarNode>,
         resources: Option<&'source GrammarNode>,
-        state: &mut TextState,
+        state: &mut TextState<'_>,
         depth: usize,
     ) {
         let Some(node) = node.filter(|node| depth <= 16 && !state.active.contains(&node.start))
@@ -600,14 +709,50 @@ impl<'source> PdfReader<'source> {
                 .push((Rc::clone(&stream), Rc::clone(&tree)));
         }
         state.active.insert(node.start);
+        let ranks = state.structure.and_then(|structure| {
+            let scope = if depth == 0 { state.page? } else { node.start };
+            structure.get(&scope)
+        });
+        let inherited_rank = state.rank;
+        let mut marks = Vec::new();
         for operation in tree
             .children
             .iter()
             .filter(|operation| operation.term == "operation")
         {
-            self.operation(&stream, operation, resources, state, depth);
+            let operator = text_of(&stream.source, field(Some(operation), "operator"));
+            match (pdf_marked_content_operator(operator), ranks) {
+                (kind @ (1 | 2), Some(ranks)) => {
+                    marks.push(state.rank);
+                    if kind == 2 {
+                        let properties = operation
+                            .children
+                            .iter()
+                            .filter(|child| child.field == Some("operand"))
+                            .nth(1);
+                        let id = if properties.is_some_and(|node| node.term == "dictionary") {
+                            marked_content_id(
+                                &stream.source,
+                                dictionary_value(&stream.source, properties, "MCID"),
+                            )
+                        } else {
+                            let name = name_of(&stream.source, properties);
+                            let properties = self.get(self.get(resources, "Properties"), &name);
+                            marked_content_id(self.text, self.get(properties, "MCID"))
+                        };
+                        state.rank = id.and_then(|id| ranks.get(&id).copied()).or(state.rank);
+                    }
+                }
+                (3, Some(_)) => {
+                    if let Some(previous) = marks.pop() {
+                        state.rank = previous;
+                    }
+                }
+                _ => self.operation(&stream, operation, resources, state, depth),
+            }
         }
         state.active.remove(&node.start);
+        state.rank = inherited_rank;
     }
 
     fn operation(
@@ -615,7 +760,7 @@ impl<'source> PdfReader<'source> {
         stream: &PdfStream<'_>,
         operation: &GrammarNode,
         resources: Option<&'source GrammarNode>,
-        state: &mut TextState,
+        state: &mut TextState<'_>,
         depth: usize,
     ) {
         let source = &stream.source;
@@ -748,7 +893,7 @@ impl<'source> PdfReader<'source> {
         &mut self,
         stream: &PdfStream<'_>,
         node: Option<&GrammarNode>,
-        state: &mut TextState,
+        state: &mut TextState<'_>,
     ) {
         let Some(node) = node.filter(|node| matches!(node.term, "literal_string" | "hex_string"))
         else {
@@ -767,7 +912,7 @@ impl<'source> PdfReader<'source> {
         &mut self,
         stream: &PdfStream<'_>,
         node: &GrammarNode,
-        state: &mut TextState,
+        state: &mut TextState<'_>,
         text: String,
     ) {
         let (start, end) = if stream.filter.is_empty() {
@@ -775,12 +920,15 @@ impl<'source> PdfReader<'source> {
         } else {
             (stream.data.start, stream.data.end)
         };
+        let paint_order = self.output.text_runs.len();
         self.output.text_runs.push(TextRun {
             text,
             separated: state.separated,
             start,
             end,
             position: state.position_on_page(),
+            rank: state.rank,
+            paint_order,
         });
         state.separated = false;
     }
@@ -795,6 +943,7 @@ impl<'source> PdfReader<'source> {
             .iter()
             .copied()
             .find(|node| self.kind(Some(node), "Type") == "Catalog");
+        let structure = self.read_structure_order(catalog);
         if let Some(root) = self.get(catalog, "Pages") {
             let mut frames = vec![(root, None, IDENTITY_MATRIX)];
             let mut visited = HashSet::new();
@@ -827,6 +976,8 @@ impl<'source> PdfReader<'source> {
                     "Page" => {
                         let contents = self.get(Some(node), "Contents");
                         let mut state = TextState::new(rotation);
+                        state.page = Some(node.start);
+                        state.structure = structure.get(&node.start);
                         let page_start = self.output.text_runs.len();
                         if contents.is_some_and(|node| node.term == "array") {
                             for item in array_elements(contents) {
@@ -835,9 +986,12 @@ impl<'source> PdfReader<'source> {
                         } else {
                             self.visit_content(contents, resources, &mut state, 0);
                         }
-                        if state.orderable {
-                            order_page_text(&mut self.output.text_runs, page_start);
-                        }
+                        order_page_text(
+                            &mut self.output.text_runs,
+                            page_start,
+                            state.orderable,
+                            state.structure.is_some(),
+                        );
                     }
                     _ => {}
                 }

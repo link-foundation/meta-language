@@ -1801,7 +1801,10 @@ maps in page-tree order. Fully positioned horizontal lines on a page are
 ordered by descending baseline and then ascending horizontal position after
 applying page rotation, graphics transformations, and nested form matrices.
 Graphics state carries across page content streams and is scoped to each form.
-Lines without a common page coordinate system keep their content order. Projected
+Lines without a common page coordinate system keep their content order. Within
+each page, tagged text follows the structure tree. Marked-content identifiers
+are scoped to the page content or the referenced form stream. Untagged text
+keeps its position among the geometrically ordered runs. Projected
 coordinates use the runtime's string indices (JavaScript UTF-16 and Rust
 UTF-8). Source ranges index the original bytes of byte input or the UTF-8
 encoding of string input. Each projected

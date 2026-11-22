@@ -66,6 +66,14 @@ export function pdfTextOperatorKind(operator) {
   return 0;
 }
 
+/** @param {string} operator @returns {number} */
+export function pdfMarkedContentOperator(operator) {
+  if (operator === 'BMC') return 1;
+  if (operator === 'BDC') return 2;
+  if (operator === 'EMC') return 3;
+  return 0;
+}
+
 /** @param {string} operator @returns {boolean} */
 export function pdfDrawingOperator(operator) {
   return operator === 'q' || operator === 'Q' || operator === 'cm' || operator === 'm' || operator === 'l' || operator === 'c' || operator === 're' || operator === 'S' || operator === 's' || operator === 'f' || operator === 'f*' || operator === 'F' || operator === 'B' || operator === 'B*' || operator === 'b' || operator === 'b*' || operator === 'n' || operator === 'sh';

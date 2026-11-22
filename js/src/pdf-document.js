@@ -1,6 +1,6 @@
 import { inflateSync } from 'node:zlib';
 import {
-  composePdfMatrices, documentStreamFitsBudget, pdfDrawingOperator, pdfLzwCodeWidth, pdfStreamFilterKind,
+  composePdfMatrices, documentStreamFitsBudget, pdfDrawingOperator, pdfLzwCodeWidth, pdfMarkedContentOperator, pdfStreamFilterKind,
   pdfTextOperatorKind, translatePdfMatrix,
 } from './document-container-policy.js';
 import { parsePdfContentCst } from './pdf-grammar.js';
@@ -23,6 +23,13 @@ const textOf = (text, node) => node ? text.slice(node.start, node.end) : '';
 const numericOperand = (text, node) => ['integer', 'real'].includes(node?.term) ? Number(textOf(text, node)) : NaN;
 const nameOf = (text, node) => node?.term === 'name' ? textOf(text, node).slice(1)
   .replace(/#([0-9a-fA-F]{2})/gu, (_, digits) => String.fromCharCode(Number.parseInt(digits, 16))) : '';
+const dictionaryValue = (text, node, key) => field(node?.children.find(
+  child => child.term === 'dictionary_entry' && nameOf(text, field(child, 'key')) === key
+), 'value');
+const markedContentId = (text, node) => {
+  const value = node?.term === 'integer' ? numericOperand(text, node) : NaN;
+  return Number.isInteger(value) && value >= 0 && value <= 2147483647 ? value : null;
+};
 
 export function readPdfDocument(text, tree, decodeStreams) {
   const objects = new Map();
@@ -35,12 +42,44 @@ export function readPdfDocument(text, tree, decodeStreams) {
   function resolve(node) {
     return node?.term === 'indirect_reference' ? objects.get(objectReference(node)) : node;
   }
-  function entries(node) {
-    const dictionary = resolve(node);
-    return dictionary?.children.filter(child => child.term === 'dictionary_entry') ?? [];
-  }
   function get(node, key) {
-    return resolve(field(entries(node).find(entry => nameOf(text, field(entry, 'key')) === key), 'value'));
+    return resolve(dictionaryValue(text, resolve(node), key));
+  }
+
+  function readStructureOrder(catalog) {
+    const pages = new Map();
+    const first = get(get(catalog, 'StructTreeRoot'), 'K');
+    if (!first) return pages;
+    const visited = new Set();
+    const pending = [{ node: first, page: null }];
+    let next = 0;
+    while (pending.length) {
+      const { node, page: inherited } = pending.pop();
+      if (node.term === 'array') {
+        if (visited.has(node)) continue;
+        visited.add(node);
+        for (const child of arrayElements(node).reverse()) {
+          const item = resolve(child);
+          if (item) pending.push({ node: item, page: inherited });
+        }
+      } else if (node.term === 'dictionary' && nameOf(text, get(node, 'Type')) !== 'MCR') {
+        if (visited.has(node)) continue;
+        visited.add(node);
+        const children = get(node, 'K');
+        if (children) pending.push({ node: children, page: get(node, 'Pg') ?? inherited });
+      } else {
+        const page = get(node, 'Pg') ?? inherited;
+        const stream = get(node, 'Stm') ?? page;
+        const id = markedContentId(text, node.term === 'integer' ? node : get(node, 'MCID'));
+        if (!page || !stream || id === null) continue;
+        if (!pages.has(page)) pages.set(page, new Map());
+        const scopes = pages.get(page);
+        if (!scopes.has(stream)) scopes.set(stream, new Map());
+        const ranks = scopes.get(stream);
+        if (!ranks.has(id)) ranks.set(id, next++);
+      }
+    }
+    return pages;
   }
 
   let decodedBytes = 0;
@@ -135,6 +174,9 @@ export function readPdfDocument(text, tree, decodeStreams) {
     }
     state.active.add(node);
     const { source, data, filter } = stream;
+    const ranks = state.structure?.get(depth === 0 ? state.page : node);
+    const inheritedRank = state.rank;
+    const marks = [];
     const startOf = term => filter ? data.start : data.start + term.start;
     const endOf = term => filter ? data.end : data.start + term.end;
     function show(value) {
@@ -143,7 +185,7 @@ export function readPdfDocument(text, tree, decodeStreams) {
       if (!visible) return;
       textRuns.push({
         text: visible, start: startOf(value), end: endOf(value),
-        separated: state.separated, position: positionOnPage(state),
+        separated: state.separated, position: positionOnPage(state), rank: state.rank,
       });
       state.separated = false;
     }
@@ -206,19 +248,33 @@ export function readPdfDocument(text, tree, decodeStreams) {
         state.graphics.push({ transform, font, leading });
       } else if (operator === 'Q' && state.graphics.length) {
         Object.assign(state, state.graphics.pop());
+      } else if (ranks) {
+        const mark = pdfMarkedContentOperator(operator);
+        if (mark === 1 || mark === 2) {
+          marks.push(state.rank);
+          if (mark === 2) {
+            const properties = argumentsList[1];
+            const id = properties?.term === 'dictionary'
+              ? markedContentId(source, dictionaryValue(source, properties, 'MCID'))
+              : markedContentId(text, get(get(get(resources, 'Properties'), nameOf(source, properties)), 'MCID'));
+            state.rank = ranks.get(id) ?? state.rank;
+          }
+        } else if (mark === 3 && marks.length) state.rank = marks.pop();
       }
     }
     state.active.delete(node);
+    state.rank = inheritedRank;
 
     function showSpace(value) {
       const previous = textRuns.at(-1);
       if (previous && !state.separated && !previous.text.endsWith(' ')) {
-        textRuns.push({ text: ' ', start: startOf(value), end: endOf(value), separated: false, position: positionOnPage(state) });
+        textRuns.push({ text: ' ', start: startOf(value), end: endOf(value), separated: false, position: positionOnPage(state), rank: state.rank });
       }
     }
   }
 
   const catalog = [...objects.values()].find(node => nameOf(text, get(node, 'Type')) === 'Catalog');
+  const structure = readStructureOrder(catalog);
   const root = get(catalog, 'Pages');
   const frames = root ? [{ node: root, resources: undefined, rotation: identityMatrix }] : [];
   const visited = new Set();
@@ -235,12 +291,12 @@ export function readPdfDocument(text, tree, decodeStreams) {
       for (const kid of arrayElements(get(node, 'Kids')).reverse()) frames.push({ node: resolve(kid), resources, rotation });
     } else if (type === 'Page') {
       const contents = get(node, 'Contents');
-      const state = newTextState(rotation);
+      const state = newTextState(rotation, node, structure.get(node));
       const pageStart = textRuns.length;
       if (contents?.term === 'array') {
         for (const content of arrayElements(contents)) visitContent(resolve(content), resources, state);
       } else visitContent(contents, resources, state);
-      if (state.orderable) orderPageText(textRuns, pageStart);
+      orderPageText(textRuns, pageStart, state.orderable, Boolean(state.structure));
     }
   }
   if (!root) {
@@ -321,10 +377,11 @@ function decodeLzw(source, earlyChange, limit) {
   }
 }
 
-function newTextState(transform = identityMatrix) {
+function newTextState(transform = identityMatrix, page, structure) {
   return {
     active: new Set(), separated: true, font: null, ordinate: null,
     position: null, leading: 0, transform, graphics: [], orderable: true,
+    page, structure, rank: null,
   };
 }
 
@@ -351,7 +408,7 @@ function advanceLine(state) {
   state.position = translatePdfMatrix(state.position, 0, -state.leading);
 }
 
-function orderPageText(runs, start) {
+function orderPositionedPageText(runs, start) {
   const lines = [];
   for (let index = start; index < runs.length; index += 1) {
     if (runs[index].separated) {
@@ -364,6 +421,19 @@ function orderPageText(runs, start) {
   lines.sort((left, right) => right.position.y - left.position.y || left.position.x - right.position.x);
   const ordered = lines.flatMap(line => runs.slice(line.start, line.end));
   for (const [index, run] of ordered.entries()) runs[start + index] = run;
+}
+
+function orderPageText(runs, start, orderable, hasStructure) {
+  const tagged = hasStructure ? runs.slice(start).filter(run => run.rank !== null) : [];
+  if (orderable) orderPositionedPageText(runs, start);
+  if (tagged.length === 0) return;
+  // Keep stream order within each marked sequence and preserve untagged slots.
+  tagged.sort((left, right) => left.rank - right.rank);
+  let next = 0;
+  for (let index = start; index < runs.length; index += 1) {
+    if (runs[index].rank !== null) runs[index] = tagged[next++];
+  }
+  runs[start].separated = true;
 }
 
 function pageOperator(source, operation) {

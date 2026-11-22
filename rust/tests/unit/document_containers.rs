@@ -250,6 +250,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
     );
     check_reading_order(&fixture["readingOrder"]);
     check_reading_order(&fixture["transformedReadingOrder"]);
+    check_reading_order(&fixture["taggedReadingOrder"]);
     check_lzw_decoding(&fixture["lzw"]);
     for (requirement_id, assertions) in [
         (
@@ -269,6 +270,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
                 "pdfVisibleTextKeepsEncodedAndLiteralRanges",
                 "pdfPositionedLinesKeepReadingOrderAndRanges",
                 "pdfTransformedLinesKeepReadingOrderAndRanges",
+                "pdfTaggedSequencesKeepReadingOrderAndRanges",
             ][..],
         ),
     ] {

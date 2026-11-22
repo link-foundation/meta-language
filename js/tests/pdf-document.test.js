@@ -122,10 +122,11 @@ test('PDF streams and font Unicode keep the original ranges with both byte entry
   checkCorruptDecoding();
   checkReadingOrder(fixture.readingOrder);
   checkReadingOrder(fixture.transformedReadingOrder);
+  checkReadingOrder(fixture.taggedReadingOrder);
   checkLzwDecoding();
   for (const [requirementId, assertions] of [
     ['I195-I239-PDF-CONTENT-STREAMS', ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError']],
-    ['I195-I239-PDF-FONT-UNICODE', ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges', 'pdfTransformedLinesKeepReadingOrderAndRanges']],
+    ['I195-I239-PDF-FONT-UNICODE', ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges', 'pdfTransformedLinesKeepReadingOrderAndRanges', 'pdfTaggedSequencesKeepReadingOrderAndRanges']],
   ]) {
     recordIssue195Observations({ requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(),
       fixtureFile, assertions, testName: 'PDF streams and font Unicode keep the original ranges with both byte entry points' });
