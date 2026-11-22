@@ -822,7 +822,8 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         const error=readJavaScriptArgumentRestStateError(heap,frame.arguments,pending.state);if(error!=='')return error;if(suspended)return 'argument copying cannot hide a selected source callback';return '';
       }
       case 'waitIteratorProtocol':{
-        const state=pending.state,instruction=frame.position===0?undefined:fn.instructions[frame.position-1];
+        if(frame.position===0)return 'iterator work retains its actual source instruction and region';
+        const state=pending.state,instruction=fn.instructions[frame.position-1];
         if(instruction===undefined||instruction.$!=='iteratorProtocol')return 'iterator work retains its actual source instruction and region';
         if(instruction.destination!==pending.destination||instruction.done!==pending.done||instruction.slot!==pending.slot||instruction.realm!==pending.realm||instruction.operation!==pending.operation||state.operation!==pending.operation)return 'iterator work retains its actual source instruction and region';
         const error=readJavaScriptIteratorProtocolStateError(heap,state);if(error!=='')return error;if(pending.operation==='step'&&(state.readValue??true)!==(instruction.readValue??true))return 'iterator advancement retains its actual value-versus-elision choice';
