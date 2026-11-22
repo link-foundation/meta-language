@@ -739,6 +739,7 @@ impl<'a> Compiler<'a> {
                 Condition::Expected(self.expectations[&key])
             }
             "next" => Condition::Next(self.operation_item(operation, owner)?),
+            "atStart" => Condition::AtStart,
             "atEnd" => Condition::AtEnd,
             "equal" => {
                 let (left, right) = pair(self)?;

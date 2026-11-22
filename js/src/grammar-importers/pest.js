@@ -1,4 +1,6 @@
-import { GrammarBuilder, canonicalRepeat, choice, sequence } from '../grammar.js';
+import { readFileSync } from 'node:fs';
+import { Grammar, GrammarBuilder, canonicalRepeat, choice, sequence } from '../grammar.js';
+import { parseGrammarLinks } from '../grammar-links.js';
 import {
   Cursor,
   grammarFromRules,
@@ -7,16 +9,18 @@ import {
   unsupportedError,
 } from './common.js';
 import { decorateGrammar } from '../grammar-decorators.js';
+import { allowPestImplicitTrivia } from './pest-policy.js';
 
 const FORMAT = 'peg';
-const PEST_BUILTINS = [
-  'ANY', 'SOI', 'EOI', 'ASCII_DIGIT', 'ASCII_NONZERO_DIGIT', 'ASCII_BIN_DIGIT',
-  'ASCII_OCT_DIGIT', 'ASCII_HEX_DIGIT', 'ASCII_ALPHA_LOWER', 'ASCII_ALPHA_UPPER',
-  'ASCII_ALPHA', 'ASCII_ALPHANUMERIC', 'ASCII', 'NEWLINE',
-  'UNICODE', 'LETTER', 'CASED_LETTER', 'UPPERCASE_LETTER', 'LOWERCASE_LETTER',
-  'TITLECASE_LETTER', 'MODIFIER_LETTER', 'OTHER_LETTER', 'MARK', 'NUMBER',
-  'PUNCTUATION', 'SEPARATOR', 'SYMBOL', 'CONTROL', 'XID_START', 'XID_CONTINUE',
-];
+const STACK_RULES = new Set(['PUSH', 'PUSH_LITERAL', 'PEEK', 'PEEK_ALL', 'POP', 'POP_ALL', 'DROP']);
+const TRIVIA_RULES = ['WHITESPACE', 'COMMENT'];
+let builtInSources;
+
+export function pestBuiltInSource(name) {
+  builtInSources ??= new Map(readFileSync(new URL('../data/pest/built-ins.lino', import.meta.url), 'utf8')
+    .split('\n').slice(1).filter(Boolean).map(line => [line.slice(6, line.indexOf(' ', 6)), line]));
+  return builtInSources.get(name);
+}
 
 /** Imports pest PEG grammar source into the shared grammar representation. */
 export function importPest(source, options = {}) {
@@ -24,8 +28,82 @@ export function importPest(source, options = {}) {
 }
 
 function readPest(source) {
-  const parser = new PestParser(String(source));
-  return grammarFromRules(FORMAT, parser.parseRules(), null, PEST_BUILTINS);
+  const definitions = new PestParser(String(source)).parseRules();
+  const rules = new Map(definitions.map(definition => [definition.name, definition]));
+  const start = definitions[0]?.name;
+  if (!start) return grammarFromRules(FORMAT, []);
+  const grammar = new Grammar(start, rules, FORMAT);
+  const builtIns = grammar.undefinedNonterminals().map(name => [name, pestBuiltInSource(name)]);
+  const undefinedRule = builtIns.find(([, definition]) => !definition);
+  if (undefinedRule) throw parseError(FORMAT, `undefined non-terminal ${undefinedRule[0]}`);
+  if (builtIns.length > 0) {
+    const links = [`(grammar (start ${builtIns[0][0]}))`, ...builtIns.map(([, definition]) => definition)];
+    for (const [name, definition] of parseGrammarLinks(links.join('\n')).rules) rules.set(name, definition);
+  }
+  return grammarFromRules(FORMAT, lowerImplicitTrivia(rules), start);
+}
+
+function lowerImplicitTrivia(rules) {
+  const [whitespace, comment] = TRIVIA_RULES.map(name => rules.has(name) ? GrammarBuilder.ref(name) : null);
+  if (!whitespace && !comment) return [...rules.values()];
+  const spaces = whitespace && GrammarBuilder.repeat0(whitespace);
+  const comments = comment && GrammarBuilder.repeat0(sequence([comment, spaces].filter(Boolean)));
+  const trivia = { kind: 'token', item: sequence([spaces, comments].filter(Boolean)) };
+  const lowered = new Map();
+  const variants = new Map();
+  const pending = [];
+
+  function referencedRule(name, allowsTrivia) {
+    const definition = rules.get(name);
+    if (allowsTrivia || !definition || definition.modifier === undefined ||
+        ['@', '$', '!'].includes(definition.modifier) || TRIVIA_RULES.includes(name)) return name;
+    if (!variants.has(name)) {
+      let variant = `${name}_pest_atomic`;
+      while (rules.has(variant)) variant += '_';
+      variants.set(name, variant);
+      pending.push([variant, definition]);
+    }
+    return variants.get(name);
+  }
+
+  function withTrivia(expression, allowsTrivia) {
+    switch (expression.kind) {
+      case 'ref': return GrammarBuilder.ref(referencedRule(expression.name, allowsTrivia));
+      case 'seq': {
+        const items = expression.items.map(item => withTrivia(item, allowsTrivia));
+        return sequence(allowsTrivia ? items.flatMap((item, index) => index ? [trivia, item] : [item]) : items);
+      }
+      case 'choice': return choice(expression.items.map(item => withTrivia(item, allowsTrivia)), expression.ordered);
+      case 'repeat': case 'repeat0': case 'repeat1': {
+        const item = withTrivia(expression.item, allowsTrivia);
+        if (!allowsTrivia) return { ...expression, item };
+        const min = expression.min ?? (expression.kind === 'repeat1' ? 1 : 0);
+        const max = expression.max ?? null;
+        if (max === 0) return GrammarBuilder.empty();
+        const rest = max === 1 ? GrammarBuilder.empty()
+          : canonicalRepeat(sequence([trivia, item]), Math.max(min - 1, 0), max === null ? null : max - 1);
+        const repeated = sequence([item, rest]);
+        return min ? repeated : GrammarBuilder.optional(repeated);
+      }
+      case 'optional': case 'and': case 'not': return { ...expression, item: withTrivia(expression.item, allowsTrivia) };
+      default: return expression;
+    }
+  }
+
+  function lower(name, definition, inheritedTrivia) {
+    const allowsTrivia = allowPestImplicitTrivia(inheritedTrivia, TRIVIA_RULES.includes(definition.name),
+      ['@', '$'].includes(definition.modifier), definition.modifier === '!');
+    const expression = withTrivia(definition.expression, allowsTrivia);
+    const result = rule(name, expression, definition.kind);
+    if (name !== definition.name && definition.kind !== 'silent') {
+      result.action = [{ operation: 'buildNode', kind: definition.name }];
+    }
+    lowered.set(name, result);
+  }
+
+  for (const [name, definition] of rules) lower(name, definition, true);
+  for (const [name, definition] of pending) lower(name, definition, false);
+  return [...lowered.values()];
 }
 
 class PestParser extends Cursor {
@@ -60,15 +138,12 @@ class PestParser extends Cursor {
       }
       this.consume('=');
       this.skipSpace();
-      let kind = 'normal';
-      if (['_', '@', '$', '!'].includes(this.peek())) {
-        const modifier = this.take();
-        kind = { _: 'silent', '@': 'atomic', $: 'token' }[modifier] ?? 'normal';
-      }
+      const modifier = ['_', '@', '$', '!'].includes(this.peek()) ? this.take() : '';
+      const kind = { _: 'silent', '@': 'atomic', $: 'token' }[modifier] ?? 'normal';
       this.consume('{');
       const expression = this.alternation();
       this.consume('}');
-      rules.push(rule(name, expression, kind));
+      rules.push({ ...rule(name, expression, kind), modifier });
     }
     return rules;
   }
@@ -136,6 +211,7 @@ class PestParser extends Cursor {
     this.skipSpace();
     if (name === 'PUSH' && this.peek() === '(') throw unsupportedError(FORMAT, 'Push');
     if (name === 'PEEK' && this.peek() === '[') throw unsupportedError(FORMAT, 'PeekSlice');
+    if (STACK_RULES.has(name)) throw unsupportedError(FORMAT, `${name} stack rule`);
     return name === 'ANY' ? GrammarBuilder.any() : GrammarBuilder.ref(name);
   }
 }

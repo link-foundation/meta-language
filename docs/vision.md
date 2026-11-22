@@ -1582,6 +1582,14 @@ and UTF-8 bytes in Rust. Concrete tree coordinates use UTF-8 bytes in both
 runtimes. The `#grammar-match?` predicate composes with source text predicates
 over a captured link. Whole-input parsing continues to use the full source range.
 
+Pest imports resolve built-in character rules from shared Links data generated
+from the pinned Pest Unicode tables. Input-boundary rules evaluate at the
+absolute source positions, including during a grammar search. When Pest source
+defines `WHITESPACE` or `COMMENT`, the importer lowers the applicable sequence
+and repetition boundaries to explicit trivia matches. Atomic calls select rule
+variants that suppress implicit trivia, and non-atomic rules restore it.
+Unsupported Pest stack operations report their construct at import time.
+
 Grammar attributes preserve ordinary JavaScript own-key order: canonical
 array-index names come first numerically, other names retain insertion order,
 and overwrites retain position. The complete shared JavaScript kernel generates

@@ -877,6 +877,10 @@ impl Machine for ActionMachine<'_, '_, '_> {
         self.end == self.executor.end
     }
 
+    fn at_start(&mut self) -> bool {
+        self.end == 0
+    }
+
     fn matched(&mut self) -> OpResult<String> {
         Ok(self.executor.text(self.start, self.end))
     }
@@ -971,6 +975,10 @@ impl Machine for ScannerMachine<'_, '_> {
 
     fn at_end(&mut self) -> bool {
         self.cursor >= self.executor.end
+    }
+
+    fn at_start(&mut self) -> bool {
+        self.cursor == 0
     }
 
     fn lookahead(&mut self, item: &Expr) -> OpResult<bool> {

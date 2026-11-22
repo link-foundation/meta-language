@@ -14,6 +14,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   sentenceAbbreviations: 'https://github.com/link-foundation/meta-language/issues/232',
   larkRegexTerminals: 'https://github.com/link-foundation/meta-language/issues/233',
+  pestBuiltInRules: 'https://github.com/link-foundation/meta-language/issues/234',
   grammarAssetAvailability: 'https://github.com/link-foundation/meta-language/issues/244',
   pdfStreamNullCharacters: 'https://github.com/link-foundation/meta-language/issues/239',
   rankedLanguageIdentification: 'https://github.com/link-foundation/meta-language/issues/237',
@@ -481,6 +482,39 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       implementationEntryPoints: {
         javascript: ['js/src/grammar-importers/lark-regex.js', 'js/tests/grammar-lark.test.js'],
         rust: ['rust/src/grammar/import/lark/regex.rs', 'rust/tests/unit/grammar_import_lark.rs'],
+      },
+    })),
+    ...[
+      {
+        id: 'I195-I234-PEST-BUILT-IN-RULES',
+        construct: 'built-in ASCII and Unicode classes and input anchors',
+        expectedBehavior: 'Imported Pest grammars execute predefined character rules and positive input anchors. Searching at a later offset cannot satisfy the beginning-of-input anchor.',
+        selector: 'all built-in acceptance and rejection cases, and absolute anchor search spans',
+        assertions: ['builtInRulesExecute', 'anchorsUseAbsolutePositions'],
+      },
+      {
+        id: 'I195-I234-PEST-IMPLICIT-TRIVIA',
+        construct: 'implicit whitespace and comment insertion',
+        expectedBehavior: 'A declared whitespace or comment rule matches implicitly at sequence and repeat boundaries whenever the current Pest rule call allows implicit trivia.',
+        selector: 'all trivia acceptance and rejection cases across the rule modifiers',
+        assertions: ['implicitTriviaTracksAtomicContext'],
+      },
+      {
+        id: 'I195-I234-PEST-RULE-DIAGNOSTICS',
+        construct: 'undefined rules and unsupported stacks',
+        expectedBehavior: 'Undefined rule references and unsupported stack rules produce consistent explicit grammar import errors.',
+        selector: 'all grammar sources and exact diagnostic messages',
+        assertions: ['pestRuleDiagnosticsUseExactMessages'],
+      },
+    ].map(entry => ({
+      ...entry,
+      source: ISSUE_195_SOURCES.pestBuiltInRules,
+      language: 'Pest PEG grammars',
+      version: 'Pest 2.9.2 built-in character tables and grammar semantics',
+      fixture: 'parity/fixtures/pest-built-ins.lino',
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/pest.js', 'js/tests/grammar-importers.test.js'],
+        rust: ['rust/src/grammar/import/pest.rs', 'rust/tests/unit/grammar_import_pest.rs'],
       },
     })),
     ...[

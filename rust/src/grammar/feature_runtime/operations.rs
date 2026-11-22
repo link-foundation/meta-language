@@ -142,6 +142,7 @@ pub(super) enum Condition {
     /// (see `Expectations` in executor.rs).
     Expected(usize),
     Next(Expr),
+    AtStart,
     AtEnd,
     Equal(ValueOp, ValueOp),
     Less(ValueOp, ValueOp),
@@ -185,6 +186,9 @@ pub(super) trait Machine {
         false
     }
     fn column(&mut self) -> usize;
+    fn at_start(&mut self) -> bool {
+        false
+    }
     fn at_end(&mut self) -> bool;
     fn matched(&mut self) -> OpResult<String> {
         Err(OpError::Failed)
@@ -336,6 +340,7 @@ pub(super) fn evaluate_condition(
         Condition::Valid(token) => machine.requested() == Some(&**token),
         Condition::Expected(id) => machine.expected(*id),
         Condition::Next(item) => machine.lookahead(item)?,
+        Condition::AtStart => machine.at_start(),
         Condition::AtEnd => machine.at_end(),
         Condition::Equal(left, right) => {
             let left = evaluate_value(left, machine)?;
@@ -457,6 +462,7 @@ pub(super) fn allowed_in(context: &str, operation: &str) -> bool {
         "pushMode",
         "popMode",
         "setMode",
+        "atStart",
         "atEnd",
         "equal",
         "less",
@@ -492,6 +498,7 @@ pub(super) fn allowed_in(context: &str, operation: &str) -> bool {
         "fieldText",
     ];
     const PREDICATE: &[&str] = &[
+        "atStart",
         "atEnd",
         "equal",
         "less",
@@ -555,6 +562,10 @@ impl Machine for ValueMachine<'_, '_> {
 
     fn at_end(&mut self) -> bool {
         self.end == self.executor.end
+    }
+
+    fn at_start(&mut self) -> bool {
+        self.end == 0
     }
 
     fn matched(&mut self) -> OpResult<String> {

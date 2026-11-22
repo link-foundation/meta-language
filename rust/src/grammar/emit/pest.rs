@@ -1,6 +1,9 @@
-use std::fmt::Write as _;
+use std::{collections::BTreeMap, fmt::Write as _};
 
-use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, RuleKind};
+use crate::grammar::{
+    CharClassItem, FeatureExpr, FieldValue, Grammar, GrammarExpr, GrammarFormat, GrammarRule,
+    RuleKind, import::pest_built_in_source, parse_grammar_links,
+};
 
 use super::{
     EmitReport, GrammarEmitError, PEST_RULE_TEMPLATE, finish_lines, ordered_rules,
@@ -22,10 +25,41 @@ use super::{
 /// cannot form valid pest text, such as an empty choice, an empty character
 /// class, a descending character range, or counted repetition with `max < min`.
 pub fn emit_pest(grammar: &Grammar) -> Result<(String, EmitReport), GrammarEmitError> {
-    let mut emitter = PestEmitter::default();
+    let rules = ordered_rules(grammar);
+    let explicit_trivia = grammar.source_format() == Some(GrammarFormat::Peg)
+        && rules
+            .iter()
+            .any(|rule| contains_explicit_trivia(rule.expr()));
+    let mut emitter = PestEmitter {
+        explicit_trivia,
+        ..PestEmitter::default()
+    };
+    if explicit_trivia {
+        for name in ["WHITESPACE", "COMMENT"] {
+            if grammar.rule(name).is_none() {
+                continue;
+            }
+            let mut alias = format!("_pest_{name}");
+            while grammar.rule(&alias).is_some() {
+                alias.push('_');
+            }
+            emitter.names.insert(name, alias);
+        }
+    }
     let mut lines = Vec::new();
 
-    for rule in ordered_rules(grammar) {
+    for rule in rules {
+        if grammar.source_format() == Some(GrammarFormat::Peg)
+            && Some(rule.name()) != grammar.start()
+            && rule.kind() == RuleKind::Silent
+            && rule
+                .name()
+                .bytes()
+                .all(|byte| byte.is_ascii_uppercase() || byte.is_ascii_digit() || byte == b'_')
+            && matches_built_in(rule)
+        {
+            continue;
+        }
         if let Some(doc) = rule.doc() {
             push_doc_lines(&mut lines, doc);
         }
@@ -38,13 +72,71 @@ pub fn emit_pest(grammar: &Grammar) -> Result<(String, EmitReport), GrammarEmitE
         let body = emitter.emit_expr(rule.expr(), Precedence::Choice)?;
         lines.push(render_rule_line_with_modifier(
             PEST_RULE_TEMPLATE,
-            rule.name(),
+            emitter.name(rule.name()),
             rule_modifier(rule.kind()),
             &body,
         ));
     }
 
     Ok((finish_lines(&lines), emitter.report))
+}
+
+fn matches_built_in(rule: &GrammarRule) -> bool {
+    let name = rule.name();
+    let Some(source) = pest_built_in_source(name) else {
+        return false;
+    };
+    parse_grammar_links(&format!("(grammar (start {name}))\n{source}"))
+        .is_ok_and(|grammar| grammar.rule(name) == Some(rule))
+}
+
+fn token_item(feature: &FeatureExpr) -> Option<&GrammarExpr> {
+    let FeatureExpr::Form(form) = feature else {
+        return None;
+    };
+    match (form.head.as_str(), form.fields.as_slice()) {
+        ("token", [FieldValue::Expression(item)]) => Some(item),
+        _ => None,
+    }
+}
+
+fn contains_explicit_trivia(expr: &GrammarExpr) -> bool {
+    match expr {
+        GrammarExpr::Feature(feature) => {
+            let Some(item) = token_item(feature) else {
+                return false;
+            };
+            let mut first = item;
+            if let GrammarExpr::Sequence(items) = first {
+                let Some(item) = items.first() else {
+                    return false;
+                };
+                first = item;
+            }
+            let GrammarExpr::ZeroOrMore(item) = first else {
+                return false;
+            };
+            let first = if let GrammarExpr::Sequence(items) = item.as_ref() {
+                items.first()
+            } else {
+                Some(item.as_ref())
+            };
+            matches!(first, Some(GrammarExpr::NonTerminal(name)) if name == "WHITESPACE" || name == "COMMENT")
+        }
+        GrammarExpr::Sequence(items)
+        | GrammarExpr::Choice {
+            alternatives: items,
+            ..
+        } => items.iter().any(contains_explicit_trivia),
+        GrammarExpr::Optional(item)
+        | GrammarExpr::ZeroOrMore(item)
+        | GrammarExpr::OneOrMore(item)
+        | GrammarExpr::Repeat { expr: item, .. }
+        | GrammarExpr::And(item)
+        | GrammarExpr::Not(item)
+        | GrammarExpr::Capture { expr: item, .. } => contains_explicit_trivia(item),
+        _ => false,
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -59,9 +151,15 @@ enum Precedence {
 #[derive(Clone, Debug, Default)]
 struct PestEmitter {
     report: EmitReport,
+    names: BTreeMap<&'static str, String>,
+    explicit_trivia: bool,
 }
 
 impl PestEmitter {
+    fn name<'name>(&'name self, name: &'name str) -> &'name str {
+        self.names.get(name).map_or(name, String::as_str)
+    }
+
     fn emit_expr(
         &mut self,
         expr: &GrammarExpr,
@@ -80,7 +178,7 @@ impl PestEmitter {
                 (emit_char_class(*negated, items)?, Precedence::Atom)
             }
             GrammarExpr::AnyChar => ("ANY".to_string(), Precedence::Atom),
-            GrammarExpr::NonTerminal(name) => (name.clone(), Precedence::Atom),
+            GrammarExpr::NonTerminal(name) => (self.name(name).to_owned(), Precedence::Atom),
             GrammarExpr::Choice {
                 ordered,
                 alternatives,
@@ -113,6 +211,11 @@ impl PestEmitter {
                 (format!("!{inner}"), Precedence::Prefix)
             }
             GrammarExpr::Feature(feature) => {
+                if self.explicit_trivia
+                    && let Some(item) = token_item(feature)
+                {
+                    return self.emit_expr(item, parent);
+                }
                 return Err(unsupported_error(GrammarFormat::Peg, feature.head()));
             }
             GrammarExpr::Capture { label, expr } => {

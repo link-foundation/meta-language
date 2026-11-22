@@ -1,48 +1,40 @@
 //! Hand-written pest PEG importer, a port of
 //! `js/src/grammar-importers/pest.js`.
 
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
+
 use super::common::{
-    Cursor, canonical_repeat, choice, decimal, default_escapes, grammar_from_rules, is_space,
-    sequence,
+    Cursor, canonical_repeat, choice, collect_references, decimal, default_escapes,
+    grammar_from_rules, is_space, sequence,
 };
+use super::pest_policy::allow_pest_implicit_trivia;
 use super::{GrammarImportError, parse_error, unsupported_error};
-use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
+use crate::grammar::{
+    FeatureExpr, FeatureForm, FieldValue, Grammar, GrammarExpr, GrammarFormat, GrammarRule,
+    RuleKind, parse_grammar_links,
+};
 
 const FORMAT: GrammarFormat = GrammarFormat::Peg;
 
-/// The pest built-in rules a grammar may reference without defining them.
-const PEST_BUILTINS: &[&str] = &[
-    "ANY",
-    "SOI",
-    "EOI",
-    "ASCII_DIGIT",
-    "ASCII_NONZERO_DIGIT",
-    "ASCII_BIN_DIGIT",
-    "ASCII_OCT_DIGIT",
-    "ASCII_HEX_DIGIT",
-    "ASCII_ALPHA_LOWER",
-    "ASCII_ALPHA_UPPER",
-    "ASCII_ALPHA",
-    "ASCII_ALPHANUMERIC",
-    "ASCII",
-    "NEWLINE",
-    "UNICODE",
-    "LETTER",
-    "CASED_LETTER",
-    "UPPERCASE_LETTER",
-    "LOWERCASE_LETTER",
-    "TITLECASE_LETTER",
-    "MODIFIER_LETTER",
-    "OTHER_LETTER",
-    "MARK",
-    "NUMBER",
-    "PUNCTUATION",
-    "SEPARATOR",
-    "SYMBOL",
-    "CONTROL",
-    "XID_START",
-    "XID_CONTINUE",
+const BUILT_IN_RULES: &str = include_str!("../../data/pest-built-ins.lino");
+const STACK_RULES: &[&str] = &[
+    "PUSH",
+    "PUSH_LITERAL",
+    "PEEK",
+    "PEEK_ALL",
+    "POP",
+    "POP_ALL",
+    "DROP",
 ];
+const TRIVIA_RULES: &[&str] = &["WHITESPACE", "COMMENT"];
+
+pub(crate) fn pest_built_in_source(name: &str) -> Option<&'static str> {
+    BUILT_IN_RULES.lines().find(|line| {
+        line.strip_prefix("(rule ")
+            .and_then(|rule| rule.split_once(' '))
+            .is_some_and(|(rule, _)| rule == name)
+    })
+}
 
 /// Parses PEG `.pest` grammar text into the grammar IR.
 ///
@@ -64,8 +56,226 @@ pub fn import_pest(text: &str) -> Result<Grammar, GrammarImportError> {
     let mut parser = PestParser {
         cursor: Cursor::with_comments(text, FORMAT),
     };
-    let rules = parser.rules()?;
-    grammar_from_rules(FORMAT, rules, PEST_BUILTINS)
+    let mut definitions = parser.rules()?;
+    add_built_in_rules(&mut definitions)?;
+    let rules = lower_implicit_trivia(&definitions)?;
+    grammar_from_rules(FORMAT, rules, &[])
+}
+
+struct PestRule {
+    rule: GrammarRule,
+    modifier: Option<char>,
+}
+
+fn add_built_in_rules(definitions: &mut Vec<PestRule>) -> Result<(), GrammarImportError> {
+    let mut references = Vec::new();
+    for definition in definitions.iter() {
+        collect_references(definition.rule.expr(), &mut references);
+    }
+    let local: BTreeSet<_> = definitions
+        .iter()
+        .map(|definition| definition.rule.name())
+        .collect();
+    references.retain(|name| !local.contains(name.as_str()));
+    references.sort_unstable();
+    let Some(first) = references.first() else {
+        return Ok(());
+    };
+    let built_in: BTreeMap<_, _> = BUILT_IN_RULES
+        .lines()
+        .filter_map(|line| {
+            let (name, _) = line.strip_prefix("(rule ")?.split_once(' ')?;
+            Some((name, line))
+        })
+        .collect();
+    let mut links = format!("(grammar (start {first}))");
+    for name in references {
+        let source = built_in
+            .get(name.as_str())
+            .ok_or_else(|| parse_error(FORMAT, format!("undefined non-terminal {name}")))?;
+        links.push('\n');
+        links.push_str(source);
+    }
+    let grammar = parse_grammar_links(&links)?;
+    definitions.extend(grammar.rules().iter().cloned().map(|rule| PestRule {
+        rule,
+        modifier: None,
+    }));
+    Ok(())
+}
+
+struct ImplicitTrivia<'rules> {
+    rules: BTreeMap<&'rules str, &'rules PestRule>,
+    trivia: GrammarExpr,
+    variants: BTreeMap<String, String>,
+    pending: VecDeque<(String, &'rules PestRule)>,
+}
+
+fn lower_implicit_trivia(definitions: &[PestRule]) -> Result<Vec<GrammarRule>, GrammarImportError> {
+    let rules: BTreeMap<_, _> = definitions
+        .iter()
+        .map(|definition| (definition.rule.name(), definition))
+        .collect();
+    let spaces = rules
+        .contains_key("WHITESPACE")
+        .then(|| GrammarExpr::zero_or_more(GrammarExpr::NonTerminal("WHITESPACE".to_owned())));
+    let comments = rules.contains_key("COMMENT").then(|| {
+        GrammarExpr::zero_or_more(sequence(
+            std::iter::once(GrammarExpr::NonTerminal("COMMENT".to_owned()))
+                .chain(spaces.iter().cloned())
+                .collect(),
+        ))
+    });
+    if spaces.is_none() && comments.is_none() {
+        return Ok(definitions
+            .iter()
+            .map(|definition| definition.rule.clone())
+            .collect());
+    }
+    let trivia = GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+        "token",
+        vec![FieldValue::Expression(sequence(
+            spaces.into_iter().chain(comments).collect(),
+        ))],
+    )));
+    let mut lowering = ImplicitTrivia {
+        rules,
+        trivia,
+        variants: BTreeMap::new(),
+        pending: VecDeque::new(),
+    };
+    let mut lowered = Vec::new();
+    for definition in definitions {
+        lowered.push(lowering.rule(definition.rule.name(), definition, true)?);
+    }
+    while let Some((name, definition)) = lowering.pending.pop_front() {
+        lowered.push(lowering.rule(&name, definition, false)?);
+    }
+    Ok(lowered)
+}
+
+impl ImplicitTrivia<'_> {
+    fn referenced_rule(&mut self, name: &str, allows_trivia: bool) -> String {
+        let Some(&definition) = self.rules.get(name) else {
+            return name.to_owned();
+        };
+        if allows_trivia
+            || definition.modifier.is_none()
+            || matches!(definition.modifier, Some('@' | '$' | '!'))
+            || TRIVIA_RULES.contains(&name)
+        {
+            return name.to_owned();
+        }
+        if let Some(variant) = self.variants.get(name) {
+            return variant.clone();
+        }
+        let mut variant = format!("{name}_pest_atomic");
+        while self.rules.contains_key(variant.as_str()) {
+            variant.push('_');
+        }
+        self.variants.insert(name.to_owned(), variant.clone());
+        self.pending.push_back((variant.clone(), definition));
+        variant
+    }
+
+    fn rule(
+        &mut self,
+        name: &str,
+        definition: &PestRule,
+        inherited_trivia: bool,
+    ) -> Result<GrammarRule, GrammarImportError> {
+        let allows_trivia = allow_pest_implicit_trivia(
+            inherited_trivia,
+            TRIVIA_RULES.contains(&definition.rule.name()),
+            matches!(definition.modifier, Some('@' | '$')),
+            definition.modifier == Some('!'),
+        );
+        let expr = self.expression(definition.rule.expr(), allows_trivia)?;
+        let mut rule = GrammarRule::new(name, expr).with_kind(definition.rule.kind());
+        if name != definition.rule.name() && rule.kind() != RuleKind::Silent {
+            rule.attributes.action = Some(vec![FeatureForm::new(
+                "buildNode",
+                vec![FieldValue::Name(definition.rule.name.clone())],
+            )]);
+        }
+        Ok(rule)
+    }
+
+    fn expression(
+        &mut self,
+        expr: &GrammarExpr,
+        allows_trivia: bool,
+    ) -> Result<GrammarExpr, GrammarImportError> {
+        let lowered = match expr {
+            GrammarExpr::NonTerminal(name) => {
+                GrammarExpr::NonTerminal(self.referenced_rule(name, allows_trivia))
+            }
+            GrammarExpr::Sequence(items) => {
+                let mut interleaved = Vec::new();
+                for (index, item) in items.iter().enumerate() {
+                    if allows_trivia && index > 0 {
+                        interleaved.push(self.trivia.clone());
+                    }
+                    interleaved.push(self.expression(item, allows_trivia)?);
+                }
+                sequence(interleaved)
+            }
+            GrammarExpr::Choice {
+                ordered,
+                alternatives,
+            } => {
+                let items = alternatives
+                    .iter()
+                    .map(|item| self.expression(item, allows_trivia))
+                    .collect::<Result<_, _>>()?;
+                choice(items, *ordered)
+            }
+            GrammarExpr::Optional(item) => {
+                GrammarExpr::optional(self.expression(item, allows_trivia)?)
+            }
+            GrammarExpr::And(item) => GrammarExpr::and(self.expression(item, allows_trivia)?),
+            GrammarExpr::Not(item) => GrammarExpr::not(self.expression(item, allows_trivia)?),
+            GrammarExpr::ZeroOrMore(item) => self.repetition(item, 0, None, allows_trivia)?,
+            GrammarExpr::OneOrMore(item) => self.repetition(item, 1, None, allows_trivia)?,
+            GrammarExpr::Repeat { expr, min, max } => {
+                self.repetition(expr, *min, *max, allows_trivia)?
+            }
+            _ => expr.clone(),
+        };
+        Ok(lowered)
+    }
+
+    fn repetition(
+        &mut self,
+        item: &GrammarExpr,
+        min: usize,
+        max: Option<usize>,
+        allows_trivia: bool,
+    ) -> Result<GrammarExpr, GrammarImportError> {
+        let item = self.expression(item, allows_trivia)?;
+        if !allows_trivia {
+            return canonical_repeat(FORMAT, item, min as u64, max.map(|count| count as u64));
+        }
+        if max == Some(0) {
+            return Ok(GrammarExpr::Empty);
+        }
+        let rest = if max == Some(1) {
+            GrammarExpr::Empty
+        } else {
+            canonical_repeat(
+                FORMAT,
+                sequence(vec![self.trivia.clone(), item.clone()]),
+                min.saturating_sub(1) as u64,
+                max.map(|count| count as u64 - 1),
+            )?
+        };
+        let repeated = sequence(vec![item, rest]);
+        Ok(if min == 0 {
+            GrammarExpr::optional(repeated)
+        } else {
+            repeated
+        })
+    }
 }
 
 struct PestParser<'source> {
@@ -73,35 +283,39 @@ struct PestParser<'source> {
 }
 
 impl PestParser<'_> {
-    fn rules(&mut self) -> Result<Vec<GrammarRule>, GrammarImportError> {
-        let mut rules: Vec<GrammarRule> = Vec::new();
+    fn rules(&mut self) -> Result<Vec<PestRule>, GrammarImportError> {
+        let mut rules: Vec<PestRule> = Vec::new();
         loop {
             self.cursor.skip_space()?;
             if self.cursor.eof() {
                 return Ok(rules);
             }
             let name = self.cursor.identifier()?;
-            if rules.iter().any(|rule| rule.name == name) {
+            if rules.iter().any(|definition| definition.rule.name == name) {
                 return Err(parse_error(FORMAT, format!("duplicate rule {name}")));
             }
             self.cursor.consume("=")?;
             self.cursor.skip_space()?;
-            let kind = match self.cursor.peek() {
-                Some(modifier @ ('_' | '@' | '$' | '!')) => {
-                    self.cursor.take();
-                    match modifier {
-                        '_' => RuleKind::Silent,
-                        '@' => RuleKind::Atomic,
-                        '$' => RuleKind::Token,
-                        _ => RuleKind::Normal,
-                    }
-                }
+            let modifier = self
+                .cursor
+                .peek()
+                .filter(|value| matches!(value, '_' | '@' | '$' | '!'));
+            if modifier.is_some() {
+                self.cursor.take();
+            }
+            let kind = match modifier {
+                Some('_') => RuleKind::Silent,
+                Some('@') => RuleKind::Atomic,
+                Some('$') => RuleKind::Token,
                 _ => RuleKind::Normal,
             };
             self.cursor.consume("{")?;
             let expr = self.alternation()?;
             self.cursor.consume("}")?;
-            rules.push(GrammarRule::new(name, expr).with_kind(kind));
+            rules.push(PestRule {
+                rule: GrammarRule::new(name, expr).with_kind(kind),
+                modifier: Some(modifier.unwrap_or(' ')),
+            });
         }
     }
 
@@ -198,6 +412,9 @@ impl PestParser<'_> {
         }
         if name == "PEEK" && next == Some('[') {
             return Err(unsupported_error(FORMAT, "PeekSlice"));
+        }
+        if STACK_RULES.contains(&name.as_str()) {
+            return Err(unsupported_error(FORMAT, format!("{name} stack rule")));
         }
         Ok(if name == "ANY" {
             GrammarExpr::AnyChar

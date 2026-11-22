@@ -13,6 +13,7 @@ mod ebnf;
 mod gbnf;
 mod lark;
 mod pest;
+mod pest_policy;
 mod tree_sitter_json;
 
 pub use abnf::import_abnf;
@@ -22,6 +23,7 @@ pub use ebnf::import_ebnf;
 pub use gbnf::import_gbnf;
 pub use lark::import_lark;
 pub use pest::import_pest;
+pub(crate) use pest::pest_built_in_source;
 pub use tree_sitter_json::import_tree_sitter_json;
 
 /// Error raised while importing an external grammar notation.

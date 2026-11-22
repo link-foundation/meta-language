@@ -22,6 +22,8 @@ include = [
     "src/data/grammar-lock.lino",
     "src/data/language-catalog.lino",
     "src/data/native-grammars/*.lino",
+    "src/data/pest-built-ins.lino",
+    "src/data/pest-built-ins-license.txt",
     "src/data/concept-records.lino",
     "src/data/foundation-models.lino",
     "src/data/native-text-metadata.lino",
