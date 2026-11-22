@@ -24,6 +24,7 @@ use super::issue_195_observations::{Observation, record};
 mod renaming;
 
 const FIXTURE: &str = "parity/fixtures/grammar-merge.json";
+const PEST_EXPECTATIONS: &str = "parity/fixtures/pest-grammar-merge-expectations.lino";
 
 fn observe(requirement_id: &str, assertions: &[&str], test_name: &str) {
     let fixture_id = format!(
@@ -41,9 +42,22 @@ fn observe(requirement_id: &str, assertions: &[&str], test_name: &str) {
 }
 
 fn fixture() -> Value {
+    let mut fixture = read_fixture(FIXTURE);
+    let expectations = read_fixture(PEST_EXPECTATIONS);
+    fixture["expected"]["groups"] = expectations["groups"].clone();
+    for (key, value) in expectations["remerge"]
+        .as_object()
+        .expect("remerge expectations")
+    {
+        fixture["expected"]["remerge"][key.as_str()] = value.clone();
+    }
+    fixture
+}
+
+fn read_fixture(name: &str) -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
-        .join(FIXTURE);
+        .join(name);
     super::project_data::read_project_data(
         &fs::read_to_string(
             super::project_data::resolve_project_data_path(path)
