@@ -8,29 +8,95 @@ import {constructJavaScriptOwnedConstructorField,javaScriptConstructorFieldValue
 import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
 import {typeKey} from './types.js';
 const present=Symbol('unchanged nominal spread absence guards');
-export function forgetJavaScriptNominalSpreadGuard(env,name){if(env.has(present))env.set(present,env.get(present).filter(row=>row.name!==name));}
-export function readJavaScriptOptionalGuardBranch(condition,env,outcome,depth=0){
+const constructors=Symbol('unchanged nominal constructor guards');
+function fieldPath(node){
+ const fields=[];
+ while(node.k==='field'&&fields.length<256){fields.push(node.field);node=node.object;}
+ if(node.k!=='name'||node.path.length!==1)return null;
+ return {name:node.path[0],fields:fields.reverse()};
+}
+function samePath(left,right){return left.name===right.name&&left.fields.length===right.fields.length&&left.fields.every((field,index)=>field===right.fields[index]);}
+export function readJavaScriptGuardedConstructors(node,env){
+ if(!env.has(constructors))return undefined;
+ const path=fieldPath(node);
+ return path&&(env.get(constructors)??[]).find(fact=>samePath(fact,path));
+}
+export function forgetJavaScriptNominalSpreadGuard(env,name){
+ for(const kind of [present,constructors])if(env.has(kind))env.set(kind,env.get(kind).filter(row=>row.name!==name));
+}
+function immutableFieldPath(checker,node,env){
+ const path=fieldPath(node);
+ if(!path)return null;
+ let type=env.get(path.name);
+ for(const field of path.fields){
+  const owner=type?.kind==='option'?type.element:type;
+  const variants=owner?.kind==='data'?checker.items.get(owner.name)?.ctors:undefined;
+  const declared=variants?.flatMap(variant=>variant.fields.filter(candidate=>candidate.name===field));
+  if(!declared?.length)return null;
+  const selected=javaScriptConstructorFieldValueType(declared[0]);
+  if(declared.some(candidate=>typeKey(javaScriptConstructorFieldValueType(candidate))!==typeKey(selected)))return null;
+  type=declared.length===variants.length?selected:{kind:'option',element:selected,absence:'undefined'};
+ }
+ return {...path,type};
+}
+function joinedBranchFacts(original,left,right){
+ if(left===original||right===original)return original;
+ const absence=(left.get(present)??[]).filter(fact=>(right.get(present)??[]).some(other=>fact.absence===other.absence&&samePath(fact,other)));
+ const tags=(left.get(constructors)??[]).flatMap(fact=>{
+  const other=(right.get(constructors)??[]).find(other=>fact.owner===other.owner&&samePath(fact,other));
+  return other?[{...fact,names:[...new Set([...fact.names,...other.names])]}]:[];
+ });
+ return new Map(original).set(present,absence).set(constructors,tags);
+}
+function directTagTest(condition){
+ const test=condition.tagTest;
+ if(!test||condition.k!=='match'||condition.scrutinees.length!==1||condition.rows.length!==2)return null;
+ const actual=fieldPath(condition.scrutinees[0]),declared=fieldPath(test.object);
+ if(!actual||!declared||!samePath(actual,declared))return null;
+ const [matching,remaining]=condition.rows;
+ const pattern=matching.patterns[0];
+ if(matching.patterns.length!==1||pattern.k!=='ctor'||pattern.path.at(-1)!==test.tag||!pattern.args.every(arg=>arg.k==='wild')
+   ||remaining.patterns.length!==1||remaining.patterns[0].k!=='wild')return null;
+ if(matching.body.k!=='bool'||matching.body.value!==!test.negated||remaining.body.k!=='bool'||remaining.body.value!==test.negated)return null;
+ return test;
+}
+export function readJavaScriptOptionalGuardBranch(checker,condition,env,outcome,depth=0){
  if(depth>=256)return env;
- if(condition.k==='unary'&&condition.op==='not')return readJavaScriptOptionalGuardBranch(condition.arg,env,!outcome,depth+1);
+ if(condition.k==='unary'&&condition.op==='not')return readJavaScriptOptionalGuardBranch(checker,condition.arg,env,!outcome,depth+1);
+ const test=directTagTest(condition);
+ if(test){
+  const path=immutableFieldPath(checker,test.object,env);
+  const owner=path?.type?.kind==='option'?path.type.element:path?.type;
+  const variants=owner?.kind==='data'?checker.items.get(owner.name)?.ctors:undefined;
+  if(!variants?.some(variant=>variant.name===test.tag))return env;
+  const facts=env.get(constructors)??[],previous=facts.find(fact=>samePath(fact,path));
+  const names=(previous?.names??variants.map(variant=>variant.name)).filter(name=>(name===test.tag)===(outcome!==test.negated));
+  return new Map(env).set(constructors,[...facts.filter(fact=>fact!==previous),{...path,owner:owner.name,names}]);
+ }
  if(condition.k!=='binary')return env;
  const {op,left,right}=condition;
- if((op==='and'&&outcome)||(op==='or'&&!outcome)){
-  const first=readJavaScriptOptionalGuardBranch(left,env,outcome,depth+1);
-  return readJavaScriptOptionalGuardBranch(right,first,outcome,depth+1);
+ if(op==='and'||op==='or'){
+  const first=readJavaScriptOptionalGuardBranch(checker,left,env,outcome,depth+1);
+  if((op==='and')===outcome)return readJavaScriptOptionalGuardBranch(checker,right,first,outcome,depth+1);
+  const second=readJavaScriptOptionalGuardBranch(checker,right,env,outcome,depth+1);
+  return joinedBranchFacts(env,first,second);
  }
- const nameNode=left.k==='name'?left:right;
+ const nameNode=left.k==='name'||left.k==='field'?left:right;
  const literal=nameNode===left?right:left;
- if(nameNode.k!=='name'||nameNode.path.length!==1)return env;
- const name=nameNode.path[0],absence=literal.k==='none'?literal.absence:literal.k==='unit'?'undefined':'';
+ const absence=literal.k==='none'?literal.absence:literal.k==='unit'?'undefined':'';
  const arm=readJavaScriptNominalSpreadGuardArm(condition.k,op,absence);
- if(arm!==(outcome?1:2)||env.get(name)?.kind!=='option')return env;
+ if(arm!==(outcome?1:2))return env;
+ const path=immutableFieldPath(checker,nameNode,env);
+ if(!path)return env;
  const facts=env.get(present)??[];
- if(facts.some(fact=>fact.name===name&&fact.absence===absence))return env;
- return new Map(env).set(present,[...facts,{name,absence}]);
+ if(facts.some(fact=>fact.absence===absence&&samePath(fact,path)))return env;
+ return new Map(env).set(present,[...facts,{...path,absence}]);
 }
 export function projectJavaScriptGuardedOptional(node,value,env){
- if(value.type.kind!=='option'||node.k!=='name'||node.path.length!==1)return value;
- const exclusions=(env.get(present)??[]).filter(row=>row.name===node.path[0]).map(row=>row.absence);
+ if(value.type.kind!=='option'||!env.has(present))return value;
+ const path=fieldPath(node);
+ if(!path)return value;
+ const exclusions=(env.get(present)??[]).filter(row=>samePath(row,path)).map(row=>row.absence);
  const required=value.type.absence==='both'?['undefined','null']:[value.type.absence];
  return required.every(absence=>exclusions.includes(absence))?{k:'unwrapOption',arg:value,type:value.type.element}:value;
 }

@@ -258,6 +258,36 @@ fn absent_constructor_arm_retains_the_payload_of_an_optional_lookup() {
 }
 
 #[test]
+fn compound_nominal_guards_and_literal_branches_retain_their_types() {
+    let source = r#"
+        /** @typedef {{ $: 'count', payload: number } | { $: 'text', payload: string } | { $: 'other' }} Value */
+        /** @typedef {{ $: 'entry', current: Value, extra?: number }} Entry */
+        /** @param {Entry} entry @returns {number} */
+        function read(entry) {
+          if (entry.current.$ !== 'count' || entry.extra === undefined) return -1;
+          return entry.current.payload + entry.extra;
+        }
+        /** @param {boolean} skip @param {Entry[]} entries @returns {number} */
+        function select(skip, entries) {
+          const available = skip ? [] : entries;
+          const next = skip ? undefined : available[0];
+          return next === undefined ? -2 : read(next);
+        }
+        console.log(select(false, [{ $: 'entry', current: { $: 'count', payload: 4 }, extra: 3 }]));
+        console.log(select(false, [{ $: 'entry', current: { $: 'text', payload: 'four' }, extra: 3 }]));
+        console.log(select(false, [{ $: 'entry', current: { $: 'count', payload: 4 } }]));
+        console.log(select(true, []));
+    "#;
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&program).unwrap();
+    for text in [source, emitted.text.as_str()] {
+        let result = run(Command::new("node").args(["--input-type=module", "-e", text]));
+        assert!(result.ok, "{}", result.stderr);
+        assert_eq!(result.stdout, "7\n-1\n-1\n-2\n");
+    }
+}
+
+#[test]
 fn optional_tagged_fields_keep_own_presence_through_execution_and_typed_archives() {
     use meta_language::translation::emit_rust::emit_rust;
     use meta_language::{

@@ -413,7 +413,8 @@ struct Env {
     known: HashMap<String, Fact>,
     immutable_products: HashMap<String, bool>,
     own_properties: Vec<(String, String)>,
-    nominal_spread_absences: Vec<(String, String)>,
+    nominal_spread_absences: Vec<(javascript_nominal_spreads::FieldPath, String)>,
+    nominal_constructors: Vec<javascript_nominal_spreads::ConstructorGuard>,
     own_key_callback: Option<guarded_record_indices::OwnKeyCallbackOrigin>,
 }
 
@@ -427,7 +428,9 @@ impl Env {
         self.vars.insert(name.to_owned(), ty);
         self.immutable_products.remove(name);
         self.nominal_spread_absences
-            .retain(|(binder, _)| binder != name);
+            .retain(|(path, _)| path.root != name);
+        self.nominal_constructors
+            .retain(|guard| guard.path.root != name);
         self.own_properties
             .retain(|(object, key)| object != name && key != name);
         self.known.retain(|variable, fact| {

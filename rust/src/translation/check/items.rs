@@ -318,6 +318,7 @@ impl Checker {
                         immutable_products: HashMap::new(),
                         own_properties: Vec::new(),
                         nominal_spread_absences: Vec::new(),
+                        nominal_constructors: Vec::new(),
                         own_key_callback: None,
                     };
                     let body = self.expr(&item.body, &env, path, Some(&ret), false)?;
@@ -361,6 +362,7 @@ impl Checker {
                         immutable_products: HashMap::new(),
                         own_properties: Vec::new(),
                         nominal_spread_absences: Vec::new(),
+                        nominal_constructors: Vec::new(),
                         own_key_callback: None,
                     };
                     let mut prop = self.prop(&item.prop, &env, path)?;

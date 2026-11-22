@@ -33,7 +33,7 @@ import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
 import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-profile.js';
 import {checkJavaScriptObjectEnumeration} from './javascript-object-enumeration.js';
 import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-order-operations.js';
-import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,readJavaScriptOptionalGuardBranch,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
+import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,readJavaScriptGuardedConstructors,readJavaScriptOptionalGuardBranch,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
@@ -793,7 +793,8 @@ class Checker {
         if(value.type.kind==='data'&&this.items.get(value.type.name)?.sourceStandardCollectionCarrier)checkRustStandardCollectionObservation(value.type,name=>this.items.get(name),'field projection',node.span);
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
         if(guarded)return guarded;
-        return checkJavaScriptDataField(this,value,node.field,node.span)??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span,this.checkedProjection);
+        const field=checkJavaScriptDataField(this,value,node.field,node.span,false,readJavaScriptGuardedConstructors(node.object,env))??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span,this.checkedProjection);
+        return this.language==='JavaScript'?projectJavaScriptGuardedOptional(node,field,env):field;
       }
       case 'length': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
@@ -1076,7 +1077,27 @@ class Checker {
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
         const ownEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.cond,env):{then:env,else:env};
-        const branchesEnv=this.language==='JavaScript'?{then:readJavaScriptOptionalGuardBranch(node.cond,ownEnv.then,true),else:readJavaScriptOptionalGuardBranch(node.cond,ownEnv.else,false)}:ownEnv;
+        const branchesEnv=this.language==='JavaScript'?{then:readJavaScriptOptionalGuardBranch(this,node.cond,ownEnv.then,true),else:readJavaScriptOptionalGuardBranch(this,node.cond,ownEnv.else,false)}:ownEnv;
+        const firstAbsence=this.language==='JavaScript'&&(node.then.k==='none'||node.then.k==='unit');
+        const secondAbsence=this.language==='JavaScript'&&(node.else.k==='none'||node.else.k==='unit');
+        if(!expected&&(firstAbsence||secondAbsence)){
+          const then=this.expr(node.then,branchesEnv.then,path,undefined),otherwise=this.expr(node.else,branchesEnv.else,path,undefined);
+          const absence=value=>value.k==='unit'?'undefined':value.absence;
+          const value=firstAbsence?otherwise:then;
+          const owner=value.type.kind==='option'?value.type.element:value.type;
+          let policy=firstAbsence?absence(then):absence(otherwise);
+          if(firstAbsence&&secondAbsence)policy=mergeOptionalAbsence(policy,absence(otherwise));
+          else if(value.type.kind==='option')policy=mergeOptionalAbsence(policy,value.type.absence);
+          const type=option(owner,policy);
+          return {k:'if',cond,then:coerce(then,type,this.language,node.span),else:coerce(otherwise,type,this.language,node.span),type};
+        }
+        const emptyArray=node=>node.k==='array'&&node.items.length===0;
+        if(this.language==='JavaScript'&&!expected&&emptyArray(node.then)&&!emptyArray(node.else)){
+          const otherwise=this.expr(node.else,branchesEnv.else,path,undefined,allowLiteral);
+          const then=this.expr(node.then,branchesEnv.then,path,otherwise.type,allowLiteral);
+          const branches=unifyBranches(then,otherwise,expected,this.language,node.span);
+          return {k:'if',cond,then:branches[0],else:branches[1],type:branches[0].type};
+        }
         if (acceptSemanticBranchContextReordering(expected != null, needsBranchResultContext(node.then), needsBranchResultContext(node.else))) {
           let otherwise = this.expr(node.else, branchesEnv.else, path, undefined, allowLiteral);
           if (otherwise.type.kind === 'literal') otherwise = this.expr(node.else, branchesEnv.else, path, this.defaultNumber());
@@ -1655,7 +1676,7 @@ class Checker {
       let rightEnv=env;
       if(this.language==='JavaScript'){
         const branches=readJavaScriptOwnPropertyBranchEnvironments(node.left,env);
-        rightEnv=readJavaScriptOptionalGuardBranch(node.left,outcome?branches.then:branches.else,outcome);
+        rightEnv=readJavaScriptOptionalGuardBranch(this,node.left,outcome?branches.then:branches.else,outcome);
       }
       const right = this.expr(node.right, rightEnv, path, undefined);
       const operation = readOptionalLogicalOperation(this.language, left.type.kind, right.type.kind,

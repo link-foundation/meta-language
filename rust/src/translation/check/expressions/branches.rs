@@ -24,6 +24,18 @@ fn needs_branch_result_context(node: &SExpr, depth: usize) -> bool {
     }
 }
 
+fn javascript_literal_absence(source: &SExpr) -> Option<&str> {
+    match &source.node {
+        SNode::None { absence } => Some(absence),
+        SNode::Unit => Some("undefined"),
+        _ => None,
+    }
+}
+
+fn is_empty_array(source: &SExpr) -> bool {
+    matches!(&source.node, SNode::Array { items, .. } if items.is_empty())
+}
+
 impl Checker {
     #[allow(clippy::too_many_lines)]
     pub(super) fn check_literal_expression(
@@ -151,6 +163,26 @@ impl Checker {
                 self.apply_javascript_optional_guard(cond, &mut else_env, false, 0);
                 let checked = self.expr(cond, env, path, None, false)?;
                 let cond = self.boolean_value(checked, span)?;
+                if self.language == super::Language::JavaScript
+                    && matches!(context, ExpectedType::Concrete(None))
+                    && let Some((then, otherwise)) = self.check_javascript_literal_branches(
+                        (then, &then_env),
+                        (otherwise, &else_env),
+                        path,
+                        span,
+                        allow_literal,
+                    )?
+                {
+                    let ty = then.ty.clone();
+                    return Ok(Expr::new(
+                        Node::If {
+                            cond: Box::new(cond),
+                            then: Box::new(then),
+                            otherwise: Box::new(otherwise),
+                        },
+                        ty,
+                    ));
+                }
                 if crate::translation::semantic_input_rules::accept_semantic_branch_context_reordering(
                     !matches!(context, ExpectedType::Concrete(None)),
                     needs_branch_result_context(then, 0), needs_branch_result_context(otherwise, 0),
@@ -255,5 +287,54 @@ impl Checker {
                 unreachable!("the original dispatcher selects only this helper's retained variants")
             }
         }
+    }
+
+    fn check_javascript_literal_branches(
+        &mut self,
+        (then, then_env): (&SExpr, &Env),
+        (otherwise, else_env): (&SExpr, &Env),
+        path: &[String],
+        span: Option<super::Span>,
+        allow_literal: bool,
+    ) -> Result<Option<(Expr, Expr)>> {
+        let first = javascript_literal_absence(then);
+        let second = javascript_literal_absence(otherwise);
+        if let Some(absence) = first.or(second) {
+            use crate::translation::structured_type_rules::merge_optional_absence;
+            let then = self.expr(then, then_env, path, None, false)?;
+            let otherwise = self.expr(otherwise, else_env, path, None, false)?;
+            let selected = if first.is_some() {
+                &otherwise.ty
+            } else {
+                &then.ty
+            };
+            let (owner, policy) = if let Type::Option {
+                element,
+                absence: retained,
+            } = selected
+            {
+                (element.as_ref(), merge_optional_absence(absence, retained))
+            } else {
+                (
+                    selected,
+                    if first.is_some() && second.is_some() {
+                        merge_optional_absence(absence, second.unwrap_or(absence))
+                    } else {
+                        absence.to_owned()
+                    },
+                )
+            };
+            let ty = crate::translation::types::option(owner.clone(), policy);
+            return Ok(Some((
+                self.coerce(then, &ty, span)?,
+                self.coerce(otherwise, &ty, span)?,
+            )));
+        }
+        if is_empty_array(then) && !is_empty_array(otherwise) {
+            let otherwise = self.expr(otherwise, else_env, path, None, allow_literal)?;
+            let then = self.expr(then, then_env, path, Some(&otherwise.ty), allow_literal)?;
+            return self.unify_branches(then, otherwise, None, span).map(Some);
+        }
+        Ok(None)
     }
 }

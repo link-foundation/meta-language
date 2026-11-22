@@ -7,7 +7,118 @@ use crate::translation::javascript_constructor_presence::{field_value_type, own_
 use crate::translation::javascript_nominal_spread_rules as rules;
 use crate::translation::surface::SRecordEntry;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) struct FieldPath {
+    pub(super) root: String,
+    fields: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct ConstructorGuard {
+    pub(super) path: FieldPath,
+    pub(super) owner: String,
+    pub(super) names: Vec<String>,
+}
+
+impl FieldPath {
+    fn read(mut node: &SExpr) -> Option<Self> {
+        let mut fields = Vec::new();
+        while let SNode::Field { object, field } = &node.node {
+            if fields.len() == 256 {
+                return None;
+            }
+            fields.push(field.clone());
+            node = object;
+        }
+        fields.reverse();
+        Some(Self {
+            root: node.simple_name()?.to_owned(),
+            fields,
+        })
+    }
+}
+
+pub(super) fn guarded_constructors<'a>(node: &SExpr, env: &'a Env) -> Option<&'a ConstructorGuard> {
+    let path = FieldPath::read(node)?;
+    env.nominal_constructors
+        .iter()
+        .find(|guard| guard.path == path)
+}
+
+fn direct_tag_test(condition: &SExpr) -> Option<&crate::translation::surface::STagTest> {
+    use crate::translation::surface::SPatternNode;
+    let test = condition.tag_test.as_deref()?;
+    let SNode::Match { scrutinees, rows } = &condition.node else {
+        return None;
+    };
+    let [source] = scrutinees.as_slice() else {
+        return None;
+    };
+    let [matching, remaining] = rows.as_slice() else {
+        return None;
+    };
+    let [matched] = matching.patterns.as_slice() else {
+        return None;
+    };
+    let [fallback] = remaining.patterns.as_slice() else {
+        return None;
+    };
+    let SPatternNode::Ctor { path, args } = &matched.node else {
+        return None;
+    };
+    (source == &test.object
+        && path.last() == Some(&test.tag)
+        && args
+            .iter()
+            .all(|arg| matches!(&arg.node, SPatternNode::Wild))
+        && matches!(&fallback.node, SPatternNode::Wild)
+        && matches!(&matching.body.node, SNode::Bool { value } if *value != test.negated)
+        && matches!(&remaining.body.node, SNode::Bool { value } if *value == test.negated))
+    .then_some(test)
+}
+
 impl Checker {
+    fn immutable_nominal_path(&self, node: &SExpr, env: &Env) -> Option<(FieldPath, Type)> {
+        let path = FieldPath::read(node)?;
+        let mut ty = env.vars.get(&path.root)?.clone();
+        for field in &path.fields {
+            let owner = if let Type::Option { element, .. } = &ty {
+                element.as_ref()
+            } else {
+                &ty
+            };
+            let Type::Data { name } = owner else {
+                return None;
+            };
+            let variants = &self.data_decl(name).ok()?.ctors;
+            let declared = variants
+                .iter()
+                .filter_map(|variant| {
+                    variant
+                        .fields
+                        .iter()
+                        .find(|candidate| &candidate.name == field)
+                })
+                .collect::<Vec<_>>();
+            let value = |field: &crate::translation::ir::Field| {
+                field_value_type(&field.ty)
+                    .filter(|_| field.optional)
+                    .unwrap_or(&field.ty)
+                    .clone()
+            };
+            let selected = value(declared.first()?);
+            if declared.iter().any(|field| value(field) != selected) {
+                return None;
+            }
+            ty = if declared.len() == variants.len() {
+                selected
+            } else {
+                crate::translation::types::option(selected, "undefined")
+            };
+        }
+        Some((path, ty))
+    }
+
     pub(super) fn apply_javascript_optional_guard(
         &self,
         condition: &SExpr,
@@ -26,56 +137,147 @@ impl Checker {
             self.apply_javascript_optional_guard(arg, env, !outcome, depth + 1);
             return;
         }
+        if let Some(test) = direct_tag_test(condition) {
+            let Some((path, ty)) = self.immutable_nominal_path(&test.object, env) else {
+                return;
+            };
+            let ty = if let Type::Option { element, .. } = ty {
+                *element
+            } else {
+                ty
+            };
+            let Type::Data { name: owner } = ty else {
+                return;
+            };
+            let Ok(entry) = self.data_decl(&owner) else {
+                return;
+            };
+            if !entry.ctors.iter().any(|variant| variant.name == test.tag) {
+                return;
+            }
+            let previous = env
+                .nominal_constructors
+                .iter()
+                .position(|guard| guard.path == path);
+            let mut names = previous.map_or_else(
+                || {
+                    entry
+                        .ctors
+                        .iter()
+                        .map(|variant| variant.name.clone())
+                        .collect::<Vec<_>>()
+                },
+                |index| env.nominal_constructors.remove(index).names,
+            );
+            names.retain(|name| (*name == test.tag) == (outcome != test.negated));
+            env.nominal_constructors
+                .push(ConstructorGuard { path, owner, names });
+            return;
+        }
         let SNode::Binary {
             op, left, right, ..
         } = &condition.node
         else {
             return;
         };
-        if (*op == BinaryOp::And && outcome) || (*op == BinaryOp::Or && !outcome) {
-            self.apply_javascript_optional_guard(left, env, outcome, depth + 1);
-            self.apply_javascript_optional_guard(right, env, outcome, depth + 1);
+        if matches!(op, BinaryOp::And | BinaryOp::Or) {
+            if (*op == BinaryOp::And) == outcome {
+                self.apply_javascript_optional_guard(left, env, outcome, depth + 1);
+                self.apply_javascript_optional_guard(right, env, outcome, depth + 1);
+            } else {
+                let mut first = env.clone();
+                let mut second = env.clone();
+                self.apply_javascript_optional_guard(left, &mut first, outcome, depth + 1);
+                self.apply_javascript_optional_guard(right, &mut second, outcome, depth + 1);
+                env.nominal_spread_absences = first
+                    .nominal_spread_absences
+                    .into_iter()
+                    .filter(|fact| second.nominal_spread_absences.contains(fact))
+                    .collect();
+                env.nominal_constructors = first
+                    .nominal_constructors
+                    .into_iter()
+                    .filter_map(|mut guard| {
+                        let other = second
+                            .nominal_constructors
+                            .iter()
+                            .find(|other| other.path == guard.path && other.owner == guard.owner)?;
+                        for name in &other.names {
+                            if !guard.names.contains(name) {
+                                guard.names.push(name.clone());
+                            }
+                        }
+                        Some(guard)
+                    })
+                    .collect();
+            }
             return;
         }
-        let (name, literal) = if let Some(name) = left.simple_name() {
-            (name, &right.node)
-        } else if let Some(name) = right.simple_name() {
-            (name, &left.node)
+        let absence = |node: &SExpr| match &node.node {
+            SNode::None { absence } => Some(absence.clone()),
+            SNode::Unit => Some("undefined".to_owned()),
+            _ => None,
+        };
+        let (source, absence) = if let Some(absence) = absence(right) {
+            (left, absence)
+        } else if let Some(absence) = absence(left) {
+            (right, absence)
         } else {
             return;
         };
-        let absence = match literal {
-            SNode::None { absence } => absence.as_str(),
-            SNode::Unit => "undefined",
-            _ => return,
-        };
-        let arm = rules::read_java_script_nominal_spread_guard_arm("binary", op.name(), absence);
-        if arm != if outcome { 1.0 } else { 2.0 }
-            || !matches!(env.vars.get(name), Some(Type::Option { .. }))
-            || env
-                .nominal_spread_absences
-                .iter()
-                .any(|(binder, kind)| binder == name && kind == absence)
-        {
+        let arm = rules::read_java_script_nominal_spread_guard_arm("binary", op.name(), &absence);
+        if arm != if outcome { 1.0 } else { 2.0 } {
             return;
         }
-        env.nominal_spread_absences
-            .push((name.to_owned(), absence.to_owned()));
+        let Some((path, _)) = self.immutable_nominal_path(source, env) else {
+            return;
+        };
+        if !env
+            .nominal_spread_absences
+            .iter()
+            .any(|fact| fact.0 == path && fact.1 == absence)
+        {
+            env.nominal_spread_absences.push((path, absence));
+        }
     }
+
     pub(super) fn guarded_nominal_optional(&self, node: &SExpr, value: Expr, env: &Env) -> Expr {
+        self.project_guarded_nominal_optional(FieldPath::read(node), value, env)
+    }
+
+    pub(super) fn guarded_nominal_field_optional(
+        &self,
+        object: &SExpr,
+        field: &str,
+        value: Expr,
+        env: &Env,
+    ) -> Expr {
+        let path = FieldPath::read(object)
+            .filter(|path| path.fields.len() < 256)
+            .map(|mut path| {
+                path.fields.push(field.to_owned());
+                path
+            });
+        self.project_guarded_nominal_optional(path, value, env)
+    }
+
+    fn project_guarded_nominal_optional(
+        &self,
+        path: Option<FieldPath>,
+        value: Expr,
+        env: &Env,
+    ) -> Expr {
         if self.language != Language::JavaScript {
             return value;
         }
-        let Some(name) = node.simple_name() else {
-            return value;
-        };
         let Type::Option { element, absence } = &value.ty else {
             return value;
         };
+        let Some(path) = path else { return value };
         let excluded = |absence: &str| {
             env.nominal_spread_absences
                 .iter()
-                .any(|(binder, kind)| binder == name && kind == absence)
+                .any(|(field, kind)| field == &path && kind == absence)
         };
         if if absence == "both" {
             excluded("null") && excluded("undefined")
@@ -93,6 +295,7 @@ impl Checker {
             value
         }
     }
+
     pub(super) fn nominal_spread_literal(
         &mut self,
         entries: &[SRecordEntry],

@@ -21,6 +21,37 @@ const number = { kind: 'float' };
 const text = { kind: 'string' };
 const unit = { kind: 'unit' };
 
+test('compound guards refine the exact immutable nominal field path', () => {
+  const source = `
+/** @typedef {{ $: 'count', payload: number } | { $: 'text', payload: string } | { $: 'other' }} Value */
+/** @typedef {{ $: 'entry', current: Value, extra?: number }} Entry */
+/** @param {Entry} entry @returns {number} */
+function read(entry) {
+  if (entry.current.$ !== 'count' || entry.extra === undefined) return -1;
+  return entry.current.payload + entry.extra;
+}
+console.log(read({ $: 'entry', current: { $: 'count', payload: 4 }, extra: 3 }));
+console.log(read({ $: 'entry', current: { $: 'text', payload: 'four' }, extra: 3 }));
+console.log(read({ $: 'entry', current: { $: 'count', payload: 4 } }));`;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), '7\n-1\n-1\n');
+});
+
+test('literal absence and empty arrays acquire the type of the other branch', () => {
+  const source = `
+/** @typedef {{ $: 'row', name: string }} Row */
+/** @param {boolean} skip @param {Row[]} rows @returns {string} */
+function read(skip, rows) {
+  const selected = skip ? [] : rows;
+  const next = skip ? undefined : selected[0];
+  return next === undefined ? 'empty' : next.name;
+}
+console.log(read(false, [{ $: 'row', name: 'sample' }]));
+console.log(read(true, []));`;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), 'sample\nempty\n');
+});
+
 test('an absent constructor case retains the payload of an optional lookup in another case', () => {
   const source = `
     /** @typedef {{$:'indexed', index:number} | {$:'absent'}} Selection */
