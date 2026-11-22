@@ -2,7 +2,7 @@
 
 use super::{Checker, Env, Expr, Node, Result, SExpr, Span, Type, type_error, unsupported};
 use crate::translation::frontend_rules::ml_array::number_index;
-use crate::translation::ir::RecordEntry;
+use crate::translation::ir::{Decl, RecordEntry};
 use crate::translation::javascript_constructor_presence as presence;
 use crate::translation::record_value_rules as rules;
 use crate::translation::surface::SRecordEntry;
@@ -652,6 +652,16 @@ impl Checker {
     ) -> Result<Expr> {
         let value = self.expr(object, env, path, None, false)?;
         let value = Self::reference_value(value);
+        if let Type::Data { name } = &value.ty
+            && matches!(self.decls.get(name), Some(Decl::Data(data)) if data.source_standard_collection_carrier.is_some())
+        {
+            crate::translation::rust_standard_collection_carriers::check_observation(
+                &value.ty,
+                |name| self.decls.get(name),
+                "field projection",
+                span,
+            )?;
+        }
         if self.checked_projection && matches!(value.ty, Type::Record { .. }) {
             return Ok(Self::record_field(value, field, span)?.expect("checked record field"));
         }

@@ -356,6 +356,8 @@ impl Threader<'_> {
                 module_path: Vec::new(),
                 generated: true,
                 output: true,
+                source_standard_collection_library_owner: None,
+                source_standard_collection_carrier: None,
                 source_unit_clone_derivation: None,
                 source_field_signatures: None,
             },

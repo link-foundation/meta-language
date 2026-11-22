@@ -43,6 +43,10 @@ pub(super) fn project_function_result_types(
 }
 
 pub(super) fn project_data(data: &DataDecl, program: &Program) -> Result<SItem> {
+    let mut source_standard_collection_carrier = data.source_standard_collection_carrier.clone();
+    if let Some(carrier) = &mut source_standard_collection_carrier {
+        carrier.kernel_type = project_type(&carrier.kernel_type, program)?;
+    }
     Ok(SItem::Data(SData {
         name: data.name.clone(),
         ctors: data
@@ -69,6 +73,8 @@ pub(super) fn project_data(data: &DataDecl, program: &Program) -> Result<SItem> 
             .collect::<Result<_>>()?,
         span: data.span,
         generated: data.generated,
+        source_standard_collection_library_owner: data.source_standard_collection_library_owner.clone(),
+        source_standard_collection_carrier,
         source_unit_clone_derivation: data.source_unit_clone_derivation.clone().map(Box::new),
         source_field_signatures: data.source_field_signatures.clone(),
     }))

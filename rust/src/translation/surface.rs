@@ -595,6 +595,12 @@ pub struct SParam {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SData {
+    /// Source owner of a projected standard collection library declaration.
+    #[serde(default, rename = "sourceStandardCollectionLibraryOwner", skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_library_owner: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionLibraryOwner>>,
+    /// Concrete front-end collection identity and its actual kernel declaration links.
+    #[serde(default, rename = "sourceStandardCollectionCarrier", skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_carrier: Option<Box<super::rust_standard_collection_carriers::CollectionCarrier>>,
     pub name: String,
     pub ctors: Vec<SCtor>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -622,6 +628,9 @@ pub struct SData {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SFn {
+    /// Source owner of a projected standard collection library declaration.
+    #[serde(default, rename = "sourceStandardCollectionLibraryOwner", skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_library_owner: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionLibraryOwner>>,
     /// Restriction selector; only an opaque admitted-loop witness authenticates it.
     #[serde(default,rename="sourceFiniteRecordLoopHelper",skip_serializing_if="is_false")]
     pub source_finite_record_loop_helper: bool,

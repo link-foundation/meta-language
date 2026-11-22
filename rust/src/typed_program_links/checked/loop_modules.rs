@@ -37,6 +37,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
         source_empty_option: function.source_empty_option.clone().map(Box::new),
         source_type_namespace: function.source_type_namespace.clone().map(Box::new),
         source_loop: function.source_loop.clone().map(Box::new),
+        source_standard_collection_library_owner: function.source_standard_collection_library_owner.clone(),
         source_pure_unit: function.source_pure_unit.clone().map(Box::new),
         source_local_state: function.source_local_state.clone().map(Box::new),
         source_const_function: function.source_const_function.clone().map(Box::new),
@@ -79,7 +80,8 @@ pub(super) fn project_module(
             unreachable!("program items are declarations or modules");
         };
         if let Some(Decl::Data(data)) = program.declaration(full_name)
-            && program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_type_namespace.is_some()) || matches!(declaration, Decl::Data(data) if data.source_unit_clone_derivation.is_some()))
+            && (data.source_standard_collection_library_owner.is_some() || data.source_standard_collection_carrier.is_some()
+                || program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_type_namespace.is_some()) || matches!(declaration, Decl::Data(data) if data.source_unit_clone_derivation.is_some())))
         {
             if data.module_path != actual_path
                 || data.full_name != *full_name

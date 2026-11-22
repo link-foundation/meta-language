@@ -8,9 +8,15 @@ export function extendExclusiveSourceSchema(before){
   after.fields[field]=label;
  }
  const install=(table,key,value)=>{if(!table||typeof table!=='object'||Array.isArray(table))throw new TypeError('collection ownership needs complete reference vocabulary');if(Object.hasOwn(table,key)&&JSON.stringify(table[key])!==JSON.stringify(value))throw new TypeError('preserve conflicting collection ownership reference');table[key]=value;};
- const roles=[['standardCollectionLibraryDeclaration','standard collection library declaration reference','declaration'],['standardCollectionKernel','standard collection kernel reference','kernelDeclaration'],['standardCollectionPacket','standard collection packet reference','packetDeclaration']];
- for(const [role,label,field]of roles){install(after.references,role,label);install(after.referenceSourceFields,role,[['','',field]]);install(after.referenceTargetFields,role,'fullName');}
- if(after.optionalReferenceRoles!==undefined&&(!Array.isArray(after.optionalReferenceRoles)||after.optionalReferenceRoles.some(role=>typeof role!=='string'||!Object.hasOwn(after.references,role))))throw new TypeError('optional references must retain actual declared roles');
- after.optionalReferenceRoles=[...new Set([...(after.optionalReferenceRoles??[]),...roles.map(row=>row[0])])];
+ const roles=[
+  ['standardCollectionLibraryDeclaration','standard collection library declaration reference','Rust standard collection projected library owner 1','declaration'],
+  ['standardCollectionKernel','standard collection kernel reference','Rust standard collection kernel library 1','kernelDeclaration'],
+  ['standardCollectionPacket','standard collection packet reference','Rust standard collection kernel library 1','packetDeclaration'],
+ ];
+ for(const [role,label,model,field]of roles){
+  install(after.references,role,label);
+  install(after.referenceSourceFields,role,[['',model,field]]);
+  install(after.referenceTargetFields,role,'fullName');
+ }
  return after;
 }

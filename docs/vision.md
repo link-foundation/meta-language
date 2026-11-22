@@ -260,7 +260,10 @@ The generated Links graph must agree with the independently checked bodies and
 original declaration owners. The nominal packet retains the distinct normal,
 invalid and resource continuations. Source lowering additionally requires
 actual call and loan witnesses to authorize the represented value/state
-transitions. Custom hash/equality behavior and further collection families
+transitions. Each concrete carrier links to its generic state and packet
+declarations. Each projected library owner links to its own checked declaration.
+These references retain declaration identity after source-free reload.
+Custom hash/equality behavior and further collection families
 require separate source interpretations. Recursive metadata, live loans,
 entries and text retain explicit resource bounds across representations.
 

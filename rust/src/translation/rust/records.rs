@@ -255,6 +255,8 @@ impl RustParser {
             }],
             span: span(&start, self.cursor.peek()),
             generated: false,
+            source_standard_collection_library_owner: None,
+            source_standard_collection_carrier: None,
             source_unit_clone_derivation: None,
             source_field_signatures,
         })

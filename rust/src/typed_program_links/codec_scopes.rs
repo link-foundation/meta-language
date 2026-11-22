@@ -69,6 +69,10 @@ impl Decoder<'_> {
     pub(super) fn type_kind(&self, id: LinkId) -> &str {
         self.tag(id, "kind")
     }
+    pub(super) fn reference_type_kind(&self, id: LinkId) -> &str {
+        let kind = self.type_kind(id);
+        if kind.is_empty() { self.tag(id, "model") } else { kind }
+    }
     pub(super) fn reference_name(&self, label: &str, target: LinkId) -> Result<String> {
         match read_program_reference_target_field(label).as_str() {
             "name" => self.name(target),
@@ -192,10 +196,20 @@ impl Decoder<'_> {
                     ));
                 }
             }
+            let model = self.reference_type_kind(*id);
+            if matches!(model, "Rust standard collection projected library owner 1" | "Rust standard collection kernel library 1") {
+                for label in super::typed_program_links_schema()["references"].as_object().into_iter().flatten().filter_map(|(_, value)| value.as_str()) {
+                    if !read_program_reference_source_field(label, self.kind(*id), model).is_empty()
+                        && !self.references.get(id).is_some_and(|references| references.iter().any(|(owned_label, _)| owned_label == label))
+                    {
+                        return Err(error("a linked collection source owner has no actual declaration reference"));
+                    }
+                }
+            }
         }
         for (owner, references) in &self.references {
             let kind = self.kind(*owner);
-            let type_kind = self.type_kind(*owner);
+            let type_kind = self.reference_type_kind(*owner);
             let mut fields = BTreeSet::new();
             for (label, target) in references {
                 let field = read_program_reference_source_field(label, kind, type_kind);
@@ -213,17 +227,21 @@ impl Decoder<'_> {
                     ));
                 }
                 let role = read_program_reference_role(label);
-                if role == "declaration" || role == "classConstructor" {
+                if matches!(role.as_str(), "declaration" | "classConstructor" | "standardCollectionPacket") {
                     if self.kind(*target) != "fn" || !ownership.declaration_ids.contains(target) {
                         return Err(error(
                             "a linked declaration reference is unresolved or has an invalid target",
                         ));
                     }
-                } else if role == "datatype" {
+                } else if matches!(role.as_str(), "datatype" | "standardCollectionKernel") {
                     if !ownership.datatype_ids.contains(target) {
                         return Err(error(
                             "a linked datatype reference does not target an owned datatype",
                         ));
+                    }
+                } else if role == "standardCollectionLibraryDeclaration" {
+                    if !matches!(self.kind(*target), "data" | "fn") || !ownership.declaration_ids.contains(target) {
+                        return Err(error("a linked collection source owner has an invalid declaration target"));
                     }
                 } else if role == "constructor" {
                     let datatype = references

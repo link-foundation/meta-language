@@ -178,7 +178,7 @@ fn semantic_targets(
             .checked_sub(1)
             .ok_or_else(|| error("the linked program exceeds its reference resource limit"))?;
         let kind = value["k"].as_str().unwrap_or_default();
-        let type_kind = value["kind"].as_str().unwrap_or_default();
+        let type_kind = value["kind"].as_str().or_else(|| value["model"].as_str()).unwrap_or_default();
         for (role, label) in typed_program_links_schema()["references"]
             .as_object()
             .unwrap()

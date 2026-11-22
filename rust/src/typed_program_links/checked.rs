@@ -305,6 +305,8 @@ fn validate_type_record(
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    crate::translation::rust_standard_collection_carriers::check_program(program)
+        .map_err(|failure| error(failure.to_string()))?;
     let mut data_declarations=HashMap::new();
     for declaration in &program.declarations {
         if let Decl::Data(data)=declaration

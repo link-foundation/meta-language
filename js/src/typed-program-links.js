@@ -293,7 +293,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
   for (const reference of pending) {
     const target = objects.get(idOf(reference.target));
     if (!target || typeof target !== 'object') throw new TypeError('a program reference does not target an owned declaration');
-    const field = readProgramReferenceSourceField(reference.label, reference.owner.k ?? '', reference.owner.kind ?? '');
+    const field = readProgramReferenceSourceField(reference.label, reference.owner.k ?? '', reference.owner.kind ?? reference.owner.model ?? '');
     if (!field || Object.hasOwn(reference.owner, field)) throw new TypeError('a program reference has an invalid or duplicate source field');
     const targetField = readProgramReferenceTargetField(reference.label);
     const name = target[targetField] ?? (reference.label === schema.references.declaration ? target.name : undefined);

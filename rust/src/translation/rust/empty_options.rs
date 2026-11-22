@@ -208,6 +208,7 @@ impl RustParser {
             source_primitive_owners: None,
             source_empty_option: Some(Box::new(proof)),
             source_type_namespace: None,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
             source_local_state: None,
             source_const_function: None,

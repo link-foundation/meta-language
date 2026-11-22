@@ -599,7 +599,7 @@ impl RustParser {
             let previous=self.retain_source_type_owners;self.retain_source_type_owners=true;
             let captured=self.capture_data_field_signatures(&name,&[],groups.iter().map(|(name,fields)|(name.as_str(),fields.as_slice())));
             self.retain_source_type_owners=previous;
-            items.push(SItem::Data(SData { name,ctors,span:None,generated:true,source_unit_clone_derivation:None,source_field_signatures:captured? }));
+            items.push(SItem::Data(SData { name,ctors,span:None,generated:true,source_standard_collection_library_owner:None,source_standard_collection_carrier:None,source_unit_clone_derivation:None,source_field_signatures:captured? }));
         }
         Ok(())
     }

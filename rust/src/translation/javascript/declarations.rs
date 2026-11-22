@@ -131,6 +131,8 @@ impl JavaScriptParser {
                     ctors: ctors.clone(),
                     span: None,
                     generated: false,
+                    source_standard_collection_library_owner: None,
+                    source_standard_collection_carrier: None,
                     source_unit_clone_derivation: None,
                     source_field_signatures: None,
                 });
@@ -139,6 +141,8 @@ impl JavaScriptParser {
                     ctors,
                     span: Some(range),
                     generated: false,
+                    source_standard_collection_library_owner: None,
+                    source_standard_collection_carrier: None,
                     source_unit_clone_derivation: None,
                     source_field_signatures: None,
                 }));
@@ -774,6 +778,7 @@ impl JavaScriptParser {
                 source_diagnostic_attributes: None,
                 span: Some(self.read_complete_declaration_span(doc_token)?),
                 generated: false,
+                source_standard_collection_library_owner: None,
                 source_pure_unit: None,
             });
         }
@@ -918,6 +923,7 @@ impl JavaScriptParser {
             body,
             span: Some(self.read_complete_declaration_span(doc_token)?),
             generated: false,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
         };
         if self.owned_array_reader_namespace == 0 {

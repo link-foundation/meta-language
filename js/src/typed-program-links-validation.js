@@ -4,7 +4,7 @@ import {checkRustSourcePlaceTransform} from './translation/rust-source-place-tra
 import {checkRustVectorMutationInterface,checkRustVectorMutationBody} from './translation/rust-vector-mutation-interfaces.js';
 import {checkRustRecordPlace} from './translation/rust-record-place-regions.js';
 import {checkRustFallibleIteratorInterface,checkRustFallibleIteratorBody} from './translation/rust-fallible-iterator-interfaces.js';
-import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner} from './translation/rust-standard-collection-signatures.js';
+import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner,checkRustStandardCollectionPacketOwner} from './translation/rust-standard-collection-signatures.js';
 import {checkRustExclusiveSourceSignature} from './translation/rust-exclusive-source-signatures.js';
 import {checkRustBorrowedVectorSourceRegions} from './translation/rust-borrowed-source-regions.js';
 import {checkRustOwnedVectorSourceFold} from './translation/rust-source-loop-folds.js';
@@ -204,7 +204,16 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
           fields.add(field.name); type(field.type);
         }
       }
-      if(entry.sourceStandardCollectionCarrier!==undefined){checkRustStandardCollectionCarrier(entry,program.sourceLanguage,value=>value,name=>program.declarations.get(name));type(entry.sourceStandardCollectionCarrier.kernelType);for(const [field,role]of [['kernelDeclaration','standardCollectionKernel'],['packetDeclaration','standardCollectionPacket']]){const actual=program.declarations.get(entry.sourceStandardCollectionCarrier.kernelLibrary[field]),target=targetOf(entry.sourceStandardCollectionCarrier.kernelLibrary,role);if(!actual||(graphPatterns?target!==actual:target&&target!==actual))throw new TypeError('a collection carrier must reference its actual shared kernel and packet declarations');}}
+      if(entry.sourceStandardCollectionCarrier!==undefined){
+        const declaration = name => program.declarations.get(name);
+        const { kernelType, kernelLibrary } = checkRustStandardCollectionCarrier(entry,program.sourceLanguage,value=>value,declaration);
+        checkRustStandardCollectionPacketOwner(entry,program.sourceLanguage,declaration);
+        type(kernelType);
+        for(const [field,role] of [['kernelDeclaration','standardCollectionKernel'],['packetDeclaration','standardCollectionPacket']]){
+          const actual=declaration(kernelLibrary[field]),target=targetOf(entry.sourceStandardCollectionCarrier.kernelLibrary,role);
+          if(!actual||(graphPatterns?target!==actual:target&&target!==actual))throw new TypeError('a collection carrier must reference its actual shared kernel and packet declarations');
+        }
+      }
       if (Object.hasOwn(entry,'sourceFieldSignatures')) {
         checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,program.sourceLanguage,name,value=>value,type=>program.declarations.get(type.name));
         for(const constructor of entry.sourceFieldSignatures.ctors)for(const field of constructor.fields)type(field.type);

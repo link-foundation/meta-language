@@ -8,6 +8,7 @@ import {compareRustStandardCollectionValuePackets} from '../src/translation/rust
 import {readRustStandardCollectionStateError} from '../src/translation/rust-standard-collection-state.js';
 import {parseRust} from '../src/translation/rust.js';
 import {checkProgram} from '../src/translation/check.js';
+import {decodeTypedProgramLinks,encodeTypedProgramLinks} from '../src/typed-program-links.js';
 import {rustStandardCollectionEqualityOriginals,rustStandardCollectionEqualityRefusals} from './fixtures/rust-standard-collection-equality.mjs';
 const integer=value=>({$:'rustCollectionInteger',value:BigInt(value)}),boolean=value=>({$:'rustCollectionBoolean',value}),text=value=>({$:'rustCollectionString',units:Array.from({length:value.length},(_,index)=>value.charCodeAt(index))});
 function state(kind,keyDomain,valueDomain,entries,root='left',revision=0){
@@ -56,4 +57,26 @@ test('public opt-in parser lowers genuine equality originals through actual proj
 });
 test('independent original literals retain native version bounds and observations',()=>{
  assert.equal(rustStandardCollectionEqualityOriginals.length,24);for(const fixture of rustStandardCollectionEqualityOriginals){assert.equal(fixture.sourceVersionRange,'>=1.90.0 <1.100.0');assert.match(fixture.stdout,/true\n$/);assert.match(fixture.source,/fn main/);}assert.equal(rustStandardCollectionEqualityRefusals.length,6);
+});
+test('typed Links replay collection carriers through their actual state and packet declarations',()=>{
+ const library=actualLibrary();
+ const checked=checkProgram(parseRust(rustStandardCollectionEqualityOriginals[0].source,{
+  standardCollectionSourceModel:'Rust closed standard collections 1',standardCollectionSourceLibrary:library,
+  standardCollectionPointerWidth:64,sourceVersion:'1.90.0',exclusiveSourceModel:'Rust exclusive source loans 1',
+ }));
+ const {network,root}=encodeTypedProgramLinks(checked);
+ const limits={nodeLimit:1_000_000};
+ const decoded=decodeTypedProgramLinks(network,root,limits);
+ const carrier=[...checked.declarations.values()].find(declaration=>declaration.sourceStandardCollectionCarrier);
+ const restored=decoded.declarations.get(carrier.name).sourceStandardCollectionCarrier;
+ assert.deepEqual(restored,carrier.sourceStandardCollectionCarrier);
+ assert.equal(decoded.declarations.get(restored.kernelLibrary.kernelDeclaration).sourceStandardCollectionLibraryOwner.role,'state');
+ assert.equal(decoded.declarations.get(restored.kernelLibrary.packetDeclaration).sourceStandardCollectionLibraryOwner.role,'packet');
+ const relations=network.fieldRelations();
+ const packet=relations.find(relation=>relation.label==='standard collection packet reference');
+ assert.ok(packet);
+ const kernel=relations.find(relation=>relation.parent.equals(packet.parent)&&relation.label==='standard collection kernel reference');
+ assert.ok(kernel);
+ packet.link.setReferences([packet.parent,packet.link.references()[1],kernel.child]);
+ assert.throws(()=>decodeTypedProgramLinks(network,root,limits),/collection carrier|packet declaration|semantic reference/u);
 });

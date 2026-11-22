@@ -32,6 +32,10 @@ export function readProgramReferenceRole(term) {
   if ((term === "declaration reference")) return "declaration";
   if ((term === "data type declaration reference")) return "datatype";
   if ((term === "constructor declaration reference")) return "constructor";
+  if ((term === "source class constructor reference")) return "classConstructor";
+  if ((term === "standard collection library declaration reference")) return "standardCollectionLibraryDeclaration";
+  if ((term === "standard collection kernel reference")) return "standardCollectionKernel";
+  if ((term === "standard collection packet reference")) return "standardCollectionPacket";
   if ((term === "datatype declaration reference")) return "datatype";
   return "";
 }
@@ -83,6 +87,7 @@ export function readProgramExpressionOperandFields(kind) {
   if ((kind === "index")) return "array index";
   if ((kind === "length")) return "array";
   if ((kind === "record")) return "entries order";
+  if ((kind === "propositionValue")) return "left right";
   return "";
 }
 
@@ -93,6 +98,10 @@ export function readProgramReferenceSourceField(label, constructKind, typeKind) 
   if ((label === "data type declaration reference" && constructKind === "" && typeKind === "data")) return "name";
   if ((label === "data type declaration reference" && constructKind === "ctor" && typeKind === "")) return "data";
   if ((label === "constructor declaration reference" && constructKind === "ctor" && typeKind === "")) return "ctor";
+  if ((label === "source class constructor reference" && constructKind === "" && typeKind === "record")) return "sourceClassOwner";
+  if ((label === "standard collection library declaration reference" && constructKind === "" && typeKind === "Rust standard collection projected library owner 1")) return "declaration";
+  if ((label === "standard collection kernel reference" && constructKind === "" && typeKind === "Rust standard collection kernel library 1")) return "kernelDeclaration";
+  if ((label === "standard collection packet reference" && constructKind === "" && typeKind === "Rust standard collection kernel library 1")) return "packetDeclaration";
   if ((label === "datatype declaration reference" && constructKind === "" && typeKind === "data")) return "name";
   if ((label === "datatype declaration reference" && constructKind === "ctor" && typeKind === "")) return "data";
   return "";
@@ -103,7 +112,7 @@ export function readProgramReferenceTargetField(label) {
   if ((label === "binding reference")) return "name";
   if ((label === "declaration reference") || (label === "data type declaration reference")) return "fullName";
   if ((label === "constructor declaration reference")) return "name";
-  if ((label === "datatype declaration reference")) return "fullName";
+  if ((label === "source class constructor reference") || (label === "standard collection library declaration reference") || (label === "standard collection kernel reference") || (label === "standard collection packet reference") || (label === "datatype declaration reference")) return "fullName";
   return "";
 }
 
@@ -121,7 +130,7 @@ export function readProgramNeutralFieldDefault(context, field) {
   if (((field === "frozen") && ((context === "expression:ctor") || (context === "expression:tuple"))) || ((context === "expression:toString" && field === "console"))) return "false";
   if ((context === "parameter") && ((field === "guard") || (field === "default"))) return "null";
   if ((context === "effect:let" && field === "constant")) return "false";
-  if (((field === "span") && ((context === "effect:let") || (context === "declaration:module") || (context === "effect:print") || (context === "expression:lit") || (context === "expression:unit") || (context === "expression:var") || (context === "expression:call") || (context === "expression:ctor") || (context === "expression:match") || (context === "expression:unary") || (context === "expression:binary") || (context === "expression:if") || (context === "expression:let") || (context === "expression:toString") || (context === "expression:stringMap") || (context === "expression:stringTest") || (context === "expression:cast") || (context === "expression:abort") || (context === "expression:print") || (context === "expression:array") || (context === "expression:append") || (context === "expression:index") || (context === "expression:length") || (context === "expression:math") || (context === "expression:tuple") || (context === "expression:tupleIndex") || (context === "expression:none") || (context === "expression:referenceAllocate") || (context === "expression:referenceRead") || (context === "expression:functionRef") || (context === "expression:apply") || (context === "expression:lambda") || (context === "expression:record") || (context === "expression:recordField") || (context === "expression:cellAllocate") || (context === "expression:cellRead") || (context === "expression:cellWrite") || (context === "expression:some") || (context === "expression:flattenOption") || (context === "expression:coalesce") || (context === "expression:optionalField") || (context === "expression:optionalProject") || (context === "expression:optionalIndex") || (context === "expression:optionalIndexNumber") || (context === "expression:stringPoints") || (context === "expression:collectionItems") || (context === "expression:method") || (context === "expression:nullishNumber") || (context === "expression:optionalText") || (context === "expression:strictEqual") || (context === "expression:optionalTypeOf") || (context === "expression:set") || (context === "expression:map") || (context === "expression:collectionSize") || (context === "expression:truthy"))) || ((context === "expression:record" && field === "order"))) return "null";
+  if (((field === "span") && ((context === "effect:let") || (context === "declaration:module") || (context === "effect:print") || (context === "expression:lit") || (context === "expression:unit") || (context === "expression:var") || (context === "expression:call") || (context === "expression:ctor") || (context === "expression:match") || (context === "expression:unary") || (context === "expression:binary") || (context === "expression:if") || (context === "expression:let") || (context === "expression:toString") || (context === "expression:stringMap") || (context === "expression:stringTest") || (context === "expression:cast") || (context === "expression:abort") || (context === "expression:print") || (context === "expression:array") || (context === "expression:append") || (context === "expression:index") || (context === "expression:length") || (context === "expression:math") || (context === "expression:tuple") || (context === "expression:tupleIndex") || (context === "expression:none") || (context === "expression:referenceAllocate") || (context === "expression:referenceRead") || (context === "expression:functionRef") || (context === "expression:apply") || (context === "expression:lambda") || (context === "expression:record") || (context === "expression:recordField") || (context === "expression:cellAllocate") || (context === "expression:cellRead") || (context === "expression:cellWrite") || (context === "expression:some") || (context === "expression:flattenOption") || (context === "expression:coalesce") || (context === "expression:optionalField") || (context === "expression:optionalProject") || (context === "expression:optionalIndex") || (context === "expression:optionalIndexNumber") || (context === "expression:stringPoints") || (context === "expression:collectionItems") || (context === "expression:method") || (context === "expression:nullishNumber") || (context === "expression:optionalText") || (context === "expression:strictEqual") || (context === "expression:optionalTypeOf") || (context === "expression:set") || (context === "expression:map") || (context === "expression:collectionSize") || (context === "expression:truthy") || (context === "expression:propositionValue"))) || ((context === "expression:record" && field === "order"))) return "null";
   return "";
 }
 
@@ -133,16 +142,17 @@ export function readProgramTypeNeutralFieldDefault(kind, field) {
 
 /** @param {string} kind @param {string} field @returns {boolean} */
 export function acceptProgramExpressionField(kind, field) {
-  if ((kind === "tuple")) return field === "k" || field === "type" || field === "span" || field === "items" || field === "frozen" || field === "productModel";
-  if ((kind === "tupleIndex")) return field === "k" || field === "type" || field === "span" || field === "object" || field === "index";
-  if ((kind === "record")) return field === "k" || field === "type" || field === "span" || field === "entries" || field === "order";
-  if ((kind === "recordField")) return field === "k" || field === "type" || field === "span" || field === "object" || field === "field" || field === "index";
-  if ((kind === "some") || (kind === "flattenOption")) return field === "k" || field === "value" || field === "type" || field === "span";
-  if ((kind === "coalesce")) return field === "k" || field === "left" || field === "right" || field === "type" || field === "span";
-  if ((kind === "optionalField")) return field === "k" || field === "object" || field === "field" || field === "index" || field === "type" || field === "span";
-  if ((kind === "optionalProject")) return field === "k" || field === "object" || field === "field" || field === "type" || field === "span";
-  if ((kind === "collectionSize")) return field === "k" || field === "object" || field === "type" || field === "span";
-  if ((kind === "truthy")) return field === "k" || field === "arg" || field === "type" || field === "span";
+  if ((kind === "tuple")) return field === "k" || field === "type" || field === "span" || field === "items" || field === "frozen" || field === "productModel" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "tupleIndex")) return field === "k" || field === "type" || field === "span" || field === "object" || field === "index" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "record")) return field === "k" || field === "type" || field === "span" || field === "entries" || field === "order" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "recordField")) return field === "k" || field === "type" || field === "span" || field === "object" || field === "field" || field === "index" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "some") || (kind === "flattenOption")) return field === "k" || field === "value" || field === "type" || field === "span" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "coalesce")) return field === "k" || field === "left" || field === "right" || field === "type" || field === "span" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "optionalField")) return field === "k" || field === "object" || field === "field" || field === "index" || field === "type" || field === "span" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "optionalProject")) return field === "k" || field === "object" || field === "field" || field === "type" || field === "span" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "collectionSize")) return field === "k" || field === "object" || field === "type" || field === "span" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "truthy")) return field === "k" || field === "arg" || field === "type" || field === "span" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
+  if ((kind === "propositionValue")) return field === "k" || field === "op" || field === "left" || field === "right" || field === "domain" || field === "sameValue" || field === "type" || field === "span" || field === "sourcePosition" || field === "sourceStateTransition" || field === "sourceLoopFold" || field === "sourcePlaceTransform" || field === "sourceRecordPlace";
   return false;
 }
 
@@ -220,6 +230,7 @@ export function readProgramExpressionProjection(term) {
   if ((term === "map")) return "map";
   if ((term === "collectionSize")) return "collectionSize";
   if ((term === "truthy")) return "truthy";
+  if ((term === "propositionValue")) return "propositionValue";
   return "";
 }
 
@@ -232,12 +243,13 @@ export function acceptProgramExpressionOperation(kind, operation) {
   if ((kind === "collectionRead")) return operation === "get" || operation === "has";
   if ((kind === "collectionItems")) return operation === "keys" || operation === "values" || operation === "entries";
   if ((kind === "optionalPredicate")) return operation === "isInteger" || operation === "isSafeInteger" || operation === "isFinite" || operation === "isNaN";
+  if ((kind === "propositionValue")) return operation === "eq" || operation === "ne" || operation === "lt" || operation === "le" || operation === "gt" || operation === "ge";
   return false;
 }
 
 /** @param {string} label @returns {boolean} */
 export function acceptProgramReferenceField(label) {
-  return label === "binding reference" || label === "declaration reference" || label === "data type declaration reference" || label === "constructor declaration reference" || label === "datatype declaration reference";
+  return label === "binding reference" || label === "declaration reference" || label === "data type declaration reference" || label === "constructor declaration reference" || label === "source class constructor reference" || label === "standard collection library declaration reference" || label === "standard collection kernel reference" || label === "standard collection packet reference" || label === "datatype declaration reference";
 }
 
 /** @param {string} name @returns {boolean} */

@@ -499,6 +499,8 @@ impl<'a> LeanParser<'a> {
             ctors,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_standard_collection_library_owner: None,
+            source_standard_collection_carrier: None,
             source_unit_clone_derivation: None,
             source_field_signatures: None,
         })
@@ -647,6 +649,7 @@ impl<'a> LeanParser<'a> {
                 body,
                 span: Some(self.span_to_next(&start)),
                 generated: false,
+                source_standard_collection_library_owner: None,
                 source_pure_unit: None,
             })));
         }
@@ -687,6 +690,7 @@ impl<'a> LeanParser<'a> {
             body,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
         })))
     }

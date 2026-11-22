@@ -343,7 +343,7 @@ impl Decoder<'_> {
                         let field = read_program_reference_source_field(
                             label,
                             self.kind(id),
-                            self.type_kind(id),
+                            self.reference_type_kind(id),
                         );
                         if field.is_empty() {
                             return Err(error(

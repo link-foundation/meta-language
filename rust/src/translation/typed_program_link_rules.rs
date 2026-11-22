@@ -57,6 +57,14 @@ pub fn read_program_reference_role(term: &str) -> String {
         String::from("datatype")
     } else if term == "constructor declaration reference" {
         String::from("constructor")
+    } else if term == "source class constructor reference" {
+        String::from("classConstructor")
+    } else if term == "standard collection library declaration reference" {
+        String::from("standardCollectionLibraryDeclaration")
+    } else if term == "standard collection kernel reference" {
+        String::from("standardCollectionKernel")
+    } else if term == "standard collection packet reference" {
+        String::from("standardCollectionPacket")
     } else if term == "datatype declaration reference" {
         String::from("datatype")
     } else {
@@ -157,6 +165,8 @@ pub fn read_program_expression_operand_fields(kind: &str) -> String {
         String::from("array")
     } else if kind == "record" {
         String::from("entries order")
+    } else if kind == "propositionValue" {
+        String::from("left right")
     } else {
         String::new()
     }
@@ -189,6 +199,23 @@ pub fn read_program_reference_source_field(
         && (type_kind.is_empty())
     {
         String::from("ctor")
+    } else if ((label == "source class constructor reference") && (construct_kind.is_empty()))
+        && (type_kind == "record")
+    {
+        String::from("sourceClassOwner")
+    } else if ((label == "standard collection library declaration reference")
+        && (construct_kind.is_empty()))
+        && (type_kind == "Rust standard collection projected library owner 1")
+    {
+        String::from("declaration")
+    } else if ((label == "standard collection kernel reference") && (construct_kind.is_empty()))
+        && (type_kind == "Rust standard collection kernel library 1")
+    {
+        String::from("kernelDeclaration")
+    } else if ((label == "standard collection packet reference") && (construct_kind.is_empty()))
+        && (type_kind == "Rust standard collection kernel library 1")
+    {
+        String::from("packetDeclaration")
     } else if (label == "datatype declaration reference" && (construct_kind.is_empty()))
         && type_kind == "data"
     {
@@ -211,7 +238,12 @@ pub fn read_program_reference_target_field(label: &str) -> String {
         String::from("fullName")
     } else if label == "constructor declaration reference" {
         String::from("name")
-    } else if label == "datatype declaration reference" {
+    } else if ((((label == "source class constructor reference")
+        || (label == "standard collection library declaration reference"))
+        || (label == "standard collection kernel reference"))
+        || (label == "standard collection packet reference"))
+        || label == "datatype declaration reference"
+    {
         String::from("fullName")
     } else {
         String::new()
@@ -248,7 +280,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
     } else if context == "effect:let" && field == "constant" {
         String::from("false")
     } else if (field == "span"
-        && ((((((((((((((((((((((((((((((((((((((((((((((((((((((context == "effect:let"
+        && (((((((((((((((((((((((((((((((((((((((((((((((((((((((context == "effect:let"
             || context == "declaration:module")
             || context == "effect:print")
             || context == "expression:lit")
@@ -302,7 +334,8 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
             || (context == "expression:set"))
             || (context == "expression:map"))
             || (context == "expression:collectionSize"))
-            || (context == "expression:truthy")))
+            || (context == "expression:truthy"))
+            || (context == "expression:propositionValue")))
         || (context == "expression:record" && (field == "order"))
     {
         String::from("null")
@@ -328,35 +361,96 @@ pub fn read_program_type_neutral_field_default(kind: &str, field: &str) -> Strin
 #[must_use]
 pub fn accept_program_expression_field(kind: &str, field: &str) -> bool {
     if kind == "tuple" {
-        ((((field == "k" || field == "type") || field == "span") || field == "items")
+        (((((((((field == "k" || field == "type") || field == "span") || field == "items")
             || field == "frozen")
-            || field == "productModel"
+            || field == "productModel")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "tupleIndex" {
-        (((field == "k" || field == "type") || field == "span") || field == "object")
-            || field == "index"
+        ((((((((field == "k" || field == "type") || field == "span") || field == "object")
+            || field == "index")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "record" {
-        (((field == "k" || field == "type") || field == "span") || field == "entries")
-            || (field == "order")
+        ((((((((field == "k" || field == "type") || field == "span") || field == "entries")
+            || (field == "order"))
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "recordField" {
-        ((((field == "k" || field == "type") || field == "span") || field == "object")
+        (((((((((field == "k" || field == "type") || field == "span") || field == "object")
             || field == "field")
-            || field == "index"
+            || field == "index")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "some" || kind == "flattenOption" {
-        ((field == "k" || field == "value") || field == "type") || field == "span"
+        (((((((field == "k" || field == "value") || field == "type") || field == "span")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "coalesce" {
-        (((field == "k" || field == "left") || field == "right") || field == "type")
-            || field == "span"
+        ((((((((field == "k" || field == "left") || field == "right") || field == "type")
+            || field == "span")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "optionalField" {
-        ((((field == "k" || field == "object") || field == "field") || field == "index")
+        (((((((((field == "k" || field == "object") || field == "field") || field == "index")
             || field == "type")
-            || field == "span"
+            || field == "span")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "optionalProject" {
-        (((field == "k" || field == "object") || field == "field") || field == "type")
-            || field == "span"
+        ((((((((field == "k" || field == "object") || field == "field") || field == "type")
+            || field == "span")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "collectionSize" {
-        ((field == "k" || field == "object") || field == "type") || field == "span"
+        (((((((field == "k" || field == "object") || field == "type") || field == "span")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else if kind == "truthy" {
-        ((field == "k" || (field == "arg")) || field == "type") || field == "span"
+        (((((((field == "k" || (field == "arg")) || field == "type") || field == "span")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
+    } else if kind == "propositionValue" {
+        (((((((((((field == "k" || (field == "op")) || field == "left") || field == "right")
+            || (field == "domain"))
+            || (field == "sameValue"))
+            || field == "type")
+            || field == "span")
+            || (field == "sourcePosition"))
+            || (field == "sourceStateTransition"))
+            || (field == "sourceLoopFold"))
+            || (field == "sourcePlaceTransform"))
+            || (field == "sourceRecordPlace")
     } else {
         false
     }
@@ -505,6 +599,8 @@ pub fn read_program_expression_projection(term: &str) -> String {
         String::from("collectionSize")
     } else if term == "truthy" {
         String::from("truthy")
+    } else if term == "propositionValue" {
+        String::from("propositionValue")
     } else {
         String::new()
     }
@@ -568,6 +664,11 @@ pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool 
     } else if kind == "optionalPredicate" {
         ((operation == "isInteger" || operation == "isSafeInteger") || operation == "isFinite")
             || operation == "isNaN"
+    } else if kind == "propositionValue" {
+        (((((operation == "eq") || (operation == "ne")) || (operation == "lt"))
+            || (operation == "le"))
+            || (operation == "gt"))
+            || (operation == "ge")
     } else {
         false
     }
@@ -576,9 +677,13 @@ pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn accept_program_reference_field(label: &str) -> bool {
-    (((label == "binding reference" || label == "declaration reference")
+    (((((((label == "binding reference" || label == "declaration reference")
         || label == "data type declaration reference")
         || label == "constructor declaration reference")
+        || (label == "source class constructor reference"))
+        || (label == "standard collection library declaration reference"))
+        || (label == "standard collection kernel reference"))
+        || (label == "standard collection packet reference"))
         || label == "datatype declaration reference"
 }
 

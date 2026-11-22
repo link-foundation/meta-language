@@ -53,6 +53,12 @@ pub struct LambdaParam {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataDecl {
+    /// Source owner of a projected standard collection library declaration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_library_owner: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionLibraryOwner>>,
+    /// Concrete front-end collection identity and its actual kernel declaration links.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_carrier: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionCarrier>>,
     pub name: String,
     pub ctors: Vec<Ctor>,
     #[serde(default)]
@@ -80,6 +86,9 @@ pub struct DataDecl {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FnDecl {
+    /// Source owner of a projected standard collection library declaration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_standard_collection_library_owner: Option<Box<crate::translation::rust_standard_collection_carriers::CollectionLibraryOwner>>,
     /// Actual complete pure Unit header and body sites under the selected model.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_pure_unit: Option<serde_json::Value>,

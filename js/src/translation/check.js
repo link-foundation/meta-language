@@ -121,7 +121,7 @@ import {checkRustFnMutSourceSpecialization} from './rust-fnmut-source-signatures
 import {checkRustSourceVectorSort} from './rust-source-vector-sort.js';
 import {checkRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
 import {checkRustSourceStateTransition} from './rust-source-state-transitions.js';
-import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner,checkRustStandardCollectionObservation} from './rust-standard-collection-signatures.js';
+import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner,checkRustStandardCollectionObservation,checkRustStandardCollectionPacketOwner} from './rust-standard-collection-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
@@ -446,6 +446,9 @@ class Checker {
       } else if (item.k !== 'data') {
         throw typeError(`unknown item ${item.k}`, item.span);
       }
+    });
+    this.walk(items,path,(item,_path,entry)=>{
+      if(item.k==='data'&&entry.sourceStandardCollectionCarrier)checkRustStandardCollectionPacketOwner(entry,this.language,name=>this.items.get(name));
     });
     const build = (list, listPath) => list.map((item) => (item.k === 'module'
       ? { k: 'module', name: item.name, fullName: [...listPath, item.name].join('.'), items: build(item.items, [...listPath, item.name]), span: item.span }

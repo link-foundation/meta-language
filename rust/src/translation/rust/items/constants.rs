@@ -58,6 +58,7 @@ impl RustParser {
             source_type_namespace: None,
             source_local_state: None,
             source_const_function: None,
+            source_standard_collection_library_owner: None,
             source_pure_unit: None,
             source_loop: None,
         })

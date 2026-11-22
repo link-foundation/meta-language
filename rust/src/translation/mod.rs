@@ -106,6 +106,7 @@ pub(crate) mod rust_borrowed_source_region_rules;
 pub(crate) mod rust_borrowed_iterator_rules;
 pub(crate) mod rust_mutable_record_loan_rules;
 pub(crate) mod rust_standard_collection_value_packet;
+pub mod rust_standard_collection_carriers;
 pub mod rust_standard_collection_library;
 mod source_library_closure;
 pub(crate) mod finite_record_loop_helpers;

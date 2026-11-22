@@ -6,7 +6,7 @@ import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {extendCurrentTypedProgramSourceSchema as extendClassOwnerSchema} from './class-owner-schema-extension.mjs';
 export const classOwnerSourceProfileReceipt='parity/self-translation/class-owner-source-profiles.lino';
 export const classOwnerSourceProfilePredecessorRevision='397c2ea47e8531558857dc54caf88358fd51033a';
-const classOwnerSourceProfileReceiptSha256='PENDING';
+const classOwnerSourceProfileReceiptSha256='e9eee17a71f76070f3f9fc2d7827be97c1a3db3fa823187a0de4e938d0ef5136';
 const previousNativeTypeSha256='89d8ca15420493e3e9210a1b0a5b359d55d8a9821a7445806ea82a98fd99f92f';
 const root=new URL('../../',import.meta.url),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const fail=message=>{throw new TypeError('class owner source profile: '+message);};

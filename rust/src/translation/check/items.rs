@@ -11,6 +11,7 @@ use super::{
 
 impl Checker {
     pub(super) fn refuse_callable_data_observation(&self,ty:&Type,operation:&str,span:Option<Span>)->Result<()>{
+        super::super::rust_standard_collection_carriers::check_observation(ty, |name| self.decls.get(name), operation, span)?;
         if crate::translation::class_owners::accept_type_observation(ty,self.source_class_owners.as_ref(),operation){return Ok(());}
         let facts=crate::translation::callable_data::read_callable_data_facts(ty,&|name|match self.decls.get(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
         let reason=crate::translation::callable_data_derivation_rules::read_callable_data_observation_error(operation,facts.callable);
@@ -83,6 +84,8 @@ impl Checker {
                     generated: data.generated,
                     output: false,
                     source_field_signatures: None,
+                    source_standard_collection_library_owner: data.source_standard_collection_library_owner.clone(),
+                    source_standard_collection_carrier: data.source_standard_collection_carrier.clone(),
                     source_unit_clone_derivation: data
                         .source_unit_clone_derivation
                         .as_deref()
@@ -109,6 +112,7 @@ impl Checker {
                     source_empty_option: function.source_empty_option.as_deref().cloned(),
                     source_type_namespace: function.source_type_namespace.as_deref().cloned(),
                     source_loop: function.source_loop.as_deref().cloned(),
+                    source_standard_collection_library_owner: function.source_standard_collection_library_owner.clone(),
                     source_pure_unit: function.source_pure_unit.as_deref().cloned(),
                     source_local_state: function.source_local_state.as_deref().cloned(),
                     source_const_function: function.source_const_function.as_deref().cloned(),
@@ -211,9 +215,14 @@ impl Checker {
             } else {
                 None
             };
+            let mut collection_carrier = item.source_standard_collection_carrier.clone();
+            if let Some(carrier) = &mut collection_carrier {
+                carrier.kernel_type = self.resolve_type(Some(&carrier.kernel_type), path, item.span)?;
+            }
             if let Some(Decl::Data(entry)) = self.decls.get_mut(&full(path, &item.name)) {
                 entry.ctors = ctors;
                 entry.source_field_signatures = source_fields;
+                entry.source_standard_collection_carrier = collection_carrier;
             }
         }
         // Every actual layout and each field's original declaration context is
