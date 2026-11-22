@@ -1992,6 +1992,19 @@ export const VISION_REQUIREMENTS = Object.freeze([
     ],
     tooling: ['js/scripts/issue-195-documentation.mjs', 'js/scripts/check-documentation.mjs'],
   },
+  {
+    id: 'I195-GRAMMAR-NATURAL-LANGUAGE-SENTENCE-BOUNDARIES',
+    sourceKey: 'naturalLanguageSentenceIssue',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/natural-language-sentence-boundaries.lino',
+    fixtureId: 'natural-language-sentence-boundaries',
+    construct: 'lossless natural language sentence segmentation with English and Russian abbreviation profiles',
+    aliases: ['en', 'ru'],
+    expectedBehavior: 'Within-sentence abbreviation periods, initials and decimal points preserve the containing sentence. An abbreviation can share a true sentence-ending period as in the Russian enumeration example. Both runtimes emit the independently expected UTF-8 sentence spans and reconstruct every fixture exactly.',
+    assertions: ['naturalLanguageSentenceBoundariesMatch', 'naturalLanguageSentenceSourceReconstructs'],
+    javascript: ['js/src/text-grammar.js', 'js/scripts/build-native-text-grammars.mjs', 'js/tests/native-text-grammars.test.js'],
+    rust: ['rust/src/structured_text_parser.rs', 'rust/tests/unit/native_text_grammars.rs'],
+  },
 ]);
 
 const RUNTIMES = ['javascript', 'rust', 'tooling'];
@@ -2029,7 +2042,7 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
       scope: {
         ...(requiredRuntimes.includes('tooling') ? REPOSITORY_TOOLING : BOTH_PACKAGES),
         construct: row.construct,
-        aliases: [],
+        aliases: row.aliases ?? [],
         extensions: [],
       },
       expectedBehavior: row.expectedBehavior,

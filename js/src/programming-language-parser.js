@@ -196,7 +196,7 @@ function parseGrammarCst(text, canonical) {
     ?? (languageEntry(canonical).family === 'natural' ? parseNaturalLanguageCst : undefined);
   if (builtin) {
     const tokens = [];
-    const tree = builtinGrammarNode(builtin(text), text, boundaries, tokens);
+    const tree = builtinGrammarNode(builtin(text, canonical), text, boundaries, tokens);
     return { canonical, rootTerm: tree.term, tokens, tree };
   }
   const id = languageEntry(canonical).grammars[0]?.id;

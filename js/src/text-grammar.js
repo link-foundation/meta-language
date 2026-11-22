@@ -18,8 +18,7 @@ function textParser() {
   return parser;
 }
 
-function parseTextCst(text, mode) {
-  const startRule = metadata.starts[mode];
+function parseTextCst(text, mode, startRule = metadata.starts[mode]) {
   const rootTerm = metadata.projection[startRule].term;
   const boundaries = sourceBoundaries(text);
   const parsed = textParser().parseTree(text, { startRule });
@@ -59,6 +58,7 @@ export function parsePlainTextCst(text) {
 }
 
 /** Native sentence grammar retaining every lexeme, source byte and control error. */
-export function parseNaturalLanguageCst(text) {
-  return parseTextCst(text, 'natural');
+export function parseNaturalLanguageCst(text, language) {
+  const startRule = Object.hasOwn(metadata.naturalStarts, language) ? metadata.naturalStarts[language] : undefined;
+  return parseTextCst(text, 'natural', startRule);
 }

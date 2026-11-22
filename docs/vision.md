@@ -1559,6 +1559,17 @@ the same global space as programming languages, and reuse requires the same
 checked meaning correspondence. Tests distinguish native representation and
 source preservation from any richer linguistic capability they verify.
 
+Sentence boundaries also retain decimal points and initials followed by a
+capitalized word inside the sentence. The shared native text specification
+records English and Russian abbreviation profiles. Both runtimes select the
+profile by the canonical language and execute the same generated Links
+productions. A continuation depends on the abbreviation's context, including
+the following letter, number or punctuation, and, for Russian year abbreviations,
+a preceding number. Closing marks can fall between the abbreviation and the
+continuation. Internal periods in forms such as `т. д.` stay inside the sentence
+even when the final period ends it. Exact byte spans include the original
+closing punctuation and trailing whitespace.
+
 ## Grammar feature union
 
 Grammar attributes preserve ordinary JavaScript own-key order: canonical

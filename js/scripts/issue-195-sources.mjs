@@ -8,7 +8,7 @@
 // so the ledger cannot silently keep a stale or incomplete requirement snapshot.
 // The offline check (the default) validates the committed register against the
 // ledger and captured direct instructions; `--online` also compares it with
-// the live issue #195/#199 and pull request #196/#201 discussions.
+// all tracked live issue and pull request discussions.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -19,8 +19,8 @@ export const ISSUE_195_SOURCE_REGISTER_PATH = 'parity/issue-195-sources.json';
 export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
-export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226]);
+export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 232]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 247]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never

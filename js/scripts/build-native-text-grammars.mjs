@@ -22,6 +22,64 @@ function characterClass(specification, negated = false) {
   ], negated);
 }
 
+function sentenceProfiles(specification) {
+  return Object.entries(specification.sentenceProfiles ?? {}).map(([language, profile]) => {
+    const prefix = language.toLowerCase().replaceAll(' ', '_');
+    return {
+      ...profile, language, document: `${prefix}_language_document`, sentence: `${prefix}_language_sentence`,
+    };
+  });
+}
+
+function sentenceInterior(terminals, closing, continuation, { abbreviations = {}, numberedAbbreviations = {} }) {
+  const horizontalSpace = characterClass({ categories: ['Zs'], characters: [9] });
+  const uppercase = characterClass({ categories: ['Lu', 'Lt'] });
+  const digit = characterClass({ categories: ['Nd'] });
+  const word = characterClass({ categories: ['L', 'M', 'N'], characters: [95] });
+  const contexts = {
+    letter: characterClass({ categories: ['L'] }),
+    lowercaseOrNumber: characterClass({ categories: ['Ll', 'Nd'] }),
+    uppercaseOrNumber: characterClass({ categories: ['Lu', 'Lt', 'Nd'] }),
+    number: digit,
+  };
+  const period = expression.literal('.');
+  const followedBy = (context) => expression.and(expression.seq(
+    expression.repeat0(closing),
+    expression.orderedChoice(
+      expression.seq(expression.repeat1(horizontalSpace), context),
+      expression.seq(expression.repeat0(horizontalSpace), continuation),
+    ),
+  ));
+  const rulesFor = (entries, numbered) => Object.entries(entries).flatMap(([context, spellings]) =>
+    spellings.map((spelling) => {
+      const unpunctuated = spelling.slice(0, -1);
+      const stem = Array.from(unpunctuated, (character, index) => {
+        if (character === ' ') {
+          return unpunctuated[index - 1] === '.' ? expression.repeat0(horizontalSpace) : expression.repeat1(horizontalSpace);
+        }
+        const forms = new Set([character.toLowerCase(), character.toUpperCase()]);
+        return characterClass({ characters: [...forms].map((form) => form.codePointAt(0)) });
+      });
+      const continued = expression.seq(period, followedBy(contexts[context]));
+      // A numbered reading takes priority over the same unnumbered spelling.
+      // Keep the stem's internal periods if the final period ends a sentence.
+      const ending = numbered || unpunctuated.includes('.')
+        ? expression.orderedChoice(continued, expression.and(period))
+        : continued;
+      if (numbered) stem.unshift(expression.repeat1(digit), expression.repeat1(horizontalSpace));
+      return expression.seq(...stem, ending);
+    }),
+  );
+  return expression.orderedChoice(
+    ...rulesFor(numberedAbbreviations, true),
+    ...rulesFor(abbreviations, false),
+    expression.seq(expression.repeat1(digit), period, expression.and(digit)),
+    expression.seq(uppercase, period, expression.and(expression.seq(expression.repeat0(horizontalSpace), uppercase))),
+    expression.repeat1(word),
+    expression.seq(expression.not(terminals), expression.any()),
+  );
+}
+
 /** A full native grammar: region boundaries, lexemes and validation are links. */
 export function buildNativeTextGrammar(specification) {
   const whitespace = characterClass(specification.whitespace);
@@ -30,13 +88,14 @@ export function buildNativeTextGrammar(specification) {
   const punctuation = expression.charClass([...whitespace.items, ...word.items, ...control.items], true);
   const terminals = characterClass({ characters: specification.sentenceTerminals.map((value) => value.codePointAt(0)) });
   const closing = characterClass(specification.sentenceClosings);
+  const continuation = characterClass(specification.sentenceContinuation ?? {});
   const end = expression.not(expression.any());
   const newline = expression.literal(specification.lineEnding);
   const immediateToken = (item) => ({ kind: 'immediateToken', item });
   const line = expression.seq(immediateToken(expression.repeat0(expression.seq(expression.not(newline), expression.any()))), expression.orderedChoice(newline, end));
-  const sentence = expression.seq(
+  const sentence = (profile = {}) => expression.seq(
     expression.and(expression.any()),
-    immediateToken(expression.repeat0(expression.seq(expression.not(terminals), expression.any()))),
+    immediateToken(expression.repeat0(sentenceInterior(terminals, closing, continuation, profile))),
     expression.orderedChoice(immediateToken(expression.seq(expression.repeat1(terminals), expression.repeat0(closing), expression.repeat0(whitespace))), end),
   );
   const opening = expression.literal(specification.parentheses.opening);
@@ -45,7 +104,7 @@ export function buildNativeTextGrammar(specification) {
     ['text_document', { expression: expression.orderedChoice(expression.repeat1(expression.seq(expression.and(expression.any()), expression.ref('text_line'))), expression.ref('text_line')) }],
     ['text_line', { expression: line }],
     ['natural_language_document', { expression: expression.repeat0(expression.ref('natural_language_sentence')) }],
-    ['natural_language_sentence', { expression: sentence }],
+    ['natural_language_sentence', { expression: sentence() }],
     ['lexical_document', { expression: expression.repeat0(expression.orderedChoice(...['whitespace', 'lexical_word', 'rejected_control', 'lexical_punctuation'].map((name) => expression.ref(name)))) }],
     ['whitespace', { expression: expression.repeat1(whitespace), kind: 'token' }],
     ['lexical_word', { expression: expression.repeat1(word), kind: 'token' }],
@@ -60,6 +119,18 @@ export function buildNativeTextGrammar(specification) {
     rule.concept = specification.concepts[name];
     rule.sourceNames = [{ source: 'native:native-text', name: specification.projection[name]?.term ?? name }];
   }
+  for (const profile of sentenceProfiles(specification)) {
+    for (const [name, item] of [
+      [profile.document, expression.repeat0(expression.ref(profile.sentence))],
+      [profile.sentence, sentence(profile)],
+    ]) {
+      rules.set(name, {
+        expression: item,
+        concept: `grammar.${name.replaceAll('_', '-')}`,
+        sourceNames: [{ source: 'native:native-text', name }],
+      });
+    }
+  }
   return new Grammar(specification.starts.plain, rules, null, { matching: 'peg' });
 }
 
@@ -67,10 +138,17 @@ export async function generateNativeTextGrammars({ check = false } = {}) {
   const specificationBytes = readProjectFileBytes(join(root, NATIVE_TEXT_SPECIFICATION));
   const specification = readProjectData(join(root, NATIVE_TEXT_SPECIFICATION));
   const grammar = renderGrammarLinks(buildNativeTextGrammar(specification));
+  const naturalStarts = {};
+  const projection = { ...specification.projection };
+  for (const { language, document, sentence } of sentenceProfiles(specification)) {
+    naturalStarts[language] = document;
+    projection[document] = projection[specification.starts.natural];
+    projection[sentence] = projection.natural_language_sentence;
+  }
   const metadata = serializeProjectData({ generatedBy: 'js/scripts/build-native-text-grammars.mjs',
     source: NATIVE_TEXT_SPECIFICATION, sourceSha256: createHash('sha256').update(specificationBytes).digest('hex'),
     grammarSha256: createHash('sha256').update(grammar).digest('hex'),
-    starts: specification.starts, validation: specification.validation, projection: specification.projection }, join(root, NATIVE_TEXT_METADATA_FILES[0]));
+    starts: specification.starts, validation: specification.validation, projection, naturalStarts }, join(root, NATIVE_TEXT_METADATA_FILES[0]));
   const outputs = [...NATIVE_TEXT_GRAMMAR_FILES.map((path) => [path, grammar]), ...NATIVE_TEXT_METADATA_FILES.map((path) => [path, metadata])];
   for (const [path, expected] of outputs) {
     if (check) {
