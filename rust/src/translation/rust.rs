@@ -247,6 +247,21 @@ fn parse_rust_with_selected_profiles(
 ) -> Result<SProgram> {
     if super::rust_borrowed_vector_rules::accept_rust_borrowed_vector_signature_model(profiles.source_signature){profiles.retain_source_type_owners=true;}
     let source_version_minor = source_versions::minor(profiles.source_version)?;
+    if !profiles.fn_mut_source.is_empty() {
+        use super::rust_exclusive_source_loan_rules::read_rust_exclusive_source_loan_profile;
+        use super::rust_fnmut_source_declaration_rules::read_rust_fn_mut_source_model_error;
+        let error = read_rust_fn_mut_source_model_error(profiles.fn_mut_source, source_version_minor);
+        if !error.is_empty() {
+            return Err(unsupported("Rust source FnMut function", &error, None));
+        }
+        if profiles.exclusive_source != read_rust_exclusive_source_loan_profile() {
+            return Err(unsupported(
+                "Rust source FnMut function",
+                "source FnMut specialization requires the actual exclusive source state profile and covered version",
+                None,
+            ));
+        }
+    }
     let SourceProfiles {
         source_version: _,
         exclusive_source: _,

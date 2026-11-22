@@ -248,6 +248,51 @@ mod tests {
         "fn main() { let mut number = 1u16; number = 2u16; println!(\"{}\", number); }";
 
     #[test]
+    fn composed_source_checks_the_actual_fn_mut_selector_and_version() {
+        let profiles = SourceProfiles {
+            source_version: "1.90.0",
+            source_signature: "Rust source function signature 3",
+            exclusive_source: "Rust exclusive source loans 1",
+            fn_mut_source: "Rust closed source FnMut specializations 1",
+            ..SourceProfiles::default()
+        };
+        for version in ["1.89.0", "1.100.0"] {
+            let error = parse_rust_with_selected_profiles(
+                "fn main() {}",
+                SourceProfiles {
+                    source_version: version,
+                    ..profiles
+                },
+            )
+            .unwrap_err();
+            assert!(error.message.contains("from 1.90.0 through 1.99.x"));
+        }
+        for (exclusive_source, fn_mut_source, diagnostic) in [
+            (
+                "",
+                profiles.fn_mut_source,
+                "actual exclusive source state profile",
+            ),
+            (
+                profiles.exclusive_source,
+                "unknown profile",
+                "actual closed source FnMut specialization model",
+            ),
+        ] {
+            let error = parse_rust_with_selected_profiles(
+                "fn main() {}",
+                SourceProfiles {
+                    exclusive_source,
+                    fn_mut_source,
+                    ..profiles
+                },
+            )
+            .unwrap_err();
+            assert!(error.message.contains(diagnostic));
+        }
+    }
+
+    #[test]
     fn explicit_region_composition_retains_whole_storage_write_authority() {
         let profiles = SourceProfiles {
             source_version: "1.90.0",
