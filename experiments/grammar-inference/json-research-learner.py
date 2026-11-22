@@ -1,4 +1,4 @@
-"""Run the pinned, model-free XVada algorithm on an existing holdout batch."""
+"""Run the pinned model-free learners on the same JSON holdout batch."""
 import base64
 from contextlib import redirect_stdout
 import hashlib
@@ -21,7 +21,7 @@ def reject_constant(value):
 def accept_json(source):
     try:
         json.loads(source, parse_constant=reject_constant)
-    except (ValueError, RecursionError):
+    except ValueError:
         return False
     return True
 
@@ -31,12 +31,24 @@ def fail_on_model_call():
     # deterministic configuration supplies no credentials or model proposals.
     class NoModel:
         def __getattr__(self, name):
-            print(f"model call in deterministic XVada configuration: {name}", file=sys.stderr, flush=True)
+            print(f"model call in deterministic configuration: {name}", file=sys.stderr, flush=True)
             os._exit(76)
 
     model = ModuleType("openai")
     model.OpenAI = NoModel
     sys.modules["openai"] = model
+
+
+def natgi_unused_pretty_print():
+    # NatGI imports this debug printer by an unavailable module name. All
+    # printer calls in the pinned source are commented out.
+    def unexpected_debug_call(*args, **kwargs):
+        print("unexpected debug printer call in pinned NatGI run", file=sys.stderr, flush=True)
+        os._exit(76)
+
+    debug = ModuleType("PrettyPrint")
+    debug.PrettyPrintTree = unexpected_debug_call
+    sys.modules["PrettyPrint"] = debug
 
 
 def run(checkout, trace_path, request):
@@ -45,10 +57,18 @@ def run(checkout, trace_path, request):
     memory = request["memoryBytes"]
     resource.setrlimit(resource.RLIMIT_AS, (memory, memory))
     fail_on_model_call()
+    strategy = request["strategy"]
+    if strategy == "natgi":
+        natgi_unused_pretty_print()
+    elif strategy != "xvada":
+        raise ValueError("unknown pinned research learner")
     sys.path.insert(0, str(checkout))
     import config
     config.USE_LLM = False
     config.AI_LABEL = False
+    if strategy == "natgi":
+        config.TREEVADA = False
+        config.HDD = True
     from lark.exceptions import UnexpectedInput
     from oracle import ExternalOracle
     from search import approx_tokenize
@@ -75,7 +95,10 @@ def run(checkout, trace_path, request):
             spelling = source.encode("utf-8")
             if len(spelling) > input_limit:
                 exhausted("membership query bytes")
-            accepted = accept_json(source)
+            try:
+                accepted = accept_json(source)
+            except RecursionError:
+                exhausted("membership oracle nesting")
             self.real_calls += 1
             print(json.dumps({"query": self.real_calls, "sha256": hashlib.sha256(spelling).hexdigest(),
                               "bytes": len(spelling), "accepted": accepted, "source": source}), file=trace)
@@ -91,7 +114,13 @@ def run(checkout, trace_path, request):
             for source in request["positives"]:
                 oracle.parse(source)
                 observations.append(approx_tokenize(oracle, source))
-            _, grammar = build_start_grammar(oracle, observations, (3, 10))
+            grammars = build_start_grammar(oracle, observations, (3, 10))
+            expected_grammars = 4 if strategy == "natgi" else 2
+            # NatGI's bracket-guided branch precedes the optional TreeVada
+            # search and still runs when model suggestions are disabled.
+            if len(grammars) != expected_grammars or grammars[1] is None:
+                raise ValueError("the pinned learner did not return its model-free HDD grammar")
+            grammar = grammars[1]
             parser = grammar.parser()
         except MemoryError:
             exhausted("training address space")

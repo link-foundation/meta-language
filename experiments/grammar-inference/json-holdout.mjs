@@ -1,6 +1,7 @@
 // Run on a CI runner once the full source draft is ready for verification.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { createDynamicMetaLanguage } from '../../js/src/dynamic-meta-language.js';
@@ -8,7 +9,12 @@ import { inferRegularGrammar } from '../../js/src/grammar-inference.js';
 import { renderGrammarLinks } from '../../js/src/grammar-links.js';
 
 const corpusRevision = '1ef36fa01286573e846ac449e8683f8833c5b26a';
-const xvadaRevision = '5221b183bc6e1ac583505299173fdbae0706da99';
+const externalLearners = new Map([
+  ['xvada', { revision: '5221b183bc6e1ac583505299173fdbae0706da99', paper: 'arXiv:2607.08959v4',
+    mode: 'model-free TreeVada with HDD' }],
+  ['natgi', { revision: '561f35a9bc9fa02c62de6d2ebfbc6266357fe414', paper: 'arXiv:2509.26616v2',
+    mode: 'model-free bracket-guided trees with HDD' }],
+]);
 const inputLimit = 8192;
 const learnerLimits = { stateLimit: 128, pairLimit: 8192, attemptLimit: 4096, symbolLimit: 2048, byteLimit: 16384 };
 const parserLimits = { maxDepth: 192, stepLimit: 100_000, memoLimit: 4096, memoryLimit: 8 * 1024 * 1024 };
@@ -99,29 +105,33 @@ function measure(rows, learner, oracle) {
     f1: ratio(2 * truePositive, 2 * truePositive + falsePositive + falseNegative) };
 }
 
-function measureExternalLearner(checkout, tracePath, candidates) {
-  if (git(checkout, 'rev-parse', 'HEAD').toString().trim() !== xvadaRevision) throw new Error('uncovered XVada revision');
-  if (git(checkout, 'status', '--porcelain', '--untracked-files=all').length !== 0) throw new Error('XVada inputs must match the pinned checkout');
+function measureExternalLearner(strategy, checkout, tracePath, candidates) {
+  const { revision, mode } = externalLearners.get(strategy);
+  if (git(checkout, 'rev-parse', 'HEAD').toString().trim() !== revision) throw new Error('uncovered ' + strategy + ' revision');
+  if (git(checkout, 'status', '--porcelain', '--untracked-files=all').length !== 0) {
+    throw new Error(strategy + ' inputs must match the pinned checkout');
+  }
   const budget = { seed: 101, inputLimit, memoryBytes: 512 * 1024 * 1024, queryLimit: 4096, trainingSeconds: 90, parseSeconds: 2 };
   const holdout = candidates.map(({ path, sha256, input }) => ({ path, sha256, bytes: input.toString('base64') }));
   const pythonScript = fileURLToPath(new URL('./json-research-learner.py', import.meta.url));
   const invoke = trace => {
     const result = spawnSync('python3', ['-s', '-B', pythonScript, checkout, trace], {
-      input: JSON.stringify({ ...budget, positives, holdout }), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+      input: JSON.stringify({ strategy, ...budget, positives, holdout }), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
       env: { ...process.env, PYTHONHASHSEED: String(budget.seed) },
     });
     if (result.stderr) process.stderr.write(result.stderr);
     if (result.status !== 0 && result.status !== 75) {
-      throw new Error(result.error?.message ?? 'XVada process exited with ' + (result.signal ?? result.status));
+      throw new Error(result.error?.message ?? strategy + ' process exited with ' + (result.signal ?? result.status));
     }
     const measurement = JSON.parse(result.stdout);
     if (measurement.larkVersion !== '1.2.2') throw new Error('uncovered Lark version ' + measurement.larkVersion);
-    if ((result.status === 75) !== Boolean(measurement.trainingLimit)) throw new Error('inconsistent XVada training outcome');
+    if ((result.status === 75) !== Boolean(measurement.trainingLimit)) throw new Error('inconsistent ' + strategy + ' training outcome');
     return measurement;
   };
   const { holdout: learned, ...first } = invoke(tracePath);
   const repeated = invoke(tracePath + '.repeat');
-  const provenance = { budget, archive: null, learnerMode: 'model-free TreeVada with HDD' };
+  const firstTrace = digest(readFileSync(tracePath)), repeatedTrace = digest(readFileSync(tracePath + '.repeat'));
+  const provenance = { budget, archive: null, learnerMode: mode, firstTrace, repeatedTrace };
   if (first.trainingLimit) {
     return { ...first, ...provenance, grammar: null, deterministic: null, repeatedTrainingLimit: repeated.trainingLimit,
       outcomes: Object.fromEntries(candidates.map(({ path }) =>
@@ -129,17 +139,18 @@ function measureExternalLearner(checkout, tracePath, candidates) {
   }
   const learnedPaths = new Set(Object.keys(learned));
   if (learnedPaths.size !== candidates.length || candidates.some(row => !learnedPaths.has(row.path))) {
-    throw new Error('XVada omitted an eligible holdout input');
+    throw new Error(strategy + ' omitted an eligible holdout input');
   }
   return { ...first, ...provenance, outcomes: learned,
-    deterministic: first.grammar === repeated.grammar && JSON.stringify(learned) === JSON.stringify(repeated.holdout) };
+    deterministic: firstTrace === repeatedTrace && first.grammar === repeated.grammar
+      && JSON.stringify(learned) === JSON.stringify(repeated.holdout) };
 }
 
 const [checkout, strategy, externalCheckout, tracePath] = process.argv.slice(2);
-const external = strategy === 'xvada';
-if (!checkout || !['rpni', 'edsm', 'alergia', 'xvada'].includes(strategy)
+const external = externalLearners.get(strategy);
+if (!checkout || (!external && !['rpni', 'edsm', 'alergia'].includes(strategy))
   || process.argv.length !== (external ? 6 : 4) || (external && (!externalCheckout || !tracePath))) {
-  throw new Error('usage: node json-holdout.mjs <JSONTestSuite checkout> <rpni|edsm|alergia|xvada> [<XVada checkout> <training trace.jsonl>]');
+  throw new Error('usage: node json-holdout.mjs <JSONTestSuite checkout> <rpni|edsm|alergia|xvada|natgi> [<learner checkout> <training trace.jsonl>]');
 }
 if (process.versions.node !== '24.14.0') throw new Error('uncovered Node oracle ' + process.versions.node);
 const python = spawnSync('python3', ['--version'], { encoding: 'utf8' });
@@ -159,7 +170,7 @@ function measureLocalLearner() {
     parser: createDynamicMetaLanguage([model.source]).parser(model.source.id, parserLimits) };
 }
 const { parser, outcomes, ...learner } = external
-  ? measureExternalLearner(externalCheckout, tracePath, corpus.filter(eligible)) : measureLocalLearner();
+  ? measureExternalLearner(strategy, externalCheckout, tracePath, corpus.filter(eligible)) : measureLocalLearner();
 let learnerQueries = 0, oracleQueries = 0, parseMilliseconds = 0;
 const rows = corpus.map(({ input, ...record }) => {
   if (!input) return record;
@@ -189,7 +200,7 @@ process.stdout.write(JSON.stringify({ schemaVersion: 1, corpusRevision, strategy
   oracles: { node: process.versions.node, v8: process.versions.v8, python: pythonVersion },
   training: { positives, negatives: external ? [] : negatives }, ...learner,
   grammarBytes: learner.grammar === null ? null : Buffer.byteLength(learner.grammar),
-  ...(external ? { learnerRevision: xvadaRevision, learnerLicense: 'MIT' }
+  ...(external ? { learnerRevision: external.revision, learnerPaper: external.paper, learnerLicense: 'MIT' }
     : { learnerLimits, parserLimits, parseMilliseconds, peakLearnerProcessRssKiB: process.resourceUsage().maxRSS }),
   learnerQueries, oracleQueries,
   acceptance: Object.fromEntries(['label', 'node', 'python'].map(oracle => [oracle, measure(rows, 'learned', oracle)])), rows }, null, 2) + '\n');

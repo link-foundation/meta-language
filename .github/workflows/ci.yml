@@ -310,7 +310,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        strategy: [rpni, edsm, alergia, xvada, attributed]
+        strategy: [rpni, edsm, alergia, xvada, natgi, attributed]
     steps:
       - uses: actions/checkout@v7
 
@@ -333,18 +333,24 @@ jobs:
           git -C "$RUNNER_TEMP/JSONTestSuite" fetch --depth=1 --no-tags \
             https://github.com/nst/JSONTestSuite.git "$CORPUS_REVISION"
 
-      - name: Fetch the pinned deterministic XVada learner
-        if: ${{ matrix.strategy == 'xvada' }}
+      - name: Fetch the pinned model-free research learner
+        if: ${{ matrix.strategy == 'xvada' || matrix.strategy == 'natgi' }}
         env:
-          XVADA_REVISION: 5221b183bc6e1ac583505299173fdbae0706da99
+          LEARNER_STRATEGY: ${{ matrix.strategy }}
         run: |
-          git init "$RUNNER_TEMP/xvada"
-          git -C "$RUNNER_TEMP/xvada" remote add origin https://github.com/rifatarefin/xvada.git
-          git -C "$RUNNER_TEMP/xvada" config remote.origin.promisor true
-          git -C "$RUNNER_TEMP/xvada" config remote.origin.partialclonefilter blob:none
-          git -C "$RUNNER_TEMP/xvada" fetch --depth=1 --no-tags --filter=blob:none origin "$XVADA_REVISION"
-          git -C "$RUNNER_TEMP/xvada" sparse-checkout set --no-cone '/*.py' /LICENSE
-          git -C "$RUNNER_TEMP/xvada" checkout --detach "$XVADA_REVISION"
+          case "$LEARNER_STRATEGY" in
+            xvada) revision=5221b183bc6e1ac583505299173fdbae0706da99 ;;
+            natgi) revision=561f35a9bc9fa02c62de6d2ebfbc6266357fe414 ;;
+            *) exit 1 ;;
+          esac
+          checkout="$RUNNER_TEMP/$LEARNER_STRATEGY"
+          git init "$checkout"
+          git -C "$checkout" remote add origin "https://github.com/rifatarefin/$LEARNER_STRATEGY.git"
+          git -C "$checkout" config remote.origin.promisor true
+          git -C "$checkout" config remote.origin.partialclonefilter blob:none
+          git -C "$checkout" fetch --depth=1 --no-tags --filter=blob:none origin "$revision"
+          git -C "$checkout" sparse-checkout set --no-cone '/*.py' /LICENSE
+          git -C "$checkout" checkout --detach "$revision"
           python3 -m venv "$RUNNER_TEMP/grammar-inference-venv"
           "$RUNNER_TEMP/grammar-inference-venv/bin/python" -m pip install --require-hashes --only-binary=:all: --no-deps \
             -r experiments/grammar-inference/xvada-requirements.txt
@@ -359,8 +365,8 @@ jobs:
             experiment=(experiments/grammar-inference/attributed-holdout.mjs)
           else
             experiment=(experiments/grammar-inference/json-holdout.mjs "$RUNNER_TEMP/JSONTestSuite" "$LEARNER_STRATEGY")
-            if [[ "$LEARNER_STRATEGY" == xvada ]]; then
-              experiment+=("$RUNNER_TEMP/xvada" grammar-inference-results/training-queries.jsonl)
+            if [[ "$LEARNER_STRATEGY" == xvada || "$LEARNER_STRATEGY" == natgi ]]; then
+              experiment+=("$RUNNER_TEMP/$LEARNER_STRATEGY" grammar-inference-results/training-queries.jsonl)
             fi
           fi
           node --max-old-space-size=512 "${experiment[@]}" \
