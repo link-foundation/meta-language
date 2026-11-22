@@ -1,6 +1,7 @@
 //! Target placement transport. The shared JavaScript policy decides prefixes;
 //! this does not establish ownership, positivity, defaults or emit aliases.
 use std::collections::{HashMap,HashSet};
+use std::{cell::RefCell, rc::Rc};
 use super::diagnostics::{Result,unsupported};
 use super::ir::{Decl,Program};
 
@@ -76,9 +77,16 @@ pub(crate) fn plan_formal_datatype_modules(program:&Program)->Result<FormalDatat
         let representative=*indices.iter().min().ok_or_else(||unsupported("formal datatype modules","a mutual group has no actual owner",None))?;
         for index in indices{groups[index]=representative as f64;}
     }
-    let paths=data.iter().map(|entry|entry.module_path.clone()).collect::<Vec<_>>();
-    let prefixes=super::formal_datatype_module_rules::plan_formal_datatype_module_prefixes(&paths,&groups);
-    let depths=super::formal_datatype_module_rules::plan_formal_datatype_module_closure(&paths,&prefixes);
+    let paths = data.iter()
+        .map(|entry| Rc::new(RefCell::new(entry.module_path.clone())))
+        .collect::<Vec<_>>();
+    let paths = Rc::new(RefCell::new(paths));
+    let prefixes = super::formal_datatype_module_rules::plan_formal_datatype_module_prefixes(
+        Rc::clone(&paths),
+        Rc::new(RefCell::new(groups)),
+    );
+    let depths = super::formal_datatype_module_rules::plan_formal_datatype_module_closure(paths, prefixes);
+    let depths = depths.borrow();
     if depths.len()!=data.len(){return Err(unsupported("formal datatype modules","actual module paths exceed the bounded placement profile",None));}
     let mut aliases=Vec::new();
     let mut projected=program.clone();

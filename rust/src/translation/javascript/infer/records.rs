@@ -100,7 +100,7 @@ impl Inference {
     ) -> Result<()> {
         let (left_owner,left_open)={let value=left.borrow();(value.source_class_owner.clone(),value.open)};
         let (right_owner,right_open)={let value=right.borrow();(value.source_class_owner.clone(),value.open)};
-        match crate::translation::javascript_class_owner_rules::read_java_script_class_owner_inference(left_owner.as_deref().unwrap_or(""),right_owner.as_deref().unwrap_or(""),left_open,right_open).as_str(){
+        match crate::translation::class_owners::infer_class_owner(left_owner.as_deref().unwrap_or(""),right_owner.as_deref().unwrap_or(""),left_open,right_open)?.as_str(){
             "left"=>{left.borrow_mut().source_class_owner=right_owner;self.unification_changes+=1;},
             "right"=>{right.borrow_mut().source_class_owner=left_owner;self.unification_changes+=1;},
             "error"=>return Err(type_error("an actual class constructor owner cannot be erased or replaced by a plain record",place)),_=>{}

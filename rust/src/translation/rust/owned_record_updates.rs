@@ -2,7 +2,7 @@
 //! move policy. Field identities stay only in existing owner-state frames.
 use super::{Options,Result,RustParser,SExpr,SNode,SourceOrigins,SourceOrigin,SourceDeclaration,Span,Type,unsupported};
 use super::records::NamedRecord;
-use crate::translation::rust_owned_record_update_rules as rules;
+use super::owned_record_policy::fields as rules;
 use std::collections::HashMap;
 pub(super) fn field_state(snapshot:&HashMap<String,String>,identity:&str)->String{
  if let Some(state)=snapshot.get(identity){return state.clone();}let mut root=rules::read_rust_owned_record_field_root(identity);for _ in 0..crate::translation::rust_owned_record_place_rules::read_rust_owned_record_place_depth_limit() as usize{if root.is_empty(){break;}if let Some(state)=snapshot.get(&root){return rules::read_rust_owned_record_absent_field_state(state).to_owned();}root=rules::read_rust_owned_record_field_root(&root);}"absent".to_owned()

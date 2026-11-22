@@ -9,7 +9,7 @@ impl SourceOrigins {
     pub(in super::super) fn ensure_owned_record_field_state(&mut self,identity:&str){self.source_binding_states.entry(identity.to_owned()).or_insert_with(||"available".to_owned());}
     pub(in super::super) fn set_owned_record_field_state(&mut self,identity:&str,state:&str){self.source_binding_states.insert(identity.to_owned(),state.to_owned());}
     pub(in super::super) fn check_owned_record_whole(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{
-        if self.collecting||origin.source_binding_identity.is_none(){return Ok(());}let boxed=self.owned_box_record_owner(origin).is_some();if !boxed{let mut direct=origin.clone();direct.wrappers.clear();if self.nominal_ownership_facts(&direct).profile!="owned"{return Ok(());}}let (identities,states):(Vec<_>,Vec<_>)=self.source_binding_states.iter().map(|(identity,state)|(identity.clone(),state.clone())).unzip();let error=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_whole_error(origin.source_binding_identity.as_deref().unwrap_or(""),&identities,&states);if error.is_empty(){Ok(())}else{Err(unsupported("Rust record field ownership",&error,span))}
+        if self.collecting||origin.source_binding_identity.is_none(){return Ok(());}let boxed=self.owned_box_record_owner(origin).is_some();if !boxed{let mut direct=origin.clone();direct.wrappers.clear();if self.nominal_ownership_facts(&direct).profile!="owned"{return Ok(());}}let (identities,states):(Vec<_>,Vec<_>)=self.source_binding_states.iter().map(|(identity,state)|(identity.clone(),state.clone())).unzip();let error=super::super::owned_record_policy::fields::read_rust_owned_record_whole_error(origin.source_binding_identity.as_deref().unwrap_or(""),&identities,&states);if error.is_empty(){Ok(())}else{Err(unsupported("Rust record field ownership",&error,span))}
     }
     pub(in super::super) fn assign_copy_closure_lexical_binding(&mut self,mut origin:SourceOrigin)->SourceOrigin{
         if !self.collecting{let identity=format!("lexical {}",self.next_source_binding_identity);self.next_source_binding_identity+=1;origin.source_lexical_binding_identity=Some(identity.clone());self.source_binding_states.insert(identity,"available".to_owned());}self.promote_mutable_record_value_loans(origin)
@@ -262,7 +262,7 @@ impl SourceOrigins {
         } else {
             None
         };
-        let surviving_fields=self.source_binding_states.keys().filter(|id|{let root=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_ultimate_root(id);!root.is_empty()&&self.source_binding_states.get(&root).is_some_and(|state|state=="available")&&(before.contains_key(&root)||escaping.as_ref()==Some(&root)||result.source_extending_temporary_bindings.contains(&root))}).cloned().collect::<HashSet<_>>();
+        let surviving_fields=self.source_binding_states.keys().filter(|id|{let root=super::super::owned_record_policy::fields::read_rust_owned_record_ultimate_root(id);!root.is_empty()&&self.source_binding_states.get(&root).is_some_and(|state|state=="available")&&(before.contains_key(&root)||escaping.as_ref()==Some(&root)||result.source_extending_temporary_bindings.contains(&root))}).cloned().collect::<HashSet<_>>();
         for (id, state) in &mut self.source_binding_states {
             if !retained.contains(id.as_str())&&!before.contains_key(id)&&!surviving_fields.contains(id)&&!surviving_loans.contains(id)
                 && escaping.as_ref() != Some(id)
@@ -314,7 +314,7 @@ impl SourceOrigins {
         before: &HashMap<String, String>,
         span: Option<Span>,
     ) -> Result<()> {
-        let ids = before.keys().chain(self.source_binding_states.keys().filter(|id|!crate::translation::rust_owned_record_update_rules::read_rust_owned_record_field_root(id).is_empty())).collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
+        let ids = before.keys().chain(self.source_binding_states.keys().filter(|id|!super::super::owned_record_policy::fields::read_rust_owned_record_field_root(id).is_empty())).collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
         let left = ids
             .iter()
             .map(|id| super::super::owned_record_updates::field_state(before,id))

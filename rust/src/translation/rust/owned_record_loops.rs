@@ -5,7 +5,7 @@ use super::owned_record_state::Slot;
 use super::owned_record_effects::EffectSource;
 use crate::translation::surface::SArrayItem;
 use crate::translation::rust_owned_record_loop_rules as rules;
-use crate::translation::rust_owned_record_update_rules as fields;
+use super::owned_record_policy::{fields, state};
 use crate::translation::rust_owned_record_effect_rules as effects;
 use std::collections::{HashSet,HashMap};
 use std::sync::Arc;
@@ -41,7 +41,7 @@ fn place<'a>(parser:&'a RustParser,node:&SExpr)->Option<Place<'a>>{
 fn counter(parser:&RustParser,guard:&SExpr)->Result<Counter>{
  let SNode::Binary{op,left,right}=&guard.node else{return Err(fail("the loop head needs its actual pure counter comparison with zero",guard.span));};if !numeral(right,"0"){return Err(fail("the loop head needs its actual pure counter comparison with zero",guard.span));}let selected=place(parser,left).filter(|place|!place.indices.is_empty()).ok_or_else(||fail("the loop head needs an actual mutable record field place",guard.span))?;
  let origin=selected.origin;let owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());let(bits,signed)=match origin.ty.as_ref(){Some(Type::Fixed{bits,signed})=>(*bits as f64,*signed),_=>(0.0,false)};let owner=owner.filter(|owner|owner.kind=="primitive"&&owner.arguments.is_empty()).map(|owner|owner.path.join("::")).unwrap_or_default();let error=rules::read_rust_owned_record_loop_counter_error(origin.ty.as_ref().map_or("",Type::kind),bits,signed,origin.wrappers.len() as f64,&owner,op.name());if !origin.proven||!error.is_empty(){return Err(fail(if error.is_empty(){"the loop counter needs its actual complete source proof"}else{&error},guard.span));}
- let indices=selected.indices;let target=crate::translation::rust_owned_record_state_rules::read_rust_owned_record_state_field_identity(&selected.slot.root,&indices.iter().map(|index|*index as f64).collect::<Vec<_>>());Ok(Counter{lexical:selected.slot.lexical.clone(),indices,target,ty:origin.ty.as_ref().expect("actual admitted counter type").clone()})
+ let indices=selected.indices;let target=state::read_rust_owned_record_state_field_identity(&selected.slot.root,&indices.iter().map(|index|*index as f64).collect::<Vec<_>>());Ok(Counter{lexical:selected.slot.lexical.clone(),indices,target,ty:origin.ty.as_ref().expect("actual admitted counter type").clone()})
 }
 fn text<'a>(value:&'a Value,key:&str)->&'a str{value.get(key).and_then(Value::as_str).unwrap_or("")}
 fn children(node:&Value)->Result<Vec<&Value>>{let kind=text(node,"k");let roles=match kind{"let"=>vec!["value".to_owned(),"body".to_owned()],"print"=>vec!["expr".to_owned(),"body".to_owned()],"name"|"num"|"str"|"bool"|"unit"=>return Ok(Vec::new()),_=>effects::read_rust_owned_record_effect_children(kind)};if roles.is_empty(){return Err(fail("the loop body needs complete ordered source roles",None));}let mut result=Vec::new();for role in roles{if let Some(values)=node[&role].as_array(){for child in values{result.push(if child.get("k").is_none()&&child.get("value").is_some(){&child["value"]}else{child});}}else if node[&role].is_object(){result.push(&node[&role]);}}Ok(result)}

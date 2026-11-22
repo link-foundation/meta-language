@@ -3,27 +3,40 @@
 /** @param {string[][]} paths @param {number[]} groups @returns {number[]} */
 export function planFormalDatatypeModulePrefixes(paths,groups){
  if(paths.length!==groups.length||paths.length>8192)return [];
- const depths=[];
+ const common=[];
  let total=0;
  for(let index=0;index<paths.length;index+=1){
   const path=paths[index],group=groups[index];
-  if(path===undefined||path.length>256||group===undefined||!Number.isSafeInteger(group)||group<0||group>=paths.length||group===0&&1/group<0)return [];
+  if(path===undefined)return [];
+  if(group===undefined)return [];
+  if(path.length>256||!Number.isSafeInteger(group)||group<0||group>=paths.length||group===0&&1/group<0)return [];
   if(groups[group]!==group)return [];
-  for(const part of path){if(part.length===0||part.length>4096)return [];total+=part.length;if(total>8388608)return [];}
-  depths.push(path.length);
+  for(let part=0;part<path.length;part+=1){
+   const value=path[part];
+   if(value===undefined||value.length===0||value.length>4096)return [];
+   total+=value.length;
+   if(total>8388608)return [];
+  }
+  common.push(path.length);
  }
  // A component's source-earliest representative makes placement deterministic.
  // Every member is compared with that one path, preserving an exact prefix.
- const common=paths.map(path=>path.length);
  for(let index=0;index<paths.length;index+=1){
   const group=groups[index],path=paths[index];
-  if(group===undefined||path===undefined||group>index)return [];
+  if(group===undefined)return [];
+  if(path===undefined)return [];
+  if(group>index)return [];
   const representative=paths[group];if(representative===undefined)return [];
   let depth=0;
   while(depth<path.length&&depth<representative.length&&path[depth]===representative[depth])depth+=1;
-  common[group]=Math.min(common[group]??0,depth);
+  common.splice(group,1,Math.min(common[group]??0,depth));
  }
- for(let index=0;index<paths.length;index+=1)depths[index]=common[groups[index]??-1]??-1;
+ const depths=[];
+ for(let index=0;index<groups.length;index+=1){
+  const group=groups[index];
+  if(group===undefined)return [];
+  depths.push(common[group]??-1);
+ }
  return depths;
 }
 
@@ -38,7 +51,9 @@ export function planFormalDatatypeModuleClosure(paths,depths){
  let budget=0;
  for(let index=0;index<paths.length;index+=1){
   const path=paths[index],depth=depths[index];
-  if(path===undefined||path.length>256||depth===undefined||!Number.isSafeInteger(depth)||depth<0||depth>path.length||depth===0&&1/depth<0)return [];
+  if(path===undefined)return [];
+  if(depth===undefined)return [];
+  if(path.length>256||!Number.isSafeInteger(depth)||depth<0||depth>path.length||depth===0&&1/depth<0)return [];
   let key='';
   for(let part=0;part<path.length;part+=1){
    const value=path[part];if(value===undefined||value.length===0||value.length>4096)return [];
@@ -50,7 +65,15 @@ export function planFormalDatatypeModuleClosure(paths,depths){
  const result=[];
  for(let index=0;index<paths.length;index+=1){
   let selected=depths[index]??-1,key='';
-  for(const value of paths[index]??[]){key+=String(value.length)+':'+value;const protectedDepth=boundaries.get(key);if(protectedDepth!==undefined)selected=Math.min(selected,protectedDepth);}
+  const path=paths[index];
+  if(path===undefined)return [];
+  for(let part=0;part<path.length;part+=1){
+   const value=path[part];
+   if(value===undefined)return [];
+   key+=String(value.length)+':'+value;
+   const protectedDepth=boundaries.get(key);
+   if(protectedDepth!==undefined)selected=Math.min(selected,protectedDepth);
+  }
   result.push(selected);
  }
  return result;

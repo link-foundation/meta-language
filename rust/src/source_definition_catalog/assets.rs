@@ -38,11 +38,17 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "collection-access-program.lino" => {
             Some(include_str!("../data/collection-access-program.lino"))
         }
+        "collection-copy-program.lino" => {
+            Some(include_str!("../data/collection-copy-program.lino"))
+        }
         "conditional-chain-program.lino" => {
             Some(include_str!("../data/conditional-chain-program.lino"))
         }
         "conditional-constructor-sharing-program.lino" => Some(include_str!(
             "../data/conditional-constructor-sharing-program.lino"
+        )),
+        "datatype-dependency-group-program.lino" => Some(include_str!(
+            "../data/datatype-dependency-group-program.lino"
         )),
         "dynamic-language-command-program.lino" => Some(include_str!(
             "../data/dynamic-language-command-program.lino"
@@ -52,6 +58,12 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "fixed-integer-cast-program.lino" => {
             Some(include_str!("../data/fixed-integer-cast-program.lino"))
+        }
+        "formal-datatype-alias-program.lino" => {
+            Some(include_str!("../data/formal-datatype-alias-program.lino"))
+        }
+        "formal-datatype-module-program.lino" => {
+            Some(include_str!("../data/formal-datatype-module-program.lino"))
         }
         "formal-string-unit-program.lino" => {
             Some(include_str!("../data/formal-string-unit-program.lino"))
@@ -83,6 +95,12 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-call-source-program.lino" => {
             Some(include_str!("../data/javascript-call-source-program.lino"))
         }
+        "javascript-class-observation-program.lino" => Some(include_str!(
+            "../data/javascript-class-observation-program.lino"
+        )),
+        "javascript-class-owner-program.lino" => {
+            Some(include_str!("../data/javascript-class-owner-program.lino"))
+        }
         "javascript-class-source-program.lino" => {
             Some(include_str!("../data/javascript-class-source-program.lino"))
         }
@@ -97,6 +115,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         )),
         "javascript-fixed-integer-cast-program.lino" => Some(include_str!(
             "../data/javascript-fixed-integer-cast-program.lino"
+        )),
+        "javascript-host-capability-program.lino" => Some(include_str!(
+            "../data/javascript-host-capability-program.lino"
         )),
         "javascript-identifier-program.lino" => {
             Some(include_str!("../data/javascript-identifier-program.lino"))
@@ -149,6 +170,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-record-parameter-program.lino" => Some(include_str!(
             "../data/javascript-record-parameter-program.lino"
         )),
+        "javascript-source-text-program.lino" => {
+            Some(include_str!("../data/javascript-source-text-program.lino"))
+        }
         "javascript-string-argument-program.lino" => Some(include_str!(
             "../data/javascript-string-argument-program.lino"
         )),
@@ -199,6 +223,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "project-translation-archive-program.lino" => Some(include_str!(
             "../data/project-translation-archive-program.lino"
         )),
+        "proposition-value-program.lino" => {
+            Some(include_str!("../data/proposition-value-program.lino"))
+        }
         "record-callable-parameter-program.lino" => Some(include_str!(
             "../data/record-callable-parameter-program.lino"
         )),
@@ -233,8 +260,20 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-array-length-program.lino" => {
             Some(include_str!("../data/rust-array-length-program.lino"))
         }
+        "rust-array-lookup-option-program.lino" => Some(include_str!(
+            "../data/rust-array-lookup-option-program.lino"
+        )),
         "rust-array-lookup-program.lino" => {
             Some(include_str!("../data/rust-array-lookup-program.lino"))
+        }
+        "rust-borrowed-iterator-program.lino" => {
+            Some(include_str!("../data/rust-borrowed-iterator-program.lino"))
+        }
+        "rust-borrowed-source-region-program.lino" => Some(include_str!(
+            "../data/rust-borrowed-source-region-program.lino"
+        )),
+        "rust-borrowed-vector-program.lino" => {
+            Some(include_str!("../data/rust-borrowed-vector-program.lino"))
         }
         "rust-byte-ascii-program.lino" => {
             Some(include_str!("../data/rust-byte-ascii-program.lino"))
@@ -277,6 +316,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "rust-displayed-string-interface-program.lino" => Some(include_str!(
             "../data/rust-displayed-string-interface-program.lino"
+        )),
+        "rust-expression-completion-program.lino" => Some(include_str!(
+            "../data/rust-expression-completion-program.lino"
         )),
         "rust-formatting-program.lino" => {
             Some(include_str!("../data/rust-formatting-program.lino"))
@@ -339,11 +381,29 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-owned-binding-program.lino" => {
             Some(include_str!("../data/rust-owned-binding-program.lino"))
         }
+        "rust-owned-record-effect-program.lino" => Some(include_str!(
+            "../data/rust-owned-record-effect-program.lino"
+        )),
         "rust-owned-record-loop-program.lino" => {
             Some(include_str!("../data/rust-owned-record-loop-program.lino"))
         }
+        "rust-owned-record-place-program.lino" => {
+            Some(include_str!("../data/rust-owned-record-place-program.lino"))
+        }
+        "rust-owned-record-state-program.lino" => {
+            Some(include_str!("../data/rust-owned-record-state-program.lino"))
+        }
         "rust-owned-record-update-program.lino" => Some(include_str!(
             "../data/rust-owned-record-update-program.lino"
+        )),
+        "rust-owned-standard-sum-method-program.lino" => Some(include_str!(
+            "../data/rust-owned-standard-sum-method-program.lino"
+        )),
+        "rust-owned-standard-sum-observer-program.lino" => Some(include_str!(
+            "../data/rust-owned-standard-sum-observer-program.lino"
+        )),
+        "rust-owned-standard-sum-predicate-program.lino" => Some(include_str!(
+            "../data/rust-owned-standard-sum-predicate-program.lino"
         )),
         "rust-panic-value-program.lino" => {
             Some(include_str!("../data/rust-panic-value-program.lino"))
@@ -419,9 +479,15 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-source-constant-program.lino" => {
             Some(include_str!("../data/rust-source-constant-program.lino"))
         }
+        "rust-source-namespace-program.lino" => {
+            Some(include_str!("../data/rust-source-namespace-program.lino"))
+        }
         "rust-source-owner-retention-program.lino" => Some(include_str!(
             "../data/rust-source-owner-retention-program.lino"
         )),
+        "rust-source-type-origin-program.lino" => {
+            Some(include_str!("../data/rust-source-type-origin-program.lino"))
+        }
         "rust-source-version-program.lino" => {
             Some(include_str!("../data/rust-source-version-program.lino"))
         }
@@ -431,8 +497,29 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-standard-string-view-program.lino" => Some(include_str!(
             "../data/rust-standard-string-view-program.lino"
         )),
+        "rust-standard-sum-conversion-program.lino" => Some(include_str!(
+            "../data/rust-standard-sum-conversion-program.lino"
+        )),
+        "rust-standard-sum-guard-program.lino" => {
+            Some(include_str!("../data/rust-standard-sum-guard-program.lino"))
+        }
         "rust-standard-sum-method-program.lino" => Some(include_str!(
             "../data/rust-standard-sum-method-program.lino"
+        )),
+        "rust-standard-sum-nested-program.lino" => Some(include_str!(
+            "../data/rust-standard-sum-nested-program.lino"
+        )),
+        "rust-standard-sum-ownership-program.lino" => Some(include_str!(
+            "../data/rust-standard-sum-ownership-program.lino"
+        )),
+        "rust-standard-sum-predicate-program.lino" => Some(include_str!(
+            "../data/rust-standard-sum-predicate-program.lino"
+        )),
+        "rust-standard-sum-signature-program.lino" => Some(include_str!(
+            "../data/rust-standard-sum-signature-program.lino"
+        )),
+        "rust-standard-sum-source-program.lino" => Some(include_str!(
+            "../data/rust-standard-sum-source-program.lino"
         )),
         "rust-string-addition-program.lino" => {
             Some(include_str!("../data/rust-string-addition-program.lino"))
@@ -496,6 +583,12 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "source-library-binding-program.lino" => {
             Some(include_str!("../data/source-library-binding-program.lino"))
+        }
+        "source-library-class-program.lino" => {
+            Some(include_str!("../data/source-library-class-program.lino"))
+        }
+        "source-library-error-program.lino" => {
+            Some(include_str!("../data/source-library-error-program.lino"))
         }
         "source-library-export-program.lino" => {
             Some(include_str!("../data/source-library-export-program.lino"))

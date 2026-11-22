@@ -2,8 +2,8 @@
 //! come from generated JavaScript policy, never a native replacement model.
 use super::{Binding,Options,Result,RustParser,SExpr,SNode,SPattern,SPatternNode,SRow,SourceOrigin,SourceDeclaration,Span,TokenKind,Type,unsupported,type_error};
 use super::records::NamedRecord;
-use crate::translation::rust_owned_record_state_rules as rules;
-use crate::translation::rust_owned_record_update_rules as field_rules;
+use super::owned_record_policy::state as rules;
+use super::owned_record_policy::fields as field_rules;
 #[derive(Clone)]
 pub(super) struct Slot{pub(super) lexical:String,pub(super) root:String,pub(super) origin:SourceOrigin,pub(super) current_name:String,frame:usize,callable:usize,sequence:usize,site:Option<Span>}
 #[derive(Clone)]

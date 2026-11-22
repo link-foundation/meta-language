@@ -8,7 +8,7 @@ export const rustBaselineNativePolicyControlGroups=[
  {sourcePath:'js/src/translation/rust-borrowed-source-region-rules.js',moduleName:'authored_borrowed_source_region_controls',testName:'all_literal_borrowed_source_region_controls',fixtureSelections:[selection('rust-borrowed-source-regions','rustBorrowedSourceRegionDecisions')]},
  {sourcePath:'js/src/translation/javascript-primitive-methods.js',moduleName:'authored_primitive_method_controls',testName:'all_literal_primitive_method_controls',fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveMethodDecisions'),profile:'exact pure fixture data 2'}]},
  {sourcePath:'js/src/translation/javascript-call-primitives.js',moduleName:'authored_primitive_addition_controls',testName:'all_literal_primitive_addition_controls',fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveAdditionDecisions'),profile:'exact pure fixture data 2'}]},
- {sourcePath:'js/src/translation/javascript-collection-rules.js',moduleName:'authored_inspectable_collection_controls',testName:'all_literal_inspectable_collection_controls',fixtureSelections:[{...selection('javascript-inspectable-collections','javascriptInspectableCollectionDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/javascript-collection-rules.js',moduleName:'authored_inspectable_collection_controls',testName:'all_literal_inspectable_collection_controls',aliases:true,fixtureSelections:[{...selection('javascript-inspectable-collections','javascriptInspectableCollectionDecisions'),profile:'exact pure fixture data 2'}]},
  ...[
   ['javascript-source-text-rules','source_text_profile','javascriptSourceTextProfileDecisions'],
   ['javascript-semantic-values','source_text_semantic','javascriptSourceTextSemanticDecisions'],
@@ -64,7 +64,7 @@ export const rustBaselineNativePolicyControlGroups=[
  {sourcePath:'js/src/translation/rust-owned-record-state-rules.js',moduleName:'authored_owned_record_state_controls',testName:'all_literal_owned_record_state_controls',fixtureSelections:[
   selection('rust-owned-record-state','rustOwnedRecordStateDecisions'),
  ]},
- {sourcePath:'js/src/translation/javascript-class-owner-rules.js',moduleName:'authored_class_owner_controls',testName:'all_literal_class_owner_controls',fixtureSelections:[
+ {sourcePath:'js/src/translation/javascript-class-owner-rules.js',moduleName:'authored_class_owner_controls',testName:'all_literal_class_owner_controls',aliases:true,fixtureSelections:[
   selection('closed-class-owner-witnesses','closedClassOwnerDecisions'),
  ]},
  {sourcePath:'js/src/translation/rust-owned-record-place-rules.js',moduleName:'authored_owned_record_place_controls',testName:'all_literal_owned_record_place_controls',fixtureSelections:[
@@ -85,7 +85,7 @@ export const rustBaselineNativePolicyControlGroups=[
  {sourcePath:'js/src/translation/rust-nominal-ownership-rules.js',moduleName:'authored_nominal_ownership_controls',testName:'all_literal_nominal_ownership_controls',fixtureSelections:[
   selection('rust-nominal-standard-sum-ownership','rustNominalStandardSumOwnershipDecisions'),
  ]},
- {sourcePath:'js/src/translation/javascript-class-observation-rules.js',moduleName:'authored_class_observation_controls',testName:'all_literal_class_observation_controls',fixtureSelections:[
+ {sourcePath:'js/src/translation/javascript-class-observation-rules.js',moduleName:'authored_class_observation_controls',testName:'all_literal_class_observation_controls',aliases:true,fixtureSelections:[
   selection('closed-class-prototype-methods','closedClassPrototypeObservationDecisions'),
  ]},
  {sourcePath:'js/src/translation/rust-owned-standard-sum-method-rules.js',moduleName:'authored_owned_sum_method_controls',testName:'all_literal_owned_sum_method_controls',fixtureSelections:[

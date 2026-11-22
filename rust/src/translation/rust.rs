@@ -53,6 +53,7 @@ mod standard_sum_completions;
 mod owned_local_state;
 mod owned_record_updates;
 mod owned_record_places;
+mod owned_record_policy;
 mod owned_record_state;
 mod owned_record_effects;
 pub(super) mod owned_record_loops;

@@ -3,7 +3,7 @@ use super::{SourceOrigins,SourceOrigin,Span,Result,unsupported};
 use std::collections::{HashSet,HashMap};
 use crate::translation::rust_mutable_record_loan_rules as rules;
 use crate::translation::rust_owned_binding_rules as loans;
-use crate::translation::rust_owned_record_update_rules as fields;
+use super::super::owned_record_policy::{fields, state};
 use super::super::copy_closure_lifetimes::value_borrows;
 impl SourceOrigins {
  fn charge_mutable_record_loans(&mut self,nodes:usize,text:usize,span:Option<Span>)->Result<()> {
@@ -42,7 +42,7 @@ impl SourceOrigins {
   origin.source_value_borrow_bindings=values;Ok(origin)
  }
  pub(in super::super) fn promote_mutable_record_value_loans(&mut self,origin:SourceOrigin)->SourceOrigin {if !self.collecting{for id in value_borrows(&origin){if self.mutable_record_loans.loans.contains_key(&id){self.source_temporary_bindings.remove(&id);}}}origin}
- pub(in super::super) fn mutable_record_live_loan(&self,root:&str,target:&str)->bool {self.mutable_record_loans.active.get(root).is_some_and(|active|active.iter().any(|id|{let loan=&self.mutable_record_loans.loans[id];self.source_binding_states.get(id).map(String::as_str)==Some("available")&&crate::translation::rust_owned_record_state_rules::test_rust_owned_record_state_loan_overlap(root,target,&loan.dependencies,loan.lexical)}))}
+ pub(in super::super) fn mutable_record_live_loan(&self,root:&str,target:&str)->bool {self.mutable_record_loans.active.get(root).is_some_and(|active|active.iter().any(|id|{let loan=&self.mutable_record_loans.loans[id];self.source_binding_states.get(id).map(String::as_str)==Some("available")&&state::test_rust_owned_record_state_loan_overlap(root,target,&loan.dependencies,loan.lexical)}))}
  pub(in super::super) fn check_mutable_record_loan_move(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()> {let target=origin.source_binding_identity.as_deref().unwrap_or("");let root=if self.mutable_record_loans.roots.contains_key(target){target.to_owned()}else{fields::read_rust_owned_record_ultimate_root(target)};let error=rules::read_rust_mutable_record_loan_move_error(self.owned_binding_value(origin),!root.is_empty()&&self.mutable_record_live_loan(&root,target));if error.is_empty(){Ok(())}else{Err(unsupported("Rust mutable record loan",&error,span))}}
  pub(in super::super) fn mutable_record_carried_loans(&self,result:&SourceOrigin)->HashSet<String> {value_borrows(result).into_iter().filter(|id|self.mutable_record_loans.loans.contains_key(id)).collect()}
  pub(in super::super) fn mutable_record_loan_survives(&self,id:&str,before:&HashMap<String,String>,carried:&HashSet<String>)->bool {let Some(loan)=self.mutable_record_loans.loans.get(id)else{return false;};rules::accept_rust_mutable_record_loan_escape(carried.contains(id),before.contains_key(&loan.root)&&self.source_binding_states.get(&loan.root).map(String::as_str)==Some("available"),loan.dependencies.iter().all(|id|self.source_binding_states.get(id).map(String::as_str)==Some("available")))}

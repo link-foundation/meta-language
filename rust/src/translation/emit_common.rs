@@ -8,6 +8,7 @@
 //! Mirrors `js/src/translation/emit-common.js`.
 
 use std::collections::{BTreeSet, HashMap, HashSet};
+use std::{cell::RefCell, rc::Rc};
 
 use serde::{Deserialize, Serialize};
 
@@ -784,7 +785,12 @@ pub fn datatype_groups(program:&Program)->Result<HashMap<String,Vec<&Decl>>>{
     let positions=members.iter().enumerate().map(|(index,entry)|(entry.full_name(),index)).collect::<HashMap<_,_>>();
     let mut ends=Vec::new();let mut edges=Vec::new();
     for entry in &members{for name in dependencies(entry){if let Some(index)=positions.get(name.as_str()){if edges.len()>=131072{return Err(unsupported("datatype dependencies","the complete datatype dependency graph exceeds its bounded source profile",None));}edges.push(*index as f64);}}ends.push(edges.len() as f64);}
-    let plan=super::datatype_dependency_group_rules::plan_datatype_dependency_groups(members.len() as f64,&ends,&edges);
+    let plan = super::datatype_dependency_group_rules::plan_datatype_dependency_groups(
+        members.len() as f64,
+        Rc::new(RefCell::new(ends)),
+        Rc::new(RefCell::new(edges)),
+    );
+    let plan = plan.borrow();
     if plan.len()!=members.len(){return Err(unsupported("datatype dependencies","the complete datatype dependency graph exceeds its bounded source profile",None));}
     let mut units=HashMap::<usize,Vec<&Decl>>::new();
     for(index,representative)in plan.iter().enumerate(){if !representative.is_finite()||representative.fract()!=0.0||*representative<0.0||*representative>=members.len() as f64{return Err(unsupported("datatype dependencies","the shared component plan has an invalid actual owner",None));}units.entry(*representative as usize).or_default().push(members[index]);}
