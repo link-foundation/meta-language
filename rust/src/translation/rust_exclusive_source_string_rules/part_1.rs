@@ -94,3 +94,9 @@ pub fn accept_rust_exclusive_source_string_suffix(
         self::accept_rust_string_addition_owner("right", owner, path, children),
     )
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_owned_string_concatenation(current: &str, suffix: &str) -> bool {
+    (current == "string") && (suffix == "text")
+}

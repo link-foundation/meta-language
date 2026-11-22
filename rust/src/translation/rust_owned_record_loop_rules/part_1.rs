@@ -621,6 +621,25 @@ pub fn accept_rust_owned_vector_source_fold_model(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_finite_loop_state_transform(
+    language: &str,
+    model: &str,
+    name: &str,
+    generated: bool,
+    slots: f64,
+    start: f64,
+    end: f64,
+) -> bool {
+    ((((((language == "Rust") && (model == "Rust finite loop state transformation 1"))
+        && generated)
+        && self::test_rust_owned_record_loop_chunk_name(name))
+        && (slots >= 1f64))
+        && (slots <= 512f64))
+        && self::accept_rust_source_region_span(start, end)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_owned_vector_source_fold_control_variants() -> Vec<String> {
     vec![
         String::from("FunctionResult"),
