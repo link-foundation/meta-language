@@ -9,8 +9,8 @@ use super::document_container::{
     insert_derived_document,
 };
 use super::document_container_policy::{
-    document_stream_fits_budget, pdf_drawing_operator, pdf_lzw_code_width, pdf_stream_filter_kind,
-    pdf_text_operator_kind,
+    compose_pdf_matrices, document_stream_fits_budget, pdf_drawing_operator, pdf_lzw_code_width,
+    pdf_stream_filter_kind, pdf_text_operator_kind, translate_pdf_matrix,
 };
 use super::pdf_text_fonts::{
     PdfFont, decode_font_text, glyph_name, hex_bytes, pdf_whitespace, predefined_encoding,
@@ -26,6 +26,14 @@ use crate::{
 const MAXIMUM_STREAM_BYTES: usize = 16 * 1024 * 1024;
 const MAXIMUM_DECODED_BYTES: usize = 32 * 1024 * 1024;
 const MAXIMUM_CMAP_BYTES: usize = 2 * 1024 * 1024;
+type PdfTransformationMatrix = (f64, f64, f64, f64, f64, f64);
+const PAGE_ROTATIONS: [PdfTransformationMatrix; 4] = [
+    (1.0, 0.0, 0.0, 1.0, 0.0, 0.0),
+    (0.0, -1.0, 1.0, 0.0, 0.0, 0.0),
+    (-1.0, 0.0, 0.0, -1.0, 0.0, 0.0),
+    (0.0, 1.0, -1.0, 0.0, 0.0, 0.0),
+];
+const IDENTITY_MATRIX: PdfTransformationMatrix = PAGE_ROTATIONS[0];
 
 pub(crate) fn attach_binary_pdf(
     network: &mut LinkNetwork,
@@ -209,19 +217,33 @@ struct TextRun {
 struct TextPosition {
     x: f64,
     y: f64,
-    horizontal_scale: f64,
-    vertical_scale: f64,
 }
 
-impl Default for TextPosition {
-    fn default() -> Self {
-        Self {
-            x: 0.0,
-            y: 0.0,
-            horizontal_scale: 1.0,
-            vertical_scale: 1.0,
-        }
+#[derive(Clone)]
+struct GraphicsState {
+    transform: PdfTransformationMatrix,
+    font: Option<Rc<PdfFont>>,
+    leading: f64,
+}
+
+fn numeric_operand(source: &str, operand: &GrammarNode) -> Option<f64> {
+    if !matches!(operand.term, "integer" | "real") {
+        return None;
     }
+    text_of(source, Some(operand))
+        .parse::<f64>()
+        .ok()
+        .filter(|value| value.is_finite())
+}
+
+fn transformation_matrix(
+    values: impl Iterator<Item = Option<f64>>,
+) -> Option<PdfTransformationMatrix> {
+    let values = values.collect::<Option<Vec<_>>>()?;
+    let &[a, b, c, d, e, f] = values.as_slice() else {
+        return None;
+    };
+    Some((a, b, c, d, e, f))
 }
 
 #[derive(Default)]
@@ -234,22 +256,26 @@ struct PdfDocument<'source> {
 struct TextState {
     active: HashSet<usize>,
     separated: bool,
-    font: Option<Rc<PdfFont>>,
     ordinate: Option<f64>,
-    position: Option<TextPosition>,
-    leading: f64,
+    position: Option<PdfTransformationMatrix>,
+    graphics: GraphicsState,
+    saved_graphics: Vec<GraphicsState>,
     orderable: bool,
 }
 
 impl TextState {
-    fn new() -> Self {
+    fn new(transform: PdfTransformationMatrix) -> Self {
         Self {
             active: HashSet::new(),
             separated: true,
-            font: None,
             ordinate: None,
             position: None,
-            leading: 0.0,
+            graphics: GraphicsState {
+                transform,
+                font: None,
+                leading: 0.0,
+            },
+            saved_graphics: Vec::new(),
             orderable: true,
         }
     }
@@ -257,11 +283,26 @@ impl TextState {
     fn advance_line(&mut self) {
         self.position = self
             .position
-            .filter(|_| self.leading.is_finite())
-            .map(|mut position| {
-                position.y -= self.leading * position.vertical_scale;
-                position
-            });
+            .filter(|_| self.graphics.leading.is_finite())
+            .map(|position| translate_pdf_matrix(position, 0.0, -self.graphics.leading));
+    }
+
+    fn transform(&mut self, matrix: Option<PdfTransformationMatrix>) {
+        if let Some(matrix) = matrix {
+            self.graphics.transform = compose_pdf_matrices(self.graphics.transform, matrix);
+        } else {
+            self.orderable = false;
+        }
+    }
+
+    fn position_on_page(&mut self) -> Option<TextPosition> {
+        let (a, b, c, d, x, y) = compose_pdf_matrices(self.graphics.transform, self.position?);
+        if a > 0.0 && b == 0.0 && c == 0.0 && d > 0.0 && x.is_finite() && y.is_finite() {
+            Some(TextPosition { x, y })
+        } else {
+            self.orderable = false;
+            None
+        }
     }
 }
 
@@ -546,7 +587,9 @@ impl<'source> PdfReader<'source> {
         if !tree.children.iter().any(|operation| {
             let operator = text_of(&stream.source, field(Some(operation), "operator"));
             operation.term == "operation"
-                && (pdf_text_operator_kind(operator) != 0 || pdf_drawing_operator(operator))
+                && (pdf_text_operator_kind(operator) != 0
+                    || pdf_drawing_operator(operator)
+                    || operator == "TL")
         }) {
             return;
         }
@@ -583,39 +626,38 @@ impl<'source> PdfReader<'source> {
             .filter(|child| child.field == Some("operand"));
         let first = operands.clone().next();
         let last = operands.clone().next_back();
-        let numeric_operand = |operand: &GrammarNode| {
-            if !matches!(operand.term, "integer" | "real") {
-                return None;
-            }
-            text_of(source, Some(operand))
-                .parse::<f64>()
-                .ok()
-                .filter(|value| value.is_finite())
-        };
+        let number = |operand| numeric_operand(source, operand);
         match pdf_text_operator_kind(operator) {
             1 => {
-                state.font =
+                state.graphics.font =
                     self.font(self.get(self.get(resources, "Font"), &name_of(source, first)))
             }
             2 => {
                 let form = self.get(self.get(resources, "XObject"), &name_of(source, first));
                 let dictionary = field(form, "dictionary");
                 if self.kind(dictionary, "Subtype") == "Form" {
-                    let font = state.font.clone();
                     let ordinate = state.ordinate;
                     let position = state.position;
-                    let leading = state.leading;
-                    state.orderable = false;
+                    let graphics = state.graphics.clone();
+                    let saved_graphics = std::mem::take(&mut state.saved_graphics);
+                    if let Some(matrix) = self.get(dictionary, "Matrix") {
+                        state.transform(transformation_matrix(array_elements(Some(matrix)).map(
+                            |value| {
+                                self.resolve(value)
+                                    .and_then(|value| numeric_operand(self.text, value))
+                            },
+                        )));
+                    }
                     self.visit_content(
                         form,
                         self.get(dictionary, "Resources").or(resources),
                         state,
                         depth + 1,
                     );
-                    state.font = font;
                     state.ordinate = ordinate;
                     state.position = position;
-                    state.leading = leading;
+                    state.graphics = graphics;
+                    state.saved_graphics = saved_graphics;
                 }
             }
             3 => self.show_text(stream, last, state),
@@ -667,37 +709,37 @@ impl<'source> PdfReader<'source> {
                 } else {
                     state.ordinate.unwrap_or_default() + ordinate
                 });
-                let values = operands.map(numeric_operand).collect::<Option<Vec<_>>>();
-                match (operator, values.as_deref()) {
-                    ("Tm", Some(&[a, b, c, d, x, y]))
-                        if a > 0.0 && b == 0.0 && c == 0.0 && d > 0.0 =>
-                    {
-                        state.position = Some(TextPosition {
-                            x,
-                            y,
-                            horizontal_scale: a,
-                            vertical_scale: d,
-                        });
+                if operator == "Tm" {
+                    state.position = transformation_matrix(operands.map(number));
+                    state.orderable &= state.position.is_some();
+                } else if let Some(&[x, y]) =
+                    operands.map(number).collect::<Option<Vec<_>>>().as_deref()
+                {
+                    state.position = Some(translate_pdf_matrix(
+                        state.position.unwrap_or(IDENTITY_MATRIX),
+                        x,
+                        y,
+                    ));
+                    if operator == "TD" {
+                        state.graphics.leading = -y;
                     }
-                    ("Td" | "TD", Some(&[x, y])) => {
-                        let mut position = state.position.unwrap_or_default();
-                        position.x += x * position.horizontal_scale;
-                        position.y += y * position.vertical_scale;
-                        state.position = Some(position);
-                        if operator == "TD" {
-                            state.leading = -y;
-                        }
-                    }
-                    _ => state.orderable = false,
+                } else {
+                    state.orderable = false;
                 }
             }
             _ if operator == "TL" => {
-                state.leading = first
+                state.graphics.leading = first
                     .filter(|_| operands.count() == 1)
-                    .and_then(numeric_operand)
+                    .and_then(number)
                     .unwrap_or(f64::NAN);
             }
-            _ if operator == "cm" => state.orderable = false,
+            _ if operator == "cm" => state.transform(transformation_matrix(operands.map(number))),
+            _ if operator == "q" => state.saved_graphics.push(state.graphics.clone()),
+            _ if operator == "Q" => {
+                if let Some(graphics) = state.saved_graphics.pop() {
+                    state.graphics = graphics;
+                }
+            }
             _ => {}
         }
     }
@@ -714,7 +756,7 @@ impl<'source> PdfReader<'source> {
         };
         let text = decode_font_text(
             &string_bytes(text_of(&stream.source, Some(node))),
-            state.font.as_deref(),
+            state.graphics.font.as_deref(),
         );
         if !text.is_empty() {
             self.show_run(stream, node, state, text);
@@ -738,7 +780,7 @@ impl<'source> PdfReader<'source> {
             separated: state.separated,
             start,
             end,
-            position: state.position,
+            position: state.position_on_page(),
         });
         state.separated = false;
     }
@@ -754,25 +796,37 @@ impl<'source> PdfReader<'source> {
             .copied()
             .find(|node| self.kind(Some(node), "Type") == "Catalog");
         if let Some(root) = self.get(catalog, "Pages") {
-            let mut frames = vec![(root, None)];
+            let mut frames = vec![(root, None, IDENTITY_MATRIX)];
             let mut visited = HashSet::new();
-            while let Some((node, inherited)) = frames.pop() {
+            while let Some((node, inherited, inherited_rotation)) = frames.pop() {
                 if !visited.insert(node.start) {
                     continue;
                 }
                 let resources = self.get(Some(node), "Resources").or(inherited);
+                let turns = self
+                    .get(Some(node), "Rotate")
+                    .filter(|value| value.term == "integer")
+                    .and_then(|value| numeric_operand(self.text, value))
+                    .map(|degrees| (degrees / 90.0).rem_euclid(4.0));
+                let rotation = match turns {
+                    Some(0.0) => PAGE_ROTATIONS[0],
+                    Some(1.0) => PAGE_ROTATIONS[1],
+                    Some(2.0) => PAGE_ROTATIONS[2],
+                    Some(3.0) => PAGE_ROTATIONS[3],
+                    _ => inherited_rotation,
+                };
                 match self.kind(Some(node), "Type").as_ref() {
                     "Pages" => {
                         for kid in array_elements(self.get(Some(node), "Kids"))
                             .rev()
                             .filter_map(|kid| self.resolve(kid))
                         {
-                            frames.push((kid, resources));
+                            frames.push((kid, resources, rotation));
                         }
                     }
                     "Page" => {
                         let contents = self.get(Some(node), "Contents");
-                        let mut state = TextState::new();
+                        let mut state = TextState::new(rotation);
                         let page_start = self.output.text_runs.len();
                         if contents.is_some_and(|node| node.term == "array") {
                             for item in array_elements(contents) {
@@ -798,7 +852,7 @@ impl<'source> PdfReader<'source> {
                     self.visit_content(
                         Some(node),
                         self.get(dictionary, "Resources"),
-                        &mut TextState::new(),
+                        &mut TextState::new(IDENTITY_MATRIX),
                         0,
                     );
                 }

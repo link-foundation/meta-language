@@ -1798,8 +1798,10 @@ Visible text is a separate projection of document syntax. HTML, Markdown and
 WordprocessingML use shared projection rules for hidden syntax, block breaks,
 list markers and character references. PDF uses show-text operators and font
 maps in page-tree order. Fully positioned horizontal lines on a page are
-ordered by descending baseline and then ascending horizontal position. Lines
-without a common page coordinate system keep their content order. Projected
+ordered by descending baseline and then ascending horizontal position after
+applying page rotation, graphics transformations, and nested form matrices.
+Graphics state carries across page content streams and is scoped to each form.
+Lines without a common page coordinate system keep their content order. Projected
 coordinates use the runtime's string indices (JavaScript UTF-16 and Rust
 UTF-8). Source ranges index the original bytes of byte input or the UTF-8
 encoding of string input. Each projected

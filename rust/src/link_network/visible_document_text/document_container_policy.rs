@@ -23,6 +23,45 @@ pub(super) fn pdf_lzw_code_width(width: usize, next: usize, early_change: usize)
     }
 }
 
+fn pdf_transform_coordinate(
+    horizontal_scale: f64,
+    horizontal: f64,
+    vertical_scale: f64,
+    vertical: f64,
+    offset: f64,
+) -> f64 {
+    horizontal_scale * horizontal + vertical_scale * vertical + offset
+}
+
+pub(super) fn compose_pdf_matrices(
+    (a, b, c, d, e, f): (f64, f64, f64, f64, f64, f64),
+    (g, h, i, j, k, l): (f64, f64, f64, f64, f64, f64),
+) -> (f64, f64, f64, f64, f64, f64) {
+    (
+        a * g + c * h,
+        b * g + d * h,
+        a * i + c * j,
+        b * i + d * j,
+        pdf_transform_coordinate(a, k, c, l, e),
+        pdf_transform_coordinate(b, k, d, l, f),
+    )
+}
+
+pub(super) fn translate_pdf_matrix(
+    (a, b, c, d, e, f): (f64, f64, f64, f64, f64, f64),
+    x: f64,
+    y: f64,
+) -> (f64, f64, f64, f64, f64, f64) {
+    (
+        a,
+        b,
+        c,
+        d,
+        pdf_transform_coordinate(a, x, c, y, e),
+        pdf_transform_coordinate(b, x, d, y, f),
+    )
+}
+
 pub(super) fn pdf_text_operator_kind(operator: &str) -> u8 {
     match operator {
         "Tf" => 1,

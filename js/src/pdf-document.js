@@ -1,6 +1,7 @@
 import { inflateSync } from 'node:zlib';
 import {
-  documentStreamFitsBudget, pdfDrawingOperator, pdfLzwCodeWidth, pdfStreamFilterKind, pdfTextOperatorKind,
+  composePdfMatrices, documentStreamFitsBudget, pdfDrawingOperator, pdfLzwCodeWidth, pdfStreamFilterKind,
+  pdfTextOperatorKind, translatePdfMatrix,
 } from './document-container-policy.js';
 import { parsePdfContentCst } from './pdf-grammar.js';
 import { decodePdfFontText, pdfGlyphName, pdfPredefinedEncoding, pdfStringBytes, readPdfUnicodeMap } from './pdf-text-fonts.js';
@@ -9,11 +10,17 @@ const maximumStreamBytes = 16 * 1024 * 1024;
 const maximumDecodedDocumentBytes = 32 * 1024 * 1024;
 const maximumCmapBytes = 2 * 1024 * 1024;
 const pdfWhitespace = /[\x00\t\n\f\r ]/gu;
+const pageRotations = [
+  [1, 0, 0, 1, 0, 0], [0, -1, 1, 0, 0, 0],
+  [-1, 0, 0, -1, 0, 0], [0, 1, -1, 0, 0, 0],
+];
+const identityMatrix = pageRotations[0];
 
 const field = (node, name) => node?.children.find(child => child.field === name);
 const operands = node => node?.children.filter(child => child.field === 'operand') ?? [];
 const arrayElements = node => node?.children.filter(child => child.named && !child.extra) ?? [];
 const textOf = (text, node) => node ? text.slice(node.start, node.end) : '';
+const numericOperand = (text, node) => ['integer', 'real'].includes(node?.term) ? Number(textOf(text, node)) : NaN;
 const nameOf = (text, node) => node?.term === 'name' ? textOf(text, node).slice(1)
   .replace(/#([0-9a-fA-F]{2})/gu, (_, digits) => String.fromCharCode(Number.parseInt(digits, 16))) : '';
 
@@ -136,7 +143,7 @@ export function readPdfDocument(text, tree, decodeStreams) {
       if (!visible) return;
       textRuns.push({
         text: visible, start: startOf(value), end: endOf(value),
-        separated: state.separated, position: state.position,
+        separated: state.separated, position: positionOnPage(state),
       });
       state.separated = false;
     }
@@ -151,16 +158,12 @@ export function readPdfDocument(text, tree, decodeStreams) {
         const form = get(get(resources, 'XObject'), nameOf(source, argumentsList[0]));
         const dictionary = field(form, 'dictionary');
         if (nameOf(text, get(dictionary, 'Subtype')) === 'Form') {
-          const font = state.font;
-          const ordinate = state.ordinate;
-          const position = state.position;
-          const leading = state.leading;
-          state.orderable = false;
+          const { font, ordinate, position, leading, transform, graphics } = state;
+          const matrix = get(dictionary, 'Matrix');
+          if (matrix) applyTransform(state, arrayElements(matrix).map(value => numericOperand(text, resolve(value))));
+          state.graphics = [];
           visitContent(form, get(dictionary, 'Resources') ?? resources, state, depth + 1);
-          state.font = font;
-          state.ordinate = ordinate;
-          state.position = position;
-          state.leading = leading;
+          Object.assign(state, { font, ordinate, position, leading, transform, graphics });
         }
       } else if (kind === 3) {
         show(argumentsList.at(-1));
@@ -185,55 +188,54 @@ export function readPdfDocument(text, tree, decodeStreams) {
         const ordinate = Number(textOf(source, argumentsList.at(-1)));
         if (operator === 'Tm' ? ordinate !== state.ordinate : ordinate !== 0) state.separated = true;
         state.ordinate = operator === 'Tm' ? ordinate : (state.ordinate ?? 0) + ordinate;
-        const values = argumentsList.map(numericOperand);
+        const values = argumentsList.map(value => numericOperand(source, value));
         if (operator === 'Tm') {
-          const [a, b, c, d, x, y] = values;
-          if (values.length === 6 && values.every(Number.isFinite) && a > 0 && b === 0 && c === 0 && d > 0) {
-            state.position = { x, y, horizontalScale: a, verticalScale: d };
-          } else state.orderable = false;
+          if (values.length === 6 && values.every(Number.isFinite)) state.position = values;
+          else state.orderable = false;
         } else if (values.length === 2 && values.every(Number.isFinite)) {
           const [x, y] = values;
-          const previous = state.position ?? { x: 0, y: 0, horizontalScale: 1, verticalScale: 1 };
-          state.position = {
-            ...previous, x: previous.x + x * previous.horizontalScale, y: previous.y + y * previous.verticalScale,
-          };
+          state.position = translatePdfMatrix(state.position ?? identityMatrix, x, y);
           if (operator === 'TD') state.leading = -y;
         } else state.orderable = false;
       } else if (operator === 'TL') {
-        state.leading = argumentsList.length === 1 ? numericOperand(argumentsList[0]) : NaN;
+        state.leading = argumentsList.length === 1 ? numericOperand(source, argumentsList[0]) : NaN;
       } else if (operator === 'cm') {
-        state.orderable = false;
+        applyTransform(state, argumentsList.map(value => numericOperand(source, value)));
+      } else if (operator === 'q') {
+        const { transform, font, leading } = state;
+        state.graphics.push({ transform, font, leading });
+      } else if (operator === 'Q' && state.graphics.length) {
+        Object.assign(state, state.graphics.pop());
       }
     }
     state.active.delete(node);
 
-    function numericOperand(value) {
-      return value.term === 'integer' || value.term === 'real' ? Number(textOf(source, value)) : NaN;
-    }
-
     function showSpace(value) {
       const previous = textRuns.at(-1);
       if (previous && !state.separated && !previous.text.endsWith(' ')) {
-        textRuns.push({ text: ' ', start: startOf(value), end: endOf(value), separated: false, position: state.position });
+        textRuns.push({ text: ' ', start: startOf(value), end: endOf(value), separated: false, position: positionOnPage(state) });
       }
     }
   }
 
   const catalog = [...objects.values()].find(node => nameOf(text, get(node, 'Type')) === 'Catalog');
   const root = get(catalog, 'Pages');
-  const frames = root ? [{ node: root, resources: undefined }] : [];
+  const frames = root ? [{ node: root, resources: undefined, rotation: identityMatrix }] : [];
   const visited = new Set();
   while (frames.length) {
-    const { node, resources: inherited } = frames.pop();
+    const { node, resources: inherited, rotation: inheritedRotation } = frames.pop();
     if (!node || visited.has(node)) continue;
     visited.add(node);
     const type = nameOf(text, get(node, 'Type'));
     const resources = get(node, 'Resources') ?? inherited;
+    const rotationOperand = get(node, 'Rotate');
+    const turns = rotationOperand?.term === 'integer' ? numericOperand(text, rotationOperand) / 90 : NaN;
+    const rotation = Number.isInteger(turns) ? pageRotations[(turns % 4 + 4) % 4] : inheritedRotation;
     if (type === 'Pages') {
-      for (const kid of arrayElements(get(node, 'Kids')).reverse()) frames.push({ node: resolve(kid), resources });
+      for (const kid of arrayElements(get(node, 'Kids')).reverse()) frames.push({ node: resolve(kid), resources, rotation });
     } else if (type === 'Page') {
       const contents = get(node, 'Contents');
-      const state = newTextState();
+      const state = newTextState(rotation);
       const pageStart = textRuns.length;
       if (contents?.term === 'array') {
         for (const content of arrayElements(contents)) visitContent(resolve(content), resources, state);
@@ -319,11 +321,26 @@ function decodeLzw(source, earlyChange, limit) {
   }
 }
 
-function newTextState() {
+function newTextState(transform = identityMatrix) {
   return {
     active: new Set(), separated: true, font: null, ordinate: null,
-    position: null, leading: 0, orderable: true,
+    position: null, leading: 0, transform, graphics: [], orderable: true,
   };
+}
+
+function applyTransform(state, matrix) {
+  if (matrix.length === 6 && matrix.every(Number.isFinite)) state.transform = composePdfMatrices(state.transform, matrix);
+  else state.orderable = false;
+}
+
+function positionOnPage(state) {
+  if (!state.position) return null;
+  const [a, b, c, d, x, y] = composePdfMatrices(state.transform, state.position);
+  if (!(a > 0 && b === 0 && c === 0 && d > 0 && Number.isFinite(x) && Number.isFinite(y))) {
+    state.orderable = false;
+    return null;
+  }
+  return { x, y };
 }
 
 function advanceLine(state) {
@@ -331,7 +348,7 @@ function advanceLine(state) {
     state.position = null;
     return;
   }
-  state.position = { ...state.position, y: state.position.y - state.leading * state.position.verticalScale };
+  state.position = translatePdfMatrix(state.position, 0, -state.leading);
 }
 
 function orderPageText(runs, start) {
@@ -351,7 +368,7 @@ function orderPageText(runs, start) {
 
 function pageOperator(source, operation) {
   const operator = textOf(source, field(operation, 'operator'));
-  return pdfTextOperatorKind(operator) !== 0 || pdfDrawingOperator(operator);
+  return pdfTextOperatorKind(operator) !== 0 || pdfDrawingOperator(operator) || operator === 'TL';
 }
 
 function decodeAscii85(source, limit) {

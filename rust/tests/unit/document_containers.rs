@@ -249,6 +249,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
         "A€é"
     );
     check_reading_order(&fixture["readingOrder"]);
+    check_reading_order(&fixture["transformedReadingOrder"]);
     check_lzw_decoding(&fixture["lzw"]);
     for (requirement_id, assertions) in [
         (
@@ -267,6 +268,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
                 "pdfTextUsesFontMappingsAndPageOrder",
                 "pdfVisibleTextKeepsEncodedAndLiteralRanges",
                 "pdfPositionedLinesKeepReadingOrderAndRanges",
+                "pdfTransformedLinesKeepReadingOrderAndRanges",
             ][..],
         ),
     ] {

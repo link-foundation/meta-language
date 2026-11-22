@@ -21,6 +21,39 @@ export function pdfLzwCodeWidth(width, next, earlyChange) {
   return width;
 }
 
+/**
+ * @param {number} horizontalScale @param {number} horizontal
+ * @param {number} verticalScale @param {number} vertical @param {number} offset @returns {number}
+ */
+function pdfTransformCoordinate(horizontalScale, horizontal, verticalScale, vertical, offset) {
+  return horizontalScale * horizontal + verticalScale * vertical + offset;
+}
+
+/**
+ * Map local coordinates through the enclosing PDF transformation matrix.
+ * @param {[number, number, number, number, number, number]} outer
+ * @param {[number, number, number, number, number, number]} inner
+ * @returns {[number, number, number, number, number, number]}
+ */
+export function composePdfMatrices(outer, inner) {
+  const [a, b, c, d, e, f] = outer;
+  const [g, h, i, j, k, l] = inner;
+  return [
+    a * g + c * h, b * g + d * h, a * i + c * j, b * i + d * j,
+    pdfTransformCoordinate(a, k, c, l, e), pdfTransformCoordinate(b, k, d, l, f),
+  ];
+}
+
+/**
+ * @param {[number, number, number, number, number, number]} matrix
+ * @param {number} x @param {number} y
+ * @returns {[number, number, number, number, number, number]}
+ */
+export function translatePdfMatrix(matrix, x, y) {
+  const [a, b, c, d, e, f] = matrix;
+  return [a, b, c, d, pdfTransformCoordinate(a, x, c, y, e), pdfTransformCoordinate(b, x, d, y, f)];
+}
+
 /** @param {string} operator @returns {number} */
 export function pdfTextOperatorKind(operator) {
   if (operator === 'Tf') return 1;
