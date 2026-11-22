@@ -96,7 +96,7 @@ export function captureMeasuredWorkloadCosts(directory){
 /** Test groups, each a pattern over the test file name without `.test.js`. */
 export const TEST_GROUPS = Object.freeze({
   grammar:
-    /^(?!issue-195-grammar-(?:profile-|native-|declared-settling$))(?!error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)(?:grammar-|native-tree-projection-memory$|native-concept-reuse-normalization$|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|issue-195-merge-real-reconciliation$|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+    /^(?!issue-195-grammar-(?:profile-|native-|declared-settling$))(?!error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)(?:grammar-|native-tree-projection-memory$|native-concept-reuse-normalization$|lino-|links-notation$|pdf-(?:grammar|document)$|visible-document-text$|wordprocessing-package$|default-cst-|tree-sitter-node-kind$|issue-195-merge-real-reconciliation$|language-|natural-language(?:-(?:morphology|values))?$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
   'grammar-native':
     /^(?:issue-195-grammar-native-(?!recovery$)|issue-195-grammar-declared-settling$|native-development-oracles$|native-text-grammars$)/u,
   'grammar-recovery': /^(?:error-recovery-|issue-195-grammar-native-recovery$)/u,
