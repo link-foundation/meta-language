@@ -922,7 +922,9 @@ class Inference {
         const value = updating ? this.fresh() : this.expr(node.value, env);
         if (node.index) {
           this.expr(node.index, env);
-          this.unify(object, { kind: 'array', element: value }, node.span);
+          if (node.index.k === 'str' && this.resolve(object).kind === 'record') {
+            this.fields.push({ object, field: node.index.value, result: value, where: node.span });
+          } else this.unify(object, { kind: 'array', element: value }, node.span);
         } else this.fields.push({ object, field: node.field, result: value, where: node.span });
         if (updating) this.arithmetic.push({ left: value, result: value, where: node.span });
         return value;

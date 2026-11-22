@@ -1485,6 +1485,12 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if (this.checkedProjection && node.op === 'readOrderedRecordSnapshot') {
+      const operand = node.args.length === 1 && !node.args[0].spread ? this.expr(node.args[0].value, env, path, undefined) : null;
+      if (operand?.type.kind !== 'record' || !operand.type.reference || !operand.type.ordered || operand.type.open)
+        throw typeError('an ordered record snapshot requires its actual shared closed record', node.span);
+      return this.referenceValue(operand);
+    }
     if (this.checkedProjection && ['strictEqual:false', 'strictEqual:true'].includes(node.op)) {
       if (node.args.length !== 2 || node.args.some(argument => argument.spread)) throw typeError('checked strict equality requires two actual operands', node.span);
       const [left, right] = node.args.map(argument => this.expr(argument.value, env, path, undefined));

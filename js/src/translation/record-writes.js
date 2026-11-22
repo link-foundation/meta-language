@@ -2,6 +2,7 @@
 import { coerce, bindLocal } from './check.js';
 import { unsupported, typeError } from './diagnostics.js';
 import { UNIT } from './types.js';
+import {javaScriptConstructorFieldValueType} from './javascript-constructor-presence.js';
 import { readRecordFieldWriteOperator, readRecordFieldWriteName, readRecordFieldSourceWriteRefusal, readRecordCompoundBinaryOperation,
   readRecordFieldWriteArgumentCount, readRecordFieldWriteIdentity } from './record-write-rules.js';
 
@@ -10,8 +11,11 @@ export function checkRecordFieldWrite(checker, node, object, env, path) {
   if (!operator) return null;
   const name = readRecordFieldWriteName(node.op);
   const field = object.type.kind === 'record' ? object.type.fields.find(field => field.name === name) : undefined;
+  const type=field ? javaScriptConstructorFieldValueType(field) : undefined;
+  if(field?.optional&&name==='__proto__')throw unsupported('shared record field assignment',
+    'a potentially inherited prototype setter requires the actual prototype operation',node.span);
   const refusal = readRecordFieldSourceWriteRefusal(checker.language, operator, object.type.kind, object.type.reference === true,
-    object.type.open === true, Boolean(field), field?.type.kind ?? '');
+    object.type.open === true, Boolean(field), type?.kind ?? '');
   if (refusal) throw unsupported('shared record field assignment', refusal, node.span);
   if (node.args.length !== readRecordFieldWriteArgumentCount(operator) || node.args.some(value => !value)) {
     throw typeError('a field assignment must retain every actual operand', node.span);
@@ -43,16 +47,19 @@ export function checkRecordFieldWrite(checker, node, object, env, path) {
       body = { k: 'let', ...bindings[index], body, type: UNIT };
     return body;
   }
-  const args = node.args.map(argument => coerce(checker.expr(argument, env, path, field.type), field.type,
+  const args = node.args.map(argument => coerce(checker.expr(argument, env, path, type), type,
     checker.language, argument.span ?? node.span));
   return { k: 'method', object, op: node.op, args, type: UNIT, span: node.span };
 }
 
 export function checkSourceRecordFieldWrite(checker, node, env, path) {
-  if (typeof node.field !== 'string' || node.index) throw unsupported('shared indexed assignment',
+  const literalKey = checker.language === 'JavaScript' && node.index?.k === 'str';
+  if (node.index ? !literalKey : typeof node.field !== 'string') throw unsupported('shared indexed assignment',
     'indexed assignment needs live slots, holes, length and property-key semantics', node.span);
   const object = checker.expr(node.object, env, path, undefined);
-  const operation = readRecordFieldWriteIdentity(node.op, node.field);
+  if (literalKey && object.type.kind !== 'record') throw unsupported('shared indexed assignment',
+    'indexed assignment needs live slots, holes, length and property-key semantics', node.span);
+  const operation = readRecordFieldWriteIdentity(node.op, literalKey ? node.index.value : node.field);
   if (!operation) throw unsupported('shared record field assignment', 'this operator needs its complete state operation', node.span);
   return checkRecordFieldWrite(checker, { ...node, op: operation, args: node.value ? [node.value] : [] }, object, env, path);
 }

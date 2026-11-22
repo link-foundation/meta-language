@@ -40,6 +40,10 @@ export function readRecordFieldWriteSuffix(initial, receiver, arguments_) {
 export function acceptLinkedRecordFieldWrite(expression, operation, kind, reference) {
   return expression === 'method' && kind === 'record' && reference && readRecordFieldWriteOperator(operation) !== '';
 }
+/** @param {string} expression @param {string} kind @param {boolean} ordered @returns {string} */
+export function readLinkedOrderedRecordSnapshotOperation(expression, kind, ordered) {
+  return expression === 'referenceRead' && kind === 'record' && ordered ? 'readOrderedRecordSnapshot' : '';
+}
 /** @param {string} operator @param {string} kind @param {boolean} reference
  * @param {boolean} open @param {boolean} field @param {string} valueKind @returns {string} */
 export function readRecordFieldWriteRefusal(operator, kind, reference, open, field, valueKind) {
@@ -93,6 +97,34 @@ export function renderRecordFieldWrite(target, operator, receiver, field, index,
         + '.is_nan() || (' + previous + '.abs() == 1.0 && ' + value + '.is_infinite()) { f64::NAN } else { ' + previous + '.powf(' + value + ') }'
     : previous + ' ' + operator.slice(0, 1) + ' ' + value;
   return output + owner + '.borrow_mut().' + index + ' = ' + result + '; () }';
+}
+/** Numeric keys are inserted ahead of greater numeric keys and every normal
+ * String key. A new String key is appended; overwrites retain their positions.
+ * @param {number[]} numericKeys @param {number} field @returns {number[]} */
+export function readOptionalRecordFieldOrderFollowers(numericKeys, field) {
+  const selected = numericKeys[field] ?? -1;
+  const followers = [];
+  if (selected < 0) return followers;
+  for (let index = 0; index < numericKeys.length; index += 1) {
+    const key = numericKeys[index] ?? -1;
+    if (key < 0 || key > selected) followers.push(index);
+  }
+  return followers;
+}
+
+/** @param {string} receiver @param {string} index @param {string} argument
+ * @param {string} suffix @param {boolean} ordered @param {string[]} followers @returns {string} */
+export function renderOptionalRustRecordFieldWrite(receiver, index, argument, suffix, ordered, followers) {
+  const owner = 'ml_field_owner' + suffix, value = 'ml_field_value' + suffix;
+  const capture = '{ let ' + owner + ' = ' + receiver + '; let ' + value + ' = ' + argument + '; ';
+  const storage = 'let mut ' + owner + ' = ' + owner + '.borrow_mut(); ';
+  if (!ordered) return capture + storage + owner + '.' + index + ' = Some((' + value + ',)); () }';
+  const field = owner + '.0.' + index, order = owner + '.1';
+  const position = followers.length === 0 ? order + '.len()'
+    : order + '.iter().position(|ml_ordered_field| [' + followers.join(', ') + '].contains(ml_ordered_field)).unwrap_or(' + order + '.len())';
+  const next = 'ml_field_previous' + suffix;
+  return capture + storage + 'if ' + field + '.is_none() { let ' + next + ' = ' + position
+    + '; ' + order + '.insert(' + next + ', ' + index + '.0); } ' + field + ' = Some((' + value + ',)); () }';
 }
 /** @returns {string} */
 export function readRecordFieldWriteStatement() {

@@ -8,7 +8,10 @@ impl RustEmitter<'_> {
             unreachable!("selected record write")
         };
         let field = rules::read_record_field_write_name(op);
-        let Type::Record { fields, .. } = &object.ty else {
+        let Type::Record {
+            fields, ordered, ..
+        } = &object.ty
+        else {
             unreachable!("checked record owner")
         };
         let index = fields
@@ -46,12 +49,38 @@ impl RustEmitter<'_> {
             "write-record-field",
             &rules::read_record_field_write_statement(),
         );
+        if fields[index].optional {
+            let numeric = if *ordered {
+                fields.iter().map(|field| {
+                    crate::translation::javascript_literal_property_rules::read_java_script_literal_property_index(
+                        &field.name.encode_utf16().map(f64::from).collect::<Vec<_>>(),
+                    )
+                }).collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            };
+            let position = serde_json::Number::from(index)
+                .as_f64()
+                .expect("an actual field index");
+            let followers = rules::read_optional_record_field_order_followers(&numeric, position)
+                .iter()
+                .map(|field| format!("{field:.1}"))
+                .collect::<Vec<_>>();
+            return Ok(rules::render_optional_rust_record_field_write(
+                &receiver,
+                &index.to_string(),
+                &arguments[0],
+                &suffix,
+                *ordered,
+                &followers,
+            ));
+        }
         Ok(rules::render_record_field_write(
             "Rust",
             &rules::read_record_field_write_operator(op),
             &receiver,
             "",
-            &if matches!(&object.ty, Type::Record { ordered: true, .. }) {
+            &if *ordered {
                 format!("0.{index}")
             } else {
                 index.to_string()

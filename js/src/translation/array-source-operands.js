@@ -4,6 +4,9 @@ import { acceptReferenceArraySourceOperands } from './reference-array-projection
 export function captureArraySourceOperands(checker, array, index, env) {
   if (!acceptReferenceArraySourceOperands(checker.language, array.k, array.reference?.type.kind ?? '',
     array.reference?.type.reference === true)) return { array, index, bindings: [] };
+  if (checker.checkedProjection && array.reference.k === 'var' && index.k === 'var') {
+    return { array, index, bindings: [] };
+  }
   const inner = new Map(env), bindings = [];
   for (const [prefix, value] of [['ml_array_read_value', array.reference], ['ml_array_read_index', index]]) {
     let name;

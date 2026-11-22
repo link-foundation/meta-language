@@ -24,6 +24,23 @@ impl Checker {
             ),
             _ => (None, false),
         };
+        if field.as_ref().is_some_and(|field| field.optional) && name == "__proto__" {
+            return Err(unsupported(
+                "shared record field assignment",
+                "a potentially inherited prototype setter requires the actual prototype operation",
+                span,
+            ));
+        }
+        let field_value_type = |field: &crate::translation::types::TypeField| {
+            if field.optional {
+                crate::translation::javascript_constructor_presence::field_value_type(&field.ty)
+                    .expect("checked optional own-field carrier")
+                    .clone()
+            } else {
+                field.ty.clone()
+            }
+        };
+        let value_type = field.as_ref().map(field_value_type);
         let refusal = rules::read_record_field_source_write_refusal(
             self.language.as_str(),
             &operator,
@@ -31,7 +48,7 @@ impl Checker {
             object.ty.is_reference(),
             open,
             field.is_some(),
-            field.as_ref().map_or("", |field| field.ty.kind()),
+            value_type.as_ref().map_or("", Type::kind),
         );
         if !refusal.is_empty() {
             return Err(unsupported(
@@ -151,13 +168,14 @@ impl Checker {
                 body, bindings,
             ));
         }
+        let value_type = value_type.expect("the shared field rule retained its actual value type");
         let mut values = Vec::new();
         for argument in args {
             let argument = argument.as_ref().expect("the actual operand was retained");
-            let value = self.expr(argument, env, path, Some(&field.ty), false)?;
+            let value = self.expr(argument, env, path, Some(&value_type), false)?;
             values.push(Some(self.coerce(
                 value,
-                &field.ty,
+                &value_type,
                 argument.span.or(span),
             )?));
         }
@@ -183,7 +201,11 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
-        let Some(field) = field.filter(|_| index.is_none()) else {
+        let literal_key = index.and_then(|index| match &index.node {
+            SNode::Str { value } if self.language.as_str() == "JavaScript" => Some(value.as_str()),
+            _ => None,
+        });
+        let Some(field) = literal_key.or_else(|| field.filter(|_| index.is_none())) else {
             return Err(unsupported(
                 "shared indexed assignment",
                 "indexed assignment needs live slots, holes, length and property-key semantics",
@@ -191,6 +213,13 @@ impl Checker {
             ));
         };
         let object = self.expr(object, env, path, None, false)?;
+        if literal_key.is_some() && !matches!(object.ty, Type::Record { .. }) {
+            return Err(unsupported(
+                "shared indexed assignment",
+                "indexed assignment needs live slots, holes, length and property-key semantics",
+                span,
+            ));
+        }
         let operation = rules::read_record_field_write_identity(operator, field);
         if operation.is_empty() {
             return Err(unsupported(

@@ -10992,6 +10992,11 @@ checks the vector against the presence of each captured field carrier before
 sorting numeric keys. Spread and rest rebase the source's actual positions.
 Key and value enumeration use those positions, so an absent field contributes
 no entry and an own field containing undefined contributes one.
+Writing a statically named optional data field through a shared record alias
+creates that own field when absent. The receiver and right-hand expression
+are complete before the exclusive storage borrow. A new numeric key enters
+before greater numeric keys and every other String key, while a new
+nonnumeric key appends. An overwrite retains its existing position.
 
 Before target effect analysis, ordered constructors capture every actual field
 value once and call the complete source-defined order constructor through

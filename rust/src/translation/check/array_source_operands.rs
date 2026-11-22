@@ -22,6 +22,12 @@ impl Checker {
             return (array, index, Vec::new());
         }
         let reference = reference.unwrap();
+        if self.checked_projection
+            && matches!(reference.node, Node::Var { .. })
+            && matches!(index.node, Node::Var { .. })
+        {
+            return (array, index, Vec::new());
+        }
         let mut inner = env.clone();
         let mut bindings = Vec::new();
         for (prefix, value) in [

@@ -1,3 +1,4 @@
+import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-rules.js';
 import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
 import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
@@ -22,7 +23,7 @@ import {UTF16_TEXT_PRELUDE} from './utf16-text-runtime.js';
 import {rustEscape,rustString} from './rust-string-literals.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
-import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordFieldWriteName, renderRecordFieldWrite, readRecordFieldWriteStatement, readRecordFieldWriteSuffix } from './record-write-rules.js';
+import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordFieldWriteName, renderRecordFieldWrite, renderOptionalRustRecordFieldWrite, readOptionalRecordFieldOrderFollowers, readRecordFieldWriteStatement, readRecordFieldWriteSuffix } from './record-write-rules.js';
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import { acceptSnapshotCallbackParameters } from './reference-method-rules.js';
 import { acceptReadOnlyReferenceCallback } from './reference-callbacks.js';
@@ -1341,6 +1342,13 @@ class RustEmitter {
       this.temporaries = readRecordFieldWriteSuffix(Math.max(initial, this.temporaries), receiver, args);
       const suffix = String(this.temporaries);
       this.state.encode('write-record-field', readRecordFieldWriteStatement());
+      if (e.object.type.fields[index].optional) {
+        const ordered=e.object.type.ordered===true;
+        const numeric=ordered ? e.object.type.fields.map(field=>readJavaScriptLiteralPropertyIndex(
+          Array.from({length:field.name.length},(_,position)=>field.name.charCodeAt(position)))) : [];
+        const followers=readOptionalRecordFieldOrderFollowers(numeric,index).map(position=>position+'.0');
+        return renderOptionalRustRecordFieldWrite(receiver,String(index),args[0],suffix,ordered,followers);
+      }
       return renderRecordFieldWrite('Rust', readRecordFieldWriteOperator(e.op), receiver, '', (e.object.type.ordered?'0.':'')+String(index), args, suffix);
     }
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);

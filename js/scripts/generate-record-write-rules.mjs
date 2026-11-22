@@ -12,8 +12,8 @@ const definition = { schemaVersion: 1, model: 'native Rust source Unicode scalar
   module: 'record_write_rules', functions: [
     'readRecordFieldWriteIdentity','readRecordFieldWriteOperator','readRecordFieldWriteName',
     'readRecordFieldWriteArgumentCount','readRecordFieldWriteSuffix','acceptLinkedRecordFieldWrite',
-    'readRecordCompoundBinaryOperation','readRecordFieldSourceWriteRefusal',
-    'renderRecordFieldWrite','readRecordFieldWriteStatement'
+    'readRecordCompoundBinaryOperation','readRecordFieldSourceWriteRefusal','readLinkedOrderedRecordSnapshotOperation',
+    'renderRecordFieldWrite','readOptionalRecordFieldOrderFollowers','renderOptionalRustRecordFieldWrite','readRecordFieldWriteStatement'
   ].map(source => ({ source })) };
 // The implementation retains every complete exported rule. Source/schema
 // transport exposes only the endpoints actually consumed by native owners.

@@ -159,6 +159,29 @@ pub fn accept_linked_record_field_write(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_linked_ordered_record_snapshot_operation(
+    expression: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    ordered: bool,
+) -> self::ml_string::Text {
+    if (((*expression)
+        == (self::ml_string::Text::from_units(vec![
+            114, 101, 102, 101, 114, 101, 110, 99, 101, 82, 101, 97, 100,
+        ])))
+        && ((*kind) == (self::ml_string::Text::from_units(vec![114, 101, 99, 111, 114, 100]))))
+        && ordered
+    {
+        self::ml_string::Text::from_units(vec![
+            114, 101, 97, 100, 79, 114, 100, 101, 114, 101, 100, 82, 101, 99, 111, 114, 100, 83,
+            110, 97, 112, 115, 104, 111, 116,
+        ])
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_record_field_write_refusal(
     operator: &self::ml_string::Text,
     kind: &self::ml_string::Text,
@@ -500,6 +523,180 @@ pub fn render_record_field_write(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_optional_record_field_order_followers(numeric_keys: &[f64], field: f64) -> Vec<f64> {
+    {
+        let selected =
+            (self::ml_array::optional_at(numeric_keys, self::ml_array::number_index(field)))
+                .unwrap_or_else(|| -1f64);
+        {
+            let followers = Vec::<f64>::new();
+            if selected < 0f64 {
+                followers
+            } else {
+                {
+                    let index = 0f64;
+                    {
+                        self::source_ml_source1_temporary_read_optional_record_field_order_followers_loop4(numeric_keys, selected, followers, index)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_optional_rust_record_field_write(
+    receiver: &self::ml_string::Text,
+    index: &self::ml_string::Text,
+    argument: &self::ml_string::Text,
+    suffix: &self::ml_string::Text,
+    ordered: bool,
+    followers: &[self::ml_string::Text],
+) -> self::ml_string::Text {
+    {
+        let owner = (self::ml_string::Text::from_units(vec![
+            109, 108, 95, 102, 105, 101, 108, 100, 95, 111, 119, 110, 101, 114,
+        ]))
+        .concat(suffix);
+        {
+            let value = (self::ml_string::Text::from_units(vec![
+                109, 108, 95, 102, 105, 101, 108, 100, 95, 118, 97, 108, 117, 101,
+            ]))
+            .concat(suffix);
+            {
+                let capture = ((((((((self::ml_string::Text::from_units(vec![
+                    123, 32, 108, 101, 116, 32,
+                ]))
+                .concat(&owner))
+                .concat(&self::ml_string::Text::from_units(vec![32, 61, 32])))
+                .concat(receiver))
+                .concat(&self::ml_string::Text::from_units(vec![
+                    59, 32, 108, 101, 116, 32,
+                ])))
+                .concat(&value))
+                .concat(&self::ml_string::Text::from_units(vec![32, 61, 32])))
+                .concat(argument))
+                .concat(&self::ml_string::Text::from_units(vec![59, 32]));
+                {
+                    let storage = ((((self::ml_string::Text::from_units(vec![
+                        108, 101, 116, 32, 109, 117, 116, 32,
+                    ]))
+                    .concat(&owner))
+                    .concat(&self::ml_string::Text::from_units(vec![32, 61, 32])))
+                    .concat(&owner))
+                    .concat(&self::ml_string::Text::from_units(vec![
+                        46, 98, 111, 114, 114, 111, 119, 95, 109, 117, 116, 40, 41, 59, 32,
+                    ]));
+                    if ordered {
+                        {
+                            let field = (owner
+                                .concat(&self::ml_string::Text::from_units(vec![46, 48, 46])))
+                            .concat(index);
+                            {
+                                let order =
+                                    owner.concat(&self::ml_string::Text::from_units(vec![46, 49]));
+                                {
+                                    let position =
+                                        if (followers.len() as f64) == 0f64 {
+                                            order.concat(&self::ml_string::Text::from_units(vec![
+                                                46, 108, 101, 110, 40, 41,
+                                            ]))
+                                        } else {
+                                            ((((order.concat(
+                                                &self::ml_string::Text::from_units(vec![
+                                                    46, 105, 116, 101, 114, 40, 41, 46, 112, 111,
+                                                    115, 105, 116, 105, 111, 110, 40, 124, 109,
+                                                    108, 95, 111, 114, 100, 101, 114, 101, 100, 95,
+                                                    102, 105, 101, 108, 100, 124, 32, 91,
+                                                ]),
+                                            ))
+                                            .concat(&self::ml_string::join(
+                                                followers,
+                                                &self::ml_string::Text::from_units(vec![44, 32]),
+                                            )))
+                                            .concat(&self::ml_string::Text::from_units(vec![
+                                                93, 46, 99, 111, 110, 116, 97, 105, 110, 115, 40,
+                                                109, 108, 95, 111, 114, 100, 101, 114, 101, 100,
+                                                95, 102, 105, 101, 108, 100, 41, 41, 46, 117, 110,
+                                                119, 114, 97, 112, 95, 111, 114, 40,
+                                            ])))
+                                            .concat(&order))
+                                            .concat(&self::ml_string::Text::from_units(vec![
+                                                46, 108, 101, 110, 40, 41, 41,
+                                            ]))
+                                        };
+                                    {
+                                        let next = (self::ml_string::Text::from_units(vec![
+                                            109, 108, 95, 102, 105, 101, 108, 100, 95, 112, 114,
+                                            101, 118, 105, 111, 117, 115,
+                                        ]))
+                                        .concat(suffix);
+                                        (((((((((((((((((capture.concat(&storage))
+                                            .concat(
+                                                &self::ml_string::Text::from_units(vec![
+                                                    105, 102, 32,
+                                                ]),
+                                            ))
+                                        .concat(&field))
+                                        .concat(&self::ml_string::Text::from_units(
+                                            vec![
+                                                46, 105, 115, 95, 110, 111, 110, 101, 40, 41, 32,
+                                                123, 32, 108, 101, 116, 32,
+                                            ],
+                                        )))
+                                        .concat(&next))
+                                        .concat(&self::ml_string::Text::from_units(
+                                            vec![32, 61, 32],
+                                        )))
+                                        .concat(&position))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            59, 32,
+                                        ])))
+                                        .concat(&order))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            46, 105, 110, 115, 101, 114, 116, 40,
+                                        ])))
+                                        .concat(&next))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            44, 32,
+                                        ])))
+                                        .concat(index))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            46, 48, 41, 59, 32, 125, 32,
+                                        ])))
+                                        .concat(&field))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            32, 61, 32, 83, 111, 109, 101, 40, 40,
+                                        ])))
+                                        .concat(&value))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            44, 41, 41, 59, 32, 40, 41, 32, 125,
+                                        ]))
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        ((((((capture.concat(&storage)).concat(&owner))
+                            .concat(&self::ml_string::Text::from_units(vec![46])))
+                        .concat(index))
+                        .concat(&self::ml_string::Text::from_units(vec![
+                            32, 61, 32, 83, 111, 109, 101, 40, 40,
+                        ])))
+                        .concat(&value))
+                        .concat(&self::ml_string::Text::from_units(vec![
+                            44, 41, 41, 59, 32, 40, 41, 32, 125,
+                        ]))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_record_field_write_statement() -> self::ml_string::Text {
     self::ml_string::Text::from_units(vec![
         65, 110, 32, 111, 119, 110, 32, 102, 105, 101, 108, 100, 32, 119, 114, 105, 116, 101, 32,
@@ -605,5 +802,51 @@ pub fn source_ml_source1_temporary_read_record_field_write_suffix_loop3(
             }
         }
         return { suffix };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_read_optional_record_field_order_followers_loop4(
+    numeric_keys: &[f64],
+    mut selected: f64,
+    mut followers: Vec<f64>,
+    mut index: f64,
+) -> Vec<f64> {
+    loop {
+        if index < (numeric_keys.len() as f64) {
+            {
+                let key = (self::ml_array::optional_at(
+                    numeric_keys,
+                    self::ml_array::number_index(index),
+                ))
+                .unwrap_or_else(|| -1f64);
+                if (key < 0f64) || (key > selected) {
+                    {
+                        let followers_2 = {
+                            let (ml_append_right, ml_append_left) = (vec![index], followers);
+                            self::ml_array::append(ml_append_left, ml_append_right)
+                        };
+                        {
+                            let index_2 = index + 1f64;
+                            {
+                                (followers, index) = (followers_2, index_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+                {
+                    {
+                        let index_3 = index + 1f64;
+                        {
+                            index = index_3;
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        return { followers };
     }
 }

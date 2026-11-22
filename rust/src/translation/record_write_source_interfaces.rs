@@ -101,6 +101,21 @@ pub(crate) fn read_record_field_source_write_refusal(
     String::from_utf16(&value.0)
         .expect("a native source operation must preserve Unicode scalar spelling")
 }
+pub(crate) fn read_linked_ordered_record_snapshot_operation(
+    source_argument_0: &str,
+    source_argument_1: &str,
+    source_argument_2: bool,
+) -> String {
+    let native_argument_0 = implementation::ml_string::Text::from_text(source_argument_0);
+    let native_argument_1 = implementation::ml_string::Text::from_text(source_argument_1);
+    let value = implementation::read_linked_ordered_record_snapshot_operation(
+        &native_argument_0,
+        &native_argument_1,
+        source_argument_2,
+    );
+    String::from_utf16(&value.0)
+        .expect("a native source operation must preserve Unicode scalar spelling")
+}
 pub(crate) fn render_record_field_write(
     source_argument_0: &str,
     source_argument_1: &str,
@@ -128,6 +143,39 @@ pub(crate) fn render_record_field_write(
         &native_argument_4,
         &native_argument_5,
         &native_argument_6,
+    );
+    String::from_utf16(&value.0)
+        .expect("a native source operation must preserve Unicode scalar spelling")
+}
+pub(crate) fn read_optional_record_field_order_followers(
+    source_argument_0: &[f64],
+    source_argument_1: f64,
+) -> Vec<f64> {
+    implementation::read_optional_record_field_order_followers(source_argument_0, source_argument_1)
+}
+pub(crate) fn render_optional_rust_record_field_write(
+    source_argument_0: &str,
+    source_argument_1: &str,
+    source_argument_2: &str,
+    source_argument_3: &str,
+    source_argument_4: bool,
+    source_argument_5: &[String],
+) -> String {
+    let native_argument_0 = implementation::ml_string::Text::from_text(source_argument_0);
+    let native_argument_1 = implementation::ml_string::Text::from_text(source_argument_1);
+    let native_argument_2 = implementation::ml_string::Text::from_text(source_argument_2);
+    let native_argument_3 = implementation::ml_string::Text::from_text(source_argument_3);
+    let native_argument_5 = source_argument_5
+        .iter()
+        .map(|value| implementation::ml_string::Text::from_text(value))
+        .collect::<Vec<_>>();
+    let value = implementation::render_optional_rust_record_field_write(
+        &native_argument_0,
+        &native_argument_1,
+        &native_argument_2,
+        &native_argument_3,
+        source_argument_4,
+        &native_argument_5,
     );
     String::from_utf16(&value.0)
         .expect("a native source operation must preserve Unicode scalar spelling")

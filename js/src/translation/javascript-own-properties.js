@@ -17,9 +17,10 @@ const failure=()=>({k:'math',op:readJavaScriptSourceExceptionOperation('TypeErro
 function membership(checker,receiver,key,form,span){
  if(form==='record'){
   if(receiver.type.open)throw unsupported('own property membership','the actual open record needs its complete runtime property domain',span);
+  const value=checker.referenceValue(receiver);
   return receiver.type.fields.reduce((result,field)=>{
    const selected=equal(key,literal(STRING,field.name));
-   const owned=field.optional?both(selected,constructJavaScriptOptionalPresence(readJavaScriptOwnedRecordField(receiver,field,true),field.type.element,span)):selected;
+   const owned=field.optional?both(selected,constructJavaScriptOptionalPresence(readJavaScriptOwnedRecordField(value,field,true),field.type.element,span)):selected;
    return either(result,owned);
   },literal(BOOL,false));
  }

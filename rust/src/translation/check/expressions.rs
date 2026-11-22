@@ -707,6 +707,17 @@ impl Checker {
                 span,
             ),
             SNode::Math { op, name, args } => {
+                if self.checked_projection && op == "readOrderedRecordSnapshot" {
+                    if let [argument] = args.as_slice()
+                        && !argument.spread
+                    {
+                        let operand = self.expr(&argument.value, env, path, None, false)?;
+                        if matches!(operand.ty, Type::Record { reference: true, ordered: true, open: false, .. }) {
+                            return Ok(Self::reference_value(operand));
+                        }
+                    }
+                    return Err(type_error("an ordered record snapshot requires its actual shared closed record", span));
+                }
                 if op==&crate::translation::disjoint_collection_iterations::read_disjoint_collection_iteration_source_operation()||op==&crate::translation::disjoint_collection_iterations::read_disjoint_collection_spread_source_operation(){return self.closed_collection_iteration(args,span,env,path,expected,op==&crate::translation::disjoint_collection_iterations::read_disjoint_collection_spread_source_operation());}
                 if crate::translation::conditional_chain_rules::accept_conditional_chain_operation(
                     op,

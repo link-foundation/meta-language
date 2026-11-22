@@ -124,6 +124,22 @@ fn expression_value(value: &Value, program: &Program) -> Result<Value> {
         return Ok(result);
     }
     let plan = &plans[&key];
+    let snapshot = crate::translation::record_write_source_interfaces::read_linked_ordered_record_snapshot_operation(
+        value["k"].as_str().unwrap_or_default(),
+        value["type"]["kind"].as_str().unwrap_or_default(),
+        value["type"]["ordered"] == true,
+    );
+    if !snapshot.is_empty() {
+        let mut result = json!({"k":"referencePayload","value":{
+            "k":"math","op":snapshot,"name":"","args":[
+                {"value":expression(&value["reference"], program)?,"spread":false}
+            ]
+        }});
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
     let reference_form = read_surface_reference_projection_form(
         value["k"].as_str().unwrap_or_default(),
         value["type"]["kind"].as_str().unwrap_or_default(),

@@ -10,7 +10,7 @@ import { readRecordProjection, readRecordProjectionError } from './translation/r
 import { readLinkedProgramNumberOperand } from './typed-program-number-projection.js';
 import { readSurfaceReferenceProjectionForm, readSurfaceReferencePayloadOperand } from './translation/surface-reference-analysis-rules.js';
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
-import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
+import { acceptLinkedRecordFieldWrite, readLinkedOrderedRecordSnapshotOperation } from './translation/record-write-rules.js';
 import { acceptLinkedBigIntegerBitwiseOperation } from './translation/big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
 import {acceptLinkedJavaScriptSourceException} from './translation/source-exception-rules.js';
@@ -85,6 +85,9 @@ function projectLinkedProgramExpressionValue(value, declarations, {rootedNamespa
   }
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
+  const snapshot = readLinkedOrderedRecordSnapshotOperation(value.k, value.type?.kind ?? '', value.type?.ordered === true);
+  if (snapshot) return {k:'referencePayload',value:{k:'math',op:snapshot,name:'',args:[{value:project(value.reference),spread:false}]},
+    ...(value.span !== undefined ? {span:value.span} : {})};
   if (sourceLanguage && value.k === 'strictEqual') {
     return { k: 'math', op: key, name: '', args: [value.left, value.right].map(value => ({ value: project(value), spread: false })),
       ...(value.span !== undefined ? { span: value.span } : {}) };

@@ -56,7 +56,8 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         if form == "record" {
-            let Type::Record { fields, open, .. } = &receiver.ty else {
+            let value = Self::reference_value(receiver);
+            let Type::Record { fields, open, .. } = &value.ty else {
                 unreachable!("a selected record retains its fields")
             };
             if *open {
@@ -73,7 +74,7 @@ impl Checker {
                     && field.optional
                 {
                     let carrier = Expr::new(Node::RecordField {
-                        object: Box::new(receiver.clone()), field: field.name.clone(), index,
+                        object: Box::new(value.clone()), field: field.name.clone(), index,
                     }, field.ty.clone());
                     selected = both(selected, Self::javascript_optional_presence(carrier, element, span)?);
                 }
