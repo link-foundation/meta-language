@@ -412,7 +412,8 @@ export function readRustGenericTypeAliasDeclarationPlan(kinds,values,raws){
     else end+=1;
    }
    if(end>=values.length||end===first)return ['error','empty or unclosed source type alias declaration'];
-   result.push(name,String(position),String(first),String(end),String(end+1),String(parameters.length),...parameters);
+   result.push(name,String(position),String(first),String(end),String(end+1),String(parameters.length));
+   for(const parameter of parameters)result.push(parameter);
    if(names.length>10000)return ['error','source type alias declaration limit exceeded'];
    position=end+1;continue;
   }
