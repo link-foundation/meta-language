@@ -33,7 +33,7 @@ import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
 import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-profile.js';
 import {checkJavaScriptObjectEnumeration} from './javascript-object-enumeration.js';
 import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-order-operations.js';
-import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,readJavaScriptGuardedConstructors,readJavaScriptOptionalGuardBranch,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
+import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,hasJavaScriptGuardedOwnField,readJavaScriptGuardedConstructors,readJavaScriptOptionalGuardBranch,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
@@ -454,7 +454,7 @@ class Checker {
         } catch (error) {
           if (!reportDeclarationErrors || !(error instanceof TranslationError)) throw error;
           failedDeclarations++;
-          if (declarationErrors.length < 40) {
+          if (declarationErrors.length < 192) {
             declarationErrors.push(new TranslationError(error.kind, `${entry.fullName}: ${error.reason}`, error.span ?? item.span, error.details));
           }
           return;
@@ -793,7 +793,8 @@ class Checker {
         if(value.type.kind==='data'&&this.items.get(value.type.name)?.sourceStandardCollectionCarrier)checkRustStandardCollectionObservation(value.type,name=>this.items.get(name),'field projection',node.span);
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
         if(guarded)return guarded;
-        const field=checkJavaScriptDataField(this,value,node.field,node.span,false,readJavaScriptGuardedConstructors(node.object,env))??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span,this.checkedProjection);
+        const guard=readJavaScriptGuardedConstructors(node.object,env),own=hasJavaScriptGuardedOwnField(node,env);
+        const field=checkJavaScriptDataField(this,value,node.field,node.span,false,{guard,own})??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span,this.checkedProjection);
         return this.language==='JavaScript'?projectJavaScriptGuardedOptional(node,field,env):field;
       }
       case 'length': {

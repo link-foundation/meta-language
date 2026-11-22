@@ -9,6 +9,7 @@ import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.
 import {typeKey} from './types.js';
 const present=Symbol('unchanged nominal spread absence guards');
 const constructors=Symbol('unchanged nominal constructor guards');
+const ownProperties=Symbol('unchanged nominal own property guards');
 function fieldPath(node){
  const fields=[];
  while(node.k==='field'&&fields.length<256){fields.push(node.field);node=node.object;}
@@ -21,8 +22,13 @@ export function readJavaScriptGuardedConstructors(node,env){
  const path=fieldPath(node);
  return path&&(env.get(constructors)??[]).find(fact=>samePath(fact,path));
 }
+export function hasJavaScriptGuardedOwnField(node,env){
+ if(!env.has(ownProperties))return false;
+ const path=fieldPath(node);
+ return path&&(env.get(ownProperties)??[]).some(fact=>samePath(fact,path));
+}
 export function forgetJavaScriptNominalSpreadGuard(env,name){
- for(const kind of [present,constructors])if(env.has(kind))env.set(kind,env.get(kind).filter(row=>row.name!==name));
+ for(const kind of [present,constructors,ownProperties])if(env.has(kind))env.set(kind,env.get(kind).filter(row=>row.name!==name));
 }
 function immutableFieldPath(checker,node,env){
  const path=fieldPath(node);
@@ -46,7 +52,8 @@ function joinedBranchFacts(original,left,right){
   const other=(right.get(constructors)??[]).find(other=>fact.owner===other.owner&&samePath(fact,other));
   return other?[{...fact,names:[...new Set([...fact.names,...other.names])]}]:[];
  });
- return new Map(original).set(present,absence).set(constructors,tags);
+ const own=(left.get(ownProperties)??[]).filter(fact=>(right.get(ownProperties)??[]).some(other=>samePath(fact,other)));
+ return new Map(original).set(present,absence).set(constructors,tags).set(ownProperties,own);
 }
 function directTagTest(condition){
  const test=condition.tagTest;
@@ -63,6 +70,15 @@ function directTagTest(condition){
 export function readJavaScriptOptionalGuardBranch(checker,condition,env,outcome,depth=0){
  if(depth>=256)return env;
  if(condition.k==='unary'&&condition.op==='not')return readJavaScriptOptionalGuardBranch(checker,condition.arg,env,!outcome,depth+1);
+ if(outcome&&condition.k==='math'&&condition.op==='testJavaScriptOwnedProperty'&&condition.args.length===2&&condition.args.every(arg=>!arg.spread)){
+  const [object,key]=condition.args.map(arg=>arg.value);
+  const path=key.k==='str'?immutableFieldPath(checker,object,env):null;
+  if(path?.type?.kind==='data'&&path.fields.length<256){
+   const property={name:path.name,fields:[...path.fields,key.value]},facts=env.get(ownProperties)??[];
+   if(!facts.some(fact=>samePath(fact,property)))return new Map(env).set(ownProperties,[...facts,property]);
+  }
+  return env;
+ }
  const test=directTagTest(condition);
  if(test){
   const path=immutableFieldPath(checker,test.object,env);

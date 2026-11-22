@@ -415,6 +415,7 @@ struct Env {
     own_properties: Vec<(String, String)>,
     nominal_spread_absences: Vec<(javascript_nominal_spreads::FieldPath, String)>,
     nominal_constructors: Vec<javascript_nominal_spreads::ConstructorGuard>,
+    nominal_own_fields: Vec<javascript_nominal_spreads::FieldPath>,
     own_key_callback: Option<guarded_record_indices::OwnKeyCallbackOrigin>,
 }
 
@@ -431,6 +432,7 @@ impl Env {
             .retain(|(path, _)| path.root != name);
         self.nominal_constructors
             .retain(|guard| guard.path.root != name);
+        self.nominal_own_fields.retain(|path| path.root != name);
         self.own_properties
             .retain(|(object, key)| object != name && key != name);
         self.known.retain(|variable, fact| {

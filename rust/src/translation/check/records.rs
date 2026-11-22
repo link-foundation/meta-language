@@ -671,7 +671,8 @@ impl Checker {
             return Ok(field);
         }
         let guard = super::javascript_nominal_spreads::guarded_constructors(object, env);
-        if let Some(projected) = self.javascript_data_field(&value, field, span, guard)? {
+        let own = super::javascript_nominal_spreads::guards_own_field(object, field, env);
+        if let Some(projected) = self.javascript_data_field(&value, field, span, guard, own)? {
             return Ok(self.guarded_nominal_field_optional(object, field, projected, env));
         }
         if let Some(absent) = self.javascript_absent_record_property(&value, field, expected, span)

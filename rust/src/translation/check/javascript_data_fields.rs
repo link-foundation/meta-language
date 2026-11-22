@@ -17,15 +17,15 @@ fn value_type(field: &crate::translation::ir::Field) -> &Type {
 }
 
 impl Checker {
-    #[allow(clippy::cast_precision_loss)] // actual in-memory field coordinates
     pub(super) fn javascript_data_field(
         &mut self,
         object: &Expr,
         field: &str,
         span: Option<Span>,
         guard: Option<&ConstructorGuard>,
+        own: bool,
     ) -> Result<Option<Expr>> {
-        self.project_javascript_data_field(object, field, span, false, guard)
+        self.project_javascript_data_field(object, field, span, false, guard, own)
     }
 
     pub(super) fn javascript_data_field_projection(
@@ -35,9 +35,10 @@ impl Checker {
         span: Option<Span>,
         preserve_presence: bool,
     ) -> Result<Option<Expr>> {
-        self.project_javascript_data_field(object, field, span, preserve_presence, None)
+        self.project_javascript_data_field(object, field, span, preserve_presence, None, false)
     }
 
+    #[allow(clippy::cast_precision_loss)] // actual in-memory field coordinates
     fn project_javascript_data_field(
         &mut self,
         object: &Expr,
@@ -45,6 +46,7 @@ impl Checker {
         span: Option<Span>,
         preserve_presence: bool,
         guard: Option<&ConstructorGuard>,
+        own: bool,
     ) -> Result<Option<Expr>> {
         let Type::Data { name } = &object.ty else {
             return Ok(None);
@@ -61,10 +63,8 @@ impl Checker {
             .iter()
             .filter(|ctor| guard.is_none_or(|guard| guard.names.contains(&ctor.name)))
             .collect::<Vec<_>>();
-        let positions = entry
-            .ctors
+        let positions = variants
             .iter()
-            .filter(|ctor| guard.is_none_or(|guard| guard.names.contains(&ctor.name)))
             .map(|ctor| {
                 ctor.fields
                     .iter()
@@ -84,7 +84,7 @@ impl Checker {
                 })
             })
             .collect::<Vec<_>>();
-        let inherited=crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_field_form(
+        let inherited=!own&&crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_field_form(
             &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text("record"),false,false,
             &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text(field)).to_string()=="prototype";
         if !preserve_presence

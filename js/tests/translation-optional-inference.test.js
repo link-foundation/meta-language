@@ -52,6 +52,20 @@ console.log(read(true, []));`;
   assert.equal(observations(emitJavaScript(program).text), 'sample\nempty\n');
 });
 
+test('an actual own-property test guards optional nominal constructor data', () => {
+  const source = `
+/** @typedef {{ $: 'request', constructor?: number }} Request */
+/** @param {Request} request @returns {number} */
+function read(request) {
+  const selected = Object.hasOwn(request, 'constructor') ? request.constructor : undefined;
+  return selected ?? -1;
+}
+console.log(read({ $: 'request', constructor: 0 }));
+console.log(read({ $: 'request' }));`;
+  const program = checkProgram(parseJavaScript(source));
+  assert.equal(observations(emitJavaScript(program).text), '0\n-1\n');
+});
+
 test('an absent constructor case retains the payload of an optional lookup in another case', () => {
   const source = `
     /** @typedef {{$:'indexed', index:number} | {$:'absent'}} Selection */

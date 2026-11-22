@@ -273,17 +273,25 @@ fn compound_nominal_guards_and_literal_branches_retain_their_types() {
           const next = skip ? undefined : available[0];
           return next === undefined ? -2 : read(next);
         }
+        /** @typedef {{ $: 'request', constructor?: number }} Request */
+        /** @param {Request} request @returns {number} */
+        function readConstructor(request) {
+          const selected = Object.hasOwn(request, 'constructor') ? request.constructor : undefined;
+          return selected ?? -3;
+        }
         console.log(select(false, [{ $: 'entry', current: { $: 'count', payload: 4 }, extra: 3 }]));
         console.log(select(false, [{ $: 'entry', current: { $: 'text', payload: 'four' }, extra: 3 }]));
         console.log(select(false, [{ $: 'entry', current: { $: 'count', payload: 4 } }]));
         console.log(select(true, []));
+        console.log(readConstructor({ $: 'request', constructor: 0 }));
+        console.log(readConstructor({ $: 'request' }));
     "#;
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
     let emitted = emit_javascript(&program).unwrap();
     for text in [source, emitted.text.as_str()] {
         let result = run(Command::new("node").args(["--input-type=module", "-e", text]));
         assert!(result.ok, "{}", result.stderr);
-        assert_eq!(result.stdout, "7\n-1\n-1\n-2\n");
+        assert_eq!(result.stdout, "7\n-1\n-1\n-2\n0\n-3\n");
     }
 }
 

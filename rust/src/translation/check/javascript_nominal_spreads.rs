@@ -36,13 +36,31 @@ impl FieldPath {
             fields,
         })
     }
+
+    fn child(mut self, field: &str) -> Option<Self> {
+        if self.fields.len() >= 256 {
+            return None;
+        }
+        self.fields.push(field.to_owned());
+        Some(self)
+    }
 }
 
 pub(super) fn guarded_constructors<'a>(node: &SExpr, env: &'a Env) -> Option<&'a ConstructorGuard> {
+    if env.nominal_constructors.is_empty() {
+        return None;
+    }
     let path = FieldPath::read(node)?;
     env.nominal_constructors
         .iter()
         .find(|guard| guard.path == path)
+}
+
+pub(super) fn guards_own_field(object: &SExpr, field: &str, env: &Env) -> bool {
+    !env.nominal_own_fields.is_empty()
+        && FieldPath::read(object)
+            .and_then(|path| path.child(field))
+            .is_some_and(|path| env.nominal_own_fields.contains(&path))
 }
 
 fn direct_tag_test(condition: &SExpr) -> Option<&crate::translation::surface::STagTest> {
@@ -137,6 +155,21 @@ impl Checker {
             self.apply_javascript_optional_guard(arg, env, !outcome, depth + 1);
             return;
         }
+        if outcome
+            && let SNode::Math { op, args, .. } = &condition.node
+            && op == "testJavaScriptOwnedProperty"
+            && let [object, key] = args.as_slice()
+            && !object.spread
+            && !key.spread
+            && let SNode::Str { value } = &key.value.node
+            && let Some((path, Type::Data { .. })) = self.immutable_nominal_path(&object.value, env)
+            && let Some(path) = path.child(value)
+        {
+            if !env.nominal_own_fields.contains(&path) {
+                env.nominal_own_fields.push(path);
+            }
+            return;
+        }
         if let Some(test) = direct_tag_test(condition) {
             let Some((path, ty)) = self.immutable_nominal_path(&test.object, env) else {
                 return;
@@ -193,6 +226,11 @@ impl Checker {
                     .nominal_spread_absences
                     .into_iter()
                     .filter(|fact| second.nominal_spread_absences.contains(fact))
+                    .collect();
+                env.nominal_own_fields = first
+                    .nominal_own_fields
+                    .into_iter()
+                    .filter(|fact| second.nominal_own_fields.contains(fact))
                     .collect();
                 env.nominal_constructors = first
                     .nominal_constructors

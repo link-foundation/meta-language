@@ -5,7 +5,7 @@ import {UNIT,STRING,option,typeKey} from './types.js';
 import {javaScriptConstructorFieldValueType} from './javascript-constructor-presence.js';
 import {unsupported} from './diagnostics.js';
 import {coerce} from './check.js';
-export function checkJavaScriptDataField(checker,object,field,span,preservePresence=false,guard){
+export function checkJavaScriptDataField(checker,object,field,span,preservePresence=false,{guard,own=false}={}){
   if(checker.language!=='JavaScript'||object.type.kind!=='data')return null;
   const entry=checker.items.get(object.type.name);
   if(entry?.k!=='data')throw unsupported('datatype property','the actual nominal declaration is unavailable',span);
@@ -13,7 +13,7 @@ export function checkJavaScriptDataField(checker,object,field,span,preservePrese
     entry.ctors.filter(ctor=>guard.names.includes(ctor.name)):entry.ctors;
   const positions=variants.map(ctor=>ctor.fields.findIndex(candidate=>candidate.name===field));
   const types=variants.map((ctor,index)=>positions[index]<0?'':typeKey(javaScriptConstructorFieldValueType(ctor.fields[positions[index]])));
-  const inherited=readJavaScriptRecordFormalDefaultFieldForm('record',false,false,field)==='prototype';
+  const inherited=!own&&readJavaScriptRecordFormalDefaultFieldForm('record',false,false,field)==='prototype';
   if(!preservePresence&&inherited&&variants.some((ctor,index)=>ctor.fields[positions[index]]?.optional)){
     throw unsupported('datatype property','an absent own field can expose an inherited property',span);
   }
