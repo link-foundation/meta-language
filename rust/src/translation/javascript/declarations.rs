@@ -21,6 +21,7 @@ use crate::translation::frontend_rules::{
 use crate::translation::javascript_constructor_field_type_rules::read_java_script_constructor_field_boundary;
 use crate::translation::primitive_value_rules::accept_object_property_definition;
 use crate::translation::surface::SExpr;
+use crate::translation::types::option;
 
 mod file;
 mod jsdoc;
@@ -689,10 +690,7 @@ impl JavaScriptParser {
                 }),
                 ty: declared.map(|declared| {
                     if optional {
-                        Type::Option {
-                            element: Box::new(declared),
-                            absence: "undefined".to_owned(),
-                        }
+                        option(declared, "undefined")
                     } else {
                         declared
                     }

@@ -41,7 +41,7 @@ fn nominal_optional_guards_preserve_present_values_and_absence() {
             emitted.text
         ));
     }
-    assert_eq!(modules.len(), 3);
+    assert_eq!(modules.len(), 5);
     fs::write(&source, modules.join("\n")).unwrap();
     let compiled = run(Command::new("rustc")
         .args(["--edition=2024", "--test"])
@@ -51,7 +51,7 @@ fn nominal_optional_guards_preserve_present_values_and_absence() {
     assert!(compiled.ok, "{}", compiled.stderr);
     let observed = run(&mut Command::new(&binary));
     assert!(observed.ok, "{}\n{}", observed.stdout, observed.stderr);
-    assert!(observed.stdout.contains("3 passed"), "{}", observed.stdout);
+    assert!(observed.stdout.contains("5 passed"), "{}", observed.stdout);
 }
 
 #[test]

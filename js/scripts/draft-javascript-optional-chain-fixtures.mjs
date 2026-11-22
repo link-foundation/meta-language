@@ -64,6 +64,12 @@ for(const [name, argument, result, value] of [
  const source='/** @typedef {{$:"present",identity:bigint|null}} '+type+' */ /** @param {'+type+'|null|undefined} receiver */ function '+nameOfProjection+'(receiver){return receiver?.identity;} export function compute(){return '+nameOfProjection+'('+argument+')'+result+';}';
  cases.push({name,source,entry:'optionalChainCase'+cases.length,value,abort:null});
 }
+for (const [name, argument] of [['omitted receiver',''], ['explicit null receiver','null']]) {
+ const entry='optionalChainCase'+cases.length, type='NullableNominal'+cases.length;
+ const projection='nullableNominalProjection'+cases.length;
+ const source='/** @typedef {{$:"present",identity:bigint}} '+type+' */ /** @param {'+type+'|null} [receiver] */ function '+projection+'(receiver){return receiver?.identity;} export function compute(){return '+projection+'('+argument+')===undefined;}';
+ cases.push({name:'guarded nominal projection with '+name,source,entry,value:'true',abort:null});
+}
 const source=cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(').replaceAll('failChainArgument','failChainArgument'+row.entry)).join('\n');
 const revision='b3ca8297';
 const history=['js/scripts/generate-javascript-optional-call-fixtures.mjs','js/tests/translation-javascript-optional-calls.test.js','parity/fixtures/javascript-optional-calls.lino','js/src/translation/javascript.js','js/src/translation/javascript-infer.js','rust/src/translation/javascript/expressions.rs','rust/src/translation/javascript/infer.rs'].map(path=>{

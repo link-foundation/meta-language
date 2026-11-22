@@ -7384,6 +7384,11 @@ present values. Both runtimes use the unchanged source-generated optional-slot
 rule. General missing-argument inference and full function environments remain
 required; these source drafts establish no observed behavior.
 
+Bracketed JavaScript parameter annotations merge the omission alternative into
+the declared type through the standard optional type constructor. A declaration
+that already allows null or undefined has one optional domain whose absence
+policy includes omission and all explicitly declared alternatives.
+
 Rust let-else fallbacks containing actual return keywords compose with the
 existing ordinary completion tree and conditional pattern packets. A shared
 source scanner distinguishes real keywords from raw identifiers and opaque text;

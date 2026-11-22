@@ -44,7 +44,7 @@ import { TokenCursor, describe, tokenize } from './lexer.js';
 import { readJavaScriptConstructorFieldBoundary } from './javascript-constructor-field-type-rules.js';
 import { expandJavaScriptConstructorSpreads } from './javascript-constructor-spread.js';
 import { javaScriptOptionalConstructorFieldType, readJavaScriptOptionalConstructorField } from './javascript-constructor-presence.js';
-import { BOOL, FLOAT, INT, NAT, STRING, array, typeKey } from './types.js';
+import { BOOL, FLOAT, INT, NAT, STRING, array, option, typeKey } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
@@ -712,7 +712,7 @@ class JavaScriptParser {
       const text = doc?.params.get(token.value);
       const optional = doc?.optionalParams.has(token.value) && !token.defaultValue;
       const declared = text ? this.type(text, doc.range) : null;
-      const type = optional && declared ? { kind: 'option', element: declared, absence: 'undefined' } : declared;
+      const type = optional && declared ? option(declared, 'undefined') : declared;
       return {
         name: token.value,
         type,
