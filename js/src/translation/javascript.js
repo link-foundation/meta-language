@@ -1887,7 +1887,7 @@ class JavaScriptParser {
     const node = { discriminant: { k: 'field', object: test.object, field: '$' }, data: test.data, clauses: [{ tests: [{ k: 'tag', tag: test.tag }] }] };
     const [matching, other] = test.negated ? [otherwise, then] : [then, otherwise];
     const rows = [this.tagRow(node, { k: 'tag', tag: test.tag, span: where }, matching, where), ...this.defaultRows(node, other, where)];
-    return { k: 'match', scrutinees: [test.object], rows, span: where };
+    return { k: 'match', scrutinees: [test.object], rows, tagTest: test, span: where };
   }
 
   tagRow(node, test, caseBody, where) {

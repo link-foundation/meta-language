@@ -196,6 +196,11 @@ pub fn coerce(
     if let Some(abrupt) = abrupt_results::coerce_abrupt_result(&value, ty) {
         return Ok(abrupt);
     }
+    if language == Language::JavaScript
+        && let Some(widened) = records::widen_javascript_record_presence(&value, ty, span)?
+    {
+        return Ok(widened);
+    }
     let absence = match &value.node {
         Node::None { absence } => absence.as_str(),
         _ => "",

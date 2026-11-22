@@ -38,6 +38,9 @@ pub(crate) fn deserialize_tuple_product_model<'de, D: serde::Deserializer<'de>>(
 /// One named field of a structural record.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TypeField {
+    /// The JavaScript property may be absent independently of its value.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub optional: bool,
     /// The source field name.
     pub name: std::string::String,
     /// The field's recursively structured type.
@@ -257,6 +260,7 @@ impl Type {
                     .iter()
                     .map(|field| {
                         Ok(TypeField {
+                            optional: field.optional,
                             name: field.name.clone(),
                             ty: map(&field.ty)?,
                         })
@@ -337,8 +341,12 @@ impl Type {
                 let children = sorted
                     .iter()
                     .map(|field| {
-                        serde_json::to_string(&[field.name.clone(), field.ty.key()])
-                            .expect("string pairs serialize")
+                        if field.optional {
+                            serde_json::to_string(&(&field.name, field.ty.key(), true))
+                        } else {
+                            serde_json::to_string(&(&field.name, field.ty.key()))
+                        }
+                        .expect("record field identity serializes")
                     })
                     .collect();
                 (

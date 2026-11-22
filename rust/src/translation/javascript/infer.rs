@@ -155,6 +155,7 @@ enum Term {
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct RecordTerm {
     fields: Vec<(String, Term)>,
+    optional_fields: std::collections::BTreeSet<String>,
     open: bool,
     source_class_owner: Option<String>,
 }

@@ -399,6 +399,12 @@ impl Checker {
         let Some(ty) = ty else {
             return Err(type_error("missing type annotation", span));
         };
+        if let Type::Record { fields, .. } = ty
+            && fields.iter().any(|field| field.optional
+                && super::super::javascript_constructor_presence::field_value_type(&field.ty).is_none())
+        {
+            return Err(type_error("an optional record field needs its actual presence carrier", span));
+        }
         if !ty.children().is_empty() {
             return ty.map_children(|child| self.resolve_type(Some(child), path, span));
         }

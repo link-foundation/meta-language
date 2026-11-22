@@ -10,7 +10,7 @@ const policyFile = new URL('../src/translation/data/record-emission.lino', impor
 const nativePolicyFile = new URL('../../rust/src/data/record-emission.lino', import.meta.url);
 const artifactFile = new URL('../../parity/self-translation/record-emission-rules-native.lino', import.meta.url);
 const hash = text => createHash('sha256').update(text).digest('hex');
-const requiredImport = "import { readRequiredTextFact } from './fact-column-rules.js';\n";
+const requiredImport = "import { readRequiredTextFact, readRequiredBooleanFact } from './fact-column-rules.js';\n";
 const factsFile = new URL('../src/translation/fact-column-rules.js', import.meta.url);
 
 export function readRecordEmissionSourceModule(source = readFileSync(sourceFile, 'utf8')) {

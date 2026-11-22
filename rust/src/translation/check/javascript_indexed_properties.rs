@@ -115,10 +115,12 @@ impl Checker {
             source_class_owner: None,
             fields: vec![
                 TypeField {
+                    optional: false,
                     name: "base".to_owned(),
                     ty: receiver.ty.clone(),
                 },
                 TypeField {
+                    optional: false,
                     name: "key".to_owned(),
                     ty: key.ty.clone(),
                 },

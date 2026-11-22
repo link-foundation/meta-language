@@ -66,12 +66,20 @@ impl Checker {
                     span,
                 ));
             }
-            return Ok(fields.iter().fold(boolean(false), |result, field| {
-                either(
-                    result,
-                    equal(key.clone(), text_lit(STRING, field.name.clone())),
-                )
-            }));
+            let mut result = boolean(false);
+            for (index, field) in fields.iter().enumerate() {
+                let mut selected = equal(key.clone(), text_lit(STRING, field.name.clone()));
+                if let Type::Option { element, .. } = &field.ty
+                    && field.optional
+                {
+                    let carrier = Expr::new(Node::RecordField {
+                        object: Box::new(receiver.clone()), field: field.name.clone(), index,
+                    }, field.ty.clone());
+                    selected = both(selected, Self::javascript_optional_presence(carrier, element, span)?);
+                }
+                result = either(result, selected);
+            }
+            return Ok(result);
         }
         if form == "empty" {
             return Ok(boolean(false));
@@ -209,6 +217,7 @@ impl Checker {
         let ty = Type::Record {
             source_class_owner: None,
             fields: vec![TypeField {
+                optional: false,
                 name: "key".to_owned(),
                 ty: STRING,
             }],
@@ -274,6 +283,7 @@ impl Checker {
                 .iter()
                 .enumerate()
                 .map(|(index, value)| TypeField {
+                    optional: false,
                     name: field(index),
                     ty: value.ty.clone(),
                 })

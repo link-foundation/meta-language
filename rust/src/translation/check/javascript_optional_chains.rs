@@ -108,6 +108,7 @@ impl Checker {
         let ty = Type::Record {
             source_class_owner: None,
             fields: vec![TypeField {
+                optional: false,
                 name: field.clone(),
                 ty: value.ty.clone(),
             }],

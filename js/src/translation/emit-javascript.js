@@ -45,7 +45,7 @@ import { renderSurfaceReferenceOperation } from './surface-reference-analysis-ru
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression } from './primitive-method-rules.js';
-import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
+import { renderJavaScriptOptionalRecordField, renderJavaScriptOptionalRecordValue, renderRecordField, renderRecordValue } from './record-emission-rules.js';
 import { readOptionalJavaScriptTextPrelude, renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalFlattening, renderOptionalJavaScriptOperation, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalUnwrapping } from './optional-value-rules.js';
 import { renderCallableApplication, renderCallableCellOperation, renderCallableFunctionReference, renderCallableLambda } from './callable-source-rules.js';
 import { requireDataObjectFreeze } from './primitive-value-rules.js';
@@ -550,8 +550,14 @@ class JavaScriptEmitter {
         }
         return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
           e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));
-      case 'record':
-        return emitOrderedRecordValue(this,e,'JavaScript')??renderRecordValue('JavaScript', e.entries.map(entry => JSON.stringify(entry.name)), e.entries.map(entry => this.expr(entry.value)));
+      case 'record': {
+        const ordered = emitOrderedRecordValue(this, e, 'JavaScript');
+        if (ordered !== null) return ordered;
+        const labels = e.entries.map(entry => JSON.stringify(entry.name));
+        const values = e.entries.map(entry => this.expr(entry.value));
+        const optional = e.type.fields.map(field => field.optional === true);
+        return optional.some(Boolean) ? renderJavaScriptOptionalRecordValue(labels, values, optional) : renderRecordValue('JavaScript', labels, values);
+      }
       case 'cellAllocate':
         return renderCallableCellOperation('JavaScript', e.k, '', this.expr(e.value), '', '', '');
       case 'cellRead':
@@ -562,8 +568,13 @@ class JavaScriptEmitter {
         return renderSurfaceReferenceOperation('JavaScript', e.k, this.expr(e.value), '');
       case 'referenceRead':
         return renderSurfaceReferenceOperation('JavaScript', e.k, this.expr(e.reference), '');
-      case 'recordField':
-        return renderRecordField('JavaScript', this.expr(e.object), JSON.stringify(e.field), '');
+      case 'recordField': {
+        const object = this.expr(e.object);
+        const label = JSON.stringify(e.field);
+        return e.object.type.fields[e.index]?.optional === true
+          ? renderJavaScriptOptionalRecordField(object, label)
+          : renderRecordField('JavaScript', object, label, '');
+      }
       case 'tuple':
         if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
         return renderTupleValue('JavaScript', e.items.map((item) => this.expr(item)), e.frozen === true);

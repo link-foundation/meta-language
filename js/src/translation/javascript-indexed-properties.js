@@ -4,14 +4,15 @@ import {typeError,unsupported} from './diagnostics.js';
 import {readJavaScriptLiteralPropertyIndex,readJavaScriptLiteralPropertyForm,readJavaScriptStringIndexNumberForm} from './javascript-literal-property-rules.js';
 import {materializeJavaScriptNumberConversion} from './javascript-number-conversion.js';
 import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
+import {readJavaScriptOwnedRecordField} from './javascript-constructor-presence.js';
 const literal=(type,value)=>({k:'lit',value,type});
 const variable=(name,type)=>({k:'var',name,type});
 const binary=(op,left,right,domain,type)=>({k:'binary',op,left,right,...(domain?{domain}:{}),type});
-export function checkJavaScriptNamedProperty(value,field,span){
+export function checkJavaScriptNamedProperty(value,field,span,carrier=false){
  if(value.type.kind==='record'){
   const selected=value.type.fields.find(item=>item.name===field);
   if(!selected)throw typeError('record has no field '+field,span);
-  return {k:'recordField',object:value,field,index:value.type.fields.indexOf(selected),type:selected.type};
+  return readJavaScriptOwnedRecordField(value,selected,carrier);
  }
  if(field==='size'&&(value.type.kind==='map'||value.type.kind==='set'))return {k:'collectionSize',object:value,type:FLOAT};
  if(field==='length'&&(value.type.kind==='array'||value.type.kind==='string'))return {k:'length',array:value,type:FLOAT};

@@ -35,7 +35,7 @@ function describeKey(value,span,source){
  throw unsupported('computed property key diagnostic','the actual key needs its side-effect-free source description and constructor protocol',span);
 }
 
-export function checkJavaScriptNullishAccess(checker,node,value,env,path,expected){
+export function checkJavaScriptNullishAccess(checker,node,value,env,path,expected,evaluate){
  if(checker.language!=='JavaScript')return null;
  const computed=node.k==='index';
  const member=node.k==='method'?node.op:node.field;
@@ -56,7 +56,7 @@ export function checkJavaScriptNullishAccess(checker,node,value,env,path,expecte
   const object={k:'name',path:[binding],span:node.object.span};
   const index=computed&&(node.index.k==='str'||node.index.k==='num'||node.index.k==='unary'&&node.index.op==='neg'&&node.index.arg.k==='num')?node.index:computed?{k:'name',path:[keyName],span:node.index.span}:null;
   const source=node.k==='method'?{...node,object}:computed?{...node,object,index}:{k:'field',object,field:member,span:node.span};
-  const body=checker.expr(source,scope,path,expected);
+  const body=evaluate ? evaluate(object,scope) : checker.expr(source,scope,path,expected);
   type=body.type;
   success={k:'let',name:binding,value:{k:'unwrapOption',arg:receiver,type:present},body,type};
  }

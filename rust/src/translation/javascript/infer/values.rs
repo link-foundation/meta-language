@@ -70,7 +70,7 @@ impl Inference {
             } => self.binary(*op, left, right, expr.span, env),
             SNode::If { .. } => self.infer_conditional_expression(expr, env),
             SNode::Let { .. } => self.infer_binding_expression(expr, env),
-            SNode::Match { .. } => self.infer_match_expression(expr, env),
+            SNode::Match { .. } => self.infer_match_expression(expr, env, None),
             SNode::StringMap { object, .. } => {
                 let value = self.expr(object, env)?;
                 self.unify(&value, &Term::Known(STRING), object.span)?;

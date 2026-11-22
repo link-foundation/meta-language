@@ -9,14 +9,24 @@ import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.
 import {typeKey} from './types.js';
 const present=Symbol('unchanged nominal spread absence guards');
 export function forgetJavaScriptNominalSpreadGuard(env,name){if(env.has(present))env.set(present,env.get(present).filter(row=>row.name!==name));}
-export function readJavaScriptNominalSpreadBranches(condition,env){
- const negated=condition.k==='unary'&&condition.op==='not',guard=negated?condition.arg:condition;
- if(guard.k!=='binary')return {then:env,else:env};
- const left=guard.left,right=guard.right,name=left.k==='name'&&left.path.length===1&&right.k==='none'?left.path[0]:right.k==='name'&&right.path.length===1&&left.k==='none'?right.path[0]:null;
- const absence=left.k==='none'?left.absence:right.k==='none'?right.absence:'';
- const arm=readJavaScriptNominalSpreadGuardArm(guard.k,guard.op,absence);if(!arm||name===null||!env.has(name))return {then:env,else:env};
- const selected=new Map(env);selected.set(present,[...(env.get(present)??[]),{name,absence}]);
- return (negated?3-arm:arm)===1?{then:selected,else:env}:{then:env,else:selected};
+export function readJavaScriptOptionalGuardBranch(condition,env,outcome,depth=0){
+ if(depth>=256)return env;
+ if(condition.k==='unary'&&condition.op==='not')return readJavaScriptOptionalGuardBranch(condition.arg,env,!outcome,depth+1);
+ if(condition.k!=='binary')return env;
+ const {op,left,right}=condition;
+ if((op==='and'&&outcome)||(op==='or'&&!outcome)){
+  const first=readJavaScriptOptionalGuardBranch(left,env,outcome,depth+1);
+  return readJavaScriptOptionalGuardBranch(right,first,outcome,depth+1);
+ }
+ const nameNode=left.k==='name'?left:right;
+ const literal=nameNode===left?right:left;
+ if(nameNode.k!=='name'||nameNode.path.length!==1)return env;
+ const name=nameNode.path[0],absence=literal.k==='none'?literal.absence:literal.k==='unit'?'undefined':'';
+ const arm=readJavaScriptNominalSpreadGuardArm(condition.k,op,absence);
+ if(arm!==(outcome?1:2)||env.get(name)?.kind!=='option')return env;
+ const facts=env.get(present)??[];
+ if(facts.some(fact=>fact.name===name&&fact.absence===absence))return env;
+ return new Map(env).set(present,[...facts,{name,absence}]);
 }
 export function projectJavaScriptGuardedOptional(node,value,env){
  if(value.type.kind!=='option'||node.k!=='name'||node.path.length!==1)return value;

@@ -94,7 +94,7 @@ function ordinaryTypeKey(type) {
     case 'union':
       return renderPortableTypeIdentity(type.kind, '', type.alternatives.map(typeKey));
     case 'record':
-      return renderPortableTypeIdentity(type.kind, (type.open ? 'open:' : '')+(type.ordered?'ordered:':'')+(type.sourceClassOwner!==undefined?'class:'+JSON.stringify(type.sourceClassOwner)+':':''), [...type.fields].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).map(({ name, type: fieldType }) => JSON.stringify([name, typeKey(fieldType)])));
+      return renderPortableTypeIdentity(type.kind, (type.open ? 'open:' : '')+(type.ordered?'ordered:':'')+(type.sourceClassOwner!==undefined?'class:'+JSON.stringify(type.sourceClassOwner)+':':''), [...type.fields].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).map(({ name, type: fieldType, optional }) => JSON.stringify(optional ? [name, typeKey(fieldType), true] : [name, typeKey(fieldType)])));
     case 'map':
       return renderPortableTypeIdentity(type.kind, '', [typeKey(type.key), typeKey(type.value)]);
     case 'set':

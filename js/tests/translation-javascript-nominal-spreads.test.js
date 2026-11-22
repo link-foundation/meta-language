@@ -26,4 +26,71 @@ for(const row of fixture.programs)test(row.name,()=>{
  }
 });
 for(const row of fixture.refusals)test(row.name,()=>assert.throws(()=>checkProgram(parseJavaScript(row.source))));
+test('structural spreads preserve omission, explicit undefined, and the earlier own value',()=>{
+ const source=`
+/** @typedef {{value?:number}} Shape */
+/** @param {boolean} own @returns {Shape} */
+function make(own) { return own ? {value:undefined} : {}; }
+/** @param {Shape} source @returns {Shape} */
+function copy(source) { return {value:7,...source}; }
+/** @returns {Shape} */
+function widen() { const original={value:3}; return original; }
+function compute() {
+ const missing=make(false), explicit=make(true);
+ const left=copy(missing), right=copy(explicit);
+ return !Object.hasOwn(missing,'value') && Object.hasOwn(explicit,'value') &&
+  left.value===7 && Object.hasOwn(right,'value') && (right.value ?? 8)===8 &&
+  Object.hasOwn(widen(),'value') && widen().value===3;
+}`;
+ assert.equal(runInNewContext(source+'\ncompute();'),true);
+ const program=checkProgram(parseJavaScript(source));
+ const {network,root}=encodeTypedProgramLinks(program);
+ const rust=emitRust(program);
+ for(const restored of [LinkNetwork.fromLino(network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(network))]){
+  const decoded=decodeTypedProgramLinks(restored,root);
+  const javascript=emitJavaScript(decoded);
+  const entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
+  assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),true);
+  assert.deepEqual(emitRust(decoded),rust);
+ }
+});
+test('tag comparisons and guarded branches retain the nullish property error',()=>{
+ const source=`
+/** @typedef {{$:'trunk',value:number}|{$:'twig'}} Tree */
+/** @param {Tree|null|undefined} tree @returns {boolean} */
+function compute(tree) { return tree.$==='twig'; }
+/** @param {Tree|null|undefined} tree @returns {number} */
+function branch(tree) { if(tree.$==='twig')return 1; return 2; }
+`;
+ const program=checkProgram(parseJavaScript(source));
+ const {network,root}=encodeTypedProgramLinks(program);
+ const javascript=emitJavaScript(decodeTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),root));
+ for(const [name, twig, trunk] of [['compute',true,false],['branch',1,2]]){
+  const entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===name).target;
+  for(const read of [runInNewContext(source+'\n'+name),runInNewContext(javascript.text+'\n'+entry)]){
+   assert.equal(read({$:'twig'}),twig);
+   assert.equal(read({$:'trunk',value:3}),trunk);
+   for(const absent of [null,undefined])assert.throws(()=>read(absent),
+    error=>error.name==='TypeError'&&error.message===`Cannot read properties of ${absent} (reading '$')`);
+  }
+ }
+});
+test('short-circuit guards exclude both absences before reading a tagged local',()=>{
+ const source=`
+/** @typedef {{$:'trunk',value:number}|{$:'twig'}} Tree */
+/** @param {Tree} tree @returns {boolean} */
+function isTwig(tree) { return tree.$==='twig'; }
+/** @param {Tree|null|undefined} tree @returns {boolean} */
+function compute(tree) {
+ if(tree===null || tree===undefined || tree.$!=='twig')return false;
+ return isTwig(tree);
+}`;
+ const javascript=emitJavaScript(checkProgram(parseJavaScript(source)));
+ const entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
+ const original=runInNewContext(source+'\ncompute');
+ const translated=runInNewContext(javascript.text+'\n'+entry);
+ for(const value of [null,undefined,{$:'twig'},{$:'trunk',value:3}]){
+  assert.equal(translated(value),original(value));
+ }
+});
 test('every complete preceding source remains exact',()=>{assert.equal(fixture.predecessors.length,11);for(const row of fixture.predecessors){const record=readProjectData(new URL('../../'+row.retained,import.meta.url));assert.equal(record.path,row.path);assert.equal(record.revision,row.revision);assert.equal(Buffer.byteLength(record.source),row.bytes);assert.equal(createHash('sha256').update(record.source).digest('hex'),row.sha256);}});

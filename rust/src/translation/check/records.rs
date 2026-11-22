@@ -3,6 +3,7 @@
 use super::{Checker, Env, Expr, Node, Result, SExpr, Span, Type, type_error, unsupported};
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::ir::RecordEntry;
+use crate::translation::javascript_constructor_presence as presence;
 use crate::translation::record_value_rules as rules;
 use crate::translation::surface::SRecordEntry;
 use crate::translation::types::TypeField;
@@ -24,6 +25,47 @@ fn position(value: f64, length: usize, span: Option<Span>) -> Result<usize> {
     number_index(value)
         .filter(|index| *index < length)
         .ok_or_else(|| type_error("record entries need an exact ordered input length", span))
+}
+
+pub(super) fn widen_javascript_record_presence(
+    value: &Expr,
+    ty: &Type,
+    span: Option<Span>,
+) -> Result<Option<Expr>> {
+    let (
+        Type::Record { fields: source, source_class_owner: None, ordered: false, open: false, reference: false },
+        Type::Record { fields: target, source_class_owner: None, ordered: false, open: false, reference: false },
+    ) = (&value.ty, ty) else {
+        return Ok(None);
+    };
+    if !target.iter().any(|field| field.optional)
+        || source.iter().any(|field| !target.iter().any(|wanted| wanted.name == field.name))
+        || target.iter().any(|field| !field.optional && !source.iter().any(|actual| actual.name == field.name))
+    {
+        return Ok(None);
+    }
+    let name = "ml_record_presence_source".to_owned();
+    let owner = Expr::var(name.clone(), value.ty.clone());
+    let mut entries = Vec::with_capacity(target.len());
+    for field in target {
+        let contents = if let Some((index, actual)) = source.iter().enumerate().find(|(_, actual)| actual.name == field.name) {
+            let read = Expr::new(Node::RecordField { object: Box::new(owner.clone()), field: actual.name.clone(), index }, actual.ty.clone());
+            if field.optional == actual.optional && field.ty.same(&actual.ty) {
+                read
+            } else if field.optional && !actual.optional {
+                let payload_type = presence::field_value_type(&field.ty).expect("checked optional field presence");
+                let payload = super::coerce(read, payload_type, super::Language::JavaScript, span, None)?;
+                presence::own_value(payload, &field.ty)
+            } else {
+                return Ok(None);
+            }
+        } else {
+            Expr::new(Node::None { absence: "undefined".to_owned() }, field.ty.clone())
+        };
+        entries.push(RecordEntry { name: field.name.clone(), value: contents });
+    }
+    let body = Expr::new(Node::Record { entries, order: None }, ty.clone());
+    Ok(Some(Expr::new(Node::Let { name, value: Box::new(value.clone()), body: Box::new(body) }, ty.clone())))
 }
 
 enum OrderChunk {
@@ -131,8 +173,10 @@ impl Checker {
                 return Ok(value);
             }
         }
-        let expected = expected
-            .or_else(|| declared.filter(|ty| matches!(ty, Type::Record { ordered: true, .. }|Type::Record{source_class_owner:Some(_),..})));
+        let expected = expected.or_else(|| {
+            declared.filter(|ty| matches!(ty, Type::Record { fields, ordered, source_class_owner, .. }
+                if *ordered || source_class_owner.is_some() || fields.iter().any(|field| field.optional)))
+        });
         let expected_fields = match expected {
             Some(Type::Record { fields, .. }) => fields.as_slice(),
             _ => &[],
@@ -228,6 +272,7 @@ impl Checker {
                 fields: values
                     .iter()
                     .map(|entry| TypeField {
+                        optional: expected_fields.iter().any(|field| field.name == entry.name && field.optional),
                         name: entry.name.clone(),
                         ty: entry.value.ty.clone(),
                     })
@@ -244,6 +289,8 @@ impl Checker {
                 ty,
             ));
         }
+        let mut optional = Vec::new();
+        let mut possibly_absent = Vec::new();
         for selected in rules::read_record_value_order(number(entries.len()), false) {
             let entry = &entries[position(selected, entries.len(), span)?];
             if entry.spread {
@@ -268,6 +315,8 @@ impl Checker {
                         field.ty.clone(),
                     );
                     bindings.push((name.clone(), value));
+                    optional.push(field.optional);
+                    possibly_absent.push(field.optional);
                     values.push(RecordEntry {
                         name: field.name.clone(),
                         value: Expr::var(name, field.ty),
@@ -283,10 +332,22 @@ impl Checker {
                     &expected_names,
                     &name.encode_utf16().map(f64::from).collect::<Vec<_>>(),
                 );
-                let expected = number_index(wanted)
-                    .and_then(|index| expected_fields.get(index))
-                    .map(|field| &field.ty);
-                let value = self.expr(&entry.value, env, path, expected, false)?;
+                let field = number_index(wanted).and_then(|index| expected_fields.get(index));
+                let wanted_type = field.map(|field| {
+                    if field.optional {
+                        presence::field_value_type(&field.ty).expect("checked field presence")
+                    } else {
+                        &field.ty
+                    }
+                });
+                let mut value = self.expr(&entry.value, env, path, wanted_type, false)?;
+                let owns_optional = field.is_some_and(|field| field.optional);
+                if let Some(field) = field.filter(|field| field.optional) {
+                    let wanted_type = wanted_type.expect("an optional field has its value type");
+                    value = presence::own_value(self.coerce(value, wanted_type, span)?, &field.ty);
+                }
+                optional.push(owns_optional);
+                possibly_absent.push(false);
                 let binding = self.fresh_name("ml_field");
                 let reference = Expr::var(&binding, value.ty.clone());
                 bindings.push((binding, value));
@@ -300,13 +361,67 @@ impl Checker {
             .iter()
             .map(|entry| entry.name.encode_utf16().map(f64::from).collect())
             .collect::<Vec<Vec<f64>>>();
-        let selected = rules::read_record_field_order(&field_names)
+        let indices = rules::read_record_field_order(&field_names)
             .into_iter()
-            .map(|index| position(index, values.len(), span).map(|index| values[index].clone()))
+            .map(|index| position(index, values.len(), span))
             .collect::<Result<Vec<_>>>()?;
+        let mut optional_names = std::collections::HashSet::new();
+        let mut selected = Vec::new();
+        for index in indices {
+            let mut entry = values[index].clone();
+            if optional[index] {
+                optional_names.insert(entry.name.clone());
+            }
+            if possibly_absent[index] {
+                let ty = entry.value.ty.clone();
+                let read = presence::field_value_type(&ty).expect("checked field presence");
+                let Type::Option { element, .. } = &ty else { unreachable!("checked field presence") };
+                for earlier in (0..index).rev().filter(|earlier| values[*earlier].name == entry.name) {
+                    let right = if optional[earlier] {
+                        self.coerce(values[earlier].value.clone(), &ty, span)?
+                    } else {
+                        let value = self.coerce(values[earlier].value.clone(), read, span)?;
+                        presence::own_value(value, &ty)
+                    };
+                    let name = self.fresh_name("ml_optional_spread_field");
+                    let chosen = Expr::var(&name, ty.clone());
+                    let condition = Self::javascript_optional_presence(chosen.clone(), element, span)?;
+                    let body = Expr::new(Node::If {
+                        cond: Box::new(condition), then: Box::new(chosen), otherwise: Box::new(right),
+                    }, ty.clone());
+                    entry.value = Expr::new(Node::Let {
+                        name, value: Box::new(entry.value), body: Box::new(body),
+                    }, ty.clone());
+                    if !possibly_absent[earlier] { break; }
+                }
+            }
+            selected.push(entry);
+        }
+        for field in expected_fields.iter().filter(|field| field.optional) {
+            if let Some(entry) = selected.iter_mut().find(|entry| entry.name == field.name) {
+                if optional_names.insert(field.name.clone()) {
+                    let wanted = presence::field_value_type(&field.ty).expect("checked field presence");
+                    let value = self.coerce(entry.value.clone(), wanted, span)?;
+                    entry.value = presence::own_value(value, &field.ty);
+                }
+            } else {
+                optional_names.insert(field.name.clone());
+                selected.push(RecordEntry {
+                    name: field.name.clone(),
+                    value: Expr::new(Node::None { absence: "undefined".to_owned() }, field.ty.clone()),
+                });
+            }
+        }
+        if !optional_names.is_empty() {
+            selected.sort_by(|left, right| left.name.encode_utf16().cmp(right.name.encode_utf16()));
+        }
         let ordered = self.ordered_record_source
             || property_order.is_some()
             || matches!(expected, Some(Type::Record { ordered: true, .. }));
+        if ordered && !optional_names.is_empty() {
+            return Err(unsupported("ordered optional record fields",
+                "the actual dynamic own-field permutation must be represented", span));
+        }
         let order = if let Some(source) = property_order {
             let ty = crate::translation::types::array(Type::Float);
             let value = self.expr(source, env, path, Some(&ty), false)?;
@@ -346,6 +461,7 @@ impl Checker {
             fields: selected
                 .iter()
                 .map(|entry| TypeField {
+                    optional: optional_names.contains(&entry.name),
                     name: entry.name.clone(),
                     ty: entry.value.ty.clone(),
                 })
@@ -414,6 +530,9 @@ impl Checker {
     ) -> Result<Expr> {
         let value = self.expr(object, env, path, None, false)?;
         let value = Self::reference_value(value);
+        if self.checked_projection && matches!(value.ty, Type::Record { .. }) {
+            return Ok(Self::record_field(value, field, span)?.expect("checked record field"));
+        }
         if let Some(field) =
             self.javascript_nullish_field((&value, object), field, env, path, expected, span)?
         {
@@ -435,7 +554,9 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         if let Some(record) = Self::record_field(value.clone(), field, span)? {
-            return Ok(record);
+            let optional = matches!(&value.ty, Type::Record { fields, .. }
+                if fields.iter().any(|entry| entry.name == field && entry.optional));
+            return Ok(if optional { presence::read_value(record) } else { record });
         }
         if field == "size" && matches!(value.ty, Type::Map { .. } | Type::Set { .. }) {
             return Ok(Expr::new(

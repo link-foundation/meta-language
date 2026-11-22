@@ -17,6 +17,7 @@ import {readJavaScriptRecordClosureContext} from './record-closure-parameter-rul
 import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
 import {readJavaScriptRecursiveObjectPlan} from './recursive-object-bindings.js';
 import {containsJavaScriptAdvancedArrayBinding,readJavaScriptRecursiveObjectBindingPositions} from './recursive-binding-rules.js';
+import { javaScriptOptionalConstructorFieldType } from './javascript-constructor-presence.js';
 
 export function readClosure(parser, method = false) {
   const c = parser.cursor;
@@ -200,7 +201,9 @@ export function readCompositeType(parser, name, range) {
       const field = part.slice(0, index).trim();
       const optional = acceptRecordTypeOptionalName(field.charCodeAt(field.length - 1));
       const type = parser.type(part.slice(index + 1), range);
-      return { name: optional ? field.slice(0, -1) : field, type: optional ? { kind: 'option', element: type, absence: 'undefined' } : type };
+      return optional
+        ? { name: field.slice(0, -1), type: javaScriptOptionalConstructorFieldType(type), optional: true }
+        : { name: field, type };
     });
     return { kind: 'record', fields };
   }

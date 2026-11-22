@@ -30,22 +30,17 @@ impl Inference {
         let mut waiting = Vec::new();
         let mut progress = false;
         for constraint in std::mem::take(&mut self.object_rest_fields) {
-            let owner = self.resolve(&constraint.object);
-            let (kind, fields, open) = match &owner {
-                Term::Var(_) => ("var", Vec::new(), false),
+            let mut owner = self.resolve(&constraint.object);
+            if let Term::Known(ty @ crate::translation::types::Type::Record { .. }) = &owner {
+                owner = self.declared(Some(ty));
+            }
+            let (kind, fields, open, mut optional_fields) = match &owner {
+                Term::Var(_) => ("var", Vec::new(), false, Default::default()),
                 Term::Record(owner) => {
                     let owner = owner.borrow();
-                    ("record", owner.fields.clone(), owner.open)
+                    ("record", owner.fields.clone(), owner.open, owner.optional_fields.clone())
                 }
-                Term::Known(crate::translation::types::Type::Record { fields, open, .. }) => (
-                    "record",
-                    fields
-                        .iter()
-                        .map(|field| (field.name.clone(), self.declared(Some(&field.ty))))
-                        .collect(),
-                    *open,
-                ),
-                _ => ("other", Vec::new(), false),
+                _ => ("other", Vec::new(), false, Default::default()),
             };
             let form = rules::read_java_script_object_rest_owner_form(
                 &rules::ml_string::Text::from_text(kind),
@@ -69,15 +64,17 @@ impl Inference {
                 .collect::<Vec<_>>();
             let positions =
                 crate::translation::object_rest::positions(&names, &constraint.excluded);
-            let fields = positions
+            let fields: Vec<_> = positions
                 .iter()
                 .map(|position| fields[*position].clone())
                 .collect();
+            optional_fields.retain(|name| fields.iter().any(|field| field.0 == *name));
             self.unify(
                 &constraint.result,
                 &Term::Record(Rc::new(RefCell::new(RecordTerm {
                     source_class_owner: None,
                     fields,
+                    optional_fields,
                     open: false,
                 }))),
                 constraint.place,

@@ -28,7 +28,7 @@ impl JavaScriptEmitter<'_> {
             Node::Record { entries, order } => self.record_value(
                 entries,
                 order.as_deref(),
-                matches!(&e.ty, Type::Record { ordered: true, .. }),
+                &e.ty,
             ),
             Node::RecordField { object, field, .. } => self.record_field(object, field),
             Node::Lit { value } => literal(&e.ty, value),

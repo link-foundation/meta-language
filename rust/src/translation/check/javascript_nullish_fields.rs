@@ -11,6 +11,7 @@ pub(super) enum JavaScriptPropertyAccess<'a> {
     Field(&'a str),
     Method(&'a str, &'a [Option<SExpr>]),
     Index(&'a SExpr),
+    TagComparison(&'a [super::SRow]),
 }
 
 fn primitive_key_text(value: Expr, span: Option<Span>) -> Result<Expr> {
@@ -198,6 +199,7 @@ impl Checker {
                 *field
             }
             JavaScriptPropertyAccess::Index(_) => "",
+            JavaScriptPropertyAccess::TagComparison(_) => "$",
         };
         if self.language != Language::JavaScript {
             return Ok(None);
@@ -224,11 +226,13 @@ impl Checker {
         let name = rules::read_java_script_nullish_field_capture();
         let key_field = rules::read_java_script_nullish_index_key_field();
         let mut fields = vec![TypeField {
+            optional: false,
             name: name.clone(),
             ty: value.ty.clone(),
         }];
         if let Some(key) = &key_value {
             fields.push(TypeField {
+                optional: false,
                 name: key_field.clone(),
                 ty: key.ty.clone(),
             });
@@ -289,6 +293,10 @@ impl Checker {
                     object: Box::new(read),
                     op: field.to_owned(),
                     args: args.to_vec(),
+                },
+                JavaScriptPropertyAccess::TagComparison(rows) => SNode::Match {
+                    scrutinees: vec![read],
+                    rows: rows.to_vec(),
                 },
                 JavaScriptPropertyAccess::Index(node) => {
                     let SNode::Index {

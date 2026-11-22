@@ -25,12 +25,12 @@ import {readTypeQueryEvaluationPlan} from './type-query-evaluation-rules.js';
 import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureContainers,checkRustDataTypeFieldSignatureProgramContainers} from './rust-data-type-field-signatures.js';
 import {acceptLinkedStringArrayCopySort} from './string-array-sort-rules.js';
 import {captureCallableConstantApplicationHead} from './callable-constants.js';
-import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
+import {checkJavaScriptOptionalChain,constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
 import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
 import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-profile.js';
 import {checkJavaScriptObjectEnumeration} from './javascript-object-enumeration.js';
 import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-order-operations.js';
-import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,readJavaScriptNominalSpreadBranches,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
+import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,readJavaScriptOptionalGuardBranch,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
@@ -468,7 +468,14 @@ class Checker {
     if (type.kind === 'union') return { ...type, alternatives: type.alternatives.map(alternative => this.resolveType(alternative, path, span)) };
     if (type.kind === 'record') {
       if(type.ordered!==undefined&&typeof type.ordered!=='boolean')throw typeError('record ordered facet must be a boolean',span);
-      return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.resolveType(field.type, path, span) })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
+      const fields = type.fields.map(field => {
+        const storage = this.resolveType(field.type, path, span);
+        if (field.optional !== undefined && (field.optional !== true || !isJavaScriptOptionalConstructorFieldType(storage))) {
+          throw typeError('an optional record field needs its actual presence carrier', span);
+        }
+        return { ...field, type: storage };
+      });
+      return { ...type, fields: fields.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
     }
     if (type.kind === 'map') return { ...type, key: this.resolveType(type.key, path, span), value: this.resolveType(type.value, path, span) };
     if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.resolveType(param.type ?? param, path, span)), ret: this.resolveType(type.ret, path, span) };
@@ -744,7 +751,7 @@ class Checker {
         if(value.type.kind==='data'&&this.items.get(value.type.name)?.sourceStandardCollectionCarrier)checkRustStandardCollectionObservation(value.type,name=>this.items.get(name),'field projection',node.span);
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
         if(guarded)return guarded;
-        return checkJavaScriptDataField(this,value,node.field,node.span)??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span);
+        return checkJavaScriptDataField(this,value,node.field,node.span)??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span,this.checkedProjection);
       }
       case 'length': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
@@ -1023,7 +1030,7 @@ class Checker {
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
         const ownEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.cond,env):{then:env,else:env};
-        const branchesEnv=this.language==='JavaScript'?{then:readJavaScriptNominalSpreadBranches(node.cond,ownEnv.then).then,else:readJavaScriptNominalSpreadBranches(node.cond,ownEnv.else).else}:ownEnv;
+        const branchesEnv=this.language==='JavaScript'?{then:readJavaScriptOptionalGuardBranch(node.cond,ownEnv.then,true),else:readJavaScriptOptionalGuardBranch(node.cond,ownEnv.else,false)}:ownEnv;
         if (acceptSemanticBranchContextReordering(expected != null, needsBranchResultContext(node.then), needsBranchResultContext(node.else))) {
           let otherwise = this.expr(node.else, branchesEnv.else, path, undefined, allowLiteral);
           if (otherwise.type.kind === 'literal') otherwise = this.expr(node.else, branchesEnv.else, path, this.defaultNumber());
@@ -1051,7 +1058,18 @@ class Checker {
         return { k: 'let', name: node.name, value, body, type: body.type };
       }
       case 'match': {
-        const compiled=this.compileMatch(node,env,path);if(node.sourceRecordPlace)retainRecordPlaceMatch(this,compiled);return this.expr(compiled,env,path,expected,allowLiteral);
+        let checkedTagReceiver;
+        if (this.language === 'JavaScript' && node.tagTest && node.scrutinees.length === 1) {
+          const source = node.scrutinees[0];
+          const receiver = this.expr(source, env, path, undefined);
+          if (receiver.type.kind === 'option') {
+            const member = { k: 'field', object: source, field: '$', span: node.span };
+            return checkJavaScriptNullishAccess(this, member, receiver, env, path, expected, (present, scope) =>
+              this.expr({ ...node, tagTest: undefined, scrutinees: [present] }, scope, path, expected));
+          }
+          checkedTagReceiver = receiver;
+        }
+        const compiled=this.compileMatch(node,env,path,checkedTagReceiver);if(node.sourceRecordPlace)retainRecordPlaceMatch(this,compiled);return this.expr(compiled,env,path,expected,allowLiteral);
       }
       case 'match1':
         return this.match(node, env, path, expected, allowLiteral);
@@ -1114,7 +1132,7 @@ class Checker {
    */
   recordLiteral(node, env, path, expected) {
     const nominal=checkJavaScriptNominalSpread(this,node,env,path,expected);if(nominal)return nominal;
-    if(!expected&&node.type?.kind==='record'&&(node.type.ordered===true||node.type.sourceClassOwner!==undefined))expected=this.resolveType(node.type,path,node.span);
+    if(!expected&&node.type?.kind==='record'&&(node.type.ordered===true||node.type.sourceClassOwner!==undefined||node.type.fields.some(field=>field.optional)))expected=this.resolveType(node.type,path,node.span);
     const entries = [];
     const bindings = [];
     const orderChunks=[];
@@ -1140,7 +1158,7 @@ class Checker {
       if(node.type?.kind==='record'&&Boolean(node.type.ordered)!==ordered)throw typeError(node.type.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
       if(expected?.kind==='record'&&Boolean(expected.ordered)!==ordered)throw typeError(expected.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
       const order=ordered?coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span):null;
-      return { k: 'record', entries, ...(ordered?{order}:{}), type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) } };
+      return { k: 'record', entries, ...(ordered?{order}:{}), type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type, ...(expected?.fields?.find(field => field.name === entry.name)?.optional ? { optional: true } : {}) })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) } };
     }
     const evaluationOrder = readRecordValueOrder(node.entries.length, false);
     if (evaluationOrder[0] < 0) throw typeError('record entries need an exact ordered input length', node.span);
@@ -1156,24 +1174,64 @@ class Checker {
         for (const [index, field] of value.type.fields.entries()) {
           const name=this.freshName('ml_spread_field');
           bindings.push({name,value:{k:'recordField',object,field:field.name,index,type:field.type}});
-          entries.push({name:field.name,value:{k:'var',name,type:field.type}});
+          const value = {k:'var',name,type:field.type};
+          entries.push({name:field.name,value,...(field.optional?{optional:true,possiblyAbsent:true}:{})});
         }
       } else {
         orderChunks.push({name:entry.name});
         const position = readRecordFieldPosition(expectedNames, units(entry.name));
-        const want = position < 0 ? undefined : expected.fields[position].type;
-        const value = this.expr(entry.value, env, path, want);
+        const field = position < 0 ? undefined : expected.fields[position];
+        const want = field && javaScriptConstructorFieldValueType(field);
+        let value = this.expr(entry.value, env, path, want);
+        if (field?.optional) value = constructJavaScriptOwnedConstructorField(
+          coerce(value, want, this.language, entry.value.span ?? node.span), field.type);
         const name = this.freshName('ml_field');
         bindings.push({ name, value });
-        entries.push({ name: entry.name, value: { k: 'var', name, type: value.type } });
+        entries.push({ name: entry.name, value: { k: 'var', name, type: value.type }, ...(field?.optional ? { optional: true } : {}) });
       }
     }
     // Overwritten fields still evaluate: bind every entry before selecting the final values.
     const fieldOrder = readRecordFieldOrder(entries.map(entry => units(entry.name)));
     if (fieldOrder[0] < 0) throw typeError('record fields contain an invalid UTF16 name', node.span);
-    const selected = fieldOrder.map(index => entries[index]);
+    const selected = fieldOrder.map(index => {
+      const current = entries[index];
+      if (!current.possiblyAbsent) return current;
+      // An absent spread entry leaves an earlier own field in place. Explicit
+      // undefined occupies the inner value coordinate and still overwrites.
+      for (let previous = index - 1; previous >= 0; previous--) {
+        const earlier = entries[previous];
+        if (earlier.name !== current.name) continue;
+        const readType = javaScriptConstructorFieldValueType({ type: current.value.type, optional: true });
+        const right = earlier.optional ? earlier.value : constructJavaScriptOwnedConstructorField(
+          coerce(earlier.value, readType, this.language, node.span), current.value.type);
+        if (!sameType(right.type, current.value.type)) throw typeError('optional spread field storage differs: '+current.name,node.span);
+        const type = current.value.type;
+        const name = this.freshName('ml_optional_spread_field');
+        const chosen = { k: 'var', name, type };
+        const condition = constructJavaScriptOptionalPresence(chosen, type.element, node.span);
+        const body = { k: 'if', cond: condition, then: chosen, else: right, type };
+        current.value = { k: 'let', name, value: current.value, body, type };
+        if (!earlier.possiblyAbsent) break;
+      }
+      return current;
+    });
+    if (expected?.kind === 'record') for (const field of expected.fields) {
+      if (!field.optional) continue;
+      const current = selected.find(entry => entry.name === field.name);
+      if (!current) {
+        selected.push({ name: field.name, value: { k: 'none', absence: 'undefined', type: field.type }, optional: true });
+      } else if (!current.optional) {
+        const value = coerce(current.value, javaScriptConstructorFieldValueType(field), this.language, node.span);
+        current.value = constructJavaScriptOwnedConstructorField(value, field.type);
+        current.optional = true;
+      }
+    }
+    if (selected.some(entry => entry.optional)) {
+      selected.sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+    }
     const ordered=node.propertyOrder!==undefined||expected?.ordered===true||this.orderedRecordSource===true;
     let order;
+    if (ordered && selected.some(entry => entry.optional)) throw unsupported('ordered optional record fields','the actual dynamic own-field permutation must be represented',node.span);
     if(node.propertyOrder!==undefined)order=coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span);
     else if(ordered){
       if(node.entries.some(entry=>entry.spread)){
@@ -1197,8 +1255,8 @@ class Checker {
         order={k:'array',items:positions.map(index=>({k:'lit',value:String(index),type:FLOAT})),type:array(FLOAT)};
       }
     }
-    const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) };
-    let body = { k: 'record', entries: selected, ...(ordered?{order}:{}), type };
+    const type = { kind: 'record', fields: selected.map(({ name, value, optional }) => ({ name, type: value.type, ...(optional ? { optional: true } : {}) })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) };
+    let body = { k: 'record', entries: selected.map(({ name, value }) => ({ name, value })), ...(ordered?{order}:{}), type };
     for (const index of readRecordValueOrder(bindings.length, true)) {
       const binding = bindings[index];
       body = { k: 'let', name: binding.name, value: binding.value, body, type };
@@ -1447,7 +1505,9 @@ class Checker {
     if(acceptLinkedJavaScriptStringConstruction('math',node.op))return checkJavaScriptStringConstructionValue(this,node,env,path);
     if(acceptLinkedJavaScriptStringUnitConstruction('math',node.op)){
       if(this.language!=='JavaScript'||node.args.length!==1||node.args[0].spread)throw typeError('a JavaScript UTF16 literal needs one owned unit column',node.span);
-      const units=this.expr(node.args[0].value,env,path,array(FLOAT));
+      const operand=node.args[0].value;
+      const payload=operand.k==='referencePayload'?operand:{k:'referencePayload',value:operand};
+      const units=this.expr(payload,env,path,array(FLOAT));
       if(units.k!=='array'||units.items.some(item=>item.k!=='lit'||item.type.kind!=='float')||!acceptJavaScriptStringUnits(units.items.map(item=>Number(item.value))))throw typeError('a JavaScript UTF16 literal needs explicit checked integral code units',node.span);
       return{k:'math',op:node.op,args:[units],type:STRING};
     }
@@ -1525,8 +1585,13 @@ class Checker {
     const { op } = node;
     if (op === 'and' || op === 'or') {
       const left = this.expr(node.left, env, path, undefined);
-      const branchesEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.left,env):{then:env,else:env};
-      const right = this.expr(node.right, op==='and'?branchesEnv.then:branchesEnv.else, path, undefined);
+      const outcome=op==='and';
+      let rightEnv=env;
+      if(this.language==='JavaScript'){
+        const branches=readJavaScriptOwnPropertyBranchEnvironments(node.left,env);
+        rightEnv=readJavaScriptOptionalGuardBranch(node.left,outcome?branches.then:branches.else,outcome);
+      }
+      const right = this.expr(node.right, rightEnv, path, undefined);
       const operation = readOptionalLogicalOperation(this.language, left.type.kind, right.type.kind,
         left.type.kind === 'option' && sameType(left.type.element, right.type), right.type.kind === 'option' && sameType(right.type.element, left.type), sameType(left.type, right.type), op);
       if (operation === 'boolean') return { k: 'binary', op, left, right, type: BOOL };
@@ -1868,14 +1933,14 @@ class Checker {
    * Bind patterns name the constructor fields directly so structural
    * recursion stays visible to the recursion analysis.
    */
-  compileMatch(node, env, path) {
+  compileMatch(node, env, path, checkedTagReceiver) {
     const lets = [];
     const columns = node.scrutinees.map((source,column) => {
       const owners=node.rows.flatMap(row=>readRustIntegerPatternOwners(row.patterns[column]));
       const inferenceError=readRustSourceNumericPatternInferenceError(this.language,source.k,Boolean(source.type),owners);if(inferenceError)throw typeError(inferenceError,source.span??node.span);
       const inferred=readRustSourceNumericPatternInference(this.language,source.k,Boolean(source.type),owners);
       const scrutinee=inferred?{...source,type:inferred==='f64'?FLOAT:rustFixedType(inferred)}:source;
-      const checked = this.expr(scrutinee, env, path, undefined);
+      const checked = column === 0 && checkedTagReceiver ? checkedTagReceiver : this.expr(scrutinee, env, path, undefined);
       if (scrutinee.k === 'name' && scrutinee.path.length === 1 && env.has(scrutinee.path[0])) {
         return { name: scrutinee.path[0], type: checked.type };
       }
@@ -2345,6 +2410,10 @@ export function coerce(value, type, language, span, flavor = undefined) {
   if (value.type.kind === 'literal') throw typeError('untyped literal', span);
   if (sameType(value.type, type)) return value;
   const abrupt=coerceAbruptResult(value,type);if(abrupt)return abrupt;
+  if (language === 'JavaScript' && value.type.kind === 'record' && type.kind === 'record') {
+    const converted = widenJavaScriptRecordPresence(value, type, span);
+    if (converted) return converted;
+  }
   const optional = readOptionalCoercionOperation(language, type.kind, value.type.kind, value.k,
     type.kind === 'option' && acceptOptionalAbsence(type.absence, value.absence),
     type.kind === 'option' && acceptOptionalAbsence(type.absence, 'undefined'),
@@ -2365,6 +2434,35 @@ export function coerce(value, type, language, span, flavor = undefined) {
     return castTo(value, NAT, flavor ?? 'checked', span);
   }
   throw typeError(`expected ${typeKey(type)} but found ${typeKey(value.type)}`, span);
+}
+
+function widenJavaScriptRecordPresence(value, type, span) {
+  const source = value.type;
+  if (source.reference || type.reference || source.open || type.open || source.ordered || type.ordered
+    || source.sourceClassOwner !== undefined || type.sourceClassOwner !== undefined
+    || !type.fields.some(field => field.optional)) return null;
+  const from = new Map(source.fields.map(field => [field.name, field]));
+  const to = new Map(type.fields.map(field => [field.name, field]));
+  if (source.fields.some(field => !to.has(field.name))
+    || type.fields.some(field => !field.optional && !from.has(field.name))) return null;
+  const name = 'ml_record_presence_source';
+  const owner = { k: 'var', name, type: source };
+  const entries = [];
+  for (const field of type.fields) {
+    const original = from.get(field.name);
+    if (!original) {
+      entries.push({ name: field.name, value: { k: 'none', absence: 'undefined', type: field.type } });
+      continue;
+    }
+    const read = readJavaScriptOwnedRecordField(owner, original, true);
+    if (Boolean(field.optional) === Boolean(original.optional) && sameType(field.type, original.type)) {
+      entries.push({ name: field.name, value: read });
+    } else if (field.optional && !original.optional) {
+      const payload = coerce(read, javaScriptConstructorFieldValueType(field), 'JavaScript', span);
+      entries.push({ name: field.name, value: constructJavaScriptOwnedConstructorField(payload, field.type) });
+    } else return null;
+  }
+  return { k: 'let', name, value, body: { k: 'record', entries, type }, type };
 }
 
 function castTo(arg, to, flavor, span, language = '') {

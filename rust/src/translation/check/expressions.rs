@@ -427,7 +427,28 @@ impl Checker {
                 self.check_binding_expression(node, env, path, context, allow_literal)
             }
             SNode::Match { scrutinees, rows } => {
-                let compiled = self.compile_match(scrutinees, rows, span, env, path)?;
+                let checked_tag_receiver =
+                    if self.language == Language::JavaScript && node.tag_test.is_some()
+                        && let [source] = scrutinees.as_slice()
+                    {
+                        let receiver = self.expr(source, env, path, None, false)?;
+                        if matches!(receiver.ty, Type::Option { .. })
+                            && let Some(guarded) = self.javascript_nullish_access(
+                                (&receiver, source),
+                                super::javascript_nullish_fields::JavaScriptPropertyAccess::TagComparison(rows),
+                                env,
+                                path,
+                                expected,
+                                span,
+                            )?
+                        {
+                            return Ok(guarded);
+                        }
+                        Some(receiver)
+                    } else {
+                        None
+                    };
+                let compiled = self.compile_match(scrutinees, rows, span, env, path, checked_tag_receiver)?;
                 self.expr_with_context(&compiled, env, path, context, allow_literal)
             }
             SNode::Match1 { scrutinee, cases } => {
@@ -755,19 +776,12 @@ impl Checker {
     ) -> Result<Expr> {
         match op {
             BinaryOp::And | BinaryOp::Or => {
-                let (then_env, else_env) = self.own_property_branch_environments(left, env);
+                let (mut then_env, mut else_env) = self.own_property_branch_environments(left, env);
+                let outcome = op == BinaryOp::And;
+                let right_env = if outcome { &mut then_env } else { &mut else_env };
+                self.apply_javascript_optional_guard(left, right_env, outcome, 0);
                 let left = self.expr(left, env, path, None, false)?;
-                let right = self.expr(
-                    right,
-                    if op == BinaryOp::And {
-                        &then_env
-                    } else {
-                        &else_env
-                    },
-                    path,
-                    None,
-                    false,
-                )?;
+                let right = self.expr(right, right_env, path, None, false)?;
                 self.logical_values(op, left, right, span)
             }
             BinaryOp::Concat => {

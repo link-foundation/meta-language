@@ -369,6 +369,7 @@ impl Checker {
                 .iter()
                 .enumerate()
                 .map(|(index, value)| TypeField {
+                    optional: false,
                     name: field(index),
                     ty: value.ty.clone(),
                 })

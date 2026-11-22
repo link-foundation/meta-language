@@ -619,13 +619,15 @@ pub(super) fn lower_tag_if(
     };
     let mut rows = vec![tag_row(&tag_switch, &test.tag, place, &matching, place)?];
     rows.extend(default_rows(&tag_switch, other, place)?);
-    Ok(node(
+    let mut lowered = node(
         SNode::Match {
             scrutinees: vec![test.object.clone()],
             rows,
         },
         place,
-    ))
+    );
+    lowered.tag_test = Some(Box::new(test.clone()));
+    Ok(lowered)
 }
 
 pub(super) fn tag_row(

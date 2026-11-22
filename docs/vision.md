@@ -1381,6 +1381,18 @@ JavaScript undefined, null, or a value according to the field's type.
 Property reads project the value, and membership and spread consult the
 outer carrier. Both typed Links transports retain the field declaration and
 the complete carrier.
+Closed structural records use the same two coordinates for an optional field.
+Their type identity includes the presence marker and the field carrier. A
+literal evaluates every supplied expression in source order. A spread reads
+the carrier once per field, replaces an earlier field when the carrier is
+present, and retains the earlier field when the carrier is empty. Closed
+unordered values can gain declared optional fields through a checked
+conversion. Reference values preserve their original ownership.
+Strict null or undefined comparisons refine a stable binding in the branch
+that excludes the corresponding absence. Short-circuit evaluation applies
+those facts only on paths where the requisite comparisons have happened.
+Tag reads on a possibly nullish binding evaluate the receiver once and keep
+the source property's TypeError on an absent receiver.
 The call-source fixture codecs use value trees. An omitted field has no wire
 key, while an own undefined field uses the `fieldPresence` marker. Each
 array or record in this fixture transport decodes into its own container.

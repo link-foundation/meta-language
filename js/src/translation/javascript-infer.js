@@ -272,10 +272,11 @@ class Inference {
         const step = readRecordTypeConstraintStep(recordNameUnits(a.fields), recordNameUnits(b.fields), Boolean(a.open), Boolean(b.open), phase, index);
         const [action, left, right] = step;
         if (action === 6) return;
-        if (action === 0) this.unify(a.fields[left].type, b.fields[right].type, where);
+        if (action === 0) this.unify(javaScriptConstructorFieldValueType(a.fields[left]), javaScriptConstructorFieldValueType(b.fields[right]), where);
         else if (action === 1) this.addInferredField(b, a.fields[left], where);
         else if (action === 2) this.addInferredField(a, b.fields[right], where);
-        const error = readRecordTypeConstraintError(action, action === 3 ? a.fields[left].name : action === 4 ? b.fields[right].name : '');
+        const missing = action === 3 ? a.fields[left] : action === 4 ? b.fields[right] : undefined;
+        const error = missing?.optional ? '' : readRecordTypeConstraintError(action, missing?.name ?? '');
         if (error) throw typeError(error, where);
         phase = step[3];
         index = step[4];
@@ -430,7 +431,7 @@ class Inference {
         if(form==='wait')continue;
         if(form==='prototype')throw unsupported('record formal inherited property','an absent own field cannot replace the actual prototype property '+constraint.field,constraint.where);
         if(form==='absent')this.unify(constraint.result,{kind:'option',element:UNIT,absence:'undefined'},constraint.where);
-        else if(form==='present')this.unify(constraint.result,present.type,constraint.where);
+        else if(form==='present')this.unify(constraint.result,javaScriptConstructorFieldValueType(present),constraint.where);
         else this.fields.push(constraint);
         this.recordFormalFields.splice(this.recordFormalFields.indexOf(constraint),1);progress=true;
       }
@@ -606,9 +607,12 @@ class Inference {
             const source = this.resolve(entry.type);
             if (readRecordSpreadRole(source.kind) !== 'fields') throw typeError('an object spread needs a known record shape', constraint.where);
             fields.push(...source.fields);
-          } else fields.push({ name: entry.name, type: entry.type });
+          } else fields.push({ name: entry.name, type: entry.type, ...(entry.optional ? { optional: true } : {}) });
         }
-        const shape = { kind: 'record', fields: readRecordFieldInsertionOrder(recordNameUnits(fields)).map(index => ({ name: fields[index].name, type: fields[index].type })) };
+        for (const field of constraint.term.fields) {
+          if (field.optional && !fields.some(actual => actual.name === field.name)) fields.push(field);
+        }
+        const shape = { kind: 'record', fields: readRecordFieldInsertionOrder(recordNameUnits(fields)).map(index => fields[index]) };
         this.unify(constraint.term, shape, constraint.where);
         constraint.term.open = false;
         this.recordSpreads.splice(this.recordSpreads.indexOf(constraint), 1);
@@ -804,7 +808,7 @@ class Inference {
         declared = { name: field, type: result };
         this.addInferredField(type, declared, where);
       }
-      if (declared) this.unify(result, declared.type, where);
+      if (declared) this.unify(result, javaScriptConstructorFieldValueType(declared), where);
       return true;
     }
     if ((type.kind === 'map' || type.kind === 'set') && field === 'size') {
@@ -1033,7 +1037,7 @@ class Inference {
         return this.expr(node.body, new Map(env).set(node.name, want ?? value), expected);
       }
       case 'match':
-        return this.match(node, env);
+        return this.match(node, env, expected);
       case 'stringMap':
         this.unify(this.expr(node.object, env), STRING, node.span);
         return STRING;
@@ -1292,13 +1296,13 @@ class Inference {
     return result;
   }
 
-  match(node, env) {
+  match(node, env, expected) {
     const scrutinees = node.scrutinees.map((scrutinee) => this.expr(scrutinee, env));
     let result = null;
     for (const row of node.rows) {
       const scope = new Map(env);
       row.patterns.forEach((pattern, index) => this.pattern(pattern, scrutinees[index], scope, row.span ?? node.span));
-      const body = this.expr(row.body, scope);
+      const body = this.expr(row.body, scope, expected);
       if (result) {
         result = this.join(body, result, row.span ?? node.span);
       } else result = body;
@@ -1396,15 +1400,19 @@ class Inference {
         }
       } else {
         const expectedPosition = want?.kind === 'record' ? readRecordFieldPosition(recordNameUnits(want.fields), Array.from({ length: entry.name.length }, (_, index) => entry.name.charCodeAt(index))) : -1;
-        const declared = expectedPosition < 0 ? undefined : want.fields[expectedPosition].type;
+        const expectedField = expectedPosition < 0 ? undefined : want.fields[expectedPosition];
+        const declared = expectedField && javaScriptConstructorFieldValueType(expectedField);
         const value = entryTerms?.[entryIndex]??this.expr(entry.value, env, declared);
         if (declared) this.unify(value, declared, entry.value.span ?? node.span);
-        fields.push({ name: entry.name, type: declared ?? value });
-        entries.push({ spread: false, name: entry.name, type: declared ?? value });
+        fields.push(expectedField?.optional ? expectedField : { name: entry.name, type: declared ?? value });
+        entries.push({ spread: false, name: entry.name, type: expectedField?.optional ? expectedField.type : declared ?? value, ...(expectedField?.optional ? { optional: true } : {}) });
       }
     }
+    if (want?.kind === 'record') for (const field of want.fields) {
+      if (field.optional && !fields.some(actual => actual.name === field.name)) fields.push(field);
+    }
     const sourceClassOwner=node.type?.sourceClassOwner??want?.sourceClassOwner??readJavaScriptSourceClassOwner(this.sourceClassOwners,fields.map(field=>field.name));
-    const term = { kind: 'record', fields: readRecordFieldInsertionOrder(recordNameUnits(fields)).map(index => ({ name: fields[index].name, type: fields[index].type })), ...(unknownSpread && { open: true }),...(sourceClassOwner!==undefined?{sourceClassOwner}:{}) };
+    const term = { kind: 'record', fields: readRecordFieldInsertionOrder(recordNameUnits(fields)).map(index => fields[index]), ...(unknownSpread && { open: true }),...(sourceClassOwner!==undefined?{sourceClassOwner}:{}) };
     if (unknownSpread) this.recordSpreads.push({ term, entries, where: node.span });
     this.records.set(node, term);
     return term;

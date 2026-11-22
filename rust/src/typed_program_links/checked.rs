@@ -98,6 +98,16 @@ fn validate_type_record(
         if value["kind"]=="record"&&fields.get("sourceClassOwner").is_some_and(|owner|!owner.as_str().is_some_and(|name|!name.is_empty())){
             return Err(error("a linked class record needs its actual nonempty constructor owner"));
         }
+        if value["kind"] == "record"
+            && value["fields"].as_array().is_some_and(|layout| layout.iter().any(|field| {
+                field.get("optional").is_some_and(|optional| {
+                    optional != true || serde_json::from_value(field["type"].clone()).ok()
+                        .is_none_or(|ty| crate::translation::javascript_constructor_presence::field_value_type(&ty).is_none())
+                })
+            }))
+        {
+            return Err(error("a linked optional record field needs its separate own-property presence carrier"));
+        }
         if value["k"] == "binary"
             && value
                 .get("rounding")

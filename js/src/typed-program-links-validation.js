@@ -156,7 +156,12 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         if(declaration?.k!=='fn'||target&&target!==declaration)throw new TypeError('a linked class record must target its actual owned constructor declaration');
       }
       if(value.ordered!==undefined&&typeof value.ordered!=='boolean')throw new TypeError('a linked record ordered facet must be a boolean');
-      value.fields.forEach((field) => validateChild(field.type));
+      value.fields.forEach(field => {
+        if (Object.hasOwn(field, 'optional') && (field.optional !== true || !isJavaScriptOptionalConstructorFieldType(field.type))) {
+          throw new TypeError('a linked optional record field needs its separate own-property presence carrier');
+        }
+        validateChild(field.type);
+      });
     }
     else if (value.kind === 'map') { validateChild(value.key); validateChild(value.value); }
     else if (value.kind === 'function') { value.params.forEach(validateChild); validateChild(value.ret); }

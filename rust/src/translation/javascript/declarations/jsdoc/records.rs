@@ -39,16 +39,14 @@ pub(super) fn read_record_type(
         let optional = accept_record_type_optional_name(last);
         let ty = read_jsdoc_type(&source_type, range, aliases, expanding)?;
         fields.push(TypeField {
+            optional,
             name: if optional {
                 field[..field.len() - 1].to_owned()
             } else {
                 field.to_owned()
             },
             ty: if optional {
-                Type::Option {
-                    element: Box::new(ty),
-                    absence: "undefined".to_owned(),
-                }
+                crate::translation::javascript_constructor_presence::field_type(ty)
             } else {
                 ty
             },

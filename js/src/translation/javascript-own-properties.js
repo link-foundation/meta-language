@@ -2,6 +2,7 @@
 import {BOOL,FLOAT,STRING,UNIT} from './types.js';
 import {unsupported} from './diagnostics.js';
 import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
+import {readJavaScriptOwnedRecordField} from './javascript-constructor-presence.js';
 import {materializeJavaScriptPrimitiveText} from './javascript-string-search.js';
 import {materializeJavaScriptNumberConversion} from './javascript-number-conversion.js';
 import {readJavaScriptSourceExceptionOperation} from './source-exception-rules.js';
@@ -16,7 +17,11 @@ const failure=()=>({k:'math',op:readJavaScriptSourceExceptionOperation('TypeErro
 function membership(checker,receiver,key,form,span){
  if(form==='record'){
   if(receiver.type.open)throw unsupported('own property membership','the actual open record needs its complete runtime property domain',span);
-  return receiver.type.fields.reduce((result,field)=>either(result,equal(key,literal(STRING,field.name))),literal(BOOL,false));
+  return receiver.type.fields.reduce((result,field)=>{
+   const selected=equal(key,literal(STRING,field.name));
+   const owned=field.optional?both(selected,constructJavaScriptOptionalPresence(readJavaScriptOwnedRecordField(receiver,field,true),field.type.element,span)):selected;
+   return either(result,owned);
+  },literal(BOOL,false));
  }
  if(form==='empty')return literal(BOOL,false);
  if(form==='nominal'){

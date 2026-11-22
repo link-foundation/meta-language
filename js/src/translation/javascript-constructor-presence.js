@@ -25,6 +25,15 @@ export function constructJavaScriptOwnedConstructorField(value, type) {
   return { k: 'some', value: { k: 'tuple', items: [value], type: type.element }, type };
 }
 
+export function readJavaScriptOwnedRecordField(object, field, carrier = false) {
+  const read = { k: 'recordField', object, field: field.name, index: object.type.fields.indexOf(field), type: field.type };
+  if (!field.optional || carrier) return read;
+  const product = field.type.element;
+  const type = javaScriptConstructorFieldValueType(field);
+  const fallback = { k: 'tuple', items: [{ k: 'none', absence: 'undefined', type }], type: product };
+  return { k: 'tupleIndex', index: 0, object: { k: 'coalesce', left: read, right: fallback, type: product }, type };
+}
+
 export function readJavaScriptOptionalConstructorField(carrier, span) {
   return {
     k: 'tupleIndex', index: 0,

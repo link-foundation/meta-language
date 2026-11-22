@@ -34,6 +34,7 @@ impl Checker {
         span: Option<Span>,
         env: &Env,
         path: &[String],
+        mut checked_tag_receiver: Option<Expr>,
     ) -> Result<SExpr> {
         let mut lets = Vec::new();
         let mut columns = Vec::new();
@@ -67,7 +68,11 @@ impl Checker {
             } else {
                 source
             };
-            let checked = self.expr(scrutinee, env, path, None, false)?;
+            let checked = if column == 0 && let Some(receiver) = checked_tag_receiver.take() {
+                receiver
+            } else {
+                self.expr(scrutinee, env, path, None, false)?
+            };
             if let Some(name) = env.local(scrutinee) {
                 columns.push(Column {
                     name: name.to_owned(),

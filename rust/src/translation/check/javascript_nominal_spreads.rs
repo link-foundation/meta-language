@@ -8,55 +8,59 @@ use crate::translation::javascript_nominal_spread_rules as rules;
 use crate::translation::surface::SRecordEntry;
 
 impl Checker {
-    pub(super) fn nominal_spread_branch_environments(
+    pub(super) fn apply_javascript_optional_guard(
         &self,
         condition: &SExpr,
-        env: &Env,
-    ) -> (Env, Env) {
-        let (mut yes, mut no) = (env.clone(), env.clone());
-        if self.language != Language::JavaScript {
-            return (yes, no);
+        env: &mut Env,
+        outcome: bool,
+        depth: usize,
+    ) {
+        if self.language != Language::JavaScript || depth >= 256 {
+            return;
         }
-        let (guard, negated) = if let SNode::Unary {
+        if let SNode::Unary {
             op: UnaryOp::Not,
             arg,
         } = &condition.node
         {
-            (arg.as_ref(), true)
-        } else {
-            (condition, false)
-        };
+            self.apply_javascript_optional_guard(arg, env, !outcome, depth + 1);
+            return;
+        }
         let SNode::Binary {
             op, left, right, ..
-        } = &guard.node
+        } = &condition.node
         else {
-            return (yes, no);
+            return;
         };
-        let pair = match (&left.node, &right.node) {
-            (SNode::Name { path }, SNode::None { absence }) if path.len() == 1 => {
-                Some((path[0].as_str(), absence.as_str()))
-            }
-            (SNode::None { absence }, SNode::Name { path }) if path.len() == 1 => {
-                Some((path[0].as_str(), absence.as_str()))
-            }
-            _ => None,
+        if (*op == BinaryOp::And && outcome) || (*op == BinaryOp::Or && !outcome) {
+            self.apply_javascript_optional_guard(left, env, outcome, depth + 1);
+            self.apply_javascript_optional_guard(right, env, outcome, depth + 1);
+            return;
+        }
+        let (name, literal) = if let Some(name) = left.simple_name() {
+            (name, &right.node)
+        } else if let Some(name) = right.simple_name() {
+            (name, &left.node)
+        } else {
+            return;
         };
-        let Some((name, absence)) = pair else {
-            return (yes, no);
+        let absence = match literal {
+            SNode::None { absence } => absence.as_str(),
+            SNode::Unit => "undefined",
+            _ => return,
         };
         let arm = rules::read_java_script_nominal_spread_guard_arm("binary", op.name(), absence);
-        if arm == 0.0 || !env.has(name) {
-            return (yes, no);
+        if arm != if outcome { 1.0 } else { 2.0 }
+            || !matches!(env.vars.get(name), Some(Type::Option { .. }))
+            || env
+                .nominal_spread_absences
+                .iter()
+                .any(|(binder, kind)| binder == name && kind == absence)
+        {
+            return;
         }
-        let selected = if (if negated { 3.0 - arm } else { arm }) == 1.0 {
-            &mut yes
-        } else {
-            &mut no
-        };
-        selected
-            .nominal_spread_absences
+        env.nominal_spread_absences
             .push((name.to_owned(), absence.to_owned()));
-        (yes, no)
     }
     pub(super) fn guarded_nominal_optional(&self, node: &SExpr, value: Expr, env: &Env) -> Expr {
         if self.language != Language::JavaScript {

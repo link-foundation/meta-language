@@ -4,10 +4,12 @@ use super::{Env, Inference, Rc, RecordTerm, RefCell, Result, SExpr, Span, Term, 
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::record_value_rules as rules;
 use crate::translation::surface::SRecordEntry;
+use std::collections::BTreeSet;
 
 pub(super) struct RecordSpreadEntry {
     name: Option<String>,
     spread: bool,
+    optional: bool,
     term: Term,
 }
 
@@ -160,17 +162,21 @@ impl Inference {
                     &right_fields[position(*right_index, right_fields.len())].1,
                     place,
                 )?,
-                1 => self.add_record_field(
-                    right,
-                    &left_fields[position(*left_index, left_fields.len())],
-                    place,
-                )?,
-                2 => self.add_record_field(
-                    left,
-                    &right_fields[position(*right_index, right_fields.len())],
-                    place,
-                )?,
-                3 => {
+                1 => {
+                    let field = &left_fields[position(*left_index, left_fields.len())];
+                    self.add_record_field(right, field, place)?;
+                    if left.borrow().optional_fields.contains(&field.0) {
+                        right.borrow_mut().optional_fields.insert(field.0.clone());
+                    }
+                }
+                2 => {
+                    let field = &right_fields[position(*right_index, right_fields.len())];
+                    self.add_record_field(left, field, place)?;
+                    if right.borrow().optional_fields.contains(&field.0) {
+                        left.borrow_mut().optional_fields.insert(field.0.clone());
+                    }
+                }
+                3 if !left.borrow().optional_fields.contains(&left_fields[position(*left_index, left_fields.len())].0) => {
                     return Err(type_error(
                         rules::read_record_type_constraint_error(
                             *action,
@@ -179,7 +185,7 @@ impl Inference {
                         place,
                     ));
                 }
-                4 => {
+                4 if !right.borrow().optional_fields.contains(&right_fields[position(*right_index, right_fields.len())].0) => {
                     return Err(type_error(
                         rules::read_record_type_constraint_error(
                             *action,
@@ -188,7 +194,7 @@ impl Inference {
                         place,
                     ));
                 }
-                5 => {}
+                3..=5 => {}
                 6 => return Ok(()),
                 _ => unreachable!("the shared record constraint action is declared"),
             }
@@ -436,11 +442,15 @@ impl Inference {
                 .insert(std::ptr::from_ref(node), nominal.clone());
             return Ok(nominal);
         }
-        let wanted = match wanted {
-            Some(Term::Record(record)) => record.borrow().fields.clone(),
-            _ => Vec::new(),
+        let (wanted, wanted_optional) = match wanted {
+            Some(Term::Record(record)) => {
+                let record = record.borrow();
+                (record.fields.clone(), record.optional_fields.clone())
+            }
+            _ => (Vec::new(), BTreeSet::new()),
         };
         let mut fields = Vec::new();
+        let mut optional_fields = BTreeSet::new();
         let mut retained = Vec::new();
         let mut open = false;
         for (entry_index, entry) in entries.iter().enumerate() {
@@ -460,6 +470,7 @@ impl Inference {
                 retained.push(RecordSpreadEntry {
                     name: None,
                     spread: true,
+                    optional: false,
                     term: term.clone(),
                 });
                 let source = self.resolve(&term);
@@ -469,7 +480,15 @@ impl Inference {
                         let Term::Record(record) = source else {
                             unreachable!("the shared spread role selects an actual record")
                         };
-                        fields.extend(record.borrow().fields.iter().cloned());
+                        let record = record.borrow();
+                        for field in &record.fields {
+                            if record.optional_fields.contains(&field.0) {
+                                optional_fields.insert(field.0.clone());
+                            } else {
+                                optional_fields.remove(&field.0);
+                            }
+                            fields.push(field.clone());
+                        }
                     }
                     _ => {
                         return Err(type_error(
@@ -500,12 +519,27 @@ impl Inference {
                     self.unify(&value, declared, entry.value.span.or(node.span))?;
                 }
                 let term = declared.cloned().unwrap_or(value);
+                let optional = wanted_optional.contains(name);
+                if optional {
+                    optional_fields.insert(name.to_owned());
+                } else {
+                    optional_fields.remove(name);
+                }
                 fields.push((name.to_owned(), term.clone()));
                 retained.push(RecordSpreadEntry {
                     name: Some(name.to_owned()),
                     spread: false,
+                    optional,
                     term,
                 });
+            }
+        }
+        for field in &wanted {
+            if wanted_optional.contains(&field.0) {
+                optional_fields.insert(field.0.clone());
+                if !fields.iter().any(|actual| actual.0 == field.0) {
+                    fields.push(field.clone());
+                }
             }
         }
         let owner = Rc::new(RefCell::new(RecordTerm {
@@ -517,6 +551,7 @@ impl Inference {
                     .collect::<Vec<_>>(),
             )?,
             fields: insertion_fields(&fields),
+            optional_fields,
             open,
         }));
         let term = Term::Record(owner.clone());
@@ -578,6 +613,7 @@ impl Inference {
                 continue;
             }
             let mut fields = Vec::new();
+            let mut optional_fields = BTreeSet::new();
             for entry in &constraint.entries {
                 if entry.spread {
                     let source = self.resolve(&entry.term);
@@ -590,22 +626,41 @@ impl Inference {
                     let Term::Record(record) = source else {
                         unreachable!("the shared spread role selects an actual record")
                     };
-                    fields.extend(record.borrow().fields.iter().cloned());
+                    let record = record.borrow();
+                    for field in &record.fields {
+                        if record.optional_fields.contains(&field.0) {
+                            optional_fields.insert(field.0.clone());
+                        } else {
+                            optional_fields.remove(&field.0);
+                        }
+                        fields.push(field.clone());
+                    }
                 } else {
-                    fields.push((
-                        entry
-                            .name
-                            .clone()
-                            .expect("a retained ordinary field has its name"),
-                        entry.term.clone(),
-                    ));
+                    let name = entry.name.clone().expect("a retained ordinary field has its name");
+                    if entry.optional {
+                        optional_fields.insert(name.clone());
+                    } else {
+                        optional_fields.remove(&name);
+                    }
+                    fields.push((name, entry.term.clone()));
+                }
+            }
+            let owner = constraint.owner.borrow();
+            for field in &owner.fields {
+                if owner.optional_fields.contains(&field.0)
+                    && !fields.iter().any(|actual| actual.0 == field.0)
+                {
+                    optional_fields.insert(field.0.clone());
+                    fields.push(field.clone());
                 }
             }
             let shape = Rc::new(RefCell::new(RecordTerm {
-                source_class_owner: constraint.owner.borrow().source_class_owner.clone(),
+                source_class_owner: owner.source_class_owner.clone(),
                 fields: insertion_fields(&fields),
+                optional_fields,
                 open: false,
             }));
+            drop(owner);
             self.unify(
                 &Term::Record(constraint.owner.clone()),
                 &Term::Record(shape),
