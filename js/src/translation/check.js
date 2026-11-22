@@ -743,7 +743,7 @@ class Checker {
         return checkJavaScriptDataField(this,value,node.field,node.span)??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span);
       }
       case 'length': {
-        const object = this.expr(node.object, env, path, undefined);
+        const object = this.referenceValue(this.expr(node.object, env, path, undefined));
         if (object.type.kind !== 'array') throw typeError(`length of ${typeKey(object.type)}`, node.span);
         return { k: 'length', array: object, type: node.integer ? INT : FLOAT };
       }

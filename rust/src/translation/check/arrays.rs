@@ -562,6 +562,7 @@ impl Checker {
         path: &[String],
     ) -> Result<Expr> {
         let array = self.expr(object, env, path, None, false)?;
+        let array = Self::reference_value(array);
         if array.ty.element().is_none() {
             return Err(type_error(format!("length of {}", array.ty.key()), span));
         }

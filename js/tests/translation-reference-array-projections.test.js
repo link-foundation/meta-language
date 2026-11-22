@@ -42,3 +42,19 @@ test('effectful typed keys keep the existing native payload-read path and fresh 
   assert.equal(readReferenceArrayProjection('length', 'referenceRead', 'string', true, 'float', true), '');
   assert.equal(readReferenceArrayProjectionSuffix(1, ['ml_reference_array1 + ml_reference_position2 + ml_reference_projection3']), 4);
 });
+
+test('lowered for-of reads a shared array length without copying its payload', () => {
+  const source = `export function sumValues() {
+    const values = [1, 2];
+    let total = 0;
+    for (const value of values) total += value;
+    return total;
+  }`;
+  const program = checkProgram(parseJavaScript(source, { referenceSemantics: true }));
+  const rust = emitRust(program);
+  assert.match(rust.text, /\.borrow\(\)\.len\(\)/u);
+  assert.match(rust.text, /&\*ml_reference_array/u);
+  const js = emitJavaScript(program);
+  const entry = js.mappings.find(mapping => mapping.kind === 'function' && mapping.source === 'sumValues').target;
+  assert.equal(runInNewContext(js.text.replace(/^export /gmu, '') + '\n' + entry + '();', {}, { timeout: 1000 }), 3);
+});
