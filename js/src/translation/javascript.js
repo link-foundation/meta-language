@@ -1,5 +1,6 @@
 import {planJavaScriptStringArguments} from './javascript-string-argument-rules.js';
 import {findJavaScriptLexicalDeclarationConflict} from './lexical-declaration-rules.js';
+import { readJavaScriptConstructorTagAlternativeLimit } from './javascript-surface-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {readJavaScriptOptionalCallOperation,acceptJavaScriptOptionalCallHead,requireJavaScriptOptionalCallChain} from './javascript-optional-call-rules.js';
 import {readJavaScriptArrayClassificationBuiltinOperation} from './array-classification-rules.js';
@@ -2462,6 +2463,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     let tag = null;
+    let tagFieldCount = 0;
     const fields = Object.create(null);
     const entries = [];
     let duplicate = null;
@@ -2493,10 +2495,12 @@ class JavaScriptParser {
         prototypeDefinition = { value: this.expr(), span: span(key, key), index };
       } else if (readJavaScriptObjectPropertyForm(key.value, c.is('('), c.is(':'), !computed && key.kind === 'identifier') === 'tag') {
         c.expect(':', 'object');
-        const value = c.next();
-        if (value.kind !== 'string') throw unsupported('computed tag', 'the $ tag is a string literal', span(value, value));
-        this.requireScalarStringToken(value,'datatype constructor tag');
-        tag = value.value;
+        const value = this.expr();
+        if (!acceptJavaScriptConstructorTagExpression(value) || tag && (tag.k !== 'str' || value.k !== 'str')) {
+          throw unsupported('computed tag', 'a constructor tag needs literal strings in a finite conditional expression', value.span);
+        }
+        tag = value;
+        tagFieldCount = entries.length;
       } else {
         if (Object.hasOwn(fields, key.value)) duplicate ??= key;
         const form = readJavaScriptObjectPropertyForm(key.value, c.is('('), c.is(':'), !computed && key.kind === 'identifier');
@@ -2516,7 +2520,18 @@ class JavaScriptParser {
     if (form === 'record') return { k: 'record', entries, ...prototype, span: span(start, c.peek()) };
     if (form === 'duplicate') throw typeError(`duplicate field ${duplicate.value}`, span(duplicate, duplicate));
     if (form === 'spread') throw unsupported('tagged object spread', 'constructor spreads require a complete tagged field projection', span(start, c.peek()));
-    return { k: 'ctorObject', tag, fields, ...prototype, span: span(start, c.peek()) };
+    const where = span(start, c.peek());
+    if (tag.k === 'str') return { k: 'ctorObject', tag: tag.value, fields, ...prototype, span: where };
+    const bindings = entries.slice(0, tagFieldCount).map(({ name, value }) => {
+      const binding = this.generatedPrefix+'temporary_constructor_field'+(++this.generatedCount);
+      fields[name] = { k: 'name', path: [binding], span: value.span };
+      return { name: binding, value };
+    });
+    const construct = expression => expression.k === 'str'
+      ? { k: 'ctorObject', tag: expression.value, fields, span: where }
+      : { ...expression, then: construct(expression.then), else: construct(expression.else), span: where };
+    const value = bindings.reduceRight((body, binding) => ({ k: 'let', ...binding, body, span: where }), construct(tag));
+    return { ...value, ...prototype };
   }
 
   /**
@@ -2930,3 +2945,15 @@ function span(from, to) {
 
 import {readJavaScriptObjectBindingDeclaration,readJavaScriptObjectBindingNames} from './object-binding-declarations.js';
 import {hasJavaScriptAdvancedArrayBinding} from './recursive-object-bindings.js';
+
+// Bound expansion of the constructor body to the actual finite source choices.
+function acceptJavaScriptConstructorTagExpression(expression) {
+  const pending = [expression];
+  let alternatives = 0;
+  while (pending.length) {
+    const value = pending.pop();
+    if (value.k === 'if') pending.push(value.else, value.then);
+    else if (value.k !== 'str' || ++alternatives > readJavaScriptConstructorTagAlternativeLimit()) return false;
+  }
+  return true;
+}

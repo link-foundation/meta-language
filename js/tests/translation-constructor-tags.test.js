@@ -162,3 +162,16 @@ test('named union alternatives retain their fields and use the declared receiver
   assert.throws(() => parseJavaScript(source.replace("Sample | { $: 'empty' }", "Sample | { $: 'sample' }")), /duplicate tag sample/u);
   assert.throws(() => parseJavaScript(source.replace("Sample | { $: 'empty' }", "Unknown | { $: 'empty' }")), /Unknown needs its declared constructor layout/u);
 });
+
+test('finite conditional constructor tags preserve branch choice and property evaluation order', () => {
+  const source = readFileSync(new URL('../../parity/fixtures/translation-conditional-constructor-tags.js', import.meta.url), 'utf8');
+  const expected = [1, 0, 9, 'first', 1, 1, 2, 9, 'second', 1, 2, 3, 9, 'third'];
+  const observe = text => {
+    const output = [];
+    runInNewContext(text, { console: { log: value => output.push(value) } }, { timeout: 1000 });
+    return output;
+  };
+  assert.deepEqual(observe(source), expected);
+  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(source))).text), expected);
+  assert.throws(() => parseJavaScript(source.replace("'third' : 'second'", "'third' : option")), /finite conditional expression/u);
+});

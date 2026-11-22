@@ -195,6 +195,11 @@ pub fn read_java_script_object_value_form(tagged: bool, duplicate: bool, spread:
 }
 
 #[must_use]
+pub fn read_java_script_constructor_tag_alternative_limit() -> f64 {
+    32f64
+}
+
+#[must_use]
 pub fn read_java_script_method_receiver_kind(operation: &str) -> String {
     if (((((((((((((((((operation == "map") || (operation == "flatMap"))
         || (operation == "filter"))

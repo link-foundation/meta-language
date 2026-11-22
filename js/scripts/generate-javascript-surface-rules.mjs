@@ -25,11 +25,14 @@ const groups = [
     names: ['accept_java_script_terminal_tag_guard', 'accept_java_script_tag_guard_sequence'], flag: '--update-terminal-tag-guard-styles'},
   {id: 'javascript-equality-inference-library-style', order: 110,
     names: ['read_java_script_equality_inference_step'], flag: '--update-equality-inference-styles'},
+  {id: 'javascript-constructor-tag-library-style', order: 130,
+    names: ['accept_java_script_value_switch', 'read_java_script_constructor_tag_alternative_limit'],
+    flag: '--update-constructor-tag-styles'},
 ];
 const interfaceId = 'javascript-terminal-tag-guard-interface-style';
 const interfaceFlag = '--update-terminal-tag-guard-interface-styles';
 assert.ok(args.length === 0 || args.length === 1 && ['--check', interfaceFlag, ...groups.map(group => group.flag)].includes(args[0]),
-  'use no arguments, --check, --update-terminal-tag-guard-styles, --update-equality-inference-styles, or --update-terminal-tag-guard-interface-styles');
+  'use no arguments, --check, --update-terminal-tag-guard-styles, --update-equality-inference-styles, --update-terminal-tag-guard-interface-styles, or --update-constructor-tag-styles');
 const document = readFileSync(styleFile, 'utf8');
 const lines = document.match(/[^\n]*\n|[^\n]+$/gu) ?? [];
 assert.equal(Buffer.byteLength(lines[0]), 106060, 'the entire historical JavaScript surface style row retains its bytes');

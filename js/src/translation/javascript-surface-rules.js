@@ -94,6 +94,11 @@ export function readJavaScriptObjectValueForm(tagged, duplicate, spread) {
   return 'constructor';
 }
 
+/** @returns {number} */
+export function readJavaScriptConstructorTagAlternativeLimit() {
+  return 32;
+}
+
 /** @param {string} operation @returns {string} */
 export function readJavaScriptMethodReceiverKind(operation) {
   if (operation === 'map' || operation === 'flatMap' || operation === 'filter' || operation === 'find' || operation === 'findIndex' || operation === 'some' || operation === 'every' || operation === 'reduce' || operation === 'join' || operation === 'push' || operation === 'pop' || operation === 'shift' || operation === 'unshift' || operation === 'splice' || operation === 'reverse' || operation === 'sort' || operation === 'fill' || operation === 'copyWithin') return 'array';

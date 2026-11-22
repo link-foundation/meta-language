@@ -723,3 +723,32 @@ fn named_union_alternatives_keep_their_fields_and_declared_tag_owner() {
         assert!(error.to_string().contains(diagnostic), "{error}");
     }
 }
+
+#[test]
+fn finite_conditional_tags_preserve_branch_and_property_evaluation_order() {
+    let source =
+        include_str!("../../../parity/fixtures/translation-conditional-constructor-tags.js");
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_javascript(&checked).unwrap();
+    for script in [source, emitted.text.as_str()] {
+        let output = Command::new("node")
+            .args(["--input-type=module", "-e", script])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            output.stdout,
+            b"1\n0\n9\nfirst\n1\n1\n2\n9\nsecond\n1\n2\n3\n9\nthird\n"
+        );
+    }
+    let error =
+        parse_javascript(&source.replace("'third' : 'second'", "'third' : option")).unwrap_err();
+    assert!(
+        error.to_string().contains("finite conditional expression"),
+        "{error}"
+    );
+}
