@@ -72,6 +72,23 @@ impl FnMutSourceDeclarations {
         })
     }
 
+    pub(super) fn read_tokens(&self, range: &Range<usize>) -> Vec<Token> {
+        let mut tokens = self.tokens[range.clone()].to_vec();
+        let mut end = self
+            .tokens
+            .last()
+            .expect("the actual source lexer retains EOF")
+            .clone();
+        let offset = tokens
+            .last()
+            .expect("an admitted source range is nonempty")
+            .end;
+        end.start = offset;
+        end.end = offset;
+        tokens.push(end);
+        tokens
+    }
+
     pub(super) fn position(&self, range: &Range<usize>) -> SourceFoldSpan {
         SourceFoldSpan {
             start: self.tokens[range.start].start,

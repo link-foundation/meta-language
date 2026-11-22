@@ -43,6 +43,7 @@ mod expressions;
 mod float_predicate_rules;
 mod float_predicates;
 mod fn_mut_source_declarations;
+mod fn_mut_source_headers;
 mod formatting;
 mod function_pointers;
 mod generic_type_aliases;
@@ -623,6 +624,7 @@ struct RustParser {
     source_constant_functions: HashMap<String, source_constant_evaluation::ConstantInitializer>,
     source_constant_tokens: Arc<Vec<Token>>,
     fn_mut_source_declarations: Option<Rc<fn_mut_source_declarations::FnMutSourceDeclarations>>,
+    fn_mut_source_type_bindings: Vec<(String, SourceOrigin)>,
     shared_array_handle_source_model: String,
     shared_array_state: shared_array_handles::SharedArrayState,
     standard_collections: Option<standard_collections::StandardCollectionSource>,
@@ -721,6 +723,7 @@ impl RustParser {
         Self {
             source_constant_tokens,
             fn_mut_source_declarations: None,
+            fn_mut_source_type_bindings: Vec::new(),
             source_version_minor: 0.0,
             exclusive_source_enabled: !profiles.exclusive_source.is_empty(),
             source_regions_composed: super::rust_owned_record_loop_rules::accept_rust_source_region_composition(

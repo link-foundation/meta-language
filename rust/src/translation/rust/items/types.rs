@@ -175,6 +175,11 @@ impl RustParser {
             return Ok(ty);
         }
         let segments = self.path_segments("type")?;
+        if let Some(origin) = self.resolve_fn_mut_source_type_parameter(&segments, &token)? {
+            let ty = origin.ty.clone().expect("an admitted concrete source type has a type");
+            self.origins.current_type = origin;
+            return Ok(ty);
+        }
         self.refuse_collection_library_path(&segments, &self.module_path, &token)?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
