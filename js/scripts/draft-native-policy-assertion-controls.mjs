@@ -130,7 +130,7 @@ export function composeNativePolicyAssertionProgram(options){if('assignment' in 
  * written. Root authoring owns atomic registration/publication of the result. */
 function translate({sourcePath,closure,fixtures,moduleName,testName,referenceSemantics,operationOwners=[],assignment=null}){
  const program=compose({sourcePath,closure,fixtures,operationOwners,assignment,moduleName});
- const checked=checkProgram(parseJavaScript(program.source,{referenceSemantics})),sourceDeclarationOwners=readSourceLibraryDeclarationOwnership(closure,{...checked,main:null});
+ const checked=checkProgram(parseJavaScript(program.source,referenceSemantics?{referenceSemantics:true}:undefined)),sourceDeclarationOwners=readSourceLibraryDeclarationOwnership(closure,{...checked,main:null});
  const emitted=emitRust(checked,{arrayConsumption:true});limit(Buffer.byteLength(emitted.text),8*1024*1024,'native assertion output exceeds 8 MiB');
  const relocation=readPortableLibraryRelocation(emitted.text),tokens=tokenize(relocation.source,'Rust').tokens;if(tokens.some((token,index)=>token.value==='fn'&&tokens[index+1]?.value===testName))throw new TypeError('native assertion wrapper collides with an actual generated function');
  const rust=relocation.source+'\n#[test]\nfn '+testName+'() { main(); }\n',output='rust/tests/generated/'+moduleName+'.rs';
