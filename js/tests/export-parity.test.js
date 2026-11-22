@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import { Parser } from 'links-notation';
 
 import * as javascript from '../src/index.js';
-import { exportParity } from '../scripts/generate-export-parity.mjs';
+import { exportParity, resolveExports } from '../scripts/generate-export-parity.mjs';
 import { readProjectData, readProjectFileBytes } from '../scripts/project-data.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
@@ -105,6 +105,17 @@ const RUNNERS = Object.freeze({
   readSourceTextByteLength: ([text]) => [String(javascript.readSourceTextByteLength(text))],
   readSourceTextByte: ([text, offset]) => [String(javascript.readSourceTextByte(text, Number(offset)) ?? 'none')],
   sliceSourceTextBytes: ([text, start, end]) => [javascript.sliceSourceTextBytes(text, Number(start), Number(end)) ?? 'none'],
+});
+
+test('export parity recognizes the existing Rust JavaScript spelling', () => {
+  const original = { path: 'translation::sample_java_script_value', name: 'sample_java_script_value', kind: 'function' };
+  const conventional = { path: 'sample_javascript_value', name: 'sample_javascript_value', kind: 'function' };
+  const exports = ['sampleJavaScriptValue'];
+  assert.deepEqual(resolveExports(exports, [conventional]), {
+    entries: { sampleJavaScriptValue: { rust: conventional.path, kind: conventional.kind } },
+    missing: [],
+  });
+  assert.equal(resolveExports(exports, [original, conventional]).entries.sampleJavaScriptValue.rust, original.path);
 });
 
 test('export parity: every public export is listed with a public Rust item', async () => {

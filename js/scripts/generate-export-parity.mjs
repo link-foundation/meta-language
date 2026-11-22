@@ -60,6 +60,10 @@ export const OVERRIDES = Object.freeze({
   learnActiveGrammar: { rust: 'grammar::inference::active::learn_active_grammar' },
   learnActiveGrammarAutomaton: { rust: 'grammar::inference::active::learn_active_grammar_automaton' },
   sampleActiveGrammarWords: { rust: 'grammar::inference::active::sample_active_grammar_words' },
+  // Rust's ordinary graph has the full unsigned identity domain directly.
+  UnsignedLink: { rust: 'Link' },
+  UnsignedLinkId: { rust: 'LinkId' },
+  UnsignedLinkNetwork: { rust: 'LinkNetwork' },
   renderSyntaxTree: { rust: 'SyntaxTree::render' },
   validateGrammar: { rust: 'validate' },
   renderRuleFieldLinks: { rust: 'render_rule_fields' },
@@ -240,10 +244,14 @@ export function resolveExports(exportNames, surface) {
       entries[name] = { rust: override.rust, kind: item.kind };
       continue;
     }
-    const candidates = [...new Set([name, snake(name), name.toUpperCase(), snake(name).toUpperCase()])];
-    const hits = candidates.flatMap((candidate) => byName.get(candidate) ?? [])
+    const converted = snake(name);
+    const javascript = converted.replace(/(^|_)java_script(?=_|$)/gu, '$1javascript');
+    const candidates = [...new Set([name, converted, name.toUpperCase(), converted.toUpperCase()])];
+    const matches = candidates.flatMap(candidate => byName.get(candidate) ?? []);
+    const fallback = [...new Set([javascript, javascript.toUpperCase()])];
+    const hits = (matches.length ? matches : fallback.flatMap(candidate => byName.get(candidate) ?? []))
       .sort((left, right) => depth(left.path) - depth(right.path) || left.path.localeCompare(right.path));
-    if (hits.length === 0) missing.push(`${name}: no public Rust item named ${candidates.join(', ')}`);
+    if (hits.length === 0) missing.push(`${name}: no public Rust item named ${[...new Set([...candidates, ...fallback])].join(', ')}`);
     else entries[name] = { rust: hits[0].path, kind: hits[0].kind };
   }
   return { entries, missing };
