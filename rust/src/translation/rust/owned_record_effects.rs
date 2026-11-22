@@ -3,15 +3,15 @@
 use std::collections::{BTreeMap,HashMap};
 use serde::Serialize;
 use serde_json::{Value,json};
-use super::{Result,RustParser,SExpr,SProgram,SourceOrigin,Span,unsupported};
-use super::owned_record_state::{Layout,Slot};
+use super::{Result,RustParser,SExpr,SProgram,SourceOrigin,Span,Type,unsupported};
+use super::owned_record_state::{CollectionPlace,Layout,Slot};
 use crate::translation::rust_owned_record_effect_rules as rules;
 use crate::translation::rust_expression_completion_rules as completion;
 use crate::translation::proposition_value_rules as proposition;
 use crate::translation::rust_owned_record_loop_rules as loops;
 
 #[derive(Default)]
-pub(super) struct OwnedRecordEffects{reads:Vec<Slot>,writes:Vec<Write>,pub(super) loops:super::owned_record_loops::FiniteRecordLoopState,pub(super) loop_scope:Option<usize>}
+pub(super) struct OwnedRecordEffects{reads:Vec<Slot>,writes:Vec<Write>,packets:Vec<(CollectionPlace,Type)>,pub(super) loops:super::owned_record_loops::FiniteRecordLoopState,pub(super) loop_scope:Option<usize>}
 struct Write{slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String}
 pub(super) enum EffectSource<'a>{Read(&'a Slot),Write{slot:&'a Slot,target:&'a str}}
 type Environment=BTreeMap<String,(Slot,String)>;
@@ -21,8 +21,8 @@ fn decode(value:Value)->Result<SExpr>{serde_json::from_value(value).map_err(|_|f
 fn name(value:&str)->Value{json!({"k":"name","path":[value]})}
 fn loop_control(owner:&[String],variant:&str,args:Vec<Value>)->Value{let mut path=owner.to_vec();path.push(variant.to_owned());json!({"k":"app","fn":{"k":"name","path":path},"args":args})}
 fn text<'a>(value:&'a Value,key:&str)->&'a str{value.get(key).and_then(Value::as_str).unwrap_or("")}
-fn marker(value:&Value)->bool{text(value,"k")=="math"&&[rules::read_rust_owned_record_effect_operation("read"),rules::read_rust_owned_record_effect_operation("write"),loops::read_rust_owned_record_loop_operation()].iter().any(|operation|operation==text(value,"op"))}
-fn has_write(value:&Value)->Result<bool>{let mut pending=vec![value];let mut count=0;while let Some(value)=pending.pop(){if !value.is_object()&&!value.is_array(){continue;}count+=1;if count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("the assertion exceeds its source inspection budget"));}if marker(value)&&text(value,"op")==rules::read_rust_owned_record_effect_operation("write"){return Ok(true);}match value{Value::Array(values)=>pending.extend(values),Value::Object(values)=>pending.extend(values.values()),_=>{}}}Ok(false)}
+fn marker(value:&Value)->bool{text(value,"k")=="math"&&(["read","write","packet"].iter().any(|role|rules::read_rust_owned_record_effect_operation(role)==text(value,"op"))||loops::read_rust_owned_record_loop_operation()==text(value,"op"))}
+fn has_write(value:&Value)->Result<bool>{let mut pending=vec![value];let mut count=0;while let Some(value)=pending.pop(){if !value.is_object()&&!value.is_array(){continue;}count+=1;if count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("the assertion exceeds its source inspection budget"));}if marker(value)&&["write","packet"].iter().any(|role|rules::read_rust_owned_record_effect_operation(role)==text(value,"op")){return Ok(true);}match value{Value::Array(values)=>pending.extend(values),Value::Object(values)=>pending.extend(values.values()),_=>{}}}Ok(false)}
 fn contains(value:&Value,callables:bool,count:&mut usize)->Result<bool>{let mut pending=vec![value];while let Some(value)=pending.pop(){if !value.is_object()&&!value.is_array(){continue;}*count+=1;if *count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("the actual state expression exceeds its inspection budget"));}if marker(value){return Ok(true);}if !callables&&text(value,"k")=="lambda"{continue;}match value{Value::Array(values)=>pending.extend(values),Value::Object(values)=>pending.extend(values.values()),_=>{}}}Ok(false)}
 fn wrap(bindings:Vec<Value>,mut value:Value)->Value{for mut binding in bindings.into_iter().rev(){binding["body"]=value;value=binding;}value}
 fn data_inventory(items:&Value,path:&[String],output:&mut Vec<(Vec<String>,Value)>){for item in items.as_array().into_iter().flatten(){if text(item,"k")=="module"{let mut nested=path.to_vec();nested.push(text(item,"name").to_owned());data_inventory(&item["items"],&nested,output);}else if text(item,"k")=="data"{output.push((path.to_vec(),item.clone()));}}}
@@ -40,6 +40,31 @@ impl Lowered{fn plain(value:Value,environment:Environment)->Self{Self{bindings:V
 enum PacketFailure{Expression(Value),Packet(Value,usize,Box<PacketFailure>)}
 struct Transport<'a>{parser:&'a mut RustParser,path:Vec<String>,declarations:HashMap<String,Slot>,data:Vec<(Vec<String>,Value)>,work:usize,inspection:usize,loop_helpers:Vec<(usize,Vec<String>,Value)>,loop_names:HashMap<usize,Vec<String>>}
 impl Transport<'_>{
+ fn collection_packet(&mut self,mut node:Value,environment:Environment,depth:usize)->Result<Lowered>{
+  let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state packet"))?;
+  if index.to_string()!=text(&node,"name")||!node["args"].as_array().is_some_and(|args|args.len()==1&&args[0]["spread"]==false){return Err(fail("a private state packet needs its actual single evaluated operand"));}
+  let (CollectionPlace{slot,layouts,..},ty)=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.packets.get(index)).cloned().ok_or_else(||fail("unknown actual state packet"))?;
+  let expected=encode(&ty)?;
+  let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,Some(&expected))?;
+  let (_,current)=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable state packet cannot leave its actual lexical declaration scope"))?;
+  let packet=self.parser.fresh_product_binding();
+  let root=self.parser.fresh_product_binding();
+  let position=|role|match rules::read_rust_owned_record_effect_packet_position(role){
+   0.0=>Ok(json!({"k":"tupleIndex","object":name(&packet),"index":0})),
+   1.0=>Ok(json!({"k":"tupleIndex","object":name(&packet),"index":1})),
+   _=>Err(fail("a write packet lost its actual result and state positions")),
+  };
+  result.bindings.push(json!({"k":"let","name":packet,"type":expected,"value":result.value}));
+  let mut updated=position("state")?;
+  if !layouts.is_empty(){
+   let rebuilt=self.parser.rebuild_record_state(&layouts,0,decode(name(current))?,decode(updated)?,None)?;
+   updated=encode(&rebuilt)?;
+  }
+  result.bindings.push(json!({"k":"let","name":root,"value":updated}));
+  result.environment.insert(slot.lexical.clone(),(slot,root));
+  result.value=position("result")?;
+  Ok(result)
+ }
  fn charge(&mut self,depth:usize)->Result<()>{self.work+=1;if self.work>rules::read_rust_owned_record_effect_limit("work") as usize||depth>rules::read_rust_owned_record_effect_limit("depth") as usize{return Err(fail("ordered state construction exceeds its finite source budget"));}Ok(())}
  fn ty(&self,node:&Value,expected:Option<&Value>)->Result<Option<Value>>{
   if let Some(expected)=expected.filter(|value|!value.is_null()){return Ok(Some(expected.clone()));}
@@ -103,6 +128,7 @@ impl Transport<'_>{
   let form=rules::read_rust_owned_record_effect_form(&kind,text(&node,"op"));
   if form=="proposition comparison"{let tuple=json!({"k":"tuple","items":[node["prop"]["left"].take(),node["prop"]["right"].take()]});let mut result=self.ordered(tuple,&["items".to_owned()],environment,depth+1)?;node["prop"]["left"]=result.value["items"][0].take();node["prop"]["right"]=result.value["items"][1].take();result.value=node;return Ok(result);}
   if form=="read state"{let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state read"))?;let slot=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.reads.get(index)).ok_or_else(||fail("unknown actual state read"))?;let (_,current)=environment.get(&slot.lexical).ok_or_else(||fail("a mutable read needs its actual initialized lexical state in this callable"))?;return Ok(Lowered::plain(name(current),environment));}
+  if form=="write state packet"{return self.collection_packet(node,environment,depth);}
   if form=="write state"{let index=text(&node,"name").parse::<usize>().map_err(|_|fail("invalid private state write"))?;let (slot,layouts,field)={let write=self.parser.owned_record_state.effects.as_ref().and_then(|effects|effects.writes.get(index)).ok_or_else(||fail("unknown actual state write"))?;(write.slot.clone(),write.layouts.clone(),write.field.clone())};let expected=field.ty.as_ref().map(|ty|encode(&self.parser.record_source_type(ty,&field.path))).transpose()?;let mut result=self.visit(node["args"][0]["value"].take(),environment,depth+1,expected.as_ref())?;let previous=result.environment.get(&slot.lexical).ok_or_else(||fail("a mutable write cannot leave its actual lexical declaration scope"))?.1.clone();let rhs=self.parser.fresh_product_binding();let fresh=self.parser.fresh_product_binding();let rebuilt=self.parser.rebuild_record_state(&layouts,0,decode(name(&previous))?,decode(name(&rhs))?,None)?;let mut binding=json!({"k":"let","name":rhs,"value":result.value});if let Some(ty)=expected{binding["type"]=ty;}result.bindings.push(binding);result.bindings.push(json!({"k":"let","name":fresh,"type":encode(&self.parser.record_source_type(slot.origin.ty.as_ref().ok_or_else(||fail("a mutable root lost its actual type"))?,&slot.origin.path))?,"value":encode(&rebuilt)?}));result.environment.insert(slot.lexical.clone(),(slot,fresh));result.value=json!({"k":"unit"});return Ok(result);}
   if form=="binding"{let annotation=node.get("type").cloned();let mut first=self.visit(node["value"].take(),environment,depth+1,annotation.as_ref())?;let binding_name=text(&node,"name").to_owned();let mut binding=node.clone();binding.as_object_mut().expect("actual binding").remove("body");binding["value"]=first.value;first.bindings.push(binding);let slot=self.declarations.get(&binding_name).cloned();if let Some(slot)=slot.as_ref(){first.environment.insert(slot.lexical.clone(),(slot.clone(),binding_name));}let body=self.visit(node["body"].take(),first.environment,depth+1,want)?;first.bindings.extend(body.bindings);let mut environment=body.environment;if let Some(slot)=slot{environment.remove(&slot.lexical);}return Ok(Lowered{bindings:first.bindings,value:body.value,environment});}
   if form=="print"{let mut first=self.visit(node["expr"].take(),environment,depth+1,None)?;node["expr"]=first.value;let body=node["body"].take();node["body"]=json!({"k":"unit"});first.bindings.push(json!({"k":"let","name":self.parser.fresh_product_binding(),"value":node}));let result=self.visit(body,first.environment,depth+1,want)?;first.bindings.extend(result.bindings);return Ok(Lowered{bindings:first.bindings,value:result.value,environment:result.environment});}
@@ -160,14 +186,51 @@ impl Transport<'_>{
  fn items(&mut self,items:&mut Value,path:&[String])->Result<()>{for item in items.as_array_mut().into_iter().flatten(){if text(item,"k")=="module"{let mut nested=path.to_vec();nested.push(text(item,"name").to_owned());self.items(&mut item["items"],&nested)?;}else if text(item,"k")=="fn"&&contains(&item["body"],true,&mut self.inspection)?{self.path=path.to_vec();let body=self.alpha(item["body"].take(),&HashMap::new(),0)?;let expected=item.get("ret").cloned();let result=self.visit(body,Environment::new(),0,expected.as_ref())?;item["body"]=wrap(result.bindings,result.value);}}Ok(())}
 }
 impl RustParser{
- fn charge_owned_record_effect(&self)->Result<()>{if self.owned_record_state.effects.as_ref().is_some_and(|effects|effects.reads.len()+effects.writes.len()>=rules::read_rust_owned_record_effect_limit("work") as usize){return Err(fail("the actual state operations exceed their source budget"));}Ok(())}
+ pub(super) fn check_collection_operand_effects(&self,left:&SExpr,right:&SExpr)->Result<()>{
+  let Some(place)=super::owned_record_loops::place(self,left) else{return Ok(());};
+  if self.origins.collecting{return Ok(());}
+  let slot=place.slot;
+  let fields=place.indices.iter().map(|index|*index as f64).collect::<Vec<_>>();
+  let target=super::owned_record_policy::state::read_rust_owned_record_state_field_identity(&slot.root,&fields);
+  let expression=encode(right)?;
+  let mut pending=vec![&expression];
+  let mut count=0;
+  while let Some(value)=pending.pop(){
+   if !value.is_object()&&!value.is_array(){continue;}
+   count+=1;
+   if count>rules::read_rust_owned_record_effect_limit("inspection") as usize{return Err(fail("collection operands exceed their source inspection budget"));}
+   if text(value,"k")=="math"
+    && let Some(EffectSource::Write{slot:other,target:written})=self.owned_record_effect_source_parts(text(value,"op"),text(value,"name"),value["args"].as_array().map_or(0,Vec::len))
+    && other.lexical==slot.lexical
+    && (written==target.as_str()||super::owned_record_policy::fields::test_rust_owned_record_field_descendant(written,&target)||super::owned_record_policy::fields::test_rust_owned_record_field_descendant(&target,written))
+   {return Err(fail("a later operand cannot mutate an already borrowed collection"));}
+   match value{Value::Array(values)=>pending.extend(values),Value::Object(values)=>pending.extend(values.values()),_=>{}}
+  }
+  Ok(())
+ }
+ fn charge_owned_record_effect(&self)->Result<()>{if self.owned_record_state.effects.as_ref().is_some_and(|effects|effects.reads.len()+effects.writes.len()+effects.packets.len()>=rules::read_rust_owned_record_effect_limit("work") as usize){return Err(fail("the actual state operations exceed their source budget"));}Ok(())}
+ pub(super) fn owned_record_effect_collection_packet(&mut self,place:CollectionPlace,ty:Type,packet:SExpr,origin:SourceOrigin)->Result<SExpr>{
+  self.charge_owned_record_effect()?;
+  let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("state packet transport is not active"))?;
+  let ordinal=effects.packets.len();
+  effects.packets.push((place,ty));
+  let mut node=decode(json!({"k":"math","op":rules::read_rust_owned_record_effect_operation("packet"),"name":ordinal.to_string(),"args":[{"value":encode(&packet)?,"spread":false}]}))?;
+  node.span=packet.span;
+  self.origins.mark(&node,origin);
+  Ok(node)
+ }
  pub(super) fn read_owned_record_effect_assignment(&mut self,path:&[String])->Result<Option<SExpr>>{self.owned_record_state.effects.get_or_insert_with(OwnedRecordEffects::default);Ok(self.read_record_state_assignment(path)?.map(|value|value.value))}
  pub(super) fn begin_owned_record_short_circuit(&self)->Option<HashMap<String,String>>{self.owned_record_state.effects.as_ref().map(|_|self.origins.snapshot_owned_bindings())}
  pub(super) fn end_owned_record_short_circuit(&mut self,before:Option<HashMap<String,String>>){if let Some(before)=before{let after=self.origins.snapshot_owned_bindings();self.origins.join_owned_bindings(&before,&after,true,true);}}
  pub(super) fn owned_record_effect_read(&mut self,slot:Slot,span:Option<Span>)->Result<SExpr>{self.charge_owned_record_effect()?;let origin=slot.origin.clone();let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("state read transport is not active"))?;let ordinal=effects.reads.len();effects.reads.push(slot);let mut value=decode(json!({"k":"math","op":rules::read_rust_owned_record_effect_operation("read"),"name":ordinal.to_string(),"args":[]}))?;value.span=span;self.origins.mark(&value,origin);Ok(value)}
  pub(super) fn owned_record_effect_write(&mut self,slot:Slot,layouts:Vec<Layout>,field:SourceOrigin,target:String,value:SExpr,path:&[String],span:Option<Span>)->Result<SExpr>{self.charge_owned_record_effect()?;let effects=self.owned_record_state.effects.as_mut().ok_or_else(||fail("state write transport is not active"))?;let ordinal=effects.writes.len();effects.writes.push(Write{slot,layouts,field,target});let mut node=decode(json!({"k":"math","op":rules::read_rust_owned_record_effect_operation("write"),"name":ordinal.to_string(),"args":[{"value":encode(&value)?,"spread":false}]}))?;node.span=span;let origin=SourceOrigin::with_type(super::UNIT,path,Vec::new());self.origins.mark(&node,origin);Ok(node)}
+ pub(super) fn is_collection_mutation_statement(&self,node:&SExpr)->bool{
+  let super::SNode::Math{op,name,args}=&node.node else{return false;};
+  op==rules::read_rust_owned_record_effect_operation("packet")
+   && matches!(self.owned_record_effect_source_parts(op,name,args.len()),Some(EffectSource::Write{..}))
+ }
  pub(super) fn owned_record_effect_source(&self,node:&SExpr)->Option<EffectSource<'_>>{let super::SNode::Math{op,name,args}=&node.node else{return None;};self.owned_record_effect_source_parts(op,name,args.len())}
- pub(super) fn owned_record_effect_source_parts(&self,op:&str,name:&str,arity:usize)->Option<EffectSource<'_>>{let index=name.parse::<usize>().ok()?;if index.to_string()!=name{return None;}let effects=self.owned_record_state.effects.as_ref()?;if op==rules::read_rust_owned_record_effect_operation("read")&&arity==0{return effects.reads.get(index).map(EffectSource::Read);}if op==rules::read_rust_owned_record_effect_operation("write")&&arity==1{return effects.writes.get(index).map(|write|EffectSource::Write{slot:&write.slot,target:&write.target});}None}
+ pub(super) fn owned_record_effect_source_parts(&self,op:&str,name:&str,arity:usize)->Option<EffectSource<'_>>{let index=name.parse::<usize>().ok()?;if index.to_string()!=name{return None;}let effects=self.owned_record_state.effects.as_ref()?;if op==rules::read_rust_owned_record_effect_operation("read")&&arity==0{return effects.reads.get(index).map(EffectSource::Read);}if op==rules::read_rust_owned_record_effect_operation("write")&&arity==1{return effects.writes.get(index).map(|write|EffectSource::Write{slot:&write.slot,target:&write.target});}if op==rules::read_rust_owned_record_effect_operation("packet")&&arity==1{return effects.packets.get(index).map(|(place,_)|EffectSource::Write{slot:&place.slot,target:&place.target});}None}
  pub(super) fn finish_owned_record_effects(&mut self,program:&mut SProgram)->Result<()>{
   if self.owned_record_state.effects.is_none(){return Ok(());}if self.origins.collecting&&self.owned_record_state.effects.as_ref().is_some_and(|effects|effects.loops.entries.iter().any(|entry|entry.admission.is_none())){return Ok(());}
   let mut value=encode(program)?;if !contains(&value,true,&mut 0)?{return Ok(());}let mut data=Vec::new();data_inventory(&value["items"],&[],&mut data);let mut transport=Transport{parser:self,path:Vec::new(),declarations:HashMap::new(),data,work:0,inspection:0,loop_helpers:Vec::new(),loop_names:HashMap::new()};transport.items(&mut value["items"],&[])?;transport.path.clear();if value["main"].is_object(){value["main"]=transport.main(value["main"].take())?;}if contains(&value,true,&mut 0)?{return Err(fail("a private record state operation escaped its ordered consumer"));}

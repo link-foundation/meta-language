@@ -11,6 +11,7 @@
 //! Mirrors `js/src/translation/rust.js`.
 
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 use std::sync::Arc;
 
 use super::aborts::rust_macro_message;
@@ -50,6 +51,7 @@ mod items;
 mod ordinary_completions;
 mod expression_completions;
 mod standard_sum_completions;
+mod standard_collections;
 mod owned_local_state;
 mod owned_record_updates;
 mod owned_record_places;
@@ -172,6 +174,7 @@ pub use source_profiles::{
     parse_rust_with_pure_unit_call_model, parse_rust_with_runtime_shell_model,
     parse_rust_with_scalar_loop_model, parse_rust_with_shared_array_handle_source_model,
     parse_rust_with_shared_array_handle_source_model_and_version, parse_rust_with_source_models,
+    parse_rust_with_standard_collection_source_model,
     parse_rust_with_source_profiles, parse_rust_with_source_signature_model,
     parse_rust_with_source_type_owners, parse_rust_with_source_type_owners_and_version,
     parse_rust_with_source_version, parse_rust_with_source_version_and_signature_model, parse_rust_with_type_namespace_model,
@@ -230,6 +233,7 @@ struct SourceProfiles<'a> {
     type_namespace: &'a str,
     pure_unit_call: &'a str,
     local_value_state: &'a str,
+    standard_collections: Option<&'a Rc<dyn super::rust_standard_collection_carriers::CollectionSourceDeclarations>>,
 }
 
 fn parse_rust_with_selected_profiles(
@@ -252,6 +256,7 @@ fn parse_rust_with_selected_profiles(
         pure_unit_call: pure_unit_call_model,
         local_value_state: local_value_state_model,
         retain_source_type_owners: _,
+        standard_collections: _,
     } = profiles;
     if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_interpretation(
         shared_array_handle_source_model,
@@ -463,6 +468,7 @@ fn parse_rust_with_selected_profiles(
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
     source_origins.type_catalog = origins.type_catalog;
     source_origins.value_catalog = origins.value_catalog;
+    source_origins.standard_collection_owners = origins.standard_collection_owners;
     source_origins.collecting = true;
     source_origins.unit_clone_facts = origins.unit_clone_facts;
     source_origins.nominal_copy_derivations = origins.nominal_copy_derivations;
@@ -477,6 +483,7 @@ fn parse_rust_with_selected_profiles(
         original_source.clone(),
     );
     syntax.source_version_minor = source_version_minor;
+    syntax.inherit_standard_collection_source(declarations.standard_collections);
     syntax.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(syntax.ordinary_completion_context(),source_version_minor);
     syntax.origins.borrowed_vector_source_enabled=crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(source_signature_model,syntax.ordinary_completion_context(),source_version_minor);
     syntax.source_constant_initializers = declarations.source_constant_initializers;
@@ -496,6 +503,7 @@ fn parse_rust_with_selected_profiles(
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
     if super::check::check_program(&surface).is_err() && shared_array_handle_source_model.is_empty()
+        && profiles.standard_collections.is_none()
         && !syntax.origins.standard_sum_source_needs_final_admission
         && !syntax.origins.borrowed_vector_needs_final_admission
     {
@@ -509,10 +517,12 @@ fn parse_rust_with_selected_profiles(
         original_source,
     );
     parser.source_version_minor = source_version_minor;
+    parser.inherit_standard_collection_source(syntax.standard_collections);
     parser.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(parser.ordinary_completion_context(),source_version_minor);
     parser.origins.borrowed_vector_source_enabled=crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(source_signature_model,parser.ordinary_completion_context(),source_version_minor);
     parser.origins.type_catalog = syntax.origins.type_catalog;
     parser.origins.value_catalog = syntax.origins.value_catalog;
+    parser.origins.standard_collection_owners = syntax.origins.standard_collection_owners;
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
     parser.origins.nominal_copy_derivations = syntax.origins.nominal_copy_derivations;
     parser.origins.nominal_copy_owners = syntax.origins.nominal_copy_owners;
@@ -525,7 +535,11 @@ fn parse_rust_with_selected_profiles(
     parser.primitive_imports = syntax.primitive_imports;
     parser.named_records = syntax.named_records;
     parser.inherent_methods = syntax.inherent_methods;
-    parser.file()
+    let surface = parser.file()?;
+    if profiles.standard_collections.is_some() {
+        super::check::check_program(&surface)?;
+    }
+    Ok(surface)
 }
 
 /// Where a sequence of items ends: at the end of the file or at a module's `}`.
@@ -572,6 +586,7 @@ struct RustParser {
     source_constant_tokens: Arc<Vec<Token>>,
     shared_array_handle_source_model: String,
     shared_array_state: shared_array_handles::SharedArrayState,
+    standard_collections: Option<standard_collections::StandardCollectionSource>,
     const_function_model: String,
     const_function_keyword: Option<Token>,
     original_source: Option<Arc<str>>,
@@ -660,6 +675,10 @@ impl RustParser {
         origins.owned_binding_excluded =
             !profiles.scalar_loop.is_empty() || !profiles.const_function.is_empty();
         let source_constant_tokens = Arc::new(tokens.clone());
+        let mut owned_record_state = owned_record_state::OwnedRecordState::default();
+        if profiles.standard_collections.is_some() {
+            owned_record_state.effects = Some(Default::default());
+        }
         Self {
             source_constant_tokens,
             source_version_minor: 0.0,
@@ -673,6 +692,9 @@ impl RustParser {
             source_constant_functions: HashMap::new(),
             shared_array_handle_source_model: profiles.shared_array_handle_source.to_owned(),
             shared_array_state: shared_array_handles::SharedArrayState::default(),
+            standard_collections: profiles
+                .standard_collections
+                .map(|library| standard_collections::StandardCollectionSource::new(Rc::clone(library))),
             const_function_model: profiles.const_function.to_owned(),
             const_function_keyword: None,
             original_source,
@@ -722,7 +744,7 @@ impl RustParser {
             iterator_item_type_inference_origin: None,
             reserved_binding_names,
             named_records: HashMap::new(),
-            owned_record_state: owned_record_state::OwnedRecordState::default(),
+            owned_record_state,
             inherent_owner: None,
             declaration_self_owner: None,
             inherent_methods: HashMap::new(),

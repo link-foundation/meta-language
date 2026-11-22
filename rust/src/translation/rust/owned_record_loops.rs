@@ -27,10 +27,10 @@ pub(super) struct FiniteRecordLoopState{pub(super) entries:Vec<LoopEntry>,pub(su
 #[derive(serde::Serialize)]
 struct LoopProjection<'a>{guard:&'a SExpr,body:&'a SExpr,types:Vec<&'a Option<Type>>}
 fn fail(reason:&str,span:Option<Span>)->super::TranslationError{unsupported("Rust finite record loop",reason,span)}
-struct Place<'a>{slot:&'a Slot,indices:Vec<usize>,origin:&'a SourceOrigin}
+pub(super) struct Place<'a>{pub(super) slot:&'a Slot,pub(super) indices:Vec<usize>,pub(super) origin:&'a SourceOrigin}
 struct Counter{lexical:String,indices:Vec<usize>,target:String,ty:Type}
 fn numeral(node:&SExpr,value:&str)->bool{matches!(&node.node,SNode::Num{value:actual,ty}if actual==value&&ty.as_ref().is_none_or(|ty|matches!(ty,Type::Fixed{bits:8,signed:false})))}
-fn place<'a>(parser:&'a RustParser,node:&SExpr)->Option<Place<'a>>{
+pub(super) fn place<'a>(parser:&'a RustParser,node:&SExpr)->Option<Place<'a>>{
  if let Some(EffectSource::Read(slot))=parser.owned_record_effect_source(node){return Some(Place{slot,indices:Vec::new(),origin:&slot.origin});}
  let SNode::Match{scrutinees,rows}=&node.node else{return None;};if scrutinees.len()!=1||rows.len()!=1||rows[0].patterns.len()!=1{return None;}
  let SPatternNode::Ctor{path,args}=&rows[0].patterns[0].node else{return None;};let SNode::Name{path:names}=&rows[0].body.node else{return None;};if names.len()!=1{return None;}

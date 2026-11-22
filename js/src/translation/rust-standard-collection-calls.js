@@ -15,6 +15,8 @@ import {testRustExclusiveSourcePlaceOverlap} from './rust-exclusive-source-loan-
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {readRustSourceTypeOwner} from './rust-source-signatures.js';
 const fail=(reason,span)=>{throw unsupported('Rust standard collection source call',reason,span);};
+const collectionMutationStatements=new WeakSet();
+export function testRustStandardCollectionSourceDiscard(node){return collectionMutationStatements.has(node);}
 const copy=value=>structuredClone(value),name=value=>({k:'name',path:[value]});
 function sourceFunction(parser,expected,arity,span){const library=parser.standardCollectionSource.library,entry=library.program.declarations.get(expected);if(entry?.k!=='fn'||!entry.body||entry.params.length!==arity)fail('the complete actual projected library callable is unavailable: '+expected,span);return {entry,path:['crate',...expected.split('.')]};}
 function sourceHandlers(parser,span){const supplied=parser.standardCollectionSource.library.sourceHandlers;return {invalid:(message='collection source protocol mismatch')=>supplied.invalid({k:'str',value:message,span}),resource:(state,reason)=>supplied.resource(state,reason)};}
@@ -26,13 +28,16 @@ function exactArgumentOrigin(parser,node,expectedDomain,borrowed,path,span,expec
  if(literal&&expected?.type.kind==='fixed'&&expectedDomain!=='String'&&expectedDomain!=='bool'){
   literal.type=copy(expected.type);const inferred={...actual,type:copy(expected.type),sourceOwner:copy(expected.sourceOwner),proven:true,copyEvidence:true};parser.origins.mark(node,inferred);actual=inferred;
  }
+ if(!borrowed&&actual.wrappers.length!==0)fail('collection insertion requires a direct owned source value',span);
  const transferred=parser.origins.ownedArgumentTransfers.has(node);if(!transferred)checkRustOwnedOrigin(parser.origins,actual,span);
  let owner=actual.expandedSourceOwner??actual.sourceOwner;
  if(!owner&&actual.type?.kind==='string')owner=readRustSourceTypeOwner(parser,[actual.textSourceModel==='string slice'?'str':'String'],[],actual.type);
  let domain=readRustStandardCollectionSourceScalarDomain({...actual,sourceOwner:owner,wrappers:[]},parser.standardCollectionSource.pointerWidth);
  if(expectedDomain==='String'&&borrowed&&actual.type?.kind==='string'&&actual.textSourceModel==='string slice'&&actual.wrappers.every(layer=>layer==='reference')){domain='str';owner={kind:'primitive',path:['str'],arguments:[]};}
  if(!owner&&node.k==='str'&&expectedDomain==='String'&&borrowed){domain='str';owner={kind:'primitive',path:['str'],arguments:[]};}
- const argument={domain,proven:actual.proven===true,available:true,borrowed:borrowed&&actual.wrappers.length>0,ownedTransfer:!borrowed&&domain==='String'&&(transferred||parser.origins.availableOwnedBinding(actual)||actual.sourceOwnedResultProof===true),sourceOwner:owner};
+ const local=parser.origins.collecting&&node.k==='name'&&node.path.length===1&&parser.origins.scope.has(node.path[0]);
+ const ownedTransfer=!borrowed&&domain==='String'&&actual.wrappers.length===0&&(transferred||parser.origins.availableOwnedBinding(actual)||actual.sourceOwnedResultProof===true||local);
+ const argument={domain,proven:actual.proven===true,available:true,borrowed:borrowed&&(node.k==='str'||actual.wrappers.length===1&&actual.wrappers[0]==='reference'),ownedTransfer,sourceOwner:owner};
  const invalid=readRustStandardCollectionArgumentOriginError(argument,expectedDomain,borrowed);if(invalid)fail(invalid,span);return {actual,argument};
 }
 function encodeArgument(parser,node,domain,type,span){
@@ -106,6 +111,16 @@ export function readRustStandardCollectionSourceConstructor(parser,segments,args
  const context=parser.standardCollectionSource,library=context.library,helper=sourceFunction(parser,'createRustStandardCollectionState',6,span),root=parser.freshProductBinding(),call={$:'rustStandardCollectionCallOrigin',owner:row.origin.resolvedOwner,typeIdentity:row.origin.typeIdentity,receiverRoot:root,method,dispatchOwner:method==='default'?(owner?'core::default::Default':trait):owner,proven:true,shadowed:false,mutable:false,available:false,overlappingLoan:false,arguments:[]},constants=[row.origin,row.keyDomain,row.valueDomain,row.pointerWidth,root,call],application={k:'app',fn:{k:'name',path:helper.path},args:constants.map((value,index)=>encodeRustStandardCollectionSourceConstant(library,value,helper.entry.params[index].type,span)),span},handlers=sourceHandlers(parser,span),body=matchRustStandardCollectionSourceVariant(parser,library,helper.entry.ret,application,'rustCollectionCreated',fields=>fields.get('state')?wrapRustStandardCollectionSourceState(row,fields.get('state').expression,span):handlers.invalid(),(tag,fields)=>tag==='rustCollectionResourceLimit'?handlers.resource(fields.get('state')?.expression,fields.get('reason')?.expression):handlers.invalid(),span),origin=resultOrigin(parser,row,'new',path,span);
  return parser.origins.mark(body,origin);
 }
+export function readRustStandardCollectionSourceCloneCall(parser,segments,args,path,span){
+ if(!parser.standardCollectionSource||segments.at(-1)!=='clone')return null;
+ const resolved=parser.resolve(segments,path),owner=resolved.slice(0,-1).join('::');
+ if(!['core::clone::Clone','std::clone::Clone'].includes(owner))return null;
+ if(parser.origins.lookupTypeOwner(segments.slice(0,-1),path)||parser.origins.lookupTypeOwner([resolved[0]],path)||parser.origins.scope.has(segments[0]))fail('explicit collection Clone retains its actual unshadowed standard trait owner',span);
+ const actual=args[0]&&parser.origins.origin(args[0],path);
+ if(!actual||!readRustStandardCollectionSourceOrigin(parser,actual))return null;
+ if(args.length!==1||actual.wrappers.length!==1||actual.wrappers[0]!=='reference')throw typeError('standard collection Clone requires its actual single shared receiver',span);
+ return readRustStandardCollectionSourceMethod(parser,args[0],{value:'clone'},[],span,path);
+}
 export function readRustStandardCollectionSourceMethod(parser,receiver,method,args,span,path=parser.modulePath){
  const context=parser.standardCollectionSource;if(!context)return null;const actual=parser.origins.origin(receiver,path),row=readRustStandardCollectionSourceOrigin(parser,actual);if(!row)return null;
  if(parser.standardCollectionSourceIteratorReader&&['iter','keys','values'].includes(method.value))return parser.standardCollectionSourceIteratorReader(receiver,method,args,path,span);
@@ -127,7 +142,12 @@ export function readRustStandardCollectionSourceMethod(parser,receiver,method,ar
   const scalarType=packet.entry.params[2].type.element,argumentList={k:'array',element:projectRustStandardCollectionLibraryType(scalarType),items:args.map((_,index)=>({value:encodeArgument(parser,references[index+1],index===0?row.keyDomain:row.valueDomain,scalarType,span),spread:false})),span},application={k:'app',fn:{k:'name',path:packet.path},args:[kernelState,{k:'str',value:operation,span},argumentList,metadata,{k:'str',value:projection,span}],span};
   return matchRustStandardCollectionSourceVariant(parser,library,packet.entry.ret,application,'rustCollectionPacketNormal',normal=>{const values=normal.get('values'),writeback=normal.get('writeback');if(values?.type.kind!=='tuple'||values.type.elements.length!==2||!writeback)fail('actual kernel packet retains result zero and state one',span);const result=decodeResult(parser,row,operation,{k:'tupleIndex',object:values.expression,index:0},values.type.elements[0],origin,span),state=wrapRustStandardCollectionSourceState(row,{k:'tupleIndex',object:values.expression,index:1},span),tuple={k:'tuple',items:[result,state],span};return {k:'if',cond:mutation?writeback.expression:{k:'unary',op:'not',arg:writeback.expression},then:tuple,else:handlers.invalid('kernel packet writeback does not match the actual source operation'),span};},(tag,fields)=>tag==='rustCollectionResourceLimit'?handlers.resource(fields.get('state')?.expression,fields.get('reason')?.expression):handlers.invalid(),span);
  },()=>handlers.invalid(),span),span),span);
- const operands=[receiver,...args];if(mutation)return recordRustExclusiveSourcePacketEffect(parser,wrapper.path,operands,wrapper.parameters,origin,[{index:0,...place}],span);
+ const operands=[receiver,...args];
+ if(mutation){
+  const result=recordRustExclusiveSourcePacketEffect(parser,wrapper.path,operands,wrapper.parameters,origin,[{index:0,...place}],span);
+  collectionMutationStatements.add(result);
+  return result;
+ }
  const result={k:'tupleIndex',object:{k:'app',fn:{k:'name',path:wrapper.path},args:operands,span},index:0,span};return snapshotOrigin?parser.origins.markVectorConstructor(result,origin):parser.origins.mark(result,origin);
 }
 

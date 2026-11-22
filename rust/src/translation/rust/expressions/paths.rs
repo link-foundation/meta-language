@@ -15,6 +15,10 @@ impl RustParser {
         options: Options,
     ) -> Result<SExpr> {
         let segments = self.path_segments("expression")?;
+        self.refuse_collection_library_path(&segments, path, token)?;
+        if let Some(value) = self.standard_collection_constructor(&segments, path, token)? {
+            return Ok(value);
+        }
         if let Some(value)=self.read_generic_type_alias_constructor(&segments,path,token)? {
             return Ok(value);
         }
@@ -187,6 +191,12 @@ impl RustParser {
         let mut args = self.contextual_call_arguments(path, &callee)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if let Some(cloned) = self.standard_collection_clone_call(&segments, &args, path, range)? {
+            return Ok(cloned);
+        }
+        if let Some(comparison) = self.standard_collection_equality_call(&segments, &args, path, range)? {
+            return Ok(comparison);
+        }
         if let Some(vector)=self.read_borrowed_vector_empty_source_constructor(&segments,&args,path,range)?{return Ok(vector);}
         if let Some(vector)=self.read_owned_vector_empty_constructor(&segments,&args,path,range)?{return Ok(vector);}
         if let Some(mut origin) = self.type_alias_empty_vector_origin(&segments, path) {

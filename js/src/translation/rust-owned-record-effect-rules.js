@@ -1,6 +1,6 @@
 import {readRustExpressionCompletionForm,readRustExpressionCompletionChildRoles,readRustExpressionCompletionLimit} from './rust-expression-completion-rules.js';
 /** @param {string} kind @param {string} operation @returns {string} */
-export function readRustOwnedRecordEffectForm(kind,operation){if(kind==='math'&&operation==='rustOwnedRecordStateRead')return 'read state';if(kind==='math'&&operation==='rustOwnedRecordStateWrite')return 'write state';if(kind==='propositionValue')return 'proposition comparison';return readRustExpressionCompletionForm(kind,operation);}
+export function readRustOwnedRecordEffectForm(kind,operation){if(kind==='math'&&operation==='rustOwnedRecordStateRead')return 'read state';if(kind==='math'&&operation==='rustOwnedRecordStateWrite')return 'write state';if(kind==='math'&&operation==='rustOwnedRecordStatePacket')return 'write state packet';if(kind==='propositionValue')return 'proposition comparison';return readRustExpressionCompletionForm(kind,operation);}
 /** All added roles are ordinary source operand order. Lazy branches remain
  * separate forms and callable bodies remain separate callable boundaries.
  * @param {string} kind @returns {string[]} */
@@ -14,7 +14,9 @@ export function readRustOwnedRecordEffectChildren(kind){
  return [];
 }
 /** @param {string} operation @returns {string} */
-export function readRustOwnedRecordEffectOperation(operation){return operation==='read'?'rustOwnedRecordStateRead':operation==='write'?'rustOwnedRecordStateWrite':'';}
+export function readRustOwnedRecordEffectOperation(operation){return operation==='read'?'rustOwnedRecordStateRead':operation==='write'?'rustOwnedRecordStateWrite':operation==='packet'?'rustOwnedRecordStatePacket':'';}
+/** @param {string} role @returns {number} */
+export function readRustOwnedRecordEffectPacketPosition(role){return role==='result'?0:role==='state'?1:-1;}
 /** @param {string} kind @returns {number} */
 export function readRustOwnedRecordEffectLimit(kind){return readRustExpressionCompletionLimit(kind);}
 /** @param {boolean} sameCallable @param {boolean} declared @returns {boolean} */

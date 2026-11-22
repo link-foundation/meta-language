@@ -80,6 +80,7 @@ impl RustParser {
         if !self.origins.collecting {
             self.refuse_standard_sum_source_patterns(&program)?;
         }
+        self.finish_standard_collection_source(&mut program)?;
         Ok(program)
     }
 
@@ -350,6 +351,7 @@ impl RustParser {
         let standard_try_from = self.primitive_try_from_import(&full, path);
         let standard_default = self.primitive_default_import(&full, path);
         let standard_sum = self.read_standard_sum_source_import(&full, path);
+        let standard_collection = self.standard_collection_import(&full, path);
         let c = &mut self.cursor;
         if !self.primitive_owner_model.is_empty() && !standard_primitive {
             return Err(unsupported(
@@ -368,6 +370,7 @@ impl RustParser {
             && !standard_try_from
             && !standard_default
             && !standard_sum
+            && !standard_collection
         {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
@@ -407,6 +410,7 @@ impl RustParser {
             || standard_try_from
             || standard_default
             || standard_sum
+            || standard_collection
         {
             full
         } else {
@@ -761,7 +765,7 @@ impl RustParser {
                     tail = Some(expr);
                     continue;
                 }
-                if disposition == "bind" {
+                if disposition == "bind" || self.is_collection_mutation_statement(&expr) {
                     self.origins.consume_owned_binding(&origin, expr.span)?;
                     lets.push(Binding {
                         name: self.fresh_product_binding(),
@@ -908,6 +912,7 @@ impl RustParser {
                 origin.ty.as_ref().map_or("", Type::kind),
                 !origin.wrappers.is_empty(),
             ) != "bind"
+                && !(self.cursor.is(";") && self.is_collection_mutation_statement(&value))
             {
                 return Err(unsupported(
                     "main statement",
@@ -983,6 +988,7 @@ impl RustParser {
         match token.value.as_str() {
             "println" => {
                 for value in args.iter().skip(1) {
+                    self.refuse_collection_observation(value, path, "formatting", false)?;
                     self.refuse_shared_value_observation(value, None, path, value.span)?;
                 }
                 let expr = if args.is_empty() {
@@ -1023,8 +1029,16 @@ impl RustParser {
                     ));
                 }
                 let right = args.remove(1);
+                let left = args.remove(0);
+                let operation = if token.value == "assert_eq" { super::BinaryOp::Eq } else { super::BinaryOp::Ne };
+                let location = span(&token, self.cursor.peek());
+                if let Some(value) = self.standard_collection_comparison(&left, &right, operation, false, path, location)? {
+                    return Ok(SEffect::Assert { prop: prop_of(value), span: location });
+                }
+                self.refuse_collection_observation(&left, path, "assertion comparison", false)?;
+                self.refuse_collection_observation(&right, path, "assertion comparison", false)?;
                 let comparison = SComparison {
-                    left: args.remove(0),
+                    left,
                     right,
                     reference: false,
                     same_value: false,

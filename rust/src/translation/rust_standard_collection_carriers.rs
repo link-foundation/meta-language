@@ -1,15 +1,18 @@
 //! Checked declaration adapters for concrete Rust standard collection carriers.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use super::Span;
 use super::diagnostics::{TranslationError, unsupported};
 use super::ir::{Decl, Program};
+use super::rust_standard_collection_library::RustStandardCollectionSourceLibrary;
 use super::rust_standard_collection_value_packet::{
     RustStandardCollectionOrigin, ml_string::Text, read_rust_standard_collection_kind,
     read_rust_standard_collection_source_origin_error, resolve_rust_standard_collection_owner,
 };
+use super::source_signatures::SourceOwner;
+use super::surface::{SCtor, SData, SExpr, SField, SItem, SProgram};
 use super::types::Type;
 
 type Result<T> = std::result::Result<T, TranslationError>;
@@ -40,11 +43,11 @@ struct CollectionKernelLibrary {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CollectionCarrier {
     model: String,
-    origin: Value,
+    pub(crate) origin: Value,
     key_domain: String,
     value_domain: String,
     pointer_width: u32,
-    concrete_identity: String,
+    pub(crate) concrete_identity: String,
     /// Actual shared nominal state type.
     pub(crate) kernel_type: Type,
     kernel_library: CollectionKernelLibrary,
@@ -150,6 +153,279 @@ impl CollectionOrigin {
 
 fn fail(reason: &str, span: Option<Span>) -> TranslationError {
     unsupported("Rust standard collection source interface", reason, span)
+}
+
+pub(crate) trait CollectionSourceDeclarations {
+    fn program(&self) -> &Program;
+    fn source_program(&self) -> &SProgram;
+    fn callable_names(&self) -> [&str; 3];
+    fn state_and_ordering_names(&self) -> (&str, &str);
+    fn entry_path(&self) -> &'static str;
+    fn source_sha256(&self) -> &str;
+    fn invalid(&self, reason: SExpr) -> SExpr;
+    fn resource(&self, state: SExpr, reason: SExpr) -> SExpr;
+}
+
+pub(crate) fn create_source_carrier(
+    library: &dyn CollectionSourceDeclarations,
+    name: String,
+    owner: &str,
+    domains: &[String],
+    source_version_minor: f64,
+    span: Option<Span>,
+) -> Result<(SData, SourceOwner)> {
+    let set = read_rust_standard_collection_kind(&Text::from_text(owner)) == Text::from_text("set");
+    let (key, value) = match domains {
+        [key] if set => (key.as_str(), "unit"),
+        [key, value] if !set => (key.as_str(), value.as_str()),
+        _ => {
+            return Err(fail(
+                "collection carriers require their complete concrete source domains",
+                span,
+            ));
+        }
+    };
+    let arguments: Vec<_> = domains
+        .iter()
+        .map(|domain| {
+            let (kind, path) = if domain == "String" {
+                (
+                    "library",
+                    vec!["std".to_owned(), "string".to_owned(), domain.clone()],
+                )
+            } else {
+                ("primitive", vec![domain.clone()])
+            };
+            SourceOwner {
+                kind: kind.to_owned(),
+                path,
+                arguments: Vec::new(),
+            }
+        })
+        .collect();
+    let scalar_facts: Vec<_> = domains
+        .iter()
+        .zip(&arguments)
+        .map(|(domain, owner)| {
+            let mut fact =
+                serde_json::json!({"proven": true, "wrappers": [], "sourceOwner": owner});
+            if domain == "String" {
+                fact["textSourceModel"] = Value::String("owned string".to_owned());
+            }
+            fact
+        })
+        .collect();
+    let source_owner = SourceOwner {
+        kind: "library".to_owned(),
+        path: owner.split("::").map(str::to_owned).collect(),
+        arguments,
+    };
+    let identity = format!("{owner}<{}>@64", domains.join(","));
+    let origin = serde_json::json!({
+        "$": "rustStandardCollectionOrigin", "ordinary": true, "proven": true,
+        "shadowed": false, "typeIdentity": identity, "resolvedOwner": owner,
+        "sourceOwner": source_owner, "arguments": scalar_facts, "sourceVersionMinor": source_version_minor,
+        "pointerWidth": 64, "customHasher": false, "customEquality": false
+    });
+    let admitted = CollectionOrigin::deserialize(&origin).map_err(|_| {
+        fail(
+            "collection source origin cannot be represented completely",
+            span,
+        )
+    })?;
+    let reason = read_rust_standard_collection_source_origin_error(
+        admitted.native(),
+        &Text::from_text(key),
+        &Text::from_text(value),
+        64.0,
+    );
+    if !reason.0.is_empty() {
+        return Err(fail(&reason.to_string(), span));
+    }
+    let (state, _) = library.state_and_ordering_names();
+    let [packet, _, _] = library.callable_names();
+    let state_type = Type::Named {
+        path: std::iter::once("crate".to_owned())
+            .chain(state.split('.').map(str::to_owned))
+            .collect(),
+        span: None,
+    };
+    let facet = Box::new(CollectionCarrier {
+        model: "Rust closed standard collections 1".to_owned(),
+        origin,
+        key_domain: key.to_owned(),
+        value_domain: value.to_owned(),
+        pointer_width: 64,
+        concrete_identity: identity,
+        kernel_type: state_type.clone(),
+        kernel_library: CollectionKernelLibrary {
+            model: "Rust standard collection kernel library 1".to_owned(),
+            entry_path: library.entry_path().to_owned(),
+            source_sha256: library.source_sha256().to_owned(),
+            kernel_declaration: state.to_owned(),
+            packet_declaration: packet.to_owned(),
+        },
+    });
+    Ok((
+        SData {
+            name,
+            ctors: vec![SCtor {
+                name: "CollectionState".to_owned(),
+                fields: vec![SField {
+                    name: Some("state".to_owned()),
+                    ty: state_type,
+                    span: None,
+                    optional: false,
+                    rocq_type: None,
+                }],
+            }],
+            span,
+            generated: false,
+            source_standard_collection_library_owner: None,
+            source_standard_collection_carrier: Some(facet),
+            source_unit_clone_derivation: None,
+            source_field_signatures: None,
+        },
+        source_owner,
+    ))
+}
+
+impl<Invalid, Resource> CollectionSourceDeclarations
+    for RustStandardCollectionSourceLibrary<Invalid, Resource>
+where
+    Invalid: Fn(SExpr) -> SExpr,
+    Resource: Fn(SExpr, SExpr) -> SExpr,
+{
+    fn program(&self) -> &Program {
+        self.program()
+    }
+
+    fn source_program(&self) -> &SProgram {
+        self.source_program()
+    }
+
+    fn callable_names(&self) -> [&str; 3] {
+        self.callable_names()
+    }
+
+    fn state_and_ordering_names(&self) -> (&str, &str) {
+        self.state_and_ordering_names()
+    }
+
+    fn entry_path(&self) -> &'static str {
+        self.entry_path()
+    }
+
+    fn source_sha256(&self) -> &str {
+        self.source_sha256()
+    }
+
+    fn invalid(&self, reason: SExpr) -> SExpr {
+        (self.handlers().invalid)(reason)
+    }
+
+    fn resource(&self, state: SExpr, reason: SExpr) -> SExpr {
+        (self.handlers().resource)(state, reason)
+    }
+}
+
+pub(crate) fn project_source_library(
+    program: &mut SProgram,
+    library: &dyn CollectionSourceDeclarations,
+    carriers: Vec<SItem>,
+) -> Result<()> {
+    fn qualify(path: &str, name: &str) -> String {
+        if path.is_empty() {
+            name.to_owned()
+        } else {
+            format!("{path}.{name}")
+        }
+    }
+
+    fn reject_conflicts(items: &[SItem], path: &str, library: &Program) -> Result<()> {
+        for item in items {
+            let name = qualify(path, item.name());
+            if let SItem::Module(module) = item {
+                reject_conflicts(&module.items, &name, library)?;
+            } else if library.declaration(&name).is_some() {
+                return Err(fail(
+                    "a source declaration cannot replace an actual projected collection library body",
+                    item.span(),
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    fn attach_owners(
+        items: &mut [SItem],
+        path: &str,
+        roles: &mut HashMap<&str, &str>,
+        entry_path: &str,
+        source_sha256: &str,
+    ) -> Result<()> {
+        for item in items {
+            let name = qualify(path, item.name());
+            if let SItem::Module(module) = item {
+                attach_owners(&mut module.items, &name, roles, entry_path, source_sha256)?;
+                continue;
+            }
+            let Some(role) = roles.remove(name.as_str()) else {
+                continue;
+            };
+            let owner = Box::new(CollectionLibraryOwner {
+                model: "Rust standard collection projected library owner 1".to_owned(),
+                entry_path: entry_path.to_owned(),
+                source_sha256: source_sha256.to_owned(),
+                declaration: name,
+                role: role.to_owned(),
+            });
+            match item {
+                SItem::Data(data) if role == "state" => {
+                    data.source_standard_collection_library_owner = Some(owner);
+                }
+                SItem::Fn(function) if role != "state" => {
+                    function.source_standard_collection_library_owner = Some(owner);
+                }
+                _ => {
+                    return Err(fail(
+                        "a projected collection role requires its actual source declaration",
+                        item.span(),
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    reject_conflicts(&program.items, "", library.program())?;
+    let [packet, kernel, equality] = library.callable_names();
+    let (state, ordering) = library.state_and_ordering_names();
+    let mut roles = HashMap::from([
+        (state, "state"),
+        (kernel, "kernel"),
+        (packet, "packet"),
+        (equality, "equality"),
+        (ordering, "ordering"),
+    ]);
+    let mut items = library.source_program().items.clone();
+    attach_owners(
+        &mut items,
+        "",
+        &mut roles,
+        library.entry_path(),
+        library.source_sha256(),
+    )?;
+    if !roles.is_empty() {
+        return Err(fail(
+            "the source projection requires all actual collection library declarations",
+            None,
+        ));
+    }
+    items.extend(carriers);
+    items.append(&mut program.items);
+    program.items = items;
+    Ok(())
 }
 
 fn valid_source_identity(path: &str, sha256: &str) -> bool {

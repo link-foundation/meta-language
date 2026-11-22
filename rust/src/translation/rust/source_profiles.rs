@@ -1,6 +1,51 @@
 //! Existing independently selected Rust source factories.
 //! Public reexports preserve the frontend API and shared parser implementation.
 use super::{Result, SProgram, SourceProfiles, parse_rust_with_selected_profiles};
+use std::rc::Rc;
+use crate::translation::rust_standard_collection_carriers::CollectionSourceDeclarations;
+use crate::translation::rust_standard_collection_library::RustStandardCollectionSourceLibrary;
+use crate::translation::surface::SExpr;
+
+/// Read concrete standard collections against the checked shared source library.
+///
+/// # Errors
+/// Refuses unsupported model, version or target and unproved source operations.
+pub fn parse_rust_with_standard_collection_source_model<Invalid, Resource>(
+    source: &str,
+    model: &str,
+    source_version: &str,
+    pointer_width: u32,
+    library: Rc<RustStandardCollectionSourceLibrary<Invalid, Resource>>,
+) -> Result<SProgram>
+where
+    Invalid: Fn(SExpr) -> SExpr + 'static,
+    Resource: Fn(SExpr, SExpr) -> SExpr + 'static,
+{
+    use crate::translation::rust_standard_collection_value_packet::{
+        ml_string::Text, read_rust_standard_collection_source_version_error,
+    };
+    let fail = |reason: &str| super::unsupported("Rust standard collection source", reason, None);
+    if model != "Rust closed standard collections 1" {
+        return Err(fail("select the exact closed standard collection source profile"));
+    }
+    if pointer_width != 64 {
+        return Err(fail("the Rust source primitive usize/isize interface requires an explicit 64-bit target"));
+    }
+    let minor = super::source_versions::minor(source_version)?;
+    let reason = read_rust_standard_collection_source_version_error(minor);
+    if reason != Text::from_text("") {
+        return Err(fail(&reason.to_string()));
+    }
+    let checked: Rc<dyn CollectionSourceDeclarations> = library;
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            source_version,
+            standard_collections: Some(&checked),
+            ..SourceProfiles::default()
+        },
+    )
+}
 
 /// Read actual standard shared-array handles under their independent source model.
 ///

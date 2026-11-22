@@ -19,6 +19,7 @@ use crate::translation::rust::{
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;
 use std::fmt;
+use std::rc::Rc;
 use std::sync::OnceLock;
 
 mod borrowed_call_diagnostics;
@@ -470,6 +471,42 @@ pub fn create_typed_program_links_with_rust_shared_array_handle_source_model(
             .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSharedArrayHandleSourceModel":model},"userProvenance":provenance});
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
+/// Import actual standard Rust collection operations through the checked source library.
+///
+/// # Errors
+/// Refuses unsupported models, versions, targets and unproved source operations.
+pub fn create_typed_program_links_with_rust_standard_collection_source_model<Invalid, Resource>(
+    source: &str,
+    model: &str,
+    version: &str,
+    pointer_width: u32,
+    library: Rc<crate::RustStandardCollectionSourceLibrary<Invalid, Resource>>,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks>
+where
+    Invalid: Fn(crate::translation::surface::SExpr) -> crate::translation::surface::SExpr + 'static,
+    Resource: Fn(crate::translation::surface::SExpr, crate::translation::surface::SExpr)
+        -> crate::translation::surface::SExpr + 'static,
+{
+    let version = crate::translation::rust::source_versions::canonical(version)
+        .map_err(|failure| error(failure.to_string()))?;
+    let surface = crate::translation::rust::parse_rust_with_standard_collection_source_model(
+        source, model, &version, pointer_width, library,
+    )
+    .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected = serde_json::json!({
+        "sourceProfile": {
+            "language": "Rust",
+            "rustSourceVersion": version,
+            "rustStandardCollectionSourceModel": model,
+            "rustStandardCollectionPointerWidth": pointer_width,
+        },
+        "userProvenance": provenance,
+    });
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 

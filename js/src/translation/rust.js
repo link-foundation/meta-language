@@ -17,7 +17,7 @@ import {readRustStandardCollectionSourceComparison,readRustStandardCollectionSou
 import {finishRustExclusiveSourceVectorHelpers} from './rust-exclusive-source-vectors.js';
 import {initializeRustStandardCollectionSource,readRustStandardCollectionSourceImport,finishRustStandardCollectionSource} from './rust-standard-collection-source.js';
 import {readRustStandardCollectionSourceType} from './rust-standard-collection-types.js';
-import {readRustStandardCollectionSourceConstructor,readRustStandardCollectionSourceMethod,readRustStandardCollectionSourceArguments} from './rust-standard-collection-calls.js';
+import {readRustStandardCollectionSourceConstructor,readRustStandardCollectionSourceMethod,readRustStandardCollectionSourceArguments,readRustStandardCollectionSourceCloneCall,testRustStandardCollectionSourceDiscard} from './rust-standard-collection-calls.js';
 import {readRustStandardCollectionSourcePositionError} from './rust-standard-collection-signatures.js';
 import {requireRustExclusiveSourceModel} from './rust-exclusive-source-signatures.js';
 import {readRustExclusiveSourceReferenceType,beginRustExclusiveSourceFunction,finishRustExclusiveSourceFunction,endRustExclusiveSourceFunction} from './rust-exclusive-source-parameters.js';
@@ -1144,7 +1144,7 @@ class RustParser {
         const origin=this.origins.origin(expr,path);
         const disposition=(ordinary?readRustOrdinaryStatementDisposition:readRustUnitStatementDisposition)(readRustPanicCompletionKind(expr.k,expr.op??''),this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
         if(disposition==='abort'){tail=expr;continue;}
-        if(disposition==='bind'){this.origins.consumeOwnedBinding(origin,expr.span);lets.push({name:this.freshProductBinding(),value:expr,span:expr.span});continue;}
+        if(disposition==='bind'||testRustStandardCollectionSourceDiscard(expr)){this.origins.consumeOwnedBinding(origin,expr.span);lets.push({name:this.freshProductBinding(),value:expr,span:expr.span});continue;}
         throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', expr.span);
       }
       if(ordinary){
@@ -1333,7 +1333,7 @@ class RustParser {
       const statement=finiteLoop?null:readRustOwnedRecordStateStatement(this,[]);
       if(statement)for(const binding of statement.bindings)effects.push({k:'let',...binding});
       const value=finiteLoop??statement?.value??this.expr([],{statement:true}),origin=this.origins.origin(value,[]);
-      if(readRustUnitStatementDisposition(value.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('main statement','main may only print, bind, assert and evaluate direct Unit calls',span(token,token));
+      if(readRustUnitStatementDisposition(value.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind'&&!(c.is(';')&&testRustStandardCollectionSourceDiscard(value)))throw unsupported('main statement','main may only print, bind, assert and evaluate direct Unit calls',span(token,token));
       const boundary=this.ordinaryCompletionContext()&&acceptRustBlockExpressionStatementBoundary(token.value,c.tokens[c.index-1]?.value??'');
       if(!c.eat(';')&&!c.is('}')&&!boundary&&!((finiteLoop||statement)&&value.block===true))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),value,span:value.span});
     }
@@ -1998,6 +1998,7 @@ class RustParser {
       c.expect(')', 'call');
       const range = span(token, c.peek());
       const collectionEquality=readRustStandardCollectionSourceEqualityCall(this,segments,args,path,range);if(collectionEquality)return collectionEquality;
+      const collectionClone=readRustStandardCollectionSourceCloneCall(this,segments,args,path,range);if(collectionClone)return collectionClone;
       const collectionConstruction=readRustStandardCollectionSourceConstructor(this,segments,args,path,range);if(collectionConstruction)return collectionConstruction;
       const borrowedEmpty=readRustBorrowedVectorEmptySourceConstructor(this,segments,args,path,range);if(borrowedEmpty)return borrowedEmpty;
       const contextualVector=readRustOwnedVectorEmptyConstructor(this,segments,args,path,range);if(contextualVector)return contextualVector;

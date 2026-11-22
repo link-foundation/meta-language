@@ -331,7 +331,7 @@ impl SourceOrigin {
         self.text_source_model == Some("owned string") && self.wrappers.is_empty()
     }
 
-    fn borrowed_string_slice(&self) -> bool {
+    pub(super) fn borrowed_string_slice(&self) -> bool {
         self.text_source_model == Some("string slice")
             && self.wrappers.len() == 1
             && self.wrappers[0] == "reference"
@@ -397,6 +397,7 @@ pub(super) struct SourceOrigins {
     pub(super) nominal_copy_derivations: HashMap<String, nominal_copies::NominalCopyDerivation>,
     pub(super) nominal_copy_owners: HashSet<String>,
     pub(super) nominal_ownership_declarations: HashMap<String,super::nominal_ownership::NominalOwnershipDeclaration>,
+    pub(super) standard_collection_owners: HashMap<String, crate::translation::source_signatures::SourceOwner>,
     pub(super) nominal_ownership_scope_complete: bool,
     pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
     pub(super) scope: HashMap<String, SourceOrigin>,
@@ -459,6 +460,7 @@ impl SourceOrigins {
             nominal_copy_derivations: HashMap::new(),
             nominal_copy_owners: HashSet::new(),
             nominal_ownership_declarations: HashMap::new(),
+            standard_collection_owners: HashMap::new(),
             nominal_ownership_scope_complete: false,
             scope: HashMap::new(),
             current_type: SourceOrigin::unknown(),

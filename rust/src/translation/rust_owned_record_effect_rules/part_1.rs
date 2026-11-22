@@ -567,6 +567,8 @@ pub fn read_rust_owned_record_effect_form(kind: &str, operation: &str) -> String
         String::from("read state")
     } else if (kind == "math") && (operation == "rustOwnedRecordStateWrite") {
         String::from("write state")
+    } else if (kind == "math") && (operation == "rustOwnedRecordStatePacket") {
+        String::from("write state packet")
     } else if kind == "propositionValue" {
         String::from("proposition comparison")
     } else {
@@ -643,8 +645,22 @@ pub fn read_rust_owned_record_effect_operation(operation: &str) -> String {
         String::from("rustOwnedRecordStateRead")
     } else if operation == "write" {
         String::from("rustOwnedRecordStateWrite")
+    } else if operation == "packet" {
+        String::from("rustOwnedRecordStatePacket")
     } else {
         String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_owned_record_effect_packet_position(role: &str) -> f64 {
+    if role == "result" {
+        0f64
+    } else if role == "state" {
+        1f64
+    } else {
+        -1f64
     }
 }
 

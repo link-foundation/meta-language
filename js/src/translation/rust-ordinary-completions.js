@@ -1,3 +1,4 @@
+import {testRustStandardCollectionSourceDiscard} from './rust-standard-collection-calls.js';
 import {readRustStandardCollectionSourceLoop,readRustStandardCollectionSourceLoopOrigin,lowerRustStandardCollectionSourceLoopCompletion} from './rust-standard-collection-source-loops.js';
 import {readRustPanicCompletionKind} from './rust-panic-value-rules.js';
 import {hasRustConditionalChain,readRustConditionalChainStages,lowerRustConditionalChainStages} from './rust-conditional-chains.js';
@@ -101,7 +102,7 @@ function sequence(parser,path,open){
   const terminated=Boolean(c.eat(';'))||bracePrint,completionKind=readRustPanicCompletionKind(expression.k,expression.op??'');
   if(terminated&&completionKind!=='abort'){
    const origin=parser.origins.origin(expression,path);
-   if(readRustOrdinaryStatementDisposition(expression.k,parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('expression statement','statements with effects are outside the portable core in function bodies',expression.span);
+   if(readRustOrdinaryStatementDisposition(expression.k,parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind'&&!testRustStandardCollectionSourceDiscard(expression))throw unsupported('expression statement','statements with effects are outside the portable core in function bodies',expression.span);
    bindings.push({name:parser.freshProductBinding(),value:expression,span:expression.span});continue;
   }
   const origin=parser.origins.origin(expression,path);

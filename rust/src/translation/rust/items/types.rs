@@ -116,6 +116,7 @@ impl RustParser {
             }
             let inner = self.parse_type()?;
             let origin = self.origins.current_type.clone();
+            let collection = self.standard_collection_origin(&origin).is_some();
             let mut wrappers = vec!["reference".to_owned()];
             wrappers.extend(origin.wrappers);
             let result = self.origins.typed(inner, &origin.path, wrappers);
@@ -123,6 +124,10 @@ impl RustParser {
             self.origins.current_type.array_source_model = origin.array_source_model;
             self.origins.current_type.array_element_position = origin.array_element_position;
             self.origins.current_type.source_lifetimes = origin.source_lifetimes;
+            if collection {
+                self.origins.current_type.expanded_source_owner =
+                    origin.expanded_source_owner.or(origin.source_owner);
+            }
             self.origins
                 .current_type
                 .source_lifetimes
@@ -170,6 +175,7 @@ impl RustParser {
             return Ok(ty);
         }
         let segments = self.path_segments("type")?;
+        self.refuse_collection_library_path(&segments, &self.module_path, &token)?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
         if let Some(alias) = self.read_type_alias_value(&segments)? {
@@ -177,6 +183,9 @@ impl RustParser {
         }
         if let Some(handle) = self.shared_array_type(&segments, &token)? {
             return Ok(handle);
+        }
+        if let Some(ty) = self.standard_collection_type(&segments, &token)? {
+            return Ok(ty);
         }
         if let Some(empty) = self.read_empty_option_result(&segments, &token)? {
             return Ok(empty);

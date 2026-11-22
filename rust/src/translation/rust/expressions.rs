@@ -132,6 +132,11 @@ impl RustParser {
             if after.kind == TokenKind::Punct && comparison_op(&after.value).is_some() {
                 return Err(Self::fail("comparison operators cannot be chained", after));
             }
+            if let Some(result) = self.standard_collection_comparison(&left, &right, op, false, path, joined(left.span, right.span, &token))? {
+                return Ok(result);
+            }
+            self.refuse_collection_observation(&left, path, "comparison", false)?;
+            self.refuse_collection_observation(&right, path, "comparison", false)?;
             let result = binary(op, left, right, &token);
             self.origins.pointer_integer_expression(&result, path)?;
             return Ok(result);
@@ -426,6 +431,7 @@ impl RustParser {
             if self.cursor.is(".") {
                 self.cursor.advance();
                 if self.cursor.is_kind(TokenKind::Number) {
+                    self.refuse_collection_observation(&value, path, "field projection", true)?;
                     let field = self.product_index_token()?;
                     let index = field.raw.parse::<usize>().map_err(|_| {
                         unsupported(
@@ -460,6 +466,10 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                if let Some(result) = self.standard_collection_method(&value, &method, path)? {
+                    value = result;
+                    continue;
+                }
                 self.guard_borrowed_vector_observation(&value,path,&method.value,Some(Span::new(value.span.map_or(token.start,|span|span.start),method.end)))?;
                 if let Some(boxed)=self.read_owned_box_clone(&value,&method,path)? {
                     value=boxed;continue;
@@ -513,6 +523,7 @@ impl RustParser {
                     continue;
                 }
                 if !self.cursor.is("(") {
+                    self.refuse_collection_observation(&value, path, "field projection", true)?;
                     if let Some(record) =
                         self.record_projection(&value, &method.value, path, span(&token, &method))?
                     {

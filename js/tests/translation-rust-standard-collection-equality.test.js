@@ -1,7 +1,10 @@
 // Deferred controls: this file is authored during bulk source drafting only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {LinkNetwork} from '../src/network.js';
+import {decodeLinkNetworkBinary,encodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {beginRustStandardCollectionEquality,stepRustStandardCollectionEquality,runRustStandardCollectionEquality,executeRustStandardCollectionEquality,readRustStandardCollectionEqualityStateError} from '../src/translation/rust-standard-collection-equality.js';
 import {compareRustStandardCollectionValuePackets} from '../src/translation/rust-standard-collection-value-packet.js';
@@ -79,4 +82,30 @@ test('typed Links replay collection carriers through their actual state and pack
  assert.ok(kernel);
  packet.link.setReferences([packet.parent,packet.link.references()[1],kernel.child]);
  assert.throws(()=>decodeTypedProgramLinks(network,root,limits),/collection carrier|packet declaration|semantic reference/u);
+});
+test('actual standard collection mutation and ordering survive both Links transports',()=>{
+ const [major,minor]=process.versions.node.split('.').map(Number);
+ assert.ok(major===24||major===22&&minor>=15,'uncovered Node '+process.versions.node+'; >=22.15.0 <23 || >=24 <25');
+ const source=readFileSync(new URL('../../examples/rust-standard-collections.rs',import.meta.url),'utf8');
+ const library=actualLibrary();
+ const options={
+  standardCollectionSourceModel:'Rust closed standard collections 1',standardCollectionSourceLibrary:library,
+  standardCollectionPointerWidth:64,sourceVersion:'1.90.0',exclusiveSourceModel:'Rust exclusive source loans 1',
+ };
+ const checked=checkProgram(parseRust(source,options));
+ const {network,root}=encodeTypedProgramLinks(checked);
+ const transports=[
+  ['Lino',LinkNetwork.fromLino(network.toLino())],
+  ['binary',decodeLinkNetworkBinary(encodeLinkNetworkBinary(network))],
+ ];
+ for(const [form,restored] of transports){
+  const replay=decodeTypedProgramLinks(restored,root,{nodeLimit:1_000_000});
+  const lines=[];
+  vm.runInNewContext(emitJavaScript(replay).text,{
+   console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]},
+  },{timeout:10000});
+  assert.deepEqual(lines,['1'],form);
+ }
+ const borrowedInsert='use std::collections::BTreeSet; fn main() { let mut values: BTreeSet<u8> = BTreeSet::new(); values.insert(&1u8); }';
+ assert.throws(()=>parseRust(borrowedInsert,options));
 });

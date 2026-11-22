@@ -519,6 +519,7 @@ impl RustParser {
                     origin.ty.as_ref().map_or("", Type::kind),
                     !origin.wrappers.is_empty(),
                 ) != "bind"
+                    && !self.is_collection_mutation_statement(&expression)
                 {
                     return Err(unsupported(
                         "expression statement",

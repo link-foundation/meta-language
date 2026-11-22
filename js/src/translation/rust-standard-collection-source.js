@@ -44,7 +44,7 @@ export function resolveRustStandardCollectionSourceOwner(parser,segments,path){
 }
 export function readRustStandardCollectionSourceImport(parser,segments,path){
  if(!parser.standardCollectionSource)return false;
- if(['core::cmp::PartialEq','std::cmp::PartialEq'].includes(segments.join('::')))return !parser.origins.lookupTypeOwner([segments[0]],path)&&!parser.origins.lookupValueOwner([segments[0]],path)&&!parser.origins.scope.has(segments[0]);
+ if(['core::cmp::PartialEq','std::cmp::PartialEq','core::clone::Clone','std::clone::Clone'].includes(segments.join('::')))return !parser.origins.lookupTypeOwner([segments[0]],path)&&!parser.origins.lookupValueOwner([segments[0]],path)&&!parser.origins.scope.has(segments[0]);
  return Boolean(segments[0]==='std'&&resolveRustStandardCollectionSourceOwner(parser,segments,path));
 }
 export function refuseRustStandardCollectionSourcePrivateName(parser,segments,path,span){

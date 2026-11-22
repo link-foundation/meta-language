@@ -63,6 +63,8 @@ pub struct RustStandardCollectionSourceLibrary<Invalid, Resource> {
     packet: String,
     kernel: String,
     equality: String,
+    ordering: String,
+    state: String,
     packet_type: String,
     constructors: [String; 3],
     handlers: RustStandardCollectionSourceHandlers<Invalid, Resource>,
@@ -91,6 +93,18 @@ impl<Invalid, Resource> RustStandardCollectionSourceLibrary<Invalid, Resource> {
     #[must_use]
     pub fn callable_names(&self) -> [&str; 3] {
         [&self.packet, &self.kernel, &self.equality]
+    }
+
+    /// Qualified nominal state and ordering declarations bound by admission.
+    #[must_use]
+    pub fn state_and_ordering_names(&self) -> (&str, &str) {
+        (&self.state, &self.ordering)
+    }
+
+    /// Original JavaScript entry path used to capture the complete source closure.
+    #[must_use]
+    pub const fn entry_path(&self) -> &'static str {
+        ENTRY
     }
 
     /// Qualified result datatype and Normal, Invalid and Resource constructors.
@@ -417,9 +431,13 @@ where
     }
     require_call(equality, equality_kernel)?;
     require_call(ordering, ordering_kernel)?;
-    if packet.params.len() != 5
-        || !matches!(packet.params[0].ty, Type::Data { .. })
-        || [equality, ordering].iter().any(|wrapper| {
+    let [receiver, _, _, _, _] = packet.params.as_slice() else {
+        return Err(fail("packet wrapper needs its complete concrete signature"));
+    };
+    let Type::Data { name: state } = &receiver.ty else {
+        return Err(fail("packet wrapper needs its actual nominal state receiver"));
+    };
+    if [equality, ordering].iter().any(|wrapper| {
             wrapper.params.len() != 4
                 || wrapper.params[..2]
                     .iter()
@@ -466,6 +484,8 @@ where
         packet: packet.full_name.clone(),
         kernel: kernel.full_name.clone(),
         equality: equality.full_name.clone(),
+        ordering: ordering.full_name.clone(),
+        state: state.clone(),
         packet_type: data.full_name.clone(),
         constructors,
         source_sha256: digest(&closure.source),

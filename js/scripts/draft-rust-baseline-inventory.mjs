@@ -1,7 +1,8 @@
 // Future source-availability declarations only, never execution observations.
 // Run only after automatic source generation and the required source audit.
 import {readProjectData,writeProjectData} from './project-data.mjs';
-if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const [mode,selection,...extra]=process.argv.slice(2);
+if(mode!=='--draft'||extra.length)throw new TypeError('use --draft with an optional exact feature identifier');
 const file=new URL('../../parity/language-features.lino',import.meta.url),inventory=readProjectData(file);
 const profiles=[
  {id:'rust-destructor-free-record-field-moves-and-updates',javascript:[
@@ -26,6 +27,15 @@ const profiles=[
   'rust/src/translation/disjoint_collection_iterations.rs','rust/src/translation/check/source_collection_iterations.rs',
   'rust/tests/unit/translation_disjoint_collection_iterations.rs','rust/tests/unit/translation_disjoint_collection_item_iterations.rs','rust/tests/unit/translation_disjoint_collection_spreads.rs',
   'parity/fixtures/disjoint-collection-iterations.lino','parity/fixtures/disjoint-collection-item-iterations.lino','parity/fixtures/disjoint-collection-spreads.lino']},
+ {id:'ordinary-rust-closed-standard-collection-values',javascript:[
+  'js/src/translation/rust-standard-collection-source.js','js/src/translation/rust-standard-collection-calls.js',
+  'js/src/translation/rust-standard-collection-equality-source.js','js/src/translation/rust-standard-collection-library.js',
+  'js/tests/translation-rust-standard-collection-equality.test.js','examples/rust-standard-collections.rs',
+ ],rust:[
+  'rust/src/translation/rust/source_profiles.rs','rust/src/translation/rust/standard_collections.rs',
+  'rust/src/translation/rust/standard_collections/packets.rs','rust/src/translation/rust_standard_collection_carriers.rs',
+  'rust/tests/unit/translation_rust_standard_collection_library.rs','examples/rust-standard-collections.rs',
+ ]},
  {id:'ordinary-transparent-rust-source-type-aliases',javascript:[
   'js/src/translation/rust-generic-type-alias-rules.js','js/src/translation/rust-generic-type-aliases.js',
   'js/tests/translation-rust-generic-type-aliases.test.js','parity/fixtures/rust-generic-type-alias-source-draft.lino',
@@ -57,7 +67,8 @@ const profiles=[
   'js/tests/translation-rust-standard-option-panic.test.js','parity/fixtures/rust-standard-option-panic-methods.lino',
  ],rust:['rust/src/translation/rust_standard_sum_method_rules.rs','rust/src/translation/rust/standard_sum_methods.rs','rust/tests/unit/translation_rust_standard_option_panic.rs']},
 ];
-for(const profile of profiles){
+if(selection!==undefined&&!profiles.some(profile=>profile.id===selection))throw new TypeError('unknown exact feature identifier');
+for(const profile of profiles.filter(profile=>selection===undefined||profile.id===selection)){
  const at=inventory.features.findIndex(row=>row.id===profile.id),previous=at<0?null:inventory.features[at];
  const row={...previous,id:profile.id,required:true};
  for(const runtime of ['javascript','rust'])row[runtime]={...previous?.[runtime],status:'implemented',evidence:[...new Set([...(previous?.[runtime]?.evidence??[]),...profile[runtime]])]};
