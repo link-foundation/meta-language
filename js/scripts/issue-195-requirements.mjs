@@ -512,7 +512,7 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       version: 'Unicode 13.0 through 17.0 fixture characters and boundaries',
       fixture: 'parity/fixtures/text-location.lino',
       implementationEntryPoints: {
-        javascript: ['js/src/text-location.js', 'js/tests/text-location.test.js'],
+        javascript: ['js/src/text-location.js', 'js/tests/language-text-location.test.js'],
         rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
       },
     })),

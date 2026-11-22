@@ -1,3 +1,5 @@
+import { normalizeQuoteScalar, normalizeYoScalar, selectTextEdit } from './text-location-policy.js';
+
 const graphemes = new Intl.Segmenter('und', { granularity: 'grapheme' });
 const normalizationOrder = ['nfkc', 'quotes', 'dashes', 'yo', 'case', 'softHyphen', 'whitespace'];
 const wordCharacter = /[\p{L}\p{M}\p{N}_]/u;
@@ -203,5 +205,4 @@ export function wordNgramOverlap(left, right, { size = 3, normalize = [] } = {})
   }
   return matches;
 }
-import { normalizeQuoteScalar, normalizeYoScalar, selectTextEdit } from './text-location-policy.js';
 

@@ -1846,6 +1846,39 @@ export function identifyLanguage(
   options?: { readonly minimumConfidence?: number },
 ): LanguageIdentification;
 
+export type TextNormalization = 'nfkc' | 'quotes' | 'dashes' | 'yo' | 'case' | 'softHyphen' | 'whitespace';
+
+export interface TextLocationRange {
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface TextLocationUnit extends TextLocationRange {
+  readonly text: string;
+}
+
+export type TextLocationEdit =
+  | { readonly kind: 'insert'; readonly fragment: null; readonly source: TextLocationUnit }
+  | { readonly kind: 'delete'; readonly fragment: TextLocationUnit; readonly source: null }
+  | { readonly kind: 'replace'; readonly fragment: TextLocationUnit; readonly source: TextLocationUnit };
+
+export interface TextLocationMatch extends TextLocationUnit {
+  readonly normalizations: readonly TextNormalization[];
+  readonly distance: number;
+  readonly edits: readonly TextLocationEdit[];
+}
+
+export function locate(source: string | LinkNetwork, fragment: string, options?: {
+  readonly normalize?: readonly TextNormalization[];
+  readonly maxEdits?: number;
+  readonly unit?: 'grapheme' | 'word';
+}): TextLocationMatch[];
+
+export function wordNgramOverlap(left: string | LinkNetwork, right: string | LinkNetwork, options?: {
+  readonly normalize?: readonly TextNormalization[];
+  readonly size?: number;
+}): { readonly words: readonly string[]; readonly left: TextLocationRange; readonly right: TextLocationRange }[];
+
 export function parseWithGrammar(
   grammar: Grammar | NormalizedGrammar,
   source: string | Uint8Array,
