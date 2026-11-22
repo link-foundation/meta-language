@@ -13,6 +13,16 @@ import {testJavaScriptSemanticSameValue,readJavaScriptSemanticTextLength,readJav
  * {$:'objectSpreadError',heap:JavaScriptOrdinaryHeap,reason:string,errorClass?:string} |
  * {$:'objectSpreadInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'objectSpreadResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectSpreadState,reason:string}} JavaScriptObjectSpreadTransition */
+/** @param {JavaScriptSemanticValue} key @returns {string} */
+function readJavaScriptObjectSpreadKeyName(key){
+ return key.$==='symbol'?'symbol:'+String(key.identity):'text:'+readJavaScriptSemanticTextString(key);
+}
+/** @param {string[]} names @returns {boolean} */
+function testDuplicateJavaScriptObjectSpreadKeyName(names){
+ const ordered=names.toSorted();
+ for(let at=1;at<ordered.length;at++)if(ordered[at]===ordered[at-1])return true;
+ return false;
+}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectSpreadState} state @returns {string} */
 export function readJavaScriptObjectSpreadStateError(heap,state){
  const heapError=readJavaScriptOrdinaryHeapError(heap);if(heapError!=='')return heapError;
@@ -38,8 +48,7 @@ export function readJavaScriptObjectSpreadStateError(heap,state){
  if(state.excluded.length>4096)return 'object spread excluded keys exceed their explicit snapshot budget';
  for(const key of state.excluded){const error=readJavaScriptOrdinaryKeyError(heap,key);if(error!=='')return error;}
  for(const key of state.keys){const error=readJavaScriptOrdinaryKeyError(heap,key);if(error!=='')return error;}
- const names=state.keys.map(key=>key.$==='symbol'?'symbol:'+String(key.identity):'text:'+readJavaScriptSemanticTextString(key));
- const ordered=names.toSorted();for(let at=1;at<ordered.length;at++)if(ordered[at]===ordered[at-1])return 'object spread own-key snapshots cannot duplicate a semantic key';
+ if(testDuplicateJavaScriptObjectSpreadKeyName(state.keys.map(key=>readJavaScriptObjectSpreadKeyName(key))))return 'object spread own-key snapshots cannot duplicate a semantic key';
  return '';
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} target

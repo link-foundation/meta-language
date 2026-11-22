@@ -753,27 +753,34 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
         const invalid=readJavaScriptArrayConcatenationStateError(heap,species,pending.state);if(invalid!=='')return invalid;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.spreadableKey,frame.registers[instruction.spreadableKey]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey)||pending.state.arguments.length!==frame.arguments.length||pending.state.arguments.some((value,index)=>!testJavaScriptSemanticSameValue(value,frame.arguments[index]??{$:'undefined'})))return 'Array concatenation retains original receiver arguments and Symbols';
         const construction=pending.construction;
-        if(construction!==undefined){if(pending.state.phase!=='construct'||pending.state.constructor===undefined||!testJavaScriptSemanticSameValue(construction.constructor,pending.state.constructor)||construction.length!==0)return 'Array concatenation retains its actual zero-length species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,species,construction);if(invalid!=='')return invalid;}
-        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array concatenation child retains its actual selected callback';return '';
+        if(construction!==undefined){const selected=Object.hasOwn(pending.state,'constructor')?pending.state.constructor:undefined;if(pending.state.phase!=='construct'||selected===undefined||!testJavaScriptSemanticSameValue(construction.constructor,selected)||construction.length!==0)return 'Array concatenation retains its actual zero-length species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,species,construction);if(invalid!=='')return invalid;}
+        if(suspended&&(construction!==undefined?construction.call===undefined:pending.state.call===undefined))return 'Array concatenation child retains its actual selected callback';return '';
       }
       case 'waitArraySlice':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
-        if(instruction?.$!=='arraySlice'||instruction.destination!==pending.destination||pending.realm!==fn.realm)return 'Array slice retains actual source instruction destination and realm';
-        const invalid=readJavaScriptArraySliceStateError(heap,instruction.species,pending.state);if(invalid!=='')return invalid;
+        if(instruction===undefined||instruction.$!=='arraySlice'||instruction.destination!==pending.destination||pending.realm!==fn.realm)return 'Array slice retains actual source instruction destination and realm';
+        const species=instruction.species;
+        if(species===undefined)return 'Array slice retains its actual species authority';
+        const invalid=readJavaScriptArraySliceStateError(heap,species,pending.state);if(invalid!=='')return invalid;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.start,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.end,frame.arguments[1]??{$:'undefined'})||pending.state.endPresent!==(frame.arguments.length>1)||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'Array slice retains original receiver bounds argument presence and Symbol';
-        if(pending.construction!==undefined){if(pending.state.phase!=='construct'||pending.state.constructor===undefined||!testJavaScriptSemanticSameValue(pending.construction.constructor,pending.state.constructor)||pending.construction.length!==pending.state.count)return 'Array slice retains its actual selected species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,instruction.species,pending.construction);if(invalid!=='')return invalid;}
-        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array slice child retains its actual selected callback';return '';
+        const construction=pending.construction;
+        if(construction!==undefined){const selected=Object.hasOwn(pending.state,'constructor')?pending.state.constructor:undefined;if(pending.state.phase!=='construct'||selected===undefined||!testJavaScriptSemanticSameValue(construction.constructor,selected)||construction.length!==pending.state.count)return 'Array slice retains its actual selected species construction';const invalid=readJavaScriptSpeciesConstructionStateError(program,heap,species,construction);if(invalid!=='')return invalid;}
+        if(suspended&&(construction!==undefined?construction.call===undefined:pending.state.call===undefined))return 'Array slice child retains its actual selected callback';return '';
       }
       case 'waitArrayTransform':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction===undefined||instruction.$!=='arrayTransform'||instruction.destination!==pending.destination||pending.realm!==fn.realm||pending.state.operation!==instruction.operation)return 'Array transform continuation retains its actual source operation, destination and realm';
-        const error=readJavaScriptArrayTransformStateError(heap,instruction.species,pending.state);if(error!=='')return error;
+        const species=instruction.species;
+        if(species===undefined)return 'Array transform retains its actual species authority';
+        const error=readJavaScriptArrayTransformStateError(heap,species,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.receiver,frame.registers[instruction.input??0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.callback,frame.arguments[0]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.thisArgument,frame.arguments[1]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'Array transforms cannot substitute actual source, callback, thisArg or conversion Symbol';
-        if(pending.construction!==undefined){
-          if(pending.state.phase!=='construct'||pending.state.constructor===undefined||pending.state.constructorFact===undefined||!testJavaScriptSemanticSameValue(pending.construction.constructor,pending.state.constructor)||pending.construction.length!==(pending.state.operation==='Array.map'?pending.state.length:0))return 'nested species construction retains its actual transform selection';
-          const error=readJavaScriptSpeciesConstructionStateError(program,heap,instruction.species,pending.construction);if(error!=='')return error;
+        const construction=pending.construction;
+        if(construction!==undefined){
+          const selected=Object.hasOwn(pending.state,'constructor')?pending.state.constructor:undefined;
+          if(pending.state.phase!=='construct'||selected===undefined||pending.state.constructorFact===undefined||!testJavaScriptSemanticSameValue(construction.constructor,selected)||construction.length!==(pending.state.operation==='Array.map'?pending.state.length:0))return 'nested species construction retains its actual transform selection';
+          const error=readJavaScriptSpeciesConstructionStateError(program,heap,species,construction);if(error!=='')return error;
         }
-        if(suspended&&(pending.construction!==undefined?pending.construction.call===undefined:pending.state.call===undefined))return 'Array transform child frames retain their actual selected call';return '';
+        if(suspended&&(construction!==undefined?construction.call===undefined:pending.state.call===undefined))return 'Array transform child frames retain their actual selected call';return '';
       }
       case 'waitArraySearch':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
@@ -1417,8 +1424,22 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'waitObjectFromEntries':return pending.error!==undefined?{$:'machineAllocateError',machine,realm:pending.error.realm,errorClass:pending.error.errorClass,reason:pending.error.reason}:acceptJavaScriptCallObjectFromEntries(program,machine,pending.destination,pending.realm,stepJavaScriptObjectFromEntries(machine.heap,pending.state));
     case 'waitPrimitiveWrapper':return acceptJavaScriptCallPrimitiveWrapper(machine,pending.destination,beginJavaScriptPrimitiveWrapper(machine.heap,pending.state.input,pending.state.prototype));
     case 'waitSymbolAllocation':return machine.heap.symbols.length>=16384?{$:'machineResourceLimit',machine,reason:'Symbol allocation exceeds the selected 16384 identity profile'}:{$:'machineAllocateSymbol',machine,description:pending.description,...(pending.registryKey===undefined?{}:{registryKey:pending.registryKey})};
-    case 'waitSymbolDescription':{const fact=readJavaScriptSymbolRegistrationFact(machine.heap,pending.symbol.identity);if(fact?.registered&&fact.key!==undefined)return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,fact.key))};return {$:'machineNeedSymbolDescription',machine,symbol:pending.symbol};}
-    case 'waitFunctionNameSymbol':{const fact=readJavaScriptSymbolRegistrationFact(machine.heap,pending.key.identity);if(fact?.registered&&fact.key!==undefined)return resumeJavaScriptCallFunctionNameSymbolDescription(program,machine,fact.key);return {$:'machineNeedFunctionNameSymbolDescription',machine,object:pending.object,key:pending.key,prefix:pending.prefix};}
+    case 'waitSymbolDescription':{
+     const symbol=pending.symbol;
+     if(symbol.$!=='symbol')return {$:'machineInvalid',heap:machine.heap,reason:'Symbol description needs its actual primitive Symbol'};
+     const fact=readJavaScriptSymbolRegistrationFact(machine.heap,symbol.identity);
+     const key=fact!==undefined&&fact.registered?fact.key:undefined;
+     if(key!==undefined)return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,key))};
+     return {$:'machineNeedSymbolDescription',machine,symbol};
+    }
+    case 'waitFunctionNameSymbol':{
+     const symbol=pending.key;
+     if(symbol.$!=='symbol')return {$:'machineInvalid',heap:machine.heap,reason:'Symbol function naming needs its actual primitive Symbol'};
+     const fact=readJavaScriptSymbolRegistrationFact(machine.heap,symbol.identity);
+     const key=fact!==undefined&&fact.registered?fact.key:undefined;
+     if(key!==undefined)return resumeJavaScriptCallFunctionNameSymbolDescription(program,machine,key);
+     return {$:'machineNeedFunctionNameSymbolDescription',machine,object:pending.object,key:symbol,prefix:pending.prefix};
+    }
     case 'waitArrayConcatenation':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array concatenation step retains actual species authority'};const construction=pending.construction;if(construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,construction));return acceptJavaScriptCallArrayConcatenation(program,machine,pending.destination,pending.realm,stepJavaScriptArrayConcatenation(machine.heap,directory,pending.state));}
     case 'waitArraySlice':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array slice step retains actual species authority'};const construction=pending.construction;if(construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,construction));return acceptJavaScriptCallArraySlice(program,machine,pending.destination,pending.realm,stepJavaScriptArraySlice(machine.heap,directory,pending.state));}
     case 'waitArrayTransform':{const directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(directory===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Array transform step retains its actual source directory'};const construction=pending.construction;if(construction!==undefined)return acceptJavaScriptCallSpeciesConstruction(program,machine,stepJavaScriptSpeciesConstruction(program,machine.heap,directory,construction));return acceptJavaScriptCallArrayTransform(program,machine,pending.destination,pending.realm,stepJavaScriptArrayTransform(machine.heap,directory,pending.state));}
