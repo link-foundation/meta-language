@@ -110,7 +110,7 @@ function acceptsEffects(facts,roles,operations,kinds,owners,starts,counts,labels
   if(textFact(roles,node)==='unknown'||textFact(roles,node)==='cell write')return false;
   if(textFact(roles,node)==='call'||textFact(roles,node)==='apply'){
    const actual=edges(starts,counts,labels,targets,node,'callee');let callees=[];
-   if(textFact(roles,node)==='call')callees=actual;else if(actual.length)callees=readRoots(facts,1,readRequiredNumberFact(actual,0),width,span);
+   if(textFact(roles,node)==='call')callees=actual;else if(actual.length!==0)callees=readRoots(facts,1,readRequiredNumberFact(actual,0),width,span);
    if(callees.length===0||callees.some(target=>!functions.includes(target)))return false;
   }
   if(textFact(roles,node)==='method'){
@@ -119,7 +119,7 @@ function acceptsEffects(facts,roles,operations,kinds,owners,starts,counts,labels
    if(effect==='write'&&!['array','map','set','record','cell'].includes(textFact(kinds,object)))return false;
    if(effect==='write'&&(textFact(kinds,object)===textFact(kinds,source)&&!separateRoots(roots,readRoots(facts,1,object,width,span))))return false;
    const arguments_=edges(starts,counts,labels,targets,node,'argument');
-   if(readDisjointCollectionIterationCallback(textFact(operations,node))&&arguments_.length){const callees=readRoots(facts,1,readRequiredNumberFact(arguments_,0),width,span);if(callees.length===0||callees.some(target=>!functions.includes(target)))return false;}
+   if(readDisjointCollectionIterationCallback(textFact(operations,node))&&arguments_.length!==0){const callees=readRoots(facts,1,readRequiredNumberFact(arguments_,0),width,span);if(callees.length===0||callees.some(target=>!functions.includes(target)))return false;}
   }
  }
  return true;
@@ -191,7 +191,7 @@ export function proveDisjointCollectionIterations(roles,operations,kinds,owners,
     // type (reduce/find/at can return existing nested handles). Actual fresh
     // referenceAllocate nodes establish new outer identities independently.
     else if(readDisjointCollectionIterationIdentityKind(textFact(kinds,node)))roots=[-1];
-    if(readDisjointCollectionIterationCallback(textFact(operations,node))&&arguments_.length)facts=bindCalls(facts,readRequiredNumberFact(owners,node),readRoots(facts,1,readRequiredNumberFact(arguments_,0),width,span),arguments_,textFact(operations,node),object,kinds,functions,parameterStarts,parameterCounts,parameters,bodies,main,width,span);
+    if(readDisjointCollectionIterationCallback(textFact(operations,node))&&arguments_.length!==0)facts=bindCalls(facts,readRequiredNumberFact(owners,node),readRoots(facts,1,readRequiredNumberFact(arguments_,0),width,span),arguments_,textFact(operations,node),object,kinds,functions,parameterStarts,parameterCounts,parameters,bodies,main,width,span);
    }
    if((role==='unknown'||role==='opaque read')&&readDisjointCollectionIterationIdentityKind(textFact(kinds,node)))roots=[-1];
    if(role!=='function'&&readDisjointCollectionIterationIdentityKind(textFact(kinds,node)))facts=addRoots(facts,1,node,roots,width,span);
@@ -219,7 +219,15 @@ export function proveDisjointCollectionIterations(roles,operations,kinds,owners,
   }
   for(let node=0;node<size;node+=1)if(textFact(roles,node)==='allocation'){const child=firstNumber(edges(starts,counts,labels,targets,node,'value'));if(child>=0&&readRoots(facts,1,child,width,span).includes(snapshot))aliases=addValue(aliases,node);}
   for(let node=0;node<size;node+=1)if(textFact(roles,node)==='call'||textFact(roles,node)==='apply'){
-   const actual=edges(starts,counts,labels,targets,node,'argument');if(actual.some(argument=>readRoots(facts,1,argument,width,span).some(root=>aliases.includes(root)))){
+   const actual=edges(starts,counts,labels,targets,node,'argument');
+   let passesAlias=false;
+   for(const argument of actual){
+    for(const root of readRoots(facts,1,argument,width,span)){
+     if(aliases.includes(root)){passesAlias=true;break;}
+    }
+    if(passesAlias)break;
+   }
+   if(passesAlias){
     const targets_=edges(starts,counts,labels,targets,node,'callee'),callees=textFact(roles,node)==='call'?targets_:targets_.length?readRoots(facts,1,readRequiredNumberFact(targets_,0),width,span):[];for(const callee of callees)scopes=addValue(scopes,callee);
    }
   }
@@ -231,7 +239,7 @@ export function proveDisjointCollectionIterations(roles,operations,kinds,owners,
   const node=readRequiredNumberFact(callbacks,at),source=readRequiredNumberFact(callbacks,at+1),callback=firstNumber(edges(starts,counts,labels,targets,node,'argument'));
   if(callback<0||!acceptDisjointCollectionIterationCallbackHead(textFact(roles,callback)))continue;
   const scopes=readRoots(facts,1,callback,width,span);
-  if(scopes.length&&acceptsEffects(facts,roles,operations,kinds,owners,starts,counts,labels,targets,functions,bodies,scopes,source,false,main,width,span))safe=safe.concat([node]);
+  if(scopes.length!==0&&acceptsEffects(facts,roles,operations,kinds,owners,starts,counts,labels,targets,functions,bodies,scopes,source,false,main,width,span))safe=safe.concat([node]);
  }
  return [0,accepted.length].concat(accepted,[safe.length],safe);
 }
