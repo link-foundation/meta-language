@@ -1010,10 +1010,25 @@ function readJavaScriptCallPendingError(program,heap,frame,fn,suspended,pending)
           }
           default:return invalidTarget;
         }
-        if(suspended&&(pending.state.$==='propertyDefinitionReady'||pending.state.operation==='Reflect.defineProperty'&&pending.state.call===undefined))return 'a definition suspension retains its actual selected child rather than a completed descriptor';
-        if(pending.state.$==='propertyDefinitionArray'&&!testJavaScriptSemanticSameValue(pending.state.assignment.exoticKey,program.exoticKey))return 'Array definition retains its actual primitive conversion Symbol';
-        if(pending.state.$==='propertyDefinitionKey'&&!testJavaScriptSemanticSameValue(pending.state.conversion.exoticKey,program.exoticKey)||pending.state.$==='propertyDefinitionDescriptor'&&pending.state.exoticKey!==undefined&&!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'property definition retains its actual primitive conversion authority';
-        if(suspended&&pending.state.$==='propertyDefinitionArray'&&pending.state.assignment.$!=='arrayAssignmentNumber')return 'Array definition child retains its actual numeric callback phase';return '';
+        const state=pending.state;
+        if(suspended&&(state.$==='propertyDefinitionReady'||state.operation==='Reflect.defineProperty'&&state.call===undefined))return 'a definition suspension retains its actual selected child rather than a completed descriptor';
+        const wrongConversion='property definition retains its actual primitive conversion authority';
+        switch(state.$){
+          case 'propertyDefinitionArray':
+            if(!testJavaScriptSemanticSameValue(state.assignment.exoticKey,program.exoticKey))return 'Array definition retains its actual primitive conversion Symbol';
+            if(suspended&&state.assignment.$!=='arrayAssignmentNumber')return 'Array definition child retains its actual numeric callback phase';
+            break;
+          case 'propertyDefinitionKey':
+            if(!testJavaScriptSemanticSameValue(state.conversion.exoticKey,program.exoticKey))return wrongConversion;
+            break;
+          case 'propertyDefinitionDescriptor':{
+            const exoticKey=state.exoticKey;
+            if(exoticKey!==undefined&&!testJavaScriptSemanticSameValue(exoticKey,program.exoticKey))return wrongConversion;
+            break;
+          }
+          default:break;
+        }
+        return '';
       }
       case 'waitNumber':{
         if(!program.realms.includes(pending.realm))return 'pending number conversion retains its actual intrinsic realm';
