@@ -104,6 +104,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-class-source-program.lino" => {
             Some(include_str!("../data/javascript-class-source-program.lino"))
         }
+        "javascript-collection-rules-program.lino" => Some(include_str!(
+            "../data/javascript-collection-rules-program.lino"
+        )),
         "javascript-comparison-program.lino" => {
             Some(include_str!("../data/javascript-comparison-program.lino"))
         }
