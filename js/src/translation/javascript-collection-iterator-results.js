@@ -15,7 +15,10 @@ import {createJavaScriptPropertyDescriptor} from './javascript-property-descript
 export function readJavaScriptCollectionIteratorResultPrototypesError(heap,arrayPrototype,objectPrototype){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;
  for(const value of [arrayPrototype,objectPrototype]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
- if(arrayPrototype.$!=='object'||arrayPrototype.callable||objectPrototype.$!=='object'||objectPrototype.callable)return 'iterator results retain their actual noncallable realm Array and Object prototypes';
+ const invalidPrototype='iterator results retain their actual noncallable realm Array and Object prototypes';
+ if(arrayPrototype.$!=='object')return invalidPrototype;
+ if(objectPrototype.$!=='object')return invalidPrototype;
+ if(arrayPrototype.callable||objectPrototype.callable)return invalidPrototype;
  const array=heap.objects[findJavaScriptOrdinaryObject(heap.objects,arrayPrototype.identity)],ordinary=heap.objects[findJavaScriptOrdinaryObject(heap.objects,objectPrototype.identity)];
  return array===undefined||array.$!=='arrayObject'||ordinary===undefined||ordinary.$!=='ordinaryObject'?'iterator result prototypes require their actual realm Array and ordinary Object kinds':'';
 }
@@ -24,8 +27,12 @@ export function readJavaScriptCollectionIteratorResultStateError(heap,state){
  const error=readJavaScriptCollectionIteratorResultPrototypesError(heap,state.arrayPrototype,state.objectPrototype);if(error!=='')return error;
  if(state.$!=='collectionIteratorResultState'||!['entry','result'].includes(state.phase)||typeof state.done!=='boolean'||state.phase==='entry'&&state.done||!['Map','Set','Array','String'].includes(state.collectionKind))return 'iterator result allocation requires its actual pending phase, operation brand and completion';
  for(const value of [state.receiver,state.key,state.value]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
- const iterator=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;
- if(iterator===undefined||iterator.$!=='collectionIteratorObject'||iterator.collectionKind!==state.collectionKind)return 'an iterator result retains its actual original receiver and operation brand';
+ const receiver=state.receiver,invalidReceiver='an iterator result retains its actual original receiver and operation brand';
+ if(receiver.$!=='object')return invalidReceiver;
+ const iterator=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];
+ if(iterator===undefined)return invalidReceiver;
+ if(iterator.$!=='collectionIteratorObject')return invalidReceiver;
+ if(iterator.collectionKind!==state.collectionKind)return invalidReceiver;
  if(state.collectionKind==='String'&&state.phase==='entry')return 'String iterators yield text values rather than entry pairs';
  if(state.done&&(state.key.$!=='undefined'||state.value.$!=='undefined'))return 'an exhausted iterator yields its actual undefined value';
  return '';
@@ -34,12 +41,11 @@ export function readJavaScriptCollectionIteratorResultStateError(heap,state){
  * @param {JavaScriptSemanticValue} arrayPrototype @param {JavaScriptSemanticValue} objectPrototype @returns {JavaScriptCollectionIteratorResultCompletion} */
 export function beginJavaScriptCollectionIteratorResult(heap,receiver,collectionKind,arrayPrototype,objectPrototype){
  // Validate every independent operand before performing the cursor transition.
- const pending={$:'collectionIteratorResultState',phase:'result',receiver,collectionKind,arrayPrototype,objectPrototype,key:{$:'undefined'},value:{$:'undefined'},done:false};
  const error=readJavaScriptCollectionIteratorResultPrototypesError(heap,arrayPrototype,objectPrototype);if(error!=='')return {$:'iteratorResultInvalid',heap,reason:error};
  const next=advanceJavaScriptBrandedCollectionIterator(heap,receiver,collectionKind);
  if(next.$==='collectionIterationTypeError')return {$:'iteratorResultTypeError',heap,reason:next.reason};
  if(next.$!=='collectionIteration')return {$:'iteratorResultInvalid',heap,reason:'iterator result creation needs its actual completed cursor transition'};
- const state={...pending,phase:next.entry?'entry':'result',key:next.key,value:next.value,done:next.done};
+ const state={$:'collectionIteratorResultState',phase:next.entry?'entry':'result',receiver,collectionKind,arrayPrototype,objectPrototype,key:next.key,value:next.value,done:next.done};
  return {$:'iteratorResultContinue',heap:next.heap,state};
 }
 /** Reuse the actual result/entry allocator after the Array iterator's

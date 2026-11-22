@@ -387,12 +387,35 @@ export function planJavaScriptOrdinaryGet(heap, identity, key, receiver) {
   return {action:'call',error:'',value:{$:'undefined'},callee:getter,receiver,arguments:[]};
 }
 
+/** @typedef {{heap:JavaScriptOrdinaryHeap,success:boolean,error:string,writes:string[],resourceLimit?:boolean}} JavaScriptOrdinaryPropertyDefinition */
+
+/** @param {JavaScriptOrdinaryObject} object @returns {boolean} */
+function acceptsJavaScriptOrdinaryOwnPropertyDefinition(object) {
+  return object.$ === 'ordinaryObject' || object.$ === 'closureObject' || object.$ === 'boundFunctionObject'
+    || object.$ === 'mapObject' || object.$ === 'setObject' || object.$ === 'weakMapObject'
+    || object.$ === 'weakSetObject' || object.$ === 'collectionIteratorObject' || object.$ === 'arrayObject';
+}
+
+/** Commit the Array-specific descriptor and length transition.
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptOrdinaryObject} object
+ * @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed
+ * @returns {JavaScriptOrdinaryPropertyDefinition} */
+function defineJavaScriptArrayOwnProperty(heap, object, key, proposed) {
+  const plan = planJavaScriptArrayPropertyDefinition(object, key, proposed);
+  if (plan.errorClass === 'resource') return {heap,success:false,error:plan.error,writes:[],resourceLimit:true};
+  if (plan.errorClass !== '') return {heap,success:false,error:plan.error,writes:[]};
+  let count = 0;
+  for (const entry of heap.objects) count += entry.properties.length;
+  if (count - object.properties.length + plan.object.properties.length > 16384) return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[],resourceLimit:true};
+  return {heap:replaceJavaScriptOrdinaryObject(heap,plan.object),success:plan.success,error:plan.error,writes:plan.writes};
+}
+
 /** DefineOwnProperty commits the exact source-selected descriptor transition.
  * A keep/reject retains the whole original state. Physical field adapters must
  * still obey the source write mask when applying a snapshot to native storage.
  * @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity
  * @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed
- * @returns {{heap:JavaScriptOrdinaryHeap,success:boolean,error:string,writes:string[],resourceLimit?:boolean}} */
+ * @returns {JavaScriptOrdinaryPropertyDefinition} */
 export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) {
   const heapError = readJavaScriptOrdinaryHeapError(heap);
   const keyError = readJavaScriptOrdinaryKeyError(heap, key);
@@ -404,15 +427,16 @@ export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) 
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'DefineOwnProperty needs its actual Object identity',writes:[]};
-  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='boundFunctionObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error descriptor definition requires its actual host protocol',writes:[]};
-  if(object.$==='arrayObject'){
-    const plan=planJavaScriptArrayPropertyDefinition(object,key,proposed);
-    if(plan.errorClass==='resource')return {heap,success:false,error:plan.error,writes:[],resourceLimit:true};
-    if(plan.errorClass!=='')return {heap,success:false,error:plan.error,writes:[]};
-    let count=0;for(const entry of heap.objects)count+=entry.properties.length;
-    if(count-object.properties.length+plan.object.properties.length>16384)return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[],resourceLimit:true};
-    return {heap:replaceJavaScriptOrdinaryObject(heap,plan.object),success:plan.success,error:plan.error,writes:plan.writes};
-  }
+  if (object.$ === 'arrayObject') return defineJavaScriptArrayOwnProperty(heap, object, key, proposed);
+  if (!acceptsJavaScriptOrdinaryOwnPropertyDefinition(object)) return {heap,success:false,error:'opaque Error descriptor definition requires its actual host protocol',writes:[]};
+  return commitJavaScriptOrdinaryOwnProperty(heap, object, key, proposed);
+}
+
+/** Commit the descriptor on a validated non-Array ordinary target.
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptOrdinaryObject} object
+ * @param {JavaScriptSemanticValue} key @param {JavaScriptPropertyDescriptor} proposed
+ * @returns {JavaScriptOrdinaryPropertyDefinition} */
+function commitJavaScriptOrdinaryOwnProperty(heap, object, key, proposed) {
   const at = findJavaScriptOrdinaryProperty(object.properties, key);
   const property = object.properties[at];
   const current = property === undefined ? createJavaScriptPropertyDescriptor('data',false,false) : property.descriptor;
