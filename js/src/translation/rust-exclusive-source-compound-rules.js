@@ -32,18 +32,23 @@ function readRustExclusiveSourceCompoundPlaceAt(forms,start,depth){
   const inner=readRustExclusiveSourceCompoundPlaceAt(forms,start+1,depth+1);
   return inner.length>=2?[...inner,-1]:[];
  }
- let plan=[start+1,start];
+ let end=start+1,root=start;
+ /** @type {number[]} */let fields=[];
  if(forms[start]==='('){
-  plan=readRustExclusiveSourceCompoundPlaceAt(forms,start+1,depth+1);
+  const plan=readRustExclusiveSourceCompoundPlaceAt(forms,start+1,depth+1);
   if(plan.length<2||forms[plan[0]]!==')')return [];
-  plan[0]+=1;
+  end=plan[0]+1;
+  root=plan[1]??-1;
+  fields=plan.slice(2);
  }else if(forms[start]!=='name')return [];
- while(forms[plan[0]]==='.'){
-  const field=plan[0]+1;
+ const fieldStart=end;
+ while(forms[end]==='.'){
+  const field=end+1;
   if(forms[field]!=='name'&&forms[field]!=='number')return [];
-  plan.push(field);plan[0]=field+1;
+  end=field+1;
  }
- return plan;
+ const positions=forms.slice(fieldStart,end).filter((_,index)=>index%2===1).map((_,index)=>fieldStart+2*index+1);
+ return [end,root,...fields,...positions];
 }
 /** @param {string} kind @param {string} bits @param {boolean} signed
  * @param {string} owner @param {string} path @param {number} children
