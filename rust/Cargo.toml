@@ -251,6 +251,7 @@ include = [
     "src/data/rust-owned-record-place-program.lino",
     "src/data/rust-owned-record-state-program.lino",
     "src/data/rust-owned-record-update-program.lino",
+    "src/data/rust-owned-standard-sum-callback-program.lino",
     "src/data/rust-owned-standard-sum-method-program.lino",
     "src/data/rust-owned-standard-sum-observer-program.lino",
     "src/data/rust-owned-standard-sum-predicate-program.lino",

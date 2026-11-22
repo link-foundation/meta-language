@@ -119,7 +119,7 @@ export function planRustOwnedStandardSumCallbackSelection(values,kinds){
   if(values[at]!=='->')return [];at+=1;code=3;
  }else if(moved)return [];
  const start=at;
- if(kinds[at]!=='identifier'&&!['crate','self','super'].includes(values[at]))return [];
+ if(kinds[at]!=='identifier'&&!['crate','self','super'].includes(values[at]??''))return [];
  at+=1;let parts=1;while(values[at]==='::'&&kinds[at+1]==='identifier'&&parts<256){at+=2;parts+=1;}
  if(code===3)return [3,start,at];
  if(values[at]==='(')code=2;else if(values[at]!==')'&&values[at]!==',')return [];
