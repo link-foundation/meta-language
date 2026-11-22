@@ -744,7 +744,7 @@ pub(super) fn tag_row(
                 .iter()
                 .find(|(name, _)| Some(name.as_str()) == field.name.as_deref());
             SPattern {
-                node: bound.map_or(SPatternNode::Wild, |(_, name)| SPatternNode::BindOrCtor {
+                node: bound.map_or(SPatternNode::Wild, |(_, name)| SPatternNode::Bind {
                     name: name.clone(),
                 }),
                 span: Some(test_span),

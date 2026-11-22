@@ -1251,8 +1251,9 @@ class Checker {
         const field = position < 0 ? undefined : expected.fields[position];
         const want = field && javaScriptConstructorFieldValueType(field);
         let value = this.expr(entry.value, env, path, want);
+        if (want) value = coerce(value, want, this.language, entry.value.span ?? node.span);
         if (field?.optional) value = constructJavaScriptOwnedConstructorField(
-          coerce(value, want, this.language, entry.value.span ?? node.span), field.type);
+          value, field.type);
         const name = this.freshName('ml_field');
         bindings.push({ name, value });
         entries.push({ name: entry.name, value: { k: 'var', name, type: value.type }, ...(field?.optional ? { optional: true } : {}) });
@@ -1976,21 +1977,26 @@ class Checker {
 
   ctorObject(node, env, path, expected) {
     const owner = this.language === 'JavaScript' && expected?.kind === 'option' ? expected.element : expected;
-    const candidates = [];
+    const names = Object.keys(node.fields);
+    const acceptsFields = ctor => ctor.fields.every(field => field.optional || Object.hasOwn(node.fields, field.name))
+      && names.every(name => ctor.fields.some(field => field.name === name));
+    let candidates = [];
     for (const entry of this.items.values()) {
       if (entry.k !== 'data' || !entry.ctors) continue;
       if (owner?.kind === 'data' && entry.fullName !== owner.name) continue;
       const ctor = entry.ctors.find((candidate) => candidate.name === node.tag);
       if (ctor) candidates.push([entry, ctor]);
     }
+    if (candidates.length > 1) {
+      const matching = candidates.filter(([, ctor]) => acceptsFields(ctor));
+      if (matching.length > 0) candidates = matching;
+    }
     if (candidates.length !== 1) {
       throw typeError(candidates.length === 0 ? `no data type has tag ${node.tag}` : `tag ${node.tag} is ambiguous`, node.span);
     }
     const [entry, ctor] = candidates[0];
-    const names = Object.keys(node.fields);
     const expectedNames = ctor.fields.map((field) => field.name);
-    if (ctor.fields.some(field => !field.optional && !Object.hasOwn(node.fields, field.name))
-      || names.some((name) => !expectedNames.includes(name))) {
+    if (!acceptsFields(ctor)) {
       throw typeError(`${node.tag} expects fields ${expectedNames.join(', ')}`, node.span);
     }
     if (Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw typeError('constructor immutability must be Boolean', node.span);

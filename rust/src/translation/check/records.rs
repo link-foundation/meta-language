@@ -433,10 +433,12 @@ impl Checker {
                     }
                 });
                 let mut value = self.expr(&entry.value, env, path, wanted_type, false)?;
+                if let Some(wanted_type) = wanted_type {
+                    value = self.coerce(value, wanted_type, entry.value.span.or(span))?;
+                }
                 let owns_optional = field.is_some_and(|field| field.optional);
                 if let Some(field) = field.filter(|field| field.optional) {
-                    let wanted_type = wanted_type.expect("an optional field has its value type");
-                    value = presence::own_value(self.coerce(value, wanted_type, span)?, &field.ty);
+                    value = presence::own_value(value, &field.ty);
                 }
                 optional.push(owns_optional);
                 possibly_absent.push(false);

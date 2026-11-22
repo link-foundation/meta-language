@@ -1942,7 +1942,7 @@ class JavaScriptParser {
         ? readJavaScriptOptionalConstructorField(binder, span) : binder;
     });
     const args = ctor.fields.map((field) => (binders.has(field.name)
-      ? { k: 'bindOrCtor', name: binders.get(field.name), span: test.span }
+      ? { k: 'bind', name: binders.get(field.name), span: test.span }
       : { k: 'wild', span: test.span }));
     return { patterns: [{ k: 'ctor', path: [ROOT, node.data.name, test.tag], args, span: test.span }], body: substituted, span: where };
   }

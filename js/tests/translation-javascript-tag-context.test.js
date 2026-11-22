@@ -22,6 +22,25 @@ const expected = '[{"$":"malformed","at":1,"end":2},{"$":"nonScalar","at":3,"end
 const observe = (source, expression = '[convert(0),convert(1),convert(2)]') =>
   runInNewContext(source + '\nJSON.stringify(' + expression + ');', {}, { timeout: 1000 });
 
+test('own-field layout selects one constructor and a switch capture may share a tag name', () => {
+  const source = `
+/** @typedef {{ $: 'symbol', identity: bigint }} SymbolValue */
+/** @typedef {{ $: 'shared', symbol: SymbolValue }} Pending */
+/** @typedef {{ $: 'shared', other: number }} Other */
+/** @returns {SymbolValue} */ function makeSymbol() { return { $: 'symbol', identity: 42n }; }
+/** @param {Pending} pending @returns {bigint} */ function readIdentity(pending) {
+  switch (pending.$) {
+    case 'shared': { const { symbol } = pending; return symbol.identity; }
+  }
+}
+/** @returns {bigint} */ function identity() {
+  const pending = { $: 'shared', symbol: makeSymbol() };
+  return readIdentity(pending);
+}`;
+  const checked = checkProgram(parseJavaScript(source));
+  assert.equal(observe(emitJavaScript(checked).text, 'identity().toString()'), '"42"');
+});
+
 test('declared fields carry exact constructor owners through nested literals and accesses', () => {
   const source = readFileSync(new URL('../../experiments/javascript-tag-context/declared-field-owners.js', import.meta.url), 'utf8');
   const run = script => {

@@ -8,6 +8,33 @@ use std::process::Command;
 
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 
+#[test]
+fn constructor_field_layout_and_switch_captures_use_declared_names() {
+    let source = r#"
+/** @typedef {{ $: 'symbol', identity: bigint }} SymbolValue */
+/** @typedef {{ $: 'shared', symbol: SymbolValue }} Pending */
+/** @typedef {{ $: 'shared', other: number }} Other */
+/** @returns {SymbolValue} */ function makeSymbol() { return { $: 'symbol', identity: 42n }; }
+/** @param {Pending} pending @returns {bigint} */ function readIdentity(pending) {
+  switch (pending.$) {
+    case 'shared': { const { symbol } = pending; return symbol.identity; }
+  }
+}
+/** @returns {bigint} */ function identity() {
+  const pending = { $: 'shared', symbol: makeSymbol() };
+  return readIdentity(pending);
+}"#;
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let javascript = emit_javascript(&checked).unwrap();
+    let output = Command::new("node")
+        .arg("-e")
+        .arg(format!("{}\nconsole.log(identity().toString());", javascript.text))
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{:?}", output.stderr);
+    assert_eq!(output.stdout, b"42\n");
+}
+
 fn rename_tag(value: &mut Value, tag: &str) {
     match value {
         Value::Array(children) => children.iter_mut().for_each(|child| rename_tag(child, tag)),

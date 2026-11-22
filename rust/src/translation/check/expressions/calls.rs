@@ -516,6 +516,13 @@ impl Checker {
             }
             _ => expected,
         };
+        let accepts_fields = |ctor: &Ctor| {
+            ctor.fields.iter().all(|field| {
+                field.optional || fields.iter().any(|(name, _)| name == &field.name)
+            }) && fields
+                .iter()
+                .all(|(name, _)| ctor.fields.iter().any(|field| name == &field.name))
+        };
         let mut candidates = Vec::new();
         for name in &self.order {
             let Some(Decl::Data(entry)) = self.decls.get(name) else {
@@ -529,6 +536,9 @@ impl Checker {
             if let Some(ctor) = entry.ctors.iter().find(|ctor| ctor.name == tag) {
                 candidates.push((entry.full_name.clone(), ctor.clone()));
             }
+        }
+        if candidates.len() > 1 && candidates.iter().any(|(_, ctor)| accepts_fields(ctor)) {
+            candidates.retain(|(_, ctor)| accepts_fields(ctor));
         }
         if candidates.len() != 1 {
             return Err(type_error(
@@ -546,11 +556,7 @@ impl Checker {
             .iter()
             .map(|field| field.name.as_str())
             .collect();
-        if ctor.fields.iter().any(|field| !field.optional && !fields.iter().any(|(name, _)| name.as_str() == field.name))
-            || fields
-                .iter()
-                .any(|(name, _)| !expected_names.contains(&name.as_str()))
-        {
+        if !accepts_fields(&ctor) {
             return Err(type_error(
                 format!("{tag} expects fields {}", expected_names.join(", ")),
                 span,
