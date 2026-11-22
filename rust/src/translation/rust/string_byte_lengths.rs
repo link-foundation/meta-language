@@ -60,10 +60,7 @@ impl RustParser {
             SNode::Math {
                 op: rules::read_rust_string_byte_length_operation(),
                 name: "Rust String byte length".to_owned(),
-                args: vec![SArrayItem {
-                    value: receiver.clone(),
-                    spread: false,
-                }],
+                args: vec![SArrayItem::new(receiver.clone(), false)],
             },
             span,
         );

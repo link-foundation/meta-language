@@ -163,7 +163,7 @@ impl RustParser {
             left = SExpr::new(SNode::Math {
                 op: crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_operation(&token.value),
                 name: "Rust primitive bitwise operation".to_owned(),
-                args: vec![SArrayItem { value: left, spread: false }, SArrayItem { value: right, spread: false }],
+                args: vec![SArrayItem::new(left, false), SArrayItem::new(right, false)],
             }, range);
         }
     }
@@ -192,14 +192,8 @@ impl RustParser {
                     ),
                     name: "Rust primitive shift".to_owned(),
                     args: vec![
-                        SArrayItem {
-                            value: left,
-                            spread: false,
-                        },
-                        SArrayItem {
-                            value: right,
-                            spread: false,
-                        },
+                        SArrayItem::new(left, false),
+                        SArrayItem::new(right, false),
                     ],
                 },
                 range,

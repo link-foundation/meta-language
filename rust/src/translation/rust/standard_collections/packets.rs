@@ -178,10 +178,7 @@ fn encode_metadata(
             items: values
                 .iter()
                 .map(|value| {
-                    Ok(SArrayItem {
-                        value: child(Some(value), element)?,
-                        spread: false,
-                    })
+                    Ok(SArrayItem::new(child(Some(value), element)?, false))
                 })
                 .collect::<Result<_>>()?,
         },
@@ -1178,10 +1175,7 @@ impl RustParser {
                     .into_iter()
                     .zip(&carrier.domains)
                     .map(|(argument, domain)| {
-                        Ok(SArrayItem {
-                            value: packet_leaf(program, element, domain, argument, location)?,
-                            spread: false,
-                        })
+                        Ok(SArrayItem::new(packet_leaf(program, element, domain, argument, location)?, false))
                     })
                     .collect::<Result<_>>()?,
             },
@@ -1561,14 +1555,8 @@ impl RustParser {
                         SNode::Array {
                             element: Some(element.as_ref().clone()),
                             items: vec![
-                                SArrayItem {
-                                    value: name(vec![accumulator.clone()], location),
-                                    spread: true,
-                                },
-                                SArrayItem {
-                                    value: decoded,
-                                    spread: false,
-                                },
+                                SArrayItem::new(name(vec![accumulator.clone()], location), true),
+                                SArrayItem::new(decoded, false),
                             ],
                         },
                         location,

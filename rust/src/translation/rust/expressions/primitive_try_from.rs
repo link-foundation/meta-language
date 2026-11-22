@@ -781,7 +781,7 @@ impl RustParser {
                 }
                 "raise" => {
                     let message = pop(&mut stack, range)?;
-                    stack.push(SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust primitive conversion panic message".to_owned(),args:vec![super::SArrayItem{value:message,spread:false}]},range));
+                    stack.push(SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust primitive conversion panic message".to_owned(),args:vec![super::SArrayItem::new(message, false)]},range));
                 }
                 "predicate" => stack.push(SExpr::new(
                     SNode::App {

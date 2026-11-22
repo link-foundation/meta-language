@@ -899,7 +899,7 @@ impl RustParser {
             let fallback = if rules::test_rust_array_lookup_panic_consumer(&consumer.value)
                 && !defaults.is_empty()
             {
-                SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust evaluated expect message".to_owned(),args:vec![super::SArrayItem{value:local(captures.len()-1),spread:false}]},range)
+                SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust evaluated expect message".to_owned(),args:vec![super::SArrayItem::new(local(captures.len()-1), false)]},range)
             } else {
                 fallback
             };

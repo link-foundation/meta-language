@@ -192,7 +192,7 @@ impl RustParser {
                             range,
                         )
                     };
-                    let result=SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust formatted panic message".to_owned(),args:vec![SArrayItem{value,spread:false}]},range);
+                    let result=SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust formatted panic message".to_owned(),args:vec![SArrayItem::new(value, false)]},range);
                     let mut origin =
                         SourceOrigin::with_type(super::super::super::UNIT, path, Vec::new());
                     origin.diverging = true;
