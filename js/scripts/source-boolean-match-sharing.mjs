@@ -39,7 +39,8 @@ function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
   const calls=readProjectData(new URL('parity/self-translation/source-direct-call-match-sharing.lino',root));
   if(calls.schemaVersion!==1||calls.model!==directCallMatchSharingModel||calls.requireActualTarget!==true||calls.preserveArgumentOrder!==true||calls.requireSameSourceSpan!==true||calls.excludeConstructorBindings!==true)throw new TypeError('actual qualified direct-call match sharing rules are required');
  }
- const memo=new WeakMap(),active=new WeakSet(),referenceCache=new WeakMap(),proofs=[];let visits=0,referenceVisits=0;
+ const proofs=[];
+ let memo,active,referenceCache,visits,referenceVisits;
  function references(body){
   if(body&&typeof body==='object'&&referenceCache.has(body))return referenceCache.get(body);
   const names=new Set(),seen=new WeakSet(),pending=[body];
@@ -149,6 +150,8 @@ function shareSourceConstructorMatches(program,closed,shareDirectCalls=false){
  }
  const declarations=new Map();
  for(const [name,entry]of program.declarations){
+  // Proof paths and their work budget belong to the declaration that owns them.
+  memo=new WeakMap();active=new WeakSet();referenceCache=new WeakMap();visits=0;referenceVisits=0;
   let body=entry.k==='fn'?rewrite(entry.body,['body'],name):entry.body;
   if(closed&&entry.k==='fn'){body=shareSourceLexicalAliases(program,entry,body,proofs);body=rewrite(body,['body'],name);body=shareSourceScopedConstructorProjections(program,entry,body,proofs);body=shareSourceConstructorProjections(program,entry,body,proofs);}
   declarations.set(name,body===entry.body?entry:{...entry,body});

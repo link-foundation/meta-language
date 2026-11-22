@@ -11605,9 +11605,10 @@ plus complete declared semantic data types. Reachability follows actual checked
 call/function/type/constructor references, never names guessed from arbitrary
 text. All omitted dependency declarations remain listed, and complete original
 sources/native generation remain in the recipe. Dependency libraries retain
-their own catalog entry points. This source graph projection neither deletes
-requirements nor substitutes placeholders for reachable code. The graph's normal
-recheck, existing100000-node/byte/reference limits and all CI gates remain exact.
+their own catalog entry points. Authoring checks reference reachability and
+constructor sharing within each checked declaration. Each declaration retains
+its traversal ceiling and its own occurrence paths. The selected graph still
+has to satisfy the complete typed Links recheck and its graph-wide limits.
 
 Deferred controls compare original sources, both graph codecs, target emissions,
 real parameter owner links and complete preceding source snapshots. Generated

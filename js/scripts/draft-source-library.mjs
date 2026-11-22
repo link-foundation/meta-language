@@ -86,7 +86,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   if (programAsset !== undefined) {
     if (!/^[a-z][a-z0-9-]*$/u.test(programAsset)) throw new TypeError('invalid typed source program asset');
     if(programEntryPoints!==''&&programEntryPoints!=='source module exports 1')throw new TypeError('unknown source program entry-point selection');
-    const selected=programEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};programProjection=selected.projection;
+    const selected=programEntryPoints===nativeEntryPoints?nativeSelection:programEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};programProjection=selected.projection;
     const linked=encodeTypedProgramLinks(selected.program,{valueSharing,recordShapes,...(sourceAliases?{provenance:{sourceModel:model,sourceClosure,sourceDeclarationOwners}}:{})});
     trace('encoded typed links');
     programText=linked.network.toLino();
