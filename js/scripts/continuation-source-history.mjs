@@ -10,18 +10,32 @@ import {restoreRawDescriptorHistoricalSource} from './raw-descriptor-historical-
 
 const historyFile=new URL('../../parity/self-translation/ci-39389240046-historical-inputs.lino',import.meta.url);
 const historyHash='05e17bf81c6304f36411073ee4853798041e2764164c999ca93888870fb61560';
+const currentHistoryFile=new URL('../../parity/self-translation/ci-39389240046-current-historical-inputs.lino',import.meta.url);
+const currentHistoryHash='248b7e3c93571b8e5f2f81149b0f3392bc6b48c1acf0ec278bf336beb5da23a3';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
-let history;
+let history,currentHistory;
+
+export function readContinuationHistoricalArchive() {
+  if(!history){
+    const bytes=readFileSync(historyFile);assert.equal(pin(bytes).sha256,historyHash);
+    history=readProjectData(historyFile);assert.equal(history.schemaVersion,1);
+  }
+  return history;
+}
 
 /** Restore only an exact reviewed successor; existing historical gates reject others. */
 export function restoreContinuationHistoricalSource(source,file,profile) {
   assert.equal(typeof source,'string');
   if(profile==='relative array')source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
-  if(!history){
-    const bytes=readFileSync(historyFile);assert.equal(pin(bytes).sha256,historyHash);
-    history=readProjectData(historyFile);assert.equal(history.schemaVersion,1);
+  const archive=readContinuationHistoricalArchive();
+  if(!currentHistory){
+    const bytes=readFileSync(currentHistoryFile);assert.equal(pin(bytes).sha256,currentHistoryHash);
+    currentHistory=readProjectData(currentHistoryFile);assert.equal(currentHistory.schemaVersion,1);
+    assert.equal(currentHistory.revision,archive.revision);
   }
-  const rows=history.sources.filter(row=>row.file===file&&row.profiles.includes(profile));
+  const matches=row=>row.file===file&&row.profiles.includes(profile);
+  const successors=currentHistory.sources.filter(matches);
+  const rows=successors.length ? successors : archive.sources.filter(matches);
   assert.ok(rows.length<=1,'one complete historical input per profile');
   if(rows.length===0)return ['relative array','original number source ranges'].includes(profile)
     ?restoreCurrentCiRepairSource(source,file):source;

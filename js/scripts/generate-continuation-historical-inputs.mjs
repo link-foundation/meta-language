@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {isDeepStrictEqual} from 'node:util';
 import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-source-history.mjs';
 import {restoreRawDescriptorHistoricalSource} from './raw-descriptor-historical-cohort.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
@@ -11,6 +12,7 @@ import {readProjectData,checkProjectData,writeProjectData,serializeProjectData} 
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {restoreRawConsumingSnapshotSource} from './raw-consuming-snapshot-source-profile.mjs';
 import {restoreProgramStringSourceDescriptorEdge} from './program-string-source-descriptors.mjs';
+import {readContinuationHistoricalArchive} from './continuation-source-history.mjs';
 
 const root=new URL('../../',import.meta.url),revision='d1232503fb38246f7e28f5d414c882a70944b38b';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
@@ -79,10 +81,15 @@ export function generateContinuationHistoricalInputs({check=false}={}) {
   }
   const value={schemaVersion:1,revision,run:39389240046,sources,
     boundary:'Exact historical input views only. Current implementations and artifacts retain independent current gates. Unknown successors are never authenticated by these views. Every original historical assertion and its complete input remain required. This record proves source preservation, not native execution or semantic equivalence.'};
-  const output=new URL('parity/self-translation/ci-39389240046-historical-inputs.lino',root);
-  if(check)checkProjectData(output,value);else writeProjectData(output,value);
+  const archive=readContinuationHistoricalArchive();
+  assert.equal(archive.revision,revision);
+  const archivedSources=new Map(archive.sources.map(row=>[row.file,row]));
+  const supplementalSources=sources.filter(row=>!isDeepStrictEqual(row,archivedSources.get(row.file)));
+  const supplemental={...value,sources:supplementalSources};
+  const output=new URL('parity/self-translation/ci-39389240046-current-historical-inputs.lino',root);
+  if(check)checkProjectData(output,supplemental);else writeProjectData(output,supplemental);
   const helperFile=new URL('js/scripts/continuation-source-history.mjs',root),source=readFileSync(helperFile,'utf8');
-  const expected=source.replace(/const historyHash='(?:[a-f0-9]{64}|PENDING)';/u,"const historyHash='"+pin(readFileSync(output)).sha256+"';");
+  const expected=source.replace(/const currentHistoryHash='(?:[a-f0-9]{64}|PENDING)';/u,"const currentHistoryHash='"+pin(readFileSync(output)).sha256+"';");
   if(check)assert.equal(source,expected);else writeFileSync(helperFile,expected);
   return value;
 }
