@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {execFileSync} from 'node:child_process';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
@@ -41,23 +40,27 @@ export function generateOwnCodebaseHistoricalNamingSources({check=false}={}){
 }
 /** Append only independently derived historical names; current extraction stays separate. */
 export async function generateAdditionalOwnCodebaseHistoricalNamingSources({check=false}={}){
-  const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b',baseline='8bc0ef9725388c7927acf1854870bf46f5e365be';
+  const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b';
   const file='parity/naming/array-identity-historical-inventories.lino';
-  let sources,stored;
-  if(check){stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;sources=stored.sources;}
-  else{
-    const originalFiles=['js/src/translation/javascript-infer.js','js/tests/translation-frontend-rules.test.js',
-      'rust/tests/unit/translation_surface_reference_analysis.rs','js/scripts/own-codebase-baseline-naming-history.mjs'];
-    const changed=execFileSync('git',['diff',baseline,'--name-only'],{cwd:root,encoding:'utf8'}).trim().split('\n')
-      .filter(path=>/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/.+\.(?:js|mjs|rs)$/u.test(path));
-    const selections=[...originalFiles.map(path=>({path,revision})),...changed.map(path=>({path,revision:baseline}))];
-    sources=selections.map(({path,revision})=>{
+  const stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
+  let sources=stored.sources;
+  if(!check){
+    const baseline='ec9f4efb0e9ef936114e09823981352f6db13700';
+    const selections=[...[
+      'js/scripts/scheduling-source-history.mjs','js/scripts/raw-oracle-contract-partition-history.mjs',
+      'js/scripts/tooling-frozen-source-history.mjs','js/tests/self-translation.test.js','js/src/grammar-runtime/executor.js',
+      'js/src/index.d.ts','js/scripts/generate-own-codebase-baseline-naming-history.mjs',
+      'js/scripts/own-codebase-baseline-naming-history.mjs',
+    ].map(path=>({path,revision:baseline})),
+    {path:'js/scripts/scheduling-source-history.mjs',revision:'231c6610fc93225fccb1682ab2943729e0c0e52e'}];
+    const additions=selections.filter(({path,revision})=>!sources.some(row=>row.file===path&&row.predecessor.revision===revision));
+    const captured=additions.map(({path,revision})=>{
       globalThis.gc?.();
       const {blob,certificate}=captureGitArtifactCertificate(revision,path);
       assert.deepEqual(verifyGitArtifactCertificate(certificate,blob,{revision,path}),blob);
-      return{file:path,predecessor:{revision,source:blob.toString('utf8'),...pin(blob),certificate},
-        current:pin(readFileSync(new URL(path,root)))};
+      return{file:path,predecessor:{revision,source:blob.toString('utf8'),...pin(blob),certificate}};
     });
+    sources=[...sources,...captured].map(row=>({...row,current:pin(readFileSync(new URL(row.file,root)))}));
   }
   // Finish Git object capture before retaining the complete naming inventory.
   // Its binding graph and Git's pack buffers need separate memory lifetimes.
