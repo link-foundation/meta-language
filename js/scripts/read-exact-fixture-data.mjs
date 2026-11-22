@@ -69,7 +69,25 @@ export function readExactFixtureExport(source,{path,exportName,profile}={}){
    else if(take('(')){const close=groupEnd(start,end);if(actual(close+1,'=>')){result=arrow(start,close,close+2,nesting);at=end;}else{result=evaluate(nesting+1);need(')');}}
    else if(token.kind==='identifier'&&actual(at+1,'=>')){result=arrow(at-1,at,at+2,nesting);at=end;}
    else if(token.kind==='string'){at++;let value=token.value;if(token.stringUnits){value='';for(const unit of token.stringUnits)value+=String.fromCharCode(unit);}result={$:'fixtureText',value};}
-   else if(token.kind==='template'){at++;if(!Array.isArray(token.parts)||token.parts.some(part=>part.expression))throw new TypeError('fixture templates must contain literal text only');let value='';for(const part of token.parts){if(part.stringUnits)for(const unit of part.stringUnits)value+=String.fromCharCode(unit);else value+=part.text;}result={$:'fixtureText',value};}
+   else if(token.kind==='template'){
+    at++;
+    if(!Array.isArray(token.parts))throw new TypeError('fixture templates require their exact literal parts');
+    let value='';
+    for(const part of token.parts){
+     value+=part.stringUnits?tokenText(part):part.text;
+     if(part.expression){
+      const name=part.expression.source.trim();
+      if(!bindingIdentifier(name))throw new TypeError('fixture template substitutions require an actual text binding');
+      const substitution=reference(name,part.expression.offset,nesting+1);
+      if(substitution.$!=='fixtureText')throw new TypeError('fixture template substitutions require initialized text');
+      bound(value.length+substitution.value.length,4*1024*1024,'fixture template text exceeds its budget');
+      value+=substitution.value;
+      operation('template text binding',start,at);
+     }
+     bound(value.length,4*1024*1024,'fixture template text exceeds its budget');
+    }
+    result={$:'fixtureText',value};
+   }
    else if(token.kind==='number'||actual(at,'-')){let sign='';if(take('-'))sign='-';const number=tokens[at++];if(!number||number.kind!=='number'&&number.raw!=='Infinity')throw new TypeError('a signed fixture literal needs its actual numeric token');const raw=sign+number.raw.replaceAll('_','');if(raw.endsWith('n')){bound(raw.length,4096,'fixture BigInt literal exceeds its digit budget');const magnitude=BigInt(number.raw.replaceAll('_','').slice(0,-1));result={$:'fixtureInteger',digits:(sign==='-'?-magnitude:magnitude).toString()};}else{if(number.kind==='number'&&!Number.isFinite(Number(raw)))throw new TypeError('overflowed Number fixture literals require explicit Infinity');result={$:'fixtureNumber',source:raw};}}
    else if(['true','false','null','undefined','NaN','Infinity'].some(word=>actual(at,word))&&!environment.has(token.value)&&!declarations.has(token.value)){at++;result=token.value==='undefined'?{$:'fixtureUndefined'}:token.value==='null'?{$:'fixtureNull'}:['true','false'].includes(token.value)?{$:'fixtureBoolean',value:token.value==='true'}:{$:'fixtureNumber',source:token.value};}
    else if(token.kind==='identifier'){at++;result=reference(token.value,token.start,nesting+1);}

@@ -6,6 +6,7 @@ export const exactFixtureAuthoringOriginals=[
  {name:'record spread overwrite preserves actual first property position',source:'const base={first:1n,last:2n};export const data={...base,first:9n,next:undefined};',expected:'{"first":9n,"last":2n,"next":undefined}'},
  {name:'pure fixed-field selector copies only actual retained input rows',source:'const rows=[{identity:1n},{identity:2n},{identity:7n}];export const data=rows.filter(row=>row.identity!==2n);',expected:'[{"identity":1n},{"identity":7n}]'},
  {name:'whole export text template is literal source data',source:'export const data=[`literal source text`];',expected:'["literal source text"]'},
+ {name:'fixture templates compose initialized text with exact code units',source:'const body="\\uD800";export const data=`pre ${body} post`;',expected:'"pre \\ud800 post"'},
  {name:'negative hexadecimal BigInt remains an exact signed integer',source:'export const data=[-0xFFn];',expected:'[-255n]'},
  {name:'undefined spelling follows the actual initialized local declaration',source:'const undefined=7;export const data=[undefined];',expected:'[7]'},
  {name:'unpaired source code unit remains exact UTF16 text',source:'export const data=["\\uD800"];',expected:'["\\ud800"]'},
@@ -29,5 +30,7 @@ export const exactFixtureAuthoringRefusals=[
  {name:'later default parameter shadows an outer initialized binding',source:'const later=1;const make=(first=later,later=2)=>({first,later});export const data=make();'},
  {name:'custom iterables are not array spreads',source:'export const data=[...unknown];'},
  {name:'template interpolation cannot compute an oracle',source:'export const data=[`${policy()}`];'},
+ {name:'fixture template substitution cannot coerce an aggregate',source:'const value={};export const data=`${value}`;'},
+ {name:'fixture template substitution cannot read a later binding',source:'export const data=`${body}`;const body="later";'},
  {name:'chained selectors require a separate exact expression profile',source:'const values=[{x:1}];export const data=values.filter(value=>value.x===1===true);'},
 ];

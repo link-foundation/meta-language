@@ -13363,7 +13363,10 @@ Shared or mutable handle interpretations need their own cloning/alias model.
 Independent policy assertions may be translated automatically as complete
 programs. Source tooling captures literal fixture rows, constant references,
 literal append operations and exact Number spellings without executing a policy
-to derive its expected result. Every original fixture/export/index has one
+to derive its expected result. A template can insert text from an actual
+initialized lexical binding while retaining its UTF-16 code units and source
+provenance. Coercion and computed substitutions require separate source models.
+Every original fixture/export/index has one
 actual exported owner in its captured source closure. Multiple independent
 roots reconcile all original coordinates before filtering; unknown, missing or
 duplicate assignments refuse. The source compiler translates the complete
