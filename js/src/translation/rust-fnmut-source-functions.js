@@ -3,7 +3,7 @@
 import {unsupported,typeError} from './diagnostics.js';
 import {readRustSourceVersion} from './rust-source-versions.js';
 import {readRustFnMutSourceModelError} from './rust-fnmut-source-declaration-rules.js';
-import {captureRustFnMutSourceDeclaration,readRustFnMutSourceDeclaration,specializeRustFnMutSourceDeclaration,previewRustFnMutSourceDeclaration} from './rust-fnmut-source-declarations.js';
+import {captureRustFnMutSourceDeclaration,tryCaptureRustFnMutSourceDeclaration,readRustFnMutSourceDeclaration,specializeRustFnMutSourceDeclaration,previewRustFnMutSourceDeclaration} from './rust-fnmut-source-declarations.js';
 import {readRustFnMutSourceCallback,readRustFnMutSourceCallbackBinding} from './rust-fnmut-source-callbacks.js';
 import {createRustSourceSignature} from './rust-source-signatures.js';
 import {beginRustOwnedRecordStateBlock,endRustOwnedRecordStateBlock,registerRustExclusiveSourceStateRoot,readRustOwnedRecordStateDeclarations} from './rust-owned-record-state.js';
@@ -39,11 +39,11 @@ function receiver(parser,facts){
 }
 export function readRustFnMutSourceFunctionTemplate(parser,path,start,name,constKeyword=null){
  if(!parser.fnMutSourceModel||parser.fnMutSourceSpecialization)return null;
- const arena=registry(parser),key=[...path,name].join('.'),tokens=parser.sourceConstantTokens,from=tokens.findIndex(token=>token.start===start.start);let callback=false;
- for(let at=from+1;at<tokens.length&&!(tokens[at].kind==='punct'&&tokens[at].value==='{');at++){if(at-from>1000000)fail('the original function header exceeds its actual source token budget',start);if(tokens[at].value==='FnMut')callback=true;}
- if(!callback){if(arena.templates.has(key)&&arena.templates.get(key).facts.range.start!==start.start)throw typeError('duplicate source generic function '+key,start);return null;}
+ const arena=registry(parser),key=[...path,name].join('.');
+ const handle=tryCaptureRustFnMutSourceDeclaration(parser,path,start);
+ if(!handle){if(arena.templates.has(key)&&arena.templates.get(key).facts.range.start!==start.start)throw typeError('duplicate source generic function '+key,start);return null;}
  if(constKeyword)fail('const generic FnMut calls need their independent const trait/effect interpretation',start);
- const handle=captureRustFnMutSourceDeclaration(parser,path,start),facts=readRustFnMutSourceDeclaration(parser,handle),before=arena.templates.get(key);if(before&&before.facts.range.start!==facts.range.start)throw typeError('duplicate source generic function '+key,start);arena.templates.set(key,{handle,facts});
+ const facts=readRustFnMutSourceDeclaration(parser,handle),before=arena.templates.get(key);if(before&&before.facts.range.start!==facts.range.start)throw typeError('duplicate source generic function '+key,start);arena.templates.set(key,{handle,facts});
  const self=receiver(parser,facts),params=self?[self]:[],origin=parser.origins.typeOrigin(UNIT,path);origin.sourceOwner={kind:'unit',path:[],arguments:[]};
  parser.origins.declaration(name,path,{k:'fn',parameters:[],result:origin,sourceFnMutTemplate:true});if(self)parser.inherentMethods.set(key,{owner:path.join('.'),mode:1,receiver:['reference'],sourceFnMutTemplate:true});
  const end=parser.cursor.tokens.findIndex(token=>token.kind==='punct'&&token.value==='}'&&token.end===facts.range.end);if(end<0)fail('the original generic body must remain in the actual token stream',facts.range);parser.cursor.index=end+1;

@@ -42,6 +42,7 @@ mod expression_paths;
 mod expressions;
 mod float_predicate_rules;
 mod float_predicates;
+mod fn_mut_source_declarations;
 mod formatting;
 mod function_pointers;
 mod generic_type_aliases;
@@ -470,6 +471,14 @@ fn parse_rust_with_selected_profiles(
         original_source.clone(),
     );
     declarations.source_version_minor = source_version_minor;
+    if !profiles.fn_mut_source.is_empty() {
+        declarations.fn_mut_source_declarations = Some(Rc::new(
+            fn_mut_source_declarations::FnMutSourceDeclarations::new(
+                source,
+                Arc::clone(&declarations.source_constant_tokens),
+            )?,
+        ));
+    }
     declarations.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(declarations.ordinary_completion_context(),source_version_minor);
     declarations.origins.borrowed_vector_source_enabled=crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(source_signature_model,declarations.ordinary_completion_context(),source_version_minor);
     declarations.header_discovery = declarations.ordinary_completion_context();
@@ -511,6 +520,7 @@ fn parse_rust_with_selected_profiles(
     syntax.source_constant_initializers = declarations.source_constant_initializers;
     syntax.source_constant_functions = declarations.source_constant_functions;
     syntax.source_constant_tokens = Arc::clone(&declarations.source_constant_tokens);
+    syntax.fn_mut_source_declarations = declarations.fn_mut_source_declarations;
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
     syntax.named_records = declarations.named_records;
@@ -554,6 +564,7 @@ fn parse_rust_with_selected_profiles(
     parser.source_constant_initializers = syntax.source_constant_initializers;
     parser.source_constant_functions = syntax.source_constant_functions;
     parser.source_constant_tokens = Arc::clone(&syntax.source_constant_tokens);
+    parser.fn_mut_source_declarations = syntax.fn_mut_source_declarations;
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
     parser.named_records = syntax.named_records;
@@ -611,6 +622,7 @@ struct RustParser {
     source_constant_read_stack: HashSet<String>,
     source_constant_functions: HashMap<String, source_constant_evaluation::ConstantInitializer>,
     source_constant_tokens: Arc<Vec<Token>>,
+    fn_mut_source_declarations: Option<Rc<fn_mut_source_declarations::FnMutSourceDeclarations>>,
     shared_array_handle_source_model: String,
     shared_array_state: shared_array_handles::SharedArrayState,
     standard_collections: Option<standard_collections::StandardCollectionSource>,
@@ -708,6 +720,7 @@ impl RustParser {
         }
         Self {
             source_constant_tokens,
+            fn_mut_source_declarations: None,
             source_version_minor: 0.0,
             exclusive_source_enabled: !profiles.exclusive_source.is_empty(),
             source_regions_composed: super::rust_owned_record_loop_rules::accept_rust_source_region_composition(

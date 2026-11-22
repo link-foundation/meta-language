@@ -32,6 +32,24 @@ impl RustParser {
         let const_keyword = self.const_function_keyword.take();
         let start = const_keyword.as_ref().unwrap_or(&function_keyword).clone();
         let name = self.cursor.identifier(Some("fn"))?.value;
+        if let Some(directory) = &self.fn_mut_source_declarations
+            && let Some(declaration) = directory.capture(path, &function_keyword)?
+        {
+            if const_keyword.is_some() {
+                return Err(unsupported(
+                    "Rust source FnMut function",
+                    "const generic FnMut calls need their independent const trait/effect interpretation",
+                    Some(start.span()),
+                ));
+            }
+            if declaration.callback.parameter + 1 != declaration.formal_count {
+                return Err(unsupported(
+                    "Rust source FnMut function",
+                    "this closed callback profile requires the actual callback as the final original source operand",
+                    Some(start.span()),
+                ));
+            }
+        }
         let mut source_lifetime_bindings = Vec::new();
         if self.cursor.is("<") {
             let generic = self.cursor.advance();

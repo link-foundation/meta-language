@@ -1,55 +1,62 @@
 // Actual generic/header/body token origins. This controller never substitutes
 // identifiers by spelling inside a body, and never supplies a replacement body.
 import {unsupported} from './diagnostics.js';
-import {readRustFnMutSourceModelError,readRustFnMutSourceDeclarationBudgetError} from './rust-fnmut-source-declaration-rules.js';
+import {readRustFnMutSourceModelError} from './rust-fnmut-source-declaration-rules.js';
+import {readRustFnMutSourceTokenPlan,readRustFnMutSourceTokenError} from './rust-fnmut-source-token-rules.js';
 import {testRustFnMutSourceCallbackBinding} from './rust-fnmut-source-callbacks.js';
 import {markRustFnMutSourceGenericType,guardRustFnMutSourceBodyTokens} from './rust-fnmut-source-opacity.js';
 const inventories=new WeakMap(),handles=new WeakMap();
 const fail=(reason,span)=>{throw unsupported('Rust source FnMut specialization',reason,span);};
-const punct=(token,value)=>token?.kind==='punct'&&token.value===value;
 function inventory(parser){let result=inventories.get(parser);if(!result){result={declarations:new Map(),stack:[],instances:[],next:0};inventories.set(parser,result);}return result;}
 function sourceTokens(parser){
  if(typeof parser?.source!=='string'||parser.source.length>16777216||!Array.isArray(parser.sourceConstantTokens)||!parser.origins)fail('the bounded actual original source and retained lexer inventory are required');
  const error=readRustFnMutSourceModelError(parser.fnMutSourceModel??'',parser.sourceVersionMinor);if(error)fail(error);
  return parser.sourceConstantTokens;
 }
-function close(tokens,from,opening,closing){
- if(!punct(tokens[from],opening))fail('the complete actual source delimiter is unavailable',tokens[from]);let depth=0;
- for(let index=from;index<tokens.length;index++){if(index-from>1000000)fail('the actual source body exceeds its token budget',tokens[from]);if(punct(tokens[index],opening))depth++;else if(punct(tokens[index],closing)&&--depth===0)return index;}
- fail('the actual generic/callback declaration is not completely delimited',tokens[from]);
-}
-function parameters(tokens,from,to){
- const result=[];let begin=from,round=0,square=0,angle=0;
- for(let at=from;at<=to;at++){
-  const token=tokens[at];if(at===to||punct(token,',')&&round===0&&square===0&&angle===0){if(at>begin)result.push({from:begin,to:at});begin=at+1;continue;}
-  if(punct(token,'('))round++;else if(punct(token,')'))round--;else if(punct(token,'['))square++;else if(punct(token,']'))square--;else if(punct(token,'<'))angle++;else if(punct(token,'>'))angle--;
-  if(round<0||square<0||angle<0)fail('an actual source formal has an inconsistent complete delimiter inventory',token);
+function capture(parser,path,start,optional){
+ const tokens=sourceTokens(parser),arena=inventory(parser);
+ if(arena.tokens!==tokens){
+  arena.tokens=tokens;
+  arena.tokenKinds=tokens.map(token=>token.kind);
+  arena.tokenValues=tokens.map(token=>token.value);
+  arena.tokenIndices=new Map(tokens.map((token,index)=>[token.start,index]));
  }
- return result;
+ const from=arena.tokenIndices.get(start.start)??-1;
+ if(!Array.isArray(path)||path.some(part=>typeof part!=='string'||!part))fail(readRustFnMutSourceTokenError(1),start);
+ const plan=readRustFnMutSourceTokenPlan(arena.tokenKinds,arena.tokenValues,from);
+ if(plan.length===0){
+  if(optional)return null;
+  fail(readRustFnMutSourceTokenError(7),start);
+ }
+ if(plan[0]===-1)fail(readRustFnMutSourceTokenError(plan[1]),tokens[plan[2]]??start);
+ const [bodyFrom,bodyTo,resultFrom,resultTo,formalCount,callbackIndex,genericCount]=plan;
+ const span=token=>({start:token.start,end:token.end});
+ const range=(begin,end)=>({start:tokens[begin].start,end:tokens[end-1].end});
+ const generics=plan.slice(7,7+genericCount).map(index=>({name:tokens[index].value,...span(tokens[index])}));
+ const [binder,exclusive,mutable,typeFrom,typeTo,callbackResultFrom,callbackResultTo,...parameters]=plan.slice(7+genericCount);
+ const parameterRanges=[];
+ for(let at=0;at<parameters.length;at+=2)parameterRanges.push(range(parameters[at],parameters[at+1]));
+ const callback={index:callbackIndex,name:tokens[binder].value,binder:span(tokens[binder]),
+  mode:exclusive?'exclusive':'value',mutable:mutable===1,typeRange:range(typeFrom,typeTo),
+  parameterRanges,resultRange:range(callbackResultFrom,callbackResultTo)};
+ for(let index=from;index<=bodyTo;index++){
+  const token=tokens[index];
+  if(!Number.isSafeInteger(token.start)||!Number.isSafeInteger(token.end)||token.start<start.start||
+     token.end>tokens[bodyTo].end||parser.source.slice(token.start,token.end)!==token.raw)
+   fail('each generic body token must retain its real original source spelling and range',token);
+ }
+ const name=tokens[from+1].value,sourceRange=range(from,bodyTo+1);
+ const key=[...path,name].join('.')+'@'+sourceRange.start+':'+sourceRange.end,existing=arena.declarations.get(key);
+ if(existing)return existing;
+ const handle=Object.freeze({identity:arena.next++});
+ handles.set(handle,{parser,name,path:[...path],range:sourceRange,generics,callback,formalCount,
+  resultRange:resultFrom<0?null:range(resultFrom,resultTo),bodyRange:range(bodyFrom,bodyTo+1),tokenFrom:from,tokenTo:bodyTo});
+ arena.declarations.set(key,handle);
+ return handle;
 }
-function callback(tokens,formal,index){
- let at=formal.from;const mutable=tokens[at]?.value==='mut';if(mutable)at++;
- const binder=tokens[at];if(binder?.kind!=='identifier'||!punct(tokens[at+1],':'))return null;at+=2;const typeStart=tokens[at];let mode='value';
- if(punct(tokens[at],'&')){if(tokens[at+1]?.value!=='mut')return null;mode='exclusive';at+=2;}
- if(tokens[at]?.value!=='impl'||tokens[at+1]?.value!=='FnMut')return null;at+=2;
- const argumentsFrom=at,argumentsTo=close(tokens,at,'(',')');at=argumentsTo+1;
- if(!punct(tokens[at],'->')||at+1>=formal.to)fail('the actual FnMut bound needs its complete explicit result source position',tokens[at]);
- return {index,name:binder.value,binder:{start:binder.start,end:binder.end},mode,mutable,typeRange:{start:typeStart.start,end:tokens[formal.to-1].end},parameterRanges:parameters(tokens,argumentsFrom+1,argumentsTo).map(row=>({start:tokens[row.from].start,end:tokens[row.to-1].end})),resultRange:{start:tokens[at+1].start,end:tokens[formal.to-1].end}};
-}
-/** Capture a real declaration at its actual fn token before header admission.
- * The returned handle is authenticated by this parser, not a copied descriptor.
- */
-export function captureRustFnMutSourceDeclaration(parser,path,start){
- const tokens=sourceTokens(parser),from=tokens.findIndex(token=>token.start===start.start&&token.value==='fn');if(from<0||tokens[from+1]?.kind!=='identifier'||!Array.isArray(path)||path.some(part=>typeof part!=='string'||!part))fail('the selected source function needs its actual lexical token and owner path',start);
- const name=tokens[from+1].value,generics=[];let at=from+2;
- if(punct(tokens[at],'<')){const end=close(tokens,at,'<','>');for(const row of parameters(tokens,at+1,end)){if(row.to-row.from!==1||tokens[row.from].kind!=='identifier'||generics.some(prior=>prior.name===tokens[row.from].value))fail('this closed specialization requires distinct unconstrained actual type binders',tokens[row.from]);const token=tokens[row.from];generics.push({name:token.value,start:token.start,end:token.end});}at=end+1;}
- const formalEnd=close(tokens,at,'(',')'),formals=parameters(tokens,at+1,formalEnd),callbacks=formals.map((formal,index)=>callback(tokens,formal,index)).filter(Boolean);at=formalEnd+1;
- while(at<tokens.length&&!punct(tokens[at],'{')){if(tokens[at].value==='where'||punct(tokens[at],';'))fail('where predicates and absent generic bodies need their actual separate source interpretation',tokens[at]);at++;}
- const bodyFrom=at,bodyTo=close(tokens,bodyFrom,'{','}'),resultRange=punct(tokens[formalEnd+1],'->')?{start:tokens[formalEnd+2].start,end:tokens[bodyFrom-1].end}:null,error=readRustFnMutSourceDeclarationBudgetError(bodyTo-from+1,formals.length,generics.length,callbacks.length);if(error)fail(error,start);
- for(let index=from;index<=bodyTo;index++){const token=tokens[index];if(!Number.isSafeInteger(token.start)||!Number.isSafeInteger(token.end)||token.start<start.start||token.end>tokens[bodyTo].end||parser.source.slice(token.start,token.end)!==token.raw)fail('each generic body token must retain its real original source spelling and range',token);}
- const range={start:tokens[from].start,end:tokens[bodyTo].end},key=[...path,name].join('.')+'@'+range.start+':'+range.end,arena=inventory(parser),existing=arena.declarations.get(key);if(existing)return existing;
- const handle=Object.freeze({identity:arena.next++}),declaration={parser,name,path:[...path],range,generics,callback:callbacks[0],formalCount:formals.length,resultRange,bodyRange:{start:tokens[bodyFrom].start,end:tokens[bodyTo].end},tokenFrom:from,tokenTo:bodyTo};handles.set(handle,declaration);arena.declarations.set(key,handle);return handle;
-}
+/** Obtain the handle at an actual original fn token, with no stub declaration. */
+export function captureRustFnMutSourceDeclaration(parser,path,start){return capture(parser,path,start,false);}
+export function tryCaptureRustFnMutSourceDeclaration(parser,path,start){return capture(parser,path,start,true);}
 export function readRustFnMutSourceDeclaration(parser,handle){
  const declaration=handles.get(handle);if(!declaration||declaration.parser!==parser)fail('a generic source handle must originate from this actual parser');
  const {name,path,range,generics,callback,formalCount,bodyRange,resultRange}=declaration;return structuredClone({name,path,range,generics,callback,formalCount,bodyRange,resultRange});
