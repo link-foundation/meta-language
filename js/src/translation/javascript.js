@@ -40,6 +40,7 @@ import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJava
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
+import { readJavaScriptConstructorFieldBoundary } from './javascript-constructor-field-type-rules.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
@@ -490,6 +491,7 @@ class JavaScriptParser {
           continue;
         }
         const { tokens } = tokenize(tag.type, 'JavaScript');
+        const punctuation = tokens.map(token => token.kind === 'punct' ? token.value : '');
         const c = new TokenCursor(tokens, 'JavaScript');
         const ctors = [];
         do {
@@ -508,25 +510,16 @@ class JavaScriptParser {
               this.requireScalarStringToken(value,'datatype constructor tag');
               name = value.value;
             } else {
-              let type = c.identifier('field type').value;
-              if (c.is('<')) {
-                // Array<T>, whose closing brackets may be read as one >> token.
-                let depth = 0;
-                do {
-                  const token = c.next();
-                  type += token.value;
-                  for (const char of token.value) depth += char === '<' ? 1 : char === '>' ? -1 : 0;
-                } while (depth > 0 && !c.atEnd());
-              }
-              while (c.is('[')) {
-                c.next();
-                c.expect(']', 'field type');
-                type += '[]';
-              }
-              if (!c.is(',') && !c.is(';') && !c.is('}')) {
-                throw unsupported(`field type of ${key.value}`, 'field types are number, bigint, boolean, string, a @typedef name or an array T[] of one', range);
-              }
-              fields.push({ name: key.value, type: this.type(type, range) });
+              const start = c.index;
+              const end = readJavaScriptConstructorFieldBoundary(punctuation, start);
+              if (end <= start) throw unsupported(`field type of ${key.value}`, 'the complete field type needs balanced delimiters', range);
+              const typeText = tokens.slice(start, end).map((token, index) => {
+                const previous = tokens[start + index - 1];
+                const separator = index > 0 && previous.kind !== 'punct' && token.kind !== 'punct' ? ' ' : '';
+                return separator + (token.kind === 'identifier' ? token.value : token.raw);
+              }).join('');
+              fields.push({ name: key.value, type: this.type(typeText, range) });
+              c.index = end;
             }
             if (!c.eat(',') && !c.eat(';')) break;
           }

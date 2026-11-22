@@ -19,6 +19,18 @@ import * as decisions from '../src/translation/structured-type-rules.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url));
 
+test('tagged constructor fields retain recursive JSDoc types and reject mismatched delimiters', () => {
+  for (const entry of fixture.constructorFieldCases) {
+    if (entry.error) {
+      assert.throws(() => parseJavaScript(entry.source), { message: new RegExp(entry.error) });
+      continue;
+    }
+    const declarations = parseJavaScript(entry.source).items;
+    const data = declarations.find(item => item.k === 'data' && item.name === 'Sample');
+    assert.deepEqual(data.ctors.flatMap(ctor => ctor.fields.map(field => [field.name, typeKey(field.type)])), entry.fields);
+  }
+});
+
 test('structural identities preserve named fields, nesting and UTF-16 field order', () => {
   for (const entry of fixture.cases) assert.equal(typeKey(entry.type), entry.identity, entry.name);
   const record = fixture.cases.find(({ name }) => name === 'sorted record').type;

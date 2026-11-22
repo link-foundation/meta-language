@@ -14,9 +14,11 @@ use super::{
     guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
+use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::frontend_rules::{
     find_default_parameter_reference, read_java_script_lexical_declaration_step,
 };
+use crate::translation::javascript_constructor_field_type_rules::read_java_script_constructor_field_boundary;
 use crate::translation::primitive_value_rules::accept_object_property_definition;
 use crate::translation::surface::SExpr;
 
@@ -104,6 +106,17 @@ impl JavaScriptParser {
             tokenize(text, Language::JavaScript)?.tokens,
             Language::JavaScript,
         );
+        let punctuation: Vec<String> = c
+            .tokens
+            .iter()
+            .map(|token| {
+                if token.kind == TokenKind::Punct {
+                    token.value.clone()
+                } else {
+                    String::new()
+                }
+            })
+            .collect();
         let mut ctors: Vec<SCtor> = Vec::new();
         loop {
             if !c.is("{") {
@@ -131,43 +144,42 @@ impl JavaScriptParser {
                     self.require_scalar_string_token(&value, "datatype constructor tag")?;
                     tag = Some(value.value);
                 } else {
-                    let mut ty = c.identifier(Some("field type"))?.value;
-                    if c.is("<") {
-                        // Array<T>, whose closing brackets may be read as one >> token.
-                        let mut depth = 0i32;
-                        loop {
-                            let token = c.advance();
-                            for char in token.value.chars() {
-                                depth += match char {
-                                    '<' => 1,
-                                    '>' => -1,
-                                    _ => 0,
-                                };
-                            }
-                            ty.push_str(&token.value);
-                            if depth <= 0 || c.at_end() {
-                                break;
-                            }
-                        }
-                    }
-                    while c.is("[") {
-                        c.advance();
-                        c.expect("]", Some("field type"))?;
-                        ty.push_str("[]");
-                    }
-                    if !c.is(",") && !c.is(";") && !c.is("}") {
-                        return Err(unsupported(
+                    let invalid_type = || {
+                        unsupported(
                             &format!("field type of {}", key.value),
-                            "field types are number, bigint, boolean, string, a @typedef name or an array T[] of one",
+                            "the complete field type needs balanced delimiters",
                             Some(range),
-                        ));
+                        )
+                    };
+                    let start = c.index;
+                    let start_number = f64::from(u32::try_from(start).map_err(|_| invalid_type())?);
+                    let boundary =
+                        read_java_script_constructor_field_boundary(&punctuation, start_number);
+                    let end = number_index(boundary)
+                        .filter(|end| *end > start && *end < c.tokens.len())
+                        .ok_or_else(invalid_type)?;
+                    let mut field_type = String::new();
+                    for (index, token) in c.tokens[start..end].iter().enumerate() {
+                        if index > 0
+                            && c.tokens[start + index - 1].kind != TokenKind::Punct
+                            && token.kind != TokenKind::Punct
+                        {
+                            field_type.push(' ');
+                        }
+                        field_type.push_str(if token.kind == TokenKind::Identifier {
+                            &token.value
+                        } else {
+                            &token.raw
+                        });
                     }
+                    let ty = self.ty(&field_type, range)?;
                     fields.push(SField {
                         name: Some(key.value),
-                        ty: self.ty(&ty, range)?,
+                        ty,
                         rocq_type: None,
                         span: None,
                     });
+                    c.index = end;
                 }
                 if c.eat(",").is_none() && c.eat(";").is_none() {
                     break;

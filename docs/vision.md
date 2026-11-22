@@ -1402,6 +1402,10 @@ alongside its original annotation and checked result. Nested JSDoc Map and Set
 arguments reuse the existing recursive type-separator rules. Unsupported union
 target encodings produce typed diagnostics with their existing message and
 failure ordering; the historical diagnostic receipt remains separate.
+Tagged JavaScript JSDoc constructor fields use the same recursive type parser
+as function signatures. A shared token boundary rule retains nested tuples,
+record fields, generic arguments and callable signatures before reading the
+outer field separator. Quoted punctuation remains part of its literal token.
 Map and Set constructors retain one evaluated iterable expression and their
 complete checked type through editable semantic links. Shared constructor
 decisions preserve the actual contextual type owners, primitive key admission,

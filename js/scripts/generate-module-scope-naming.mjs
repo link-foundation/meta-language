@@ -36,6 +36,7 @@ sources.push('js/src/translation/array-state-method-rules.js', 'js/src/translati
 sources.push('js/src/translation/rust-shift-rules.js', 'js/src/translation/rust-shifts.js', 'js/scripts/generate-rust-shift-rules.mjs', 'js/scripts/generate-rust-shift-fixtures.mjs');
 sources.push('js/src/resource-description-address-rules.js', 'js/src/resource-description-identifiers.js', 'js/scripts/generate-resource-description-address-rules.mjs', 'js/scripts/generate-resource-description-address-fixtures.mjs');
 sources.push('js/src/link-cli-archive-topology-rules.js', 'js/src/link-cli-archive-command.js');
+sources.push('js/src/translation/javascript-constructor-field-type-rules.js');
 const archiveOperationNames = {
  readLinkCliArchiveStoreName: 'read link command line interface archive store name',
  readLinkCliArchiveStateName: 'read link command line interface archive state name',

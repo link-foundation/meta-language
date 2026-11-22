@@ -91,7 +91,26 @@ const inferenceIdentities = [
   if (typeKey(type) !== identity) throw new Error(`${kind}: inference identity differs from independently specified fixture`);
   return { kind, detail, children, identity };
 });
-const data = independentOccurrences({ cases, emissionCases, traitCases, callableData, optionalPrelude: '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }', inferenceIdentities });
+const constructorFieldCases = [
+  {
+    source: "/** @typedef {{ $: 'sample'; signature: (value: Array<ReadonlyArray<string>>) => [boolean, string], rows: Array<Array<Array<number>>>, nullable: string | undefined, shape: { map: Map<string, boolean>, names: string [ ] } }} Sample */",
+    fields: [
+      ['signature', 'function:(array:array:string):tuple:[bool,string]'],
+      ['rows', 'array:array:array:float'],
+      ['nullable', 'option:undefined:string'],
+      ['shape', 'record:[["map","map:string:bool"],["names","array:string"]]'],
+    ],
+  },
+  {
+    source: "/** @typedef {{ $: 'first', pair: [boolean, string] } | { $: 'second'; map: Map<string, boolean> }} Sample */",
+    fields: [['pair', 'tuple:[bool,string]'], ['map', 'map:string:bool']],
+  },
+  {
+    source: "/** @typedef {{ $: 'broken', rows: Array<[number, string>> }} Sample */",
+    error: 'the complete field type needs balanced delimiters',
+  },
+];
+const data = independentOccurrences({ cases, emissionCases, traitCases, callableData, optionalPrelude: '/// A nullable value retains the distinct JavaScript null and undefined cases.\n#[derive(Clone, Debug, PartialEq, Eq)]\npub enum MlOptional<T> { Value(T), Null, Undefined }', inferenceIdentities, constructorFieldCases });
 const target = new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url);
 if (process.argv.includes('--check')) {
   checkProjectData(target, data);

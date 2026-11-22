@@ -67,6 +67,12 @@ remaining default-branch checks still need CI evidence.
   snapshot editions, own fields whose value is JavaScript `undefined`, and the
   distinction between an absent field on one union alternative and an optional
   field declared on that alternative.
+  Required constructor fields now use the recursively parsed type grammar in
+  both frontends. The source author generated the Rust boundary scanner from
+  the JavaScript scanner. The shared fixtures cover nested generic, tuple,
+  record and function types and a mismatched delimiter. Authoring completed
+  without fixture execution. This leaves optional presence and named
+  alternatives open.
 - Exact fixture templates can now substitute initialized text and retain its
   source and UTF-16 units. The native assertion author translated all 54
   borrowed-iterator assertions and all 15 array-object assertions from their

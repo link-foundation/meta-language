@@ -2,12 +2,13 @@ use meta_language::translation::check::check_program;
 use meta_language::translation::emit_lean::emit_lean;
 use meta_language::translation::emit_rocq::emit_rocq;
 use meta_language::translation::emit_rust::emit_rust;
+use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::structured_type_rules::{
     accept_optional_absence, accept_type_identity, merge_optional_absence,
     read_rust_optional_prelude, render_portable_type_identity, render_rust_compound_type,
     render_rust_reference_type, wrap_portable_reference_identity,
 };
-use meta_language::translation::surface::SProgram;
+use meta_language::translation::surface::{SItem, SProgram};
 use meta_language::translation::types::{Type, option};
 use serde_json::Value;
 
@@ -16,6 +17,38 @@ fn fixture() -> Value {
         "../../../parity/fixtures/translation-structured-types.lino"
     ))
     .unwrap()
+}
+
+#[test]
+fn tagged_constructor_fields_retain_compound_types_and_reject_mismatched_delimiters() {
+    let data = fixture();
+    for entry in data["constructorFieldCases"].as_array().unwrap() {
+        let result = parse_javascript(entry["source"].as_str().unwrap());
+        if let Some(error) = entry["error"].as_str() {
+            assert!(result.unwrap_err().to_string().contains(error));
+            continue;
+        }
+        let program = result.unwrap();
+        let declaration = program
+            .items
+            .iter()
+            .find_map(|item| match item {
+                SItem::Data(data) if data.name == "Sample" => Some(data),
+                _ => None,
+            })
+            .unwrap();
+        let fields: Vec<_> = declaration
+            .ctors
+            .iter()
+            .flat_map(|constructor| {
+                constructor
+                    .fields
+                    .iter()
+                    .map(|field| (field.name.as_deref(), field.ty.key()))
+            })
+            .collect();
+        assert_eq!(serde_json::to_value(fields).unwrap(), entry["fields"]);
+    }
 }
 
 #[test]
