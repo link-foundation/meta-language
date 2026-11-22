@@ -378,6 +378,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-nominal-copy-program.lino" => {
             Some(include_str!("../data/rust-nominal-copy-program.lino"))
         }
+        "rust-nominal-ownership-program.lino" => {
+            Some(include_str!("../data/rust-nominal-ownership-program.lino"))
+        }
         "rust-numeric-pattern-program.lino" => {
             Some(include_str!("../data/rust-numeric-pattern-program.lino"))
         }

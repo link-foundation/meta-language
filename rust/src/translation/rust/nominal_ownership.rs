@@ -4,7 +4,13 @@ use super::{Result,RustParser,SExpr,SNode,Span,Token,SourceOrigins,SourceOrigin,
 use crate::translation::rust_nominal_ownership_rules as rules;
 use crate::translation::rust_owned_recursive_datatype_rules as recursive_rules;
 use crate::translation::source_signatures::SourceOwner;
+use std::cell::RefCell;
 use std::collections::{HashMap,HashSet};
+use std::rc::Rc;
+
+fn policy_column<T: Clone>(column: &[T]) -> Rc<RefCell<Vec<T>>> {
+    Rc::new(RefCell::new(column.to_vec()))
+}
 #[derive(Clone)]
 pub(super) struct NominalOwnershipDeclaration{
     pub(super) constructors:Vec<String>,pub(super) copy:bool,pub(super) derives_clone:bool,pub(super) profile:String,pub(super) clone_implemented:bool,pub(super) recursive_profile:String,pub(super) recursive_clone_implemented:bool,pub(super) vector_element:bool,pub(super) closed_owned_container:bool,pub(super) constructor_witness_rank:f64,pub(super) constructor_witness:f64,
@@ -47,12 +53,12 @@ impl Projection<'_>{
   }
   let closed=owner.is_some_and(|owner|match ty{Type::Named{..}=>declared.as_ref().is_some_and(|entry|matches!(entry.declaration,SourceDeclaration::Data)&&self.positions.contains_key(&entry.full_name)&&rules::accept_rust_nominal_ownership_declaration_owner(&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64,&entry.full_name.split('.').collect::<Vec<_>>().join("::"))),_=>true});
   let (bits,signed)=match ty{Type::Fixed{bits,signed}=>(bits.to_string(),*signed),_=>(String::new(),false)};let parameters=match ty{Type::Function{params,..}=>params.len() as f64,_=>-1.0};let element=match ty{Type::Array{element,..}=>element.kind(),_=>""};
-  let mut kind=rules::read_rust_nominal_ownership_leaf(ty.kind(),&bits,signed,&origin.wrappers,origin.proven,origin.direct_copy_value(),owner.map_or("",|owner|owner.kind.as_str()),&owner.map_or_else(String::new,|owner|owner.path.join("::")),owner.map_or(-1.0,|owner|owner.path.len() as f64),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.array_source_model.or(origin.text_source_model).unwrap_or(""),origin.source_function_pointer_header,parameters,origins.nominal_ownership_scope_complete,closed,element);
-  if kind=="unknown"{kind=rules::read_rust_nominal_ownership_vector_template_node(ty.kind(),&origin.wrappers,origin.proven,owner.map_or("",|owner|owner.kind.as_str()),&owner.map_or_else(String::new,|owner|owner.path.join("::")),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.array_source_model.unwrap_or(""),element,origins.nominal_ownership_scope_complete);}
+  let mut kind=rules::read_rust_nominal_ownership_leaf(ty.kind(),&bits,signed,policy_column(&origin.wrappers),origin.proven,origin.direct_copy_value(),owner.map_or("",|owner|owner.kind.as_str()),&owner.map_or_else(String::new,|owner|owner.path.join("::")),owner.map_or(-1.0,|owner|owner.path.len() as f64),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.array_source_model.or(origin.text_source_model).unwrap_or(""),origin.source_function_pointer_header,parameters,origins.nominal_ownership_scope_complete,closed,element);
+  if kind=="unknown"{kind=rules::read_rust_nominal_ownership_vector_template_node(ty.kind(),policy_column(&origin.wrappers),origin.proven,owner.map_or("",|owner|owner.kind.as_str()),&owner.map_or_else(String::new,|owner|owner.path.join("::")),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.array_source_model.unwrap_or(""),element,origins.nominal_ownership_scope_complete);}
   if kind=="named"{let target=declared.and_then(|entry|self.positions.get(&entry.full_name).copied()).map_or(-1.0,|index|index as f64);return self.node("reference",Vec::new(),target);}
   if kind=="tuple"{let children=origin.fields.iter().flatten().map(|child|self.value(child,depth+1)).collect::<Result<Vec<_>>>()?;return self.node("tuple",children,-1.0);}
   if (kind=="vector"||kind=="pending vector")&&let Type::Array{element,..}=ty{let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());child.source_owner=owner.and_then(|owner|owner.arguments.first()).cloned();let child=self.value(&child,depth+1)?;return self.node(&kind,vec![child],-1.0);}
-  let index=self.node(&kind,Vec::new(),-1.0)?;self.element_leaves[index]=rules::accept_rust_nominal_vector_element_leaf(ty.kind(),&origin.wrappers);Ok(index)
+  let index=self.node(&kind,Vec::new(),-1.0)?;self.element_leaves[index]=rules::accept_rust_nominal_vector_element_leaf(ty.kind(),policy_column(&origin.wrappers));Ok(index)
  }
 }
 impl SourceOrigins{
@@ -67,7 +73,7 @@ impl SourceOrigins{
  pub(super) fn prepare_nominal_pattern_transfers(&mut self,maps:&mut [HashMap<String,SourceOrigin>],span:Option<Span>,deferred_guard:bool)->Result<HashSet<String>>{
   if self.collecting||maps.is_empty(){return Ok(HashSet::new());}
   let mut rows=Vec::new();let mut plans=Vec::new();
-  for map in maps.iter(){let mut names=map.keys().cloned().collect::<Vec<_>>();ordered(&mut names);let values=names.iter().map(|name|map[name].clone()).collect::<Vec<_>>();let identities=values.iter().map(|value|value.source_binding_identity.clone().unwrap_or_default()).collect::<Vec<_>>();let fields=values.iter().map(|value|value.source_nominal_pattern_move).collect::<Vec<_>>();let owned=values.iter().map(|value|self.owned_binding_value(value)).collect::<Vec<_>>();let produced=values.iter().map(|value|value.source_owned_result_proof).collect::<Vec<_>>();let plan=rules::plan_rust_nominal_pattern_transfers(&identities,&fields,&owned,&produced,deferred_guard);if plan[0]=="error"{return Err(unsupported("Rust nominal pattern ownership",&plan[1],span));}rows.push((names,values));plans.push(plan);}
+  for map in maps.iter(){let mut names=map.keys().cloned().collect::<Vec<_>>();ordered(&mut names);let values=names.iter().map(|name|map[name].clone()).collect::<Vec<_>>();let identities=values.iter().map(|value|value.source_binding_identity.clone().unwrap_or_default()).collect::<Vec<_>>();let fields=values.iter().map(|value|value.source_nominal_pattern_move).collect::<Vec<_>>();let owned=values.iter().map(|value|self.owned_binding_value(value)).collect::<Vec<_>>();let produced=values.iter().map(|value|value.source_owned_result_proof).collect::<Vec<_>>();let plan=rules::plan_rust_nominal_pattern_transfers(policy_column(&identities),policy_column(&fields),policy_column(&owned),policy_column(&produced),deferred_guard).borrow().clone();if plan[0]=="error"{return Err(unsupported("Rust nominal pattern ownership",&plan[1],span));}rows.push((names,values));plans.push(plan);}
   let names=rows[0].0.iter().zip(&rows[0].1).filter(|(_,value)|value.source_nominal_pattern_move&&self.owned_binding_value(value)).map(|(name,_)|name.clone()).collect::<HashSet<_>>();
   let same=maps.iter().all(|map|names.iter().all(|name|map.get(name).is_some_and(|value|{let first=&maps[0][name];value.source_nominal_pattern_move&&self.owned_binding_value(value)&&self.same_origin(first,value)&&first.source_binding_identity==value.source_binding_identity&&first.source_owned_result_proof==value.source_owned_result_proof}))&&map.values().filter(|value|value.source_nominal_pattern_move&&self.owned_binding_value(value)).count()==names.len());let error=rules::read_rust_nominal_pattern_alternative_error(same);if !error.is_empty(){return Err(unsupported("Rust nominal pattern ownership",&error,span));}
   for index in plans[0].iter().skip(1){let index=index.parse::<usize>().map_err(|_|unsupported("Rust nominal pattern ownership","invalid shared transfer position",span))?;self.consume_owned_binding(&rows[0].1[index],span)?;}
@@ -87,9 +93,31 @@ impl SourceOrigins{
   let mut projection=Projection{origins:self,positions:owners.iter().enumerate().map(|(index,name)|(name.clone(),index)).collect(),kinds:Vec::new(),ends:Vec::new(),edges:Vec::new(),targets:Vec::new(),element_leaves:Vec::new(),visits:0};let mut roots=Vec::new();
   for name in &owners{let row=&self.nominal_ownership_declarations[name];let mut constructors=Vec::new();for name in &row.constructors{let mut path=vec!["crate".into()];path.extend(name.split('.').map(str::to_owned));let fields=match self.lookup_value_owner(&path,&[]).map(|entry|entry.declaration){Some(SourceDeclaration::Constructor{fields,..})=>fields,_=>vec![SourceOrigin::unknown()]};let children=fields.iter().map(|field|projection.value(field,0)).collect::<Result<Vec<_>>>()?;constructors.push(projection.node("constructor",children,-1.0)?);}roots.push(projection.node("nominal",constructors,-1.0)? as f64);}
   let copies=owners.iter().map(|name|self.nominal_ownership_declarations[name].copy).collect::<Vec<_>>();let clones=owners.iter().map(|name|self.nominal_ownership_declarations[name].derives_clone).collect::<Vec<_>>();
-  let elements=rules::plan_rust_nominal_vector_element_owners(&owners,&copies,&clones,&projection.kinds,&projection.ends,&projection.edges,&projection.targets,&roots,&projection.element_leaves);if elements.len()!=owners.len(){return Err(unsupported("Rust nominal vector element","the actual closed nominal element graph exceeds its finite profile",None));}
-  let resolved=rules::plan_rust_nominal_ownership_vector_nodes(&projection.kinds,&projection.ends,&projection.edges,&projection.targets,&elements);if resolved.len()!=projection.kinds.len(){return Err(unsupported("Rust nominal vector element","the actual vector field edges need their complete finite element witness",None));}
-  let plan=rules::plan_rust_nominal_ownership_owners(&owners,&copies,&clones,&resolved,&projection.ends,&projection.edges,&projection.targets,&roots);if plan[0]=="error"{return Err(unsupported("Rust nominal ownership",&plan[1],None));}
+  let owner_column = policy_column(&owners);
+  let copy_column = policy_column(&copies);
+  let clone_column = policy_column(&clones);
+  let kind_column = policy_column(&projection.kinds);
+  let end_column = policy_column(&projection.ends);
+  let edge_column = policy_column(&projection.edges);
+  let target_column = policy_column(&projection.targets);
+  let root_column = policy_column(&roots);
+  let leaf_column = policy_column(&projection.element_leaves);
+  let elements = rules::plan_rust_nominal_vector_element_owners(
+      owner_column.clone(), copy_column.clone(), clone_column.clone(),
+      kind_column.clone(), end_column.clone(), edge_column.clone(), target_column.clone(),
+      root_column.clone(), leaf_column,
+  );
+  if elements.borrow().len()!=owners.len(){return Err(unsupported("Rust nominal vector element","the actual closed nominal element graph exceeds its finite profile",None));}
+  let resolved = rules::plan_rust_nominal_ownership_vector_nodes(
+      kind_column, end_column.clone(), edge_column.clone(), target_column.clone(), elements.clone(),
+  );
+  if resolved.borrow().len()!=projection.kinds.len(){return Err(unsupported("Rust nominal vector element","the actual vector field edges need their complete finite element witness",None));}
+  let plan = rules::plan_rust_nominal_ownership_owners(
+      owner_column, copy_column, clone_column, resolved, end_column, edge_column, target_column, root_column,
+  );
+  let plan = plan.borrow();
+  let elements = elements.borrow();
+  if plan[0]=="error"{return Err(unsupported("Rust nominal ownership",&plan[1],None));}
   let recursive=recursive_rules::plan_rust_owned_recursive_nominal_owners(&owners,&copies,&clones,&projection.kinds,&projection.ends,&projection.edges,&projection.targets,&roots,&projection.element_leaves);if recursive[0]=="error"{return Err(unsupported("Rust recursive nominal ownership",&recursive[1],None));}drop(projection);
   for(index,name)in owners.iter().enumerate(){let row=self.nominal_ownership_declarations.get_mut(name).expect("actual nominal registry owner");row.recursive_profile=recursive[1+5*index].clone();row.recursive_clone_implemented=recursive[2+5*index]=="Clone";row.vector_element=elements[index];row.closed_owned_container=recursive[3+5*index]=="closed";row.constructor_witness_rank=recursive[4+5*index].parse::<f64>().map_err(|_|unsupported("Rust recursive nominal ownership","invalid shared constructor witness rank",None))?;row.constructor_witness=recursive[5+5*index].parse::<f64>().map_err(|_|unsupported("Rust recursive nominal ownership","invalid shared constructor witness",None))?;let runtime=recursive_rules::plan_rust_owned_nominal_runtime_facts(self.owned_container_source_enabled,&plan[1+2*index],plan[2+2*index]=="Clone",&row.recursive_profile,row.recursive_clone_implemented,row.closed_owned_container,row.constructor_witness_rank,row.constructor_witness);row.profile=runtime[0].clone();row.clone_implemented=runtime[1]=="Clone";}Ok(())
  }
@@ -108,8 +136,8 @@ impl SourceOrigins{
    return self.nominal_copy_owners.contains(&entry.full_name)||self.nominal_ownership_facts(origin).clone_implemented;
   }
   let Some(owner)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref())else{return false;};let (bits,signed)=match ty{Type::Fixed{bits,signed}=>(bits.to_string(),*signed),_=>(String::new(),false)};
-  if let Type::Array{element,..}=ty{let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());child.source_owner=owner.arguments.first().cloned();if rules::accept_rust_nominal_verified_vector_clone(ty.kind(),&origin.wrappers,origin.proven,&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64,origin.array_source_model.unwrap_or(""),self.nominal_vector_element(&child)){return true;}}
-  let leaf=rules::read_rust_nominal_ownership_leaf(ty.kind(),&bits,signed,&origin.wrappers,origin.proven,origin.direct_copy_value(),&owner.kind,&owner.path.join("::"),owner.path.len() as f64,owner.arguments.len() as f64,origin.array_source_model.or(origin.text_source_model).unwrap_or(""),false,match ty{Type::Function{params,..}=>params.len() as f64,_=>-1.0},true,true,match ty{Type::Array{element,..}=>element.kind(),_=>"");
+  if let Type::Array{element,..}=ty{let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());child.source_owner=owner.arguments.first().cloned();if rules::accept_rust_nominal_verified_vector_clone(ty.kind(),policy_column(&origin.wrappers),origin.proven,&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64,origin.array_source_model.unwrap_or(""),self.nominal_vector_element(&child)){return true;}}
+  let leaf=rules::read_rust_nominal_ownership_leaf(ty.kind(),&bits,signed,policy_column(&origin.wrappers),origin.proven,origin.direct_copy_value(),&owner.kind,&owner.path.join("::"),owner.path.len() as f64,owner.arguments.len() as f64,origin.array_source_model.or(origin.text_source_model).unwrap_or(""),false,match ty{Type::Function{params,..}=>params.len() as f64,_=>-1.0},true,true,match ty{Type::Array{element,..}=>element.kind(),_=>"");
   if leaf=="copy"||leaf=="string"{return true;}if leaf=="tuple"{return origin.fields.as_ref().is_some_and(|fields|fields.iter().all(|field|self.source_clone_implementation_bounded(field,depth+1,active,visits)));}if leaf=="vector"&&let Type::Array{element,..}=ty{let mut child=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());child.source_owner=owner.arguments.first().cloned();return self.source_clone_implementation_bounded(&child,depth+1,active,visits);}false
  }
 }

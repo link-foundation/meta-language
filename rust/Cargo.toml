@@ -245,6 +245,7 @@ include = [
     "src/data/rust-mutable-record-loan-program.lino",
     "src/data/rust-named-formatting-program.lino",
     "src/data/rust-nominal-copy-program.lino",
+    "src/data/rust-nominal-ownership-program.lino",
     "src/data/rust-numeric-pattern-program.lino",
     "src/data/rust-owned-binding-program.lino",
     "src/data/rust-owned-record-effect-program.lino",
