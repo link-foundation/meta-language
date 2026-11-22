@@ -310,7 +310,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        strategy: [rpni, edsm, alergia, xvada]
+        strategy: [rpni, edsm, alergia, xvada, attributed]
     steps:
       - uses: actions/checkout@v7
 
@@ -325,6 +325,7 @@ jobs:
         working-directory: js
 
       - name: Fetch the pinned JSONTestSuite history
+        if: ${{ matrix.strategy != 'attributed' }}
         env:
           CORPUS_REVISION: 1ef36fa01286573e846ac449e8683f8833c5b26a
         run: |
@@ -354,14 +355,17 @@ jobs:
           LEARNER_STRATEGY: ${{ matrix.strategy }}
         run: |
           mkdir -p grammar-inference-results
-          arguments=("$RUNNER_TEMP/JSONTestSuite" "$LEARNER_STRATEGY")
-          if [[ "$LEARNER_STRATEGY" == xvada ]]; then
-            arguments+=("$RUNNER_TEMP/xvada" grammar-inference-results/training-queries.jsonl)
+          if [[ "$LEARNER_STRATEGY" == attributed ]]; then
+            experiment=(experiments/grammar-inference/attributed-holdout.mjs)
+          else
+            experiment=(experiments/grammar-inference/json-holdout.mjs "$RUNNER_TEMP/JSONTestSuite" "$LEARNER_STRATEGY")
+            if [[ "$LEARNER_STRATEGY" == xvada ]]; then
+              experiment+=("$RUNNER_TEMP/xvada" grammar-inference-results/training-queries.jsonl)
+            fi
           fi
-          node --max-old-space-size=512 experiments/grammar-inference/json-holdout.mjs "${arguments[@]}" \
-            > grammar-inference-results/holdout.json.partial \
+          node --max-old-space-size=512 "${experiment[@]}" \
+            > grammar-inference-results/holdout.json \
             2> grammar-inference-results/holdout.log
-          mv grammar-inference-results/holdout.json.partial grammar-inference-results/holdout.json
 
       - name: Retain all scores, disagreements, and diagnostics
         if: ${{ !cancelled() && hashFiles('grammar-inference-results/*') != '' }}
@@ -2060,7 +2064,7 @@ jobs:
 
   acceptance:
     name: Full Requirements Aggregate
-    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery, rust-source-versions]
+    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery, rust-source-versions, grammar-inference-holdout]
     # GitHub reports a skipped job as a successful required check. This job
     # always runs and fails itself when there are no candidates to evaluate.
     if: ${{ always() }}
@@ -2105,6 +2109,14 @@ jobs:
           else
             echo "::error::Delivery Candidates finished as '${CANDIDATES_RESULT}'; the Full Requirements Aggregate cannot pass without them"
           fi
+          exit 1
+
+      - name: Require every grammar inference holdout
+        if: ${{ github.event_name != 'release' && needs.grammar-inference-holdout.result != 'success' }}
+        env:
+          HOLDOUT_RESULT: ${{ needs.grammar-inference-holdout.result }}
+        run: |
+          echo "::error::Grammar inference holdouts finished as '$HOLDOUT_RESULT'"
           exit 1
 
       - uses: actions/checkout@v7
