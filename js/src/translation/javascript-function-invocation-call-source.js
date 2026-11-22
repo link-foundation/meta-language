@@ -18,7 +18,7 @@ export function compileJavaScriptFunctionInvocationFunction(identity,realm,opera
  if(operation==='Function.call'){
   instructions.push({$:'argumentCount',destination:5},{$:'constant',destination:4,value:{$:'number',value:1}});
   const loop=instructions.length;instructions.push({$:'numberBinary',destination:6,left:4,right:5,operator:'lessThan'});const branch=instructions.length;instructions.push({$:'branch',condition:6,yes:branch+1,no:0},{$:'argumentAt',destination:7,index:4},{$:'argumentListAppend',slot:0,value:7},{$:'numberBinary',destination:4,left:4,right:8,operator:'add'},{$:'jump',target:loop});
-  const call=instructions.length;instructions[branch]={$:'branch',condition:6,yes:branch+1,no:call};instructions.push({$:'argumentListCall',destination:9,slot:0,callee:1,receiver:2,mode:'call'},{$:'return',source:9});
+  const call=instructions.length;instructions.fill({$:'branch',condition:6,yes:branch+1,no:call},branch,branch+1);instructions.push({$:'argumentListCall',destination:9,slot:0,callee:1,receiver:2,mode:'call'},{$:'return',source:9});
  }else{
   let nullBranch=-1,undefinedBranch=-1;
   if(operation==='Function.apply'){
@@ -26,7 +26,7 @@ export function compileJavaScriptFunctionInvocationFunction(identity,realm,opera
   }
   instructions.push({$:'primitive',destination:3,operation:'require array like arguments Object',arguments:[3]},{$:'constant',destination:6,value:{$:'text',units:[108,101,110,103,116,104]}},{$:'ordinaryGet',destination:5,object:3,key:6,receiver:3},{$:'primitive',destination:5,operation:'coerce primitive number',arguments:[5]},{$:'primitive',destination:5,operation:'read array like length',arguments:[5]},{$:'constant',destination:4,value:{$:'number',value:0}});
   const loop=instructions.length;instructions.push({$:'numberBinary',destination:6,left:4,right:5,operator:'lessThan'});const branch=instructions.length;instructions.push({$:'branch',condition:6,yes:branch+1,no:0},{$:'propertyKey',destination:6,input:4,realm},{$:'ordinaryGet',destination:7,object:3,key:6,receiver:3},{$:'argumentListAppend',slot:0,value:7},{$:'numberBinary',destination:4,left:4,right:8,operator:'add'},{$:'jump',target:loop});
-  const call=instructions.length;instructions[branch]={$:'branch',condition:6,yes:branch+1,no:call};if(nullBranch>=0)instructions[nullBranch]={$:'branch',condition:6,yes:call,no:nullBranch+1};if(undefinedBranch>=0)instructions[undefinedBranch]={$:'branch',condition:6,yes:call,no:undefinedBranch+1};instructions.push({$:'argumentListCall',destination:9,slot:0,callee:1,receiver:2,mode:'call'},{$:'return',source:9});
+  const call=instructions.length;instructions.fill({$:'branch',condition:6,yes:branch+1,no:call},branch,branch+1);if(nullBranch>=0)instructions.fill({$:'branch',condition:6,yes:call,no:nullBranch+1},nullBranch,nullBranch+1);if(undefinedBranch>=0)instructions.fill({$:'branch',condition:6,yes:call,no:undefinedBranch+1},undefinedBranch,undefinedBranch+1);instructions.push({$:'argumentListCall',destination:9,slot:0,callee:1,receiver:2,mode:'call'},{$:'return',source:9});
  }
  return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:10,captures:[],instructions};
 }

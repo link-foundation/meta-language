@@ -1,5 +1,7 @@
 // Array.of / Array.from share actual Construct authority, iterator records,
 // scalar protocols and ordinary/Array property definitions. No native fallback.
+import {testJavaScriptStandardArrayCreationOperation} from './javascript-standard-operation-rules.js';
+import {compileJavaScriptStandardArrayCreationFunction} from './javascript-standard-operation-call-source.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {beginJavaScriptSynchronousIteratorStep,beginJavaScriptSynchronousIteratorClose,createJavaScriptIteratorProtocolState,requestJavaScriptIteratorProtocolCall,stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,readJavaScriptIteratorProtocolStateError,readJavaScriptSynchronousIteratorRecordError} from './javascript-iterator-protocol.js';
@@ -24,12 +26,9 @@ import {beginJavaScriptArrayAssignment,stepJavaScriptArrayAssignment,resumeJavaS
  * {$:'arrayCreationInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'arrayCreationResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptArrayCreationState,reason:string}} JavaScriptArrayCreationTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptArrayCreationOperation(operation){return operation==='Array.of'||operation==='Array.from';}
+export function testJavaScriptArrayCreationOperation(operation){return testJavaScriptStandardArrayCreationOperation(operation);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @param {JavaScriptSemanticValue} prototype @param {JavaScriptSemanticValue} iteratorKey @returns {JavaScriptCallFunction|undefined} */
-export function compileJavaScriptArrayCreationFunction(identity,realm,operation,prototype,iteratorKey){
- if(!testJavaScriptArrayCreationOperation(operation)||prototype.$!=='object'||prototype.callable||iteratorKey.$!=='symbol')return undefined;
- return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:4,captures:[],instructions:[{$:'constant',destination:1,value:prototype},{$:'constant',destination:2,value:iteratorKey},{$:'arrayCreation',destination:3,operation,prototype:1,iteratorKey:2},{$:'return',source:3}]};
-}
+export function compileJavaScriptArrayCreationFunction(identity,realm,operation,prototype,iteratorKey){return compileJavaScriptStandardArrayCreationFunction(identity,realm,operation,prototype,iteratorKey);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayCreationState} state @returns {string} */
 export function readJavaScriptArrayCreationStateError(heap,state){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;

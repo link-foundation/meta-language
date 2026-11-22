@@ -1,5 +1,6 @@
 // FromPropertyDescriptor and own-key reflection construct genuine heap values.
 // Neither selected accessors nor represented host Object/Reflect bodies run.
+import {testJavaScriptStandardPropertyReflectionOperation,testJavaScriptStandardSingleDescriptorOperation} from './javascript-standard-operation-rules.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,readJavaScriptOrdinaryOwnKeys,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,insertJavaScriptOrdinaryObject,defineJavaScriptOrdinaryProperty} from './javascript-ordinary-heap.js';
 import {readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {readJavaScriptArrayIndex,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
@@ -14,9 +15,9 @@ import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.
  * {$:'propertyReflectionInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'propertyReflectionResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptPropertyReflectionState,reason:string}} JavaScriptPropertyReflectionTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptPropertyReflectionOperation(operation){return ['Object.getOwnPropertyDescriptor','Object.getOwnPropertyDescriptors','Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Reflect.ownKeys','Reflect.getOwnPropertyDescriptor'].includes(operation);}
+export function testJavaScriptPropertyReflectionOperation(operation){return testJavaScriptStandardPropertyReflectionOperation(operation);}
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptSingleDescriptorOperation(operation){return operation==='Object.getOwnPropertyDescriptor'||operation==='Reflect.getOwnPropertyDescriptor';}
+export function testJavaScriptSingleDescriptorOperation(operation){return testJavaScriptStandardSingleDescriptorOperation(operation);}
 /** @param {string} kind @returns {boolean} */
 export function testJavaScriptReflectionOrdinaryKind(kind){return ['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(kind);}
 /** @param {string} value @returns {JavaScriptSemanticValue} */

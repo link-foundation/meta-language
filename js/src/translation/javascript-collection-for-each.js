@@ -1,5 +1,7 @@
 // Direct MapData/SetData traversal uses the shared insertion history. No
 // iterator allocation, Symbol.iterator lookup or user next() participates.
+import {testJavaScriptStandardCollectionForEachOperation} from './javascript-standard-operation-rules.js';
+import {compileJavaScriptStandardCollectionForEachFunction} from './javascript-standard-operation-call-source.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject} from './javascript-ordinary-heap.js';
 import {readJavaScriptCollectionIteratorReceiverError} from './javascript-collection-iteration.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
@@ -12,14 +14,11 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
  * {$:'collectionForEachError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'collectionForEachInvalid',heap:JavaScriptOrdinaryHeap,reason:string}} JavaScriptCollectionForEachTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptCollectionForEachOperation(operation){return operation==='Map.forEach'||operation==='Set.forEach';}
+export function testJavaScriptCollectionForEachOperation(operation){return testJavaScriptStandardCollectionForEachOperation(operation);}
 /** @param {string} operation @returns {string} */
 export function readJavaScriptCollectionForEachKind(operation){return operation==='Map.forEach'?'Map':operation==='Set.forEach'?'Set':'';}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
-export function compileJavaScriptCollectionForEachFunction(identity,realm,operation){
- if(!testJavaScriptCollectionForEachOperation(operation))return undefined;
- return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'collectionForEach',destination:1,operation},{$:'return',source:1}]};
-}
+export function compileJavaScriptCollectionForEachFunction(identity,realm,operation){return compileJavaScriptStandardCollectionForEachFunction(identity,realm,operation);}
 /** Pending values are captured before entering the callback. They deliberately
  * are NOT checked against the latest entry, which may have been changed,
  * deleted or cleared by that callback. The ordinal history itself is retained.

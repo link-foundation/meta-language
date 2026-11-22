@@ -1,5 +1,6 @@
 // ObjectDefineProperties first converts every selected descriptor, then defines
 // them in order. Internal Lists retain descriptors, not replacement host data.
+import {testJavaScriptStandardPropertyDefinitionsOperation} from './javascript-standard-operation-rules.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,readJavaScriptOrdinaryOwnKeys,planJavaScriptOrdinaryGet,insertJavaScriptOrdinaryObject} from './javascript-ordinary-heap.js';
 import {readJavaScriptPropertyDescriptorError,testJavaScriptPropertyDescriptorsSameValue} from './javascript-property-descriptors.js';
 import {readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
@@ -17,7 +18,7 @@ import {readJavaScriptReflectedOwnProperty,constructJavaScriptReflectionText,tes
  * {$:'propertyDefinitionsInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'propertyDefinitionsResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptPropertyDefinitionsState,reason:string}} JavaScriptPropertyDefinitionsTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptPropertyDefinitionsOperation(operation){return operation==='Object.defineProperties'||operation==='Object.create';}
+export function testJavaScriptPropertyDefinitionsOperation(operation){return testJavaScriptStandardPropertyDefinitionsOperation(operation);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPropertyDefinitionsState} state @returns {string} */
 export function readJavaScriptPropertyDefinitionsStateError(heap,state){
  const invalid=readJavaScriptOrdinaryHeapError(heap);if(invalid!=='')return invalid;

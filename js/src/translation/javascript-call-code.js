@@ -211,3 +211,7 @@ export function testJavaScriptCallStrictEqual(left,right){
  }
  return testJavaScriptSemanticSameValue(left,right);
 }
+/** @returns {JavaScriptArraySpeciesDirectory} */
+export function requireJavaScriptArraySpeciesDirectory() {
+ throw new TypeError('the compiled array operation requires its validated species directory');
+}

@@ -1,5 +1,7 @@
 // AddEntriesFromIterable with a fresh ordinary target. Every user Get, Call,
 // ToPropertyKey and IteratorClose continuation uses the same inspectable heap.
+import {testJavaScriptStandardObjectFromEntriesOperation} from './javascript-standard-operation-rules.js';
+import {compileJavaScriptStandardObjectFromEntriesFunction} from './javascript-standard-operation-call-source.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,insertJavaScriptOrdinaryObject,defineJavaScriptOrdinaryProperty,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {beginJavaScriptSynchronousIterator,beginJavaScriptSynchronousIteratorStep,beginJavaScriptSynchronousIteratorClose,stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,provideJavaScriptIteratorPrimitivePrototype,readJavaScriptIteratorProtocolStateError,readJavaScriptSynchronousIteratorRecordError} from './javascript-iterator-protocol.js';
@@ -19,12 +21,9 @@ import {testJavaScriptReflectionPropertyBudget} from './javascript-property-refl
  * {$:'objectFromEntriesInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'objectFromEntriesResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectFromEntriesState,reason:string}} JavaScriptObjectFromEntriesTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptObjectFromEntriesOperation(operation){return operation==='Object.fromEntries';}
+export function testJavaScriptObjectFromEntriesOperation(operation){return testJavaScriptStandardObjectFromEntriesOperation(operation);}
 /** @param {bigint} identity @param {bigint} realm @param {JavaScriptSemanticValue} prototype @param {JavaScriptSemanticValue} iteratorKey @returns {JavaScriptCallFunction|undefined} */
-export function compileJavaScriptObjectFromEntriesFunction(identity,realm,prototype,iteratorKey){
- if(prototype.$!=='object'||prototype.callable||iteratorKey.$!=='symbol')return undefined;
- return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:5,captures:[],instructions:[{$:'argument',destination:1,index:0},{$:'constant',destination:2,value:prototype},{$:'constant',destination:3,value:iteratorKey},{$:'objectFromEntries',destination:4,input:1,prototype:2,iteratorKey:3},{$:'return',source:4}]};
-}
+export function compileJavaScriptObjectFromEntriesFunction(identity,realm,prototype,iteratorKey){return compileJavaScriptStandardObjectFromEntriesFunction(identity,realm,prototype,iteratorKey);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectFromEntriesState} state @returns {string} */
 export function readJavaScriptObjectFromEntriesStateError(heap,state){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;

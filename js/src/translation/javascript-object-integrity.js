@@ -1,4 +1,6 @@
 // Ordinary own-property observations and resumable integrity-level changes.
+import {testJavaScriptStandardObjectObservationOperation} from './javascript-standard-operation-rules.js';
+import {compileJavaScriptStandardObjectObservationFunction} from './javascript-standard-operation-call-source.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,readJavaScriptOrdinaryOwnKeys,preventJavaScriptOrdinaryExtensions,defineJavaScriptOrdinaryProperty,setJavaScriptOrdinaryPrototype} from './javascript-ordinary-heap.js';
 import {readJavaScriptArrayIndex,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
@@ -11,18 +13,9 @@ import {createJavaScriptPropertyDescriptor,readJavaScriptPropertyDescriptorKind}
  * {$:'objectIntegrityInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'objectIntegrityResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectIntegrityState,reason:string}} JavaScriptObjectIntegrityTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptObjectObservationOperation(operation){return ['Object.builtinTag','Symbol.valueOf','Number.valueOf','Boolean.valueOf','Boolean.toString','BigInt.valueOf','String.toString','String.valueOf','Object.regularExpressionSlot','Object.prototype.hasOwnProperty','Object.prototype.propertyIsEnumerable','Object.hasOwn','Object.is','Object.isExtensible','Object.isSealed','Object.isFrozen','Object.preventExtensions','Object.seal','Object.freeze','Object.getPrototypeOf','Object.setPrototypeOf'].includes(operation);}
+export function testJavaScriptObjectObservationOperation(operation){return testJavaScriptStandardObjectObservationOperation(operation);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
-export function compileJavaScriptObjectObservationFunction(identity,realm,operation){
- if(!testJavaScriptObjectObservationOperation(operation))return undefined;
- if(operation==='Boolean.toString')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'objectObservation',destination:1,operation:'Boolean.valueOf',input:0,other:0},{$:'primitive',destination:1,operation:'convert primitive text',arguments:[1]},{$:'return',source:1}]};
- if(['Symbol.valueOf','Number.valueOf','Boolean.valueOf','BigInt.valueOf'].includes(operation)||operation==='String.toString'||operation==='String.valueOf')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'objectObservation',destination:1,operation,input:0,other:0},{$:'return',source:1}]};
- if(operation==='Object.prototype.hasOwnProperty'||operation==='Object.prototype.propertyIsEnumerable')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:4,captures:[],instructions:[{$:'argument',destination:1,index:0},{$:'propertyKey',destination:1,input:1,realm},{$:'primitive',destination:2,operation:'require nonnull Object input',arguments:[0]},{$:'objectObservation',destination:3,operation,input:0,other:1},{$:'return',source:3}]};
- /** @type {JavaScriptCallInstruction[]} */const instructions=[{$:'argument',destination:1,index:0}];
- if(operation==='Object.hasOwn')instructions.push({$:'primitive',destination:1,operation:'require nonnull Object input',arguments:[1]});
- instructions.push({$:'argument',destination:2,index:1});if(operation==='Object.hasOwn')instructions.push({$:'propertyKey',destination:2,input:2,realm});
- instructions.push({$:'objectObservation',destination:3,operation,input:1,other:2},{$:'return',source:3});return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:4,captures:[],instructions};
-}
+export function compileJavaScriptObjectObservationFunction(identity,realm,operation){return compileJavaScriptStandardObjectObservationFunction(identity,realm,operation);}
 /** @param {string} kind @returns {boolean} */
 export function testJavaScriptOrdinaryIntegrityKind(kind){return ['ordinaryObject','closureObject','boundFunctionObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(kind);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {string} operation @param {JavaScriptSemanticValue} input @param {JavaScriptSemanticValue} other @returns {JavaScriptObjectIntegrityTransition} */

@@ -14,10 +14,6 @@ import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 import {readUtf16TextRepetitionLength,readUtf16TextPaddingLength,constructUtf16TextRepetition,constructUtf16TextPadding} from './utf16-text-expansion-rules.js';
 import {replaceUtf16Text,planUtf16TextSubstitution,sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
 
-/** @typedef {{$:'primitiveValue',value:JavaScriptSemanticValue} |
- * {$:'primitiveInvalid',reason:string} | {$:'primitiveError',errorClass:string,reason:string} |
- * {$:'primitiveResourceLimit',reason:string}} JavaScriptCallPrimitiveResult */
-
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallNumericPrimitive(operation,values){
  // A Number-only array can canonicalize NaNs in supported engines. Unary

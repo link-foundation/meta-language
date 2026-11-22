@@ -1,4 +1,5 @@
 // Shared map/filter algorithm; custom Construct remains an explicit protocol.
+import {testJavaScriptStandardArrayTransformOperation} from './javascript-standard-operation-rules.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,planJavaScriptOrdinaryGet,defineJavaScriptOrdinaryProperty,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
 import {createJavaScriptPropertyDescriptor,planJavaScriptPropertyDefinition} from './javascript-property-descriptors.js';
 import {planJavaScriptArrayPropertyDefinition} from './javascript-array-objects.js';
@@ -23,7 +24,7 @@ import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversi
  * {$:'arrayTransformResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptArrayTransformState,reason:string}} JavaScriptArrayTransformTransition */
 /** @typedef {{$:'indexedPropertyCreated',heap:JavaScriptOrdinaryHeap} | {$:'indexedPropertyError',heap:JavaScriptOrdinaryHeap,reason:string} | {$:'indexedPropertyInvalid',heap:JavaScriptOrdinaryHeap,reason:string} | {$:'indexedPropertyResourceLimit',heap:JavaScriptOrdinaryHeap,reason:string}} JavaScriptIndexedPropertyCreation */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptArrayTransformOperation(operation){return operation==='Array.map'||operation==='Array.filter';}
+export function testJavaScriptArrayTransformOperation(operation){return testJavaScriptStandardArrayTransformOperation(operation);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory
  * @param {JavaScriptArrayTransformState} state @returns {string} */
 export function readJavaScriptArrayTransformStateError(heap,directory,state){

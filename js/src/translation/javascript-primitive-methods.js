@@ -1,10 +1,11 @@
 // Actual standard method identities select these shared primitive semantics.
 // Object conversion/RegExp protocols remain explicit continuation obligations.
+import {testJavaScriptStandardPrimitiveMethodOperation} from './javascript-standard-operation-rules.js';
 import {executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
 import {readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit} from './javascript-semantic-values.js';
 import {readUtf16TextInteger} from './utf16-text-rules.js';
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptPrimitiveMethodOperation(operation){return operation==='String.startsWith';}
+export function testJavaScriptPrimitiveMethodOperation(operation){return testJavaScriptStandardPrimitiveMethodOperation(operation);}
 /** @param {JavaScriptSemanticValue} receiver @param {string} operation
  * @param {JavaScriptSemanticValue[]} args @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptPrimitiveMethod(receiver,operation,args){

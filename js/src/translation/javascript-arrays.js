@@ -1,12 +1,13 @@
 // Global allocation and resumable ArraySetLength. Numeric requests are actual
 // ToNumber obligations; a frontend must execute them, including both effects.
+import {testJavaScriptStandardArrayIntrinsicOperation} from './javascript-standard-operation-rules.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,testJavaScriptOrdinarySymbol,replaceJavaScriptOrdinaryObject} from './javascript-ordinary-heap.js';
 import {readJavaScriptPropertyDescriptorKind} from './javascript-property-descriptors.js';
 import {testJavaScriptSemanticAccessor} from './javascript-semantic-values.js';
 import {constructJavaScriptArrayObject,testJavaScriptArrayLength,testJavaScriptArrayLengthKey,planJavaScriptArrayPropertyDefinition,planJavaScriptArrayLengthDefinition,convertJavaScriptArrayUnsignedLength} from './javascript-array-objects.js';
 /** This is an operation identifier, never authority inferred from a method name.
  * @param {string} operation @returns {boolean} */
-export function testJavaScriptArrayIntrinsicOperation(operation){return operation==='Array.isArray';}
+export function testJavaScriptArrayIntrinsicOperation(operation){return testJavaScriptStandardArrayIntrinsicOperation(operation);}
 /** @typedef {{$:'arrayDefinitionState',identity:bigint,key:JavaScriptSemanticValue,descriptor:JavaScriptPropertyDescriptor,phase:string,unsignedLength:number,numberLength:JavaScriptSemanticValue}} JavaScriptArrayDefinitionState */
 /** @typedef {{$:'arrayNormal',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'arrayPropertyComplete',heap:JavaScriptOrdinaryHeap,success:boolean,writes:string[]} |

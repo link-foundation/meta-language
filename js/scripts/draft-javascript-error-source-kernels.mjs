@@ -7,7 +7,7 @@ const specifications = [
  {sourcePath:'js/src/translation/javascript-error-construction-rules.js',moduleName:'javascript_error_construction_rules',model:'Authoritative JavaScript Error value construction 1',programAsset:'javascript-error-construction-program'},
  {sourcePath:'js/src/translation/javascript-error-class-rules.js',moduleName:'javascript_error_class_rules',model:'Actual intrinsic Error subclass source ownership 1',programAsset:'javascript-error-class-program'},
  {sourcePath:'js/src/translation/javascript-error-class-source.js',moduleName:'javascript_error_class_source',model:'Actual Error subclass plans to registered call code 1',programAsset:'javascript-error-class-source-program'},
- {sourcePath:'js/src/translation/javascript-collection-call-source.js',moduleName:'javascript_collection_call_source',model:'Inspectable JavaScript standard collection call compilation 1',programAsset:'javascript-collection-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-collection-call-source.js',moduleName:'javascript_collection_call_source',model:'Inspectable JavaScript standard collection call compilation 1',programAsset:'javascript-collection-call-source-program',referenceSemantics:true},
 ];
 if(mode!=='--draft'||extra.length||moduleName!==undefined&&!specifications.some(specification=>specification.moduleName===moduleName))throw new TypeError('use --draft with an optional registered module name');
 for(const specification of specifications){

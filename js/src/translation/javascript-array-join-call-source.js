@@ -8,7 +8,7 @@ export function testJavaScriptArrayJoinOperation(operation){return operation==='
  * the active receiver directory under the selected V8 compatibility profile.
  * Unwinding releases this frame's token, including conversion/getter throws.
  * @param {bigint} identity @param {bigint} realm
- * @param {import('./javascript-object-call-source.js').JavaScriptPrimitiveWrapperRoots|undefined} roots
+ * @param {JavaScriptPrimitiveWrapperRoots|undefined} roots
  * @returns {JavaScriptCallFunction|undefined}
  */
 export function compileJavaScriptArrayJoinFunction(identity,realm,roots){
@@ -21,7 +21,7 @@ export function compileJavaScriptArrayJoinFunction(identity,realm,roots){
  const separatorBranch=code.length;code.push({$:'branch',condition:8,yes:0,no:separatorBranch+1},{$:'primitive',destination:3,operation:'convert primitive text',arguments:[3]});
  const separatorDone=code.length;code.push({$:'jump',target:0});
  const comma=code.length;code.push({$:'constant',destination:3,value:{$:'text',units:[44]}});
- const ready=code.length;code[separatorBranch]={$:'branch',condition:8,yes:comma,no:separatorBranch+1};code[separatorDone]={$:'jump',target:ready};
+ const ready=code.length;code.fill({$:'branch',condition:8,yes:comma,no:separatorBranch+1},separatorBranch,separatorBranch+1);code.fill({$:'jump',target:ready},separatorDone,separatorDone+1);
  code.push({$:'constant',destination:5,value:{$:'text',units:[]}},{$:'constant',destination:9,value:{$:'number',value:0}},{$:'constant',destination:10,value:{$:'number',value:1}},{$:'constant',destination:12,value:{$:'null'}},{$:'copy',destination:4,source:9},{$:'numberBinary',destination:8,left:2,right:9,operator:'equal'});
  const empty=code.length;code.push({$:'branch',condition:8,yes:0,no:empty+1},{$:'arrayJoinEnter',destination:14,receiver:1});
  const guard=code.length;code.push({$:'branch',condition:14,yes:guard+1,no:0});
@@ -33,6 +33,6 @@ export function compileJavaScriptArrayJoinFunction(identity,realm,roots){
  const advance=code.length;code.push({$:'numberBinary',destination:4,left:4,right:10,operator:'add'},{$:'jump',target:loop});
  const leave=code.length;code.push({$:'arrayJoinLeave',receiver:1});
  const finish=code.length;code.push({$:'return',source:5});
- code[empty]={$:'branch',condition:8,yes:finish,no:empty+1};code[guard]={$:'branch',condition:14,yes:guard+1,no:finish};code[exhausted]={$:'branch',condition:8,yes:exhausted+1,no:leave};code[undefinedElement]={$:'branch',condition:8,yes:advance,no:undefinedElement+1};code[nullElement]={$:'branch',condition:8,yes:advance,no:nullElement+1};
+ code.fill({$:'branch',condition:8,yes:finish,no:empty+1},empty,empty+1);code.fill({$:'branch',condition:14,yes:guard+1,no:finish},guard,guard+1);code.fill({$:'branch',condition:8,yes:exhausted+1,no:leave},exhausted,exhausted+1);code.fill({$:'branch',condition:8,yes:advance,no:undefinedElement+1},undefinedElement,undefinedElement+1);code.fill({$:'branch',condition:8,yes:advance,no:nullElement+1},nullElement,nullElement+1);
  return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:15,captures:[],instructions:code};
 }

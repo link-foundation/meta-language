@@ -1,3 +1,4 @@
+import {testJavaScriptStandardArrayCallbackOperation} from './javascript-standard-operation-rules.js';
 import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 // Shared inspectable-object Array callback algorithms without species creation.
 // Boxed primitive receivers and opaque HasProperty need explicit protocols.
@@ -16,7 +17,7 @@ import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversi
  * {$:'arrayCallbackInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'arrayCallbackResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptArrayCallbackState,reason:string}} JavaScriptArrayCallbackTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptArrayCallbackOperation(operation){return ['Array.forEach','Array.some','Array.every','Array.find','Array.findIndex','Array.findLast','Array.findLastIndex','Array.reduce','Array.reduceRight'].includes(operation);}
+export function testJavaScriptArrayCallbackOperation(operation){return testJavaScriptStandardArrayCallbackOperation(operation);}
 /** @param {string} operation @returns {boolean} */
 export function testJavaScriptArrayCallbackReverse(operation){return operation==='Array.findLast'||operation==='Array.findLastIndex'||operation==='Array.reduceRight';}
 /** @param {string} operation @returns {boolean} */

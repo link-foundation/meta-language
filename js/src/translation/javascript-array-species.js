@@ -1,5 +1,6 @@
 // ArraySpeciesCreate selection. Allocation and Construct are explicit requests,
 // never assumed Objects or original-host-body fallbacks.
+import {testJavaScriptStandardArraySpeciesGetterOperation} from './javascript-standard-operation-rules.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {testJavaScriptArrayValue} from './javascript-arrays.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
@@ -74,7 +75,7 @@ export function readJavaScriptConstructorAuthorityTarget(heap,candidate){
  return undefined;
 }
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptArraySpeciesGetterOperation(operation){return operation==='Array.species getter';}
+export function testJavaScriptArraySpeciesGetterOperation(operation){return testJavaScriptStandardArraySpeciesGetterOperation(operation);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpeciesDirectory} directory
  * @param {JavaScriptSemanticValue} original @param {number} length @returns {JavaScriptArraySpeciesTransition} */
 export function beginJavaScriptArraySpeciesSelection(heap,directory,original,length){

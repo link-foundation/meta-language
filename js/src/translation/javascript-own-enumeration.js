@@ -1,5 +1,6 @@
 // EnumerableOwnProperties and CreateArrayFromList share the ordinary heap.
 // Key snapshots/Lists are internal control data, never fabricated Array Objects.
+import {testJavaScriptStandardObjectEnumerationOperation} from './javascript-standard-operation-rules.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,readJavaScriptOrdinaryOwnKeys,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit,readJavaScriptSemanticTextString,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {readJavaScriptArrayLength} from './javascript-array-objects.js';
@@ -15,7 +16,7 @@ import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.
  * {$:'objectEnumerationInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'objectEnumerationResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectEnumerationState,reason:string}} JavaScriptObjectEnumerationTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptObjectEnumerationOperation(operation){return ['Object.keys','Object.values','Object.entries'].includes(operation);}
+export function testJavaScriptObjectEnumerationOperation(operation){return testJavaScriptStandardObjectEnumerationOperation(operation);}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectEnumerationState} state @returns {string} */
 export function readJavaScriptObjectEnumerationStateError(heap,state){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;

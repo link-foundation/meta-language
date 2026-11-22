@@ -11,6 +11,10 @@ import {readJavaScriptSourceTextProfileError} from './javascript-source-text-rul
  * | { $:'object', identity:bigint, callable:boolean }} JavaScriptSemanticValue
  */
 
+/** @typedef {{$:'primitiveValue',value:JavaScriptSemanticValue} |
+ * {$:'primitiveInvalid',reason:string} | {$:'primitiveError',errorClass:string,reason:string} |
+ * {$:'primitiveResourceLimit',reason:string}} JavaScriptCallPrimitiveResult */
+
 /** @param {JavaScriptSemanticValue} value @returns {string} */
 export function readJavaScriptSemanticValueError(value) {
   switch (value.$) {
