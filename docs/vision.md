@@ -1327,6 +1327,13 @@ constructor arity and match coverage before emission. The data, constructor and
 match projections reuse the existing surface checker and compare the complete
 rechecked semantic program. Shared decision data supplies reference roles,
 operand traversal, projection instructions and role-specific absent fields.
+During source-library authoring, an ordinary captured module closure can
+check each original owner's parsed declarations within the existing
+per-owner container and depth limits. Every declaration interval belongs
+to the original, bounded capture. The declarations still share one checker
+catalog and the source checker verifies that calls resolve through their
+actual module imports. A retained source interval directory supplies no
+authority to standalone programs or to decoded typed archives.
 Type records also distinguish serializer-owned neutral values from unknown
 fields. The actual native type declarations define five omitted false flags:
 array, record, map and set references, and record openness. A source-checked

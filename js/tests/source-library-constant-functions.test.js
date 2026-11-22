@@ -12,7 +12,9 @@ import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHe
 import {analyzeProgram,BindingRenameError} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
-import {checkProgram} from '../src/translation/check.js';
+import {checkProgram, checkSourceLibraryProgram} from '../src/translation/check.js';
+import {readSuppliedSourceLibraryClosure} from '../src/translation/source-library-closure.js';
+import {checkOwnedProgramContainers, withSourceOwnerContainers} from '../src/translation/owned-program-containers.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {emitLean} from '../src/translation/emit-lean.js';
@@ -25,6 +27,48 @@ const root=fileURLToPath(new URL('../../',import.meta.url));
 const fixture=readProjectData(new URL('../../parity/fixtures/source-library-constant-functions.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.node);
+
+test('source-owner checking resolves imports through actual declarations', () => {
+ const entry = 'fixtures/source-owner-entry.js';
+ const dependency = 'fixtures/source-owner-dependency.js';
+ const modules = [
+  {path: dependency, source: '/** @returns {boolean} */\nexport function readFlag() { return true; }'},
+  {path: entry, source: "import {readFlag as readImportedFlag} from './source-owner-dependency.js';\n"
+   + '/** @returns {boolean} */\nexport function readEntryFlag() { return readImportedFlag(); }'},
+ ];
+ const closure = readSuppliedSourceLibraryClosure(entry, modules, {aliases: true});
+ const ordinary = checkProgram(parseJavaScript(closure.source));
+ const checked = checkSourceLibraryProgram(closure);
+ assert.deepEqual(checked.program, ordinary);
+ assert.deepEqual(checked.owners.map(owner => owner.path), [dependency, entry]);
+ assert.throws(() => checkSourceLibraryProgram({...closure}), /original captured module composition/u);
+ closure.inputs[0].closureRange.start = closure.source.length;
+ assert.deepEqual(checkSourceLibraryProgram(closure).owners, checked.owners);
+ closure.source += '\n';
+ assert.throws(() => checkSourceLibraryProgram(closure), /original captured module composition/u);
+});
+
+test('source-owner container checks keep limits and whole-program marker selection', () => {
+ const left = {span: {start: 1, end: 3}, body: Array.from({length: 50_000}, () => ({}))};
+ const right = {span: {start: 5, end: 7}, body: Array.from({length: 50_000}, () => ({}))};
+ const root = {items: [left, right]};
+ const directory = {ranges: [{start: 0, end: 4}, {start: 5, end: 9}]};
+ const check = () => checkOwnedProgramContainers(root, {
+  acceptContainer: (_kind, dense, unrepresented) => dense && !unrepresented,
+  fail: reason => { throw new TypeError(reason); },
+  selectedFields: ['selected'],
+ });
+ assert.throws(check, /container graph exceeds its resource limit/u);
+ assert.equal(withSourceOwnerContainers(root, directory, check), false);
+ right.span = {start: 2, end: 3};
+ assert.throws(() => withSourceOwnerContainers(root, directory, check), /container graph exceeds its resource limit/u);
+ right.span = {start: 5, end: 7};
+ right.selected = true;
+ Object.defineProperty(left, 'unrepresented', {enumerable: true, get() { assert.fail('getter execution'); }});
+ assert.throws(() => withSourceOwnerContainers(root, directory, check), /unrepresented own fields/u);
+ assert.throws(check, /container graph exceeds its resource limit/u);
+});
+
 for(const row of fixture.headNames)test('actual function head token '+row.kind,()=>assert.equal(acceptJavaScriptSourceFunctionHeadName(row.kind),row.expected));
 for(const row of fixture.loopScopeTerms)test('actual loop scope term '+row.term,()=>assert.equal(testJavaScriptSourceLoopScopeTerm(row.term),row.expected));
 for(const row of fixture.expressionTerms)test('actual expression scope term '+row.term,()=>assert.equal(testJavaScriptSourceFunctionExpressionTerm(row.term),row.expected));

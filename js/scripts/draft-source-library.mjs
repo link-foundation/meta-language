@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, lstatSync, realpath
 import {fileURLToPath} from 'node:url';
 import { createHash } from 'node:crypto';
 import { parseJavaScript } from '../src/translation/javascript.js';
-import { checkProgram } from '../src/translation/check.js';
+import { checkProgram, checkSourceLibraryProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { readPortableLibraryRelocation } from './record-rule-library.mjs';
@@ -23,7 +23,7 @@ import {readSourceLibraryClassProfileError,readSourceLibraryReExportProfileError
 import {draftJavaScriptErrorSourceClosure} from './draft-javascript-error-source-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, publishSourceReceipt=false, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceErrorClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, publishSourceReceipt=false, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceErrorClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='', sourceOwnerChecking=false }) {
   const traceEnabled = process.env.META_LANGUAGE_TRACE_SOURCE_AUTHOR === '1';
   const started = traceEnabled ? performance.now() : 0;
   const trace = stage => {
@@ -39,6 +39,9 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
   if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');
+  if (typeof sourceOwnerChecking !== 'boolean' || sourceOwnerChecking && (!sourceDependencies || sourceClasses || sourceErrorClasses)) {
+    throw new TypeError('source owner checking requires original ordinary source modules');
+  }
   const classError=readSourceLibraryClassProfileError(sourceClasses,sourceDependencies,sourceAliases,referenceSemantics);if(classError)throw new TypeError(classError);
   const reExportError=readSourceLibraryReExportProfileError(sourceReExports,sourceDependencies,sourceAliases);if(reExportError)throw new TypeError(reExportError);
   const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath,{aliases:sourceAliases,classes:sourceClasses,reExports:sourceReExports}) : null;
@@ -46,20 +49,27 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const sourceSyntax=parseAuthoredJavaScriptModule(source,sourcePath);
   trace('read declarations');
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
-  let originalProgram;
+  let originalProgram, sourceDeclarationOwners;
   try {
-    originalProgram = checkProgram(parseJavaScript(source, { referenceSemantics }));
+    if (sourceOwnerChecking) {
+      ({ program: originalProgram, owners: sourceDeclarationOwners } =
+        checkSourceLibraryProgram(sourceClosure, { referenceSemantics, reportDeclarationErrors: traceEnabled }));
+    } else {
+      originalProgram = checkProgram(parseJavaScript(source, { referenceSemantics }));
+      sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure, originalProgram) : null;
+    }
   } catch (error) {
-    const span = error?.span;
-    if (traceEnabled && Number.isSafeInteger(span?.start) && Number.isSafeInteger(span?.end)
-      && span.start >= 0 && span.end >= span.start && span.end <= source.length) {
-      console.error('Source before:', JSON.stringify(source.slice(Math.max(0, span.start - 160), span.start)));
-      console.error('Failing source:', JSON.stringify(source.slice(span.start, Math.min(span.end, span.start + 160))));
-      console.error('Source after:', JSON.stringify(source.slice(span.end, span.end + 160)));
+    if (traceEnabled) {
+      const diagnostics = error instanceof AggregateError ? error.errors : [error];
+      for (const diagnostic of diagnostics) {
+        const span = diagnostic?.span;
+        if (!Number.isSafeInteger(span?.start) || !Number.isSafeInteger(span?.end)
+          || span.start < 0 || span.end < span.start || span.end > source.length) continue;
+        console.error(diagnostic.message, JSON.stringify(source.slice(Math.max(0, span.start - 80), Math.min(span.end + 80, span.start + 320))));
+      }
     }
     throw error;
   }
-  const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,originalProgram) : null;
   trace('checked declarations');
   if(booleanMatchSharing!==''&&booleanMatchSharing!=='literal Boolean constructor match arms 1')throw new TypeError('unknown source Boolean match sharing selection');
   if(constructorMatchSharing!==''&&!['closed constructor match sharing 1',directCallMatchSharingModel].includes(constructorMatchSharing)||constructorMatchSharing&&booleanMatchSharing)throw new TypeError('unknown or conflicting constructor match sharing selection');
@@ -163,6 +173,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
     ...(programAsset===undefined?{}:{programAsset:{path:'js/src/data/'+programAsset+'.lino',bytes:Buffer.byteLength(programText),sha256:createHash('sha256').update(programText).digest('hex')}}),
     ...(sourceDeclarationOwners ? {sourceDeclarationOwners} : {}),
+    ...(sourceOwnerChecking ? {sourceOwnerChecking: 'original ordinary declaration owners 1'} : {}),
     emitted: { text: emitted.text, definitions: emitted.definitions, preludes: emitted.preludes, mappings: emitted.mappings, encodings: emitted.encodings??[] },
     files: files.map(file => ({ path: file.path ?? moduleName + '.rs', source: file.source })),
     ...(removedFiles.length?{removedFiles}:{}),

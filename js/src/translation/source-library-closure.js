@@ -11,8 +11,18 @@ import {readSourceLibraryErrorProfileError} from './source-library-error-rules.j
 
 const root = new URL('file:///meta-language-supplied-sources/');
 const digest = source => createHash('sha256').update(source).digest('hex');
+const ownerDirectories = new WeakMap();
 const actual = (source, token, value) => token?.kind === 'identifier' && token.value === value
   && source.slice(token.start, token.end) === value;
+
+/** Only original, ordinary source module composition supplies these coordinates. */
+export function readCapturedSourceLibraryOwnerDirectory(closure) {
+  const directory = ownerDirectories.get(closure);
+  if (!directory || directory.source !== closure.source) {
+    throw new TypeError('source owner checking requires its original captured module composition');
+  }
+  return directory;
+}
 
 export function readSourceLibraryModuleFacts(source,path,aliases=false,classes='',reExports='',errorClasses='',packageImports=[]) {
   if(classes!==''&&classes!=='closed local class declarations 1')throw new TypeError('unknown source closure class profile');
@@ -193,7 +203,26 @@ export function captureSourceLibraryClosure(sourcePath,{aliases=false,classes=''
     if(acceptsClasses)parts.splice(0,parts.length,...composeSourceLibraryClassDeclarations(captures,[...parts]));
   }
   const source = parts.join('\n\n');
-  return {source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),inputs:captures,...(classes?{sourceClasses:classes}:{}),...(errorClasses?{sourceErrorClasses:errorClasses,entryPath:entry.path}:{}),...(reExports?{sourceReExports:reExports}:{}),...(usedPackageImports.size?{sourcePackageImports:[...usedPackageImports]}:{})};
+  const closure = {source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),inputs:captures,...(classes?{sourceClasses:classes}:{}),...(errorClasses?{sourceErrorClasses:errorClasses,entryPath:entry.path}:{}),...(reExports?{sourceReExports:reExports}:{}),...(usedPackageImports.size?{sourcePackageImports:[...usedPackageImports]}:{})};
+  if (!acceptsClasses) {
+    const inputs = captures.map(input => Object.freeze({
+      path: input.path,
+      closureRange: Object.freeze({ ...input.closureRange }),
+      declarations: Object.freeze([...input.declarations]),
+      ...(input.compiledDeclarations ? {
+        compiledDeclarations: Object.freeze([...input.compiledDeclarations]),
+      } : {}),
+      compiledImportNames: Object.freeze([
+        ...(input.compiledImportNames ?? input.removedImports.flatMap(imported => imported.names)),
+      ]),
+    }));
+    ownerDirectories.set(closure, Object.freeze({
+      source,
+      inputs: Object.freeze(inputs),
+      ranges: Object.freeze(inputs.map(input => input.closureRange)),
+    }));
+  }
+  return closure;
 }
 
 /** Retain actual complete definitions for ownership/effect analysis, while
@@ -204,7 +233,8 @@ export function readSourceLibraryDeclarationOwnership(closure,program) {
   const owners = new Map(), rows = [];
   for (const [name,entry] of program.declarations) {
     const input = closure.inputs.find(input=>Number.isSafeInteger(entry.span?.start)
-      && (input.closureRanges??[input.closureRange]).some(range=>entry.span.start>=range.start&&entry.span.start<range.end));
+      && Number.isSafeInteger(entry.span?.end) && entry.span.end >= entry.span.start
+      && (input.closureRanges??[input.closureRange]).some(range=>entry.span.start>=range.start&&entry.span.start<range.end&&entry.span.end<=range.end));
     if (!input || !['fn','data'].includes(entry.k))
       throw new TypeError('source dependency needs a represented declaration owner: '+name);
     const declaredType=entry.k==='data'&&!entry.generated;
@@ -224,7 +254,7 @@ export function readSourceLibraryDeclarationOwnership(closure,program) {
       const value = pending.pop();
       if (!value || typeof value !== 'object' || seen.has(value)) continue;
       seen.add(value);
-      if (value.k === 'call' && typeof value.fn === 'string' && owners.get(value.fn) !== input && !imports.has(value.fn))
+      if ((value.k === 'call' || value.k === 'functionRef') && typeof value.fn === 'string' && owners.get(value.fn) !== input && !imports.has(value.fn))
         throw new TypeError('source dependency cannot capture '+value.fn+' from another module in '+input.path);
       for (const child of Array.isArray(value) ? value : Object.values(value)) pending.push(child);
     }

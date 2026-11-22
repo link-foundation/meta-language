@@ -9,6 +9,9 @@ import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRus
 import {checkPropositionValue} from './proposition-values.js';
 import {validateFiniteRecordLoopHelpers} from './finite-record-loop-helpers.js';
 import {checkRustSourceExpressionPosition} from './rust-source-expression-positions.js';
+import {parseJavaScript} from './javascript.js';
+import {readCapturedSourceLibraryOwnerDirectory, readSourceLibraryDeclarationOwnership} from './source-library-closure.js';
+import {withSourceOwnerContainers} from './owned-program-containers.js';
 import {acceptCollectionCopyArrayFromSnapshot} from './collection-copy-rules.js';
 import {checkCollectionCopySnapshotCallbacks} from './collection-copies.js';
 import {checkDisjointCollectionIterations} from './disjoint-collection-iterations.js';
@@ -65,7 +68,7 @@ import {acceptRustStringByteLengthOperation,readRustStringByteLengthArgumentErro
 // target can never silently substitute its own (for example, Lean's Euclidean
 // `Int` division for JavaScript's truncating BigInt division).
 
-import { typeError, unsupported } from './diagnostics.js';
+import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
 import {coerceAbruptResult} from './abrupt-results.js';
 import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
@@ -216,23 +219,41 @@ function immutableProductValue(value, bindings = new Map()) {
 
 export function checkProgram(surface) { return checkSurfaceProgram(surface, false); }
 
+/** Check actual source modules against one common declaration catalog. */
+export function checkSourceLibraryProgram(closure, {referenceSemantics, reportDeclarationErrors = false} = {}) {
+  const directory = readCapturedSourceLibraryOwnerDirectory(closure);
+  const surface = parseJavaScript(directory.source, {referenceSemantics});
+  if (surface.main?.effects?.length || surface.imports?.length || surface.externals?.length) {
+    throw typeError('source owner checking requires all declarations and no unresolved module inputs');
+  }
+  const program = checkSurfaceProgram(surface, false, directory, reportDeclarationErrors);
+  const owners = readSourceLibraryDeclarationOwnership(directory, program);
+  return { program, owners };
+}
+
 // Internal graph boundary: terms already carry normalized primitive operations.
 // All core type/arity/ownership/proof checks still run; source-call desugaring
 // must not run again and change the represented operation or fresh bindings.
 export function checkProjectedProgram(surface) { return checkSurfaceProgram(surface, true); }
 
-function checkSurfaceProgram(surface, checkedProjection) {
-  checkRustDataTypeFieldSignatureProgramContainers(surface);
+function checkSurfaceProgram(surface, checkedProjection, directory, reportDeclarationErrors = false) {
+  const initialCheck = () => checkRustDataTypeFieldSignatureProgramContainers(surface);
+  if (directory) withSourceOwnerContainers(surface, directory, initialCheck);
+  else initialCheck();
   const orderProfile=prepareJavaScriptRecordOrderProfile(surface);
   surface=orderProfile.surface;
-  const sourceProofSelected=checkRustConstFunctionContainers(surface);
-  if(sourceProofSelected)checkRustDiagnosticAttributePlacement(surface);
-  checkRustRuntimeShellContainers(surface);
-  checkRustTypeNamespaceRecordShapes(surface);
-  checkRustOwnedLocalStateContainers(surface);
+  const checkContainers = () => {
+    const sourceProofSelected=checkRustConstFunctionContainers(surface);
+    if(sourceProofSelected)checkRustDiagnosticAttributePlacement(surface);
+    checkRustRuntimeShellContainers(surface);
+    checkRustTypeNamespaceRecordShapes(surface);
+    checkRustOwnedLocalStateContainers(surface);
+  };
+  if (directory) withSourceOwnerContainers(surface, directory, checkContainers);
+  else checkContainers();
   const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics), checkedProjection);
   checker.orderedRecordSource=orderProfile.selected;
-  return checker.program(surface);
+  return checker.program(surface, directory, reportDeclarationErrors);
 }
 
 // The linked checked-IR boundary reuses the source checker's pattern rules.
@@ -287,13 +308,13 @@ class Checker {
     this.modules = new Map([['', { path: [], names: new Map(), modules: new Map() }]]);
   }
 
-  program(surface) {
+  program(surface, directory, reportDeclarationErrors) {
     this.generatedPrefix = readSourceIdentifierSupply(collectSourceIdentifierTexts(surface));
     this.declare(surface.items, []);
     this.sourceClassMethods=surface.sourceClassMethods??[];
     this.sourceClassOwners=Object.hasOwn(surface,'sourceClassOwners')?surface.sourceClassOwners:undefined;
     validateClosedClassMethodDefinitions(this,this.sourceClassMethods);
-    const items = this.checkItems(surface.items, []);
+    const items = this.checkItems(surface.items, [], reportDeclarationErrors);
     const main = surface.main ? this.checkMain(surface.main) : null;
     const program = {
       schemaVersion: 1,
@@ -312,12 +333,16 @@ class Checker {
     }
     analyseRecursion(program);
     validateFiniteRecordLoopHelpers(surface,program,this.checkedProjection);
-    checkRustPrimitiveOwnerProof(program);
-    checkRustConstFunctionProof(program);
-    checkRustEmptyOptionProof(program);
-    validateRustTypeNamespace(program);
-    checkRustPureUnitCalls(program);
-    checkRustOwnedLocalStateProof(program);
+    const checkSourceProofs = () => {
+      checkRustPrimitiveOwnerProof(program);
+      checkRustConstFunctionProof(program);
+      checkRustEmptyOptionProof(program);
+      validateRustTypeNamespace(program);
+      checkRustPureUnitCalls(program);
+      checkRustOwnedLocalStateProof(program);
+    };
+    if (directory) withSourceOwnerContainers(program, directory, checkSourceProofs);
+    else checkSourceProofs();
     checkRustBorrowedVectorSourceRegions(program);
     checkDisjointCollectionIterations(program,this.closedCollectionIterationMarkers);
     checkCollectionCopySnapshotCallbacks(program);
@@ -363,7 +388,9 @@ class Checker {
     }
   }
 
-  checkItems(items, path) {
+  checkItems(items, path, reportDeclarationErrors) {
+    const declarationErrors = [];
+    let failedDeclarations = 0;
     // Data layouts and signatures are resolved program-wide before any body,
     // so declarations may refer to each other in any order.
     this.walk(items, path, (item, itemPath, entry) => {
@@ -422,7 +449,16 @@ class Checker {
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k === 'fn') {
         const env = new Map(entry.params.map((param) => [param.name, param.type]));
-        entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
+        try {
+          entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
+        } catch (error) {
+          if (!reportDeclarationErrors || !(error instanceof TranslationError)) throw error;
+          failedDeclarations++;
+          if (declarationErrors.length < 40) {
+            declarationErrors.push(new TranslationError(error.kind, `${entry.fullName}: ${error.reason}`, error.span ?? item.span, error.details));
+          }
+          return;
+        }
         if(entry.sourceVectorMutation)checkRustVectorMutationBody(entry,entry.sourceVectorMutation);
         if(entry.sourceFallibleIterator)checkRustFallibleIteratorBody(entry,entry.sourceFallibleIterator);
         if(item.sourceStandardCollectionLibraryOwner!==undefined)entry.sourceStandardCollectionLibraryOwner=checkRustStandardCollectionLibraryOwner(entry,this.language);
@@ -447,6 +483,9 @@ class Checker {
         throw typeError(`unknown item ${item.k}`, item.span);
       }
     });
+    if (failedDeclarations) {
+      throw new AggregateError(declarationErrors, `Failed to check ${failedDeclarations} source declaration bodies (showing ${declarationErrors.length})`);
+    }
     this.walk(items,path,(item,_path,entry)=>{
       if(item.k==='data'&&entry.sourceStandardCollectionCarrier)checkRustStandardCollectionPacketOwner(entry,this.language,name=>this.items.get(name));
     });
