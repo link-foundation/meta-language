@@ -3,6 +3,7 @@ import {
   languageParserAvailability,
   parseEmbeddedProgrammingLanguage,
   parseProgrammingLanguage,
+  parsedPdfContent,
 } from './programming-language-parser.js';
 import {
   ByteRange,
@@ -49,6 +50,9 @@ import { seedStatehoodWorkedExample } from './concept-ontology.js';
 import { projectVisibleDocumentText } from './visible-document-text.js';
 import { hasZipHeader, readBinaryString, readWordprocessingPackage } from './open-packaging-conventions.js';
 import { binaryStringCoordinates } from './binary-string-source.js';
+import { readPdfDocument } from './pdf-document.js';
+import { parsePdfCst } from './pdf-grammar.js';
+import { sourceBoundaries } from './source-boundaries.js';
 import {
   CONCEPT_RECORDS,
   FORMER_CONCEPT_ID_VOCABULARY,
@@ -141,6 +145,15 @@ export class LinkNetwork {
     const network = new LinkNetwork();
     const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
     network._attachEmbeddedRegions(document, text, language, configuration, parsed);
+    if (parsed.originalTree && text.includes('stream')) {
+      const coordinates = sourceBoundaries(text);
+      const span = (start, end) => {
+        const from = coordinates.get(start);
+        const to = coordinates.get(end);
+        return new SourceSpan(new ByteRange(from.byte, to.byte), new Point(from.row, from.column), new Point(to.row, to.column));
+      };
+      network._insertPdfDerivedDocuments(document, text, parsed.originalTree, span, configuration, 'binary-string');
+    }
     annotateNaturalLanguage(network, document, text, language);
     const links = parsed.canonical === 'LiNo' ? insertLinoSemantics(network, text, language) : [];
     return { network, links };
@@ -168,11 +181,53 @@ export class LinkNetwork {
       const encoded = [...chunk].map((byte) => byte.toString(16).padStart(2, '0')).join('');
       network.insertSourceToken(format, `bytes:${encoded}`, span);
     }
-    if (canonicalLanguageName(format) === 'DOCX' && hasZipHeader(source)) {
-      const coordinates = (start, end) => new SourceSpan(new ByteRange(start, end), new Point(0, start), new Point(0, end));
+    const coordinates = (start, end) => new SourceSpan(new ByteRange(start, end), new Point(0, start), new Point(0, end));
+    const language = canonicalLanguageName(format);
+    if (language === 'DOCX' && hasZipHeader(source)) {
       network._insertWordprocessingPackage(source, format, coordinates, configuration, 'bytes');
+    } else if (language === 'PDF' && source.length > 0) {
+      const text = Buffer.from(source).toString('latin1');
+      const tree = parsePdfCst(text, true);
+      const errors = [];
+      const pending = [tree];
+      while (pending.length) {
+        const node = pending.pop();
+        if (node.isError || node.isMissing) errors.push(network.insertSyntaxNode(format, node.term, [], {
+          span: coordinates(node.start, node.end), flags: node.isMissing ? LinkFlags.missing() : LinkFlags.error(),
+        }));
+        if (node.hasError) pending.push(...node.children);
+      }
+      const document = network.insertSyntaxNode(format, 'pdf_file', errors, {
+        span: coordinates(0, source.length), flags: new LinkFlags({ hasError: tree.hasError }),
+      });
+      network._insertPdfDerivedDocuments(document, text, tree, coordinates, configuration, 'bytes');
     }
     return network;
+  }
+
+  _insertPdfDerivedDocuments(container, source, tree, coordinates, configuration, encoding) {
+    const { streams, textRuns, errors } = readPdfDocument(source, tree, configuration.decodeDocumentStreams !== false);
+    for (const { source, tree, filter, data } of streams) {
+      const child = new LinkNetwork();
+      child._insertProgrammingLanguage(parsedPdfContent(source, tree), 'PDF', configuration);
+      this._insertDerivedDocument(container, 'content_stream', 'PDF', coordinates(data.start, data.end),
+        encoding, filter, child);
+    }
+    for (const run of textRuns) {
+      this.insertLink([container], new LinkMetadata({ linkType: LinkType.Semantic,
+        term: run.separated ? 'PDF text line' : 'PDF text run', language: 'PDF',
+        span: coordinates(run.start, run.end), definition: run.text }));
+    }
+    for (const error of errors) {
+      this.insertLink([container], new LinkMetadata({ linkType: LinkType.Object, term: 'ERROR', language: 'PDF',
+        named: true, span: coordinates(error.start, error.end), definition: error.message, flags: LinkFlags.error() }));
+    }
+  }
+
+  _insertDerivedDocument(container, term, language, span, encoding, compression, network, clean = true) {
+    return this.insertLink([container], new LinkMetadata({ linkType: LinkType.Document, term,
+      language, named: true, span, flags: clean ? LinkFlags.clean() : LinkFlags.error(),
+      definition: `derived document\n${encoding}\n${compression}\n${network.toLino()}` }));
   }
 
   _insertWordprocessingPackage(bytes, language, coordinates, configuration, encoding) {
@@ -191,10 +246,8 @@ export class LinkNetwork {
       span: coordinates(0, bytes.length), flags: new LinkFlags({ hasError }),
     });
     for (const part of parsedParts) {
-      this.insertLink([container], new LinkMetadata({ linkType: LinkType.Document, term: part.name,
-        language: 'DOCX', named: true, span: coordinates(part.start, part.end),
-        flags: part.clean ? LinkFlags.clean() : LinkFlags.error(),
-        definition: `derived document\n${encoding}\n${part.compression}\n${part.network.toLino()}` }));
+      this._insertDerivedDocument(container, part.name, 'DOCX', coordinates(part.start, part.end),
+        encoding, part.compression, part.network, part.clean);
     }
   }
 

@@ -1,10 +1,9 @@
 import { inflateRawSync } from 'node:zlib';
+import { documentStreamFitsBudget } from './document-container-policy.js';
 
 const localHeader = 0x04034b50;
 const centralHeader = 0x02014b50;
 const endOfDirectory = 0x06054b50;
-const maximumPartBytes = 16 * 1024 * 1024;
-const maximumPackageTextBytes = 32 * 1024 * 1024;
 const packageText = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 export function hasZipHeader(bytes) {
@@ -102,7 +101,7 @@ export function readWordprocessingPackage(bytes) {
     try {
       const { name, start, end, method, flags, uncompressed, checksum } = entry;
       if ((flags & 0x2041) || (method !== 0 && method !== 8)) throw new Error('unsupported OPC part compression or encryption');
-      if (uncompressed > maximumPartBytes || textBytes + uncompressed > maximumPackageTextBytes) throw new Error('OPC part exceeds the decoded size limit');
+      if (!documentStreamFitsBudget(end - start, uncompressed, textBytes)) throw new Error('OPC part exceeds the decoded size limit');
       // Charge the announced output before decoding so corrupt parts also use the budget.
       textBytes += uncompressed;
       const data = bytes.subarray(start, end);

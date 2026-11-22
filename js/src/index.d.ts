@@ -1234,7 +1234,7 @@ export class LinkNetwork {
     language: string;
     sourceRange: ByteRange;
     encoding: 'bytes' | 'binary-string';
-    compression: 'stored' | 'deflate';
+    compression: string;
     network: LinkNetwork;
   }>;
   embeddedRegions(): EmbeddedRegion[];
@@ -1271,6 +1271,7 @@ export class ParseConfiguration {
     embeddedRegionDepthLimit?: number;
     embeddedRegionCountLimit?: number;
     embeddedRegionByteLimit?: number;
+    decodeDocumentStreams?: boolean;
   });
   readonly triviaAttachmentPolicy: string;
   readonly regionDetectionPolicy: RegionDetectionPolicyValue;
@@ -1279,11 +1280,13 @@ export class ParseConfiguration {
   readonly embeddedRegionDepthLimit: number;
   readonly embeddedRegionCountLimit: number;
   readonly embeddedRegionByteLimit: number;
+  readonly decodeDocumentStreams: boolean;
   static default(): ParseConfiguration;
   withTriviaAttachmentPolicy(policy: string): ParseConfiguration;
   withRegionDetectionPolicy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   with_region_detection_policy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   withAccessMode(mode: string): ParseConfiguration;
+  withDocumentStreamDecoding(enabled: boolean): ParseConfiguration;
   withEmbeddedRegionLimits(limits?: EmbeddedRegionLimits): ParseConfiguration;
 }
 

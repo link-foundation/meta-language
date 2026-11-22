@@ -204,7 +204,7 @@ function projectEdits(selection, edits, first, chunks, syntax) {
   if (cursor < selection.end) chunks.push({ kind: 'text', start: cursor, end: selection.end, syntax });
 }
 
-function projectChunks(chunks, read, options) {
+function projectChunks(chunks, read, options, sourceOrdered = true) {
   const parts = [];
   const map = [];
   let textEnd = 0;
@@ -290,7 +290,7 @@ function projectChunks(chunks, read, options) {
       default: readText(chunk);
     }
   }
-  return new VisibleDocumentText(parts.join(''), map);
+  return new VisibleDocumentText(parts.join(''), map, sourceOrdered);
 }
 
 class VisibleDocumentText {
@@ -384,12 +384,24 @@ export function projectVisibleDocumentText(network, {
   if (nbsp !== 'space' && nbsp !== 'keep') throw new TypeError('nbsp must be space or keep');
   const sourceLanguage = network.links().find(link => link.metadata().linkType === LinkType.Language);
   const language = canonicalLanguageName(sourceLanguage?.metadata().term ?? '');
+  const options = { blockSeparator, decodeEntities, collapseWhitespace, nbsp, listBullet };
+  if (language === 'PDF') {
+    const chunks = [];
+    for (const link of network.links()) {
+      const { term, span, language, definition, linkType } = link.metadata();
+      if (language !== 'PDF' || linkType !== LinkType.Semantic || !span || !definition ||
+          (term !== 'PDF text line' && term !== 'PDF text run')) continue;
+      const { start, end } = span.byteRange;
+      if (term === 'PDF text line') chunks.push({ kind: 'separator', start, end: start });
+      chunks.push({ kind: 'replace', start, end, text: definition });
+    }
+    return projectChunks(chunks, null, options, false);
+  }
   const packaged = language === 'DOCX' && network.links().some(link => link.metadata().term === 'docx_package');
   const documents = packaged ? network.derivedDocuments() : [];
   const source = !packaged || documents.some(document => document.encoding === 'binary-string')
     ? utf8.encode(network.reconstructText()) : new Uint8Array();
   const read = (start, end) => readUtf8.decode(source.subarray(start, end));
-  const options = { blockSeparator, decodeEntities, collapseWhitespace, nbsp, listBullet };
   if (packaged) return projectPackagedText(documents, read, options);
   const records = ['HTML', 'Markdown', 'DOCX'].includes(language) ? syntaxLinks(network) : [];
   const ownRecords = records.filter(record => record.language === language);

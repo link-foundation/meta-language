@@ -215,9 +215,10 @@ function parseGrammarCst(text, canonical) {
   const builtin = { LiNo: parseLinoCst, PDF: parsePdfCst, txt: parsePlainTextCst }[canonical]
     ?? (languageEntry(canonical).family === 'natural' ? parseNaturalLanguageCst : undefined);
   if (builtin) {
+    const originalTree = builtin(text);
     const tokens = [];
-    const tree = builtinGrammarNode(builtin(text), text, boundaries, tokens);
-    return { canonical, rootTerm: tree.term, tokens, tree };
+    const tree = builtinGrammarNode(originalTree, text, boundaries, tokens);
+    return { canonical, rootTerm: tree.term, tokens, tree, originalTree: canonical === 'PDF' ? originalTree : undefined };
   }
   const id = languageEntry(canonical).grammars[0]?.id;
   if (id !== undefined && isNativeGrammar(id)) {
@@ -258,6 +259,12 @@ function parseGrammarCst(text, canonical) {
   pushGapNodes(trailing, adapter.endOffset(root), text.length, text, boundaries, tokens);
   parsed.delete();
   return publicRoot({ canonical, tokens, tree, leading, trailing }, text, boundaries);
+}
+
+export function parsedPdfContent(source, originalTree) {
+  const tokens = [];
+  const tree = builtinGrammarNode(originalTree, source, sourceBoundaries(source), tokens);
+  return { canonical: 'PDF', rootTerm: tree.term, tokens, tree };
 }
 
 // Preserves the original public Lean root while retaining the grammar's

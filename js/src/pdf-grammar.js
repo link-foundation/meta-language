@@ -32,12 +32,17 @@ import {
  * - Malformed input is kept in `ERROR` nodes, and absent delimiters,
  *   keywords, the header and the `%%EOF` marker as zero-width missing nodes.
  *
- * Offsets are string indices; every delimiter is ASCII, and a `/Length` is
- * counted in UTF-8 bytes, so the Rust port computes the same tree over UTF-8
- * byte offsets.
+ * Offsets are string indices. A `/Length` is counted in UTF-8 bytes for
+ * text input and in original bytes for a Latin-1 view of a binary file.
  */
-export function parsePdfCst(text) {
-  return new PdfGrammarParser(text).file();
+export function parsePdfCst(text, binary = false) {
+  return new PdfGrammarParser(text, binary).file();
+}
+
+export function parsePdfContentCst(text) {
+  const parser = new PdfGrammarParser(text);
+  const tree = parser.contentStream(0, text.length);
+  return tree && fillExtras(tree, (start, end) => parser.lexGap(start, end));
 }
 
 function markInvalidSourceCharacters(tree, text) {
@@ -68,8 +73,9 @@ const CONTENT_STREAM_KEYS = new Set([
 const HEADER = /^%PDF-[0-9]+\.[0-9]+$/u;
 
 class PdfGrammarParser {
-  constructor(text) {
+  constructor(text, binary = false) {
     this.text = text;
+    this.binary = binary;
     this.position = 0;
     this.limit = text.length;
     this.content = false;
@@ -169,8 +175,13 @@ class PdfGrammarParser {
   streamExtent(dictionary, dataStart) {
     const length = directLength(dictionary, this.text);
     if (length !== null) {
-      const end = advanceUtf8(this.text, dataStart, length);
-      if (end >= 0) {
+      const binaryLength = dataStart + length;
+      const utf8Length = this.binary ? -1 : advanceUtf8(this.text, dataStart, length);
+      const ends = [utf8Length, binaryLength];
+      for (const end of ends) {
+        if (end < 0 || end > this.text.length) continue;
+        if (end === binaryLength && end !== utf8Length && !this.binary &&
+            /[^\x00-\xff]/u.test(this.text.slice(dataStart, end))) continue;
         let keyword = end;
         while (isWhite(this.char(keyword))) keyword += 1;
         if (this.atKeywordAt(keyword, 'endstream')) return [end, keyword];
