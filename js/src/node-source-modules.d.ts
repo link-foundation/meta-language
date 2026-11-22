@@ -71,7 +71,7 @@ export interface PreparedJavaScriptRuntimeDataModule {
  readExport(name:string):{$:string;value?:JavaScriptSemanticValue;[field:string]:unknown};
  begin(name:string,args:JavaScriptSemanticValue[],options?:{construct?:boolean}):JavaScriptSourceTransition|JavaScriptModuleInitializationTransition;
 }
-export function readSuppliedSourceLibraryClosure(sourcePath:string,modules:readonly {path:string;source:string}[],options?:{aliases?:boolean;classes?:string;reExports?:string;errorClasses?:string}):unknown;
+export function readSuppliedSourceLibraryClosure(sourcePath:string,modules:readonly {path:string;source:string}[],options?:{aliases?:boolean;classes?:string;reExports?:string;errorClasses?:string;packageImports?:readonly {specifier:string;importer:string;binding:string;provider:string}[]}):unknown;
 export function captureSourceLibraryErrorClosure(closure:unknown):unknown;
 export function checkSourceLibraryErrorClosure(archive:unknown):unknown;
 export function prepareJavaScriptErrorSourceClosure(archive:unknown,authority:JavaScriptSourceRealmAuthority):PreparedJavaScriptErrorClosure;

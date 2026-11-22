@@ -7,10 +7,33 @@ import {insertJavaScriptOrdinaryObject,registerJavaScriptOrdinarySymbol,readJava
 import {allocateJavaScriptWeakCollection,executeJavaScriptWeakCollectionOperation} from '../src/translation/javascript-weak-collections.js';
 import {compileJavaScriptWeakCollectionFunction} from '../src/translation/javascript-weak-collection-call-source.js';
 import {beginJavaScriptCallMachine} from '../src/translation/javascript-call-machine.js';
+import {readSourceLibraryClosure,readSuppliedSourceLibraryClosure} from '../scripts/read-source-library-closure.mjs';
+import {testJavaScriptValidatedHeapSnapshot as testPortableHeapReceipt} from '../src/translation/javascript-heap-validation-portable.js';
 const object=(identity,callable=false)=>({$:'object',identity,callable});
 function input(){let heap={$:'ordinaryHeap',objects:[],symbols:[]};heap=insertJavaScriptOrdinaryObject(heap,10n,{$:'null'}).heap;heap=allocateJavaScriptWeakCollection(heap,1n,{$:'null'},'WeakMap').heap;return executeJavaScriptWeakCollectionOperation(heap,object(1n),'WeakMap.set',[object(10n),{$:'number',value:7}]).heap;}
 test('a fully validated immutable copy cannot be changed through its public source aliases',()=>{
  const heap=input(),sealed=sealJavaScriptOrdinaryHeapSnapshot(heap);assert.equal(sealed.error,'');assert.notEqual(sealed.heap,heap);assert.equal(testJavaScriptValidatedHeapSnapshot(sealed.heap),true);assert.equal(Object.isFrozen(sealed.heap),true);assert.equal(Object.isFrozen(sealed.heap.objects),true);assert.equal(Object.isFrozen(sealed.heap.objects[0].weakEntries[0].value),true);assert.equal(Object.getPrototypeOf(sealed.heap),null);heap.objects[0].weakEntries[0].value.value=99;assert.equal(executeJavaScriptWeakCollectionOperation(sealed.heap,object(1n),'WeakMap.get',[object(10n)]).value.value,7);assert.throws(()=>{sealed.heap.objects[0].weakEntries[0].value.value=99;},TypeError);assert.equal(readJavaScriptOrdinaryHeapError(sealed.heap),'');assert.equal(sealJavaScriptOrdinaryHeapSnapshot(sealed.heap).heap,sealed.heap);
+});
+test('source authoring retains exactly the portable heap authority and its original import',()=>{
+ const importer='js/src/translation/javascript-ordinary-heap.js';
+ const closure=readSourceLibraryClosure(importer,{aliases:true});
+ const [registration]=closure.sourcePackageImports;
+ const [publishedImport]=closure.inputs.find(row=>row.path===importer).removedImports;
+ assert.equal(publishedImport.specifier,'#ordinary-heap-validation-authority');
+ assert.equal(publishedImport.dependency,registration.provider);
+ assert.deepEqual(publishedImport.packageImport,registration);
+ assert.ok(closure.inputs.some(row=>row.path===registration.provider));
+ assert.ok(closure.inputs.every(row=>row.path!==registration.defaultProvider));
+ const modules=closure.inputs.map(({path,source})=>({path,source}));
+ const options={aliases:true,packageImports:closure.sourcePackageImports};
+ assert.deepEqual(readSuppliedSourceLibraryClosure(importer,modules,options),closure);
+ assert.throws(()=>readSuppliedSourceLibraryClosure(importer,modules,{aliases:true}),/registered package import/);
+ const withoutProvider=modules.filter(row=>row.path!==registration.provider);
+ assert.throws(()=>readSuppliedSourceLibraryClosure(importer,withoutProvider,options),/missing from the supplied closure/);
+ const {heap,error}=sealJavaScriptOrdinaryHeapSnapshot(input());
+ assert.equal(error,'');
+ assert.equal(testJavaScriptValidatedHeapSnapshot(heap),true);
+ assert.equal(testPortableHeapReceipt(heap),false);
 });
 test('shallow freezing, receipt flags and immutable copying do not forge heap validation',()=>{
  const bad={$:'ordinaryHeap',objects:[{$:'weakMapObject',identity:1n,prototype:{$:'null'},extensible:true,callable:false,properties:[],weakEntries:[{$:'weakCollectionEntry',key:{$:'number',value:7},value:{$:'undefined'}}]}],symbols:[],validated:true,model:'validated immutable ordinary call snapshots 1'};Object.freeze(bad);assert.equal(testJavaScriptValidatedHeapSnapshot(bad),false);assert.notEqual(readJavaScriptOrdinaryHeapError(bad),'');const frozen=copyJavaScriptImmutableSnapshotData(bad);assert.equal(Object.isFrozen(frozen),true);assert.equal(testJavaScriptValidatedHeapSnapshot(frozen),false);assert.notEqual(sealJavaScriptOrdinaryHeapSnapshot(frozen).error,'');assert.notEqual(readJavaScriptOrdinaryHeapError(frozen),'');

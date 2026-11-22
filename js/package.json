@@ -8,6 +8,12 @@
   "bin": {
     "meta-language": "./src/cli.js"
   },
+  "imports": {
+    "#ordinary-heap-validation-authority": {
+      "meta-language-portable-source": "./src/translation/javascript-heap-validation-portable.js",
+      "default": "./src/translation/javascript-heap-snapshot-authority.js"
+    }
+  },
   "exports": {
     "./node-source-modules": {
       "types": "./src/node-source-modules.d.ts",

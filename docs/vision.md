@@ -4808,6 +4808,21 @@ skip repeated validation only for exact privately published, fully validated,
 recursively immutable snapshots. Mutable/new/untrusted snapshots retain full
 checks; persistent mutation costs and complete garbage collection remain explicit
 requirements rather than claims established by lookup complexity alone.
+The installed JavaScript package resolves the heap validation authority to
+the private receipt registry. Portable source authoring resolves the same
+binding to a module with no publication capability, so every portable heap
+undergoes the same complete structural validation. The
+[`source-package-imports.lino`](../parity/self-translation/source-package-imports.lino)
+registration binds the package condition, exact import, consumer and provider
+to the actual package manifest. Source capture retains the selected provider's
+complete source and the original import. Supplied-source replay derives the
+same owner through that registered selection.
+
+The collection call compiler consumes shared operation identifiers and pure
+bytecode builders. Stateful handlers use the same definitions while their
+heap execution remains outside the compiler's source closure. Identifiers
+select an algorithm only after the actual realm directory supplies its
+callable owner.
 
 Mixed readonly and mutable source functions select the existing signature3,
 exclusive-loan and closed FnMut profiles together. Each body keeps its genuine

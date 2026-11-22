@@ -1,4 +1,4 @@
-import {testJavaScriptValidatedHeapSnapshot} from './javascript-heap-snapshot-authority.js';
+import {testJavaScriptValidatedHeapSnapshot} from '#ordinary-heap-validation-authority';
 import {readJavaScriptWeakKeyEligibility} from './javascript-weak-collection-rules.js';
 import {readJavaScriptArrayObjectError,planJavaScriptArrayPropertyDefinition,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,constructJavaScriptSemanticTextUnits,readJavaScriptSemanticTextLength} from './javascript-semantic-values.js';

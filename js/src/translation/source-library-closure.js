@@ -14,7 +14,7 @@ const digest = source => createHash('sha256').update(source).digest('hex');
 const actual = (source, token, value) => token?.kind === 'identifier' && token.value === value
   && source.slice(token.start, token.end) === value;
 
-export function readSourceLibraryModuleFacts(source,path,aliases=false,classes='',reExports='',errorClasses='') {
+export function readSourceLibraryModuleFacts(source,path,aliases=false,classes='',reExports='',errorClasses='',packageImports=[]) {
   if(classes!==''&&classes!=='closed local class declarations 1')throw new TypeError('unknown source closure class profile');
   const reExportError=readSourceLibraryReExportProfileError(reExports,true,aliases);if(reExportError)throw new TypeError(reExportError);
   const errorProfile=readSourceLibraryErrorProfileError(errorClasses,true,aliases,classes);if(errorProfile)throw new TypeError(errorProfile);
@@ -91,11 +91,16 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false,classes='
       || !actual(source,tokens[at + 1],'from') || tokens[at + 2]?.kind !== 'string')
       throw new TypeError('source closure import is outside its exact named-function profile at '+path+':'+token.start);
     const specifier = tokens[at + 2].value;
-    if (!specifier.startsWith('./') && !specifier.startsWith('../')) throw new TypeError('source closure imports require actual relative files');
-    if (!specifier.endsWith('.js') || specifier.includes('?') || specifier.includes('#')) throw new TypeError('source closure imports require explicit JavaScript files');
+    const packageImport = specifier.startsWith('#') ? packageImports.find(rule=>rule.specifier===specifier&&rule.importer===path) : undefined;
+    if(packageImport&&(names.length!==1||names[0]!==packageImport.binding||bindings[0].local!==packageImport.binding))
+      throw new TypeError('portable source package imports require their registered unchanged binding in '+path);
+    if(!packageImport){
+      if (!specifier.startsWith('./') && !specifier.startsWith('../')) throw new TypeError('source closure imports require actual relative files or a registered package import');
+      if (!specifier.endsWith('.js') || specifier.includes('?') || specifier.includes('#')) throw new TypeError('source closure imports require explicit JavaScript files');
+    }
     at += 3;
     const end = tokens[at]?.kind === 'punct' && tokens[at].value === ';' ? tokens[at++].end : tokens[at - 1].end;
-    imports.push({statement:source.slice(token.start,end),start:token.start,end,coordinateUnit:'UTF-16 code units',specifier,names,...(aliases?{bindings}:{})});
+    imports.push({statement:source.slice(token.start,end),start:token.start,end,coordinateUnit:'UTF-16 code units',specifier,names,...(aliases?{bindings}:{}),...(packageImport?{packageImport}: {})});
     index = at - 1;
   }
   const importedNames = new Set();
@@ -132,12 +137,24 @@ export function readSuppliedSourceLibraryClosure(sourcePath,modules,options={}){
  if(used.size!==supplied.size)throw new TypeError('the supplied closure must retain exactly every reachable actual source module');return closure;
 }
 
-export function captureSourceLibraryClosure(sourcePath,{aliases=false,classes='',reExports='',errorClasses=''}={},readModule) {
+export function captureSourceLibraryClosure(sourcePath,{aliases=false,classes='',reExports='',errorClasses='',packageImports=[]}={},readModule) {
   if(typeof aliases!=='boolean')throw new TypeError('source alias composition needs an explicit Boolean');
   const profileError=readSourceLibraryClassProfileError(classes,true,aliases,true);if(profileError)throw new TypeError(profileError);
   const reExportError=readSourceLibraryReExportProfileError(reExports,true,aliases);if(reExportError)throw new TypeError(reExportError);
   const errorProfile=readSourceLibraryErrorProfileError(errorClasses,true,aliases,classes);if(errorProfile)throw new TypeError(errorProfile);
   const acceptsClasses=Boolean(classes||errorClasses);
+  if(!Array.isArray(packageImports)||packageImports.length>16)throw new TypeError('portable package imports require a bounded registration directory');
+  const importKeys=new Set(),usedPackageImports=new Set();
+  for(const rule of packageImports){
+    if(rule===null||typeof rule!=='object'||!Object.hasOwn(rule,'importer')||!Object.hasOwn(rule,'provider')||
+      !Object.hasOwn(rule,'specifier')||typeof rule.specifier!=='string'||!/^#[a-z][a-z0-9-]*$/u.test(rule.specifier)||
+      !Object.hasOwn(rule,'binding')||typeof rule.binding!=='string'||!/^[$A-Z_a-z][$\w]*$/u.test(rule.binding))throw new TypeError('portable package imports require actual named specifiers and bindings');
+    sourceLibraryLogicalModuleURL(rule.importer);
+    sourceLibraryLogicalModuleURL(rule.provider);
+    const key=rule.importer+'\0'+rule.specifier;
+    if(importKeys.has(key)||!rule.provider.endsWith('.js')||rule.provider===rule.importer)throw new TypeError('portable package imports require unique registrations and explicit dependency modules');
+    importKeys.add(key);
+  }
   const states = new Map(), captures = [], parts = [],active=new Set();
   let bytes = 0;
   function visit(url) {
@@ -147,11 +164,13 @@ export function captureSourceLibraryClosure(sourcePath,{aliases=false,classes=''
     if (states.size >= 128) throw new RangeError('source library closure exceeds 128 actual modules');
     bytes += Buffer.byteLength(source);
     if (bytes > 16 * 1024 * 1024) throw new RangeError('source library closure exceeds 16 MiB');
-    const {imports,exports,declarations,declarationBindings,classDeclarations,classUnresolvedNames,namedReExports,directExports}=readSourceLibraryModuleFacts(source,path,aliases,classes,reExports,errorClasses);
+    const {imports,exports,declarations,declarationBindings,classDeclarations,classUnresolvedNames,namedReExports,directExports}=readSourceLibraryModuleFacts(source,path,aliases,classes,reExports,errorClasses,packageImports);
     const capture = {path,source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),removedImports:imports,exports:[...exports],...(declarationBindings?{declarationBindings}:{}),...(acceptsClasses?{classDeclarations,classUnresolvedNames}:{}),...(errorClasses?{sourceErrorClasses:errorClasses}:{}),...(reExports?{removedReExports:namedReExports,directExports}:{})};
     states.set(identity,capture);active.add(identity);
     for (const imported of [...imports,...(namedReExports??[])]) {
-      const dependency = visit(new URL(imported.specifier,url));
+      const selected = imported.packageImport;
+      if(selected)usedPackageImports.add(selected);
+      const dependency = visit(selected?sourceLibraryLogicalModuleURL(selected.provider):new URL(imported.specifier,url));
       for (const name of imported.names) if (!dependency.exports.includes(name))
         throw new TypeError('source closure import '+name+' has no actual exported owner in '+dependency.path);
       imported.dependency = dependency.path;
@@ -166,15 +185,15 @@ export function captureSourceLibraryClosure(sourcePath,{aliases=false,classes=''
   }
   const entry=visit(sourceLibraryLogicalModuleURL(sourcePath));
   if(aliases){
-    let compiled=composeSourceLibraryAliases(captures,entry.path,source=>{const facts=readSourceLibraryModuleFacts(source,entry.path,true,classes,reExports,errorClasses);return reExports?facts:facts.imports;},{classes:acceptsClasses,reExports:Boolean(reExports)});
-    if(acceptsClasses)compiled=compiled.map((source,index)=>finishSourceLibraryClassComposition(captures[index],source,text=>readSourceLibraryModuleFacts(text,captures[index].path,true,classes,reExports,errorClasses)));
+    let compiled=composeSourceLibraryAliases(captures,entry.path,(source,path)=>{const facts=readSourceLibraryModuleFacts(source,path,true,classes,reExports,errorClasses,packageImports);return reExports?facts:facts.imports;},{classes:acceptsClasses,reExports:Boolean(reExports)});
+    if(acceptsClasses)compiled=compiled.map((source,index)=>finishSourceLibraryClassComposition(captures[index],source,text=>readSourceLibraryModuleFacts(text,captures[index].path,true,classes,reExports,errorClasses,packageImports)));
     parts.splice(0,parts.length,...compiled);
     let offset=0;
     for(let index=0;index<captures.length;index+=1){captures[index].closureRange={start:offset,end:offset+parts[index].length,coordinateUnit:'UTF-16 code units'};offset+=parts[index].length+2;}
     if(acceptsClasses)parts.splice(0,parts.length,...composeSourceLibraryClassDeclarations(captures,[...parts]));
   }
   const source = parts.join('\n\n');
-  return {source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),inputs:captures,...(classes?{sourceClasses:classes}:{}),...(errorClasses?{sourceErrorClasses:errorClasses,entryPath:entry.path}:{}),...(reExports?{sourceReExports:reExports}:{})};
+  return {source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),inputs:captures,...(classes?{sourceClasses:classes}:{}),...(errorClasses?{sourceErrorClasses:errorClasses,entryPath:entry.path}:{}),...(reExports?{sourceReExports:reExports}:{}),...(usedPackageImports.size?{sourcePackageImports:[...usedPackageImports]}:{})};
 }
 
 /** Retain actual complete definitions for ownership/effect analysis, while

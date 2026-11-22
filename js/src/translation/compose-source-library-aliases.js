@@ -105,7 +105,7 @@ export function composeSourceLibraryAliases(inputs,entryPath,readImports,{classe
       for(const transformation of transformations)if(transformation.operation==='resolved import binding substitution')transformation.sourceSha256=digest(source);
       if(classes||reExports)recordSourceLibraryCompositionStep(input,prior,source,'resolved import binding substitution',sourceEdits);
     }
-    const transformed=readImports(source),transformedImports=Array.isArray(transformed)?transformed:transformed.imports;
+    const transformed=readImports(source,input.path),transformedImports=Array.isArray(transformed)?transformed:transformed.imports;
     input.compiledDeclarations=input.declarations.map(name=>selected.get(key(input.path,name)));
     input.declarationAliases=input.declarations.map((original,index)=>({source:input.path,original,compiled:input.compiledDeclarations[index]}));
     input.compiledImportNames=input.removedImports.flatMap(imported=>imported.bindings.map(binding=>{const actual=provider(imported.dependency,binding.imported);return selected.get(key(actual.path,actual.name));}));
