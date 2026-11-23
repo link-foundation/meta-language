@@ -197,6 +197,30 @@ failure at log line 58.
 [JavaScript lexer tests](../../../js/tests/grammar-lexer-rules.test.js),
 [native lexer tests](../../../rust/tests/unit/grammar_lexer_transport.rs)
 
+On `38e6dd385`, Delivery Candidates compiled the Rust package and uploaded
+both packages at log lines 643 and 692. Cargo Check finished all targets
+with all features at log line 1171. The clean-consumer jobs wrote reports
+for Linux, Windows and macOS, and Relative Meta Logic ran 80 JavaScript and
+50 Rust workload tests successfully against the installed candidates.
+[Delivery Candidates](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137879130706),
+[Cargo Check](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137903731232),
+[Linux](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902893557),
+[Windows](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902893377),
+[macOS](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902893300),
+[Relative Meta Logic](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902892881)
+
+Clippy 1.100.0 reached 24 more diagnostics at log lines 1658–2112.
+The 22 generated binary codec diagnostics identified a local binding that
+immediately returned its initializer. The second review authenticates all six
+partition inputs at the tested merge revision. It retains the complete
+initializer expression at each site and applies after the earlier review.
+The other diagnostics concerned a constructor's visibility within a private
+module and a repeated namespace lookup. The constructor remains available
+within the crate through the private module. The vacant-entry lookup preserves
+existing namespace contents across subsequent declarations.
+[Rust lint](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137903731323),
+[review data](../../../parity/self-translation/native-source-style-review-137903731323.lino)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
