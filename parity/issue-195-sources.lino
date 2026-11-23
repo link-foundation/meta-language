@@ -1676,7 +1676,7 @@
 (1676: 67 1675 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1677: (meta: (t: semantic) (n: 1) (term: string%20value) (def: Original%20requirements%20for%20JSON%20Schema%20grammar%20lowering%2C%20decoder%20emission%2C%20located%20document%20validation%20and%20reverse%20schema%20inference.) (lang: meta-language%20structured%20data)))
 (1678: 38 1677 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(1679: 1680 2059 2064 2065 2067 2073 2076 2077 2078 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
+(1679: 1680 2059 2064 2065 2067 2073 2076 2077 2078 2079 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
 (1680: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA) (lang: meta-language%20structured%20data)))
 (1681: 41 1679 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1682: 55 1397 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
@@ -2075,3 +2075,4 @@
 (2076: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY) (lang: meta-language%20structured%20data)))
 (2077: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-SIBLINGS) (lang: meta-language%20structured%20data)))
 (2078: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-FIELDS) (lang: meta-language%20structured%20data)))
+(2079: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA-EXCLUSIVE-REQUIRED-PROPERTIES) (lang: meta-language%20structured%20data)))

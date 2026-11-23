@@ -4837,16 +4837,19 @@ one branch, there is no generatable array. Two branches with different item
 layouts can also be distinguished by disjoint finite string sets at a
 common required prefix position. Optional positions and overlapping string sets
 cannot establish that proof. An unresolved overlap retains a diagnostic for
-validation. For object alternatives with the same declared names, required names
-and additional-property rule, the decoder can factor differing properties with
-finite domains. It groups each property's values by the branches that accept
-them. An absent optional property contributes every branch. The decoder
-intersects branch sets across the differing properties and emits the object
+validation. For object alternatives with the same declared names and
+additional-property rule, the decoder can factor differences in finite property
+domains and required names. It groups each property's values by the branches
+that accept them. When every branch shares a property's schema, presence follows
+that common schema, including the additional-property rule for undeclared
+names. Absence contributes only the branches in which the property is optional.
+The decoder intersects branch sets across these properties and emits the object
 when exactly one branch remains. The common layout constrains the other
-properties. A single differing property becomes required because omitting it
-would give all branches the same result. With multiple differing properties,
-the existing finite inspection budget also charges each combination considered
-and the estimated cost of emitting each resulting object layout.
+properties. When branches differ only in the value of one optional property,
+the generated object requires that property because omitting it would give all
+branches the same result. The existing finite inspection budget charges each
+combination of multiple value differences or required-name differences and the
+estimated cost of emitting each resulting object layout.
 Local references can supply the common layout or the finite property schemas.
 Parent object assertions intersect with the common layout. For each differing
 property, the decoder applies the parent's explicit property schema or its

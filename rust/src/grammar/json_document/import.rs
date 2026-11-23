@@ -325,6 +325,7 @@ struct ObjectFieldVariants<'schema> {
 
 struct ObjectFieldVariant<'schema> {
     branches: Vec<usize>,
+    use_common_schema: bool,
     values: Vec<Cow<'schema, Value>>,
     expression: Option<Expression>,
 }
@@ -1509,12 +1510,10 @@ impl<'schema> Importer<'schema> {
         }
         let (base, location) = (first.0, &first.1);
         let properties: Vec<_> = property_schemas(base).collect();
-        let required: BTreeSet<_> = required_property_names(base).collect();
         let additional = additional_property_schema(base);
         let mut differing = Vec::new();
         for (layout, _) in others {
-            if required_property_names(layout).collect::<BTreeSet<_>>() != required
-                || additional_property_schema(layout) != additional
+            if additional_property_schema(layout) != additional
                 || property_schemas(layout).count() != properties.len()
             {
                 return None;
@@ -1525,36 +1524,77 @@ impl<'schema> Importer<'schema> {
                 }
             }
         }
-        if differing.is_empty() {
+        let branch_required: Vec<BTreeSet<_>> = layouts
+            .iter()
+            .map(|(layout, _)| required_property_names(layout).collect())
+            .collect();
+        let all_required: BTreeSet<_> = branch_required.iter().flatten().copied().collect();
+        let differing_required: BTreeSet<_> = all_required
+            .iter()
+            .copied()
+            .filter(|name| {
+                branch_required
+                    .iter()
+                    .any(|required| !required.contains(name))
+            })
+            .collect();
+        let mut affected = differing.clone();
+        affected.extend(
+            differing_required
+                .iter()
+                .copied()
+                .filter(|name| !differing.contains(name)),
+        );
+        if affected.is_empty() {
             return Some(None);
         }
         let all_branches: Vec<_> = (0..layouts.len()).collect();
-        let required: BTreeSet<_> = required
-            .into_iter()
+        let required: BTreeSet<_> = all_required
+            .difference(&differing_required)
+            .copied()
             .chain(required_property_names(schema))
             .collect();
         let mut work = 16_384;
         let mut fields = Vec::new();
-        for &name in &differing {
-            let schemas: Vec<_> = layouts
-                .iter()
-                .map(|&(layout, _)| &layout["properties"][name])
-                .collect();
-            let sibling = schema["properties"]
-                .get(name)
-                .unwrap_or_else(|| additional_property_schema(schema));
-            let mut variants = self.exclusive_property_variants(&schemas, sibling, &mut work)?;
-            if !required.contains(name) && differing.len() > 1 {
-                variants.push(ObjectFieldVariant {
+        for name in affected {
+            let mut variants = if differing.contains(&name) {
+                let schemas: Vec<_> = layouts
+                    .iter()
+                    .map(|&(layout, _)| &layout["properties"][name])
+                    .collect();
+                let sibling = schema["properties"]
+                    .get(name)
+                    .unwrap_or_else(|| additional_property_schema(schema));
+                self.exclusive_property_variants(&schemas, sibling, &mut work)?
+            } else {
+                vec![ObjectFieldVariant {
                     branches: all_branches.clone(),
+                    use_common_schema: true,
                     values: Vec::new(),
                     expression: None,
-                });
+                }]
+            };
+            if !required.contains(name) {
+                let branches: Vec<_> = branch_required
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(index, required)| (!required.contains(name)).then_some(index))
+                    .collect();
+                if !branches.is_empty() {
+                    variants.push(ObjectFieldVariant {
+                        branches,
+                        use_common_schema: false,
+                        values: Vec::new(),
+                        expression: None,
+                    });
+                }
             }
             fields.push(ObjectFieldVariants { name, variants });
         }
         let mut selections = Vec::new();
-        if let [field] = fields.as_mut_slice() {
+        if differing_required.is_empty()
+            && let [field] = fields.as_mut_slice()
+        {
             let values: Vec<_> = field
                 .variants
                 .drain(..)
@@ -1566,17 +1606,19 @@ impl<'schema> Importer<'schema> {
             }
             field.variants.push(ObjectFieldVariant {
                 branches: Vec::new(),
+                use_common_schema: false,
                 values,
                 expression: None,
             });
             selections.push(vec![0]);
         } else {
-            // An absent optional field admits every branch. Each selected
+            // An absent field admits only branches that leave it optional. Each selected
             // combination has its own ordinary object grammar and budget cost.
             let names: HashSet<_> = properties
                 .iter()
                 .map(|&(name, _)| name)
                 .chain(required.iter().copied())
+                .chain(all_required.iter().copied())
                 .chain(property_schemas(schema).map(|(name, _)| name))
                 .collect();
             if names.len() > 12 {
@@ -1596,7 +1638,7 @@ impl<'schema> Importer<'schema> {
             return Some(None);
         }
 
-        let (properties, additional, required, location) = if has_sibling_assertions {
+        let (properties, additional, location) = if has_sibling_assertions {
             let property_location = pointer_child(pointer, "properties");
             let selected_locations: HashSet<_> = differing
                 .iter()
@@ -1605,7 +1647,7 @@ impl<'schema> Importer<'schema> {
             let CollectionConstraints::Object {
                 properties,
                 additional,
-                required,
+                ..
             } = collection_constraints(
                 &[schema, base],
                 object,
@@ -1621,7 +1663,7 @@ impl<'schema> Importer<'schema> {
             else {
                 return None;
             };
-            (properties, additional, required, pointer)
+            (properties, additional, pointer)
         } else {
             (
                 properties
@@ -1629,16 +1671,19 @@ impl<'schema> Importer<'schema> {
                     .map(|(name, value)| (name, CollectionChild::Schema(value)))
                     .collect(),
                 CollectionChild::Schema(additional),
-                required.into_iter().collect(),
                 location.as_str(),
             )
         };
         let mut expressions = Vec::new();
         for selection in selections {
             let mut overrides = HashMap::new();
-            let mut required = required.clone();
+            let mut required_names: Vec<_> = required.iter().copied().collect();
             for (field, selected) in fields.iter_mut().zip(selection) {
                 let variant = &mut field.variants[selected];
+                if variant.use_common_schema {
+                    required_names.push(field.name);
+                    continue;
+                }
                 if variant.values.is_empty() {
                     overrides.insert(field.name, CollectionChild::Schema(&PROHIBITED_SCHEMA));
                     continue;
@@ -1660,9 +1705,9 @@ impl<'schema> Importer<'schema> {
                     field.name,
                     CollectionChild::Conjunction(vec![ConjunctionEntry::Expression(expression)]),
                 );
-                required.push(field.name);
+                required_names.push(field.name);
             }
-            let fields = properties
+            let mut selected_fields: Vec<_> = properties
                 .iter()
                 .map(|(name, child)| {
                     (
@@ -1671,10 +1716,15 @@ impl<'schema> Importer<'schema> {
                     )
                 })
                 .collect();
+            selected_fields.extend(fields.iter().filter_map(|field| {
+                overrides
+                    .remove(field.name)
+                    .map(|child| (field.name, child))
+            }));
             if let Some(expression) = self.object_with_properties(
-                fields,
+                selected_fields,
                 additional.clone(),
-                required.into_iter(),
+                required_names.into_iter(),
                 location,
             ) {
                 expressions.push(expression);
@@ -1731,6 +1781,7 @@ impl<'schema> Importer<'schema> {
                 let index = variants.len();
                 variants.push(ObjectFieldVariant {
                     branches,
+                    use_common_schema: false,
                     values: Vec::new(),
                     expression: None,
                 });

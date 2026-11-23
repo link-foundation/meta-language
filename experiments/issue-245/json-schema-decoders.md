@@ -130,6 +130,14 @@ even though both branches matched. The fixture exercises two and three
 branches, absent optional fields, field ordering, escaped keys, local
 references, and shared and parent constraints.
 
+Run `node experiments/issue-245/json-schema-exclusive-required-properties.mjs`
+to reproduce a contact schema whose alternatives require `email` and `phone`
+respectively. The earlier decoder accepted a document with both properties even
+though both branches matched. The fixture also exercises shared property
+schemas, additional properties including an undeclared required key, a
+combination of required names and finite values, and a parent requiring both
+contact properties, which leaves no generatable document.
+
 The required prefix cases share a length range and distinguish branches by
 their first string value. One minimum length comes from a sibling of the
 local reference. The decoder previously admitted `["selected",null]` and now

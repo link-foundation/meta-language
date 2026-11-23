@@ -1009,39 +1009,47 @@ export function importJsonSchema(schema) {
     const names = Object.keys(base.properties);
     const differing = new Set();
     for (const layout of others) {
-      if (!isDeepStrictEqual(base.required, layout.required)
-          || !isDeepStrictEqual(base.additionalProperties, layout.additionalProperties)
+      if (!isDeepStrictEqual(base.additionalProperties, layout.additionalProperties)
           || Object.keys(layout.properties).length !== names.length) return undefined;
       for (const key of names) {
         if (!Object.hasOwn(layout.properties, key)) return undefined;
         if (!isDeepStrictEqual(base.properties[key], layout.properties[key])) differing.add(key);
       }
     }
-    if (!differing.size) return null;
-    const required = new Set([...base.required, ...(rules.required ?? [])]);
+    const branchRequired = new Set(layouts.flatMap(layout => [...layout.required]));
+    const differingRequired = new Set([...branchRequired].filter(name => layouts.some(layout => !layout.required.has(name))));
+    const affected = new Set([...differing, ...differingRequired]);
+    if (!affected.size) return null;
+    const required = new Set([...(rules.required ?? []), ...[...branchRequired].filter(name => !differingRequired.has(name))]);
     const allBranches = layouts.map((_, index) => index);
     const budget = { remaining: 16_384 };
     const dimensions = [];
-    for (const name of differing) {
-      const schemas = layouts.map(layout => layout.properties[name]);
-      const sibling = Object.hasOwn(rules.properties ?? {}, name)
-        ? rules.properties[name] : rules.additionalProperties ?? true;
-      const variants = exclusivePropertyVariants(schemas, sibling, budget);
-      if (!variants) return undefined;
-      if (!required.has(name) && differing.size > 1) variants.push({ matches: allBranches, values: [] });
+    for (const name of affected) {
+      let variants = [{ matches: allBranches, useCommonSchema: true }];
+      if (differing.has(name)) {
+        const schemas = layouts.map(layout => layout.properties[name]);
+        const sibling = Object.hasOwn(rules.properties ?? {}, name)
+          ? rules.properties[name] : rules.additionalProperties ?? true;
+        variants = exclusivePropertyVariants(schemas, sibling, budget);
+        if (!variants) return undefined;
+      }
+      if (!required.has(name)) {
+        const matches = allBranches.filter(index => !layouts[index].required.has(name));
+        if (matches.length) variants.push({ matches, values: [] });
+      }
       dimensions.push({ name, variants });
     }
 
     let selections;
-    if (dimensions.length === 1) {
+    if (dimensions.length === 1 && differingRequired.size === 0) {
       const [dimension] = dimensions;
       const values = dimension.variants.filter(variant => variant.matches.length === 1).flatMap(variant => variant.values);
       dimension.variants = [{ values }];
       selections = values.length ? [[0]] : [];
     } else {
-      // Treat presence separately because an absent optional field matches every branch.
+      // An absent field matches only branches that leave it optional.
       // The ordinary object emitter tracks each field subset for every selection.
-      const keys = new Set([...names, ...required, ...Object.keys(rules.properties ?? {})]);
+      const keys = new Set([...names, ...required, ...branchRequired, ...Object.keys(rules.properties ?? {})]);
       if (keys.size > 12) return undefined;
       const workPerObject = (2 ** keys.size + 1) * (2 + keys.size);
       selections = [];
@@ -1070,14 +1078,18 @@ export function importJsonSchema(schema) {
     if (!selections.length) return null;
     const layout = siblingAssertions.length
       ? collectionConstraints([rules, base.rules], object, 'oneOf', pointer, 0, differing)?.rules
-      : { properties: base.properties, additionalProperties: base.additionalProperties, required: [...base.required] };
+      : { properties: base.properties, additionalProperties: base.additionalProperties };
     if (!layout) return undefined;
     const location = siblingAssertions.length ? pointer : base.pointer;
     const expressions = selections.map(selection => {
-      const properties = { ...layout.properties };
-      const required = [...layout.required];
+      const properties = Object.assign(Object.create(null), layout.properties);
+      const requiredNames = [...required];
       for (const [index, { name, variants }] of dimensions.entries()) {
         const variant = variants[selection[index]];
+        if (variant.useCommonSchema) {
+          requiredNames.push(name);
+          continue;
+        }
         const { values } = variant;
         if (values.length && !variant.expression) {
           const rule = `json_exclusive_property_${next++}`;
@@ -1085,9 +1097,9 @@ export function importJsonSchema(schema) {
           variant.expression = ref(rule);
         }
         properties[name] = values.length ? () => variant.expression : false;
-        if (values.length) required.push(name);
+        if (values.length) requiredNames.push(name);
       }
-      return objectExpression({ properties, required, additionalProperties: layout.additionalProperties }, location);
+      return objectExpression({ properties, required: requiredNames, additionalProperties: layout.additionalProperties }, location);
     }).filter(Boolean);
     return expressions.length ? choice(...expressions) : null;
   }
