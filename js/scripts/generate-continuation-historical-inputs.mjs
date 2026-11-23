@@ -13,6 +13,7 @@ import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {restoreRawConsumingSnapshotSource} from './raw-consuming-snapshot-source-profile.mjs';
 import {restoreProgramStringSourceDescriptorEdge} from './program-string-source-descriptors.mjs';
 import {readContinuationHistoricalArchive} from './continuation-source-history.mjs';
+import {nativeNumberObservationSource,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 
 const root=new URL('../../',import.meta.url),revision='d1232503fb38246f7e28f5d414c882a70944b38b';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
@@ -24,6 +25,7 @@ const rangeHistory=readProjectData(new URL('parity/self-translation/original-num
  * original cohort; every actual current gate remains separate and unchanged. */
 export function restoreContinuationHistoricalAuthorInput(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  if(file===nativeNumberObservationSource)source=restoreIssue245SourceSuccessor(file,source);
   source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
   if(['js/src/translation/check.js','parity/self-translation/complete-declaration-receipts.lino'].includes(file)){
     let historical;

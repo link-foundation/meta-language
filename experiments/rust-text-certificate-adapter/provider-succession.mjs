@@ -36,13 +36,20 @@ export const OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW=Object.freeze({
  currentBytes:80496,currentSha256:'0143fa7ab50226e06aba573f5a8508659bf52bd9885a174311a8e2580c205acf',
  review:'The Rust emitter checks that an optional binary comparison domain is present before structural comparison. Both absent representations remain distinct from actual domain values. The single complete source inverse preserves the old provider, and the binary archive translation tests cover behavior independently.',
 });
+export const OVERLAY_PROVIDER_ABSENT_DOMAIN_REVIEW=Object.freeze({
+ kind:'absent linked binary comparison domain',
+ previous:'da38bf7a9a3cadcd3d768cb6f87a1bbf9e02e257',
+ module:'typed-program-links-validation.js',previousSha256:'6c2ea9bcb6266ef98af1b86708561dd8fd991e002f46c22dbfa047d90de39051',
+ currentBytes:29186,currentSha256:'0a3166246358793e5212c7f351f5e1d2254b27d699aceb15fc8ab71324e3e757',
+ review:'The linked validator treats explicit null and omitted binary domain fields as absence before comparing structural types. A present domain still must match the operands and still enters reference identity validation. The certified complete inverse preserves the preceding validator and the exact recorded decorator actions.',
+});
 export function readOverlayProviderEpochReview(previous){
-  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW];
+  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_ABSENT_DOMAIN_REVIEW];
   const review=reviews.find(row=>row.previous===previous);
   assert.ok(review,'the preceding provider profile has an exact registered review');
   return review;
 }
-const packetSha256='f2de86a22c931c93a6017f67cf1222951f85b75952bd6ce055a0977365b009c1';
+const packetSha256='65a219b3c745d32c436bb261d18f783e3d71be16c9c63cc111ef20f65bf1f6c3';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());

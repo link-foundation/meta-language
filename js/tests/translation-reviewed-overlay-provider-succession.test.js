@@ -8,7 +8,7 @@ import {reviewedOverlayProviderPolicy,readReviewedOverlayProviderSources,restore
 import {readReviewedOverlayProviderSuccession,verifyReviewedOverlayProviderSuccession,
   restoreReviewedOverlayProviderPolicy,restoreReviewedOverlayProviderReceiptSource,
   OVERLAY_PROVIDER_ORIGINAL_PACKET,OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,
-  OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,deriveReviewedOverlayProviderPolicy,
+  OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_ABSENT_DOMAIN_REVIEW,deriveReviewedOverlayProviderPolicy,
   verifyReviewedOverlayProviderSuccessionHistory,restoreReviewedOverlayProviderModuleSource}
   from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 import {generateReviewedOverlayProviderSuccession} from '../../experiments/rust-text-certificate-adapter/generate-provider-succession.mjs';
@@ -165,7 +165,8 @@ test('the reference and identifier provider epoch retains every preceding packet
 });
 
 test('the optional binary comparison domain provider retains all earlier sources and exact overlay receipts',()=>{
-  const packet=readReviewedOverlayProviderSuccession(),profile=packet.profiles.at(-1),review=OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW;
+  const current=readReviewedOverlayProviderSuccession(),packet={...current,profiles:current.profiles.slice(0,5)};
+  const profile=packet.profiles.at(-1),review=OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW;
   assert.equal(packet.profiles.length,5);
   assert.equal(profile.sourceCommit,'da38bf7a9a3cadcd3d768cb6f87a1bbf9e02e257');
   assert.equal(profile.previousSourceCommit,review.previous);
@@ -176,5 +177,21 @@ test('the optional binary comparison domain provider retains all earlier sources
   assert.equal(actual,row.current.source);
   assert.equal(restoreReviewedOverlayProviderModuleSource(actual,file,review.previous),row.previous.source);
   assert.equal(hash(serializeProjectData({...packet,profiles:packet.profiles.slice(0,-1)},'parity/self-translation/reviewed-overlay-provider-succession.lino')),
+    profile.epoch.predecessorPacket.sha256);
+});
+
+test('the linked validator source successor restores the preceding complete provider and receipts',()=>{
+  const packet=readReviewedOverlayProviderSuccession(),profile=packet.profiles[5],review=OVERLAY_PROVIDER_ABSENT_DOMAIN_REVIEW;
+  assert.equal(profile.sourceCommit,'ca791f562fa81595cf3fe91902b52188925ac6cc');
+  assert.equal(profile.previousSourceCommit,review.previous);
+  assert.equal(profile.epoch.reviewKind,review.kind);
+  assert.deepEqual(profile.inverse.map(row=>row.module),[review.module]);
+  const row=profile.certificates.find(value=>value.module===review.module),file='js/src/'+review.module;
+  const actual=read(file).toString('utf8');
+  assert.equal(actual,row.current.source);
+  assert.equal(restoreReviewedOverlayProviderModuleSource(actual,file,review.previous),row.previous.source);
+  assert.equal(restoreReviewedOverlayProviderModuleSource(actual+'\n',file,review.previous),actual+'\n');
+  const predecessor={...packet,profiles:packet.profiles.slice(0,5)};
+  assert.equal(hash(serializeProjectData(predecessor,'parity/self-translation/reviewed-overlay-provider-succession.lino')),
     profile.epoch.predecessorPacket.sha256);
 });

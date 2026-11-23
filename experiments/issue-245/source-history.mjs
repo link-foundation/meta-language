@@ -15,6 +15,7 @@ export const javascriptTestGroupsSource = 'js/scripts/test-groups.mjs';
 export const nodeDependencyTestSource = 'js/tests/issue-195-evidence-node-dependency.test.js';
 export const typedProgramLinksValidationSource = 'js/src/typed-program-links-validation.js';
 export const asciiPredicateAssertionSource = 'js/tests/translation-ascii-text-predicates.test.js';
+export const nativeNumberObservationSource = 'parity/fixtures/original-native-number-observations.lino';
 export const runtimeSourceFiles = Object.freeze([
   'rust/src/grammar/feature_runtime/mod.rs',
   'rust/src/grammar/feature_runtime/operations.rs',
@@ -51,6 +52,9 @@ const profiles = new Map([
   [asciiPredicateAssertionSource, { revision: mainRevision,
     predecessor: 'fbfe8f91bc813cd58ca68aab83a418c97824af6420f5683b0c72f2d98b012242',
     current: '25aa26956e6db42b260269a4b30ac1681325eb3d9496a77c18fd54cb0fd68ebc' }],
+  [nativeNumberObservationSource, { revision: mainRevision,
+    predecessor: '75d3ad2a41c3ca7ffb615b6f6c78e94c67191bb60b3f0c010dec4bb61b171150',
+    current: 'b467cdfb67daa832a262e9ddb861adb270e027fe8076dad513bce95a421955e0' }],
 ]);
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const text = bytes => {

@@ -7,6 +7,7 @@ import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {generateOriginalNumberSourceRangeHistory} from '../../experiments/grammar-outcome-network/native-transport/inverse/generate-source-range-history.mjs';
 import {restoreContinuationHistoricalSource} from '../scripts/continuation-source-history.mjs';
+import {nativeNumberObservationSource,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 
 const root=new URL('../../',import.meta.url);
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
@@ -40,4 +41,16 @@ test('all preceding native operations fixture bytes and complete Links receipt s
   assert.deepEqual(inverse,previous);assert.equal(serializeProjectData(inverse,before.file),before.sourceText);
   for(const key of ['inputs','sourceInventory','wirePlan','originalVisitors','trait','jsonVisitor','observationDeclaration','observationMethod','storage','inherent','implementation','relocation','rawModel','outputs','limits','counterBoundary'])
     assert.deepEqual(current[key],previous[key],key);
+});
+
+test('the current native observation fixture refreshes only its Cargo lock provenance',()=>{
+  const {current,predecessor}=readIssue245SourcePair(nativeNumberObservationSource);
+  assert.equal(readFileSync(new URL(nativeNumberObservationSource,root),'utf8'),current);
+  const actual=readStructuredDataLino(current),original=readStructuredDataLino(predecessor);
+  assert.deepEqual(actual.numberVersions.lockSource,pin(readFileSync(new URL('rust/Cargo.lock',root))));
+  assert.notDeepEqual(actual.numberVersions.lockSource,original.numberVersions.lockSource);
+  actual.numberVersions.lockSource=original.numberVersions.lockSource;
+  assert.deepEqual(actual,original);
+  assert.equal(serializeProjectData(actual,nativeNumberObservationSource),predecessor);
+  assert.equal(restoreContinuationHistoricalSource(current+'\n',nativeNumberObservationSource,'original number source ranges'),current+'\n');
 });

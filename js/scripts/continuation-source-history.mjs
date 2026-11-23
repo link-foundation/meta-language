@@ -7,6 +7,7 @@ import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-so
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
 import {restoreRawDescriptorHistoricalSource} from './raw-descriptor-historical-cohort.mjs';
+import {nativeNumberObservationSource,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 
 const historyFile=new URL('../../parity/self-translation/ci-39389240046-historical-inputs.lino',import.meta.url);
 const historyHash='05e17bf81c6304f36411073ee4853798041e2764164c999ca93888870fb61560';
@@ -26,6 +27,8 @@ export function readContinuationHistoricalArchive() {
 /** Restore only an exact reviewed successor; existing historical gates reject others. */
 export function restoreContinuationHistoricalSource(source,file,profile) {
   assert.equal(typeof source,'string');
+  if(profile==='original number source ranges'&&file===nativeNumberObservationSource)
+    source=restoreIssue245SourceSuccessor(file,source);
   if(profile==='relative array')source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
   const archive=readContinuationHistoricalArchive();
   if(!currentHistory){
