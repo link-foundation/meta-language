@@ -594,6 +594,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I236-OPEN-VOCABULARY-MORPHOLOGY-LAZY-DICTIONARY',
+      source: ISSUE_195_SOURCES.openVocabularyMorphology,
+      language: 'English and Russian morphology with provisioned OpenCorpora data',
+      version: 'OpenCorpora source revision 417150, corpus revision 4580142, compiled dictionary format 2.4',
+      construct: 'language-specific dictionary loading',
+      expectedBehavior: 'A fresh process annotates English text without opening its configured Russian dictionary. A Russian request in the same process attempts to open the configured dictionary and reports the unusable path.',
+      fixture: 'parity/fixtures/natural-language-morphology-lazy-loading.lino',
+      selector: 'an English plural, a Russian form and an unusable configured directory',
+      assertions: ['configuredDictionaryLoadsOnlyForItsLanguage'],
+      implementationEntryPoints: {
+        javascript: ['js/src/morphology.js', 'js/tests/natural-language-morphology.test.js'],
+        rust: ['rust/src/link_network/morphology/mod.rs', 'rust/tests/unit/natural_language_morphology.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',

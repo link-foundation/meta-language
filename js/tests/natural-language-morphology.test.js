@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { LinkNetwork, LinkType, agreeWithNumber, analyzeMorphology, inflect } from '../src/index.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -55,6 +57,35 @@ test('word readings, ambiguity, suffix prediction, and inflection retain their s
     requirementId: 'I195-I236-OPEN-VOCABULARY-MORPHOLOGY', suffix: 'behavior',
     fixtureId: 'i195-i236-open-vocabulary-morphology', fixtureFile,
     assertions: ['everyWordHasLinkedReading', 'ambiguousReadingsAreScored', 'unseenWordsHaveSuffixReadings', 'inflectionAndNumberAgreement'],
+    testName: context.name,
+  });
+});
+
+test('a configured dictionary opens only when its language is used', (context) => {
+  const fixtureFile = 'parity/fixtures/natural-language-morphology-lazy-loading.lino';
+  const fixtureUrl = new URL(`../../${fixtureFile}`, import.meta.url);
+  const moduleUrl = new URL('../src/index.js', import.meta.url);
+  const child = spawnSync(process.execPath, ['--input-type=module', '--eval', `
+    import assert from 'node:assert/strict';
+    import { join } from 'node:path';
+    import { LinkNetwork, analyzeMorphology } from ${JSON.stringify(moduleUrl.href)};
+    const { language, word, lemma, dictionaryLanguage, dictionaryWord } = JSON.parse(process.argv[1]);
+    const network = LinkNetwork.parse(word, language);
+    assert.equal(network.reconstructText(), word);
+    assert.ok(network.verifyFullMatch().isClean());
+    assert.ok(network.links().some(link => link.metadata().term === 'lemma:' + lemma));
+    assert.throws(() => analyzeMorphology(dictionaryWord, dictionaryLanguage),
+      error => error.path === join(process.env.META_LANGUAGE_MORPHOLOGY_DATA, 'ru', 'meta.json'));
+  `, JSON.stringify(readProjectData(fixtureUrl))], {
+    env: { ...process.env, META_LANGUAGE_MORPHOLOGY_DATA: fileURLToPath(fixtureUrl) },
+    encoding: 'utf8',
+  });
+  assert.ifError(child.error);
+  assert.equal(child.status, 0, child.stderr);
+  recordIssue195Observations({
+    requirementId: 'I195-I236-OPEN-VOCABULARY-MORPHOLOGY-LAZY-DICTIONARY', suffix: 'behavior',
+    fixtureId: 'i195-i236-open-vocabulary-morphology-lazy-dictionary', fixtureFile,
+    assertions: ['configuredDictionaryLoadsOnlyForItsLanguage'],
     testName: context.name,
   });
 });

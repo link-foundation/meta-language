@@ -1,3 +1,6 @@
+use std::path::Path;
+use std::process::Command;
+
 use meta_language::link_network::morphology::{
     MorphologyReading, agree_with_number, analyze_morphology, inflect,
 };
@@ -162,5 +165,68 @@ fn morphology_preserves_linked_readings_and_inflects_attested_lemmas() {
             "inflectionAndNumberAgreement",
         ],
         test_name: "morphology_preserves_linked_readings_and_inflects_attested_lemmas",
+    });
+}
+
+#[test]
+fn configured_dictionary_loads_only_for_its_language() {
+    const CHILD: &str = "META_LANGUAGE_MORPHOLOGY_TEST_CHILD";
+    const LAZY_FIXTURE: &str = "parity/fixtures/natural-language-morphology-lazy-loading.lino";
+    if std::env::var_os(CHILD).is_some() {
+        let lazy = read_project_data(include_str!(
+            "../../../parity/fixtures/natural-language-morphology-lazy-loading.lino"
+        ))
+        .expect("lazy morphology fixture");
+        let word = lazy["word"].as_str().unwrap();
+        let language = lazy["language"].as_str().unwrap();
+        let lemma = format!("lemma:{}", lazy["lemma"].as_str().unwrap());
+        let network = LinkNetwork::parse(word, language, ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), word);
+        assert!(network.verify_full_match(None).is_clean());
+        assert!(
+            network
+                .links()
+                .any(|link| link.metadata().term() == Some(lemma.as_str()))
+        );
+        let failure = std::panic::catch_unwind(|| {
+            analyze_morphology(
+                lazy["dictionaryWord"].as_str().unwrap(),
+                lazy["dictionaryLanguage"].as_str().unwrap(),
+            )
+        })
+        .expect_err("the configured dictionary path is a regular file");
+        let message = failure.downcast_ref::<String>().unwrap();
+        assert!(message.starts_with("configured OpenCorpora morphology data:"));
+        return;
+    }
+    let run = Command::new(std::env::current_exe().expect("morphology test executable"))
+        .args([
+            "--exact",
+            "natural_language_morphology::configured_dictionary_loads_only_for_its_language",
+            "--test-threads",
+            "1",
+        ])
+        .env(CHILD, "1")
+        .env(
+            "META_LANGUAGE_MORPHOLOGY_DATA",
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("..")
+                .join(LAZY_FIXTURE),
+        )
+        .output()
+        .expect("isolated morphology test");
+    let stdout = String::from_utf8_lossy(&run.stdout);
+    assert!(
+        run.status.success() && stdout.contains("1 passed"),
+        "{stdout}\n{}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    record(&Observation {
+        requirement_id: "I195-I236-OPEN-VOCABULARY-MORPHOLOGY-LAZY-DICTIONARY",
+        suffix: "behavior",
+        fixture_id: "i195-i236-open-vocabulary-morphology-lazy-dictionary",
+        fixture_file: LAZY_FIXTURE,
+        assertions: &["configuredDictionaryLoadsOnlyForItsLanguage"],
+        test_name: "configured_dictionary_loads_only_for_its_language",
     });
 }
