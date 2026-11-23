@@ -8,8 +8,13 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { verifyDocumentTasks } from '../../examples/deterministic-document-tasks.mjs';
+import * as publicApi from '../src/index.js';
 import {
+  DOCUMENT_TASK_CASES,
+  DOCUMENT_TASK_EXAMPLE,
   deliveryAssertions,
+  observedDocumentTask,
   supportedPlatformCoverage,
 } from '../scripts/issue-195-delivery.mjs';
 
@@ -68,6 +73,20 @@ function consumerReport(platform, overrides = {}) {
 }
 
 const allPlatforms = () => delivery.supportedPlatforms.map((platform) => consumerReport(platform));
+
+test('the clean npm consumer example exercises the public document APIs', async () => {
+  const exampleSha256 = sha256(await readFile(path.join(root, DOCUMENT_TASK_EXAMPLE)));
+  const report = consumerReport('linux-x64');
+  report.npm.documentTasks = { exampleSha256, ...verifyDocumentTasks(publicApi) };
+  for (const [, , scenario] of DOCUMENT_TASK_CASES) {
+    assert.equal(observedDocumentTask(report, expected, context, exampleSha256, scenario), true);
+    assert.equal(observedDocumentTask(report, expected, context, '0'.repeat(64), scenario), false);
+    assert.equal(observedDocumentTask(report, { ...expected, npm: '0'.repeat(64) }, context, exampleSha256, scenario), false);
+  }
+  assert.equal(observedDocumentTask(report, expected, context, exampleSha256, 'missing'), false);
+  report.npm.offline.networkAttempts.push('example made a request');
+  assert.equal(observedDocumentTask(report, expected, context, exampleSha256, 'html'), false);
+});
 
 test('supported platforms are observed when every declared platform report passes', () => {
   for (const sides of [['npm'], ['crate'], ['npm', 'crate']]) {

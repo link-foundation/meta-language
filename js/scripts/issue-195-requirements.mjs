@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { buildCacheCleanupRequirements } from './issue-195-cache-requirements.mjs';
+import { DOCUMENT_TASK_CASES, DOCUMENT_TASK_EXAMPLE } from './issue-195-delivery.mjs';
 import { CONSUMER_MATRIX, downstreamByRow, parseConsumerMatrix } from './issue-195-downstream.mjs';
 import { evidenceGroupFor } from './issue-195-evidence-plan.mjs';
 import { VISION_REQUIREMENTS, buildVisionRequirements, traceabilityFor } from './issue-195-vision-requirements.mjs';
@@ -12,6 +13,8 @@ export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
+  htmlPackageDelivery: 'https://github.com/link-foundation/meta-language/issues/230',
+  documentTasks: 'https://github.com/link-foundation/meta-language/issues/245',
   sentenceAbbreviations: 'https://github.com/link-foundation/meta-language/issues/232',
   larkRegexTerminals: 'https://github.com/link-foundation/meta-language/issues/233',
   pestBuiltInRules: 'https://github.com/link-foundation/meta-language/issues/234',
@@ -1290,6 +1293,36 @@ function buildValidationAndDeliveryRequirements(fixtureCatalog, extensions) {
         ),
       }),
     );
+  }
+  const exampleFixture = 'i195-installed-document-tasks';
+  fixtureCatalog[exampleFixture] = pinnedFixture(DOCUMENT_TASK_EXAMPLE, 'installed public API document task examples');
+  for (const [id, source, scenario, assertion, expectedBehavior] of DOCUMENT_TASK_CASES) {
+    requirements.push(requirement({
+      id,
+      source: ISSUE_195_SOURCES[source],
+      area: 'package-delivery',
+      scope: {
+        language: 'JavaScript package',
+        version: 'matching release version on Node.js >=22',
+        edition: 'clean npm artifact installation',
+        construct: scenario,
+        aliases: [],
+        extensions: [],
+      },
+      expectedBehavior,
+      requiredRuntimes: ['javascript'],
+      implementationEntryPoints: {
+        javascript: ['js/src/index.js', 'js/scripts/run-issue-195-consumer.mjs'],
+      },
+      verifications: ['pre-merge', 'release-delivery'].map(checkpoint => verification({
+        requirementId: id,
+        runtime: 'javascript',
+        suffix: checkpoint,
+        fixtureIds: [exampleFixture],
+        assertions: [assertion],
+        checkpoint,
+      })),
+    }));
   }
   return requirements;
 }

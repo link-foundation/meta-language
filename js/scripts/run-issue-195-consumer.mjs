@@ -8,9 +8,10 @@ import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DOCUMENT_TASK_EXAMPLE } from './issue-195-delivery.mjs';
 import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
 import { consumeWorkloadWireData } from './workload-wire-data.mjs';
 
@@ -88,6 +89,8 @@ async function npmConsumer() {
     JSON.stringify(Object.keys(lock.packages?.['']?.dependencies ?? {})) === '["meta-language"]';
   checksum.installedIntegrity = installed.integrity ?? null;
   checksum.expectedIntegrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
+  const examplePath = path.join(directory, path.basename(DOCUMENT_TASK_EXAMPLE));
+  await copyFile(path.join(root, DOCUMENT_TASK_EXAMPLE), examplePath);
   await writeFile(path.join(directory, 'deny-network.mjs'), DENY_NETWORK);
   await writeFile(path.join(directory, 'consumer.mjs'), NPM_CONSUMER);
   const observationPath = path.join(directory, 'observations.wire.json');
@@ -102,6 +105,7 @@ async function npmConsumer() {
     publicEntryPoints: observed.publicEntryPoints,
     offline: observed.offline,
     observations: observed.observations,
+    documentTasks: { exampleSha256: sha256(await readFile(examplePath)), ...observed.documentTasks },
   };
 }
 
@@ -362,6 +366,7 @@ globalThis.fetch = deny('fetch');
 
 const NPM_CONSUMER = `import { readFileSync, writeFileSync } from 'node:fs';
 import * as api from 'meta-language';
+import { verifyDocumentTasks } from './deterministic-document-tasks.mjs';
 
 const [corpusPath, outputPath] = process.argv.slice(2);
 const corpus = JSON.parse(readFileSync(corpusPath, 'utf8'));
@@ -406,6 +411,7 @@ const translations = corpus.delivery.translations.map(({ source, sourceLanguage,
     provenance: provenance && { ...provenance },
   };
 });
+const documentTasks = verifyDocumentTasks(api);
 const networkAttempts = [...(globalThis.__issue195NetworkAttempts ?? ['guard missing'])];
 let guardRejectsNetwork = false;
 try {
@@ -420,6 +426,7 @@ writeFileSync(outputPath, JSON.stringify({
   },
   offline: { networkAttempts, guardRejectsNetwork },
   observations: { parses, programs, translations },
+  documentTasks,
 }, null, 2));
 `;
 

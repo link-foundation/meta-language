@@ -110,6 +110,12 @@ missing or recovered nodes.
 JavaScript string offset, decode the UTF-8 prefix up to the boundary and take
 its `.length`, which counts UTF-16 code units.
 
+The [document tasks example](../examples/deterministic-document-tasks.mjs)
+exercises this HTML tree alongside JSON validation and recovery, extraction,
+quote location, and English and Russian morphology. Pass the namespace from
+`import * as api from 'meta-language'` to `verifyDocumentTasks(api)` to run the
+same checks against an installed package.
+
 ```js
 const stringOffset = (byteOffset) => decoder.decode(bytes.subarray(0, byteOffset)).length;
 ```

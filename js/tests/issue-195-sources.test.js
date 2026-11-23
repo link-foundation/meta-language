@@ -179,7 +179,7 @@ test('the remaining-scope issue is checked and refreshed independently of the or
 });
 
 test('source discovery includes every original and follow-up discussion endpoint', async () => {
-  const followUpIssues = [232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244];
+  const followUpIssues = [230, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245];
   const endpoints = [];
   const discussion = await fetchLiveDiscussion({ request: async (endpoint) => {
     endpoints.push(endpoint);
