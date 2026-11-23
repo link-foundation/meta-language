@@ -47,7 +47,17 @@ test('evidence plan covers every published-artifact verification exactly once', 
   const observed = plan.flatMap(({ cells }) => cells.map(({ cell }) => cell.testId));
 
   assert.deepEqual(observed.toSorted(), expected.toSorted());
-  assert.equal(observed.length, 8);
+  assert.deepEqual(observed.toSorted(), [
+    'i195-delivery-crate-published-javascript-release-delivery',
+    'i195-delivery-crate-published-rust-release-delivery',
+    'i195-delivery-npm-native-html-published-javascript-release-delivery',
+    'i195-delivery-npm-published-javascript-release-delivery',
+    'i195-delivery-npm-published-rust-release-delivery',
+    'i195-delivery-rml-published-javascript-release-delivery',
+    'i195-delivery-rml-published-rust-release-delivery',
+    'i195-downstream-formal-ai-published-javascript-published',
+    'i195-downstream-formal-ai-published-rust-published',
+  ]);
   assert.equal(new Set(observed).size, observed.length);
   assert.deepEqual(
     plan.map(({ group }) => group),
