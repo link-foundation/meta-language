@@ -5,16 +5,20 @@ import { inspectAutomatedTranslationRollout } from '../scripts/check-automated-t
 
 test('rollout inspection uses the current base and the latest eligible pull request attempt', async () => {
   const pull = (number) => ({
-    number, html_url: `pull/${number}`, head: { sha: `head${number}` }, base: { sha: 'current' },
+    number, html_url: `pull/${number}`, head: { sha: `head${number}` }, base: { ref: 'main', sha: 'previous' },
   });
   const run = (number, id, base, status = 'completed') => ({
     id, status, event: 'pull_request', head_sha: `head${number}`, html_url: `run/${id}`,
     run_number: id, run_attempt: 2, pull_requests: [{ number, base: { sha: base } }],
   });
   const query = async ([command, endpoint, paginate, slurp]) => {
-    assert.deepEqual([command, paginate, slurp], ['api', '--paginate', '--slurp']);
     assert.ok(endpoint.startsWith('repos/example/project/'));
     const resource = endpoint.slice('repos/example/project/'.length);
+    if (resource === 'git/ref/heads/main') {
+      assert.deepEqual([command, paginate, slurp], ['api', '--allow-escape-sequences', undefined]);
+      return { object: { sha: 'current' } };
+    }
+    assert.deepEqual([command, paginate, slurp], ['api', '--paginate', '--slurp']);
     if (resource.startsWith('pulls?')) return [[pull(1), pull(2)], [pull(3), pull(4)]];
     if (resource.includes('head_sha=head1')) return [
       { workflow_runs: [run(1, 8, 'current'), run(1, 12, 'previous')] },

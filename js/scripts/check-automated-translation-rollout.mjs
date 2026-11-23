@@ -13,15 +13,22 @@ export async function inspectAutomatedTranslationRollout(repository, query = git
   const api = `repos/${repository}`;
   const pages = (endpoint) => query(['api', `${api}/${endpoint}`, '--paginate', '--slurp']);
   const pulls = (await pages('pulls?state=open&per_page=100')).flat();
+  const baseCommits = new Map();
+  for (const ref of new Set(pulls.map(pull => pull.base.ref))) {
+    const branch = ref.split('/').map(encodeURIComponent).join('/');
+    const reference = await query(['api', `${api}/git/ref/heads/${branch}`, '--allow-escape-sequences']);
+    baseCommits.set(ref, reference.object.sha);
+  }
   const observations = [];
   for (const pull of pulls) {
     const head = pull.head.sha;
+    const base = baseCommits.get(pull.base.ref);
     const runs = (await pages(`actions/workflows/ci.yml/runs?event=pull_request&head_sha=${head}&per_page=100`))
       .flatMap(page => page.workflow_runs);
     const run = runs.sort((left, right) => right.run_number - left.run_number)
       .find(candidate => candidate.head_sha === head && candidate.event === 'pull_request' &&
-        candidate.pull_requests?.some(associated => associated.number === pull.number && associated.base.sha === pull.base.sha));
-    const observation = { pull: pull.number, url: pull.html_url, head, base: pull.base.sha };
+        candidate.pull_requests?.some(associated => associated.number === pull.number && associated.base.sha === base));
+    const observation = { pull: pull.number, url: pull.html_url, head, base };
     if (!run) {
       observations.push({ ...observation, problem: 'No CI pull_request run matches the current head and base.' });
       continue;
@@ -35,7 +42,7 @@ export async function inspectAutomatedTranslationRollout(repository, query = git
       .flatMap(page => page.jobs);
     const aggregate = jobs.find(job => job.name === FULL_REQUIREMENTS_CHECK);
     const pause = aggregate?.steps?.find(step => step.name === pauseStep);
-    const checkout = aggregate?.steps?.find(step => step.name === `Verify paused checkout ${head} against ${pull.base.sha}`);
+    const checkout = aggregate?.steps?.find(step => step.name === `Verify paused checkout ${head} against ${base}`);
     observations.push({
       ...observation,
       aggregate: aggregate?.conclusion ?? null,
