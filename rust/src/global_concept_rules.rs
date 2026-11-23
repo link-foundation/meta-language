@@ -401,7 +401,7 @@ pub fn ml_verify_global_concept_correspondence_loop1(
                             let other = 0f64;
                             {
                                 let ml_s2 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop2(first.clone(), second.clone(), at, left, right, other);
-                                match ml_s2.clone() {
+                                match ml_s2 {
                                         crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop2Result::MlVerifyGlobalConceptCorrespondenceLoop2Done => {
                                             {
                                                 let left_start = crate::global_concept_rules::ml_array::optional_at(&offsets, crate::global_concept_rules::ml_array::number_index(left.unwrap_or(f64::NAN)));
@@ -416,7 +416,7 @@ pub fn ml_verify_global_concept_correspondence_loop1(
                                                                 let edge = 0f64;
                                                                 {
                                                                     let ml_s3 = crate::global_concept_rules::ml_verify_global_concept_correspondence_loop3(edges.clone(), first.clone(), second.clone(), left_start, right_start, count, edge);
-                                                                    match ml_s3.clone() {
+                                                                    match ml_s3 {
                                                                         crate::global_concept_rules::MlVerifyGlobalConceptCorrespondenceLoop3Result::MlVerifyGlobalConceptCorrespondenceLoop3Done => {
                                                                             {
                                                                                 let at_2 = (at + 1f64);
