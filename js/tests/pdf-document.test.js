@@ -105,6 +105,27 @@ function checkReadingOrder({ page, text, ranges }) {
   }
 }
 
+function checkInheritedUnicodeMaps() {
+  for (const { encoded, start, end, text, undecoded } of fixture.inheritedUnicodeMaps) {
+    const bytes = Buffer.from(encoded, 'hex');
+    const source = bytes.toString('latin1');
+    for (const [decode, expected] of [[true, text], [false, undecoded]]) {
+      const options = ParseConfiguration.default().withDocumentStreamDecoding(decode);
+      for (const [raw, input] of [[false, LinkNetwork.parse(source, 'PDF', options)], [true, LinkNetwork.parseBytes(bytes, 'PDF', options)]]) {
+        const network = LinkNetwork.fromLino(input.toLino());
+        assert.equal(network.verifyFullMatch().isClean(), true);
+        if (raw) assert.deepEqual(Buffer.from(network.reconstructBytes()), bytes);
+        else assert.equal(network.reconstructText(), source);
+        assert.deepEqual(network.derivedDocuments(), []);
+        const projection = network.visibleText();
+        const offset = position => raw ? position : Buffer.byteLength(source.slice(0, position));
+        assert.equal(projection.text, expected);
+        assert.deepEqual(projection.sourceRange(0, expected.length), { start: offset(start), end: offset(end) });
+      }
+    }
+  }
+}
+
 function encodedPdfStream({ parameters, data }) {
   const encoded = Buffer.from(data, 'hex');
   const header = `%PDF-1.7\n1 0 obj\n<< /Length ${encoded.length} ${parameters} >>\nstream\n`;
@@ -150,11 +171,13 @@ test('PDF streams and font Unicode keep the original ranges with both byte entry
   checkReadingOrder(fixture.readingOrder);
   checkReadingOrder(fixture.transformedReadingOrder);
   checkReadingOrder(fixture.taggedReadingOrder);
+  checkInheritedUnicodeMaps();
   checkLzwDecoding();
   checkDeclaredContent();
   for (const [requirementId, assertions] of [
     ['I195-I239-PDF-CONTENT-STREAMS', ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError', 'pdfDeclaredContentWithoutTextKeepsEncodedRanges']],
     ['I195-I239-PDF-FONT-UNICODE', ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges', 'pdfTransformedLinesKeepReadingOrderAndRanges', 'pdfTaggedSequencesKeepReadingOrderAndRanges']],
+    ['I195-I239-PDF-INHERITED-UNICODE-MAPS', ['pdfUnicodeMapsInheritBaseStreamsAndKeepLiteralRanges']],
   ]) {
     recordIssue195Observations({ requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(),
       fixtureFile, assertions, testName: 'PDF streams and font Unicode keep the original ranges with both byte entry points' });

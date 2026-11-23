@@ -9,6 +9,7 @@ import { decodePdfFontText, pdfGlyphName, pdfPredefinedEncoding, pdfStringBytes,
 const maximumStreamBytes = 16 * 1024 * 1024;
 const maximumDecodedDocumentBytes = 32 * 1024 * 1024;
 const maximumCmapBytes = 2 * 1024 * 1024;
+const maximumCmapDepth = 5;
 const pdfWhitespace = /[\x00\t\n\f\r ]/gu;
 const pageRotations = [
   [1, 0, 0, 1, 0, 0], [0, -1, 1, 0, 0, 0],
@@ -155,8 +156,19 @@ export function readPdfDocument(text, tree, decodeStreams) {
       if (member.term === 'integer') code = Number(textOf(text, member));
       else if (member.term === 'name' && code >= 0 && code <= 255) differences.set(code++, pdfGlyphName(nameOf(text, member)));
     }
-    const toUnicode = readStream(get(node, 'ToUnicode'));
-    const cmap = toUnicode && toUnicode.source.length <= maximumCmapBytes ? readPdfUnicodeMap(toUnicode.source) : null;
+    const sources = [];
+    const visited = new Set();
+    let remainingBytes = maximumCmapBytes;
+    let toUnicode = get(node, 'ToUnicode');
+    while (toUnicode && visited.size <= maximumCmapDepth && !visited.has(toUnicode)) {
+      const stream = readStream(toUnicode);
+      if (!stream || stream.source.length > remainingBytes) break;
+      sources.push(stream.source);
+      remainingBytes -= stream.source.length;
+      visited.add(toUnicode);
+      toUnicode = get(field(toUnicode, 'dictionary'), 'UseCMap');
+    }
+    const cmap = sources.length > 0 ? readPdfUnicodeMap(sources) : null;
     const font = { encoding, differences, composite, cmap };
     fontCache.set(node, font);
     return font;

@@ -71,6 +71,44 @@ fn check_reading_order(fixture: &Value) {
     }
 }
 
+fn check_inherited_unicode_maps(fixture: &Value) {
+    for entry in fixture.as_array().expect("inherited PDF Unicode maps") {
+        let bytes = octets(&entry["encoded"]);
+        let source = binary_string(&bytes);
+        let start = offset(&entry["start"]);
+        let end = offset(&entry["end"]);
+        for (decode, field) in [(true, "text"), (false, "undecoded")] {
+            let expected = entry[field].as_str().expect("inherited PDF font text");
+            let options = ParseConfiguration::default().with_document_stream_decoding(decode);
+            for (raw, input) in [
+                (
+                    true,
+                    LinkNetwork::parse_bytes_with_configuration(&bytes, "PDF", options),
+                ),
+                (false, LinkNetwork::parse(&source, "PDF", options)),
+            ] {
+                let network = LinkNetwork::from_lino(&input.to_lino()).expect("PDF map round trip");
+                assert!(network.verify_full_match(None).is_clean());
+                check_reconstruction(&network, raw, &bytes, &source);
+                assert!(network.derived_documents().is_empty());
+                let projection = network.visible_text(VisibleDocumentTextOptions::default());
+                let coordinate = |position| {
+                    if raw {
+                        position
+                    } else {
+                        binary_string(&bytes[..position]).len()
+                    }
+                };
+                assert_eq!(projection.text, expected);
+                assert_eq!(
+                    projection.source_range(0, expected.len()),
+                    Some(ByteRange::new(coordinate(start), coordinate(end)))
+                );
+            }
+        }
+    }
+}
+
 fn encoded_pdf_stream(entry: &Value) -> (Vec<u8>, usize, usize) {
     let encoded = octets(&entry["data"]);
     let parameters = entry["parameters"].as_str().expect("PDF stream parameters");
@@ -312,6 +350,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
     check_reading_order(&fixture["readingOrder"]);
     check_reading_order(&fixture["transformedReadingOrder"]);
     check_reading_order(&fixture["taggedReadingOrder"]);
+    check_inherited_unicode_maps(&fixture["inheritedUnicodeMaps"]);
     check_lzw_decoding(&fixture["lzw"]);
     check_declared_content(&fixture["declaredContent"]);
     for (requirement_id, assertions) in [
@@ -335,6 +374,10 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
                 "pdfTransformedLinesKeepReadingOrderAndRanges",
                 "pdfTaggedSequencesKeepReadingOrderAndRanges",
             ][..],
+        ),
+        (
+            "I195-I239-PDF-INHERITED-UNICODE-MAPS",
+            &["pdfUnicodeMapsInheritBaseStreamsAndKeepLiteralRanges"][..],
         ),
     ] {
         record(&Observation {

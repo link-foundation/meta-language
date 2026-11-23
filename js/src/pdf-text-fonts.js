@@ -72,9 +72,27 @@ function decodeUtf16(hex) {
 
 const maximumCmapMappings = 65536;
 
+export function readPdfUnicodeMap(sources) {
+  const mapping = new Map();
+  let spaces = new Map();
+  const expansion = { remaining: maximumCmapMappings };
+  // The source order is from the derived map to its earliest base.
+  for (const source of sources) {
+    const capacity = maximumCmapMappings - mapping.size;
+    if (!capacity) break;
+    const layer = parsePdfUnicodeMap(source, capacity, expansion);
+    if (!spaces.size) spaces = layer.spaces;
+    for (const [code, value] of layer.mapping) {
+      if (!mapping.has(code)) mapping.set(code, value);
+    }
+  }
+  const widths = [...new Set([...spaces.keys(), ...Array.from(mapping.keys(), code => code.length)])].sort((a, b) => b - a);
+  return { mapping, spaces, widths };
+}
+
 // PDF 2.0, section 9.10.3. Compact bfrange tokens expand into a bounded
 // lookup table; the source widths disambiguate variable-length character codes.
-export function readPdfUnicodeMap(source) {
+function parsePdfUnicodeMap(source, capacity, expansion) {
   const mapping = new Map();
   const spaces = new Map();
   const tokens = source.matchAll(/%[^\r\n]*|<([0-9a-f\x00\t\n\f\r ]+)>|[\[\]]|(?:begin|end)(?:codespacerange|bfchar|bfrange)/giu);
@@ -85,9 +103,8 @@ export function readPdfUnicodeMap(source) {
   }
   const code = value => /^(?:[0-9A-F]{2}){1,4}$/u.test(value ?? '');
   const unicode = value => /^(?:[0-9A-F]{4})+$/u.test(value ?? '');
-  let remainingRangeWork = maximumCmapMappings;
   let token = next();
-  while (token !== undefined && mapping.size < maximumCmapMappings) {
+  while (token !== undefined && mapping.size < capacity) {
     const kind = token.toLowerCase();
     token = next();
     if (kind === 'begincodespacerange') {
@@ -100,20 +117,20 @@ export function readPdfUnicodeMap(source) {
         token = next();
       }
     } else if (kind === 'beginbfchar') {
-      while (code(token) && mapping.size < maximumCmapMappings) {
+      while (code(token) && mapping.size < capacity) {
         const result = next();
         if (!unicode(result)) { token = result; break; }
         if (result.length <= 256) mapping.set(token, decodeUtf16(result));
         token = next();
       }
     } else if (kind === 'beginbfrange') {
-      while (code(token) && mapping.size < maximumCmapMappings) {
+      while (code(token) && mapping.size < capacity) {
         const upper = next();
         if (!code(upper) || upper.length !== token.length) { token = upper; break; }
         const length = token.length;
         const low = Number.parseInt(token, 16);
-        const high = Math.min(Number.parseInt(upper, 16), low + Math.min(remainingRangeWork, maximumCmapMappings - mapping.size) - 1);
-        remainingRangeWork -= Math.max(0, high - low + 1);
+        const high = Math.min(Number.parseInt(upper, 16), low + Math.min(expansion.remaining, capacity - mapping.size) - 1);
+        expansion.remaining -= Math.max(0, high - low + 1);
         const result = next();
         if (result === '[') {
           for (let value = low; value <= high; value += 1) {
@@ -133,12 +150,19 @@ export function readPdfUnicodeMap(source) {
       }
     }
   }
-  const widths = [...new Set([...spaces.keys(), ...Array.from(mapping.keys(), key => key.length)])].sort((a, b) => b - a);
-  return { mapping, spaces, widths };
+  return { mapping, spaces };
 }
 
 function codeKey(value, length) {
   return value.toString(16).toUpperCase().padStart(length, '0');
+}
+
+function codeInSpace(code, first, last) {
+  for (let index = 0; index < code.length; index += 2) {
+    const byte = code.slice(index, index + 2);
+    if (byte < first.slice(index, index + 2) || byte > last.slice(index, index + 2)) return false;
+  }
+  return true;
 }
 
 export function decodePdfFontText(bytes, font) {
@@ -147,19 +171,24 @@ export function decodePdfFontText(bytes, font) {
   const output = [];
   const hexadecimal = Buffer.from(bytes).toString('hex').toUpperCase();
   for (let position = 0; position < hexadecimal.length;) {
-    const mappedLength = cmap?.widths.find(width => cmap.mapping.has(hexadecimal.slice(position, position + width)) &&
-      position + width <= hexadecimal.length);
-    if (mappedLength) {
-      output.push(cmap.mapping.get(hexadecimal.slice(position, position + mappedLength)));
-      position += mappedLength;
-      continue;
+    const codeAt = width => hexadecimal.slice(position, position + width);
+    const fits = width => position + width <= hexadecimal.length;
+    // Check shorter code spaces first. Maps with no matching space can still supply a known code.
+    const spaceWidth = cmap?.widths.findLast(width => {
+      if (!fits(width) || !cmap.spaces.has(width)) return false;
+      const code = codeAt(width);
+      return cmap.spaces.get(width).some(([first, last]) => codeInSpace(code, first, last));
+    });
+    const width = spaceWidth ?? cmap?.widths.find(width => fits(width) && cmap.mapping.has(codeAt(width)))
+      ?? (composite ? 4 : 2);
+    const code = codeAt(width);
+    const mapped = code.length === width ? cmap?.mapping.get(code) : undefined;
+    if (mapped !== undefined) output.push(mapped);
+    else if (composite) output.push('\ufffd');
+    else {
+      const value = Number.parseInt(code, 16);
+      output.push(differences.get(value) ?? encoding[value] ?? '\ufffd');
     }
-    const width = cmap?.widths.find(width => {
-      const code = hexadecimal.slice(position, position + width);
-      return code.length === width && cmap.spaces.get(width)?.some(([first, last]) => first <= code && code <= last);
-    }) ?? (composite ? 4 : 2);
-    const value = Number.parseInt(hexadecimal.slice(position, position + width), 16);
-    output.push(composite ? '\ufffd' : differences.get(value) ?? encoding[value] ?? '\ufffd');
     position += width;
   }
   return output.join('');

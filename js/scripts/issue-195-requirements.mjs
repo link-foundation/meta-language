@@ -434,6 +434,13 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         selector: 'reverse physical page order, an inherited Identity-H font with bfchar and bfrange, a WinAnsi Difference, horizontal text lines drawn out of reading order, scoped matrices across content streams and nested forms, inherited page rotation, and a structure tree with tagged page and form text, named properties, nested sequences, and an untagged footer',
         assertions: ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges', 'pdfTransformedLinesKeepReadingOrderAndRanges', 'pdfTaggedSequencesKeepReadingOrderAndRanges'],
       },
+      {
+        id: 'I195-I239-PDF-INHERITED-UNICODE-MAPS',
+        construct: 'Unicode mappings and code spaces inherited from embedded character maps',
+        expectedBehavior: 'Embedded UseCMap streams supply base glyph mappings and code spaces under the stream decoding policy, with nearer mappings taking precedence. The projection checks each byte against its corresponding code-space bounds and preserves the original operand range.',
+        selector: 'nested and Flate-compressed ToUnicode base maps, variable-width codes and per-byte ranges, and missing and circular base references',
+        assertions: ['pdfUnicodeMapsInheritBaseStreamsAndKeepLiteralRanges'],
+      },
     ].map(entry => ({
       ...entry,
       source: ISSUE_195_SOURCES.pdfStreamNullCharacters,

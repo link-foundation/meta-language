@@ -27,6 +27,7 @@ use crate::{
 const MAXIMUM_STREAM_BYTES: usize = 16 * 1024 * 1024;
 const MAXIMUM_DECODED_BYTES: usize = 32 * 1024 * 1024;
 const MAXIMUM_CMAP_BYTES: usize = 2 * 1024 * 1024;
+const MAXIMUM_CMAP_DEPTH: usize = 5;
 type PdfTransformationMatrix = (f64, f64, f64, f64, f64, f64);
 const PAGE_ROTATIONS: [PdfTransformationMatrix; 4] = [
     (1.0, 0.0, 0.0, 1.0, 0.0, 0.0),
@@ -660,12 +661,27 @@ impl<'source> PdfReader<'source> {
                 code = Some(value + 1);
             }
         }
-        let cmap = self
-            .stream(self.get(Some(node), "ToUnicode"))
-            .filter(|stream| {
-                stream.source.chars().take(MAXIMUM_CMAP_BYTES + 1).count() <= MAXIMUM_CMAP_BYTES
-            })
-            .map(|stream| read_unicode_map(&stream.source));
+        let mut streams = Vec::new();
+        let mut visited = HashSet::new();
+        let mut remaining_bytes = MAXIMUM_CMAP_BYTES;
+        let mut to_unicode = self.get(Some(node), "ToUnicode");
+        while let Some(map) = to_unicode {
+            if visited.len() > MAXIMUM_CMAP_DEPTH || !visited.insert(map.start) {
+                break;
+            }
+            let Some(stream) = self.stream(Some(map)) else {
+                break;
+            };
+            let bytes = stream.source.chars().take(remaining_bytes + 1).count();
+            if bytes > remaining_bytes {
+                break;
+            }
+            remaining_bytes -= bytes;
+            streams.push(stream);
+            to_unicode = self.get(field(Some(map), "dictionary"), "UseCMap");
+        }
+        let cmap = (!streams.is_empty())
+            .then(|| read_unicode_map(streams.iter().map(|stream| stream.source.as_ref())));
         let font = Rc::new(PdfFont {
             encoding,
             differences,

@@ -213,7 +213,35 @@ fn unicode_bytes<'token>(token: Option<&'token CmapToken<'_>>) -> Option<&'token
     (!hex.is_empty() && hex.len().is_multiple_of(4)).then_some(hex)
 }
 
-pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
+pub(super) fn read_unicode_map<'map>(sources: impl IntoIterator<Item = &'map str>) -> UnicodeMap {
+    let mut result = UnicodeMap::default();
+    let mut remaining_range_work = MAXIMUM_CMAP_MAPPINGS;
+    // The source order is from the derived map to its earliest base.
+    for source in sources {
+        let capacity = MAXIMUM_CMAP_MAPPINGS - result.mapping.len();
+        if capacity == 0 {
+            break;
+        }
+        let layer = parse_unicode_map(source, capacity, &mut remaining_range_work);
+        if result.spaces.is_empty() {
+            result.spaces = layer.spaces;
+        }
+        for (code, value) in layer.mapping {
+            result.mapping.entry(code).or_insert(value);
+        }
+    }
+    result.widths.extend(result.spaces.keys().copied());
+    result
+        .widths
+        .extend(result.mapping.keys().map(|&(width, _)| width));
+    result
+}
+
+fn parse_unicode_map(
+    source: &str,
+    capacity: usize,
+    remaining_range_work: &mut usize,
+) -> UnicodeMap {
     let mut tokens = CMAP_TOKENS.captures_iter(source).filter_map(|capture| {
         let text = capture.get(0)?.as_str();
         if text.starts_with('%') {
@@ -231,10 +259,9 @@ pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
         }))
     });
     let mut result = UnicodeMap::default();
-    let mut remaining_range_work = MAXIMUM_CMAP_MAPPINGS;
     let mut token = tokens.next();
     while let Some(current) = token.take() {
-        if result.mapping.len() >= MAXIMUM_CMAP_MAPPINGS {
+        if result.mapping.len() >= capacity {
             break;
         }
         token = tokens.next();
@@ -256,7 +283,6 @@ pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
                     if ranges.len() < 256 {
                         ranges.push((first, last));
                     }
-                    result.widths.insert(width);
                 }
                 "beginbfchar" => {
                     let Some(hex) = unicode_bytes(datum.as_ref()) else {
@@ -267,7 +293,6 @@ pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
                         result
                             .mapping
                             .insert((width, first), utf16(&hex_bytes(hex)));
-                        result.widths.insert(width);
                     }
                 }
                 "beginbfrange" => {
@@ -277,14 +302,13 @@ pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
                         token = datum;
                         break;
                     };
-                    let available =
-                        remaining_range_work.min(MAXIMUM_CMAP_MAPPINGS - result.mapping.len());
+                    let available = (*remaining_range_work).min(capacity - result.mapping.len());
                     let count = if last >= first {
                         ((u64::from(last - first) + 1).min(available as u64)) as usize
                     } else {
                         0
                     };
-                    remaining_range_work -= count;
+                    *remaining_range_work -= count;
                     let target = tokens.next();
                     if matches!(target, Some(CmapToken::Text("["))) {
                         let mut index = 0;
@@ -296,7 +320,6 @@ pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
                                 result
                                     .mapping
                                     .insert((width, first + index as u32), utf16(&hex_bytes(hex)));
-                                result.widths.insert(width);
                             }
                             index += 1;
                         }
@@ -308,7 +331,6 @@ pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
                             result
                                 .mapping
                                 .insert((width, first + index as u32), utf16(&bytes));
-                            result.widths.insert(width);
                             if !increment(&mut bytes) {
                                 break;
                             }
@@ -321,7 +343,7 @@ pub(super) fn read_unicode_map(source: &str) -> UnicodeMap {
                 }
             }
             token = tokens.next();
-            if result.mapping.len() >= MAXIMUM_CMAP_MAPPINGS {
+            if result.mapping.len() >= capacity {
                 break;
             }
         }
@@ -346,6 +368,16 @@ pub(super) struct PdfFont {
     pub(super) cmap: Option<UnicodeMap>,
 }
 
+fn code_in_space(bytes: &[u8], first: u32, last: u32) -> bool {
+    let first = first.to_be_bytes();
+    let last = last.to_be_bytes();
+    let offset = first.len() - bytes.len();
+    bytes
+        .iter()
+        .enumerate()
+        .all(|(index, &byte)| first[offset + index] <= byte && byte <= last[offset + index])
+}
+
 pub(super) fn decode_font_text(mut bytes: &[u8], font: Option<&PdfFont>) -> String {
     let Some(font) = font else {
         return binary_string(bytes);
@@ -357,40 +389,41 @@ pub(super) fn decode_font_text(mut bytes: &[u8], font: Option<&PdfFont>) -> Stri
                 .iter()
                 .fold(0u32, |value, byte| value * 256 + u32::from(*byte))
         };
-        let mut code_width = None;
-        let mut mapped = None;
-        if let Some(cmap) = &font.cmap {
-            for &width in cmap
+        let code_width = font.cmap.as_ref().and_then(|cmap| {
+            let widths = cmap
                 .widths
                 .iter()
-                .rev()
-                .filter(|&&width| width <= bytes.len())
-            {
-                let value = code(width);
-                if let Some(text) = cmap.mapping.get(&(width, value)) {
-                    mapped = Some((width, text));
-                    break;
-                }
-                if code_width.is_none()
-                    && cmap.spaces.get(&width).is_some_and(|ranges| {
+                .copied()
+                .filter(|&width| width <= bytes.len());
+            // Check shorter code spaces first. Recover known codes if none match.
+            widths
+                .clone()
+                .find(|width| {
+                    cmap.spaces.get(width).is_some_and(|ranges| {
                         ranges
                             .iter()
-                            .any(|&(first, last)| first <= value && value <= last)
+                            .any(|&(first, last)| code_in_space(&bytes[..*width], first, last))
                     })
-                {
-                    code_width = Some(width);
-                }
-            }
-        }
-        if let Some((width, text)) = mapped {
-            result.push_str(text);
-            bytes = &bytes[width..];
-            continue;
-        }
+                })
+                .or_else(|| {
+                    widths
+                        .rev()
+                        .find(|&width| cmap.mapping.contains_key(&(width, code(width))))
+                })
+        });
         let width = code_width
             .unwrap_or(if font.composite { 2 } else { 1 })
             .min(bytes.len());
         let value = code(width);
+        if let Some(text) = font
+            .cmap
+            .as_ref()
+            .and_then(|cmap| cmap.mapping.get(&(width, value)))
+        {
+            result.push_str(text);
+            bytes = &bytes[width..];
+            continue;
+        }
         result.push_str(if font.composite {
             REPLACEMENT
         } else {

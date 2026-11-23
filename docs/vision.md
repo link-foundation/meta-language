@@ -1799,8 +1799,15 @@ the full concrete representation.
 Visible text is a separate projection of document syntax. HTML, Markdown and
 WordprocessingML use shared projection rules for hidden syntax, block breaks,
 list markers and character references. PDF uses show-text operators and font
-maps in page-tree order. Fully positioned horizontal lines on a page are
-ordered by descending baseline and then ascending horizontal position after
+maps in page-tree order. A ToUnicode map can inherit glyph mappings and code
+spaces from embedded `UseCMap` streams, with nearer mappings taking precedence.
+The chain uses a shared size and mapping budget and stops at a repeated or
+unreadable stream. Each code-space range compares corresponding bytes and
+the smallest matching width determines glyph boundaries. See
+[PDF 2.0 §9.10.3 and its errata](https://pdf-issues.pdfa.org/32000-2-2020/clause09.html#9103-tounicode-cmaps)
+and [Adobe CMap and CIDFont Files Specification §5.2](https://adobe-type-tools.github.io/font-tech-notes/pdfs/5014.CIDFont_Spec.pdf).
+Fully positioned horizontal lines on a page are ordered by descending baseline
+and then ascending horizontal position after
 applying page rotation, graphics transformations, and nested form matrices.
 Graphics state carries across page content streams and is scoped to each form.
 Lines without a common page coordinate system keep their content order. Within
