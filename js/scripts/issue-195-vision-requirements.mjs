@@ -2072,6 +2072,7 @@ export const AREA_SPECIFICATIONS = Object.freeze({
   'generative-testing': 'acceptance-and-evidence',
   'acceptance-gate-fault-injection': 'acceptance-and-evidence',
   'package-delivery': 'packages-and-publication',
+  'release-workflow': 'packages-and-publication',
   'cache-cleanup': 'cache-cleanup',
 });
 
