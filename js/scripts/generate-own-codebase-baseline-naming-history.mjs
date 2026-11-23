@@ -43,10 +43,15 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b';
   const integration='ec9f4efb0e9ef936114e09823981352f6db13700';
   const integrationFiles=[
+    'experiments/binary-metadata-buffer/native-observations.mjs',
+    'experiments/original-link-complete-table-projection/raw-consuming-emission.mjs',
+    'experiments/original-link-complete-table-projection/raw-consuming-emission.test.mjs',
+    'experiments/original-link-complete-table-projection/raw-emission-producer-applicability.mjs',
     'js/scripts/current-ci-repair-source-history.mjs',
     'js/scripts/generate-continuation-historical-inputs.mjs',
     'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
     'js/scripts/own-codebase-baseline-naming-history.mjs',
+    'js/scripts/raw-consuming-snapshot-source-profile.mjs',
     'js/scripts/scheduling-source-history.mjs',
     'js/scripts/tooling-frozen-source-history.mjs',
     'js/src/translation/types.js',
