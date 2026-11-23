@@ -17,6 +17,8 @@ const EXCLUSIVE_TYPED_ARRAY_ITEMS_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-typed-array-items.lino";
 const EXCLUSIVE_TYPED_ARRAY_PREFIXES_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino";
+const EXCLUSIVE_OBJECT_PROPERTY_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-object-property.lino";
 
 fn fixture() -> Value {
     read_project_data(include_str!(
@@ -231,8 +233,8 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
     });
 }
 
-fn check_exclusive_array_alternatives(fixtures: &str) {
-    let fixture = read_project_data(fixtures).expect("shared exclusive array fixtures");
+fn check_exclusive_alternatives(fixtures: &str) {
+    let fixture = read_project_data(fixtures).expect("shared exclusive alternative fixtures");
     for row in fixture["grammars"].as_array().unwrap() {
         let imported = import_json_schema(&row[0]).unwrap();
         let cases = row[1].as_array().unwrap();
@@ -255,7 +257,7 @@ fn check_exclusive_array_alternatives(fixtures: &str) {
 
 #[test]
 fn exclusive_array_alternatives_count_matching_branches_for_each_length() {
-    check_exclusive_array_alternatives(include_str!(
+    check_exclusive_alternatives(include_str!(
         "../../../parity/fixtures/json-schema-exclusive-array-lengths.lino"
     ));
     record(&Observation {
@@ -273,7 +275,7 @@ fn exclusive_array_alternatives_count_matching_branches_for_each_length() {
 
 #[test]
 fn exclusive_array_alternatives_with_disjoint_item_types_count_the_empty_array_separately() {
-    check_exclusive_array_alternatives(include_str!(
+    check_exclusive_alternatives(include_str!(
         "../../../parity/fixtures/json-schema-exclusive-typed-array-items.lino"
     ));
     record(&Observation {
@@ -291,7 +293,7 @@ fn exclusive_array_alternatives_with_disjoint_item_types_count_the_empty_array_s
 
 #[test]
 fn exclusive_array_alternatives_distinguish_disjoint_first_item_types() {
-    check_exclusive_array_alternatives(include_str!(
+    check_exclusive_alternatives(include_str!(
         "../../../parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino"
     ));
     record(&Observation {
@@ -301,6 +303,24 @@ fn exclusive_array_alternatives_distinguish_disjoint_first_item_types() {
         fixture_file: EXCLUSIVE_TYPED_ARRAY_PREFIXES_FIXTURE,
         assertions: &["decoderDistinguishesDisjointArrayPrefixTypes"],
         test_name: "exclusive_array_alternatives_distinguish_disjoint_first_item_types",
+    });
+}
+
+#[test]
+fn exclusive_object_alternatives_count_values_of_a_single_differing_property() {
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-object-property.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-object-property",
+        fixture_file: EXCLUSIVE_OBJECT_PROPERTY_FIXTURE,
+        assertions: &[
+            "decoderCountsExclusiveObjectPropertyValues",
+            "duplicateObjectAlternativesHaveNoGeneratableDocument",
+        ],
+        test_name: "exclusive_object_alternatives_count_values_of_a_single_differing_property",
     });
 }
 

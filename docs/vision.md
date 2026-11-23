@@ -4837,7 +4837,15 @@ one branch, there is no generatable array. Two branches with different item
 layouts can also be distinguished by disjoint finite string sets at a
 common required prefix position. Optional positions and overlapping string sets
 cannot establish that proof. An unresolved overlap retains a diagnostic for
-validation. For finite collection branches,
+validation. For object alternatives with the same declared names, required names
+and additional-property rule, the decoder can factor a single differing property.
+Within the finite inspection budget it validates candidate property values against
+the original branches and retains each value accepted by exactly one branch.
+The common layout still constrains the other properties. The differing property
+becomes required because omitting it would give all branches the same result.
+Local references can supply the common layout or the finite property schemas.
+Identical object alternatives with no other branch have no generatable document.
+For finite collection branches,
 the importer forms candidate values from the allowed members of a closed
 object or bounded array. The validator checks every candidate against the full
 schema, including common sibling restrictions and the exclusive branch count.

@@ -508,6 +508,16 @@ impl<'schema> Importer<'schema> {
                     {
                         return expression;
                     }
+                    if overlaps
+                        && let Some(expression) = self.exclusive_object_property_expression(
+                            schema,
+                            branches,
+                            allowed_types,
+                            pointer,
+                        )
+                    {
+                        return expression;
+                    }
                     if !overlaps
                         && let Some(expression) = self.alternative_conjunction_expression(
                             schema,
@@ -1381,6 +1391,149 @@ impl<'schema> Importer<'schema> {
             }
         }
         Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
+    }
+
+    fn exclusive_object_property_expression(
+        &mut self,
+        schema: &'schema Value,
+        branches: &'schema [Value],
+        allowed_types: u8,
+        pointer: &str,
+    ) -> Option<Option<Expression>> {
+        let object = type_membership("object");
+        if schema
+            .as_object()?
+            .keys()
+            .any(|key| active_conjunction_keyword(key, 0, Some("oneOf"), object))
+        {
+            return None;
+        }
+        let mut layouts = Vec::new();
+        for (index, branch) in branches.iter().enumerate() {
+            if possible_type_membership(branch, allowed_types) == 0 {
+                continue;
+            }
+            let layers = reference_layers(self.root, branch)?;
+            let membership = layers.iter().fold(allowed_types, |types, layer| {
+                possible_type_membership(layer, types)
+            });
+            if membership == 0 {
+                continue;
+            }
+            let (&leaf, preceding) = layers.split_last()?;
+            if membership != object
+                || layers.iter().enumerate().any(|(index, layer)| {
+                    layer.as_object().is_some_and(|rules| {
+                        rules.keys().any(|key| {
+                            active_conjunction_keyword(key, index, None, object)
+                                && (index != preceding.len()
+                                    || !keywords("objectAssertion").any(|name| name == key))
+                        })
+                    })
+                })
+            {
+                return None;
+            }
+            let location = preceding
+                .last()
+                .and_then(|layer| layer["$ref"].as_str())
+                .and_then(|name| name.strip_prefix('#'))
+                .map_or_else(
+                    || pointer_child(&pointer_child(pointer, "oneOf"), &index.to_string()),
+                    str::to_owned,
+                );
+            layouts.push((leaf, location));
+        }
+        let [first, others @ ..] = layouts.as_slice() else {
+            return None;
+        };
+        if others.is_empty() {
+            return None;
+        }
+        let (base, location) = (first.0, &first.1);
+        let properties: Vec<_> = property_schemas(base).collect();
+        let required: BTreeSet<_> = required_property_names(base).collect();
+        let additional = additional_property_schema(base);
+        let mut differing = None;
+        for (layout, _) in others {
+            if required_property_names(layout).collect::<BTreeSet<_>>() != required
+                || additional_property_schema(layout) != additional
+                || property_schemas(layout).count() != properties.len()
+            {
+                return None;
+            }
+            for &(name, property) in &properties {
+                if layout["properties"].get(name)? != property {
+                    if differing.is_some_and(|previous| previous != name) {
+                        return None;
+                    }
+                    differing = Some(name);
+                }
+            }
+        }
+        let Some(name) = differing else {
+            return Some(None);
+        };
+
+        // Without the differing property, an object matches every branch or none.
+        let schemas: Vec<_> = layouts
+            .iter()
+            .map(|&(layout, _)| &layout["properties"][name])
+            .collect();
+        let mut work = 16_384;
+        let mut seen = HashSet::new();
+        let mut candidates = Vec::new();
+        for child in &schemas {
+            let (values, _) = finite_schema_candidates(
+                self.root,
+                child,
+                &mut HashSet::new(),
+                &mut work,
+                0,
+                ALL_JSON_TYPES,
+            )?;
+            for value in values {
+                charge_collection_value(value.as_ref(), schemas.len(), &mut work, 0)?;
+                if seen.insert(value.to_string()) {
+                    candidates.push(value);
+                }
+            }
+        }
+        let mut accepted = Vec::new();
+        for value in &candidates {
+            let matches = schemas
+                .iter()
+                .filter(|&&schema| {
+                    super::validation::accepts_constant(self.root, [schema], value.as_ref())
+                })
+                .count();
+            if matches == 1 {
+                accepted.push(self.constant(value.as_ref(), pointer, "oneOf"));
+            }
+        }
+        if accepted.is_empty() {
+            return Some(None);
+        }
+        let selected = EXPRESSION.choice_unordered(accepted);
+        let fields = properties
+            .into_iter()
+            .map(|(key, rule)| {
+                let child = if key == name {
+                    CollectionChild::Conjunction(vec![ConjunctionEntry::Expression(
+                        selected.clone(),
+                    )])
+                } else {
+                    CollectionChild::Schema(rule)
+                };
+                (key, child)
+            })
+            .collect();
+        Some(self.object_with_properties(
+            fields,
+            CollectionChild::Schema(additional),
+            required.into_iter().chain(std::iter::once(name)),
+            location,
+        ))
     }
 
     fn alternative_numeric_expression(

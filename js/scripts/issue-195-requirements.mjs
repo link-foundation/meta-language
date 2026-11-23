@@ -739,6 +739,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive alternatives with a shared object layout and one finite property domain per branch',
+      expectedBehavior: 'Generate a declared property value only when exactly one branch accepts that value. Require the property even if each branch allows its absence. Apply all common property and additional-property assertions. Report an empty exclusive language when alternatives have identical layouts and constraints or accept the same finite property values.',
+      fixture: 'parity/fixtures/json-schema-exclusive-object-property.lino',
+      selector: 'overlapping string enumerations with unrestricted siblings, escaped spellings, optional Boolean and null branches, additional-property assertions, referenced object and property schemas, and identical finite domains',
+      assertions: ['decoderCountsExclusiveObjectPropertyValues', 'duplicateObjectAlternativesHaveNoGeneratableDocument'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I241-JSON-RECOVERY',
       source: ISSUE_195_SOURCES.jsonRecovery,
       language: 'JSON document recovery',
