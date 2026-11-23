@@ -1428,7 +1428,7 @@
 (1428: 67 1427 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1429: (meta: (t: semantic) (n: 1) (term: string%20value) (def: Checkout%20grammar%20asset%20provisioning%20and%20a%20public%20standalone%20parser%20availability%20report.) (lang: meta-language%20structured%20data)))
 (1430: 38 1429 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(1431: 1432 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
+(1431: 1432 2075 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
 (1432: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-GRAMMAR-PARSER-AVAILABILITY) (lang: meta-language%20structured%20data)))
 (1433: 41 1431 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1434: 1436 1438 1439 1441 1443 1444 1446 1448 1450 1452 1454 1461 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
@@ -2071,3 +2071,4 @@
 (2072: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I236-ENGLISH-DICTIONARY-MORPHOLOGY) (lang: meta-language%20structured%20data)))
 (2073: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-PREFIX-TYPES) (lang: meta-language%20structured%20data)))
 (2074: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I235-UNICODE-SEARCH-BOUNDARIES) (lang: meta-language%20structured%20data)))
+(2075: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I244-NPM-FALLBACK-GRAMMAR-ASSETS) (lang: meta-language%20structured%20data)))

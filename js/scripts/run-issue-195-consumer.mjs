@@ -96,7 +96,14 @@ async function npmConsumer() {
   const observationPath = path.join(directory, 'observations.wire.json');
   await run('npm-consumer', process.execPath, [
     '--import', './deny-network.mjs', 'consumer.mjs', corpusWirePath, observationPath,
-  ], { cwd: directory, env: { ...environment, NODE_OPTIONS: '' } });
+  ], {
+    cwd: directory,
+    env: {
+      ...environment,
+      NODE_OPTIONS: '',
+      META_LANGUAGE_EXTERNAL_GRAMMAR_CACHE: path.join(directory, 'external-grammar-cache'),
+    },
+  });
   const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
   return {
     version: installedPackage.version,
@@ -411,7 +418,7 @@ const translations = corpus.delivery.translations.map(({ source, sourceLanguage,
     provenance: provenance && { ...provenance },
   };
 });
-const documentTasks = verifyDocumentTasks(api);
+const documentTasks = verifyDocumentTasks(api, { checkGrammarAssets: true });
 const networkAttempts = [...(globalThis.__issue195NetworkAttempts ?? ['guard missing'])];
 let guardRejectsNetwork = false;
 try {

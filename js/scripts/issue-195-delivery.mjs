@@ -23,6 +23,8 @@ export const DOCUMENT_TASK_CASES = [
     'Identify English and Russian input and find the expected noun lemmas.'],
   ['I195-I230-NPM-HTML-TREE', 'htmlPackageDelivery', 'html', 'htmlTreeAndSourceSpans',
     'Read an HTML element, its attribute, its text and its nested element with exact byte and character positions through the documented public entry point.'],
+  ['I195-I244-NPM-FALLBACK-GRAMMAR-ASSETS', 'grammarAssetAvailability', 'fallbackGrammars', 'fallbackGrammarAssetsParseOffline',
+    'Report every standalone parser available after installation, then parse Markdown block and inline syntax, YAML, and Kotlin losslessly with exact syntax spans, offline and without a checkout grammar cache.'],
 ];
 
 export const DELIVERY_CONSUMER_ASSERTIONS = [

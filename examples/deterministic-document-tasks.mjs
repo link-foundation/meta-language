@@ -2,14 +2,16 @@ import assert from 'node:assert/strict';
 
 // Pass the public module namespace from either an installed package or a
 // checkout. Each example returns the source-linked observations it verified.
-export function verifyDocumentTasks(api) {
-  return {
+export function verifyDocumentTasks(api, { checkGrammarAssets = false } = {}) {
+  const observations = {
     json: verifyJson(api),
     extraction: verifyExtraction(api),
     grounding: verifyGrounding(api),
     morphology: verifyMorphology(api),
     html: verifyHtml(api),
   };
+  if (checkGrammarAssets) observations.fallbackGrammars = verifyFallbackGrammarAssets(api);
+  return observations;
 }
 
 function verifyJson({ validateJson, recoverJson, importJsonSchema, createGrammarParser }) {
@@ -123,4 +125,27 @@ function verifyHtml({ LinkNetwork, LinkType }) {
   assert.deepEqual([start, end], [19, 24]);
   assert.deepEqual(characterRange, [19, 23]);
   return { name, attributeName, attributeValue, text, nested, byteRange: [start, end], characterRange };
+}
+
+function verifyFallbackGrammarAssets({ LinkNetwork, LinkType }) {
+  const unavailable = LinkNetwork.languageParserAvailability().filter(({ available }) => !available);
+  assert.deepEqual(unavailable, [], 'all installed standalone parsers have their grammar assets');
+  const fixtures = [
+    ['Markdown', '# *Title*\n\n- item\n', [['atx_heading', 0, 10], ['emphasis', 2, 9], ['list_item', 11, 18]]],
+    ['YAML', 'key: value\n', [['block_mapping_pair', 0, 10]]],
+    ['Kotlin', 'val x = 1\n', [['property_declaration', 0, 9]]],
+  ];
+  return fixtures.map(([language, source, expected]) => {
+    const network = LinkNetwork.parse(source, language);
+    assert.equal(network.reconstructText(), source, language);
+    assert.equal(network.verifyFullMatch().isClean(), true, language);
+    const syntax = network.links().map(link => link.metadata()).filter(({ linkType }) => linkType === LinkType.Syntax);
+    const spans = expected.map(([term]) => {
+      const node = syntax.find(metadata => metadata.term === term);
+      assert.ok(node?.span, `${language} ${term}`);
+      return [term, node.span.byteRange.start, node.span.byteRange.end];
+    });
+    assert.deepEqual(spans, expected, language);
+    return { language, spans };
+  });
 }

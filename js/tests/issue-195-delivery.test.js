@@ -77,7 +77,7 @@ const allPlatforms = () => delivery.supportedPlatforms.map((platform) => consume
 test('the clean npm consumer example exercises the public document APIs', async () => {
   const exampleSha256 = sha256(await readFile(path.join(root, DOCUMENT_TASK_EXAMPLE)));
   const report = consumerReport('linux-x64');
-  report.npm.documentTasks = { exampleSha256, ...verifyDocumentTasks(publicApi) };
+  report.npm.documentTasks = { exampleSha256, ...verifyDocumentTasks(publicApi, { checkGrammarAssets: true }) };
   for (const [, , scenario] of DOCUMENT_TASK_CASES) {
     assert.equal(observedDocumentTask(report, expected, context, exampleSha256, scenario), true);
     assert.equal(observedDocumentTask(report, expected, context, '0'.repeat(64), scenario), false);
