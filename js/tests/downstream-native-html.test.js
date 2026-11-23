@@ -50,4 +50,5 @@ test('the package entry point exposes native HTML elements, attributes, text and
   assert.equal(source.slice(...stringOffsets), '🙂');
   assert.equal(raw(emoji), '🙂');
   assert.deepEqual([document.metadata().span.end.row, document.metadata().span.end.column], [1, 0]);
+  assert.deepEqual(globalThis.__issue195NetworkAttempts ?? [], []);
 });

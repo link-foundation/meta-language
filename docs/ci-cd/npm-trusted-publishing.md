@@ -94,11 +94,15 @@ whose commit includes the grammar. [Issue #230](https://github.com/link-foundati
 
 `js/scripts/release-publication.mjs` rejects publishing from a branch or a
 different commit. It checks the tag, requested version, npm manifest, both
-lockfile version fields and crate manifest before authentication. The registry
-preflight requires the matching non-yanked crate and its checksum. Only an
-npm HTTP 404 means the npm artifact is absent; authentication, network and
-server failures stop publication. After publishing, the workflow waits for
-the npm artifact and verifies that both registries serve that same version.
+lockfile version fields and crate manifest before authentication. The preflight
+downloads the non-yanked crate, checks its registry SHA-256 and compares the
+commit in `.cargo_vcs_info.json` with the checked-out release commit. Only an
+npm HTTP 404 establishes that the npm artifact is absent. Authentication, network
+and server failures stop publication. After publishing, the workflow waits for
+npm to serve the same version and checks that its `gitHead` matches the release
+commit. It installs the exact registry tarball in a fresh consumer, verifies
+the installed version and integrity, and runs the native HTML fixture with
+network access disabled.
 An already published version runs this verification without requesting a
 publish credential. Registry presence alone does not establish the downstream
 delivery requirements: the post-merge evidence jobs must still install and

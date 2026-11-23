@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
@@ -88,7 +88,8 @@ async function npmConsumer() {
     JSON.stringify(Object.keys(lock.packages?.['']?.dependencies ?? {})) === '["meta-language"]';
   checksum.installedIntegrity = installed.integrity ?? null;
   checksum.expectedIntegrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
-  await writeFile(path.join(directory, 'deny-network.mjs'), DENY_NETWORK);
+  await copyFile(new URL('../tests/support/deny-consumer-network.mjs', import.meta.url),
+    path.join(directory, 'deny-network.mjs'));
   await writeFile(path.join(directory, 'consumer.mjs'), NPM_CONSUMER);
   const observationPath = path.join(directory, 'observations.wire.json');
   const offlineEnvironment = { ...environment, NODE_OPTIONS: '' };
@@ -342,35 +343,6 @@ function required(name) {
   if (!value) throw new Error(`missing ${name}`);
   return value;
 }
-
-// Loaded with `node --import` before the consumer: every socket, DNS, HTTP and
-// fetch entry point records the attempt and throws, so a parse that needed the
-// network fails instead of silently downloading.
-const DENY_NETWORK = `import dns from 'node:dns';
-import http from 'node:http';
-import https from 'node:https';
-import net from 'node:net';
-import tls from 'node:tls';
-
-globalThis.__issue195NetworkAttempts = [];
-const deny = (name) => function denied(...args) {
-  globalThis.__issue195NetworkAttempts.push(name);
-  throw new Error(\`network access is disabled for the offline consumer: \${name}\`);
-};
-net.Socket.prototype.connect = deny('net.Socket.connect');
-net.connect = deny('net.connect');
-net.createConnection = deny('net.createConnection');
-tls.connect = deny('tls.connect');
-http.request = deny('http.request');
-http.get = deny('http.get');
-https.request = deny('https.request');
-https.get = deny('https.get');
-dns.lookup = deny('dns.lookup');
-dns.resolve = deny('dns.resolve');
-dns.promises.lookup = deny('dns.promises.lookup');
-dns.promises.resolve = deny('dns.promises.resolve');
-globalThis.fetch = deny('fetch');
-`;
 
 const NPM_CONSUMER = `import { readFileSync, writeFileSync } from 'node:fs';
 import * as api from 'meta-language';

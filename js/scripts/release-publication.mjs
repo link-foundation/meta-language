@@ -2,11 +2,17 @@
 // Publication checks run only in js.yml's standalone release/tag dispatch.
 // A registry outage is a failure, never evidence that a version is unpublished.
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { appendFileSync, readFileSync } from 'node:fs';
+import { copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+// Same compressed package limit as rust/scripts/check-crate-size.rs.
+const maximumCrateBytes = 10 * 1024 * 1024;
+const registryUserAgent = 'meta-language release verification (https://github.com/link-foundation/meta-language)';
 
 export function releaseIdentity({ packageJson, packageLock, cargoManifest, env, commit }) {
   const section = /^\[package\]\s*\n([^]*?)(?=^\[|$(?![^]))/mu.exec(cargoManifest)?.[1] ?? '';
@@ -36,7 +42,10 @@ export function releaseIdentity({ packageJson, packageLock, cargoManifest, env, 
 }
 
 async function registryJson(url, { fetchImpl, allowAbsent = false }) {
-  const response = await fetchImpl(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15_000) });
+  const response = await fetchImpl(url, {
+    headers: { Accept: 'application/json', 'User-Agent': registryUserAgent },
+    signal: AbortSignal.timeout(15_000),
+  });
   if (allowAbsent && response.status === 404) return null;
   if (!response.ok) throw new Error(`${url} lookup failed (HTTP ${response.status}); publication was not attempted`);
   try {
@@ -53,14 +62,61 @@ export async function releaseRegistryState(identity, { fetchImpl = fetch } = {})
   // The crate must already exist: rust.yml publishes and waits for it before
   // dispatching the npm publisher on the same release tag.
   const crate = await registryJson(`https://crates.io/api/v1/crates/${name}/${version}`, { fetchImpl });
-  if (crate.version?.num !== version || crate.version?.yanked !== false || !/^[a-f0-9]{64}$/u.test(crate.version?.checksum ?? '')) {
+  const checksum = crate.version?.checksum;
+  if (crate.version?.num !== version || crate.version?.yanked !== false || !/^[a-f0-9]{64}$/u.test(checksum ?? '')) {
     throw new Error(`crates.io must serve the non-yanked ${name}@${version} with its checksum before npm publication`);
   }
   const npm = await registryJson(`https://registry.npmjs.org/${name}/${version}`, { fetchImpl, allowAbsent: true });
   if (npm && (npm.name !== name || npm.version !== version || !npm.dist?.integrity || !npm.dist?.tarball)) {
     throw new Error(`npm returned inconsistent artifact metadata for ${name}@${version}`);
   }
-  return { ...identity, crateChecksum: crate.version.checksum, alreadyPublished: npm !== null, npmIntegrity: npm?.dist.integrity ?? null };
+  return {
+    ...identity, crateChecksum: checksum, alreadyPublished: npm !== null,
+    npmIntegrity: npm?.dist.integrity ?? null, npmTarball: npm?.dist.tarball ?? null, npmGitHead: npm?.gitHead ?? null,
+  };
+}
+
+export async function verifyReleaseProvenance(state, { fetchImpl = fetch } = {}) {
+  const { name, version, commit, crateChecksum, alreadyPublished, npmTarball, npmGitHead } = state;
+  const archiveName = `${name}-${version}`;
+  if (alreadyPublished) {
+    if (npmTarball !== `https://registry.npmjs.org/${name}/-/${archiveName}.tgz`) {
+      throw new Error(`npm returned an unexpected registry tarball for ${name}@${version}`);
+    }
+    if (npmGitHead !== commit) {
+      throw new Error(`the published npm ${name}@${version} records commit ${npmGitHead ?? '(missing)'}, expected ${commit}`);
+    }
+  }
+  const archive = await fetchImpl(`https://static.crates.io/crates/${name}/${archiveName}.crate`, {
+    headers: { 'User-Agent': registryUserAgent },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!archive.ok || !archive.body) {
+    throw new Error(`could not download the published ${name}@${version} crate (HTTP ${archive.status})`);
+  }
+  const chunks = [];
+  let bytes = 0;
+  for await (const chunk of archive.body) {
+    bytes += chunk.byteLength;
+    if (bytes > maximumCrateBytes) throw new Error('the published crate exceeds the 10 MiB package limit');
+    chunks.push(chunk);
+  }
+  const contents = Buffer.concat(chunks, bytes);
+  if (createHash('sha256').update(contents).digest('hex') !== crateChecksum) {
+    throw new Error(`the published ${name}@${version} crate does not match its registry checksum`);
+  }
+  let revision;
+  try {
+    const vcsInfo = execFileSync('tar', ['-xzOf', '-', `${archiveName}/.cargo_vcs_info.json`], {
+      input: contents, encoding: 'utf8', maxBuffer: 4096, stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    revision = JSON.parse(vcsInfo)?.git?.sha1;
+  } catch (cause) {
+    throw new Error(`the published ${name}@${version} crate has no readable Git provenance`, { cause });
+  }
+  if (revision !== commit) {
+    throw new Error(`the published ${name}@${version} crate records commit ${revision ?? '(missing)'}, expected ${commit}`);
+  }
 }
 
 export async function verifyPublishedRelease(identity, {
@@ -72,6 +128,30 @@ export async function verifyPublishedRelease(identity, {
     if (attempt + 1 < attempts) await delay();
   }
   throw new Error(`npm does not serve ${identity.name}@${identity.version} after ${attempts} registry checks`);
+}
+
+async function verifyPublishedNativeHtml({ name, version, npmIntegrity, npmTarball }) {
+  const directory = await mkdtemp(path.join(tmpdir(), 'meta-language-published-html-'));
+  try {
+    await writeFile(path.join(directory, 'package.json'), '{"private":true}\n');
+    execFileSync('npm', [
+      'install', '--ignore-scripts', '--no-audit', '--no-fund',
+      '--cache', path.join(directory, 'npm-cache'), '--registry', 'https://registry.npmjs.org', npmTarball,
+    ], { cwd: directory, stdio: 'inherit' });
+    const lock = JSON.parse(readFileSync(path.join(directory, 'package-lock.json'), 'utf8'));
+    const installed = lock.packages?.[`node_modules/${name}`];
+    if (installed?.version !== version || installed.resolved !== npmTarball || installed.integrity !== npmIntegrity) {
+      throw new Error(`the clean HTML consumer did not install the registry artifact for ${name}@${version}`);
+    }
+    const fixture = path.join(directory, 'native-html.test.mjs');
+    await copyFile(new URL('../tests/downstream-native-html.test.js', import.meta.url), fixture);
+    const networkGuard = fileURLToPath(new URL('../tests/support/deny-consumer-network.mjs', import.meta.url));
+    execFileSync(process.execPath, ['--import', networkGuard, '--test', fixture], {
+      cwd: directory, env: {}, stdio: 'inherit',
+    });
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -87,6 +167,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (!['--identity', '--preflight', '--published'].includes(mode)) throw new Error('usage: release-publication.mjs --identity | --preflight | --published');
     const state = mode === '--identity' ? identity : mode === '--preflight'
       ? await releaseRegistryState(identity) : await verifyPublishedRelease(identity);
+    if (mode !== '--identity') await verifyReleaseProvenance(state);
+    if (mode === '--published') await verifyPublishedNativeHtml(state);
     if (process.env.GITHUB_OUTPUT) {
       appendFileSync(process.env.GITHUB_OUTPUT, `name=${identity.name}\nversion=${identity.version}\n`);
       if (state.alreadyPublished !== undefined) appendFileSync(process.env.GITHUB_OUTPUT, `already_published=${state.alreadyPublished}\n`);
