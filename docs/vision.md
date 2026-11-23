@@ -3873,6 +3873,12 @@ elapsed-time samples captured automatically from the fourteen complete report
 and grammar job logs of CI 39615628279. Missing or changed sources receive a
 size estimate. All modules and test files still execute exactly once, and
 native and historical modulo partitions keep their existing ownership rules.
+The eight report jobs also account for the cost of checking shared imported
+signatures. [Run 45153024974](https://github.com/link-foundation/meta-language/actions/runs/45153024974)
+spent 13 minutes checking the import graph for `grammar-reconcile.js` in shard
+7, and shard 4 resolved overlapping imports and finished in under 15 minutes.
+Six Rust, Rocq and JavaScript translation measurements assigned to shard 7 can
+reuse those checked imports in shard 4. Each measurement still runs once.
 Job counts, commands, coverage assertions and deadlines remain unchanged.
 These samples and scheduling estimates establish no requirement observation;
 only the next CI execution can confirm actual timing and results.

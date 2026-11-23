@@ -39,7 +39,7 @@ import { tokenize } from '../src/translation/lexer.js';
 import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
-import {partitionMeasuredWorkloads} from './test-groups.mjs';
+import { partitionMeasuredWorkloads } from './test-groups.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -87,11 +87,26 @@ function listSourceModules() {
   return walk('js/src').sort();
 }
 
-/**
- * The K-th measured-cost shard; every complete current source appears once.
- */
-function shardOf(files, index, count) {
-  return partitionMeasuredWorkloads(files,count)[index-1];
+// Run 45153024974 spent 13 minutes resolving grammar-reconcile.js imports on
+// shard 7. Shard 4 finished in under 15 minutes with compatible import contexts.
+const translationModulesToReassign = new Set([
+  'js/src/translation/emit-rocq.js',
+  'js/src/translation/guarded-private-array-write-rules.js',
+  'js/src/translation/javascript-infer.js',
+  'js/src/translation/rocq.js',
+  'js/src/translation/rust-runtime-shell-rules.js',
+  'js/src/translation/rust.js',
+]);
+
+/** Partition the complete report catalog without changing its inventory. */
+export function partitionReportModules(files, count) {
+  const shards = partitionMeasuredWorkloads(files, count);
+  if (count === 8) {
+    const moved = shards[6].filter((file) => translationModulesToReassign.has(file));
+    shards[6] = shards[6].filter((file) => !translationModulesToReassign.has(file));
+    shards[3] = [...shards[3], ...moved].sort();
+  }
+  return shards;
 }
 
 function selectedModules(replayPlan) {
@@ -102,7 +117,8 @@ function selectedModules(replayPlan) {
     console.error(`--shard takes K/N with 1 <= K <= N, not ${shard}`);
     process.exit(2);
   }
-  return shardOf(modules(replayPlan), Number(match[1]), Number(match[2]));
+  const partition = option('--modules') ? partitionMeasuredWorkloads : partitionReportModules;
+  return partition(modules(replayPlan), Number(match[2]))[Number(match[1]) - 1];
 }
 
 /** The hand-written Rust module `module` corresponds to, or null. */

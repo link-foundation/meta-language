@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
 import { LinkNetwork } from '../src/network.js';
-import { createModuleContext } from '../scripts/generate-self-translation-report.mjs';
+import { createModuleContext, partitionReportModules } from '../scripts/generate-self-translation-report.mjs';
 import { writeProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -22,6 +22,18 @@ const list = (directory) => readdirSync(path.join(root, directory), { withFileTy
   return entry.isDirectory() ? list(file) : file.endsWith('.js') ? [file] : [];
 });
 const metrics = { functions: 0, matched: 0, identical: 0, codeLines: 0, sharedLines: 0, handWrittenLines: 0 };
+
+test('report scheduling keeps every source when moving measurements away from shard 7', () => {
+  const catalog = list('js/src').sort();
+  const shards = partitionReportModules(catalog, 8);
+  assert.equal(shards.length, 8);
+  assert.ok(shards.every((shard) => shard.length > 0));
+  assert.deepEqual(shards.flat().sort(), catalog);
+  assert.ok(shards[6].includes('js/src/grammar-reconcile.js'));
+  for (const file of ['emit-rocq.js', 'guarded-private-array-write-rules.js', 'javascript-infer.js', 'rocq.js', 'rust-runtime-shell-rules.js', 'rust.js']) {
+    assert.ok(shards[3].includes(`js/src/translation/${file}`), file);
+  }
+});
 
 test('report contexts resolve real translated exports across relative module dependencies', () => {
   const modules = new Map([
