@@ -36,6 +36,12 @@ test('four required tooling cells retain every current file exactly once and eve
   assert.equal(new Set(cells.flat()).size,files.length);assert.deepEqual(cells.flat().sort(),files);
   assert.ok(cells.flat().includes('issue-195-evidence-tooling-partitions.test.js'));
   assert.ok(cells.flat().includes('issue-195-evidence-link-foundation.test.js'));
+  const measured=readProjectData(new URL('parity/fixtures/ci-45112870920-tooling-costs.lino',root));
+  assert.deepEqual(measured.logs.map(log=>log.partition),[1,2,3,4]);
+  const duration=new Map(measured.entries.map(row=>[row.file.slice('js/tests/'.length),row.milliseconds]));
+  const peak=assignments=>Math.max(...assignments.map(cell=>cell.reduce((sum,file)=>sum+(duration.get(file)??0),0)));
+  const originalCells=cells.map((_,index)=>files.filter((_,offset)=>offset%cells.length===index));
+  assert.ok(peak(cells)<peak(originalCells),'the busiest cell has fewer observed milliseconds');
 });
 
 test('partial duplicate mixed and unsupported tooling cells refuse without hiding unrelated gate edits',()=>{

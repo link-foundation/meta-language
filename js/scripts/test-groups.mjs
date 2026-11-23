@@ -20,10 +20,12 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
 const translationSchedulingFile=new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino',import.meta.url);
+const toolingSchedulingFile=new URL('../../parity/fixtures/ci-45112870920-tooling-costs.lino',import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
 const workloadRevisions=new Map([
  [39615628279,schedulingRevision],
  [45080642295,'016ed6eed0c376a682299dd6463533a620a6a36f'],
+ [45112870920,'f1d961d1a9d72bd4e6c99178d20e0aadb0415b63'],
 ]);
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
@@ -157,10 +159,14 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Balance the measured grammar cohort and both recorded translation widths.
+  // Balance cohorts with observed file durations at the recorded widths.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
   if((count===6||count===8)&&files.includes('translation-native-library-receipt-history.test.js')){
     const costs=readProjectData(translationSchedulingFile);
+    return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count,{costs})[index-1].map(file=>file.slice(9));
+  }
+  if(count===4&&files.includes('issue-195-evidence-tooling-partitions.test.js')){
+    const costs=readProjectData(toolingSchedulingFile);
     return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count,{costs})[index-1].map(file=>file.slice(9));
   }
   return files.filter((_, offset) => offset % count === index - 1);

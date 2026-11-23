@@ -16,6 +16,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/grammar-outcome-network/native-transport/inverse/generate-scheduling-repair-archive.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/runner/README.md': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/runner/plan.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/runner/run.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -65,6 +66,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/translation-frontend-rule-styles.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-grammar-context-metadata.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-raw-source-archive-workers.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/tests/translation-scheduling-source-history.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-typescript-workflow.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'parity/language-grammar-inventory.lino': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'parity/fixtures/builtin-cst-expected.lino': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -104,7 +106,7 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = '1e3a0ff83de369cdf8b81a3fa31ebd536765779210ab757480313072af1845c5';
+const archiveDigest = '7479e2bf2a05298842a36e5753544c26ed7835a7e83eb212df5c37b9bd28f44f';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 const verifiedPredecessors = new WeakMap();

@@ -3712,10 +3712,12 @@ start on the complete stored sources while generation runs. The planner admits
 the receipts only after all three regenerated source texts match the replayed
 inputs byte for byte. On smaller runners, generation precedes source replay.
 The complete tooling test group likewise has four required physical cells after
-its measured fifteen-minute cancellation. The existing modulo file partitioner
-assigns every current test file exactly once; all commands, assertions, flags,
-deadlines and aggregate prerequisites remain intact. Historical workflow checks
-recover their exact original inputs through a separate checked matrix inverse.
+its measured fifteen-minute cancellation. Workloads with unchanged source bytes
+use advisory durations from their retained CI logs. Changed or unsampled files
+use a size estimate. The partitioner assigns every current test file exactly
+once and keeps the commands, assertions, flags, deadlines and aggregate
+prerequisites intact. Historical workflow checks recover their exact original
+inputs through a separate checked matrix inverse.
 An exact native checked-program mismatch keeps its original rejection and adds
 a bounded first differing field path. Declaration-list archive failures retain
 their actual original input in the failure message. Neither diagnostic accepts,

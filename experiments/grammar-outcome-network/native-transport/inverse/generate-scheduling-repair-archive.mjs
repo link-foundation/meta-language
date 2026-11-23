@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from '../../../../js/scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-certificate.mjs';
 import {checkProjectData,writeProjectData} from '../../../../js/scripts/project-data.mjs';
+import {restoreSchedulingTestPredecessor} from '../../../../js/scripts/scheduling-source-history.mjs';
 const root=new URL('../../../../',import.meta.url),revision='d322fcd4da01c243d5f76fe631d78db2d850106b';
 const sources=[
   "js/tests/test-groups.test.js",
@@ -25,7 +26,8 @@ export function generateSchedulingRepairArchive({check=false}={}) {
       const original=captureGitArtifactCertificate(revision,file);
       verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
       const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
-      const current=Buffer.from(restoreNativeGraphSourceHistory(file,readFileSync(new URL(file,root),'utf8')));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
+      const source=restoreSchedulingTestPredecessor(file,readFileSync(new URL(file,root),'utf8'));
+      const current=Buffer.from(restoreNativeGraphSourceHistory(file,source));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
       return{file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,current:pin(current)};
     });
     const packet={schemaVersion:1,revision,run:39403403220,sources:rows,
