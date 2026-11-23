@@ -6,6 +6,7 @@ import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
 import {restoreRawOracleContractPartitionHistory,restoreReportScheduleHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
+import {javascriptWorkflowSource,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
 
@@ -81,7 +82,14 @@ test('two required raw contract cells preserve complete commands limits and the 
   const plan=after.steps.find(row=>row.name===old.name);
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
   const live=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
-  assert.deepEqual(live,after);
+  const checkoutFilter="          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n";
+  const [,scheduled,currentWorkflow]=readIssue245SourcePair(javascriptWorkflowSource).versions;
+  assert.equal(currentSource,currentWorkflow);
+  assert.equal(currentSource.split(checkoutFilter).length,2);
+  assert.equal(currentSource.replace(checkoutFilter,''),scheduled);
+  assert.match(live.steps[0].text,/fetch-depth: 0/u);
+  assert.ok(live.steps[0].text.includes(checkoutFilter.trimEnd()));
+  assert.deepEqual(parseWorkflow(currentSource.replace(checkoutFilter,'')).find(row=>row.id==='package-checks'),after);
   assert.equal(plan.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'",''),old.text);
   assert.equal(schema.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'",'')
     .replace('Run complete original link raw schema and consumer contracts',old.name)

@@ -24,6 +24,7 @@ export const runtimeSourceFiles = Object.freeze([
   javascriptRuntimeSource,
 ]);
 const schedulingRevision = '0deae514483822ffd2a42a4fa0f4c88744d0745d';
+const precedingCheckRevision = '591e98639e99c569f063214c3ae8a756185f4add';
 const profiles = [
   [runtimeSourceFiles[0], { revision: mainRevision,
     predecessor: '7b0c3936262249a43ce687a315737a59af51fed7c79ed616faddd35cd1aab221',
@@ -64,7 +65,11 @@ const profiles = [
     current: '842f0097fc91ef7a52bf565e59fa640672a09c3ea72380ddf3b205dc09629bc0' }],
   [javascriptWorkflowSource, { revision: schedulingRevision,
     predecessor: '6274838f6f901b71b1f0540b40b741640a8c23abde25b7afde91368bee4186bf',
-    current: 'f92347173c03d0ca6998379b4d5c13b2d264079455e8fe1f7746423889285bcf' }],
+    current: 'f92347173c03d0ca6998379b4d5c13b2d264079455e8fe1f7746423889285bcf',
+    successorRevision: precedingCheckRevision }],
+  [javascriptWorkflowSource, { revision: precedingCheckRevision,
+    predecessor: 'f92347173c03d0ca6998379b4d5c13b2d264079455e8fe1f7746423889285bcf',
+    current: '8df6b6086e83ba7204e441008f191f9506911299eeff441e0a5492244b74f4f2' }],
   [booleanProjectionCheckerSource, { revision: '3fe3a9f9decfa6431b5b0718729a5d123b5f236b',
     predecessor: 'b07b8ffb95d6bf4274d8bf5a16c43b2673d1869a08b1173a3fc65bcf1c14daf2',
     current: 'c0b461b416fd1ab812cb1a8670b6911a3ee905015872e689959826e932f40709',

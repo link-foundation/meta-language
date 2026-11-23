@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
-import {javascriptWorkflowSource,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
+import {javascriptWorkflowSource,readIssue245SourcePair,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
 import {generateTranslationWorkflowHistory} from '../scripts/generate-translation-workflow-history.mjs';
 import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';
@@ -44,11 +44,12 @@ test('six bounded translation partitions retain every previous file once and pre
 
 test('nine translation jobs retain complete historical cohorts and merge their exact artifact set',()=>{
   const workflow=read(javascriptWorkflowSource);
-  const previous=restoreIssue245SourceSuccessor(javascriptWorkflowSource,workflow);
+  const [previous,scheduled,current]=readIssue245SourcePair(javascriptWorkflowSource).versions;
+  assert.equal(workflow,current);
   const [six,nine]=[6,9].map(count=>Array.from({length:count},(_,index)=>
     '          - {group: translation, partition: '+(index+1)+', shards: '+count+'}\n').join(''));
   assert.equal(previous.split(six).length,2);
-  assert.equal(workflow,previous.replace(six,nine)
+  assert.equal(scheduled,previous.replace(six,nine)
     .replace('*-of-6\n','*-of-9\n').replace('--partitions 6 ','--partitions 9 '));
   const tests=parseWorkflow(workflow).find(job=>job.id==='tests');
   assert.match(tests.header,/timeout-minutes: 15/u);

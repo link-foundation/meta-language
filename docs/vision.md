@@ -3773,6 +3773,11 @@ remain authenticated against their certified predecessor. Unknown profiles,
 missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
+CI 45104457483 spent nearly two minutes fetching and checking out the whole
+repository before the raw plan job. That job requests a blobless checkout with
+full commit history. Git materializes the checked-out tree and fetches older
+blobs on demand. The fresh merge check, exact source checks, all seven plan
+contracts and ten-minute deadline still apply.
 Each raw execution boundary rereads both emission archives, the raw source and
 all producer inputs. An execution can reuse a successful emission profile proof
 only when every input buffer exactly matches the verified bytes. The transport,
