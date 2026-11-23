@@ -3791,14 +3791,19 @@ the complete current source descriptor and recursive declaration ownership
 checks each took more than a minute in shard 5. Running both in shard 3 in
 [run 45173065418](https://github.com/link-foundation/meta-language/actions/runs/45173065418/job/137687230067)
 exhausted that shard's deadline after spending 107 seconds fetching history.
-The checks run in shards 3 and 4 respectively. In the same run,
+The checks run in shards 3 and 2 respectively. In the same run,
 [shard 1](https://github.com/link-foundation/meta-language/actions/runs/45173065418/job/137687230096)
 also exhausted its deadline after its relative array history check took 95 seconds.
-That complete test file moves to shard 4, which previously finished in under
-nine minutes. Translation checkouts use full commit history and fetch historical
-blobs on demand. Every partition
-transports feedback with a LiNo receipt of the exact commit, selected files and
-payload hashes. A required merge validates every partition, permits an empty
+That complete test file moves to shard 4, which finished in 12 minutes and
+54 seconds, while shard 2 finished in 9 minutes and 39 seconds. The same run's
+[shard 6](https://github.com/link-foundation/meta-language/actions/runs/45173065418/job/137687230298)
+exhausted its deadline after completing the raw descriptor and native library
+receipt history files in 129 and 149 seconds. Those complete files move to
+shards 5 and 2 respectively. Shard 5 finished in eleven minutes.
+Translation checkouts use full commit history and fetch historical blobs on
+demand. Every partition transports feedback with a LiNo receipt of the exact
+commit, selected files and payload hashes. A required merge validates every
+partition, permits an empty
 individual partition, rejects missing, stale or conflicting inputs, and restores
 the original combined artifact name, paths and retention. An empty complete
 collection still fails. Acceptance keeps its separate evidence records, with

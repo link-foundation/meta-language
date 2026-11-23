@@ -153,14 +153,18 @@ export function partitionGroupFiles(files, shard = '1/1') {
   }
   // Native and historical modulo cohorts retain their exact partition rules.
   // Spread the two complete source checks from shard 5 (85 s and 70 s)
-  // across shards 3 and 4. Run 45173065418 showed both together exhausting shard 3.
+  // across shards 3 and 2. Run 45173065418 showed both together exhausting shard 3.
   // Shard 1 also timed out in that run. Its relative array history took 95 s.
+  // Shard 6 timed out after running the raw descriptor and native receipt
+  // history files (129 s and 149 s). Move those complete files to shards 5 and 2.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
   if (count === 6 && files.includes('translation-owned-number-facts.test.js')) {
     const measuredPartitions = new Map([
       ['translation-current-own-codebase-raw-source-descriptors.test.js', 3],
-      ['translation-self-recursive-declaration-owners.test.js', 4],
+      ['translation-self-recursive-declaration-owners.test.js', 2],
       ['translation-array-relative-history.test.js', 4],
+      ['translation-current-raw-descriptor-refresh-history.test.js', 5],
+      ['translation-native-library-receipt-history.test.js', 2],
     ]);
     return files.filter((file, offset) => (measuredPartitions.get(file) ?? (offset % count) + 1) === index);
   }

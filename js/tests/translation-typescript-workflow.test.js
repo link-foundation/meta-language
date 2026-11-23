@@ -43,12 +43,14 @@ test('six bounded translation partitions retain every previous file once and pre
   for(const file of partitionTests(originalFiles).groups.translation)assert.ok(files.includes(file),file);
 });
 
-test('the six translation shards distribute only the three measured checks from the timed-out shards',()=>{
+test('the six translation shards distribute only the five measured checks from the timed-out shards',()=>{
   const files=partitionTests(testFiles()).groups.translation;
   const moved=new Map([
     ['translation-current-own-codebase-raw-source-descriptors.test.js',3],
-    ['translation-self-recursive-declaration-owners.test.js',4],
+    ['translation-self-recursive-declaration-owners.test.js',2],
     ['translation-array-relative-history.test.js',4],
+    ['translation-current-raw-descriptor-refresh-history.test.js',5],
+    ['translation-native-library-receipt-history.test.js',2],
   ]);
   for(const file of moved.keys())assert.ok(files.includes(file),file);
   for(let shard=1;shard<=6;shard++){

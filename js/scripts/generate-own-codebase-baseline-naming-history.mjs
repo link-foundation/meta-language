@@ -50,13 +50,18 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/scripts/current-ci-repair-source-history.mjs',
     'js/scripts/generate-continuation-historical-inputs.mjs',
     'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
+    'js/scripts/generate-raw-oracle-contract-partitions.mjs',
     'js/scripts/native-compatibility-source-history.mjs',
     'js/scripts/own-codebase-baseline-naming-history.mjs',
     'js/scripts/raw-consuming-snapshot-source-profile.mjs',
+    'js/scripts/raw-oracle-contract-partition-history.mjs',
     'js/scripts/scheduling-source-history.mjs',
+    'js/scripts/test-groups.mjs',
     'js/scripts/tooling-frozen-source-history.mjs',
     'js/src/translation/types.js',
     'js/tests/self-translation.test.js',
+    'js/tests/translation-native-constructor-storage.test.js',
+    'js/tests/translation-typescript-workflow.test.js',
   ];
   const file='parity/naming/array-identity-historical-inventories.lino';
   const stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
