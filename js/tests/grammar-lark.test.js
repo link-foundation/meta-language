@@ -138,9 +138,9 @@ test('Lark refuses unsupported and malformed regexes at their UTF-8 byte positio
       message: 'lark import parse error: ' + diagnostic,
     });
   }
+  const requirementId = 'I195-I233-LARK-REGEX-DIAGNOSTICS';
   recordIssue195Observations({
-    requirementId: 'I195-I233-LARK-REGEX-DIAGNOSTICS', suffix: 'behavior',
-    fixtureId: 'i233-lark-regex-diagnostics', fixtureFile: regexFixture,
+    requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(), fixtureFile: regexFixture,
     assertions: ['unsupportedRegexReportsSourceByte'], testName: context.name,
   });
 });
