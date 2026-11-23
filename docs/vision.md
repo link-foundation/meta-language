@@ -2360,12 +2360,19 @@ and include the Unicode data license under `src/data/natural-language-values/`.
 Both runtimes use Unicode 17.0 default extended grapheme cluster boundaries
 for compatibility normalization and grapheme edit units. The JavaScript
 property tables and the shared boundary fixtures are generated from the pinned
-Unicode data by `js/scripts/build-text-location-graphemes.mjs`. A positive
-edit budget compares graphemes or word segments and returns the lowest-distance
-nonempty match at each start, preferring the shorter match on ties. Word n-gram
-overlap returns every pair of source ranges for each shared projected word
-sequence. JavaScript exposes UTF-16 offsets and Rust exposes UTF-8 offsets for
-these operations. [Unicode text segmentation](https://www.unicode.org/reports/tr29/tr29-47.html#Grapheme_Cluster_Boundaries)
+Unicode data by `js/scripts/build-text-location-graphemes.mjs`. The `nfkc`
+transformation uses Unicode 17.0 compatibility decomposition, canonical
+ordering and composition across the full input. When composition or reordering
+crosses grapheme boundaries, the affected projection retains a single ordered
+original range. JavaScript generates its normalization tables and the shared
+conformance cases through `js/scripts/build-text-location-normalization.mjs`.
+[Unicode text segmentation](https://www.unicode.org/reports/tr29/tr29-47.html#Grapheme_Cluster_Boundaries) · [Unicode normalization](https://www.unicode.org/reports/tr15/tr15-57.html)
+
+A positive edit budget compares graphemes or word segments and returns the
+lowest-distance nonempty match at each start, preferring the shorter match on
+ties. Word n-gram overlap returns every pair of source ranges for each shared
+projected word sequence. JavaScript exposes UTF-16 offsets and Rust exposes
+UTF-8 offsets for these operations.
 
 The JavaScript Yacc/Lex draft lowers declared token rules, left and right
 precedence, `%prec`, lexical modes, trivia and supported arithmetic or textual

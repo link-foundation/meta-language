@@ -12,6 +12,7 @@ use super::issue_195_observations::{Observation, record};
 const FIXTURE: &str = "parity/fixtures/text-location.lino";
 const CASE_FOLDING_FIXTURE: &str = "parity/fixtures/text-location-case-folding.lino";
 const GRAPHEME_FIXTURE: &str = "parity/fixtures/text-location-grapheme-conformance.lino";
+const NORMALIZATION_FIXTURE: &str = "parity/fixtures/text-location-normalization-conformance.lino";
 
 fn fixture() -> Value {
     read_structured_data_lino(include_str!("../../../parity/fixtures/text-location.lino"))
@@ -240,18 +241,7 @@ fn unicode_grapheme_boundaries_and_edits_keep_original_ranges() {
     assert_eq!(cases.clone().count(), 766);
     let mut clusters = BTreeSet::new();
     for line in cases {
-        let groups: Vec<String> = line
-            .strip_prefix("(case (")
-            .and_then(|case| case.strip_suffix("))"))
-            .expect("grapheme case")
-            .split(") (")
-            .map(|codes| {
-                codes
-                    .split(' ')
-                    .map(|code| char::from_u32(u32::from_str_radix(code, 16).unwrap()).unwrap())
-                    .collect()
-            })
-            .collect();
+        let groups = unicode_fixture_groups(line);
         let source = groups.concat();
         let mut offset = 0;
         let expected: Vec<_> = groups
@@ -311,5 +301,93 @@ fn unicode_grapheme_boundaries_and_edits_keep_original_ranges() {
             "graphemeEditsKeepOriginalSourceRanges",
         ],
         test_name: "unicode_grapheme_boundaries_and_edits_keep_original_ranges",
+    });
+}
+
+fn unicode_fixture_groups(line: &str) -> Vec<String> {
+    line.strip_prefix("(case (")
+        .and_then(|case| case.strip_suffix("))"))
+        .expect("Unicode conformance case")
+        .split(") (")
+        .map(|codes| {
+            codes
+                .split(' ')
+                .map(|code| char::from_u32(u32::from_str_radix(code, 16).unwrap()).unwrap())
+                .collect()
+        })
+        .collect()
+}
+
+#[test]
+fn unicode_compatibility_composition_locates_complete_original_ranges() {
+    assert_eq!(
+        unicode_normalization::UNICODE_VERSION,
+        (17, 0, 0),
+        "uncovered native Unicode normalization version"
+    );
+    let mut cases =
+        include_str!("../../../parity/fixtures/text-location-normalization-conformance.lino")
+            .lines();
+    assert!(
+        cases
+            .next()
+            .unwrap()
+            .starts_with("(unicode-normalization-conformance 17.0.0 ")
+    );
+    assert_eq!(cases.clone().count(), 20_034);
+    let prefix = "🚀\u{1}";
+    let options = TextLocationOptions {
+        normalize: &[TextNormalization::Nfkc],
+        ..TextLocationOptions::default()
+    };
+    for line in cases {
+        let samples = unicode_fixture_groups(line);
+        let normalized = &samples[0];
+        for text in &samples {
+            let source = format!("{prefix}{text}\u{2}");
+            let end = prefix.len() + text.len();
+            let found = locate(&source, normalized, options)
+                .into_iter()
+                .find(|result| result.range.start() == prefix.len() && result.range.end() == end)
+                .unwrap_or_else(|| panic!("missing complete source span for {line}"));
+            assert_eq!(&found.text, text, "{line}");
+            let required = if text == normalized {
+                &[][..]
+            } else {
+                options.normalize
+            };
+            assert_eq!(found.normalizations.as_slice(), required, "{line}");
+            assert_eq!(found.distance, 0, "{line}");
+            assert!(found.edits.is_empty(), "{line}");
+        }
+    }
+
+    let halfwidth = "ﾡￂ";
+    let source = format!("{prefix}{halfwidth}\u{2}");
+    let end = prefix.len() + halfwidth.len();
+    let matches = locate(&source, "가", options);
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].range.start(), prefix.len());
+    assert_eq!(matches[0].range.end(), end);
+    assert_eq!(matches[0].text, halfwidth);
+    assert_eq!(matches[0].normalizations.as_slice(), options.normalize);
+    assert!(locate(&source, "ᄀ", options).is_empty());
+    let pairs = word_ngram_overlap(&source, "가", 1, options.normalize);
+    assert_eq!(pairs.len(), 1);
+    assert_eq!(pairs[0].words, ["가"]);
+    assert_eq!(pairs[0].left.start(), prefix.len());
+    assert_eq!(pairs[0].left.end(), end);
+    assert_eq!(pairs[0].right.start(), 0);
+    assert_eq!(pairs[0].right.end(), "가".len());
+    record(&Observation {
+        requirement_id: "I195-I243-UNICODE-COMPATIBILITY-COMPOSITION",
+        suffix: "behavior",
+        fixture_id: "i195-i243-unicode-compatibility-composition",
+        fixture_file: NORMALIZATION_FIXTURE,
+        assertions: &[
+            "unicode17CompatibilityNormalization",
+            "compatibilityCompositionsKeepOriginalSourceRanges",
+        ],
+        test_name: "unicode_compatibility_composition_locates_complete_original_ranges",
     });
 }

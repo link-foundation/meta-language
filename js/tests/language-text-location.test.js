@@ -11,6 +11,7 @@ const fixture = readProjectData(new URL('../../' + fixtureFile, import.meta.url)
 const caseFoldingFixtureFile = 'parity/fixtures/text-location-case-folding.lino';
 const caseFoldingFixture = readProjectData(new URL('../../' + caseFoldingFixtureFile, import.meta.url));
 const graphemeFixtureFile = 'parity/fixtures/text-location-grapheme-conformance.lino';
+const normalizationFixtureFile = 'parity/fixtures/text-location-normalization-conformance.lino';
 
 function observe(context, requirementId, assertions, evidenceFile = fixtureFile) {
   recordIssue195Observations({
@@ -92,9 +93,7 @@ test('Unicode 17 grapheme boundaries and edits retain original source ranges', c
   assert.equal(cases.length, 766);
   const clusters = new Set();
   for (const line of cases) {
-    assert.match(line, /^\(case(?: \([0-9A-F ]+\))+\)$/u);
-    const groups = [...line.matchAll(/\(([0-9A-F ]+)\)/gu)].map(([, codes]) =>
-      String.fromCodePoint(...codes.split(' ').map(code => Number.parseInt(code, 16))));
+    const groups = unicodeFixtureGroups(line);
     const source = groups.join('');
     let index = 0;
     const expected = groups.map(segment => {
@@ -120,4 +119,45 @@ test('Unicode 17 grapheme boundaries and edits retain original source ranges', c
   observe(context, 'I195-I243-UNICODE-GRAPHEME-BOUNDARIES', [
     'unicode17GraphemeBoundaries', 'graphemeEditsKeepOriginalSourceRanges',
   ], graphemeFixtureFile);
+});
+
+function unicodeFixtureGroups(line) {
+  assert.match(line, /^\(case(?: \([0-9A-F ]+\))+\)$/u);
+  return [...line.matchAll(/\(([0-9A-F ]+)\)/gu)].map(([, codes]) =>
+    String.fromCodePoint(...codes.split(' ').map(code => Number.parseInt(code, 16))));
+}
+
+test('Unicode 17 compatibility composition locates complete original ranges', context => {
+  const [header, ...cases] = readFileSync(new URL('../../' + normalizationFixtureFile, import.meta.url), 'utf8').trim().split('\n');
+  assert.match(header, /^\(unicode-normalization-conformance 17\.0\.0 [0-9a-f]{64}\)$/u);
+  assert.equal(cases.length, 20034);
+  const prefix = '🚀\u0001';
+  const options = { normalize: ['nfkc'] };
+  for (const line of cases) {
+    const samples = unicodeFixtureGroups(line);
+    const [normalized] = samples;
+    for (const text of samples) {
+      const start = prefix.length;
+      const end = start + text.length;
+      const found = locate(`${prefix}${text}\u0002`, normalized, options)
+        .find(match => match.start === start && match.end === end);
+      assert.deepEqual(found, {
+        start, end, text, normalizations: text === normalized ? [] : ['nfkc'], distance: 0, edits: [],
+      }, line);
+    }
+  }
+
+  const halfwidth = 'ﾡￂ';
+  const source = `${prefix}${halfwidth}\u0002`;
+  const end = prefix.length + halfwidth.length;
+  assert.deepEqual(locate(source, '가', options), [{
+    start: prefix.length, end, text: halfwidth, normalizations: ['nfkc'], distance: 0, edits: [],
+  }]);
+  assert.deepEqual(locate(source, 'ᄀ', options), []);
+  assert.deepEqual(wordNgramOverlap(source, '가', { ...options, size: 1 }), [{
+    words: ['가'], left: { start: prefix.length, end }, right: { start: 0, end: 1 },
+  }]);
+  observe(context, 'I195-I243-UNICODE-COMPATIBILITY-COMPOSITION', [
+    'unicode17CompatibilityNormalization', 'compatibilityCompositionsKeepOriginalSourceRanges',
+  ], normalizationFixtureFile);
 });

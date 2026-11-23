@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::sync::LazyLock;
 
 use regex::Regex;
-use unicode_normalization::UnicodeNormalization;
+use unicode_normalization::char::{canonical_combining_class, compose, decompose_compatible};
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::LinkNetwork;
@@ -133,15 +133,106 @@ static CASE_FOLDING: LazyLock<BTreeMap<char, Vec<char>>> = LazyLock::new(|| {
         .collect()
 });
 
+#[derive(Clone, Copy)]
+struct NormalizedScalar {
+    value: char,
+    combining_class: u8,
+    range: ByteRange,
+}
+
+fn covering_range(left: ByteRange, right: ByteRange) -> ByteRange {
+    ByteRange::new(left.start().min(right.start()), left.end().max(right.end()))
+}
+
+fn compatibility_projection(source: &str) -> Vec<TextLocationUnit> {
+    let graphemes = source.grapheme_indices(true);
+    if source.is_ascii() {
+        return graphemes
+            .map(|(index, segment)| TextLocationUnit {
+                range: ByteRange::new(index, index + segment.len()),
+                text: segment.to_owned(),
+            })
+            .collect();
+    }
+
+    // Keep the original grapheme range through decomposition, ordering and composition.
+    let mut ordered: Vec<NormalizedScalar> = Vec::new();
+    let mut combining_start = 0;
+    for (index, segment) in graphemes {
+        let range = ByteRange::new(index, index + segment.len());
+        for scalar in segment.chars() {
+            decompose_compatible(scalar, |value| {
+                let combining_class = canonical_combining_class(value);
+                if combining_class == 0 {
+                    ordered[combining_start..].sort_by_key(|entry| entry.combining_class);
+                    combining_start = ordered.len() + 1;
+                }
+                ordered.push(NormalizedScalar {
+                    value,
+                    combining_class,
+                    range,
+                });
+            });
+        }
+    }
+    ordered[combining_start..].sort_by_key(|entry| entry.combining_class);
+
+    let mut starter: Option<usize> = None;
+    let mut last_class = 0;
+    let mut length = 0;
+    for index in 0..ordered.len() {
+        let entry = ordered[index];
+        if (last_class == 0 || last_class < entry.combining_class)
+            && let Some(starter) = starter
+            && let Some(composite) = compose(ordered[starter].value, entry.value)
+        {
+            let first = &mut ordered[starter];
+            first.value = composite;
+            first.range = covering_range(first.range, entry.range);
+            continue;
+        }
+        last_class = entry.combining_class;
+        if last_class == 0 {
+            starter = Some(length);
+        }
+        ordered[length] = entry;
+        length += 1;
+    }
+    ordered.truncate(length);
+
+    // Expansions, reordering and compositions can make source ranges overlap.
+    let mut ranges: Vec<(usize, ByteRange)> = Vec::new();
+    for (index, entry) in ordered.iter().enumerate() {
+        let (mut first, mut range) = (index, entry.range);
+        while ranges
+            .last()
+            .is_some_and(|(_, previous)| previous.end() > range.start())
+        {
+            let (previous_first, previous) = ranges.pop().expect("overlapping source range");
+            first = previous_first;
+            range = covering_range(previous, range);
+        }
+        ranges.push((first, range));
+    }
+    ranges
+        .iter()
+        .enumerate()
+        .map(|(index, &(first, range))| {
+            let end = ranges
+                .get(index + 1)
+                .map_or(ordered.len(), |(first, _)| *first);
+            let text = ordered[first..end]
+                .iter()
+                .map(|entry| entry.value)
+                .collect();
+            TextLocationUnit { range, text }
+        })
+        .collect()
+}
+
 fn project(source: &str, names: &[TextNormalization]) -> Vec<TextLocationUnit> {
     let mut result: Vec<TextLocationUnit> = Vec::new();
-    let mut emit = |segment: &str, start: usize| {
-        let range = ByteRange::new(start, start + segment.len());
-        let text = if names.contains(&Nfkc) {
-            segment.nfkc().collect()
-        } else {
-            segment.to_owned()
-        };
+    let mut emit = |text: &str, range: ByteRange| {
         for mut value in text.chars() {
             if names.contains(&Quotes) {
                 value = mapped_scalar(value, policy::normalize_quote_scalar);
@@ -181,12 +272,15 @@ fn project(source: &str, names: &[TextNormalization]) -> Vec<TextLocationUnit> {
         }
     };
     if names.contains(&Nfkc) {
-        for (index, segment) in source.grapheme_indices(true) {
-            emit(segment, index);
+        for TextLocationUnit { text, range } in compatibility_projection(source) {
+            emit(&text, range);
         }
     } else {
         for (index, scalar) in source.char_indices() {
-            emit(scalar.encode_utf8(&mut [0; 4]), index);
+            emit(
+                scalar.encode_utf8(&mut [0; 4]),
+                ByteRange::new(index, index + scalar.len_utf8()),
+            );
         }
     }
     result

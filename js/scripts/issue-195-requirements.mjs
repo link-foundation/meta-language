@@ -831,6 +831,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
       },
     },
+    {
+      id: 'I195-I243-UNICODE-COMPATIBILITY-COMPOSITION',
+      source: ISSUE_195_SOURCES.normalizedTextLocation,
+      language: 'Unicode text search',
+      version: 'Unicode 17.0.0 NFKC and unicode-normalization 0.1.25',
+      construct: 'compatibility decomposition, ordering and composition with source ranges',
+      expectedBehavior: 'The compatibility projection performs Unicode 17.0.0 NFKC across the full text. A composition or reordering that crosses original grapheme boundaries retains a single ordered source span. Quote location and word sequence overlap retain those original ranges.',
+      fixture: 'parity/fixtures/text-location-normalization-conformance.lino',
+      selector: 'every Unicode 17.0.0 normalization case, exact source ranges after supplementary characters, and halfwidth Hangul composition across original grapheme boundaries',
+      assertions: ['unicode17CompatibilityNormalization', 'compatibilityCompositionsKeepOriginalSourceRanges'],
+      implementationEntryPoints: {
+        javascript: ['js/src/text-location.js', 'js/src/text-location-normalization.js', 'js/tests/language-text-location.test.js'],
+        rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I238-HTML-VISIBLE-TEXT',
