@@ -291,6 +291,18 @@ test('GBNF escapes literals and classes and sanitizes names like Rust', () => {
   ]);
 });
 
+test('GBNF delimits byte escapes before adjacent hexadecimal digits', () => {
+  const specification = grammar(null, ['entry', seq(
+    E.literal('\u0001A\\x1F'),
+    cls(true, range('\u0000', '\u001f'), ch('a'), ch('b')),
+    cls(false, ch('^'), range('A', 'F'), ch('0')),
+    cls(false, ch('\u007f'), ch('g')),
+  )]);
+  const { source } = emitGbnf(specification);
+  assert.equal(source, 'root ::= "\\u0001A\\\\x1F" [^\\x00-\\u001Fab] [\\u005EA-F0] [\\x7Fg]\n');
+  assert.deepEqual(importGbnf(source).undefinedNonterminals(), []);
+});
+
 test('GBNF emission reports unsupported constructs', () => {
   assertUnsupported(() => emitGbnf(grammar(null, ['bad', E.and(E.literal('x'))])), 'positive-predicate');
   assertUnsupported(() => emitGbnf(grammar(null, ['bad', E.not(E.literal('xy'))])), 'negative-predicate');

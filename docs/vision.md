@@ -4624,7 +4624,9 @@ or tokens, and a link that can be inspected in the returned network.
 The schema importer builds the shared grammar representation for existing
 emitters. It defines a `start` production for Lark consumers, and retains only
 the productions reachable from that entry point. GBNF emitters map it to
-`root` and qualify identifiers reserved by XGrammar. Lark emits supplementary
+`root` and qualify identifiers reserved by XGrammar. GBNF uses a fixed-width
+Unicode escape before adjacent hexadecimal digits so readers with variable-width
+byte escapes preserve the same characters. Lark emits supplementary
 Unicode scalars directly. Calendar productions use matching scalar boundaries
 across overlapping alternatives so a contextual decoder can follow either
 path. Date, date-time, UUID and email productions share the same decoder
