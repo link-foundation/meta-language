@@ -133,7 +133,8 @@ const dictionary = [header, ...pins, ...featureRows, ...data, ''].join('\n');
 const wordNetLicense = readFileSync(join(wordNetDirectory, 'LICENSE'));
 assert.equal(digest(wordNetLicense), 'c4163fc9f8aea62a084f355753bf6d0c54d2582384eae13574e8847aa6bc227e');
 const agidLicense = files.get(prefix + 'README').toString('utf8').replaceAll('\r\n', '\n').trimEnd();
-const license = (agidLicense + '\n\n' + wordNetLicense.toString('utf8').trimEnd() + '\n').replace(/[ \t]+$/gmu, '');
+const license = (agidLicense + '\n\n' + wordNetLicense.toString('utf8').replaceAll('\r\n', '\n').trimEnd() + '\n')
+  .replace(/[ \t]+$/gmu, '');
 for (const directory of ['../src/data/morphology/', '../../rust/src/data/morphology/']) {
   const dictionaryPath = new URL(directory + 'english.lino', import.meta.url);
   const licensePath = new URL(directory + 'ENGLISH-MORPHOLOGY-LICENSE.txt', import.meta.url);
