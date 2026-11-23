@@ -4009,6 +4009,18 @@ join the recorded transport provenance. Original commands, assertions, parser
 limits and the ten-minute package deadline stay mandatory. Node's
 [worker resource controls](https://nodejs.org/download/release/v22.15.0/docs/api/worker_threads.html#new-workerfilename-options)
 define the engine bounds; actual large-workload timing remains a CI check.
+The raw planner prepares the complete checked program once and passes that
+same program to the consuming emitter. The consuming emitter still checks all
+106 declarations, rebuilds both source-free typed archives and validates the
+frozen consuming artifact. Each execution boundary freshly reads both emission
+artifacts, the source and every causal producer. One private descriptor can be
+reused only when the profile and every complete input match the verified
+snapshot. Any difference runs full verification again, and the successor
+profiles still verify their own artifacts on every read. In
+[run 45202064337](https://github.com/link-foundation/meta-language/actions/runs/45202064337/job/137859537565),
+checkout and complete source replay consumed most of the ten-minute job, and
+the injected contracts reached the deadline after the matrix was built. The
+same archives, matrix, seven injected contracts and deadline remain required.
 A private planner
 cache keeps only complete profiles, source fingerprints and replay hashes, with
 exact plan ownership and fresh whole-source comparisons. Successor plans retain
