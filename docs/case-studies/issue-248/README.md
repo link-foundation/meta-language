@@ -127,6 +127,14 @@ lint and runtime results come from CI on the updated revision.
 [Rust lint](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137557959068),
 [review data](../../../parity/self-translation/native-source-style-review-137557959068.lino)
 
+On `35ce88bc8`, tooling partition 1 reported two failures at log lines
+1262–1324. Both assertions found that the crate allowlist entry for the
+relocated ownership metadata test was missing from the dependency inventory.
+The declaration refresh appended that entry and regenerated the audit document
+with the same audit date and prior 818 entries. The focused package and
+inventory checks passed all eight tests, including both failed assertions.
+[Tooling partition 1](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211095)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
