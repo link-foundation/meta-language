@@ -1583,7 +1583,13 @@ use. A caller can explicitly install the complete pinned OpenCorpora snapshot
 with `npm run morphology:provision -- DIRECTORY` from `js/` and set
 `META_LANGUAGE_MORPHOLOGY_DATA=DIRECTORY` in either runtime. That snapshot adds
 the complete dictionary, corpus-derived ambiguity scores, and suffix
-prediction. Profiles for the other catalog languages apply their shared
+prediction. The English profile looks up attested forms and lemmas in a
+bundled Links dictionary derived from AGID 2016.01.19 and the WordNet 3.1
+adjective and adverb indexes. Both runtimes expand it on first dictionary
+lookup and use the same ordered indexes for readings and inverse inflection.
+The dictionary retains competing readings from the source and leaves uncertain
+source entries to the shared lexical and suffix rules. [AGID format and license](https://wordlist.aspell.net/agid-readme/) · [WordNet 3.1](https://wordnet.princeton.edu/)
+Profiles for the remaining catalog languages apply their shared
 lexical and suffix data and return an unspecified part of speech when the
 available evidence cannot identify one.
 

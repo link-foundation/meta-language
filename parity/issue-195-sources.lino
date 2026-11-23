@@ -1651,7 +1651,7 @@
 (1651: 67 1650 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1652: (meta: (t: semantic) (n: 1) (term: string%20value) (def: Original%20requirements%20for%20scored%20lemma%20and%20Universal%20Dependencies%20readings%2C%20suffix%20prediction%2C%20inflection%2C%20number%20agreement%20and%20lazy%20language%20data.) (lang: meta-language%20structured%20data)))
 (1653: 38 1652 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(1654: 1655 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
+(1654: 1655 2072 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
 (1655: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I236-OPEN-VOCABULARY-MORPHOLOGY) (lang: meta-language%20structured%20data)))
 (1656: 41 1654 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1657: 1659 1661 1662 1664 1666 1669 1671 1672 1674 1676 1678 1681 1682 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
@@ -2068,3 +2068,4 @@
 (2069: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-UNICODE-GRAPHEME-BOUNDARIES) (lang: meta-language%20structured%20data)))
 (2070: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-UNICODE-COMPATIBILITY-COMPOSITION) (lang: meta-language%20structured%20data)))
 (2071: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-UNICODE-WORD-AND-DASH-CLASSES) (lang: meta-language%20structured%20data)))
+(2072: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I236-ENGLISH-DICTIONARY-MORPHOLOGY) (lang: meta-language%20structured%20data)))

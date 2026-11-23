@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 270 | 269 | 1 | 0 |
+| Generators | 274 | 273 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 104 | 0 | 0 | 104 |
+| Published artifact contents | 105 | 0 | 0 | 105 |
 
 ## JavaScript engines
 
@@ -818,6 +818,10 @@ they are.
 | `js/scripts/build-json-schema-pattern-policy.mjs` | `js/scripts/build-json-schema-pattern-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-json-schema-integer-policy.mjs` | `js/scripts/build-json-schema-integer-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-text-location-case-folding.mjs` | `js/scripts/build-text-location-case-folding.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-morphology-english.mjs` | `js/scripts/build-morphology-english.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-text-location-character-classes.mjs` | `js/scripts/build-text-location-character-classes.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-text-location-graphemes.mjs` | `js/scripts/build-text-location-graphemes.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-text-location-normalization.mjs` | `js/scripts/build-text-location-normalization.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -981,7 +985,6 @@ they are.
 | `src/data/document-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/json-document/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/morphology/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/morphology/OPEN-CORPORA-LICENSE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/natural-language-values/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/pdf-font-encodings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/pdf-glyph-map-license.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -990,6 +993,8 @@ they are.
 | `src/data/pest-built-ins.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/natural-language-values/UNICODE-LICENSE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/text-location-case-folding.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/morphology/*-LICENSE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/text-location-character-classes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

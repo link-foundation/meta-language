@@ -89,3 +89,43 @@ test('a configured dictionary opens only when its language is used', (context) =
     testName: context.name,
   });
 });
+
+test('English dictionary readings preserve alternatives, inverse forms, and source spans', (context) => {
+  const fixtureFile = 'parity/fixtures/english-morphology.lino';
+  const { language, text, readings, linkedWords, inflections, numberAgreement } =
+    readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
+  for (const [word, expected] of Object.entries(readings)) {
+    const actual = analyzeMorphology(word, language)
+      .map(({ lemma, upos, features, score, source }) => [lemma, upos, features, score, source]);
+    assert.deepEqual(actual, expected, word);
+  }
+
+  const network = LinkNetwork.parse(text, language);
+  assert.equal(network.reconstructText(), text);
+  assert.ok(network.verifyFullMatch().isClean());
+  const linkedReadings = network.links().filter(link => link.metadata().term?.startsWith('morphology:'));
+  const actual = linkedReadings.map(link => {
+    const { term, span: { byteRange } } = link.metadata();
+    const [token, ...children] = link.references().map(id => network.link(id).metadata());
+    assert.equal(token.linkType, LinkType.SourceToken);
+    assert.deepEqual(token.span.byteRange, byteRange);
+    return [token.term, byteRange.start, byteRange.end, term, children.map(child => {
+      assert.deepEqual(child.span.byteRange, byteRange);
+      return child.term;
+    })];
+  });
+  const expected = linkedWords.flatMap(([word, start, end]) =>
+    readings[word.toLowerCase()].map(([lemma, upos, features, score, source]) => [
+      word, start, end, `morphology:${source}:${score.toFixed(6)}`,
+      [`lemma:${lemma}`, `upos:${upos}`, ...(features.length ? features : ['_']).map(feature => `ufeat:${feature}`)],
+    ]));
+  assert.deepEqual(actual, expected);
+  for (const [lemma, features, form] of inflections) assert.equal(inflect(lemma, features, language) ?? null, form);
+  for (const [lemma, number, form] of numberAgreement) assert.equal(agreeWithNumber(lemma, number, language), form);
+  recordIssue195Observations({
+    requirementId: 'I195-I236-ENGLISH-DICTIONARY-MORPHOLOGY', suffix: 'behavior',
+    fixtureId: 'i195-i236-english-dictionary-morphology', fixtureFile,
+    assertions: ['englishDictionaryReadingsRetainAlternatives', 'englishMorphologyLinksRetainSourceSpans', 'englishInflectionAndNumberAgreement'],
+    testName: context.name,
+  });
+});

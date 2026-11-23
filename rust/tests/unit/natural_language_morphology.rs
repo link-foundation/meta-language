@@ -230,3 +230,121 @@ fn configured_dictionary_loads_only_for_its_language() {
         test_name: "configured_dictionary_loads_only_for_its_language",
     });
 }
+
+#[test]
+fn english_dictionary_preserves_alternatives_inverse_forms_and_source_spans() {
+    const FIXTURE: &str = "parity/fixtures/english-morphology.lino";
+    let fixture: Value = read_project_data(include_str!(
+        "../../../parity/fixtures/english-morphology.lino"
+    ))
+    .expect("English morphology fixture");
+    let language = fixture["language"].as_str().unwrap();
+    let text = fixture["text"].as_str().unwrap();
+    let readings = fixture["readings"].as_object().unwrap();
+    for (word, expected) in readings {
+        let actual = analyze_morphology(word, language);
+        let expected = expected.as_array().unwrap();
+        assert_eq!(actual.len(), expected.len(), "{word}");
+        for (actual, expected) in actual.iter().zip(expected) {
+            assert_eq!(Some(actual.lemma.as_str()), expected[0].as_str(), "{word}");
+            assert_eq!(Some(actual.upos.as_str()), expected[1].as_str(), "{word}");
+            assert_eq!(serde_json::json!(actual.features), expected[2], "{word}");
+            assert_eq!(Some(actual.score), expected[3].as_f64(), "{word}");
+            assert_eq!(Some(actual.source), expected[4].as_str(), "{word}");
+        }
+    }
+
+    let network = LinkNetwork::parse(text, language, ParseConfiguration::default());
+    assert_eq!(network.reconstruct_text(), text);
+    assert!(network.verify_full_match(None).is_clean());
+    let mut actual = Vec::new();
+    for link in network.links() {
+        let metadata = link.metadata();
+        let Some(term) = metadata
+            .term()
+            .filter(|term| term.starts_with("morphology:"))
+        else {
+            continue;
+        };
+        let span = metadata.span().unwrap().byte_range();
+        let (token, children) = link.references().split_first().unwrap();
+        let token = network.link(*token).unwrap().metadata();
+        assert_eq!(token.link_type(), Some(LinkType::Token));
+        assert_eq!(token.span().unwrap().byte_range(), span);
+        let terms: Vec<_> = children
+            .iter()
+            .map(|&id| {
+                let child = network.link(id).unwrap().metadata();
+                assert_eq!(child.span().unwrap().byte_range(), span);
+                child.term().unwrap().to_owned()
+            })
+            .collect();
+        actual.push(serde_json::json!([
+            token.term().unwrap(),
+            span.start(),
+            span.end(),
+            term,
+            terms
+        ]));
+    }
+    let mut expected = Vec::new();
+    for word in fixture["linkedWords"].as_array().unwrap() {
+        let spelling = word[0].as_str().unwrap();
+        let normalized = spelling.to_lowercase();
+        for reading in readings[normalized.as_str()].as_array().unwrap() {
+            let lemma = reading[0].as_str().unwrap();
+            let upos = reading[1].as_str().unwrap();
+            let features = reading[2].as_array().unwrap();
+            let score = reading[3].as_f64().unwrap();
+            let source = reading[4].as_str().unwrap();
+            let mut terms = vec![format!("lemma:{lemma}"), format!("upos:{upos}")];
+            if features.is_empty() {
+                terms.push("ufeat:_".to_owned());
+            }
+            terms.extend(
+                features
+                    .iter()
+                    .map(|feature| format!("ufeat:{}", feature.as_str().unwrap())),
+            );
+            expected.push(serde_json::json!([
+                spelling,
+                word[1],
+                word[2],
+                format!("morphology:{source}:{score:.6}"),
+                terms
+            ]));
+        }
+    }
+    assert_eq!(actual, expected);
+    for row in fixture["inflections"].as_array().unwrap() {
+        let features: Vec<_> = row[1]
+            .as_object()
+            .unwrap()
+            .iter()
+            .map(|(name, value)| (name.as_str(), value.as_str().unwrap()))
+            .collect();
+        assert_eq!(
+            inflect(row[0].as_str().unwrap(), &features, language).as_deref(),
+            row[2].as_str()
+        );
+    }
+    for row in fixture["numberAgreement"].as_array().unwrap() {
+        assert_eq!(
+            agree_with_number(row[0].as_str().unwrap(), row[1].as_f64().unwrap(), language)
+                .as_deref(),
+            row[2].as_str()
+        );
+    }
+    record(&Observation {
+        requirement_id: "I195-I236-ENGLISH-DICTIONARY-MORPHOLOGY",
+        suffix: "behavior",
+        fixture_id: "i195-i236-english-dictionary-morphology",
+        fixture_file: FIXTURE,
+        assertions: &[
+            "englishDictionaryReadingsRetainAlternatives",
+            "englishMorphologyLinksRetainSourceSpans",
+            "englishInflectionAndNumberAgreement",
+        ],
+        test_name: "english_dictionary_preserves_alternatives_inverse_forms_and_source_spans",
+    });
+}

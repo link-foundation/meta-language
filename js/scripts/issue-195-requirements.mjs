@@ -619,6 +619,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I236-ENGLISH-DICTIONARY-MORPHOLOGY',
+      source: ISSUE_195_SOURCES.openVocabularyMorphology,
+      language: 'English morphology',
+      version: 'Universal Dependencies v2, AGID 2016.01.19 and WordNet 3.1',
+      construct: 'dictionary readings and inverse inflection',
+      expectedBehavior: 'English words receive scored attested readings, including ambiguous ones, at their exact source spans. Suffix predictions remain available outside the dictionary. Inflection and cardinal agreement select attested forms for the requested features.',
+      fixture: 'parity/fixtures/english-morphology.lino',
+      selector: 'every English dictionary, function word and invented word reading, every linked span and alternative, and every inverse form and cardinal count',
+      assertions: ['englishDictionaryReadingsRetainAlternatives', 'englishMorphologyLinksRetainSourceSpans', 'englishInflectionAndNumberAgreement'],
+      implementationEntryPoints: {
+        javascript: ['js/src/morphology.js', 'js/src/morphology-english.js', 'js/tests/natural-language-morphology.test.js'],
+        rust: ['rust/src/link_network/morphology/mod.rs', 'rust/src/link_network/morphology/english.rs', 'rust/tests/unit/natural_language_morphology.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',

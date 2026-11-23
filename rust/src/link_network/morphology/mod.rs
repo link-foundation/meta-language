@@ -2,9 +2,11 @@
 
 mod agreement_policy;
 mod dictionary;
+mod english;
 
 use self::agreement_policy::russian_number_agreement_kind;
 use self::dictionary::RussianDictionary;
+use self::english::english_morphology;
 use regex::Regex;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -283,7 +285,8 @@ pub fn analyze_morphology(word: &str, language: &str) -> Vec<MorphologyReading> 
     if spelling.is_empty() {
         return Vec::new();
     }
-    let profile = profile(locale(language));
+    let locale = locale(language);
+    let profile = profile(locale);
     let mut readings: Vec<WeightedReading> = if let Some(dictionary) = &profile.dictionary {
         dictionary
             .analyze(&spelling)
@@ -300,6 +303,13 @@ pub fn analyze_morphology(word: &str, language: &str) -> Vec<MorphologyReading> 
             .cloned()
             .collect()
     };
+    if readings.is_empty() && locale == "en" {
+        readings.extend(
+            english_morphology(&spelling, false)
+                .into_iter()
+                .map(|(_, reading)| reading),
+        );
+    }
     if readings.is_empty() {
         readings = profile.predictions(&spelling);
     }
@@ -332,7 +342,8 @@ pub fn analyze_morphology(word: &str, language: &str) -> Vec<MorphologyReading> 
 /// Returns the first attested form matching all requested Universal Dependencies features.
 #[must_use]
 pub fn inflect(lemma: &str, features: &[(&str, &str)], language: &str) -> Option<String> {
-    let profile = profile(locale(language));
+    let locale = locale(language);
+    let profile = profile(locale);
     let spelling = normalize(lemma);
     let requested: Vec<_> = features
         .iter()
@@ -357,12 +368,22 @@ pub fn inflect(lemma: &str, features: &[(&str, &str)], language: &str) -> Option
         }
         return None;
     }
-    profile
+    if let Some((form, _)) = profile
         .inflections
-        .get(&spelling)?
-        .iter()
+        .get(&spelling)
+        .into_iter()
+        .flatten()
         .find(|(_, reading)| matches(reading))
-        .map(|(form, _)| form.clone())
+    {
+        return Some(form.clone());
+    }
+    if locale == "en" {
+        return english_morphology(&spelling, true)
+            .into_iter()
+            .find(|(_, reading)| matches(reading))
+            .map(|(form, _)| form);
+    }
+    None
 }
 
 /// Inflects an attested lemma for a cardinal quantity.

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { openRussianMorphology } from './morphology-dictionary.js';
+import { englishMorphology } from './morphology-english.js';
 import { russianNumberAgreementKind } from './morphology-policy.js';
 
 const data = new URL('./data/morphology/', import.meta.url);
@@ -90,8 +91,11 @@ export function analyzeMorphology(word, language = 'Russian') {
   const profile = profileFor(language);
   const spelling = word.normalize('NFC').toLowerCase();
   if (!spelling) return [];
-  const dictionaries = profile.dictionary?.analyze(spelling).map(entry => tagReading(profile, entry))
+  let dictionaries = profile.dictionary?.analyze(spelling).map(entry => tagReading(profile, entry))
     ?? [...profile.forms.get(spelling) ?? [], ...profile.foldedForms.get(spelling) ?? []];
+  if (dictionaries.length === 0 && profile.locale === 'en') {
+    dictionaries = englishMorphology(spelling).map(({ form, ...reading }) => reading);
+  }
   const readings = dictionaries.length ? dictionaries : predictions(profile, spelling);
   const distinct = new Map();
   for (const reading of readings) {
@@ -115,8 +119,9 @@ export function inflect(lemma, features, language = 'Russian') {
     .flatMap(reading => profile.dictionary.inflections(reading)
       .map(({ form, tag }) => ({ form, ...tagReading(profile, { ...reading, tag }) })))
     ?? profile.inflections.get(spelling) ?? [];
-  const possible = data.filter(reading => !reading.features.includes('Abbr=Yes') && requested.every(feature => reading.features.includes(feature)));
-  return possible[0]?.form;
+  const matches = reading => !reading.features.includes('Abbr=Yes') && requested.every(feature => reading.features.includes(feature));
+  const form = data.find(matches)?.form;
+  return form ?? (profile.locale === 'en' ? englishMorphology(spelling, true).find(matches)?.form : undefined);
 }
 
 /** Inflects a lemma for an ordinary cardinal quantity. */
