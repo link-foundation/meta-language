@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {availableParallelism,freemem} from 'node:os';
+import {availableMemory} from 'node:process';
 import {Worker} from 'node:worker_threads';
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
 
@@ -65,6 +66,29 @@ export function readOriginalLinkRawArchiveCapacity(processors,availableBytes,con
   const jobs=configured===undefined?3:Math.min(3,Number(configured));
   const memory=availableBytes>=5*1024**3?3:availableBytes>=3*1024**3?2:1;
   return Math.min(jobs,processors,memory);
+}
+
+/** Leave one CPU for emission and retain the existing parent and worker heap bounds. */
+export function canOverlapOriginalLinkRawSourcePreparation(environment,processors=availableParallelism(),availableBytes=Math.min(freemem(),availableMemory())) {
+  return processors>=4&&readOriginalLinkRawArchiveCapacity(processors,availableBytes,environment.META_LANGUAGE_JOBS)===3;
+}
+
+/** Only admit speculative replays after all generated sources match their exact inputs. */
+export async function prepareOriginalLinkRawArchiveBatch(prepare,replay,capturedSources) {
+  if(capturedSources===undefined){
+    const batch=await prepare();
+    return {batch,receipts:await replay(batch.sources)};
+  }
+  const inputs=Object.freeze(capturedSources.slice());
+  const results=await Promise.allSettled([
+    Promise.resolve().then(()=>replay(inputs)),
+    Promise.resolve().then(prepare),
+  ]);
+  const failures=results.filter(result=>result.status==='rejected');
+  if(failures.length)throw new AggregateError(failures.map(result=>result.reason),'complete source preparation or archive replay failed');
+  const [replays,preparation]=results;
+  assert.deepEqual(preparation.value.sources,inputs,'every regenerated source must match the exact speculative replay input');
+  return {batch:preparation.value,receipts:replays.value};
 }
 
 /** Only CI runs complete archives. Each heap keeps its original one-GiB bound;

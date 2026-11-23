@@ -16,11 +16,11 @@ import {verifyStringOrderSchemaSuccessor} from '../../js/scripts/check-typed-pro
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 import {createOriginalLinkSuccessorSourceArchives,readOriginalLinkSuccessorArchiveSource} from './successor-source-archives.mjs';
-import {replayOriginalLinkRawSourceArchives,readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
+import {canOverlapOriginalLinkRawSourcePreparation,prepareOriginalLinkRawArchiveBatch,replayOriginalLinkRawSourceArchives,readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
 import {freezeOriginalLinkRawData,readOriginalLinkRawFreezeWork} from './raw-data-freeze.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
-import {generateOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
+import {generateOriginalLinkRawConsumingEmission,ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
 import {prepareOriginalLinkRawBorrowedEmission,readOriginalLinkRawBorrowedProfile} from './raw-borrowed-emission.mjs';
 const {Link: CarrierLink, StreamParser: CarrierLinksParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
@@ -590,14 +590,26 @@ export async function planOriginalLinkRawNative(environment = process.env, {emis
   const [{readProjectData}, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary}, {parseJavaScript}, {checkProgram}, {emitRust}, {emitJavaScript}, {tokenize}, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection] = await Promise.all([
     import('../../js/scripts/project-data.mjs'), import('../../js/src/index.js'), import('../../js/src/translation/javascript.js'), import('../../js/src/translation/check.js'), import('../../js/src/translation/emit-rust.js'), import('../../js/src/translation/emit-javascript.js'), import('../../js/src/translation/lexer.js'), import('./raw-fixtures.mjs'), import('./raw-corpus.mjs'), import('./raw-transport.mjs'), import('./raw-rules.mjs'), import('../rust-text-certificate-adapter/raw-identity.mjs'), import('./transport.mjs'), import('../rust-text-value-projection/model.mjs'),
   ]);
-  const preparedSource=prepareOriginalLinkRawSource({readProjectData,parseJavaScript,checkProgram,emitRust,emitJavaScript,tokenize},emissionProfile);
-  const successorSources=emissionProfile==='current'?await(async()=>{
-    const generated=await generateOriginalLinkRawConsumingEmission(true);
-    const borrowed=prepareOriginalLinkRawBorrowedEmission(generated.profile);
-    return[{source:generated.rust.text,profile:generated.profile},{source:borrowed.source,profile:borrowed.profile}];
-  })():[];
-  const sources=[preparedSource.source,...successorSources.map(row=>row.source)];
-  const receipts=await replayOriginalLinkRawSourceArchives(sources,environment);
+  let capturedSources;
+  if(emissionProfile==='current'&&canOverlapOriginalLinkRawSourcePreparation(environment)){
+    const profile=readOriginalLinkRawSelectedEmissionProfile('current');
+    const consuming=readOriginalLinkRawConsumingProfile(profile);
+    const {completeRust:currentSource}=readProjectData(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
+    const {completeRust:consumingSource}=readProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT);
+    assert.equal(sha256(currentSource),profile.sourceSha256);
+    assert.equal(sha256(consumingSource),consuming.sourceSha256);
+    const borrowed=prepareOriginalLinkRawBorrowedEmission(consuming);
+    capturedSources=[currentSource,consumingSource,borrowed.source];
+  }
+  const {batch:{preparedSource,successorSources,sources},receipts}=await prepareOriginalLinkRawArchiveBatch(async()=>{
+    const preparedSource=prepareOriginalLinkRawSource({readProjectData,parseJavaScript,checkProgram,emitRust,emitJavaScript,tokenize},emissionProfile);
+    const successorSources=emissionProfile==='current'?await(async()=>{
+      const generated=await generateOriginalLinkRawConsumingEmission(true);
+      const borrowed=prepareOriginalLinkRawBorrowedEmission(generated.profile);
+      return[{source:generated.rust.text,profile:generated.profile},{source:borrowed.source,profile:borrowed.profile}];
+    })():[];
+    return {preparedSource,successorSources,sources:[preparedSource.source,...successorSources.map(row=>row.source)]};
+  },sources=>replayOriginalLinkRawSourceArchives(sources,environment),capturedSources);
   const replay=source=>{const index=sources.indexOf(source);assert.ok(index>=0);return receipts[index];};
   const sourceToken=emissionProfile==='current'
     ?successorSourceArchives.prepare({source:preparedSource.source,profile:preparedSource.emissionProfile},successorSources,replay):null;

@@ -4,7 +4,7 @@ import {EventEmitter} from 'node:events';
 import {Worker} from 'node:worker_threads';
 import test from 'node:test';
 import {runOriginalLinkRawArchiveJobs,runOriginalLinkRawArchiveWorker,replayOriginalLinkRawSourceArchives,
-  readOriginalLinkRawArchiveWorkerSources} from '../../experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs';
+  readOriginalLinkRawArchiveWorkerSources,prepareOriginalLinkRawArchiveBatch,canOverlapOriginalLinkRawSourcePreparation} from '../../experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs';
 
 test('bounded source archive jobs retain every complete input and deterministic result order',async()=>{
   const sources=['first complete source','second complete source','third complete source'],original=[...sources];
@@ -32,6 +32,30 @@ test('source archive failures keep every sibling check and reject invalid bounds
   for(const count of [0,3,1.5,NaN,Infinity,'2'])await assert.rejects(runOriginalLinkRawArchiveJobs(['a'],invoke,count));
   for(const environment of [{},{CI:'false'},{CI:'true',META_LANGUAGE_JOBS:'0'},{CI:'true',META_LANGUAGE_JOBS:'2.5'}])
     await assert.rejects(replayOriginalLinkRawSourceArchives(['small control only'],environment));
+});
+
+test('parallel source preparation admits only identical sources and waits for every check',async()=>{
+  const sources=['current source','consuming source','borrowed source'];
+  const batch={sources};
+  const receipts=['current','consuming','borrowed'];
+  const calls=[];
+  const prepare=()=>{calls.push('prepare');return batch;};
+  const replay=inputs=>{calls.push('replay');assert.deepEqual(inputs,sources);return receipts;};
+  assert.deepEqual(await prepareOriginalLinkRawArchiveBatch(prepare,replay),{batch,receipts});
+  assert.deepEqual(calls.splice(0),['prepare','replay']);
+  assert.deepEqual(await prepareOriginalLinkRawArchiveBatch(prepare,replay,[...sources]),{batch,receipts});
+  assert.deepEqual(calls.splice(0),['replay','prepare']);
+  await assert.rejects(prepareOriginalLinkRawArchiveBatch(()=>({sources:sources.toReversed()}),replay,sources),/every regenerated source/u);
+  const release=Promise.withResolvers();
+  const preparationFailed=new Error('source changed'),replayFailed=new Error('archive changed');
+  const pending=prepareOriginalLinkRawArchiveBatch(()=>{throw preparationFailed;},async()=>{await release.promise;throw replayFailed;},sources);
+  const rejection=assert.rejects(pending,error=>{assert.deepEqual(error.errors,[replayFailed,preparationFailed]);return true;});
+  release.resolve();
+  await rejection;
+  assert.equal(canOverlapOriginalLinkRawSourcePreparation({},4,5*1024**3),true);
+  assert.equal(canOverlapOriginalLinkRawSourcePreparation({},3,5*1024**3),false);
+  assert.equal(canOverlapOriginalLinkRawSourcePreparation({},4,5*1024**3-1),false);
+  assert.equal(canOverlapOriginalLinkRawSourcePreparation({META_LANGUAGE_JOBS:'2'},4,5*1024**3),false);
 });
 
 test('complete archive receipts require one full matching message and a successful worker exit',async()=>{

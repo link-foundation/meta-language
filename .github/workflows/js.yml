@@ -393,6 +393,8 @@ jobs:
         working-directory: js
 
       - name: Provision the pinned external grammar check inputs
+        # The raw archive plan runs the checked-in native Rust grammar.
+        if: ${{ matrix.group != 'source-model-raw' }}
         run: node js/scripts/external-grammar-cache.mjs --all --materialize
 
       - name: Check grammar-derived default CST expectations

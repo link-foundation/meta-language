@@ -11,6 +11,8 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   '.github/workflows/rust.yml': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   '.github/workflows/dependency-refresh.yml': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-context-source-metadata/generate.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/original-link-complete-table-projection/raw-native-observations.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/current-ci-repair-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -35,6 +37,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/issue-195-evidence-node-dependency.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-producer.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-raw-oracle-partitions.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/tests/issue-195-evidence-raw-planning-deadline.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-tooling-partitions.test.js': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
   'js/tests/issue-195-evidence-translation-feedback.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-translation-partition-conservation.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -50,6 +53,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/test-groups.test.js': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
   'js/tests/translation-frontend-rule-styles.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-grammar-context-metadata.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/tests/translation-raw-source-archive-workers.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-typescript-workflow.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'parity/language-grammar-inventory.lino': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'parity/fixtures/builtin-cst-expected.lino': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -88,7 +92,7 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = '6ef71fb4b414df057dfdbc9f5b57dd6f086d5598ed36914bf327dac4f155bdbe';
+const archiveDigest = '85e9ff0a3190cf7addc8a16149170954eb87f8f7c9a5f1157f20f8f640912103';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 

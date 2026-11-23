@@ -3705,6 +3705,12 @@ missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
 Successful timing and full native execution still require corrected-commit CI.
+The complete raw planning cell uses the checked-in native Rust grammar and
+does not provision external grammar assets. With memory for the parent and
+three bounded archive workers and a spare CPU for emission, the workers can
+start on the complete stored sources while generation runs. The planner admits
+the receipts only after all three regenerated source texts match the replayed
+inputs byte for byte. On smaller runners, generation precedes source replay.
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. The existing modulo file partitioner
 assigns every current test file exactly once; all commands, assertions, flags,
