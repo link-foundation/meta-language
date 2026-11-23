@@ -6,6 +6,7 @@ import { evaluateIssue195Acceptance } from './issue-195-acceptance-lib.mjs';
 export const FULL_REQUIREMENTS_CHECK = 'Full Requirements Aggregate';
 const RELEASE_REQUIREMENTS = Object.freeze([
   'I195-DELIVERY-NPM-PUBLISHED',
+  'I195-DELIVERY-NPM-NATIVE-HTML-PUBLISHED',
   'I195-DELIVERY-CRATE-PUBLISHED',
   'I195-DELIVERY-RML-PUBLISHED',
   'I195-DOWNSTREAM-FORMAL-AI-PUBLISHED',
