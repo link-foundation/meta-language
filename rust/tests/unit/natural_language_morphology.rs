@@ -27,7 +27,7 @@ fn has_reading(readings: &[MorphologyReading], expected: &[Value]) -> bool {
 
 #[test]
 fn morphology_preserves_linked_readings_and_inflects_attested_lemmas() {
-    let fixture = read_project_data(include_str!(
+    let fixture: Value = read_project_data(include_str!(
         "../../../parity/fixtures/natural-language-morphology.lino"
     ))
     .expect("morphology fixtures");
@@ -173,7 +173,7 @@ fn configured_dictionary_loads_only_for_its_language() {
     const CHILD: &str = "META_LANGUAGE_MORPHOLOGY_TEST_CHILD";
     const LAZY_FIXTURE: &str = "parity/fixtures/natural-language-morphology-lazy-loading.lino";
     if std::env::var_os(CHILD).is_some() {
-        let lazy = read_project_data(include_str!(
+        let lazy: Value = read_project_data(include_str!(
             "../../../parity/fixtures/natural-language-morphology-lazy-loading.lino"
         ))
         .expect("lazy morphology fixture");

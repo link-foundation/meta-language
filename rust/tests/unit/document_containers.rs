@@ -240,8 +240,9 @@ fn check_declared_content(fixture: &Value) {
 
 #[test]
 fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
-    let fixture = read_project_data(include_str!("../../../parity/fixtures/pdf-document.lino"))
-        .expect("PDF document fixtures");
+    let fixture: Value =
+        read_project_data(include_str!("../../../parity/fixtures/pdf-document.lino"))
+            .expect("PDF document fixtures");
     let bytes = octets(&fixture["encoded"]);
     let binary = binary_string(&bytes);
     let settings = ParseConfiguration::default();
