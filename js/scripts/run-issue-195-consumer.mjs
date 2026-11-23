@@ -223,41 +223,48 @@ async function crateConsumer() {
 }
 
 async function observeCrateDependencyUpgrade(crateSource, env) {
-  const directory = path.join(workDirectory, 'crate-dependency-consumer');
-  await mkdir(path.join(directory, 'src'), { recursive: true });
   const lock = await readFile(path.join(root, 'rust/Cargo.lock'), 'utf8');
   const currentLinks = /^name = "links-notation"\nversion = "([^"]+)"/mu.exec(lock)[1];
   const currentTree = /^name = "tree-sitter"\nversion = "([^"]+)"/mu.exec(lock)[1];
   const treeSitterPatches = [...new Set(['0.27.1', currentTree])];
+  const sourcePath = JSON.stringify(crateSource.split(path.sep).join('/'));
 
-  async function resolve(links, treeSitter, label) {
+  async function resolve(label, dependencies, source) {
+    const directory = path.join(workDirectory, `crate-dependency-consumer-${label}`);
+    await mkdir(path.join(directory, 'src'), { recursive: true });
     await writeFile(path.join(directory, 'Cargo.toml'), [
       '[package]', 'name = "dependency-consumer"', 'version = "0.0.0"', 'edition = "2024"',
-      '[dependencies]',
-      `meta-language = { path = ${JSON.stringify(crateSource.split(path.sep).join('/'))}, default-features = false }`,
-      `links-notation = "=${links}"`, `tree-sitter = "=${treeSitter}"`, '',
+      '[dependencies]', ...dependencies, '',
     ].join('\n'));
+    await writeFile(path.join(directory, 'src/main.rs'), source ?? 'fn main() {}\n');
     const graph = await run(`dependency-consumer-tree-${label}`, 'cargo', [
       'tree', '-e', 'normal', '--prefix', 'none', '--format', '{p}',
     ], { cwd: directory, env });
+    if (source) await run(`dependency-consumer-type-${label}`, 'cargo', ['check', '--locked', '--quiet'], { cwd: directory, env });
     const versions = (name) => [...new Set([...graph.matchAll(new RegExp(`^${name} v(\\S+)`, 'gmu'))]
       .map(([, version]) => version))].sort();
     return { linksNotation: versions('links-notation'), treeSitter: versions('tree-sitter') };
   }
 
-  await writeFile(path.join(directory, 'src/main.rs'), `fn main() {
+  const source = `fn main() {
     let value: meta_language::links_notation::LiNo<String> =
         links_notation::parse_lino_to_links("x").unwrap().remove(0);
     assert_eq!(meta_language::links_notation::format_links(&[value]), "x");
     let _parser = tree_sitter::Parser::new();
-}\n`);
+}\n`;
   const current = [];
   for (const patch of treeSitterPatches) {
-    const versions = await resolve(currentLinks, patch, patch);
-    await run(`dependency-consumer-type-${patch}`, 'cargo', ['check', '--locked', '--quiet'], { cwd: directory, env });
+    const versions = await resolve(patch, [
+      `meta-language = { path = ${sourcePath}, default-features = false }`,
+      `links-notation = "=${currentLinks}"`,
+      `tree-sitter = "=${patch}"`,
+    ], source);
     current.push({ patch, ...versions });
   }
-  const historical = await resolve('0.22.0', '0.27.1', 'links-notation-0.22.0');
+  const historical = await resolve('links-notation-0.22', [
+    `meta-language = { path = ${sourcePath} }`,
+    'links-notation = "0.22"',
+  ]);
   return { currentLinks, treeSitterPatches, current, historical };
 }
 
