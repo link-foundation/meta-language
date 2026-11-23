@@ -34,3 +34,8 @@ export function consumingPatternLowerBound(nullable, minimum) {
 export function boundedPatternRepetition(minimum, maximum) {
   return minimum <= 1024 && (maximum < 0 || (maximum <= 1024 && minimum <= maximum));
 }
+
+/** @returns {[number, number, number]} */
+export function stringIntersectionLimits() {
+  return [12288, 4096, 3000000];
+}

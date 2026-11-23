@@ -6,6 +6,7 @@ import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-doc
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-patterns.js';
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
+import { intersectJsonStringExpressions } from './json-schema-string-intersection.js';
 import { stringSetsAreDisjoint } from './json-schema-tag-policy.js';
 import { exclusiveIntegerRange, integerBounds, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
@@ -253,6 +254,7 @@ export function importJsonSchema(schema) {
   const builder = new Expression('start').source('json-schema');
   decoderBase ??= parseGrammarLinks(readFileSync(baseFile, 'utf8'));
   for (const rule of decoderBase.rules.values()) builder.rule(rule.name, rule.expression);
+  builder.rule('json_pattern_character', anyJsonPatternCharacter());
   const compiled = new Map();
   const diagnostics = [...analysis.issues];
   const report = (pointer, keyword, message) => diagnostics.push({
@@ -387,16 +389,24 @@ export function importJsonSchema(schema) {
     return alternatives.length ? collection('[', ']', choice(...alternatives)) : null;
   }
   function stringExpression(rules, pointer) {
-    if (formatExpressions.has(rules.format) && rules.pattern === undefined) {
-      return ref(formatRule(rules.format));
-    }
-    if (rules.format !== undefined) report(pointer, 'format', 'The format constraint combined with a pattern is checked during document validation.');
+    const format = formatExpressions.has(rules.format) ? ref(formatRule(rules.format)) : null;
     if (rules.pattern !== undefined) {
       const result = lowerJsonStringPattern(rules.pattern, patternRule);
-      if (result) return result.expression && seq(literal('"'), result.expression, literal('"'));
-      report(pointer, 'pattern', 'This pattern is checked during document validation.');
+      if (result) {
+        if (!result.expression) return null;
+        const pattern = seq(literal('"'), result.expression, literal('"'));
+        if (!format) return pattern;
+        const intersection = intersectJsonStringExpressions(format, pattern, name => builder.rules.get(name)?.expression,
+          `json_string_intersection_${next++}`);
+        if (intersection === null) return null;
+        if (intersection) {
+          for (const [name, expression] of intersection.rules) builder.rule(name, expression);
+          return intersection.expression;
+        }
+        report(pointer, 'pattern', 'The format and pattern intersection exceeds the decoder work bound. The pattern is checked during document validation.');
+      } else report(pointer, 'pattern', 'This pattern is checked during document validation.');
     }
-    return ref('string');
+    return format ?? ref('string');
   }
   function numberExpression(type, rules, pointer) {
     const keywords = numericLimitKeywords.filter(key => rules[key] !== undefined);
@@ -462,7 +472,6 @@ export function importJsonSchema(schema) {
   }
   const start = named(schema, '');
   if (!start) throw new RangeError('The JSON Schema has no generatable document');
-  builder.rule('json_pattern_character', anyJsonPatternCharacter());
   builder.rule('start', seq(space, start, space));
   const grammar = builder.build();
   const reachable = new Set();

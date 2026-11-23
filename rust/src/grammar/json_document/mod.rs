@@ -10,6 +10,7 @@ mod patterns;
 mod property_names;
 mod recovery;
 mod schema;
+mod string_intersection;
 mod tag_policy;
 mod validation;
 

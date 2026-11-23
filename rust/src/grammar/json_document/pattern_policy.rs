@@ -25,3 +25,7 @@ pub fn consuming_pattern_lower_bound(nullable: bool, minimum: f64) -> f64 {
 pub fn bounded_pattern_repetition(minimum: f64, maximum: f64) -> bool {
     minimum <= 1024.0 && (maximum < 0.0 || (maximum <= 1024.0 && minimum <= maximum))
 }
+
+pub fn string_intersection_limits() -> (f64, f64, f64) {
+    (12288f64, 4096f64, 3000000f64)
+}

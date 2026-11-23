@@ -140,6 +140,12 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
     }
     let unsupported = import_json_schema(&json!({"type":"string","unregistered":true})).unwrap();
     assert_eq!(unsupported.diagnostics[0].pointer, "/unregistered");
+    for schema in fixture["ungeneratableSchemas"].as_array().unwrap() {
+        let Err(error) = import_json_schema(schema) else {
+            panic!("schema unexpectedly generated a grammar: {schema}");
+        };
+        assert!(error.to_string().contains("no generatable document"));
+    }
     record(&Observation {
         requirement_id: "I195-I240-JSON-SCHEMA",
         suffix: "behavior",
@@ -156,6 +162,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "decoderObjectConstantsAcceptMemberPermutations",
             "decoderExclusiveIntegerAlternativesRejectOverlap",
             "decoderRequiredStringTagsDistinguishAlternatives",
+            "decoderFormatsCombineWithRegularPatterns",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });

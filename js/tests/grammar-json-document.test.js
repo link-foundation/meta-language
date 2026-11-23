@@ -238,10 +238,13 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   }
   const unsupported = importJsonSchema({ type: 'string', unregistered: true });
   assert.deepEqual(unsupported.schemaDiagnostics.map(issue => issue.pointer), ['/unregistered']);
+  for (const schema of shared.ungeneratableSchemas) {
+    assert.throws(() => importJsonSchema(schema), /no generatable document/u);
+  }
   recordIssue195Observations({
     requirementId: 'I195-I240-JSON-SCHEMA', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema', fixtureFile,
-    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap', 'decoderRequiredStringTagsDistinguishAlternatives'],
+    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap', 'decoderRequiredStringTagsDistinguishAlternatives', 'decoderFormatsCombineWithRegularPatterns'],
     testName: context.name,
   });
 });

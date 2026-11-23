@@ -4635,7 +4635,12 @@ Unicode scalars directly. Calendar productions use matching scalar boundaries
 across overlapping alternatives so a contextual decoder can follow either
 path. Date, date-time, UUID and email productions share the same decoder
 grammar asset across runtimes and accept both direct and escaped spellings
-of their permitted characters. Object rules can interleave declared fields
+of their permitted characters. A bounded automaton intersection combines these
+format productions with supported regular patterns over JSON source characters.
+The resulting productions enforce both constraints across raw and escaped
+spellings. An empty intersection has no generatable string. The importer retains
+a pattern diagnostic if a conjunction exceeds the construction bound.
+Object rules can interleave declared fields
 and additional fields.
 The additional-field rule excludes every decoded spelling of each declared
 key. Bounded numeric rules generate signed integer or decimal spellings and

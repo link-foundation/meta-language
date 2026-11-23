@@ -11,6 +11,7 @@ use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_r
 use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
+use super::string_intersection::{StringIntersection, intersect_json_string_expressions};
 use super::tag_policy::string_sets_are_disjoint;
 use super::{JsonSchemaIssue, pointer_child};
 
@@ -163,15 +164,15 @@ pub fn import_json_schema(schema: &Value) -> Result<JsonSchemaGrammar, JsonSchem
         next: 1,
         pattern_rules: Vec::new(),
     };
+    importer.grammar.add_rule(GrammarRule::new(
+        "json_pattern_character",
+        any_json_pattern_character(),
+    ));
     let Some(start) = importer.named(schema, "") else {
         return Err(JsonSchemaImportError {
             diagnostics: importer.diagnostics,
         });
     };
-    importer.grammar.add_rule(GrammarRule::new(
-        "json_pattern_character",
-        any_json_pattern_character(),
-    ));
     importer.grammar.add_rule(GrammarRule::new(
         "start",
         EXPRESSION.seq([
@@ -644,32 +645,39 @@ impl<'schema> Importer<'schema> {
     }
 
     fn string(&mut self, schema: &Value, pointer: &str) -> Option<Expression> {
-        let pattern = schema.get("pattern");
-        if let Some(format) = schema["format"].as_str() {
-            if formats(format).is_some() && pattern.is_none() {
-                return Some(EXPRESSION.nt(format!("json_format_{}", format.replace('-', "_"))));
-            }
-            self.report(pointer, "format", "The format constraint combined with a pattern is checked during document validation.");
-        }
-        if let Some(pattern) = pattern.and_then(Value::as_str) {
+        let format = schema["format"]
+            .as_str()
+            .filter(|name| formats(name).is_some())
+            .map(|name| EXPRESSION.nt(format!("json_format_{}", name.replace('-', "_"))));
+        if let Some(pattern) = schema.get("pattern").and_then(Value::as_str) {
             match lower_json_string_pattern(pattern, |expression| self.pattern_rule(expression)) {
                 Some(PatternLowering::Match(expression)) => {
-                    return Some(EXPRESSION.seq([
-                        EXPRESSION.term("\""),
-                        expression,
-                        EXPRESSION.term("\""),
-                    ]));
+                    let pattern =
+                        EXPRESSION.seq([EXPRESSION.term("\""), expression, EXPRESSION.term("\"")]);
+                    let Some(format) = &format else {
+                        return Some(pattern);
+                    };
+                    let rule_prefix = format!("json_string_intersection_{}", self.next());
+                    match intersect_json_string_expressions(&self.grammar, format, &pattern, &rule_prefix) {
+                        Some(StringIntersection::Match(expression, rules)) => {
+                            for rule in rules {
+                                self.grammar.add_rule(rule);
+                            }
+                            return Some(expression);
+                        }
+                        Some(StringIntersection::Impossible) => return None,
+                        None => self.report(pointer, "pattern", "The format and pattern intersection exceeds the decoder work bound. The pattern is checked during document validation."),
+                    }
                 }
                 Some(PatternLowering::Impossible) => return None,
-                None => {}
+                None => self.report(
+                    pointer,
+                    "pattern",
+                    "This pattern is checked during document validation.",
+                ),
             }
-            self.report(
-                pointer,
-                "pattern",
-                "This pattern is checked during document validation.",
-            );
         }
-        Some(reference_expression("string"))
+        Some(format.unwrap_or_else(|| reference_expression("string")))
     }
 
     fn number(&mut self, name: &str, schema: &Value, pointer: &str) -> Option<Expression> {
