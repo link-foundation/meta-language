@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::LazyLock;
@@ -39,6 +40,8 @@ const JSON_TYPES: [(&str, u8); 7] = [
     ("null", 1 << 6),
 ];
 const ALL_JSON_TYPES: u8 = (1 << 7) - 1;
+const FINITE_SCALAR_TYPES: u8 = 1 << 5 | 1 << 6;
+static FINITE_SCALAR_VALUES: [Value; 3] = [Value::Bool(false), Value::Bool(true), Value::Null];
 static NESTED_COLLECTION_LIMITS: LazyLock<[usize; 2]> = LazyLock::new(|| {
     let mut limits = keywords("nestedCollectionLimits");
     std::array::from_fn(|_| {
@@ -47,6 +50,16 @@ static NESTED_COLLECTION_LIMITS: LazyLock<[usize; 2]> = LazyLock::new(|| {
             .expect("nested collection limit")
             .parse()
             .expect("numeric nested collection limit")
+    })
+});
+static FINITE_COLLECTION_LIMITS: LazyLock<[usize; 3]> = LazyLock::new(|| {
+    let mut limits = keywords("finiteCollectionLimits");
+    std::array::from_fn(|_| {
+        limits
+            .next()
+            .expect("finite collection limit")
+            .parse()
+            .expect("numeric finite collection limit")
     })
 });
 static ASSERTION_TYPES: LazyLock<HashMap<&'static str, u8>> = LazyLock::new(|| {
@@ -395,24 +408,18 @@ impl<'schema> Importer<'schema> {
                     .into_iter()
                     .find(|key| schema.get(*key).is_some())
                     .expect("each finite schema belongs to an assertion");
-                (constants, keyword)
+                (constants.into_iter().map(Cow::Borrowed).collect(), keyword)
             })
             .or_else(|| {
                 if reference_has_siblings || combination.is_some() {
-                    let finite_types = type_membership("boolean") | type_membership("null");
-                    if allowed_types & finite_types == allowed_types {
-                        static VALUES: [Value; 3] =
-                            [Value::Bool(false), Value::Bool(true), Value::Null];
-                        Some((VALUES.iter().collect(), "type"))
-                    } else {
-                        finite_schema_candidates(
-                            self.root,
-                            schema,
-                            &mut HashSet::new(),
-                            &mut 16_384,
-                            0,
-                        )
-                    }
+                    finite_schema_candidates(
+                        self.root,
+                        schema,
+                        &mut HashSet::new(),
+                        &mut 16_384,
+                        0,
+                        allowed_types,
+                    )
                 } else {
                     None
                 }
@@ -425,7 +432,7 @@ impl<'schema> Importer<'schema> {
                     allowed_types & value_type_membership(value) != 0
                         && super::validation::accepts_constant(root, [schema], value)
                 })
-                .map(|value| self.constant(value, pointer, keyword))
+                .map(|value| self.constant(value.as_ref(), pointer, keyword))
                 .collect();
             return (!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries));
         }
@@ -986,9 +993,14 @@ impl<'schema> Importer<'schema> {
         let root = self.root;
         let mut work = 16_384;
         for schema in &schemas {
-            let Some((candidates, keyword)) =
-                finite_schema_candidates(root, schema, &mut HashSet::new(), &mut work, 0)
-            else {
+            let Some((candidates, keyword)) = finite_schema_candidates(
+                root,
+                schema,
+                &mut HashSet::new(),
+                &mut work,
+                0,
+                ALL_JSON_TYPES,
+            ) else {
                 continue;
             };
             if candidates.len() > work / schemas.len() {
@@ -999,7 +1011,7 @@ impl<'schema> Importer<'schema> {
                 .filter(|value| {
                     super::validation::accepts_constant(root, schemas.iter().copied(), value)
                 })
-                .map(|value| self.constant(value, pointer, keyword))
+                .map(|value| self.constant(value.as_ref(), pointer, keyword))
                 .collect();
             if entries.is_empty() {
                 return Some(CollectionChild::Schema(&PROHIBITED_SCHEMA));
@@ -1253,6 +1265,7 @@ impl<'schema> Importer<'schema> {
                     &mut HashSet::new(),
                     &mut finite_work,
                     0,
+                    ALL_JSON_TYPES,
                 )
             {
                 finite_work = finite_work.checked_sub(candidates.len())?;
@@ -1265,9 +1278,9 @@ impl<'schema> Importer<'schema> {
                         continue;
                     };
                     let identity = if number == 0.0 { 0 } else { number.to_bits() };
-                    if membership & value_type_membership(value) != 0
+                    if membership & value_type_membership(&value) != 0
                         && seen.insert(identity)
-                        && super::validation::accepts_constant(self.root, [branch, &common], value)
+                        && super::validation::accepts_constant(self.root, [branch, &common], &value)
                     {
                         let point = serde_json::json!({ "minimum": value, "maximum": value });
                         alternatives.push((index, "number", point));
@@ -1757,13 +1770,169 @@ fn finite_constants(schema: &Value) -> Option<Vec<&Value>> {
     }
 }
 
+fn charge_collection_value(
+    value: &Value,
+    copies: usize,
+    work: &mut usize,
+    depth: usize,
+) -> Option<()> {
+    let size = 1 + value.as_str().map_or(0, str::len);
+    *work = work.checked_sub(copies.checked_mul(size)?)?;
+    if depth > 128 {
+        return None;
+    }
+    if let Some(items) = value.as_array() {
+        for item in items {
+            charge_collection_value(item, copies, work, depth + 1)?;
+        }
+    }
+    if let Some(fields) = value.as_object() {
+        for (key, item) in fields {
+            *work = work.checked_sub(copies.checked_mul(key.len() + 1)?)?;
+            charge_collection_value(item, copies, work, depth + 1)?;
+        }
+    }
+    Some(())
+}
+
+fn extend_collection_values(
+    prefixes: Vec<Value>,
+    members: &[Cow<'_, Value>],
+    keep_prefixes: bool,
+    work: &mut usize,
+    mut append: impl FnMut(&Value, &Value) -> Value,
+) -> Option<Vec<Value>> {
+    let size = prefixes
+        .len()
+        .checked_mul(members.len().checked_add(usize::from(keep_prefixes))?)?;
+    if size > FINITE_COLLECTION_LIMITS[2] {
+        return None;
+    }
+    *work = work.checked_sub(size)?;
+    if !members.is_empty() {
+        for prefix in &prefixes {
+            charge_collection_value(prefix, members.len(), work, 0)?;
+        }
+        for member in members {
+            charge_collection_value(member, prefixes.len(), work, 0)?;
+        }
+    }
+    let mut extended = Vec::with_capacity(size);
+    for prefix in &prefixes {
+        for member in members {
+            extended.push(append(prefix, member.as_ref()));
+        }
+    }
+    if keep_prefixes {
+        let mut prefixes = prefixes;
+        prefixes.extend(extended);
+        return Some(prefixes);
+    }
+    Some(extended)
+}
+
+fn finite_collection_values<'schema>(
+    schema: &'schema Value,
+    membership: u8,
+    work: &mut usize,
+    mut collect_member: impl FnMut(&'schema Value, &mut usize) -> Option<Vec<Cow<'schema, Value>>>,
+) -> Option<Vec<Value>> {
+    let [maximum_properties, maximum_length, maximum_values] = *FINITE_COLLECTION_LIMITS;
+    if membership == type_membership("object")
+        && schema["additionalProperties"] == PROHIBITED_SCHEMA
+    {
+        let fields = schema["properties"].as_object();
+        let required: HashSet<_> = schema["required"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .collect();
+        if required
+            .iter()
+            .any(|name| !fields.is_some_and(|fields| fields.contains_key(*name)))
+        {
+            return Some(Vec::new());
+        }
+        if fields.is_some_and(|fields| fields.len() > maximum_properties) {
+            return None;
+        }
+        let mut values = vec![Value::Object(serde_json::Map::new())];
+        for (name, child) in fields.into_iter().flatten() {
+            let members = collect_member(child, work)?;
+            let key_work = values
+                .len()
+                .checked_mul(members.len())?
+                .checked_mul(name.len() + 1)?;
+            *work = work.checked_sub(key_work)?;
+            values = extend_collection_values(
+                values,
+                &members,
+                !required.contains(name.as_str()),
+                work,
+                |prefix, member| {
+                    let mut fields = prefix.as_object().expect("object candidate").clone();
+                    fields.insert(name.clone(), member.clone());
+                    Value::Object(fields)
+                },
+            )?;
+            if values.is_empty() {
+                break;
+            }
+        }
+        return Some(values);
+    }
+    if membership == type_membership("array") {
+        let (minimum, maximum) = array_length_bounds(&[schema]);
+        let maximum = maximum?;
+        if maximum < minimum {
+            return Some(Vec::new());
+        }
+        if maximum > maximum_length as u64 {
+            return None;
+        }
+        let mut values = vec![Value::Array(Vec::new())];
+        let mut candidates = Vec::new();
+        let prefix = prefix_item_schemas(schema);
+        for length in 0..=maximum {
+            if length >= minimum {
+                if candidates.len() + values.len() > maximum_values {
+                    return None;
+                }
+                for value in &values {
+                    charge_collection_value(value, 1, work, 0)?;
+                }
+                candidates.extend(values.iter().cloned());
+            }
+            if length == maximum {
+                break;
+            }
+            let child = prefix
+                .get(length as usize)
+                .unwrap_or_else(|| tail_item_schema(schema));
+            let members = collect_member(child, work)?;
+            values = extend_collection_values(values, &members, false, work, |prefix, member| {
+                let mut items = prefix.as_array().expect("array candidate").clone();
+                items.push(member.clone());
+                Value::Array(items)
+            })?;
+            if values.is_empty() {
+                break;
+            }
+        }
+        return Some(candidates);
+    }
+    None
+}
+
 fn finite_schema_candidates<'schema>(
     root: &'schema Value,
     schema: &'schema Value,
     active: &mut HashSet<*const Value>,
     work: &mut usize,
     depth: usize,
-) -> Option<(Vec<&'schema Value>, &'static str)> {
+    allowed_types: u8,
+) -> Option<(Vec<Cow<'schema, Value>>, &'static str)> {
     *work = work.checked_sub(1)?;
     let identity = std::ptr::from_ref(schema);
     if depth > 128 || active.contains(&identity) {
@@ -1775,7 +1944,19 @@ fn finite_schema_candidates<'schema>(
         } else {
             "enum"
         };
-        return Some((values, keyword));
+        return Some((values.into_iter().map(Cow::Borrowed).collect(), keyword));
+    }
+    let membership = allowed_types & declared_type_membership(schema);
+    if membership == 0 {
+        return Some((Vec::new(), "type"));
+    }
+    if membership & FINITE_SCALAR_TYPES == membership {
+        let values = FINITE_SCALAR_VALUES
+            .iter()
+            .filter(|value| value_type_membership(value) & membership != 0)
+            .map(Cow::Borrowed)
+            .collect();
+        return Some((values, "type"));
     }
     let rules = schema.as_object()?;
     active.insert(identity);
@@ -1785,7 +1966,7 @@ fn finite_schema_candidates<'schema>(
             .and_then(Value::as_str)
             .and_then(|name| reference(root, name))
             && let Some((values, _)) =
-                finite_schema_candidates(root, target, active, work, depth + 1)
+                finite_schema_candidates(root, target, active, work, depth + 1, membership)
         {
             return Some((values, "$ref"));
         }
@@ -1795,7 +1976,7 @@ fn finite_schema_candidates<'schema>(
             };
             let values = branches.iter().try_fold(Vec::new(), |mut values, child| {
                 let (candidates, _) =
-                    finite_schema_candidates(root, child, active, work, depth + 1)?;
+                    finite_schema_candidates(root, child, active, work, depth + 1, membership)?;
                 *work = work.checked_sub(candidates.len())?;
                 values.extend(candidates);
                 Some(values)
@@ -1804,7 +1985,17 @@ fn finite_schema_candidates<'schema>(
                 return Some((values, keyword));
             }
         }
-        None
+        let values = finite_collection_values(schema, membership, work, |child, work| {
+            let (values, _) =
+                finite_schema_candidates(root, child, active, work, depth + 1, ALL_JSON_TYPES)?;
+            Some(values)
+        })?;
+        let keyword = if membership == type_membership("object") {
+            "properties"
+        } else {
+            "items"
+        };
+        Some((values.into_iter().map(Cow::Owned).collect(), keyword))
     })();
     active.remove(&identity);
     result

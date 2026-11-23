@@ -256,6 +256,12 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
     assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap', 'decoderRequiredStringTagsDistinguishAlternatives', 'decoderFormatsCombineWithRegularPatterns', 'decoderChecksFiniteReferencedAlternatives', 'validationUsesExactNumericSpellings', 'decoderAppliesSiblingTypeAssertions', 'decoderSelectsExclusiveRegularStrings', 'decoderIntersectsSiblingRegularStrings', 'decoderResolvesLinkedAlternatives', 'decoderCombinesLinkedNumericBounds', 'decoderCombinesLinkedCollectionAssertions', 'decoderAppliesSiblingCollectionAssertionsToAlternatives', 'decoderBoundsClosedArrayTailsByTheirOwnPrefix', 'decoderAppliesLinkedAssertionsWithinInstanceTypes', 'decoderCombinesCompatibleObjectPropertyLayouts', 'decoderCombinesCompatibleArrayItemLayouts', 'decoderIntersectsScalarPropertyAndItemAssertions', 'decoderFiltersFinitePropertyAndItemCandidates', 'decoderIntersectsNestedCollectionLayouts', 'decoderDistinguishesExclusiveArrayLengthIntervals', 'decoderDistinguishesRequiredArrayPrefixValues', 'decoderExclusiveDecimalAlternativesRespectEndpoints', 'decoderDistinguishesIntegerValuesWithinNumberAlternatives', 'decoderChecksExclusiveAlternativesWithinInstanceTypes', 'decoderCountsFiniteNumericBranchesInExclusiveAlternatives', 'decoderChecksBooleanAndNullAlternativeValues'],
     testName: context.name,
   });
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-FINITE-COLLECTIONS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-finite-collections', fixtureFile,
+    assertions: ['decoderCountsOverlappingFiniteCollections'],
+    testName: context.name,
+  });
 });
 
 test('shared JSON recovery fixtures preserve opt-in edits and provenance', context => {

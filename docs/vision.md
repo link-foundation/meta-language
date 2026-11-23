@@ -4775,7 +4775,15 @@ layouts distinguish every pair. For array-only branches, the proof includes
 the bounds and closed prefixes along each local reference chain. If lengths
 overlap, disjoint finite string sets at a common required prefix position
 can distinguish the branches. Optional positions and overlapping sets leave
-the exclusivity diagnostic in place when the length proof also fails.
+the exclusivity diagnostic in place when the length proof also fails and
+finite enumeration cannot resolve the overlap. For finite collection branches,
+the importer forms candidate values from the allowed members of a closed
+object or bounded array. The validator checks every candidate against the full
+schema, including common sibling restrictions and the exclusive branch count.
+The shared policy allows six declared object fields, 32 array items and 128
+values per collection. The existing finite inspection budget also accounts for
+the sizes of copied members. The importer reports a validation diagnostic when
+its other analyses cannot resolve an overlap within these limits.
 The type analysis intersects declared types along each local reference chain.
 The decoder removes branches with impossible bounds or required names and
 reports a residual when branch exclusivity or a layout intersection needs

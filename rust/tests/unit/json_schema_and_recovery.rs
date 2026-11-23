@@ -206,6 +206,14 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-FINITE-COLLECTIONS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-finite-collections",
+        fixture_file: FIXTURE,
+        assertions: &["decoderCountsOverlappingFiniteCollections"],
+        test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
+    });
 }
 
 fn action(name: &Value) -> JsonRecoveryAction {

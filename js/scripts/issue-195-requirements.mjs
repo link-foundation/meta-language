@@ -634,6 +634,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-FINITE-COLLECTIONS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON, RFC 6901 pointer and JSON Schema draft 2020-12 semantics',
+      construct: 'exact exclusive alternatives over bounded finite collections',
+      expectedBehavior: 'Within the shared construction limits, enumerate the values of closed object and bounded array branches with finite member schemas. Apply common sibling assertions and require exactly one exclusive alternative to accept each value, preserving object member permutations. Project no generatable production when every value overlaps.',
+      fixture: 'parity/fixtures/json-schema-and-recovery.lino',
+      selector: 'required and optional object fields, variable array lengths, local references, simultaneous inclusive and exclusive alternatives, nested collections, escaped and reordered object keys, and duplicate impossible alternatives',
+      assertions: ['decoderCountsOverlappingFiniteCollections'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/data/json-document/schema.lino', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/src/data/json-document/schema.lino', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I241-JSON-RECOVERY',
       source: ISSUE_195_SOURCES.jsonRecovery,
       language: 'JSON document recovery',

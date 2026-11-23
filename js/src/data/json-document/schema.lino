@@ -8,4 +8,5 @@
 (arrayAssertion prefixItems items minItems maxItems)
 (stringAssertion pattern format)
 (nestedCollectionLimits 32 4096)
+(finiteCollectionLimits 6 32 128)
 (repair closeOpenContainers dropTrailingCommas stripCodeFence extractFirstValue stripTrailingGarbage repairEscapes)

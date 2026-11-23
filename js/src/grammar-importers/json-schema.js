@@ -29,6 +29,8 @@ const assertionTypes = new Map([
 ].flatMap(([type, keywords]) => keywords.map(keyword => [keyword, jsonTypes.get(type)])));
 const allJsonTypes = (1 << 7) - 1;
 const [maximumNestedCollectionDepth, maximumNestedCollections] = jsonDocumentPolicy.nestedCollectionLimits.map(Number);
+const [maximumFiniteObjectProperties, maximumFiniteArrayLength, maximumFiniteCollectionValues] = jsonDocumentPolicy.finiteCollectionLimits.map(Number);
+const finiteScalarTypes = jsonTypes.get('boolean') | jsonTypes.get('null');
 const characters = (value) => charClass(Array.from(value, character => ({ kind: 'char', value: character })));
 const importedSchemas = new WeakMap();
 const baseFile = new URL('../data/json-document/decoder.lino', import.meta.url);
@@ -212,18 +214,91 @@ function finiteConstants(rules) {
   return Array.isArray(rules.enum) ? rules.enum : undefined;
 }
 
-function finiteSchemaCandidates(schema, resolve, budget = { remaining: 16_384 }) {
+function chargeCollectionValue(value, copies, budget, depth = 0) {
+  const cost = copies * (typeof value === 'string' ? 1 + Buffer.byteLength(value) : 1);
+  if (cost > budget.remaining) return false;
+  budget.remaining -= cost;
+  if (depth > 128) return false;
+  if (Array.isArray(value)) return value.every(item => chargeCollectionValue(item, copies, budget, depth + 1));
+  if (value !== null && typeof value === 'object') {
+    for (const key in value) {
+      if (Object.hasOwn(value, key) && (!chargeCollectionValue(key, copies, budget, depth)
+          || !chargeCollectionValue(value[key], copies, budget, depth + 1))) return false;
+    }
+  }
+  return true;
+}
+
+function extendCollectionValues(prefixes, members, keepPrefixes, budget, append) {
+  const size = prefixes.length * (members.length + Number(keepPrefixes));
+  if (size > maximumFiniteCollectionValues || size > budget.remaining) return undefined;
+  budget.remaining -= size;
+  if (members.length && (!prefixes.every(prefix => chargeCollectionValue(prefix, members.length, budget))
+      || !members.every(member => chargeCollectionValue(member, prefixes.length, budget)))) return undefined;
+  const extended = prefixes.flatMap(prefix => members.map(member => append(prefix, member)));
+  return keepPrefixes ? [...prefixes, ...extended] : extended;
+}
+
+function finiteCollectionValues(rules, membership, collectMember, budget) {
+  if (membership === jsonTypes.get('object') && rules.additionalProperties === false) {
+    const properties = rules.properties ?? {};
+    const required = new Set(rules.required ?? []);
+    if ([...required].some(name => !Object.hasOwn(properties, name))) return [];
+    const fields = Object.entries(properties);
+    if (fields.length > maximumFiniteObjectProperties) return undefined;
+    let values = [{}];
+    for (const [name, child] of fields) {
+      const candidate = collectMember(child);
+      if (!candidate) return undefined;
+      if (!chargeCollectionValue(name, values.length * candidate.values.length, budget)) return undefined;
+      values = extendCollectionValues(values, candidate.values, !required.has(name), budget,
+        (prefix, member) => ({ ...prefix, [name]: member }));
+      if (!values || !values.length) return values;
+    }
+    return values;
+  }
+  if (membership === jsonTypes.get('array')) {
+    const [minimum, maximum] = arrayLengthBounds([rules]);
+    if (maximum < minimum) return [];
+    if (!Number.isSafeInteger(maximum) || maximum > maximumFiniteArrayLength) return undefined;
+    let values = [[]];
+    const candidates = [];
+    for (let length = 0; length <= maximum; length += 1) {
+      if (length >= minimum) {
+        if (candidates.length + values.length > maximumFiniteCollectionValues
+            || !values.every(value => chargeCollectionValue(value, 1, budget))) return undefined;
+        candidates.push(...values);
+      }
+      if (length === maximum) break;
+      const candidate = collectMember(rules.prefixItems?.[length] ?? rules.items ?? true);
+      if (!candidate) return undefined;
+      values = extendCollectionValues(values, candidate.values, false, budget,
+        (prefix, member) => [...prefix, member]);
+      if (!values) return undefined;
+      if (!values.length) break;
+    }
+    return candidates;
+  }
+  return undefined;
+}
+
+function finiteSchemaCandidates(schema, resolve, budget = { remaining: 16_384 }, allowedTypes = allJsonTypes) {
   const active = new Set();
-  function collect(rules, depth) {
+  function collect(rules, depth, allowed) {
     budget.remaining -= 1;
     if (budget.remaining < 0 || depth > 128 || active.has(rules)) return undefined;
     const values = finiteConstants(rules);
     if (values) return { values, keyword: Object.hasOwn(rules, 'const') ? 'const' : 'enum' };
+    const membership = allowed & declaredTypeMembership(rules);
+    if (!membership) return { values: [], keyword: 'type' };
+    if ((membership & finiteScalarTypes) === membership) {
+      return { values: [false, true, null].filter(value => valueTypeMembership(value) & membership), keyword: 'type' };
+    }
     if (!rules || typeof rules !== 'object') return undefined;
     active.add(rules);
     try {
       if (typeof rules.$ref === 'string') {
-        const target = collect(resolve(rules.$ref), depth + 1);
+        const target = collect(resolve(rules.$ref), depth + 1, membership);
         if (target) return { values: target.values, keyword: '$ref' };
       }
       for (const keyword of ['anyOf', 'oneOf']) {
@@ -231,7 +306,7 @@ function finiteSchemaCandidates(schema, resolve, budget = { remaining: 16_384 })
         const values = [];
         let complete = true;
         for (const child of rules[keyword]) {
-          const candidate = collect(child, depth + 1);
+          const candidate = collect(child, depth + 1, membership);
           if (!candidate || candidate.values.length > budget.remaining) {
             complete = false;
             break;
@@ -241,12 +316,14 @@ function finiteSchemaCandidates(schema, resolve, budget = { remaining: 16_384 })
         }
         if (complete) return { values, keyword };
       }
+      const collection = finiteCollectionValues(rules, membership, child => collect(child, depth + 1, allJsonTypes), budget);
+      if (collection) return { values: collection, keyword: membership === jsonTypes.get('object') ? 'properties' : 'items' };
     } finally {
       active.delete(rules);
     }
     return undefined;
   }
-  return collect(schema, 0);
+  return collect(schema, 0, allowedTypes);
 }
 
 function declaredTypeMembership(rules) {
@@ -860,10 +937,7 @@ export function importJsonSchema(schema) {
     if (constants) {
       candidates = { values: constants, keyword: ['const', 'enum', 'anyOf', 'oneOf'].find(key => Object.hasOwn(rules, key)) };
     } else if (referenceHasSiblings || alternatives) {
-      const finiteTypes = jsonTypes.get('boolean') | jsonTypes.get('null');
-      candidates = (allowedTypes & finiteTypes) === allowedTypes
-        ? { values: [false, true, null], keyword: 'type' }
-        : finiteSchemaCandidates(rules, analysis.target);
+      candidates = finiteSchemaCandidates(rules, analysis.target, undefined, allowedTypes);
     }
     if (candidates) {
       const { values, keyword } = candidates;
