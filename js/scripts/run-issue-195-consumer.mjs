@@ -91,9 +91,15 @@ async function npmConsumer() {
   await writeFile(path.join(directory, 'deny-network.mjs'), DENY_NETWORK);
   await writeFile(path.join(directory, 'consumer.mjs'), NPM_CONSUMER);
   const observationPath = path.join(directory, 'observations.wire.json');
+  const offlineEnvironment = { ...environment, NODE_OPTIONS: '' };
   await run('npm-consumer', process.execPath, [
     '--import', './deny-network.mjs', 'consumer.mjs', corpusWirePath, observationPath,
-  ], { cwd: directory, env: { ...environment, NODE_OPTIONS: '' } });
+  ], { cwd: directory, env: offlineEnvironment });
+  const nativeHtmlFixture = await readFile(path.join(root, 'js/tests/downstream-native-html.test.js'));
+  await writeFile(path.join(directory, 'native-html.test.mjs'), nativeHtmlFixture);
+  await run('npm-native-html', process.execPath, [
+    '--import', './deny-network.mjs', '--test', 'native-html.test.mjs',
+  ], { cwd: directory, env: offlineEnvironment });
   const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
   return {
     version: installedPackage.version,
@@ -102,6 +108,7 @@ async function npmConsumer() {
     publicEntryPoints: observed.publicEntryPoints,
     offline: observed.offline,
     observations: observed.observations,
+    nativeHtmlFixtureSha256: sha256(nativeHtmlFixture),
   };
 }
 
@@ -125,6 +132,10 @@ async function crateConsumer() {
   const crateSource = path.join(extracted, path.basename(crate).replace(/\.crate$/u, ''));
   const manifest = await readFile(path.join(crateSource, 'Cargo.toml'), 'utf8');
   const version = /^version = "([^"]+)"/mu.exec(manifest)?.[1] ?? null;
+  const sourceInformation = path.join(crateSource, '.cargo_vcs_info.json');
+  const gitRevision = existsSync(sourceInformation)
+    ? JSON.parse(await readFile(sourceInformation, 'utf8')).git?.sha1 ?? null
+    : null;
   await writeFile(path.join(directory, 'Cargo.toml'), [
     '[package]',
     'name = "issue-195-crate-consumer"',
@@ -179,6 +190,7 @@ async function crateConsumer() {
   const sources = await rustSources(path.join(crateSource, 'src'));
   return {
     version,
+    gitRevision,
     checksum,
     clean,
     publicEntryPoints: { ...observed.publicEntryPoints, privatePathRejected },

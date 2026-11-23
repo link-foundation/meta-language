@@ -74,18 +74,23 @@ the step:
 
 ## Publishing versions that were missed
 
-The [October 12 audit](https://github.com/link-foundation/meta-language/pull/201#issuecomment-6116039616)
-recorded npm `0.46.0` and crate `1.0.0`. Once the settings above are saved,
-recover the missing npm artifact from the corresponding existing release tag:
+Recover a missing npm artifact from its existing release tag after verifying
+that the tag contains the intended JavaScript sources, package inputs, and
+publish workflow:
 
 ```bash
-gh workflow run js.yml --ref v1.0.0 -f release_version=1.0.0
+gh workflow run js.yml --ref "v$RELEASE_VERSION" -f release_version="$RELEASE_VERSION"
 ```
 
-Use the tag's version for both arguments when recovering a later release.
 A workflow dispatch on a tag executes the workflow stored on that tag; an
-older tag does not acquire checks added by a later commit. Future releases use
-the updated workflow through the dispatch in step 2.
+older tag does not acquire code or checks added by a later commit.
+
+The published [Rust 1.0.0 release](https://github.com/link-foundation/meta-language/releases/tag/v1.0.0)
+uses commit `a79782093cae3b33606483ac9f3e1d05faf36de0`, which preceded
+the [native HTML grammar](https://github.com/link-foundation/meta-language/commit/5f723fc41).
+Replaying that release can only recover its original package contents. A
+matched release containing native HTML in both packages requires a new tag
+whose commit includes the grammar. [Issue #230](https://github.com/link-foundation/meta-language/issues/230)
 
 `js/scripts/release-publication.mjs` rejects publishing from a branch or a
 different commit. It checks the tag, requested version, npm manifest, both

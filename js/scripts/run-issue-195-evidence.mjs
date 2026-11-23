@@ -679,6 +679,23 @@ async function produceDeliveryEvidence(kind) {
   };
   const reportArtifacts = { commands: [], artifacts: reports.map(({ artifact }) => artifact) };
   const local = reports.find(({ file }) => file === localReport)?.report ?? null;
+  const nativeHtmlRelease = 'i195-delivery-npm-native-html-published-javascript-release-delivery';
+  if (cellsByTestId.has(nativeHtmlRelease) && kind === 'published' && local && candidates.npmRegistry) {
+    const metadata = readProjectData(candidates.npmRegistry, { format: 'lino' });
+    const installedChecks = deliveryAssertions(local, ['npm', 'crate'], expected, deliveryContext);
+    const npmIntegrity = local.npm.checksum.expectedIntegrity;
+    if (installedChecks.exactArtifactChecksum && local.npm.version === '1.0.0' &&
+        local.crate.version === '1.0.0' && metadata.version === '1.0.0' &&
+        metadata.dist?.integrity === npmIntegrity && local.crate.gitRevision === commit &&
+        metadata.gitHead === commit && process.env.GITHUB_REF === 'refs/tags/v1.0.0') {
+      observe(nativeHtmlRelease, 'samePublishedRelease', 'npm integrity, registry gitHead, crate VCS revision and v1.0.0 tag agree');
+    }
+    const npmChecks = deliveryAssertions(local, ['npm'], expected, deliveryContext);
+    if (npmChecks.cleanEnvironment && npmChecks.exactArtifactChecksum && metadata.dist?.integrity === npmIntegrity &&
+        local.npm.nativeHtmlFixtureSha256 === manifest.fixtureCatalog['npm:native-html'].sha256) {
+      observe(nativeHtmlRelease, 'installedNativeHtmlTreeAndSpans', 'offline native HTML test of the installed npm release');
+    }
+  }
   const groups = [];
   for (const deliveryPackage of ['npm', 'crate', 'rml']) {
     for (const runtime of ['javascript', 'rust']) {
@@ -749,6 +766,7 @@ async function candidateArtifacts() {
     artifacts: [...record.artifacts, ...artifacts],
     tarball: path.join(artifactsDirectory, names[0]),
     crate: path.join(artifactsDirectory, names[1]),
+    npmRegistry: checkpoint === 'release-delivery' ? path.join(source, 'npm-registry.lino') : null,
   };
 }
 
