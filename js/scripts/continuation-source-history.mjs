@@ -12,7 +12,7 @@ import {nativeNumberObservationSource,restoreIssue245SourceSuccessor} from '../.
 const historyFile=new URL('../../parity/self-translation/ci-39389240046-historical-inputs.lino',import.meta.url);
 const historyHash='05e17bf81c6304f36411073ee4853798041e2764164c999ca93888870fb61560';
 const currentHistoryFile=new URL('../../parity/self-translation/ci-39389240046-current-historical-inputs.lino',import.meta.url);
-const currentHistoryHash='248b7e3c93571b8e5f2f81149b0f3392bc6b48c1acf0ec278bf336beb5da23a3';
+const currentHistoryHash='b721b2511bad8c03593133e54490697712f2ba750ac29779bc5a46d08c7ad328';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history,currentHistory;
 
