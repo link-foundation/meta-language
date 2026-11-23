@@ -59,7 +59,7 @@ export function buildLanguageCatalog(inventory, lock, sourceRegister = readProje
       if (baseline && !lockedGrammars.some((grammar) => grammar.id === baseline.grammar.id)) {
         throw new Error(`${language.name} no longer declares the ${baseline.grammar.id} grammar`);
       }
-      oracleGrammars = lockedGrammars.map((grammar) => grammar.id === baseline?.grammar.id ? baseline.grammar : grammar);
+      oracleGrammars = lockedGrammars.map((grammar) => grammar.id === baseline?.grammar.id ? { ...baseline.grammar } : grammar);
     }
     if (language.builtinGrammar) {
       const id = language.builtinGrammar;

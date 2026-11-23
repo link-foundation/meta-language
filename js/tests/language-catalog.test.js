@@ -1,4 +1,4 @@
-import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { checkProjectData, readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -33,13 +33,16 @@ test('the Rust native grammar embedding is generated for every inventory entry',
 });
 
 test('language catalog is generated from the inventory and shipped identically to Rust', async () => {
-  const generated = formatLanguageCatalog(buildLanguageCatalog(inventory, GRAMMAR_LOCK));
-  const shipped = await readFile(resolveProjectDataPath(new URL('../src/data/language-catalog.json', import.meta.url)), 'utf8');
+  const catalog = buildLanguageCatalog(inventory, GRAMMAR_LOCK);
+  const generated = formatLanguageCatalog(catalog);
+  const javascriptCatalog = new URL('../src/data/language-catalog.json', import.meta.url);
+  const shipped = await readFile(resolveProjectDataPath(javascriptCatalog), 'utf8');
   const rust = await readFile(
     resolveProjectDataPath(new URL('../../rust/src/data/language-catalog.json', import.meta.url)),
     'utf8',
   );
-  assert.deepEqual(readProjectData(new URL('../src/data/language-catalog.json', import.meta.url)), JSON.parse(generated));
+  assert.deepEqual(readProjectData(javascriptCatalog), JSON.parse(generated));
+  assert.equal(checkProjectData(javascriptCatalog, catalog), true);
   assert.equal(rust, shipped);
   assert.deepEqual(
     LANGUAGE_CATALOG.languages.map(({ name }) => name),
