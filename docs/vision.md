@@ -4649,6 +4649,14 @@ decimal positions and significant digits for integer types and numeric bounds,
 and uses the same comparison for numeric members of constants and enumerations.
 This preserves assertions near rounding and underflow boundaries even when the
 returned host value uses a floating-point number.
+The decoder uses that normalization for numeric constants and enumerations,
+including numeric members of collections. A zero constant accepts every
+valid all-zero mantissa with either sign and any valid exponent. Each nonzero
+constant supports its unscaled decimal form and forms with a decimal point
+inside the significant digits or up to one extra zero on either side.
+Each form fixes the compensating exponent, with optional leading zeros and
+either case of the exponent marker. The importer reports the remaining
+spellings for validation based on the original tokens.
 
 The schema importer builds the shared grammar representation for existing
 emitters. It defines a `start` production for Lark consumers, and retains only

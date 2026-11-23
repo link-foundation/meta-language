@@ -80,7 +80,7 @@ test('JSON Schema lowers tuple limits, local references, formats and finite inte
     ]) assert.equal(parser.parseTree(source).ok, accepted, source);
   }
   const residual = importJsonSchema({ oneOf: [{ type: 'number' }, { const: 1 }], unsupportedKeyword: true });
-  assert.deepEqual(residual.schemaDiagnostics.map(issue => issue.pointer), ['/unsupportedKeyword', '/oneOf', '/oneOf']);
+  assert.deepEqual(residual.schemaDiagnostics.map(issue => issue.pointer), ['/unsupportedKeyword', '/oneOf', '/oneOf', '/oneOf/1/const']);
   assert.match(residual.schemaDiagnostics[2].message, /Exclusive branch selection/u);
 });
 
@@ -260,6 +260,12 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
     requirementId: 'I195-I240-JSON-SCHEMA-FINITE-COLLECTIONS', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-finite-collections', fixtureFile,
     assertions: ['decoderCountsOverlappingFiniteCollections'],
+    testName: context.name,
+  });
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-NUMERIC-CONSTANTS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-numeric-constants', fixtureFile,
+    assertions: ['decoderNumericConstantsRespectEquivalentSpellings'],
     testName: context.name,
   });
 });

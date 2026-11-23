@@ -1,12 +1,45 @@
 import { GrammarBuilder as Expression } from '../grammar.js';
+import { jsonNumberSpelling } from '../json-number-spelling.js';
 import { exclusiveIntegerBoundary } from './json-schema-integer-policy.js';
 
 export const numericLimitKeywords = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum'];
 
-const { charRange, seq, choice, literal, repeat, repeat0, optional, empty } = Expression;
+const { charClass, charRange, seq, choice, literal, repeat, repeat0, optional, empty } = Expression;
 const digit = charRange('0', '9');
 const digits = (first, last) => first === last ? literal(String(first)) : charRange(String(first), String(last));
 const alternatives = expressions => expressions.length ? choice(...expressions) : null;
+
+export function numericConstant(value) {
+  const { sign, position, digits } = jsonNumberSpelling(String(value));
+  const zero = literal('0');
+  const leadingZeroes = repeat0(zero);
+  const exponentMarker = charClass([{ kind: 'char', value: 'e' }, { kind: 'char', value: 'E' }]);
+  const exponentSign = charClass([{ kind: 'char', value: '+' }, { kind: 'char', value: '-' }]);
+  const zeroFraction = optional(seq(literal('.'), repeat(zero, 1)));
+  if (sign === 0) return seq(optional(literal('-')), zero, zeroFraction,
+    optional(seq(exponentMarker, optional(exponentSign), repeat(digit, 1))));
+
+  const positions = new Set([position]);
+  for (let index = -1; index <= digits.length + 1; index += 1) positions.add(index);
+  const forms = [];
+  for (const index of positions) {
+    const exponent = position - index;
+    let mantissa;
+    if (index >= digits.length) {
+      mantissa = seq(literal(digits + '0'.repeat(index - digits.length)), zeroFraction);
+    } else {
+      const whole = index > 0 ? digits.slice(0, index) : '0';
+      const fraction = index > 0 ? digits.slice(index) : '0'.repeat(-index) + digits;
+      mantissa = seq(literal(`${whole}.${fraction}`), leadingZeroes);
+    }
+    const scale = exponent === 0
+      ? optional(seq(exponentMarker, optional(exponentSign), repeat(zero, 1)))
+      : seq(exponentMarker, exponent < 0 ? literal('-') : optional(literal('+')),
+        leadingZeroes, literal(String(Math.abs(exponent))));
+    forms.push(seq(mantissa, scale));
+  }
+  return seq(sign < 0 ? literal('-') : empty(), choice(...forms));
+}
 
 function fixedWidth(low, high) {
   const first = Number(low[0]);

@@ -649,6 +649,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-NUMERIC-CONSTANTS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'numeric value equality across JSON spellings in constrained decoders',
+      expectedBehavior: 'Decode the ordinary decimal representation and bounded exponent shifts of each numeric constant or enumeration member, including numbers inside arrays and objects. Accept all valid zero spellings. Reject different numeric values and invalid JSON number syntax. Report the remaining shifts for original-token validation.',
+      fixture: 'parity/fixtures/json-schema-and-recovery.lino',
+      selector: 'numeric constants, signed zero, scaled fractions and integers, nested enumerations, invalid numeric syntax and decoded versus validated residual spellings',
+      assertions: ['decoderNumericConstantsRespectEquivalentSpellings'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/grammar-importers/json-schema-numeric-ranges.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/src/grammar/json_document/number_spelling.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I241-JSON-RECOVERY',
       source: ISSUE_195_SOURCES.jsonRecovery,
       language: 'JSON document recovery',

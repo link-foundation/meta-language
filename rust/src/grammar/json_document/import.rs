@@ -219,6 +219,7 @@ pub fn import_json_schema(schema: &Value) -> Result<JsonSchemaGrammar, JsonSchem
         grammar: BASE.clone(),
         compiled: HashMap::new(),
         diagnostics: Analysis::new(schema).issues,
+        numeric_constant_diagnostics: HashSet::new(),
         next: 1,
         remaining_nested_collections: NESTED_COLLECTION_LIMITS[1],
         pattern_rules: Vec::new(),
@@ -315,6 +316,7 @@ struct Importer<'schema> {
     grammar: Grammar,
     compiled: HashMap<(*const Value, u8), String>,
     diagnostics: Vec<JsonSchemaIssue>,
+    numeric_constant_diagnostics: HashSet<String>,
     next: usize,
     remaining_nested_collections: usize,
     pattern_rules: Vec<GrammarExpr>,
@@ -560,6 +562,21 @@ impl<'schema> Importer<'schema> {
     fn constant(&mut self, value: &Value, pointer: &str, keyword: &str) -> Expression {
         match value {
             Value::String(value) => quoted(value),
+            Value::Number(value) => {
+                let number = NumberSpelling::new(&value.to_string());
+                if !number.is_zero()
+                    && self
+                        .numeric_constant_diagnostics
+                        .insert(pointer_child(pointer, keyword))
+                {
+                    self.report(
+                        pointer,
+                        keyword,
+                        "Validation accepts additional equivalent number spellings with shifted decimal points and compensating exponents.",
+                    );
+                }
+                number.constant_expression()
+            }
             Value::Array(items) => collection(
                 "[",
                 "]",

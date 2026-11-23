@@ -10,7 +10,7 @@ import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-p
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
 import { intersectJsonStringExpressions, selectExclusiveJsonStringExpressions } from './json-schema-string-intersection.js';
 import { stringSetsAreDisjoint } from './json-schema-tag-policy.js';
-import { exclusiveDecimalRange, exclusiveIntegerRange, integerBounds, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
+import { exclusiveDecimalRange, exclusiveIntegerRange, integerBounds, numericConstant, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
 const space = ref('json_space');
@@ -467,6 +467,7 @@ export function importJsonSchema(schema) {
   builder.rule('json_pattern_character', anyJsonPatternCharacter());
   const compiled = new Map();
   const diagnostics = [...analysis.issues];
+  const numericConstantDiagnostics = new Set();
   const report = (pointer, keyword, message) => diagnostics.push({
     keyword, pointer: pointerChild(pointer, keyword), message,
   });
@@ -503,6 +504,14 @@ export function importJsonSchema(schema) {
   }
   function constantExpression(instance, pointer, keyword) {
     if (typeof instance === 'string') return quoted(instance);
+    if (typeof instance === 'number' && Number.isFinite(instance)) {
+      const location = pointerChild(pointer, keyword);
+      if (instance !== 0 && !numericConstantDiagnostics.has(location)) {
+        numericConstantDiagnostics.add(location);
+        report(pointer, keyword, 'Validation accepts additional equivalent number spellings with shifted decimal points and compensating exponents.');
+      }
+      return numericConstant(instance);
+    }
     if (Array.isArray(instance)) return collection('[', ']', seq(...instance.map((item, index) => {
       const expression = constantExpression(item, pointer, keyword);
       return index ? separated(expression) : expression;

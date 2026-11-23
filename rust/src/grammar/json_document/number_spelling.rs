@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
 
+use super::super::{CharClassItem, ExprBuilder, GrammarExpr};
+
 /// A JSON number normalized to a sign, decimal position and significant digits.
 pub(super) struct NumberSpelling {
     sign: i8,
@@ -42,6 +44,85 @@ impl NumberSpelling {
 
     pub(super) fn is_integer(&self) -> bool {
         self.position >= self.digits.len() as i64
+    }
+
+    pub(super) fn is_zero(&self) -> bool {
+        self.sign == 0
+    }
+
+    pub(super) fn constant_expression(&self) -> GrammarExpr {
+        let expression = ExprBuilder;
+        let zero = expression.term("0");
+        let leading_zeroes = expression.rep0(zero.clone());
+        let exponent_marker = expression.char_class(false, ['e', 'E'].map(CharClassItem::Char));
+        let exponent_sign = expression.char_class(false, ['+', '-'].map(CharClassItem::Char));
+        let zero_fraction =
+            expression.opt(expression.seq([expression.term("."), expression.rep1(zero.clone())]));
+        if self.is_zero() {
+            return expression.seq([
+                expression.opt(expression.term("-")),
+                zero,
+                zero_fraction,
+                expression.opt(expression.seq([
+                    exponent_marker,
+                    expression.opt(exponent_sign),
+                    expression.rep1(expression.char_range('0', '9')),
+                ])),
+            ]);
+        }
+
+        let length = self.digits.len() as i64;
+        let positions = std::iter::once(self.position)
+            .chain((-1..=length + 1).filter(|&index| index != self.position));
+        let forms = positions.map(|index| {
+            let exponent = self.position - index;
+            let mantissa = if index >= length {
+                expression.seq([
+                    expression.term(format!(
+                        "{}{}",
+                        self.digits,
+                        "0".repeat((index - length) as usize)
+                    )),
+                    zero_fraction.clone(),
+                ])
+            } else {
+                let decimal = if index > 0 {
+                    let (whole, fraction) = self.digits.split_at(index as usize);
+                    format!("{whole}.{fraction}")
+                } else {
+                    format!("0.{}{}", "0".repeat((-index) as usize), self.digits)
+                };
+                expression.seq([expression.term(decimal), leading_zeroes.clone()])
+            };
+            let scale = if exponent == 0 {
+                expression.opt(expression.seq([
+                    exponent_marker.clone(),
+                    expression.opt(exponent_sign.clone()),
+                    expression.rep1(zero.clone()),
+                ]))
+            } else {
+                let sign = if exponent < 0 {
+                    expression.term("-")
+                } else {
+                    expression.opt(expression.term("+"))
+                };
+                expression.seq([
+                    exponent_marker.clone(),
+                    sign,
+                    leading_zeroes.clone(),
+                    expression.term(exponent.unsigned_abs().to_string()),
+                ])
+            };
+            expression.seq([mantissa, scale])
+        });
+        expression.seq([
+            if self.sign < 0 {
+                expression.term("-")
+            } else {
+                expression.empty()
+            },
+            expression.choice_unordered(forms),
+        ])
     }
 
     pub(super) fn compare(&self, other: &Self) -> Ordering {
