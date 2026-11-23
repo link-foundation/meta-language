@@ -57,6 +57,7 @@ fn natural_language_values_preserve_spans_and_alternatives() {
             "inflectedDurations",
             "dateAlternatives",
             "utf8SourceSpans",
+            "explicitZeroInNumberWordCompounds",
         ],
         test_name: "natural_language_values_preserve_spans_and_alternatives",
     });

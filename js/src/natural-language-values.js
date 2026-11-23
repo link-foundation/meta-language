@@ -92,18 +92,18 @@ function readAmount(match, range, profile) {
   }
   const words = numberWordRules.flatMap(rule => capturesInside(match, range, rule)).sort((left, right) => left.start - right.start);
   let total = exactDecimal('0');
-  let chunk = exactDecimal('0');
+  let chunk;
   for (const { text } of words) {
     const number = wordValue(profile, 'number', text);
     const integer = Number(number);
     if (integer >= 1000) {
-      total = addDecimals(total, scaleDecimal(chunk.coefficient === 0n ? exactDecimal('1') : chunk, number));
-      chunk = exactDecimal('0');
+      total = addDecimals(total, scaleDecimal(chunk ?? exactDecimal('1'), number));
+      chunk = undefined;
     } else if (integer === 100 && profile.locale === 'en') {
-      chunk = scaleDecimal(chunk.coefficient === 0n ? exactDecimal('1') : chunk, number);
-    } else chunk = addDecimals(chunk, exactDecimal(number));
+      chunk = scaleDecimal(chunk ?? exactDecimal('1'), number);
+    } else chunk = addDecimals(chunk ?? exactDecimal('0'), exactDecimal(number));
   }
-  return addDecimals(total, chunk);
+  return chunk === undefined ? total : addDecimals(total, chunk);
 }
 
 function readCurrency(match, profile) {

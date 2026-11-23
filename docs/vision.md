@@ -1593,7 +1593,9 @@ Links grammars recognize the shape of numeric expressions, currencies,
 durations and dates. Locale vocabularies provide number words, units and month
 names. A value action reads the captured fields, normalizes exact decimals and
 ISO 4217 codes, and validates calendar dates. A spelling such as `5-7` can carry
-both a numeric range and a date.
+both a numeric range and a date. An unqualified number word scale implies one
+unit of that scale. An explicit count, including zero, multiplies the scale and
+flows through compound numbers and durations.
 
 ## Grammar feature union
 

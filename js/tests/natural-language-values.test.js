@@ -27,7 +27,7 @@ test('natural-language values preserve the original spelling, spans, and alterna
   recordIssue195Observations({
     requirementId: 'I195-I242-NATURAL-LANGUAGE-VALUES', suffix: 'behavior',
     fixtureId: 'i195-i242-natural-language-values', fixtureFile,
-    assertions: ['localizedExactNumbers', 'currencyRanges', 'inflectedDurations', 'dateAlternatives', 'utf8SourceSpans'],
+    assertions: ['localizedExactNumbers', 'currencyRanges', 'inflectedDurations', 'dateAlternatives', 'utf8SourceSpans', 'explicitZeroInNumberWordCompounds'],
     testName: context.name,
   });
 });

@@ -154,17 +154,6 @@ impl ExactDecimal {
             ..self
         }
     }
-
-    fn or_one(self) -> Self {
-        if self.coefficient == 0 {
-            Self {
-                coefficient: 1,
-                places: 0,
-            }
-        } else {
-            self
-        }
-    }
 }
 
 impl fmt::Display for ExactDecimal {
@@ -247,20 +236,24 @@ fn read_amount(
         .collect::<Vec<_>>();
     words.sort_by_key(|span| span.start);
     let mut total = ExactDecimal::default();
-    let mut chunk = ExactDecimal::default();
+    let mut chunk: Option<ExactDecimal> = None;
+    let implicit_one = ExactDecimal {
+        coefficient: 1,
+        places: 0,
+    };
     for span in words {
         let word = profile.word("number", &span.text)?;
         let integer = word.parse::<i128>().unwrap_or_default();
         if integer >= 1000 {
-            total = total.add(chunk.or_one().scale(integer));
-            chunk = ExactDecimal::default();
+            total = total.add(chunk.unwrap_or(implicit_one).scale(integer));
+            chunk = None;
         } else if integer == 100 && profile.locale == "en" {
-            chunk = chunk.or_one().scale(integer);
+            chunk = Some(chunk.unwrap_or(implicit_one).scale(integer));
         } else {
-            chunk = chunk.add(ExactDecimal::parse(word)?);
+            chunk = Some(chunk.unwrap_or_default().add(ExactDecimal::parse(word)?));
         }
     }
-    Some(total.add(chunk))
+    Some(chunk.map_or(total, |chunk| total.add(chunk)))
 }
 
 fn currency_defaults(spelling: &str) -> &'static [&'static str] {

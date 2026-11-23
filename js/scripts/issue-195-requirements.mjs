@@ -647,10 +647,10 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       language: 'English, Russian and shared digit-based value syntax',
       version: 'ISO 4217 List One 2026-09-17, exact decimal arithmetic, proleptic Gregorian dates',
       construct: 'typed value links from grammar searches',
-      expectedBehavior: 'Grammar search emits localized number, numeric range, currency, duration, calendar date and calendar range annotations over original UTF-8 spans. Inflected number words and open date endpoints are recognized. A numeric range and a date can coexist over the same spelling.',
+      expectedBehavior: 'Grammar search emits localized number, numeric range, currency, duration, calendar date and calendar range annotations over original UTF-8 spans. Inflected number words and open date endpoints are recognized. A numeric range and a date can coexist over the same spelling. A number word scale assumes one when unqualified and preserves a preceding explicit zero in English and Russian number and duration compounds.',
       fixture: 'parity/fixtures/natural-language-values.lino',
-      selector: 'the reported Russian and English examples, related inflected forms, punctuation, shared Spanish digit and currency syntax, and invalid dates and currency codes',
-      assertions: ['localizedExactNumbers', 'currencyRanges', 'inflectedDurations', 'dateAlternatives', 'utf8SourceSpans'],
+      selector: 'the reported Russian and English examples, related inflected forms, punctuation, shared Spanish digit and currency syntax, invalid dates and currency codes, and explicit zero and bare scales in English and Russian number words and durations',
+      assertions: ['localizedExactNumbers', 'currencyRanges', 'inflectedDurations', 'dateAlternatives', 'utf8SourceSpans', 'explicitZeroInNumberWordCompounds'],
       implementationEntryPoints: {
         javascript: ['js/src/natural-language-values.js', 'js/tests/natural-language-values.test.js'],
         rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
