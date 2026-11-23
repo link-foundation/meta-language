@@ -146,6 +146,59 @@ test('main dependency refresh retains failed live findings and delivers their ou
   } finally {rmSync(directory, {recursive: true, force: true});}
 });
 
+test('scheduled refresh fast-forwards a diverged automation branch under the existing push rule', (context) => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'meta-language-refresh-branch-'));
+  context.after(() => rmSync(directory, { recursive: true, force: true }));
+  const origin = path.join(directory, 'origin.git');
+  const author = path.join(directory, 'author');
+  const checkout = path.join(directory, 'checkout');
+  const branch = 'automation/dependency-refresh';
+  const git = (cwd, ...args) => {
+    const result = spawnSync('git', ['-C', cwd, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
+  };
+  git(directory, 'init', '--bare', '--initial-branch=main', origin);
+  git(origin, 'config', 'receive.denyNonFastForwards', 'true');
+  git(directory, 'clone', origin, author);
+  git(author, 'config', 'user.name', 'Dependency Test');
+  git(author, 'config', 'user.email', 'dependency-test@example.com');
+  const audit = path.join(author, 'audit.txt');
+  writeFileSync(audit, 'base\n');
+  git(author, 'add', 'audit.txt');
+  git(author, 'commit', '-m', 'Record base audit');
+  git(author, 'switch', '--create', branch);
+  writeFileSync(audit, 'previous refresh\n');
+  git(author, 'commit', '-am', 'Previous refresh');
+  git(author, 'push', 'origin', `HEAD:refs/heads/${branch}`);
+  const oldRefresh = git(origin, 'rev-parse', branch);
+  git(author, 'switch', 'main');
+  writeFileSync(audit, 'main update\n');
+  git(author, 'commit', '-am', 'Update main independently');
+  git(author, 'push', 'origin', 'main');
+  const main = git(origin, 'rev-parse', 'main');
+  git(directory, 'clone', origin, checkout);
+
+  const rejected = spawnSync('git', ['push', '--force', 'origin', `HEAD:refs/heads/${branch}`], { cwd: checkout, encoding: 'utf8' });
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /denying non-fast-forward/u);
+  assert.equal(git(origin, 'rev-parse', branch), oldRefresh);
+
+  writeFileSync(path.join(checkout, 'audit.txt'), 'current refresh\n');
+  const workflow = readFileSync(path.join(root, '.github/workflows/dependency-refresh.yml'), 'utf8');
+  const { run } = parseWorkflow(workflow).find(job => job.id === 'refresh').steps
+    .find(step => step.name === 'Open or update the refresh pull request');
+  const publish = run.replace(/^\|\s*\n/u, '').replace(/^ {10}/gmu, '');
+  const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', 'gh() { return 0; }\n' + publish], {
+    cwd: checkout, encoding: 'utf8', env: { ...process.env, AUDIT_OUTCOME: 'success', BRANCH: branch, RUNNER_TEMP: directory },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  git(origin, 'merge-base', '--is-ancestor', oldRefresh, branch);
+  git(origin, 'merge-base', '--is-ancestor', main, branch);
+  assert.equal(git(origin, 'show', `${branch}:audit.txt`), 'current refresh');
+  assert.equal(git(origin, 'rev-parse', 'main'), main);
+});
+
 test('outdated direct pins require an audited open issue attached to each declaration', async (context) => {
   const fixture = mkdtempSync(path.join(os.tmpdir(), 'dependency-freshness-'));
   context.after(() => rmSync(fixture, { recursive: true, force: true }));
