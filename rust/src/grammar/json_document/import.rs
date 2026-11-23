@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::hash::Hash;
 use std::sync::LazyLock;
 
 use serde_json::Value;
@@ -1803,6 +1804,13 @@ fn branches_use_disjoint_types<'schema>(
     true
 }
 
+fn finite_string_values(schema: &Value) -> Option<Vec<&str>> {
+    finite_constants(schema)?
+        .into_iter()
+        .map(Value::as_str)
+        .collect()
+}
+
 fn required_string_tags(schema: &Value) -> HashMap<&str, Vec<&str>> {
     if !matches!(schema.get("type").map(types), Some([value]) if value.as_str() == Some("object"))
         || ["$ref", "anyOf", "oneOf"]
@@ -1818,13 +1826,37 @@ fn required_string_tags(schema: &Value) -> HashMap<&str, Vec<&str>> {
         .iter()
         .filter_map(|key| {
             let key = key.as_str()?;
-            let values = finite_constants(schema["properties"].get(key)?)?
-                .into_iter()
-                .map(Value::as_str)
-                .collect::<Option<Vec<_>>>()?;
+            let values = finite_string_values(schema["properties"].get(key)?)?;
             Some((key, values))
         })
         .collect()
+}
+
+fn required_prefix_tags<'schema>(
+    layers: &[&'schema Value],
+    minimum: u64,
+) -> HashMap<usize, Vec<&'schema str>> {
+    let mut tags = HashMap::new();
+    let required = usize::try_from(minimum).unwrap_or(usize::MAX);
+    for &layer in layers {
+        for (position, schema) in prefix_item_schemas(layer).iter().take(required).enumerate() {
+            if let Some(values) = finite_string_values(schema) {
+                tags.entry(position).or_insert(values);
+            }
+        }
+    }
+    tags
+}
+
+fn tags_are_disjoint<Key: Eq + Hash>(
+    left: &HashMap<Key, Vec<&str>>,
+    right: &HashMap<Key, Vec<&str>>,
+) -> bool {
+    left.iter().any(|(key, values)| {
+        right
+            .get(key)
+            .is_some_and(|other| string_sets_are_disjoint(values, other))
+    })
 }
 
 fn branches_use_disjoint_collection_layouts(
@@ -1846,14 +1878,17 @@ fn branches_use_disjoint_collection_layouts(
                 .unwrap_or_default()
         })
         .collect();
-    let lengths: Vec<_> = references
+    let arrays: Vec<_> = references
         .iter()
         .map(|layers| {
             let layers = layers.as_ref()?;
             let membership = layers.iter().fold(allowed_types, |types, layer| {
                 possible_type_membership(layer, types)
             });
-            (membership == type_membership("array")).then(|| array_length_bounds(layers))
+            (membership == type_membership("array")).then(|| {
+                let (minimum, maximum) = array_length_bounds(layers);
+                (minimum, maximum, required_prefix_tags(layers, minimum))
+            })
         })
         .collect();
     branches.iter().enumerate().all(|(index, branch)| {
@@ -1862,20 +1897,23 @@ fn branches_use_disjoint_collection_layouts(
             .enumerate()
             .all(|(other, previous)| {
                 branches_use_disjoint_types(root, [branch, previous].into_iter(), allowed_types)
-                    || lengths[index]
-                        .zip(lengths[other])
-                        .is_some_and(|(left, right)| {
-                            let minimum = left.0.max(right.0);
-                            left.1
-                                .into_iter()
-                                .chain(right.1)
-                                .any(|maximum| maximum < minimum)
-                        })
-                    || tags[index].iter().any(|(key, values)| {
-                        tags[other].get(key).is_some_and(|other_values| {
-                            string_sets_are_disjoint(values, other_values)
-                        })
-                    })
+                    || arrays[index]
+                        .as_ref()
+                        .zip(arrays[other].as_ref())
+                        .is_some_and(
+                            |(
+                                (left_min, left_max, left_tags),
+                                (right_min, right_max, right_tags),
+                            )| {
+                                let minimum = left_min.max(right_min);
+                                left_max
+                                    .iter()
+                                    .chain(right_max)
+                                    .any(|maximum| maximum < minimum)
+                                    || tags_are_disjoint(left_tags, right_tags)
+                            },
+                        )
+                    || tags_are_disjoint(&tags[index], &tags[other])
             })
     })
 }

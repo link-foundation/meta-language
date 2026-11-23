@@ -87,3 +87,9 @@ sibling Boolean item schema. The decoder previously admitted `["x"]` through
 the short branch. The fixture also checks an independent `null` branch and
 intervals that overlap at length two, where document validation still checks
 exclusivity and the sibling item schema.
+
+The required prefix cases share a length range and distinguish branches by
+their first string value. One minimum length comes from a sibling of the
+local reference. The decoder previously admitted `["selected",null]` and now
+applies the common Boolean tail rule. A control with optional prefix positions
+retains the exclusivity diagnostic because both branches match the empty array.

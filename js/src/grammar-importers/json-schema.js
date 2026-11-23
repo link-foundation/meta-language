@@ -319,6 +319,11 @@ function branchesUseDisjointTypes(branches, allowedTypes, referenceLayers) {
   return true;
 }
 
+function finiteStringValues(schema) {
+  const values = finiteConstants(schema);
+  return values?.every(value => typeof value === 'string' && value.isWellFormed()) ? values : undefined;
+}
+
 function requiredStringTags(schema) {
   const tags = new Map();
   const declared = Array.isArray(schema?.type) ? schema.type : [schema?.type];
@@ -326,9 +331,21 @@ function requiredStringTags(schema) {
       || ['$ref', 'anyOf', 'oneOf'].some(key => Object.hasOwn(schema, key))) return tags;
   for (const key of schema.required) {
     if (!schema.properties || !Object.hasOwn(schema.properties, key)) continue;
-    const values = finiteConstants(schema.properties[key]);
-    if (Array.isArray(values) && values.every(value => typeof value === 'string' && value.isWellFormed())) {
-      tags.set(key, values);
+    const values = finiteStringValues(schema.properties[key]);
+    if (values) tags.set(key, values);
+  }
+  return tags;
+}
+
+function requiredPrefixTags(layers, minimum) {
+  const tags = new Map();
+  for (const layer of layers) {
+    if (!Array.isArray(layer.prefixItems)) continue;
+    const prefix = layer.prefixItems.slice(0, minimum);
+    for (const [position, schema] of prefix.entries()) {
+      if (tags.has(position)) continue;
+      const values = finiteStringValues(schema);
+      if (values) tags.set(position, values);
     }
   }
   return tags;
@@ -337,16 +354,23 @@ function requiredStringTags(schema) {
 function branchesUseDisjointCollectionLayouts(branches, allowedTypes, referenceLayers) {
   const references = branches.map(referenceLayers);
   const tags = references.map(layers => requiredStringTags(layers?.at(-1)));
-  const lengths = references.map(layers => {
+  const arrays = references.map(layers => {
     const membership = layers?.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
-    if (membership === jsonTypes.get('array')) return arrayLengthBounds(layers);
+    if (membership !== jsonTypes.get('array')) return undefined;
+    const [minimum, maximum] = arrayLengthBounds(layers);
+    return { minimum, maximum, tags: requiredPrefixTags(layers, minimum) };
   });
-  return branches.every((branch, index) => branches.slice(0, index).every((previous, other) => (
-    branchesUseDisjointTypes([branch, previous], allowedTypes, referenceLayers)
-      || (lengths[index] && lengths[other]
-        && Math.min(lengths[index][1], lengths[other][1]) < Math.max(lengths[index][0], lengths[other][0]))
-      || [...tags[index]].some(([key, values]) => tags[other].has(key) && stringSetsAreDisjoint(values, tags[other].get(key)))
-  )));
+  const disjointTags = (left, right) => [...left].some(([key, values]) => (
+    right.has(key) && stringSetsAreDisjoint(values, right.get(key))
+  ));
+  return branches.every((branch, index) => branches.slice(0, index).every((previous, other) => {
+    const left = arrays[index];
+    const right = arrays[other];
+    return branchesUseDisjointTypes([branch, previous], allowedTypes, referenceLayers)
+      || (left && right && (Math.min(left.maximum, right.maximum) < Math.max(left.minimum, right.minimum)
+        || disjointTags(left.tags, right.tags)))
+      || disjointTags(tags[index], tags[other]);
+  }));
 }
 
 function formatRule(format) {

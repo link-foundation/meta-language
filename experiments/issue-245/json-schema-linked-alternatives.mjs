@@ -380,6 +380,22 @@ const cases = [
     ['/oneOf', '/oneOf'],
     [['[]', true], ['[true,false]', false], ['[true,false,true]', true], ['[null]', false], ['[true,false,true,false]', false]],
   ],
+  [
+    { type: 'array', prefixItems: [true], items: { type: 'boolean' }, $defs: {
+      selected: { type: 'array', minItems: 2, prefixItems: [{ const: 'selected' }] },
+      unselected: { type: 'array', prefixItems: [{ enum: ['pending', 'unknown'] }] },
+    }, oneOf: [{ $ref: '#/$defs/selected' }, { $ref: '#/$defs/unselected', minItems: 2 }] },
+    [['["selected",true]', true], ['["p\\u0065nding",false,true]', true], ['["unknown",false]', true],
+      ['["selected",null]', false], ['["pending","x"]', false], ['["other",true]', false],
+      ['["selected"]', false], ['[]', false]],
+    [],
+  ],
+  [
+    { type: 'array', oneOf: [{ prefixItems: [{ const: 'selected' }] }, { prefixItems: [{ const: 'pending' }] }] },
+    [['[]', true], ['["selected"]', true], ['["pending"]', true], ['["other"]', false]],
+    ['/oneOf'],
+    [['[]', false], ['["selected"]', true], ['["pending"]', true], ['["other"]', false]],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },

@@ -4741,10 +4741,12 @@ The shared keyword policy scopes collection, string, and numeric assertions
 to their respective instance types. Local reference chains build a production
 for each applicable type, including chains without a declared type. Inclusive
 alternatives apply sibling constraints to each branch. Exclusive alternatives
-use this construction when disjoint types, required tags, or array length
-intervals distinguish every pair. For array-only branches, the proof includes
-the bounds and closed prefixes along each local reference chain. Overlapping
-array intervals retain their exclusivity diagnostic.
+use this construction when disjoint types, required object tags, or array
+layouts distinguish every pair. For array-only branches, the proof includes
+the bounds and closed prefixes along each local reference chain. If lengths
+overlap, disjoint finite string sets at a common required prefix position
+can distinguish the branches. Optional positions and overlapping sets leave
+the exclusivity diagnostic in place when the length proof also fails.
 The type analysis intersects declared types along each local reference chain.
 The decoder removes branches with impossible bounds or required names and
 reports a residual when branch exclusivity or a layout intersection needs
