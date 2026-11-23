@@ -35,7 +35,7 @@ the array reference with `items: false` beside `$ref`. Before the correction,
 the decoder accepted `[true]` while document validation rejected it. The
 `items` keyword uses the prefix declared in the same schema object, which is
 empty in this case. The fixture retains all four inputs and checks the
-validation diagnostic with independent, conflicting prefix schemas.
+diagnostic for independently constrained string items.
 [JSON Schema Core, draft 2020-12, section 10.3.1.2](https://json-schema.org/draft/2020-12/json-schema-core#section-10.3.1.2)
 
 The same experiment checks a reference to `{ minItems: 1 }` with a sibling
@@ -51,3 +51,11 @@ a Boolean `active` property. The fixture checks both property orders, escaped
 names, additional properties, and impossible requirements under a closed
 layout. A property with distinct patterns in two layers retains a decoder
 diagnostic and both checks in document validation.
+
+The array fixture with a string prefix beside a reference to a Boolean prefix
+previously admitted `[true]` and `[false,0]`. The decoder now rejects both and
+continues to admit `[]`. New cases combine compatible schemas at each array
+position through local references and alternatives, apply the appropriate tail
+to each position, and ignore positions beyond an existing length bound or a
+forbidden item. A property with disjoint declared types is also forbidden,
+including when its name is escaped in the input.

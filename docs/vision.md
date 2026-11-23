@@ -4711,19 +4711,19 @@ An object local reference chain takes the union of the required names and
 the declared property names. For each name, the decoder uses each layer's
 explicit property schema or that layer's additional-property policy when it
 leaves the name undeclared. An unrestricted policy contributes no constraint.
-A prohibition in any layer excludes the property. Identical constraints across
-layers share a production. Other combinations of property constraints require
+A prohibition in any layer or disjoint declared types exclude the property.
+Identical constraints across layers share a production. Other combinations require
 document validation. The same rules apply to names absent from all declarations
 and to object branches combined with assertions from the parent schema.
-An array chain can add minimum and maximum lengths to a single item
-layout. The decoder keeps the strongest bound in each direction and applies
-both to the prefix and tail. A layer with `items: false` bounds the length by
-that layer's own prefix length, including zero when it has no prefix.
-Incompatible lengths or required names forbidden
-by the property layout leave no generatable collection. When independently
-constrained properties cannot share a production or two layers independently
-constrain the item layout, a diagnostic identifies assertions checked during
-document validation.
+An array chain uses the strongest minimum and maximum lengths. A layer with
+`items: false` bounds the length by that layer's own prefix length. At each
+reachable position, the layer contributes its prefix schema when it declares
+one and its tail schema otherwise. Identical constraints across layers share
+a production, and unrestricted layers contribute no constraint. A forbidden
+position or disjoint set of declared types ends the array before that position.
+Incompatible lengths or required names forbidden by the property layout leave
+no generatable collection. Other intersections of property or item schemas
+carry a diagnostic for document validation.
 The shared keyword policy scopes collection, string, and numeric assertions
 to their respective instance types. Local reference chains build a production
 for each applicable type, including chains without a declared type. Inclusive

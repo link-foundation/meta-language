@@ -25,6 +25,13 @@ const collectionDefinitions = {
 const closedArrayReference = {
   $ref: '#/$defs/prefix', items: false, $defs: { prefix: { type: 'array', prefixItems: [{ type: 'boolean' }] } },
 };
+const conflictingArrayReference = {
+  $ref: '#/$defs/prefix', prefixItems: [{ type: 'string' }], $defs: closedArrayReference.$defs,
+};
+const layeredArrayReference = {
+  type: 'array', $ref: '#/$defs/row', prefixItems: [true, { type: 'string' }], items: { type: 'null' }, minItems: 2,
+  $defs: { row: { prefixItems: [{ type: 'boolean' }, { type: 'string' }], maxItems: 3 } },
+};
 const cases = [
   [
     { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^ab' },
@@ -109,10 +116,9 @@ const cases = [
     [],
   ],
   [
-    { $ref: '#/$defs/prefix', prefixItems: [{ type: 'string' }], $defs: closedArrayReference.$defs },
-    [['[]', true], ['[true]', true], ['[false,0]', true], ['[1]', false]],
-    ['/$ref'],
+    conflictingArrayReference,
     [['[]', true], ['[true]', false], ['[false,0]', false], ['[1]', false]],
+    [],
   ],
   [
     { type: 'array', minItems: 2, maxItems: 2, $defs: collectionDefinitions, anyOf: [
@@ -211,6 +217,53 @@ const cases = [
     ['/$ref'],
     [['{"value":"az"}', true], ['{"value":"ax"}', false], ['{"value":"xz"}', false]],
   ],
+  [
+    layeredArrayReference,
+    [['[true,"a"]', true], ['[false,"b",null]', true], ['[false,"b",true]', false], ['[false,3]', false],
+      ['[true]', false], ['[1,"a"]', false], ['[true,"a",null,null]', false], ['[]', false], ['null', false]],
+    [],
+  ],
+  [
+    { type: 'array', prefixItems: [true, { type: 'null' }], anyOf: [
+      { items: { type: 'string' } }, { prefixItems: [{ const: true }, true], items: { type: 'boolean' } },
+    ] },
+    [['[]', true], ['["a"]', true], ['[true]', true], ['[true,null]', true], ['[true,null,false]', true],
+      ['[true,null,false,true]', true], ['["a","b"]', false], ['["a",null]', false], ['[false]', false],
+      ['[true,0]', false], ['[true,null,null]', false], ['{}', false]],
+    [],
+  ],
+  [
+    { type: 'array', $ref: '#/$defs/row', prefixItems: [{ type: 'boolean' }, { type: 'string', pattern: 'x$' }],
+      maxItems: 1, $defs: { row: { prefixItems: [{ type: 'boolean' }, { type: 'string', pattern: '^a' }], minItems: 1 } } },
+    [['[true]', true], ['[false]', true], ['[]', false], ['[null]', false], ['[true,"ax"]', false]],
+    [],
+  ],
+  [
+    { type: 'array', $ref: '#/$defs/row', prefixItems: [false, { type: 'string', pattern: 'x$' }],
+      $defs: { row: { prefixItems: [{ type: 'boolean' }, { type: 'string', pattern: '^a' }] } } },
+    [['[]', true], ['[true]', false], ['[true,"ax"]', false], ['[null]', false]],
+    [],
+  ],
+  [
+    { type: 'array', $ref: '#/$defs/row', prefixItems: [{ type: 'null' }], items: { type: 'number' },
+      $defs: { row: { prefixItems: [true], items: { type: 'boolean' }, minItems: 1 } } },
+    [['[null]', true], ['[]', false], ['[true]', false], ['[null,1]', false], ['[null,false]', false]],
+    [],
+  ],
+  [
+    { type: 'array', $ref: '#/$defs/row', prefixItems: [{ type: 'string', pattern: 'z$' }],
+      $defs: { row: { prefixItems: [{ type: 'string', pattern: '^a' }] } } },
+    [['[]', true], ['["az"]', true], ['["ax"]', true], ['["xz"]', false]],
+    ['/$ref'],
+    [['[]', true], ['["az"]', true], ['["ax"]', false], ['["xz"]', false]],
+  ],
+  [
+    { type: 'object', $ref: '#/$defs/record', properties: { value: { type: 'string' } },
+      $defs: { record: { properties: { value: { type: 'boolean' } } } } },
+    [['{}', true], ['{"other":true}', true], ['{"value":true}', false], ['{"value":"a"}', false],
+      ['{"v\\u0061lue":true}', false]],
+    [],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -220,6 +273,7 @@ const impossible = [
   { $defs: collectionDefinitions, $ref: '#/$defs/identified', required: ['extra'] },
   { type: 'array', minItems: 2, anyOf: [{ maxItems: 1 }, { maxItems: 0 }] },
   { ...closedArrayReference, minItems: 1 },
+  { ...conflictingArrayReference, minItems: 1 },
   { $ref: '#/$defs/record', properties: { active: { type: 'boolean' } }, additionalProperties: false,
     $defs: { record: { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] } } },
 ];
@@ -228,10 +282,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv.includes('--write')) {
     const file = new URL('../../parity/fixtures/json-schema-and-recovery.lino', import.meta.url);
     const data = readProjectData(file);
-    const corrected = data.grammars.findIndex(([schema]) => JSON.stringify(schema) === JSON.stringify(closedArrayReference));
-    const replacement = cases.find(([schema]) => schema === closedArrayReference);
-    const changed = corrected >= 0 && JSON.stringify(data.grammars[corrected]) !== JSON.stringify(replacement);
-    if (changed) data.grammars[corrected] = replacement;
+    let changed = false;
+    for (const corrected of [closedArrayReference, conflictingArrayReference]) {
+      const existing = data.grammars.findIndex(([schema]) => JSON.stringify(schema) === JSON.stringify(corrected));
+      const replacement = cases.find(([schema]) => schema === corrected);
+      if (existing >= 0 && JSON.stringify(data.grammars[existing]) !== JSON.stringify(replacement)) {
+        data.grammars[existing] = replacement;
+        changed = true;
+      }
+    }
     const grammars = new Set(data.grammars.map(([schema]) => JSON.stringify(schema)));
     const empty = new Set(data.ungeneratableSchemas.map(schema => JSON.stringify(schema)));
     const newGrammars = cases.filter(([schema]) => !grammars.has(JSON.stringify(schema)));

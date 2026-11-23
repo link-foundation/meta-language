@@ -21,6 +21,7 @@ use super::{JsonSchemaIssue, pointer_child};
 type Expression = GrammarExpr;
 const EXPRESSION: ExprBuilder = ExprBuilder;
 static UNRESTRICTED_SCHEMA: Value = Value::Bool(true);
+static PROHIBITED_SCHEMA: Value = Value::Bool(false);
 
 const INTEGER_TYPE: u8 = 1 << 3;
 const FRACTIONAL_TYPE: u8 = 1 << 4;
@@ -256,7 +257,8 @@ enum CollectionConstraints<'schema> {
         required: Vec<&'schema str>,
     },
     Array {
-        layout: &'schema Value,
+        prefix: Vec<&'schema Value>,
+        items: &'schema Value,
         minimum: u64,
         maximum: Option<u64>,
     },
@@ -698,12 +700,19 @@ impl<'schema> Importer<'schema> {
         let max = schema["maxItems"]
             .as_u64()
             .and_then(|value| usize::try_from(value).ok());
-        self.array_with_length(schema, min, max, pointer)
+        self.array_with_length(
+            prefix_item_schemas(schema),
+            tail_item_schema(schema),
+            min,
+            max,
+            pointer,
+        )
     }
 
     fn array_with_length(
         &mut self,
-        schema: &'schema Value,
+        prefix: impl IntoIterator<Item = &'schema Value>,
+        items: &'schema Value,
         min: usize,
         max: Option<usize>,
         pointer: &str,
@@ -715,17 +724,12 @@ impl<'schema> Importer<'schema> {
             return Some(collection("[", "]", EXPRESSION.empty()));
         }
         let location = pointer_child(pointer, "prefixItems");
-        let prefix: Vec<_> = schema["prefixItems"]
-            .as_array()
+        let prefix: Vec<_> = prefix
             .into_iter()
-            .flatten()
             .enumerate()
             .map(|(index, item)| self.named(item, &pointer_child(&location, &index.to_string())))
             .collect();
-        let tail = self.named(
-            schema.get("items").unwrap_or(&Value::Bool(true)),
-            &pointer_child(pointer, "items"),
-        );
+        let tail = self.named(items, &pointer_child(pointer, "items"));
         let mut alternatives = Vec::new();
         let mut members = Vec::new();
         for length in 0..=max.unwrap_or(prefix.len()).min(prefix.len()) {
@@ -904,11 +908,13 @@ impl<'schema> Importer<'schema> {
                 required,
             } => self.object_with_properties(properties, additional, required.into_iter(), pointer),
             CollectionConstraints::Array {
-                layout,
+                prefix,
+                items,
                 minimum,
                 maximum,
             } => self.array_with_length(
-                layout,
+                prefix,
+                items,
                 usize::try_from(minimum).ok()?,
                 maximum.and_then(|max| usize::try_from(max).ok()),
                 pointer,
@@ -1284,11 +1290,20 @@ fn additional_property_schema(schema: &Value) -> &Value {
         .unwrap_or(&UNRESTRICTED_SCHEMA)
 }
 
-fn compatible_property_schema<'schema>(
+fn prefix_item_schemas(schema: &Value) -> &[Value] {
+    schema["prefixItems"].as_array().map_or(&[], Vec::as_slice)
+}
+
+fn tail_item_schema(schema: &Value) -> &Value {
+    schema.get("items").unwrap_or(&UNRESTRICTED_SCHEMA)
+}
+
+fn compatible_child_schema<'schema>(
     schemas: impl Iterator<Item = &'schema Value>,
 ) -> Option<&'schema Value> {
     let mut rule = &UNRESTRICTED_SCHEMA;
     let mut agrees = true;
+    let mut membership = ALL_JSON_TYPES;
     for candidate in schemas {
         match candidate {
             Value::Bool(false) => return Some(candidate),
@@ -1296,6 +1311,10 @@ fn compatible_property_schema<'schema>(
             _ if rule == &UNRESTRICTED_SCHEMA => rule = candidate,
             _ => agrees &= rule == candidate,
         }
+        membership &= declared_type_membership(candidate);
+    }
+    if membership == 0 {
+        return Some(&PROHIBITED_SCHEMA);
     }
     agrees.then_some(rule)
 }
@@ -1326,7 +1345,7 @@ fn collection_constraints<'schema>(
             return None;
         }
         let additional =
-            compatible_property_schema(layers.iter().copied().map(additional_property_schema))?;
+            compatible_child_schema(layers.iter().copied().map(additional_property_schema))?;
         let mut seen = HashSet::new();
         let keys = layers
             .iter()
@@ -1335,7 +1354,7 @@ fn collection_constraints<'schema>(
         let mut properties = Vec::new();
         for name in keys {
             // Defaults apply only in the layers that leave this property undeclared.
-            let rule = compatible_property_schema(layers.iter().map(|&layer| {
+            let rule = compatible_child_schema(layers.iter().map(|&layer| {
                 layer["properties"]
                     .get(name)
                     .unwrap_or_else(|| additional_property_schema(layer))
@@ -1356,37 +1375,74 @@ fn collection_constraints<'schema>(
         if !collection_keywords_are_supported(layers, membership, "arrayAssertion", combination) {
             return None;
         }
-        let maximum = layers
-            .iter()
-            .filter_map(|layer| {
-                let bound = layer["maxItems"].as_u64();
-                if layer["items"] == Value::Bool(false) {
-                    let prefix = layer["prefixItems"].as_array().map_or(0, Vec::len) as u64;
-                    return Some(bound.map_or(prefix, |bound| bound.min(prefix)));
-                }
-                bound
-            })
-            .min();
-        let mut layouts = layers.iter().copied().filter(|layer| {
-            maximum != Some(0)
-                && (layer["prefixItems"]
-                    .as_array()
-                    .is_some_and(|items| !items.is_empty())
-                    || layer
-                        .get("items")
-                        .is_some_and(|schema| !schema.is_boolean()))
-        });
-        let layout = layouts.next().unwrap_or(&UNRESTRICTED_SCHEMA);
-        if layouts.next().is_some() {
-            return None;
-        }
         let minimum = layers
             .iter()
             .filter_map(|layer| layer["minItems"].as_u64())
             .max()
             .unwrap_or(0);
+        let maximum = layers
+            .iter()
+            .filter_map(|layer| {
+                let bound = layer["maxItems"].as_u64();
+                if tail_item_schema(layer) == &PROHIBITED_SCHEMA {
+                    let prefix = prefix_item_schemas(layer).len() as u64;
+                    return Some(bound.map_or(prefix, |bound| bound.min(prefix)));
+                }
+                bound
+            })
+            .min();
+        let layouts: Vec<_> = layers
+            .iter()
+            .copied()
+            .filter(|layer| {
+                maximum.is_none_or(|limit| limit != 0 && limit >= minimum)
+                    && (!prefix_item_schemas(layer).is_empty()
+                        || !tail_item_schema(layer).is_boolean())
+            })
+            .collect();
+        if layouts.len() < 2 {
+            let layout = layouts.first().copied().unwrap_or(&UNRESTRICTED_SCHEMA);
+            return Some(CollectionConstraints::Array {
+                prefix: prefix_item_schemas(layout).iter().collect(),
+                items: tail_item_schema(layout),
+                minimum,
+                maximum,
+            });
+        }
+        let prefix_length = layouts
+            .iter()
+            .map(|layer| prefix_item_schemas(layer).len())
+            .max()
+            .unwrap_or(0);
+        let prefix_end = maximum
+            .and_then(|limit| usize::try_from(limit).ok())
+            .map_or(prefix_length, |limit| prefix_length.min(limit));
+        let mut prefix = Vec::new();
+        for index in 0..prefix_end {
+            let item = compatible_child_schema(layouts.iter().map(|layer| {
+                prefix_item_schemas(layer)
+                    .get(index)
+                    .unwrap_or_else(|| tail_item_schema(layer))
+            }))?;
+            // An array cannot reach any position after a forbidden item.
+            if item == &PROHIBITED_SCHEMA {
+                return Some(CollectionConstraints::Array {
+                    prefix,
+                    items: &UNRESTRICTED_SCHEMA,
+                    minimum,
+                    maximum: Some(index as u64),
+                });
+            }
+            prefix.push(item);
+        }
+        let items = if maximum.is_some_and(|limit| limit <= prefix_length as u64) {
+            &UNRESTRICTED_SCHEMA
+        } else {
+            compatible_child_schema(layouts.iter().copied().map(tail_item_schema))?
+        };
         return Some(CollectionConstraints::Array {
-            layout,
+            prefix,
+            items,
             minimum,
             maximum,
         });

@@ -290,10 +290,12 @@ function combineNumericConstraints(layers, membership, combination) {
   return { type: membership === integerType ? 'integer' : 'number', limits };
 }
 
-function compatiblePropertySchema(schemas) {
+function compatibleChildSchema(schemas) {
   if (schemas.includes(false)) return false;
   const rule = schemas.find(schema => schema !== true) ?? true;
-  return schemas.every(schema => schema === true || isDeepStrictEqual(schema, rule)) ? rule : undefined;
+  if (schemas.every(schema => schema === true || isDeepStrictEqual(schema, rule))) return rule;
+  const types = schemas.reduce((types, schema) => types & declaredTypeMembership(schema), allJsonTypes);
+  return types === 0 ? false : undefined;
 }
 
 function branchesUseDisjointTypes(branches, allowedTypes, referenceLayers) {
@@ -562,13 +564,13 @@ export function importJsonSchema(schema) {
     if (membership === jsonTypes.get('object')) {
       const fields = layers.map(layer => layer.properties ?? {});
       const defaults = layers.map(layer => layer.additionalProperties ?? true);
-      const additionalProperties = compatiblePropertySchema(defaults);
+      const additionalProperties = compatibleChildSchema(defaults);
       if (additionalProperties === undefined) return undefined;
       const keys = new Set(fields.flatMap(Object.keys));
       const entries = [];
       for (const name of keys) {
         // Defaults apply only in the layers that leave this property undeclared.
-        const rule = compatiblePropertySchema(fields.map((properties, index) => (
+        const rule = compatibleChildSchema(fields.map((properties, index) => (
           Object.hasOwn(properties, name) ? properties[name] : defaults[index]
         )));
         if (rule === undefined) return undefined;
@@ -581,21 +583,31 @@ export function importJsonSchema(schema) {
       } };
     }
     if (membership === jsonTypes.get('array')) {
+      const minimum = layers.reduce((limit, layer) => Math.max(limit, layer.minItems ?? 0), 0);
       const maximum = layers.reduce((limit, layer) => {
         const itemLimit = layer.items === false ? layer.prefixItems?.length ?? 0 : Infinity;
         return Math.min(limit, layer.maxItems ?? Infinity, itemLimit);
       }, Infinity);
-      const layouts = maximum === 0 ? [] : layers.filter(layer => (
+      const layouts = maximum === 0 || maximum < minimum ? [] : layers.filter(layer => (
         (layer.prefixItems?.length ?? 0) > 0 || (layer.items !== undefined && typeof layer.items !== 'boolean')
       ));
-      if (layouts.length > 1) return undefined;
-      const layout = layouts[0] ?? {};
-      return { lower: arrayExpression, rules: {
-        prefixItems: layout.prefixItems,
-        items: layout.items,
-        minItems: layers.reduce((minimum, layer) => Math.max(minimum, layer.minItems ?? 0), 0),
-        maxItems: Number.isFinite(maximum) ? maximum : null,
-      } };
+      const bounds = { minItems: minimum, maxItems: Number.isFinite(maximum) ? maximum : null };
+      if (layouts.length < 2) {
+        const { prefixItems, items } = layouts[0] ?? {};
+        return { lower: arrayExpression, rules: { prefixItems, items, ...bounds } };
+      }
+      const prefixLength = layouts.reduce((length, layer) => Math.max(length, layer.prefixItems?.length ?? 0), 0);
+      const prefixItems = [];
+      for (let index = 0; index < Math.min(prefixLength, maximum); index += 1) {
+        const item = compatibleChildSchema(layouts.map(layer => layer.prefixItems?.[index] ?? layer.items ?? true));
+        if (item === undefined) return undefined;
+        // An array cannot reach any position after a forbidden item.
+        if (item === false) return { lower: arrayExpression, rules: { prefixItems, ...bounds, maxItems: index } };
+        prefixItems.push(item);
+      }
+      const items = maximum <= prefixLength ? true : compatibleChildSchema(layouts.map(layer => layer.items ?? true));
+      if (items === undefined) return undefined;
+      return { lower: arrayExpression, rules: { prefixItems, items, ...bounds } };
     }
     return undefined;
   }
