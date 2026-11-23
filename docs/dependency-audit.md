@@ -150,7 +150,7 @@ they are.
 | `anstyle-query` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.5` | transitive |  | 1.1.5 (crates.io, anstyle-query) | version | current |  |
 | `anstyle-wincon` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.0.11` | transitive |  | 3.0.11 (crates.io, anstyle-wincon) | version | current |  |
 | `anstyle` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.14` | transitive |  | 1.0.14 (crates.io, anstyle) | version | current |  |
-| `anyhow` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.104` | transitive |  | 1.0.104 (crates.io, anyhow) | version | current |  |
+| `anyhow` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.105` | transitive |  | 1.0.105 (crates.io, anyhow) | version | current |  |
 | `autocfg` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.1` | transitive |  | 1.5.1 (crates.io, autocfg) | version | current |  |
 | `base64` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.23.1` | transitive |  | 0.23.1 (crates.io, base64) | version | current |  |
 | `beef` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.2` | transitive |  | 0.5.2 (crates.io, beef) | version | current |  |
