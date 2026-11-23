@@ -401,7 +401,11 @@ test('the report balances complete module shards by measured cost and falls back
   assert.deepEqual(shards.flat().sort(), [...all].sort());
   const costs = readProjectData(path.join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
   const measured = new Map(costs.entries.map((entry) => [entry.file, entry]));
-  const rates = costs.entries.map((entry) => entry.milliseconds / entry.bytes).sort((a, b) => a - b);
+  for (const run of [45076523061, 45104457483]) {
+    const report = readProjectData(path.join(root, `parity/fixtures/ci-${run}-report-workload-costs.lino`));
+    for (const entry of report.entries) measured.set(entry.file, entry);
+  }
+  const rates = [...measured.values()].map((entry) => entry.milliseconds / entry.bytes).sort((a, b) => a - b);
   const rate = rates[Math.floor(rates.length / 2)];
   const inputs = new Map(all.map((module) => [module, readFileSync(path.join(root, module))]));
   const weighted = (module) => {
@@ -418,6 +422,10 @@ test('the report balances complete module shards by measured cost and falls back
     assert.ok(Math.max(...loads) - Math.min(...loads) <= largest, String(loads));
   }
   assertBalanced(shards, weighted);
+  assert.deepEqual(shards, partitionMeasuredWorkloads(all, 3, {
+    readSource: (module) => inputs.get(module),
+    costs: { ...costs, entries: [...measured.values()] },
+  }));
 
   const byteShards = partitionMeasuredWorkloads(all, 3, {
     readSource: (module) => inputs.get(module),
