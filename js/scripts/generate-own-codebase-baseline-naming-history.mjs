@@ -97,6 +97,8 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'js/tests/translation-ascii-text-predicate-hosts.test.js',
       'js/tests/translation-native-source-byte-history.test.js',
       'js/tests/translation-typescript-workflow.test.js',
+      'js/scripts/truthy-projection-schema.mjs',
+      'js/scripts/generate-truthy-projection-schema.mjs',
     ].map(path=>({path,revision:beforeIssue245CiRepairs})),
     {path:'js/scripts/scheduling-source-history.mjs',revision:'231c6610fc93225fccb1682ab2943729e0c0e52e'}];
     const additions=selections.filter(({path,revision})=>!sources.some(row=>row.file===path&&row.predecessor.revision===revision));
