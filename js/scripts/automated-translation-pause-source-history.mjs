@@ -6,7 +6,7 @@ import { readBootstrapStructuredDataLino } from '../../scripts/lib/structured-da
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = 'bd718f4826a23621f5d150e9c36bfa38b1ee2e9f17d4cf3188b80cd069e7da3e';
+const archiveDigest = '067fe6da90bfd4b7ebf85b0436d66538b785c503e30137f36a3a5ac2d039e7c6';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
@@ -26,7 +26,7 @@ export function restoreAutomatedTranslationPauseSource(source, file, revision) {
     'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
     'js/tests/issue-195-formal-ai-partitions.test.js', 'js/tests/issue-195-naming.test.js', 'js/tests/link-network-binary.test.js',
     'js/tests/own-codebase-baseline-naming-history.test.js',
-    'js/tests/test-groups.test.js'].includes(file)) {
+    'js/tests/test-groups.test.js', 'rust/tests/unit/translation_surface_reference_analysis.rs'].includes(file)) {
     return source;
   }
   if (!history) {

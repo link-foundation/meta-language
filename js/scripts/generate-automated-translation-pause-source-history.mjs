@@ -37,6 +37,7 @@ const files = [
   'js/tests/link-network-binary.test.js',
   'js/tests/own-codebase-baseline-naming-history.test.js',
   'js/tests/test-groups.test.js',
+  'rust/tests/unit/translation_surface_reference_analysis.rs',
 ].map((file) => ({ file, revision }));
 files.push({ file: 'js/tests/test-groups.test.js', revision: '231c6610fc93225fccb1682ab2943729e0c0e52e' });
 files.push({ file: 'js/scripts/scheduling-source-history.mjs', revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917' });
