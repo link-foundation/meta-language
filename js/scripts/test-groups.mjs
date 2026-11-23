@@ -21,7 +21,7 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
 const translationSchedulingFile=new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino',import.meta.url);
 const translationWallSchedulingFile = new URL('../../parity/fixtures/ci-45186623729-translation-wall-costs.lino', import.meta.url);
-const toolingSchedulingFile=new URL('../../parity/fixtures/ci-45112870920-tooling-costs.lino',import.meta.url);
+const toolingSchedulingFile = new URL('../../parity/fixtures/ci-45186623729-tooling-wall-costs.lino', import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
 const workloadRevisions=new Map([
  [39615628279,schedulingRevision],

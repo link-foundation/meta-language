@@ -12,14 +12,15 @@ const dynamicTitles = new Map([
   ['tests/translation-pure-unit-public-declaration-contracts.test.js', /^the exact (?:(?:private|public|complete JavaScript) Unit consumer|unregistered .* Unit model) /u],
 ]);
 
-export function translationWallCosts(files, bytes) {
+export function testFileWallCosts(files, bytes, readSource = url => readFileSync(url, 'utf8')) {
   assert.ok(bytes.length <= 1024 * 1024, 'expected a bounded single-job log');
   const owners = new Map();
   for (const file of files) {
     assert.match(file, /^tests\/[\w.-]+\.test\.js$/u);
-    const source = readFileSync(new URL(file, root), 'utf8');
+    const sourceUrl = new URL(file, root);
+    const source = readSource(sourceUrl);
     const imports = [...source.matchAll(/^import ['"](\.\.\/\.\.\/experiments\/[^'"\n]+\.test\.mjs)['"]/gmu)];
-    const sources = [source, ...imports.map(([, link]) => readFileSync(new URL(link, new URL(file, root)), 'utf8'))];
+    const sources = [source, ...imports.map(([, link]) => readSource(new URL(link, sourceUrl)))];
     for (const text of sources) {
       for (const [, , title] of text.matchAll(/\btest\((?:\{[^\n]*?\}, *)? *(['"`])([^\n]*?)\1 *[,)]/gu)) {
         if (!owners.has(title)) owners.set(title, file);
@@ -56,7 +57,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const files = readFileSync(listing, 'utf8').trim().split('\n');
   for (const log of logs) {
     assert.ok(statSync(log).size <= 1024 * 1024, 'expected a bounded single-job log');
-    const totals = translationWallCosts(files, readFileSync(log));
+    const totals = testFileWallCosts(files, readFileSync(log));
     console.log(basename(log));
     for (const [file, { elapsed, reported }] of [...totals].sort((left, right) => right[1].elapsed - left[1].elapsed)) {
       if (elapsed || reported) console.log(`${file}\t${(elapsed / 1000).toFixed(1)} seconds elapsed\t${(reported / 1000).toFixed(1)} seconds reported`);

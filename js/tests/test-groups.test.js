@@ -39,6 +39,18 @@ test('eight translation shards balance observed whole-file costs and keep every 
   }
 });
 
+test('four tooling shards keep every file while balancing observed whole-file costs', () => {
+  const files = partitionTests(testFiles()).groups.tooling;
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45186623729-tooling-wall-costs.lino', import.meta.url));
+  const actual = Array.from({ length: 4 }, (_, index) => partitionGroupFiles(files, `${index + 1}/4`));
+  assert.deepEqual(actual.flat().sort(), files);
+  const observedCosts = new Map(costs.entries.map(({ file, milliseconds }) => [file.slice('js/tests/'.length), milliseconds]));
+  assert.ok(files.filter(file => observedCosts.has(file)).length >= files.length * 0.9);
+  const estimates = actual.map(shard => shard.reduce((total, file) => total + (observedCosts.get(file) ?? 0), 0));
+  assert.ok(Math.max(...estimates) <= 600_000, `observed tooling costs by shard: ${estimates.join(', ')} ms`);
+  assert.deepEqual(costs.logs.filter(log => !log.completed).map(log => log.job), [137733805955]);
+});
+
 test('measured workload scheduling balances complete sources and rejects duplicate owners or malformed costs',()=>{
   const sources=new Map([['slow-a.js','a'],['slow-b.js','b'],['fast-a.js','c'],['fast-b.js','d']]);
   const entries=[300,290,10,10].map((milliseconds,index)=>{const [file,source]=[...sources][index];return{file,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),milliseconds};});

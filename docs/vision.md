@@ -3888,6 +3888,16 @@ inputs. Each scheduled load totals about 582 seconds using these costs. The
 regression enforces a 600-second advisory budget and complete eight-way coverage.
 The six evidence partitions keep their original assignment.
 
+The second tooling partition in that run reached the deadline after 115
+passing tests and one conditional skip. The same partition number passed in
+the two earlier runs. Changes to an unmeasured test's size estimate moved
+several more expensive files into that partition. The four tooling partitions
+now use [elapsed and reported costs](../parity/fixtures/ci-45186623729-tooling-wall-costs.lino)
+from six archived jobs. The packet includes measured durations with matching
+source hashes for 93 of 94 files, and the scheduler estimates any changed or
+unmeasured file by size. The complete four-partition test union and
+fifteen-minute deadline remain in effect.
+
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,
 reuses their measurements, and must pass before Rust or delivery stages start.

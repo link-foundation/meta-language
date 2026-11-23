@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData, writeProjectData } from '../../js/scripts/project-data.mjs';
 import { partitionMeasuredWorkloads, partitionTests, testFiles } from '../../js/scripts/test-groups.mjs';
-import { translationWallCosts } from './compare-translation-wall-costs.mjs';
+import { testFileWallCosts } from './compare-translation-wall-costs.mjs';
 
 const [directory, output = fileURLToPath(new URL('../../parity/fixtures/ci-45186623729-translation-wall-costs.lino', import.meta.url))] = process.argv.slice(2);
 assert.ok(directory, 'pass the directory containing the retained translation job logs');
@@ -58,7 +58,7 @@ for (const { run, prefix, revision, merge, shards, jobs } of captures) {
     assert.ok(text.includes('TAP version 13'), `test output in ${path}`);
     const completed = /Z # fail 0\s*$/mu.test(text);
     assert.equal(completed, job !== 137641360015 && job !== 137733805489, `expected completion for ${job}`);
-    const times = translationWallCosts(shards[index].map(file => file.slice(3)), bytes);
+    const times = testFileWallCosts(shards[index].map(file => file.slice(3)), bytes);
     for (const [file, { elapsed, reported }] of times) {
       const entry = byFile.get(`js/${file}`);
       entry.milliseconds = Math.max(entry.milliseconds, Math.ceil(Math.max(elapsed, reported)));
