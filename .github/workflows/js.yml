@@ -368,6 +368,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}
 
       - name: Simulate fresh merge with base branch
         if: github.event_name == 'pull_request'

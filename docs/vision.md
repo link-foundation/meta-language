@@ -3812,6 +3812,13 @@ report shards finish. It uses the producers' exact checkout and source hashes,
 reuses their measurements, and must pass before Rust or delivery stages start.
 Standalone JavaScript workflow runs produce and check their own report shards.
 
+The complete raw planning package check keeps full Git commit history and
+checks out every tracked file. It fetches historical blobs on demand after
+[run 45153024974](https://github.com/link-foundation/meta-language/actions/runs/45153024974/job/137669690826)
+spent 95 seconds fetching repository history and reached its ten-minute
+deadline during the injected process contracts. The fresh base-merge check,
+source replays, complete plan contracts and job deadline remain in force.
+
 Real target-tool interchange reports identify the emitted target format, its
 tool and version, the accepted and rejected corpus inputs and any failed cycle.
 A Peggy report verifies the Peggy target only; it cannot satisfy the obligation
