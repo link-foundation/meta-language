@@ -267,6 +267,10 @@ function possibleTypeMembership(rules, allowedTypes) {
   return constants ? constants.reduce((types, value) => types | valueTypeMembership(value), 0) & declared : declared;
 }
 
+function referencedTypeMembership(branch, allowedTypes, referenceLayers) {
+  return (referenceLayers(branch) ?? [branch]).reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+}
+
 function appliesToType(keyword, membership) {
   return !assertionTypes.has(keyword) || (assertionTypes.get(keyword) & membership) !== 0;
 }
@@ -312,7 +316,7 @@ function branchesUseDisjointTypes(branches, allowedTypes, referenceLayers) {
   let seen = 0;
   for (const branch of branches) {
     if (branch === null || !['object', 'boolean'].includes(typeof branch) || Array.isArray(branch)) return false;
-    const membership = (referenceLayers(branch) ?? [branch]).reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+    const membership = referencedTypeMembership(branch, allowedTypes, referenceLayers);
     if (seen & membership) return false;
     seen |= membership;
   }
@@ -867,6 +871,15 @@ export function importJsonSchema(schema) {
         if (!overlaps) {
           const conjunction = alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer);
           if (conjunction !== undefined) return conjunction;
+        }
+      }
+      if (overlaps) {
+        // An overlap can affect one JSON instance type without affecting the others.
+        const reachable = alternatives.reduce((types, branch) => types | referencedTypeMembership(branch, allowedTypes, referenceLayers), 0);
+        const families = [...jsonTypes].filter(([type, mask]) => type !== 'integer' && (mask & reachable));
+        if (families.length > 1) {
+          const entries = families.map(([, mask]) => named(rules, pointer, mask & allowedTypes)).filter(Boolean);
+          return entries.length ? choice(...entries) : null;
         }
       }
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');

@@ -107,3 +107,9 @@ though both linked branches accept its value. The fixture also checks
 `-2.00`, which only the integer branch accepts, and fractional values that
 only the number branch accepts. Separate controls exercise unbounded
 alternatives, signed zero, and a mixed alternative with no generatable value.
+
+Adding an independent `null` alternative previously admitted `0` and `-1.00`
+through overlapping number and integer branches. The importer now checks
+exclusivity within each applicable JSON instance type. Another fixture exercises
+two overlapping string branches, two overlapping numeric branches, a Boolean
+branch, and sibling constraints for the string and numeric instances.

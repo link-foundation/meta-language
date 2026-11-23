@@ -4715,6 +4715,13 @@ every number retains exponent spellings. Bounded and mixed ranges use decimal
 spelling and report the equivalent exponent spellings checked by document
 validation.
 
+When overlapping exclusive alternatives span several JSON instance types,
+the decoder checks each type separately. The numeric production keeps integer
+and non-integral values together so both numeric branch counts are available.
+String and numeric intersections can therefore enforce exclusivity alongside
+other disjoint alternatives. Any unresolved overlap still carries a validation
+diagnostic for that type.
+
 An object local reference chain takes the union of the required names and
 the declared property names. For each name, the decoder uses each layer's
 explicit property schema or that layer's additional-property policy when it

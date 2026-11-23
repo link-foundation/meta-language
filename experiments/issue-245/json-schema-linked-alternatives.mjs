@@ -447,6 +447,22 @@ const cases = [
     [['-1.00', true], ['-0.01', true], ['-0.0', false], ['0.000', false], ['0.01', true], ['1', false], ['1.1', true]],
     ['/oneOf'],
   ],
+  [
+    { oneOf: [{ type: 'number', minimum: -1 }, { type: 'integer', maximum: 1 }, { type: 'null' }] },
+    [['null', true], ['-2', true], ['2', true], ['0', false], ['-1.00', false], ['0.25', true], ['"text"', false]],
+    ['/oneOf'],
+  ],
+  [
+    {
+      type: ['number', 'string', 'boolean'], minimum: -3, pattern: '[az]',
+      $defs: { ...stringDefinitions, decimals: { type: 'number', maximum: 5 }, integers: { type: 'integer', minimum: 0 } },
+      oneOf: [{ $ref: '#/$defs/identifier' }, { type: 'string', pattern: 'z$' },
+        { $ref: '#/$defs/decimals' }, { $ref: '#/$defs/integers' }, { type: 'boolean' }],
+    },
+    [['"ab"', true], ['"x\\u007a"', true], ['"az"', false], ['"bx"', false], ['-3', true], ['-4', false],
+      ['0.00', false], ['3.5', true], ['6', true], ['6.5', false], ['true', true], ['false', true], ['null', false]],
+    ['/oneOf'],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -467,6 +483,7 @@ const impossible = [
   } } },
   { type: 'number', oneOf: [{ minimum: -1.25 }, { minimum: -1.25 }] },
   { type: 'number', oneOf: [{ maximum: 0 }, { maximum: 0 }, { type: 'integer', minimum: 0, maximum: 0 }] },
+  { oneOf: [{ type: 'number' }, { type: 'number' }, { type: 'string' }, { type: 'string' }] },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

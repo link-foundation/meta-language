@@ -476,6 +476,24 @@ impl<'schema> Importer<'schema> {
                         return expression;
                     }
                 }
+                if overlaps {
+                    // An overlap can affect one JSON instance type without affecting the others.
+                    let reachable = branches.iter().fold(0, |types, branch| {
+                        types | referenced_type_membership(self.root, branch, allowed_types)
+                    });
+                    let families: Vec<_> = JSON_TYPES
+                        .into_iter()
+                        .filter(|&(name, mask)| name != "integer" && mask & reachable != 0)
+                        .map(|(_, mask)| mask & allowed_types)
+                        .collect();
+                    if families.len() > 1 {
+                        let entries: Vec<_> = families
+                            .into_iter()
+                            .filter_map(|mask| self.named_with_types(schema, pointer, mask))
+                            .collect();
+                        return (!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries));
+                    }
+                }
                 if has_sibling_assertions {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
                 }
@@ -1811,6 +1829,17 @@ fn reference_layers<'schema>(
     None
 }
 
+fn referenced_type_membership(root: &Value, branch: &Value, allowed_types: u8) -> u8 {
+    reference_layers(root, branch).map_or_else(
+        || possible_type_membership(branch, allowed_types),
+        |layers| {
+            layers.into_iter().fold(allowed_types, |types, layer| {
+                possible_type_membership(layer, types)
+            })
+        },
+    )
+}
+
 fn branches_use_disjoint_types<'schema>(
     root: &'schema Value,
     branches: impl ExactSizeIterator<Item = &'schema Value>,
@@ -1824,14 +1853,7 @@ fn branches_use_disjoint_types<'schema>(
         if !branch.is_object() && !branch.is_boolean() {
             return false;
         }
-        let membership = reference_layers(root, branch).map_or_else(
-            || possible_type_membership(branch, allowed_types),
-            |layers| {
-                layers.into_iter().fold(allowed_types, |types, layer| {
-                    possible_type_membership(layer, types)
-                })
-            },
-        );
+        let membership = referenced_type_membership(root, branch, allowed_types);
         if seen & membership != 0 {
             return false;
         }
