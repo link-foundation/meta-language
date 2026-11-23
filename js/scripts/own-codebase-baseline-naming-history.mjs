@@ -6,7 +6,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
-import { restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
+import { nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -208,6 +208,8 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     ['js/tests/issue-195-evidence-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
     ['js/tests/issue-195-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
     ['js/tests/link-network-binary.test.js', baseline],
+    ...nativeRepairNamingSources.map(file => [file, baseline, file === 'rust/src/translation/grammar_lexer_rules/part_4.rs'
+      ? 'B59 parser token exclusion source names' : 'B70 physical field source view names']),
   ]) {
     const inventory = sourceInventory + ' for ' + file;
     const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));

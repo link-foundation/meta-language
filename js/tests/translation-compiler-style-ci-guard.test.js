@@ -10,11 +10,19 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readGlobalConceptIdentityCompilerStyles} from '../scripts/global-concept-identity-styles.mjs';
 import {readCompilerFeedbackCorrections} from '../scripts/compiler-style-feedback.mjs';
+import {applyReviewedNativeSourceStyle} from '../scripts/reviewed-native-source-styles.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {simplifyRustBranches} from '../scripts/reviewed-rust-branch-styles.mjs';
 
 const scripts=['generate-global-concept-rule-styles.mjs','generate-frontend-rule-styles.mjs'];
 const controls=readProjectData(new URL('../../parity/fixtures/compiler-style-closure-controls.lino',import.meta.url));
+
+test('native source review refuses to replay a correction over revised source',()=>{
+  const path='rust/src/translation/declaration_dependency_rules/part_2.rs';
+  const source=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  assert.throws(()=>applyReviewedNativeSourceStyle(path,source+'\n'),/reviewed source is stale/u);
+  assert.equal(applyReviewedNativeSourceStyle('rust/src/other.rs',source),source);
+});
 
 test('global concept compiler check retains both entire generated modules and original flags',()=>{
   const {baseline}=controls;

@@ -22,7 +22,7 @@ import {
   NAMING_FIXTURES,
   nameProblems,
 } from '../scripts/issue-195-naming.mjs';
-import { restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
+import { nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { extractOwnCodebaseHistoricalNames, readOwnCodebaseHistoricalNamingPolicy } from '../scripts/own-codebase-baseline-naming-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -188,9 +188,14 @@ test('the normal naming source profile retains every actual current name and bot
   assert.equal(historicalNames.slice(0,2).length,2,'both original certified owners remain first');
   const precedingCount = 2 + policy.additionalSourceViews.views.reduce((count, view) => count + view.names.length, 0);
   const precedingNames = historicalNames.slice(0, precedingCount);
-  const pauseNames = historicalNames.slice(precedingCount);
+  const remainingNames = historicalNames.slice(precedingCount);
+  const pauseNames = remainingNames.filter(({ file }) => !nativeRepairNamingSources.includes(file));
+  const repairedNames = remainingNames.filter(({ file }) => nativeRepairNamingSources.includes(file));
   assert.equal(precedingNames.length, precedingCount);
   assert.equal(pauseNames.length, 68, 'every pre-pause source owner remains present');
+  assert.ok(repairedNames.length >= 327, 'all replaced naming witnesses have a certified source view');
+  assert.deepEqual([...new Set(repairedNames.map(({ file }) => file))].sort(), [...nativeRepairNamingSources].sort());
+  assert.deepEqual(remainingNames, [...pauseNames, ...repairedNames], 'native repair source views are appended');
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {
@@ -216,7 +221,7 @@ test('the normal naming source profile retains every actual current name and bot
     assert.deepEqual(rows.map(({name,record})=>({name,record})),view.names);
     for(const row of rows){assert.equal(row.sourceView.revision,view.revision);assert.equal(row.sourceView.sha256,source.predecessor.sha256);assert.equal(row.sourceView.bytes,source.predecessor.bytes);}
   }
-  for (const rows of Map.groupBy(pauseNames, ({ inventory }) => inventory).values()) {
+  for (const rows of Map.groupBy(remainingNames, ({ inventory }) => inventory).values()) {
     const [{ inventory, file, sourceView }] = rows;
     const entries = NAME_INVENTORIES.filter(entry => entry.inventory === inventory && entry.files.includes(file));
     assert.equal(entries.length, 1, inventory);

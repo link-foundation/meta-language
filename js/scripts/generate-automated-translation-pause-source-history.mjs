@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 
+import { nativeRepairNamingSources } from './automated-translation-pause-source-history.mjs';
 import { captureGitArtifactCertificate } from './capture-git-artifact-certificate.mjs';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 
 const root = new URL('../../', import.meta.url);
 const revision = 'ec9f4efb0e9ef936114e09823981352f6db13700';
-const files = [
+const files = [...new Set([
   '.github/workflows/ci.yml',
   '.github/workflows/js.yml',
   '.github/workflows/rust.yml',
@@ -16,6 +17,7 @@ const files = [
   'js/scripts/formal-ai-partition-bundles.mjs',
   'js/scripts/formal-ai-workload-partitions.mjs',
   'js/scripts/generate-contributor-instruction-coverage.mjs',
+  'js/scripts/generate-link-network-binary-rules.mjs',
   'js/scripts/generate-raw-oracle-contract-partitions.mjs',
   'js/scripts/grammar-test-partition-history.mjs',
   'js/scripts/issue-195-formal-ai-workloads.mjs',
@@ -37,8 +39,12 @@ const files = [
   'js/tests/link-network-binary.test.js',
   'js/tests/own-codebase-baseline-naming-history.test.js',
   'js/tests/test-groups.test.js',
+  'rust/src/formal_concept_definition.rs',
+  'rust/src/shared_numeric_function_model.rs',
+  'rust/src/translation/javascript/declarations.rs',
   'rust/tests/unit/translation_surface_reference_analysis.rs',
-].map((file) => ({ file, revision }));
+  ...nativeRepairNamingSources,
+])].map((file) => ({ file, revision }));
 files.push({ file: 'js/tests/test-groups.test.js', revision: '231c6610fc93225fccb1682ab2943729e0c0e52e' });
 files.push({ file: 'js/scripts/scheduling-source-history.mjs', revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917' });
 files.push({ file: 'js/scripts/tooling-frozen-source-history.mjs', revision: '269c48e497280025271ade3765f808b2f372d1b6' });

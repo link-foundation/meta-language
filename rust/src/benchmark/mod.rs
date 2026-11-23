@@ -477,7 +477,7 @@ fn validate_manifest(
         let subject_dir = corpora_root.join(&entry.tool).join(&entry.subject);
         if !subject_dir.is_dir() {
             report.failures.push(BenchmarkFailure::new(
-                Some(id.clone()),
+                Some(id),
                 format!(
                     "vendored subject directory {} is missing",
                     subject_dir.display()

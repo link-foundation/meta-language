@@ -1,6 +1,7 @@
 // Translate the actual lexical/equality algorithms, then split complete emitted
 // declarations into bounded library modules. No native decision is handwritten.
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
+import { applyReviewedNativeSourceStyle } from './reviewed-native-source-styles.mjs';
 import { spawnSync } from 'node:child_process';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
@@ -137,7 +138,8 @@ for (const [index, group] of groups.entries()) {
 const modules = groups.map((_, index) => 'mod part_' + index + ';\npub use part_' + index + '::*;').join('\n');
 outputs.push(['mod.rs', '// Generated module partition; each declaration retains the same checked algorithm.\n' + modules + '\n']);
 mkdirSync(directory, { recursive: true });
-for (const [file, expected] of outputs) {
+for (const [file, generated] of outputs) {
+  const expected = applyReviewedNativeSourceStyle('rust/src/resource_description_rules/' + file, generated);
   const path = new URL(file, directory);
   if (process.argv.includes('--check')) {
     if (readFileSync(path, 'utf8') !== expected) throw new Error('resource description rules are stale: ' + file);
