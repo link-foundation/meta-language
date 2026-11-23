@@ -2027,7 +2027,8 @@ export const VISION_REQUIREMENTS = Object.freeze([
       expectedBehavior: 'Every open pull request uses the default pause in its own eligible GitHub Actions run.',
       assertions: ['everyOpenPullRequestRunsPausedWorkflow'],
       checkpoint: 'post-merge',
-      tooling: ['docs/case-studies/issue-248/README.md', '.github/workflows/ci.yml'],
+      group: 'merge-enforcement',
+      tooling: ['js/scripts/check-automated-translation-rollout.mjs', 'js/tests/issue-195-evidence-automated-translation-rollout.test.js', '.github/workflows/ci.yml'],
     },
   ].map(({ suffix, ...row }) => ({
     id: `I195-AUTOMATED-TRANSLATION-PAUSE-${suffix}`,

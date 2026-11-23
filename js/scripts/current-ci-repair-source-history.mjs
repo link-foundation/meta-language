@@ -17,7 +17,7 @@ let history;
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
-  source=restoreAutomatedTranslationPauseSource(source,path);
+  if(path!=='js/tests/test-groups.test.js')source=restoreAutomatedTranslationPauseSource(source,path);
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
   source=restoreRawPlanningWorkflowHistory(source,path);

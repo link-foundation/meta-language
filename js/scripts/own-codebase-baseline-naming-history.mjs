@@ -164,7 +164,10 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     const entries=inventories.filter(entry=>entry.inventory===view.inventory&&entry.files.includes(view.file));
     if(entries.length===0)continue;
     assert.equal(entries.length,1,'the same actual extractor owns the additional historical names');
-    assert.deepEqual(pin(readFileSync(resolve(root,view.file))),source.current,'the selected root retains every complete actual source byte');
+    const checkout=readFileSync(resolve(root,view.file),'utf8');
+    const previous=pin(checkout).sha256===source.current.sha256
+      ?checkout:restoreAutomatedTranslationPauseSource(checkout,view.file);
+    assert.deepEqual(pin(previous),source.current,'the selected root retains every complete actual source byte');
     const entry=entries[0],found=[...new Set(entry.extract(source.predecessor.source,view.file))]
       .map(name=>({name,record:entry.recordOf(name)}));
     const current=new Set(entry.extract(readFileSync(resolve(root,view.file),'utf8'),view.file));
@@ -177,7 +180,17 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
         archive:'parity/naming/array-identity-historical-inventories.lino',boundary:additional.boundary}});
     }
   }
-  for (const file of ['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs']) {
+  const baseline = 'ec9f4efb0e9ef936114e09823981352f6db13700';
+  for (const [file, revision] of [
+    ['js/scripts/current-ci-repair-source-history.mjs', baseline],
+    ['js/scripts/grammar-test-partition-history.mjs', baseline],
+    ['js/scripts/own-codebase-baseline-naming-history.mjs', baseline],
+    ['js/scripts/rust-test-shards.mjs', baseline],
+    ['js/scripts/scheduling-source-history.mjs', '15745ffcd322c48bdd537ccb48a5f7c9deb96917'],
+    ['js/scripts/tooling-frozen-source-history.mjs', '269c48e497280025271ade3765f808b2f372d1b6'],
+    ['js/tests/cache-fresh-merge-dependencies.test.js', baseline],
+    ['js/tests/test-groups.test.js', baseline],
+  ]) {
     const inventory = 'B70 physical field source view names for ' + file;
     const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));
     const input = resolve(root, file);
@@ -189,7 +202,7 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     for (const name of new Set(entry.extract(previous, file))) {
       if (currentNames.has(name)) continue;
       names.push({ inventory, file, name, record: entry.recordOf(name), sourceView: {
-        kind: 'complete certified historical source', revision: 'ec9f4efb0e9ef936114e09823981352f6db13700', path: file,
+        kind: 'complete certified historical source', revision, path: file,
         ...pin(previous), archive: 'parity/self-translation/automated-translation-pause-source-history.lino',
         boundary: 'The pre-pause definition retains its own identity and the current inventory is checked separately.',
       } });

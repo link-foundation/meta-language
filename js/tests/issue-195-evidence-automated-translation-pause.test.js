@@ -8,7 +8,7 @@ import { runInNewContext } from 'node:vm';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { matchesLogicalFilters, nativeTestArguments } from '../scripts/rust-test-shards.mjs';
+import { executePhysicalHarness, matchesLogicalFilters, nativeTestArguments, verifyHarnessExecution } from '../scripts/rust-test-shards.mjs';
 import { recordIssue195DirectiveObservation } from './support/issue-195-observations.js';
 
 const root = new URL('../../', import.meta.url);
@@ -31,8 +31,11 @@ function when(text, overrides = {}) {
   const multiline = /^\s*if: \|\n((?: {6,}\S[^\n]*\n)+)/mu.exec(text)?.[1];
   assert.ok(inline || multiline, text);
   const expression = (inline ?? multiline).replace(/\bneeds\.([\w-]*-[\w-]+)/gu, 'needs["$1"]');
+  const automatedTranslation = overrides.inputs?.automated_translation === true ||
+    overrides.vars?.META_LANGUAGE_AUTOMATED_TRANSLATION === 'true';
   return runInNewContext(expression, {
     inputs: { automated_translation: false, external_reports: true },
+    env: { META_LANGUAGE_AUTOMATED_TRANSLATION: String(automatedTranslation) },
     vars: {}, github: { event_name: 'pull_request' },
     needs: {
       changes: { result: 'success', outputs: { rust: 'true' } },
@@ -61,6 +64,11 @@ test('ordinary workflows pause automated translation and fail on independent che
     assert.equal(when(ci['self-translation-report'].header, profile), true);
     assert.equal(when(ci['self-translation-report-validation'].header, profile), true);
   }
+  const release = { github: { event_name: 'release' } };
+  assert.equal(when(ci.delivery.header, release), false);
+  assert.equal(when(ci.delivery.header, { ...release, ...repositoryOptIn }), true);
+  assert.match(step(ci.consumers, 'Install and parse the exact artifacts in clean consumers').text,
+    /META_LANGUAGE_AUTOMATED_TRANSLATION: \$\{\{ inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' \}\}/u);
   assert.equal(when(ci.rust.header), true);
   assert.equal(when(ci.rust.header, { ...optIn, needs: {
     changes: { result: 'success', outputs: { rust: 'true' } },
@@ -71,13 +79,34 @@ test('ordinary workflows pause automated translation and fail on independent che
   assert.equal(when(ci.candidates.header), true);
   assert.equal(when(js.reports.header), false);
   assert.equal(when(js.reports.header, optIn), true);
+  assert.match(workflow('js'), /META_LANGUAGE_AUTOMATED_TRANSLATION: \$\{\{ inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' \}\}/u);
   assert.equal(when(js.publish.header, { github: { event_name: 'workflow_dispatch' } }), false);
+  for (const [name, group, generated_slice] of [
+    ['Run generated owned Rust module experiment', 'generated', 'second'],
+    ['Run generated owned Rust literal value edit experiment', 'generated', 'first'],
+    ['Run Boolean Rust const decision prototype checks', 'generated', 'second'],
+    ['Run portable Rust text certificate feasibility checks', 'source-models'],
+    ['Run complete original link table projection checks', 'source-model-tables'],
+    ['Run complete original link raw projection checks', 'source-model-raw-generation'],
+  ]) {
+    const entry = step(js['package-checks'], name);
+    const matrix = { group, generated_slice };
+    assert.equal(when(entry.text, { matrix }), false, name);
+    assert.equal(when(entry.text, { matrix, ...optIn }), true, name);
+  }
+  for (const [name, group, generated_slice] of [
+    ['Check grammar-derived default CST expectations', 'grammar'],
+    ['Check original link schema source closure', 'generated', 'second'],
+  ]) {
+    const entry = step(js['package-checks'], name);
+    assert.equal(when(entry.text, { matrix: { group, generated_slice } }), true, name);
+  }
 
   const run = step(ci.acceptance, 'Require the active checks while automated translation is paused').run;
   const independent = ['CHANGES', 'JAVASCRIPT', 'GRAMMAR', 'CONSUMERS', 'RELATIVE_META_LOGIC', 'FORMAL_AI'];
   const good = Object.fromEntries(independent.map((check) => [`${check}_RESULT`, 'success']));
   const execute = (overrides) => spawnSync('bash', ['-e', '-c', run.replace(/^\|\n/u, '')], {
-    env: { ...process.env, ...good, GITHUB_STEP_SUMMARY: '/dev/null', RUST_NEEDED: 'true', RUST_RESULT: 'success',
+    env: { ...process.env, ...good, GITHUB_EVENT_NAME: 'pull_request', GITHUB_STEP_SUMMARY: '/dev/null', RUST_NEEDED: 'true', RUST_RESULT: 'success',
       DELIVERY_EVIDENCE_RESULT: 'skipped', ...overrides },
     encoding: 'utf8',
   });
@@ -86,6 +115,10 @@ test('ordinary workflows pause automated translation and fail on independent che
   assert.equal(execute({ RUST_NEEDED: '', RUST_RESULT: 'skipped' }).status, 1);
   assert.equal(execute({ RUST_RESULT: 'skipped' }).status, 1);
   assert.equal(execute({ DELIVERY_EVIDENCE_RESULT: 'success' }).status, 1);
+  const releaseResults = { GITHUB_EVENT_NAME: 'release', CHANGES_RESULT: 'skipped', JAVASCRIPT_RESULT: 'skipped',
+    GRAMMAR_RESULT: 'skipped', RUST_NEEDED: '', RUST_RESULT: 'skipped' };
+  assert.equal(execute(releaseResults).status, 0);
+  assert.equal(execute({ ...releaseResults, CONSUMERS_RESULT: 'failure' }).status, 1);
   for (const check of independent) {
     const result = execute({ [`${check}_RESULT`]: 'failure' });
     assert.equal(result.status, 1, check);
@@ -125,17 +158,43 @@ test('strict commands and native selectors remain available without claiming pau
   }
   assert.match(rust.test.header, /META_LANGUAGE_AUTOMATED_TRANSLATION: .*inputs\.automated_translation/u);
   const original = ['issue_195_', 'translation_', '--skip', 'grammar_'];
-  const translated = 'unit::translation_arrays::maps';
+  const translated = 'translation_arrays::maps';
+  const protectedManifest = 'issue_195_acceptance::issue_195_manifest_covers_the_full_inventory_and_translation_matrix';
+  const independent = 'issue_195_default_cst::has_nodes';
+  const inventory = [translated, protectedManifest, independent].map(name => ({ name }));
   for (const profile of ['test', 'fresh-merge', 'evidence']) {
     assert.equal(nativeTestArguments(original, profile, 'true'), original);
     assert.equal(nativeTestArguments(original, profile, undefined), original);
-    const selected = nativeTestArguments(original, profile, 'false');
+    const selected = nativeTestArguments(original, profile, 'false', inventory);
     assert.equal(matchesLogicalFilters(translated, selected), profile === 'evidence');
-    assert.equal(matchesLogicalFilters('unit::issue_195_default_cst::has_nodes', selected), true);
+    assert.equal(matchesLogicalFilters(protectedManifest, selected), true);
+    assert.equal(matchesLogicalFilters(independent, selected), true);
   }
+  const ordinary = nativeTestArguments([], 'test', 'false', inventory);
+  assert.equal(matchesLogicalFilters('typed_program_links::javascript_and_rust_sources_emit_from_reloaded_source_free_graphs', ordinary), false);
+  assert.equal(matchesLogicalFilters('typed_program_links::shared_graph_paths_have_a_bounded_semantic_walk', ordinary), true);
   assert.match(rust['fresh-merge'].header, /META_LANGUAGE_AUTOMATED_TRANSLATION: .*inputs\.automated_translation/u);
   assert.match(read('rust/scripts/simulate-fresh-merge.sh'), /rust-test-shards\.mjs --configure --shell/u);
   observe('RETAIN', ['originalCommandsRetained', 'pausedRunsCannotSupplyCompleteEvidence'], context.name);
+});
+
+test('the ordinary native harness selects translation modules from the actual inventory', async () => {
+  const translated = 'translation_arrays::maps';
+  const independent = 'issue_195_acceptance::issue_195_manifest_covers_the_full_inventory_and_translation_matrix';
+  const complete = [translated, independent];
+  const receipt = await executePhysicalHarness({
+    binary: 'unit', arguments: [], identity: { profile: 'test' }, shard: 1, count: 1, automatedTranslation: 'false',
+    invoke: async (_binary, arguments_, listing) => {
+      const names = listing === 'all' ? complete : listing
+        ? complete.filter(name => matchesLogicalFilters(name, arguments_.slice(0, -3)))
+        : complete.filter(name => arguments_.includes(name));
+      const stdout = names.map(name => listing ? `${name}: test\n` : `test ${name} ... ok\n`).join('');
+      return { stdout, stderr: '', exitCode: 0, signal: null };
+    },
+  });
+  verifyHarnessExecution(receipt);
+  assert.deepEqual(receipt.allInventory.map(row => row.name), [independent, translated]);
+  assert.deepEqual(receipt.outcomes, [{ name: independent, outcome: 'ok' }]);
 });
 
 test('the vision and contributor instructions allow manual ports with shared parity', (context) => {

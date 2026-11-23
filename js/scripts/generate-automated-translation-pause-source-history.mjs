@@ -12,26 +12,33 @@ const files = [
   '.github/workflows/js.yml',
   '.github/workflows/rust.yml',
   'js/scripts/current-ci-repair-source-history.mjs',
+  'js/scripts/grammar-test-partition-history.mjs',
+  'js/scripts/own-codebase-baseline-naming-history.mjs',
   'js/scripts/run-issue-195-consumer.mjs',
   'js/scripts/rust-test-shards.mjs',
-];
+  'js/tests/cache-fresh-merge-dependencies.test.js',
+  'js/tests/test-groups.test.js',
+].map((file) => ({ file, revision }));
+files.push({ file: 'js/tests/test-groups.test.js', revision: '231c6610fc93225fccb1682ab2943729e0c0e52e' });
+files.push({ file: 'js/scripts/scheduling-source-history.mjs', revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917' });
+files.push({ file: 'js/scripts/tooling-frozen-source-history.mjs', revision: '269c48e497280025271ade3765f808b2f372d1b6' });
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const trees = {};
-let commitText;
-const sources = files.map((file) => {
-  const { blob, certificate } = captureGitArtifactCertificate(revision, file);
+const commits = {};
+const sources = files.map(({ file, revision: predecessor }) => {
+  const { blob, certificate } = captureGitArtifactCertificate(predecessor, file);
   const current = digest(readFileSync(new URL(file, root)));
   assert.notEqual(certificate.blob.sha256, current, file);
   const { commitText: commit, trees: proof, ...owner } = certificate;
-  commitText ??= commit;
-  assert.equal(commit, commitText);
+  commits[predecessor] ??= commit;
+  assert.equal(commit, commits[predecessor]);
   owner.trees = proof.map((tree) => {
     trees[tree.objectId] ??= tree;
     return tree.objectId;
   });
-  return { file, current, original: blob.toString('utf8'), certificate: owner };
+  return { file, current, predecessor, original: blob.toString('utf8'), certificate: owner };
 });
-const history = { commitText, trees, sources };
+const history = { commits, trees, sources };
 
 const archive = new URL('parity/self-translation/automated-translation-pause-source-history.lino', root);
 const verifier = new URL('automated-translation-pause-source-history.mjs', import.meta.url);

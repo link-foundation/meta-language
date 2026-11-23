@@ -493,7 +493,7 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         env:
-          META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
+          META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: >-
           node js/scripts/run-issue-195-consumer.mjs
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
@@ -1785,7 +1785,7 @@ jobs:
   delivery:
     name: Evidence Stage (delivery)
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads]
-    if: ${{ !cancelled() && needs.candidates.result == 'success' && (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+    if: ${{ !cancelled() && needs.candidates.result == 'success' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -1878,6 +1878,7 @@ jobs:
       contents: read
       pull-requests: read
       checks: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -1896,6 +1897,9 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Materialize the verified Links Notation grammar
+        run: node js/scripts/external-grammar-cache.mjs --asset parity/grammars/links-notation-0.22.0.pegjs --materialize
 
       - name: Inspect the default-branch rules with the workflow token
         env:
@@ -1995,7 +1999,7 @@ jobs:
 
       - name: Identify admitted Rust physical profiles
         id: rust-physical-admission
-        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -2003,14 +2007,14 @@ jobs:
           node js/scripts/rust-test-shards.mjs --admission "$RUNNER_TEMP/rust-physical-jobs.json"
 
       - name: Download complete Rust physical partitions
-        if: ${{ !cancelled() && steps.rust-physical-admission.outputs.enabled == 'true' && (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && steps.rust-physical-admission.outputs.enabled == 'true' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/download-artifact@v8
         with:
           pattern: rust-physical-*-${{ github.sha }}
           path: issue-195-artifacts/rust-physical-partitions
 
       - name: Require the complete authenticated Rust test union
-        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           RUST_WORKFLOW_RESULT: ${{ needs.rust.result }}
           RUST_EVIDENCE_RESULT: ${{ needs.rust-suite.result }}
@@ -2034,7 +2038,7 @@ jobs:
           node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
 
       - name: Require the active checks while automated translation is paused
-        if: ${{ !cancelled() && !(github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
           JAVASCRIPT_RESULT: ${{ needs.js.result }}
@@ -2047,7 +2051,15 @@ jobs:
           DELIVERY_EVIDENCE_RESULT: ${{ needs.delivery.result }}
         run: |
           status=0
-          for check in CHANGES JAVASCRIPT GRAMMAR CONSUMERS RELATIVE_META_LOGIC FORMAL_AI; do
+          checks=(CONSUMERS RELATIVE_META_LOGIC FORMAL_AI)
+          if [ "$GITHUB_EVENT_NAME" != release ]; then
+            checks+=(CHANGES JAVASCRIPT GRAMMAR)
+            case "$RUST_NEEDED:$RUST_RESULT" in
+              true:success|false:skipped) ;;
+              *) echo "::error::Rust finished as '$RUST_RESULT' (needed: '$RUST_NEEDED')"; status=1 ;;
+            esac
+          fi
+          for check in "${checks[@]}"; do
             result="${check}_RESULT"
             if [ "${!result}" != success ]; then
               echo "::error::$check finished as '${!result}'"
@@ -2058,17 +2070,23 @@ jobs:
             echo "::error::Full delivery evidence finished as '$DELIVERY_EVIDENCE_RESULT' while paused"
             status=1
           fi
-          case "$RUST_NEEDED:$RUST_RESULT" in
-            true:success|false:skipped) ;;
-            *) echo "::error::Rust finished as '$RUST_RESULT' (needed: '$RUST_NEEDED')"; status=1 ;;
-          esac
           echo "Automated translation and the full Issue #195 acceptance evaluation are paused." >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+
+      - name: Verify paused checkout ${{ github.event.pull_request.head.sha }} against ${{ github.event.pull_request.base.sha }}
+        if: ${{ success() && github.event_name == 'pull_request' && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        env:
+          PULL_REQUEST_HEAD: ${{ github.event.pull_request.head.sha }}
+          PULL_REQUEST_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^1)" = "$PULL_REQUEST_BASE"
+          test "$(git rev-parse HEAD^2)" = "$PULL_REQUEST_HEAD"
 
       # A stage whose job failed before uploading has no record here; the
       # aggregate reports it as one gate error naming the stage.
       - name: Download the evidence stage outputs
-        if: ${{ !cancelled() && needs.candidates.result == 'success' && (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && needs.candidates.result == 'success' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/download-artifact@v8
         with:
           # Every matrix partition carries distinct stage/observation identities;
@@ -2078,7 +2096,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge the evidence stages
-        if: ${{ !cancelled() && needs.candidates.result == 'success' && (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && needs.candidates.result == 'success' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -2090,7 +2108,7 @@ jobs:
           --aggregate
 
       - name: Evaluate every required verification cell
-        if: ${{ (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (always() && needs.candidates.result == 'success') }}
+        if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (always() && needs.candidates.result == 'success') }}
         env:
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -2104,7 +2122,7 @@ jobs:
           --markdown-report issue-195-artifacts/report.md
 
       - name: Publish per-requirement evidence report
-        if: ${{ (github.event_name == 'release' || inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (always() && needs.candidates.result == 'success') }}
+        if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (always() && needs.candidates.result == 'success') }}
         uses: actions/upload-artifact@v7
         with:
           name: issue-195-requirement-report-${{ github.sha }}

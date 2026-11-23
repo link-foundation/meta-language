@@ -6,15 +6,17 @@ import { readBootstrapStructuredDataLino } from '../../scripts/lib/structured-da
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '7801a673c7a55343b9f0264cf2ddd2229ea0e23b685852c8c916220f32d69820';
-const revision = 'ec9f4efb0e9ef936114e09823981352f6db13700';
+const archiveDigest = 'efd31af216b6551338a21e155fa26c1d92211685eec4c3de7b7eebc92daf9515';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
-export function restoreAutomatedTranslationPauseSource(source, file) {
+export function restoreAutomatedTranslationPauseSource(source, file, revision) {
   const workflow = file.startsWith('.github/workflows/');
   if (!workflow && !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs',
-    'js/scripts/run-issue-195-consumer.mjs'].includes(file)) {
+    'js/scripts/grammar-test-partition-history.mjs', 'js/tests/cache-fresh-merge-dependencies.test.js',
+    'js/scripts/own-codebase-baseline-naming-history.mjs', 'js/scripts/run-issue-195-consumer.mjs',
+    'js/scripts/scheduling-source-history.mjs', 'js/scripts/tooling-frozen-source-history.mjs',
+    'js/tests/test-groups.test.js'].includes(file)) {
     return source;
   }
   if (!history) {
@@ -26,13 +28,14 @@ export function restoreAutomatedTranslationPauseSource(source, file) {
   // still has to authenticate the predecessor under its actual Git path.
   const current = digest(source);
   const entry = history.sources.find((row) => row.current === current &&
+    (revision === undefined || row.predecessor === revision) &&
     (row.file === file || (workflow && row.file.startsWith('.github/workflows/'))));
   if (!entry) return source;
   const original = Buffer.from(entry.original, 'utf8');
   verifyGitArtifactCertificate({
     ...entry.certificate,
-    commitText: history.commitText,
+    commitText: history.commits[entry.predecessor],
     trees: entry.certificate.trees.map((id) => history.trees[id]),
-  }, original, { revision, path: entry.file });
+  }, original, { revision: entry.predecessor, path: entry.file });
   return entry.original;
 }

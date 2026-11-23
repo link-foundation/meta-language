@@ -1,5 +1,7 @@
 # Issue #248 · Temporary pause on automated translation
 
+> **Historical case study.** See [the vision](../../vision.md#javascript-first-and-self-translation) for the current policy.
+
 [Issue #248](https://github.com/link-foundation/meta-language/issues/248) asks
 for a reversible CI pause so work on other features and fixes can proceed with
 manual ports. [evidence.lino](evidence.lino) records the exact issue body and
@@ -16,8 +18,10 @@ evidence for each assertion. The standalone JavaScript workflow on the
 baseline commit `ec9f4efb0e9ef936114e09823981352f6db13700` ran for approximately
 54 minutes and 29 seconds. That duration is wall time for the whole workflow,
 including scheduling and independent work. It does not measure peak memory
-or the time that a paused PR run will save. The workflow had several cancelled
-translation and report shards.
+or the time a paused PR run will save. Six failed translation-related jobs
+accounted for 39 minutes and 59 seconds of job time. Those intervals overlap
+and include setup and teardown. The workflow also had cancelled translation
+and report shards.
 [Baseline run](https://github.com/link-foundation/meta-language/actions/runs/45059254685)
 
 | Baseline job | Observation and implication |
@@ -25,6 +29,7 @@ translation and report shards.
 | Translation 1/6 | Local and historical relative-array inputs failed their provenance checks at log lines 903 and 1095. These are kept with the translation suite for opt-in runs. [Job log](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137321255822) |
 | Translation 4/6 | The report sizing assertion failed at lines 916 and 924 with shard sizes of 1,106,047, 1,117,099 and 1,554,120 units. Sharding distributes this work and still requires all report cells. [Job log](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137321256171) |
 | Generated package checks | The owned-tuple profile failed at line 2971. Separate jobs reported failures in the native source-model check and the raw consuming emitter. The pause gates these executable translation paths. [Generated](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137333777730), [native projection](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137333777690), [consuming emitter](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137333777743) |
+| Binary candidates | The modified-input regression at line 1000 expected a frozen candidate model refusal and received a digest assertion. The native candidate profiles and their original assertions remain in the opt-in path. [Job log](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137333777739) |
 | Conformance and tooling | Naming failed at lines 854–879 and an inherited assertion's source comparison failed at line 1145. These checks need independent fixes and remain active. [Conformance](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137321256178), [tooling](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137321255968) |
 
 ## Requirements and implementation plan
@@ -57,11 +62,11 @@ using the workflows' current conditions and shell commands.
 
 ## Operating the pause
 
-Normal PR and push runs leave `automated_translation` off. Clean consumers
-still exercise the installed packages against parsing and program fixtures.
-The existing release-delivery event retains the published-package translation
-checks. After the workflow is available on the default branch, a maintainer
-can run a diagnostic on a selected ref with this command.
+Normal PR, push and release runs leave `automated_translation` off. Clean
+consumers still exercise the installed or published packages against parsing
+and program fixtures. The complete release-delivery translation checks use the
+same repository opt-in. After the workflow is available on the default branch,
+a maintainer can run a diagnostic on a selected ref with this command.
 
 ```sh
 gh workflow run ci.yml --repo link-foundation/meta-language --ref <ref> -f automated_translation=true
@@ -92,3 +97,14 @@ GitHub where necessary, and record the new head and eligible run for each PR.
 Confirm the translation stages are skipped and the applicable independent
 checks ran. A conflicting branch requires its own conflict resolution before
 it can be verified. The captured branch inventory is a rollout input.
+
+The post-merge report records the newest eligible workflow run and its latest
+attempt for each current pull request head and base pair. It requires a
+successful pause step and aggregate. It also checks the run verified the head
+and base as parents of the tested checkout, so updated PR metadata alone is
+insufficient. Run the same observation from a clean checkout with GitHub CLI
+access.
+
+```sh
+node js/scripts/check-automated-translation-rollout.mjs /tmp/automated-translation-rollout.lino
+```
