@@ -6,7 +6,7 @@
 
 # Dependency audit
 
-Audit date: 2026-11-22
+Audit date: 2026-11-23
 
 This inventory lists every runtime, development, build and optional dependency
 of the two published packages and the website crate, every lockfile
@@ -67,8 +67,8 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 254 | 253 | 1 | 0 |
-| Toolchains and tools | 17 | 15 | 1 | 1 |
+| Generators | 255 | 254 | 1 | 0 |
+| Toolchains and tools | 18 | 16 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
@@ -821,6 +821,7 @@ they are.
 | `js/scripts/generate-javascript-identifier-models.mjs` | `js/scripts/generate-javascript-identifier-models.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dependency-workflow-source-history.mjs` | `js/scripts/generate-dependency-workflow-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -843,6 +844,7 @@ they are.
 | `elan` |  | `.github/workflows/ci.yml` | `v4.4.0` | v4.4.0 (GitHub release, leanprover/elan) | version | current |  |
 | `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.36.0` | v4.36.0 (GitHub release, leanprover/lean4) | version | current |  |
 | `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `26.13.1` | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | current |  |
+| `cargo-outdated` |  | `.github/workflows/dependency-refresh.yml` | `latest` |  | floating | current |  |
 
 ## GitHub Actions
 
@@ -983,7 +985,7 @@ they are.
 
 ## Behind the current stable release
 
-30 retained items are behind their current stable release on 2026-11-22, each for the recorded reason.
+30 retained items are behind their current stable release on 2026-11-23, each for the recorded reason.
 30 of them are at their newest compatible release, verified against the requirements that hold them;
 0 are stale and fail the delivery check.
 
