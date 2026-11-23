@@ -3771,6 +3771,10 @@ remain authenticated against their certified predecessor. Unknown profiles,
 missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
+Each raw execution boundary rereads both emission archives, the raw source and
+all producer inputs. An execution can reuse a successful emission profile proof
+only when every input buffer exactly matches the verified bytes. The transport,
+process, observation and profile-specific checks still run on every execution.
 Successful timing and full native execution still require corrected-commit CI.
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. The existing modulo file partitioner

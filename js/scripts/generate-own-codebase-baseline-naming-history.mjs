@@ -60,6 +60,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'js/src/translation/emit-rust.js',
       'rust/src/translation/check/expressions/branches.rs',
       'experiments/binary-metadata-buffer/native-observations.mjs',
+      'experiments/original-link-complete-table-projection/raw-native-observations.mjs',
       'js/scripts/test-groups.mjs','js/scripts/generate-own-codebase-test-registration-sources.mjs',
       'experiments/grammar-context-source-metadata/generate.mjs',
       'experiments/grammar-context-source-metadata/historical-inventory.mjs',
