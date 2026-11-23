@@ -5,12 +5,15 @@ import { inspectAutomatedTranslationRollout } from '../scripts/check-automated-t
 
 test('rollout inspection uses the current base and the latest eligible pull request attempt', async () => {
   const pull = (number) => ({
-    number, html_url: `pull/${number}`, head: { sha: `head${number}` },
-    base: { ref: number === 4 ? 'maintenance/release-1' : 'main', sha: 'previous' },
+    number, html_url: `pull/${number}`, head: { sha: `head${number}`, ref: `branch${number}`, repo: { id: number < 5 ? 1 : 2 } },
+    base: { ref: number === 4 ? 'maintenance/release-1' : 'main', sha: 'previous', repo: { id: 1 } },
   });
   const run = (number, id, base, status = 'completed') => ({
     id, status, event: 'pull_request', head_sha: `head${number}`, html_url: `run/${id}`,
     run_number: id, run_attempt: 2, pull_requests: [{ number, base: { sha: base } }],
+  });
+  const forkRun = (number, id, repository = 2) => ({
+    ...run(number, id, 'current'), pull_requests: [], head_repository: { id: repository }, head_branch: `branch${number}`,
   });
   const query = async ([command, endpoint, paginate, slurp]) => {
     assert.ok(endpoint.startsWith('repos/example/project/'));
@@ -22,28 +25,37 @@ test('rollout inspection uses the current base and the latest eligible pull requ
       return { object: { sha: heads[resource] } };
     }
     assert.deepEqual([command, paginate, slurp], ['api', '--paginate', '--slurp']);
-    if (resource.startsWith('pulls?')) return [[pull(1), pull(2)], [pull(3), pull(4)]];
+    if (resource.startsWith('pulls?')) return [[pull(1), pull(2)], [pull(3), pull(4), pull(5), pull(6)]];
     if (resource.includes('head_sha=head1')) return [
       { workflow_runs: [run(1, 8, 'current'), run(1, 12, 'previous')] },
-      { workflow_runs: [run(1, 9, 'current'), { ...run(1, 16, 'current'), pull_requests: [] }] },
+      { workflow_runs: [run(1, 9, 'current'), forkRun(1, 16, 1)] },
     ];
     if (resource.includes('head_sha=head2')) return [{ workflow_runs: [run(2, 14, 'previous')] }];
     if (resource.includes('head_sha=head3')) return [{ workflow_runs: [run(3, 15, 'current', 'queued')] }];
     if (resource.includes('head_sha=head4')) return [{ workflow_runs: [run(4, 17, 'release')] }];
+    if (resource.includes('head_sha=head5')) return [{ workflow_runs: [forkRun(5, 18), forkRun(5, 21, 3)] }];
+    if (resource.includes('head_sha=head6')) return [{ workflow_runs: [forkRun(6, 19)] }];
     if (resource === 'actions/runs/9/attempts/2/jobs?per_page=100') return [{ jobs: [{
       name: 'Full Requirements Aggregate', conclusion: 'success',
       steps: [
         { name: 'Require the active checks while automated translation is paused', conclusion: 'success' },
-        { name: 'Verify paused checkout head1 against current', conclusion: 'success' },
+        { name: 'Verify paused checkout for PR 1 at head1 against current', conclusion: 'success' },
       ],
     }] }];
     if (resource === 'actions/runs/17/attempts/2/jobs?per_page=100') return [{ jobs: [{
       name: 'Full Requirements Aggregate', conclusion: 'success',
       steps: [
         { name: 'Require the active checks while automated translation is paused', conclusion: 'success' },
-        { name: 'Verify paused checkout head4 against previous', conclusion: 'success' },
+        { name: 'Verify paused checkout for PR 4 at head4 against previous', conclusion: 'success' },
       ],
     }] }];
+    if (resource === 'actions/runs/18/attempts/2/jobs?per_page=100' || resource === 'actions/runs/19/attempts/2/jobs?per_page=100') {
+      const head = resource.includes('/18/') ? 'head5' : 'head6';
+      return [{ jobs: [{ name: 'Full Requirements Aggregate', conclusion: 'success', steps: [
+        { name: 'Require the active checks while automated translation is paused', conclusion: 'success' },
+        { name: `Verify paused checkout for PR 5 at ${head} against current`, conclusion: 'success' },
+      ] }] }];
+    }
     assert.fail(`Unexpected GitHub request ${resource}`);
   };
   assert.deepEqual(await inspectAutomatedTranslationRollout('example/project', query), [
@@ -51,5 +63,7 @@ test('rollout inspection uses the current base and the latest eligible pull requ
     { pull: 2, url: 'pull/2', head: 'head2', base: 'current', problem: 'No CI pull_request run matches the current head and base.' },
     { pull: 3, url: 'pull/3', head: 'head3', base: 'current', run: 'run/15', attempt: 2, problem: 'Run is queued.' },
     { pull: 4, url: 'pull/4', head: 'head4', base: 'release', run: 'run/17', attempt: 2, aggregate: 'success', pauseStep: 'success', checkoutStep: null },
+    { pull: 5, url: 'pull/5', head: 'head5', base: 'current', run: 'run/18', attempt: 2, aggregate: 'success', pauseStep: 'success', checkoutStep: 'success' },
+    { pull: 6, url: 'pull/6', head: 'head6', base: 'current', run: 'run/19', attempt: 2, aggregate: 'success', pauseStep: 'success', checkoutStep: null },
   ]);
 });

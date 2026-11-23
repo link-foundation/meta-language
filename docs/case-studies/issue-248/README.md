@@ -124,10 +124,12 @@ it can be verified. The captured branch inventory is a rollout input.
 
 The post-merge report records the newest eligible workflow run and its latest
 attempt for each current pull request head and base pair. It requires a
-successful pause step and aggregate. It also checks the run verified the head
-and base as parents of the tested checkout. It reads the current base branch ref
-directly because an unmergeable pull request can report an older base commit.
-Run the same observation from a clean checkout with GitHub CLI access.
+successful pause step and aggregate. It checks the workflow's pull request
+number and verified head and base parents even when GitHub omits the association
+for a fork. It reads the current base branch ref directly because an unmergeable
+pull request can report an older base commit. Run the same observation from a
+clean checkout with GitHub CLI access.
+[Fork workflow run for PR #246](https://github.com/link-foundation/meta-language/actions/runs/45089575521)
 
 ```sh
 node js/scripts/check-automated-translation-rollout.mjs /tmp/automated-translation-rollout.lino

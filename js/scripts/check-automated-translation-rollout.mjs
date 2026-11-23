@@ -26,8 +26,17 @@ export async function inspectAutomatedTranslationRollout(repository, query = git
     const runs = (await pages(`actions/workflows/ci.yml/runs?event=pull_request&head_sha=${head}&per_page=100`))
       .flatMap(page => page.workflow_runs);
     const run = runs.sort((left, right) => right.run_number - left.run_number)
-      .find(candidate => candidate.head_sha === head && candidate.event === 'pull_request' &&
-        candidate.pull_requests?.some(associated => associated.number === pull.number && associated.base.sha === base));
+      .find(candidate => {
+        if (candidate.head_sha !== head || candidate.event !== 'pull_request') return false;
+        if (candidate.pull_requests?.length) {
+          return candidate.pull_requests.some(associated => associated.number === pull.number && associated.base.sha === base);
+        }
+        // GitHub can omit the association for a fork. The workflow's checkout
+        // step must still confirm the exact pull request, head and base below.
+        const source = pull.head.repo;
+        return source?.id !== undefined && source.id !== pull.base.repo?.id &&
+          candidate.head_repository?.id === source.id && candidate.head_branch === pull.head.ref;
+      });
     const observation = { pull: pull.number, url: pull.html_url, head, base };
     if (!run) {
       observations.push({ ...observation, problem: 'No CI pull_request run matches the current head and base.' });
@@ -42,7 +51,7 @@ export async function inspectAutomatedTranslationRollout(repository, query = git
       .flatMap(page => page.jobs);
     const aggregate = jobs.find(job => job.name === FULL_REQUIREMENTS_CHECK);
     const pause = aggregate?.steps?.find(step => step.name === pauseStep);
-    const checkout = aggregate?.steps?.find(step => step.name === `Verify paused checkout ${head} against ${base}`);
+    const checkout = aggregate?.steps?.find(step => step.name === `Verify paused checkout for PR ${pull.number} at ${head} against ${base}`);
     observations.push({
       ...observation,
       aggregate: aggregate?.conclusion ?? null,

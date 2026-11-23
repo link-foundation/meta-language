@@ -2077,7 +2077,7 @@ jobs:
           echo "Automated translation and the full Issue #195 acceptance evaluation are paused." >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
 
-      - name: Verify paused checkout ${{ github.event.pull_request.head.sha }} against ${{ github.event.pull_request.base.sha }}
+      - name: Verify paused checkout for PR ${{ github.event.pull_request.number }} at ${{ github.event.pull_request.head.sha }} against ${{ github.event.pull_request.base.sha }}
         if: ${{ success() && github.event_name == 'pull_request' && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           PULL_REQUEST_HEAD: ${{ github.event.pull_request.head.sha }}

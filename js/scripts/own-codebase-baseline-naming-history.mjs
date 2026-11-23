@@ -194,6 +194,7 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     ['js/scripts/tooling-frozen-source-history.mjs', '269c48e497280025271ade3765f808b2f372d1b6'],
     ['js/tests/cache-fresh-merge-dependencies.test.js', baseline],
     ['js/tests/issue-195-evidence-contributor-instructions.test.js', baseline],
+    ['js/tests/issue-195-evidence-node-dependency.test.js', baseline],
     ['js/tests/issue-195-evidence-translation-partition-conservation.test.js', baseline],
     ['js/tests/test-groups.test.js', baseline],
     ['js/tests/grammar-embedded-region-rules.test.js', baseline, 'B60 recursive default region source names'],
