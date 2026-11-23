@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 const archive=new URL('../../parity/self-translation/grammar-context-source-metadata.lino',import.meta.url);
-const archiveSha256='7deb1c87bdc9630a3a8d4f81e33958b8d15245bb5219d1858cd371eac895b013';
+const archiveSha256='f944cd4467d777258b4666b4ef8cfc42921af16f5ea1b18e906ce8b7cbadf490';
 const revision='abde6ee604b914a895f23525946fab2234109e86';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;
