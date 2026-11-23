@@ -89,10 +89,10 @@ function listSourceModules() {
 /**
  * The K-th measured-cost shard; every complete current source appears once.
  */
-export function partitionSelfTranslationReportModules(files, count) {
+export function partitionSelfTranslationReportModules(files, count, { readSource } = {}) {
   const baseline = readProjectData(join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
   const entries = new Map(baseline.entries.map(row => [row.file, row]));
-  for (const [run, moduleCount] of [[45076523061, 364], [45104457483, 376]]) {
+  for (const [run, moduleCount] of [[45076523061, 364], [45104457483, 376], [45215384144, 381]]) {
     const measured = readProjectData(join(root, `parity/fixtures/ci-${run}-report-workload-costs.lino`));
     assert.equal(measured.run, run);
     assert.equal(measured.attempt, 2);
@@ -101,7 +101,7 @@ export function partitionSelfTranslationReportModules(files, count) {
     assert.equal(new Set(measured.entries.map(row => requireReportSourcePath(row.file))).size, moduleCount);
     for (const row of measured.entries) entries.set(row.file, row);
   }
-  return partitionMeasuredWorkloads(files, count, { costs: { ...baseline, entries: [...entries.values()] } });
+  return partitionMeasuredWorkloads(files, count, { readSource, costs: { ...baseline, entries: [...entries.values()] } });
 }
 
 function selectedModules(replayPlan) {

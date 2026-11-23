@@ -3983,6 +3983,10 @@ sixteen report shards finish. The producer assigns each complete module to one
 shard by measured workload. The [CI workload sample](../parity/fixtures/ci-45104457483-report-workload-costs.lino)
 binds recorded module durations to their source bytes. It divides time shared by
 import resolution and measurement equally between the two concurrent modules.
+The [subsequent CI workload sample](../parity/fixtures/ci-45215384144-report-workload-costs.lino)
+records 381 completed modules and one unfinished module. Replaying its completed
+durations with the updated schedule assigns the two longest modules from the
+timed-out shard to different shards.
 An unfinished module uses the preceding sample for matching source bytes or a
 size estimate. The sixteen shards retain their thirty-minute job deadlines.
 The verifier uses the producers' exact checkout and source hashes, reuses their

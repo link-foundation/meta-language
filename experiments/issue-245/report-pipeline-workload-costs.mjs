@@ -5,14 +5,28 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeProjectData } from '../../js/scripts/project-data.mjs';
 
-const run = 45104457483;
 const attempt = 2;
-const revision = 'be84faf03e8cf02b3d135f9f5f7c8bf8406da239';
-const head = '591e98639e99c569f063214c3ae8a756185f4add';
 const shardCount = 16;
 const root = new URL('../../', import.meta.url);
-const directory = process.argv[2];
-assert.equal(process.argv.length, 3, 'provide the directory with the retained complete CI logs');
+const [directory, runOption = '45104457483', ...extra] = process.argv.slice(2);
+assert.ok(directory && extra.length === 0, 'provide the retained CI log directory and optional run ID');
+const runs = {
+  45104457483: {
+    revision: 'be84faf03e8cf02b3d135f9f5f7c8bf8406da239',
+    head: '591e98639e99c569f063214c3ae8a756185f4add',
+    cancelledShard: 16,
+    expectedUnfinished: ['js/src/typed-program-links.js', 'js/src/typescript-erasure-rules.js'],
+  },
+  45215384144: {
+    revision: 'e6fd033e357df12c76a2714a463a769964307d00',
+    head: 'f92830dae2cad6f4cd9cb679bd09ab471635a4a6',
+    cancelledShard: 5,
+    expectedUnfinished: ['js/src/typed-program-expression-projection.js'],
+  },
+};
+const run = Number(runOption);
+assert.ok(Object.hasOwn(runs, run), 'run ID requires a reviewed merge checkout and report outcome');
+const { revision, head, cancelledShard, expectedUnfinished } = runs[run];
 const digest = value => createHash('sha256').update(value).digest('hex');
 const git = (...args) => execFileSync('git', ['--no-replace-objects', ...args], { cwd: root, maxBuffer: 2 * 1024 * 1024 });
 assert.equal(git('rev-parse', revision + '^2').toString().trim(), head);
@@ -31,7 +45,7 @@ const logs = reportJobs.map(({ number, job }) => {
   assert.equal(job.run_id, run);
   assert.equal(job.run_attempt, attempt);
   assert.equal(job.head_sha, head);
-  assert.equal(job.conclusion, number === shardCount ? 'cancelled' : 'success');
+  assert.equal(job.conclusion, number === cancelledShard ? 'cancelled' : 'success');
   const bytes = readFileSync(join(directory, 'ci-' + run + '-job-' + job.id + '.log'));
   const source = bytes.toString('utf8');
   assert.ok(bytes.length <= 262144 && source.includes('Cleaning up orphan processes'), 'complete retained job log');
@@ -59,7 +73,7 @@ const logs = reportJobs.map(({ number, job }) => {
   }
 
   const unfinished = [...pending.keys()];
-  assert.deepEqual(unfinished, job.conclusion === 'success' ? [] : ['js/src/typed-program-links.js', 'js/src/typescript-erasure-rules.js']);
+  assert.deepEqual(unfinished, number === cancelledShard ? expectedUnfinished : []);
   for (const [file, milliseconds] of completed) {
     const sourceBytes = git('show', revision + ':' + file);
     entries.push({ file, bytes: sourceBytes.length, sha256: digest(sourceBytes), milliseconds });
@@ -67,9 +81,9 @@ const logs = reportJobs.map(({ number, job }) => {
   return { job: job.id, number, conclusion: job.conclusion, bytes: bytes.length, sha256: digest(bytes), unfinished };
 });
 assert.deepEqual([...started].sort(), sources);
-assert.equal(entries.length, sources.length - 2);
+assert.equal(entries.length, sources.length - expectedUnfinished.length);
 entries.sort((left, right) => left.file.localeCompare(right.file));
-writeProjectData(new URL('parity/fixtures/ci-45104457483-report-workload-costs.lino', root), {
+writeProjectData(new URL(`parity/fixtures/ci-${run}-report-workload-costs.lino`, root), {
   schemaVersion: 1, run, attempt, head, revision, logs, entries,
   boundary: 'Advisory module elapsed durations with shared import and measurement overlap divided evenly. Unfinished modules supply no timing sample or requirement observation.',
 });

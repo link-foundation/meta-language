@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, partitionSelfTranslationReportModules, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
@@ -13,10 +12,6 @@ import { selfTranslate } from '../src/self-translation.js';
 
 test('recent report timings balance all complete module workloads across the same sixteen shards', () => {
   const repository = fileURLToPath(new URL('../../', import.meta.url));
-  const sources = readdirSync(join(repository, 'js/src'), { recursive: true, withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.name.endsWith('.js'))
-    .map(entry => relative(repository, join(entry.parentPath, entry.name)).split(sep).join('/'))
-    .sort();
   // Replay the old assignments on the source tree used to evaluate the scheduling change.
   const comparisonRevision = 'b964c412ed4efd5a0b9d04002780b7306f0e92b4';
   const git = (...args) => execFileSync('git', ['--no-replace-objects', ...args], { cwd: repository, maxBuffer: 2 * 1024 * 1024 });
@@ -46,11 +41,33 @@ test('recent report timings balance all complete module workloads across the sam
   for (const row of pipeline.entries) {
     assert.ok(!unfinished.includes(row.file));
     elapsed.set(row.file, row.milliseconds);
+    priorEntries.set(row.file, row);
   }
-  const current = partitionSelfTranslationReportModules(sources, 16);
-  assert.deepEqual(current.flat().sort(), sources);
   assert.ok(longest(historical) >= 30 * 60 * 1000, 'overlap-adjusted samples expose the prior overloaded shard');
-  assert.ok(longest(current) <= 20 * 60 * 1000, 'overlap-adjusted samples leave headroom within the deadline');
+
+  const latest = readProjectData(new URL('../../parity/fixtures/ci-45215384144-report-workload-costs.lino', import.meta.url));
+  assert.deepEqual(latest.logs.map(row => row.number), record.logs.map(row => row.number));
+  const cancelled = latest.logs.filter(row => row.conclusion === 'cancelled');
+  assert.deepEqual(cancelled.map(row => row.number), [5]);
+  const [unfinishedModule] = cancelled[0].unfinished;
+  assert.deepEqual(cancelled[0].unfinished, ['js/src/typed-program-expression-projection.js']);
+  const sampledSources = [...latest.entries.map(row => row.file), unfinishedModule].sort();
+  const sampledRevision = git('ls-tree', '-r', '--name-only', latest.head, 'js/src')
+    .toString().trimEnd().split('\n').filter(file => file.endsWith('.js')).sort();
+  assert.deepEqual(sampledSources, sampledRevision);
+  const sampledBytes = new Map(sampledSources.map(file => [file, git('show', `${latest.head}:${file}`)]));
+  const sampledInput = { readSource: file => sampledBytes.get(file) };
+  const preceding = partitionMeasuredWorkloads(sampledSources, 16, {
+    ...sampledInput, costs: { ...baseline, entries: [...priorEntries.values()] },
+  });
+  assert.deepEqual(preceding.flat().sort(), sampledSources);
+  assert.ok(longest(preceding) <= 20 * 60 * 1000, 'overlap-adjusted samples leave headroom within the deadline');
+
+  for (const row of latest.entries) elapsed.set(row.file, row.milliseconds);
+  const current = partitionSelfTranslationReportModules(sampledSources, 16, sampledInput);
+  assert.deepEqual(current.flat().sort(), sampledSources);
+  assert.ok(longest(preceding) >= 28 * 60 * 1000, 'the cancelled shard accumulated nearly the full deadline before its final module');
+  assert.ok(longest(current) <= 17 * 60 * 1000, 'updated costs distribute the expensive modules across the sixteen owners');
 });
 
 test('recent translation test timings balance both jobs in each original three-way partition', () => {

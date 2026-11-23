@@ -401,7 +401,7 @@ test('the report balances complete module shards by measured cost and falls back
   assert.deepEqual(shards.flat().sort(), [...all].sort());
   const costs = readProjectData(path.join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
   const measured = new Map(costs.entries.map((entry) => [entry.file, entry]));
-  for (const run of [45076523061, 45104457483]) {
+  for (const run of [45076523061, 45104457483, 45215384144]) {
     const report = readProjectData(path.join(root, `parity/fixtures/ci-${run}-report-workload-costs.lino`));
     for (const entry of report.entries) measured.set(entry.file, entry);
   }
