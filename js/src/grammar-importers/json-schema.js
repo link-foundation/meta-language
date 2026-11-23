@@ -3,6 +3,7 @@ import { GrammarBuilder as Expression } from '../grammar.js';
 import { collectReferences } from '../grammar-emitters/structural.js';
 import { parseGrammarLinks } from '../grammar-links.js';
 import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-document.js';
+import { jsonDocumentPolicy } from '../json-document-policy.js';
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-patterns.js';
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
@@ -21,6 +22,10 @@ const jsonTypes = new Map([
   ['object', 1], ['array', 1 << 1], ['string', 1 << 2], ['number', numberType],
   ['integer', integerType], ['boolean', 1 << 5], ['null', 1 << 6],
 ]);
+const assertionTypes = new Map([
+  ['object', jsonDocumentPolicy.objectAssertion], ['array', jsonDocumentPolicy.arrayAssertion],
+  ['string', jsonDocumentPolicy.stringAssertion], ['number', jsonDocumentPolicy.limit],
+].flatMap(([type, keywords]) => keywords.map(keyword => [keyword, jsonTypes.get(type)])));
 const allJsonTypes = (1 << 7) - 1;
 const characters = (value) => charClass(Array.from(value, character => ({ kind: 'char', value: character })));
 const importedSchemas = new WeakMap();
@@ -261,12 +266,21 @@ function possibleTypeMembership(rules, allowedTypes) {
   return constants ? constants.reduce((types, value) => types | valueTypeMembership(value), 0) & declared : declared;
 }
 
+function appliesToType(keyword, membership) {
+  return !assertionTypes.has(keyword) || (assertionTypes.get(keyword) & membership) !== 0;
+}
+
+function activeConjunctionKeyword(keyword, index, combination, membership) {
+  return keyword !== 'type' && !referenceKeys.has(keyword)
+    && !(index === 0 && keyword === combination) && appliesToType(keyword, membership);
+}
+
 function combineNumericConstraints(layers, membership, combination) {
   if (membership !== numberType && membership !== integerType) return undefined;
   const limits = {};
   for (const [index, layer] of layers.entries()) {
     for (const [key, value] of Object.entries(layer)) {
-      if (key === 'type' || referenceKeys.has(key) || (index === 0 && key === combination)) continue;
+      if (!activeConjunctionKeyword(key, index, combination, membership)) continue;
       if (!numericLimitKeywords.includes(key) || !Number.isFinite(value)) return undefined;
       const tighten = key === 'minimum' || key === 'exclusiveMinimum' ? Math.max : Math.min;
       limits[key] = tighten(limits[key] ?? value, value);
@@ -275,12 +289,12 @@ function combineNumericConstraints(layers, membership, combination) {
   return { type: membership === integerType ? 'integer' : 'number', limits };
 }
 
-function branchesUseDisjointTypes(branches, allowedTypes) {
+function branchesUseDisjointTypes(branches, allowedTypes, referenceLayers) {
   if (branches.length < 2) return true;
   let seen = 0;
   for (const branch of branches) {
     if (branch === null || !['object', 'boolean'].includes(typeof branch) || Array.isArray(branch)) return false;
-    const membership = possibleTypeMembership(branch, allowedTypes);
+    const membership = (referenceLayers(branch) ?? [branch]).reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
     if (seen & membership) return false;
     seen |= membership;
   }
@@ -305,7 +319,7 @@ function requiredStringTags(schema) {
 function branchesUseDisjointRequiredTags(branches, allowedTypes, referenceLayers) {
   const tags = branches.map(branch => requiredStringTags(referenceLayers(branch)?.at(-1)));
   return branches.every((branch, index) => branches.slice(0, index).every((previous, other) => (
-    branchesUseDisjointTypes([branch, previous], allowedTypes) || [...tags[index]].some(([key, values]) => (
+    branchesUseDisjointTypes([branch, previous], allowedTypes, referenceLayers) || [...tags[index]].some(([key, values]) => (
       tags[other].has(key) && stringSetsAreDisjoint(values, tags[other].get(key))
     ))
   )));
@@ -481,7 +495,7 @@ export function importJsonSchema(schema) {
     return format ?? ref('string');
   }
   function regularStringConstraints(rules, combination) {
-    if (Object.keys(rules).some(key => key !== combination && (key === '$ref'
+    if (Object.keys(rules).some(key => key !== combination && appliesToType(key, jsonTypes.get('string')) && (key === '$ref'
       || (!referenceKeys.has(key) && !['type', 'const', 'enum', 'pattern', 'format'].includes(key))))) return undefined;
     const expressions = [];
     if (rules.format !== undefined) {
@@ -524,20 +538,20 @@ export function importJsonSchema(schema) {
     }
     return undefined;
   }
-  function regularStringChain(layers) {
+  function regularStringChain(layers, combination) {
     const conjunction = [];
-    for (const layer of layers) {
-      const expressions = regularStringConstraints(layer, '$ref');
+    for (const [index, layer] of layers.entries()) {
+      const expressions = regularStringConstraints(layer, (index === 0 && combination) || '$ref');
       if (!expressions) return expressions;
       conjunction.push(...expressions);
     }
     return conjunction;
   }
-  function referenceCollectionLayout(layers, keywords, usesLayout, combination) {
+  function referenceCollectionLayout(layers, membership, keywords, usesLayout, combination) {
     let layout;
     for (const [index, layer] of layers.entries()) {
-      if (Object.keys(layer).some(key => key !== 'type' && !referenceKeys.has(key) && !keywords.includes(key)
-        && !(index === 0 && key === combination))) return undefined;
+      if (Object.keys(layer).some(key => activeConjunctionKeyword(key, index, combination, membership)
+        && !keywords.includes(key))) return undefined;
       if (usesLayout(layer)) {
         if (layout) return undefined;
         layout = layer;
@@ -547,7 +561,7 @@ export function importJsonSchema(schema) {
   }
   function collectionConstraints(layers, membership, combination) {
     if (membership === jsonTypes.get('object')) {
-      const layout = referenceCollectionLayout(layers, ['properties', 'additionalProperties', 'required'], layer => (
+      const layout = referenceCollectionLayout(layers, membership, jsonDocumentPolicy.objectAssertion, layer => (
         Object.keys(layer.properties ?? {}).length > 0 || (layer.additionalProperties !== undefined && layer.additionalProperties !== true)
       ), combination);
       if (!layout) return undefined;
@@ -562,7 +576,7 @@ export function importJsonSchema(schema) {
         const itemLimit = layer.items === false ? layer.prefixItems?.length ?? 0 : Infinity;
         return Math.min(limit, layer.maxItems ?? Infinity, itemLimit);
       }, Infinity);
-      const layout = referenceCollectionLayout(layers, ['prefixItems', 'items', 'minItems', 'maxItems'], layer => (
+      const layout = referenceCollectionLayout(layers, membership, jsonDocumentPolicy.arrayAssertion, layer => (
         maximum !== 0 && ((layer.prefixItems?.length ?? 0) > 0 || (layer.items !== undefined && typeof layer.items !== 'boolean'))
       ), combination);
       if (!layout) return undefined;
@@ -578,17 +592,45 @@ export function importJsonSchema(schema) {
   function referencedExpression(rules, allowedTypes, pointer) {
     const layers = referenceLayers(rules);
     if (!layers) return undefined;
+    const entries = conjunctionEntries(layers, allowedTypes, pointer);
+    return entries && lowerConjunction(entries);
+  }
+  function lowerConjunction(entries) {
+    const expressions = entries.map(lower => lower()).filter(Boolean);
+    return expressions.length ? choice(...expressions) : null;
+  }
+  function conjunctionEntries(layers, allowedTypes, pointer, combination) {
     const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
-    if (membership === 0) return null;
-    const constraints = combineNumericConstraints(layers, membership);
-    if (constraints) return numberExpression(constraints.type, constraints.limits, pointer);
-    if (membership !== jsonTypes.get('string')) {
-      const collection = collectionConstraints(layers, membership);
-      return collection?.lower(collection.rules, pointer);
+    if ((membership & numberType) === fractionalType) return undefined;
+    const entries = [];
+    for (const [type, mask] of jsonTypes) {
+      if ((membership & mask) !== mask || (type === 'integer' && (membership & fractionalType))) continue;
+      const entry = prepareType(type, mask);
+      if (entry === undefined) return undefined;
+      if (entry) entries.push(entry);
     }
-    const conjunction = regularStringChain(layers);
-    if (!conjunction) return conjunction;
-    return conjunction.length ? stringBranchProduct([conjunction]) : ref('string');
+    return entries;
+
+    function prepareType(type, mask) {
+      if (type === 'string') {
+        const conjunction = regularStringChain(layers, combination);
+        if (!conjunction) return conjunction;
+        const expression = conjunction.length ? stringBranchProduct([conjunction]) : ref('string');
+        return expression && (() => expression);
+      }
+      if (type === 'number' || type === 'integer') {
+        const constraints = combineNumericConstraints(layers, mask, combination);
+        return constraints && (() => numberExpression(type, constraints.limits, pointer));
+      }
+      if (type === 'object' || type === 'array') {
+        const collection = collectionConstraints(layers, mask, combination);
+        return collection && (() => collection.lower(collection.rules, pointer));
+      }
+      const residual = layers.some((layer, index) => Object.keys(layer).some(key => (
+        activeConjunctionKeyword(key, index, combination, mask)
+      )));
+      return residual ? undefined : () => ref(type);
+    }
   }
   function alternativeStringExpression(rules, alternatives, allowedTypes, keyword) {
     const string = jsonTypes.get('string');
@@ -641,23 +683,18 @@ export function importJsonSchema(schema) {
     const entries = branches.map(({ index, type, limits }) => numberExpression(type, limits, pointerChild(location, index))).filter(Boolean);
     return entries.length ? choice(...entries) : null;
   }
-  function alternativeCollectionExpression(rules, alternatives, allowedTypes, keyword, pointer) {
-    const branches = [];
+  function alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer) {
+    const entries = [];
+    const location = pointerChild(pointer, keyword);
     for (const [index, branch] of alternatives.entries()) {
       if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
       const layers = referenceLayers(branch);
       if (!layers) return undefined;
-      const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
-      if (membership === 0) continue;
-      const constraints = collectionConstraints([rules, ...layers], membership, keyword);
-      if (!constraints) return undefined;
-      branches.push({ index, constraints });
+      const branchEntries = conjunctionEntries([rules, ...layers], allowedTypes, pointerChild(location, index), keyword);
+      if (!branchEntries) return undefined;
+      entries.push(...branchEntries);
     }
-    const location = pointerChild(pointer, keyword);
-    const entries = branches.map(({ index, constraints }) => (
-      constraints.lower(constraints.rules, pointerChild(location, index))
-    )).filter(Boolean);
-    return entries.length ? choice(...entries) : null;
+    return lowerConjunction(entries);
   }
   function numberExpression(type, rules, pointer) {
     const keywords = numericLimitKeywords.filter(key => rules[key] !== undefined);
@@ -707,7 +744,7 @@ export function importJsonSchema(schema) {
     if (alternatives) {
       const keyword = alternatives === rules.anyOf ? 'anyOf' : 'oneOf';
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== 'type' && key !== keyword && !referenceKeys.has(key));
-      const overlaps = keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes)
+      const overlaps = keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes, referenceLayers)
         && !branchesUseDisjointRequiredTags(alternatives, allowedTypes, referenceLayers);
       if (overlaps || hasSiblingAssertions) {
         const combined = alternativeStringExpression(rules, alternatives, allowedTypes, keyword);
@@ -715,8 +752,8 @@ export function importJsonSchema(schema) {
         const numeric = alternativeNumericExpression(rules, alternatives, allowedTypes, keyword, pointer);
         if (numeric !== undefined) return numeric;
         if (!overlaps) {
-          const collections = alternativeCollectionExpression(rules, alternatives, allowedTypes, keyword, pointer);
-          if (collections !== undefined) return collections;
+          const conjunction = alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer);
+          if (conjunction !== undefined) return conjunction;
         }
       }
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');

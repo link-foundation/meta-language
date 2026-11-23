@@ -4,4 +4,7 @@
 (schema items additionalProperties)
 (type object array string integer number boolean null)
 (limit minimum maximum exclusiveMinimum exclusiveMaximum)
+(objectAssertion properties additionalProperties required)
+(arrayAssertion prefixItems items minItems maxItems)
+(stringAssertion pattern format)
 (repair closeOpenContainers dropTrailingCommas stripCodeFence extractFirstValue stripTrailingGarbage repairEscapes)

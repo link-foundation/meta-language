@@ -34,6 +34,19 @@ const JSON_TYPES: [(&str, u8); 7] = [
     ("null", 1 << 6),
 ];
 const ALL_JSON_TYPES: u8 = (1 << 7) - 1;
+static ASSERTION_TYPES: LazyLock<HashMap<&'static str, u8>> = LazyLock::new(|| {
+    [
+        ("object", "objectAssertion"),
+        ("array", "arrayAssertion"),
+        ("string", "stringAssertion"),
+        ("number", "limit"),
+    ]
+    .into_iter()
+    .flat_map(|(name, category)| {
+        keywords(category).map(move |keyword| (keyword, type_membership(name)))
+    })
+    .collect()
+});
 
 fn reference_expression(name: &str) -> Expression {
     EXPRESSION.nt(name)
@@ -247,6 +260,12 @@ enum CollectionConstraints<'schema> {
     },
 }
 
+enum ConjunctionEntry<'schema> {
+    Expression(Expression),
+    Number(&'static str, Value),
+    Collection(CollectionConstraints<'schema>),
+}
+
 fn append_member(item: &Expression, started: bool) -> Expression {
     if started {
         separated(item.clone())
@@ -389,7 +408,7 @@ impl<'schema> Importer<'schema> {
                     .keys()
                     .any(|key| key != "type" && key != keyword && !reference_keyword(key));
                 let overlaps = keyword == "oneOf"
-                    && !branches_use_disjoint_types(branches.iter(), allowed_types)
+                    && !branches_use_disjoint_types(self.root, branches.iter(), allowed_types)
                     && !branches_use_disjoint_required_tags(self.root, branches, allowed_types);
                 if overlaps || has_sibling_assertions {
                     if let Some(expression) =
@@ -407,7 +426,7 @@ impl<'schema> Importer<'schema> {
                         return expression;
                     }
                     if !overlaps
-                        && let Some(expression) = self.alternative_collection_expression(
+                        && let Some(expression) = self.alternative_conjunction_expression(
                             schema,
                             branches,
                             allowed_types,
@@ -798,6 +817,7 @@ impl<'schema> Importer<'schema> {
         if schema.as_object().is_some_and(|rules| {
             rules.keys().any(|key| {
                 Some(key.as_str()) != combination
+                    && applies_to_type(key, type_membership("string"))
                     && (key == "$ref"
                         || (!reference_keyword(key)
                             && !matches!(
@@ -853,10 +873,19 @@ impl<'schema> Importer<'schema> {
         }
     }
 
-    fn regular_string_chain(&mut self, layers: &[&Value]) -> Option<Option<Vec<Expression>>> {
+    fn regular_string_chain(
+        &mut self,
+        layers: &[&Value],
+        combination: Option<&str>,
+    ) -> Option<Option<Vec<Expression>>> {
         let mut conjunction = Vec::new();
-        for layer in layers {
-            let Some(expressions) = self.regular_string_constraints(layer, Some("$ref"))? else {
+        for (index, layer) in layers.iter().enumerate() {
+            let ignored = if index == 0 {
+                combination.or(Some("$ref"))
+            } else {
+                Some("$ref")
+            };
+            let Some(expressions) = self.regular_string_constraints(layer, ignored)? else {
                 return Some(None);
             };
             conjunction.extend(expressions);
@@ -893,26 +922,87 @@ impl<'schema> Importer<'schema> {
         pointer: &str,
     ) -> Option<Option<Expression>> {
         let layers = reference_layers(self.root, schema)?;
+        let entries = self.conjunction_entries(&layers, allowed_types, None)?;
+        Some(self.lower_conjunction(entries, pointer))
+    }
+
+    fn lower_conjunction(
+        &mut self,
+        entries: Vec<ConjunctionEntry<'schema>>,
+        pointer: &str,
+    ) -> Option<Expression> {
+        let expressions: Vec<_> = entries
+            .into_iter()
+            .filter_map(|entry| match entry {
+                ConjunctionEntry::Expression(expression) => Some(expression),
+                ConjunctionEntry::Number(name, limits) => self.number(name, &limits, pointer),
+                ConjunctionEntry::Collection(constraints) => {
+                    self.collection_expression(constraints, pointer)
+                }
+            })
+            .collect();
+        (!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions))
+    }
+
+    fn conjunction_entries(
+        &mut self,
+        layers: &[&'schema Value],
+        allowed_types: u8,
+        combination: Option<&str>,
+    ) -> Option<Vec<ConjunctionEntry<'schema>>> {
         let membership = layers.iter().fold(allowed_types, |types, layer| {
             possible_type_membership(layer, types)
         });
-        if membership == 0 {
-            return Some(None);
+        if membership & NUMBER_TYPE == FRACTIONAL_TYPE {
+            return None;
         }
-        if let Some((name, limits)) = combine_numeric_constraints(&layers, membership, None) {
-            return Some(self.number(name, &limits, pointer));
+        let mut entries = Vec::new();
+        for (name, mask) in JSON_TYPES {
+            if membership & mask != mask || (name == "integer" && membership & FRACTIONAL_TYPE != 0)
+            {
+                continue;
+            }
+            let entry = match name {
+                "object" | "array" => {
+                    ConjunctionEntry::Collection(collection_constraints(layers, mask, combination)?)
+                }
+                "number" | "integer" => {
+                    let (name, limits) = combine_numeric_constraints(layers, mask, combination)?;
+                    ConjunctionEntry::Number(name, limits)
+                }
+                "string" => {
+                    let Some(conjunction) = self.regular_string_chain(layers, combination)? else {
+                        continue;
+                    };
+                    let expression = if conjunction.is_empty() {
+                        reference_expression(name)
+                    } else {
+                        let Some(expression) =
+                            self.string_branch_product(&[conjunction.iter().collect()])?
+                        else {
+                            continue;
+                        };
+                        expression
+                    };
+                    ConjunctionEntry::Expression(expression)
+                }
+                _ => {
+                    let residual = layers.iter().enumerate().any(|(index, layer)| {
+                        layer.as_object().is_some_and(|fields| {
+                            fields.keys().any(|key| {
+                                active_conjunction_keyword(key, index, combination, mask)
+                            })
+                        })
+                    });
+                    if residual {
+                        return None;
+                    }
+                    ConjunctionEntry::Expression(reference_expression(name))
+                }
+            };
+            entries.push(entry);
         }
-        if membership != type_membership("string") {
-            let constraints = collection_constraints(&layers, membership, None)?;
-            return Some(self.collection_expression(constraints, pointer));
-        }
-        let Some(conjunction) = self.regular_string_chain(&layers)? else {
-            return Some(None);
-        };
-        if conjunction.is_empty() {
-            return Some(Some(reference_expression("string")));
-        }
-        self.string_branch_product(&[conjunction.iter().collect()])
+        Some(entries)
     }
 
     fn alternative_string_expression(
@@ -941,7 +1031,7 @@ impl<'schema> Importer<'schema> {
             if membership != string {
                 return None;
             }
-            if let Some(constraints) = self.regular_string_chain(&layers)? {
+            if let Some(constraints) = self.regular_string_chain(&layers, None)? {
                 choices.push(constraints);
             }
         }
@@ -1017,7 +1107,7 @@ impl<'schema> Importer<'schema> {
         Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
     }
 
-    fn alternative_collection_expression(
+    fn alternative_conjunction_expression(
         &mut self,
         schema: &'schema Value,
         branches: &'schema [Value],
@@ -1031,24 +1121,15 @@ impl<'schema> Importer<'schema> {
                 continue;
             }
             let mut layers = reference_layers(self.root, branch)?;
-            let membership = layers.iter().fold(allowed_types, |types, layer| {
-                possible_type_membership(layer, types)
-            });
-            if membership == 0 {
-                continue;
-            }
             layers.insert(0, schema);
-            let constraints = collection_constraints(&layers, membership, Some(keyword))?;
-            alternatives.push((index, constraints));
+            let entries = self.conjunction_entries(&layers, allowed_types, Some(keyword))?;
+            alternatives.push((index, entries));
         }
         let location = pointer_child(pointer, keyword);
         let entries: Vec<_> = alternatives
             .into_iter()
-            .filter_map(|(index, constraints)| {
-                self.collection_expression(
-                    constraints,
-                    &pointer_child(&location, &index.to_string()),
-                )
+            .filter_map(|(index, entries)| {
+                self.lower_conjunction(entries, &pointer_child(&location, &index.to_string()))
             })
             .collect();
         Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
@@ -1163,6 +1244,24 @@ fn reference_keyword(keyword: &str) -> bool {
     matches!(keyword, "$ref" | "$defs") || keywords("annotation").any(|name| name == keyword)
 }
 
+fn applies_to_type(keyword: &str, membership: u8) -> bool {
+    ASSERTION_TYPES
+        .get(keyword)
+        .is_none_or(|&mask| mask & membership != 0)
+}
+
+fn active_conjunction_keyword(
+    keyword: &str,
+    index: usize,
+    combination: Option<&str>,
+    membership: u8,
+) -> bool {
+    keyword != "type"
+        && !reference_keyword(keyword)
+        && !(index == 0 && Some(keyword) == combination)
+        && applies_to_type(keyword, membership)
+}
+
 fn required_property_names(schema: &Value) -> impl Iterator<Item = &str> {
     schema["required"]
         .as_array()
@@ -1173,7 +1272,8 @@ fn required_property_names(schema: &Value) -> impl Iterator<Item = &str> {
 
 fn reference_collection_layout<'schema>(
     layers: &[&'schema Value],
-    collection_keywords: &[&str],
+    membership: u8,
+    category: &str,
     uses_layout: impl Fn(&Value) -> bool,
     combination: Option<&str>,
 ) -> Option<&'schema Value> {
@@ -1181,10 +1281,8 @@ fn reference_collection_layout<'schema>(
     for (index, &layer) in layers.iter().enumerate() {
         if layer.as_object().is_some_and(|fields| {
             fields.keys().any(|key| {
-                key != "type"
-                    && !reference_keyword(key)
-                    && !collection_keywords.contains(&key.as_str())
-                    && !(index == 0 && Some(key.as_str()) == combination)
+                active_conjunction_keyword(key, index, combination, membership)
+                    && !keywords(category).any(|name| name == key.as_str())
             })
         }) {
             return None;
@@ -1204,7 +1302,8 @@ fn collection_constraints<'schema>(
     if membership == type_membership("object") {
         let layout = reference_collection_layout(
             layers,
-            &["properties", "additionalProperties", "required"],
+            membership,
+            "objectAssertion",
             |layer| {
                 layer["properties"]
                     .as_object()
@@ -1235,7 +1334,8 @@ fn collection_constraints<'schema>(
             .min();
         let layout = reference_collection_layout(
             layers,
-            &["prefixItems", "items", "minItems", "maxItems"],
+            membership,
+            "arrayAssertion",
             |layer| {
                 maximum != Some(0)
                     && (layer["prefixItems"]
@@ -1278,7 +1378,7 @@ fn combine_numeric_constraints(
         };
         for (key, bound) in fields {
             let key = key.as_str();
-            if key == "type" || reference_keyword(key) || (index == 0 && Some(key) == combination) {
+            if !active_conjunction_keyword(key, index, combination, membership) {
                 continue;
             }
             if !keywords("limit").any(|name| name == key) {
@@ -1433,6 +1533,7 @@ fn reference_layers<'schema>(
 }
 
 fn branches_use_disjoint_types<'schema>(
+    root: &'schema Value,
     branches: impl ExactSizeIterator<Item = &'schema Value>,
     allowed_types: u8,
 ) -> bool {
@@ -1444,7 +1545,14 @@ fn branches_use_disjoint_types<'schema>(
         if !branch.is_object() && !branch.is_boolean() {
             return false;
         }
-        let membership = possible_type_membership(branch, allowed_types);
+        let membership = reference_layers(root, branch).map_or_else(
+            || possible_type_membership(branch, allowed_types),
+            |layers| {
+                layers.into_iter().fold(allowed_types, |types, layer| {
+                    possible_type_membership(layer, types)
+                })
+            },
+        );
         if seen & membership != 0 {
             return false;
         }
@@ -1496,7 +1604,7 @@ fn branches_use_disjoint_required_tags(
             .iter()
             .enumerate()
             .all(|(other, previous)| {
-                branches_use_disjoint_types([branch, previous].into_iter(), allowed_types)
+                branches_use_disjoint_types(root, [branch, previous].into_iter(), allowed_types)
                     || tags[index].iter().any(|(key, values)| {
                         tags[other].get(key).is_some_and(|other_values| {
                             string_sets_are_disjoint(values, other_values)

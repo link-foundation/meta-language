@@ -4681,8 +4681,8 @@ It counts branches whose supported patterns, formats and finite value assertions
 all match the JSON spelling. A sibling string assertion restricts every branch.
 The decoder accepts exactly one matching branch and omits a production when
 the product has no accepting path.
-For a string-only local reference, the importer intersects supported sibling
-patterns and formats along the local reference chain. Referenced alternatives
+For the string type of a local reference, the importer intersects supported
+sibling patterns and formats along the local reference chain. Referenced alternatives
 participate in string branch selection and can supply a required string tag
 from their terminal object schema. The chain analysis stops at a repeated
 reference or the schema inspection depth limit. For string
@@ -4698,10 +4698,10 @@ common limits and generates spellings covered by exactly one interval. The
 same diagnostics describe numeric spelling limits and assertions that require
 document validation.
 
-An object-only local reference chain can add required names to a single
+An object local reference chain can add required names to a single
 property layout. The decoder takes the union of the required names and uses
 that layout's additional-property policy for names without a declared schema.
-An array-only chain can add minimum and maximum lengths to a single item
+An array chain can add minimum and maximum lengths to a single item
 layout. The decoder keeps the strongest bound in each direction and applies
 both to the prefix and tail. A layer with `items: false` bounds the length by
 that layer's own prefix length, including zero when it has no prefix.
@@ -4709,11 +4709,15 @@ Incompatible lengths or required names forbidden
 by the property layout leave no generatable collection. When two layers
 independently constrain properties or items, a reference diagnostic identifies
 the assertions checked during document validation.
-Inclusive collection alternatives apply these same sibling constraints to
-each branch. Exclusive collection alternatives use this construction when the
-branches have disjoint types or required tags. The decoder removes branches
-with impossible bounds or required names and reports a residual when branch
-exclusivity or a layout intersection needs document validation.
+The shared keyword policy scopes collection, string, and numeric assertions
+to their respective instance types. Local reference chains build a production
+for each applicable type, including chains without a declared type. Inclusive
+alternatives apply sibling constraints to each branch. Exclusive alternatives
+use this construction when the branches have disjoint types or required tags.
+The type analysis intersects declared types along each local reference chain.
+The decoder removes branches with impossible bounds or required names and
+reports a residual when branch exclusivity or a layout intersection needs
+document validation.
 
 An unrestricted integer decoder over all JSON spellings exceeds the portable
 context-free grammar model. Restrict number spellings to `1.0*1e10*`, with

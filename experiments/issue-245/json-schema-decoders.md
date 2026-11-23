@@ -37,3 +37,9 @@ the decoder accepted `[true]` while document validation rejected it. The
 empty in this case. The fixture retains all four inputs and checks the
 validation diagnostic with independent, conflicting prefix schemas.
 [JSON Schema Core, draft 2020-12, section 10.3.1.2](https://json-schema.org/draft/2020-12/json-schema-core#section-10.3.1.2)
+
+The same experiment checks a reference to `{ minItems: 1 }` with a sibling
+`maxItems: 2`. Before the change, the decoder accepted `[1,2,3]` while
+validation rejected it. The grammar now combines both bounds for arrays and
+still admits other JSON types. Additional fixtures exercise type-scoped
+assertions across mixed-type references and inclusive and exclusive branches.

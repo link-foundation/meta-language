@@ -146,6 +146,34 @@ const cases = [
     [['[true]', true], ['[false]', true], ['[]', false], ['[true,false]', false], ['[1]', false]],
     [],
   ],
+  [
+    { $ref: '#/$defs/base', maxItems: 2, $defs: { base: { minItems: 1 } } },
+    [['true', true], ['null', true], ['{}', true], ['"text"', true], ['[1]', true], ['[1,2]', true], ['[]', false], ['[1,2,3]', false]],
+    [],
+  ],
+  [
+    { $ref: '#/$defs/base', minItems: 1, pattern: 'z$', required: ['value'], maximum: 4,
+      $defs: { base: { type: ['array', 'string', 'object', 'number', 'boolean'], maxItems: 2, pattern: '^a', minimum: 1 } } },
+    [['true', true], ['null', false], ['"az"', true], ['"ab\\u007a"', true], ['"ax"', false], ['"bz"', false], ['[1]', true],
+      ['[]', false], ['[1,2,3]', false], ['{"value":null}', true], ['{}', false], ['1.5', true], ['4', true], ['0', false], ['5', false]],
+    ['/type'],
+  ],
+  [
+    { minItems: 1, pattern: 'z$', anyOf: [
+      { type: ['array', 'boolean'], maxItems: 2 }, { type: 'string', pattern: '^a' }, false,
+    ] },
+    [['true', true], ['null', false], ['[1]', true], ['[1,2]', true], ['[]', false], ['[1,2,3]', false],
+      ['"az"', true], ['"ax"', false], ['"bz"', false]],
+    [],
+  ],
+  [
+    { minItems: 1, required: ['value'], $defs: { listOrFlag: { type: ['array', 'boolean'], maxItems: 2 } }, oneOf: [
+      { $ref: '#/$defs/listOrFlag' }, { type: 'object', properties: { value: { type: 'string' } }, additionalProperties: false },
+    ] },
+    [['true', true], ['null', false], ['[1]', true], ['[]', false], ['[1,2,3]', false], ['{"value":"a"}', true],
+      ['{}', false], ['{"value":1}', false], ['{"value":"a","extra":null}', false]],
+    [],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
