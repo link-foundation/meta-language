@@ -90,6 +90,7 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
     assert.ok([
       '6ffff3b2dc530a5f24c128dadf877f3fa106932b','8bc0ef9725388c7927acf1854870bf46f5e365be',
       '231c6610fc93225fccb1682ab2943729e0c0e52e','ec9f4efb0e9ef936114e09823981352f6db13700',
+      '0deae514483822ffd2a42a4fa0f4c88744d0745d',
     ].includes(row.predecessor.revision));
     exactKeys(row.current,['bytes','sha256']);assert.equal(typeof row.predecessor.source,'string');
     assert.deepEqual(pin(row.predecessor.source),{bytes:row.predecessor.bytes,sha256:row.predecessor.sha256});

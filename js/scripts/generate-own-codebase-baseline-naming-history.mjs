@@ -46,6 +46,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   let sources=stored.sources;
   if(!check){
     const baseline='ec9f4efb0e9ef936114e09823981352f6db13700';
+    const beforeIssue245CiRepairs='0deae514483822ffd2a42a4fa0f4c88744d0745d';
     const selections=[...[
       'js/scripts/scheduling-source-history.mjs','js/scripts/raw-oracle-contract-partition-history.mjs',
       'js/scripts/tooling-frozen-source-history.mjs','js/tests/self-translation.test.js','js/src/grammar-runtime/executor.js',
@@ -87,6 +88,15 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'js/tests/translation-required-field-native-host-succession.test.js',
       'rust/tests/unit/translation_javascript_record_parameters.rs',
     ].map(path=>({path,revision:baseline})),
+    ...[
+      'js/scripts/current-ci-repair-source-history.mjs',
+      'js/scripts/generate-ascii-text-predicate-host-history.mjs',
+      'js/scripts/generate-ascii-text-predicate-hosts.mjs',
+      'js/tests/support/translation-workflow-history.js',
+      'js/tests/translation-ascii-text-predicate-hosts.test.js',
+      'js/tests/translation-native-source-byte-history.test.js',
+      'js/tests/translation-typescript-workflow.test.js',
+    ].map(path=>({path,revision:beforeIssue245CiRepairs})),
     {path:'js/scripts/scheduling-source-history.mjs',revision:'231c6610fc93225fccb1682ab2943729e0c0e52e'}];
     const additions=selections.filter(({path,revision})=>!sources.some(row=>row.file===path&&row.predecessor.revision===revision));
     const captured=additions.map(({path,revision})=>{
