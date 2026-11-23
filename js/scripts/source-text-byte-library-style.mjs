@@ -11,17 +11,11 @@ function syntax(source){
  }
  return{tokens,matching};
 }
-export function createSourceTextRustBlockReader(source){
- const{tokens,matching}=syntax(source);
- return (kind,name)=>{
-  const index=tokens.findIndex((token,index)=>token.value===kind&&tokens[index+1]?.value===name);
-  if(index<0)throw new Error(`source-text styles lost ${kind} ${name}`);
-  let open=index+2;while(tokens[open]?.value!=='{')open++;
-  return source.slice(tokens[index-1]?.value==='pub'?tokens[index-1].start:tokens[index].start,tokens[matching.get(open)].end);
- };
-}
 export function readSourceTextRustBlock(source,kind,name){
- return createSourceTextRustBlockReader(source)(kind,name);
+ const{tokens,matching}=syntax(source),index=tokens.findIndex((token,index)=>token.value===kind&&tokens[index+1]?.value===name);
+ if(index<0)throw new Error(`source-text styles lost ${kind} ${name}`);
+ let open=index+2;while(tokens[open]?.value!=='{')open++;
+ return source.slice(tokens[index-1]?.value==='pub'?tokens[index-1].start:tokens[index].start,tokens[matching.get(open)].end);
 }
 function parentheses(source){
  for(let pass=0;pass<1000;pass++){
