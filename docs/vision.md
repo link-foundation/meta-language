@@ -3801,7 +3801,14 @@ exhausted its deadline after completing the raw descriptor and native library
 receipt history files in 129 and 149 seconds. Those complete files move to
 shards 5 and 2 respectively. Shard 5 finished in eleven minutes.
 Translation checkouts use full commit history and fetch historical blobs on
-demand. Every partition transports feedback with a LiNo receipt of the exact
+demand. [Run 45202064337](https://github.com/link-foundation/meta-language/actions/runs/45202064337)
+recorded 272 passing assertions in shard 5, with the 795-second test process
+leaving no time to upload feedback after checkout and setup. Initial hosted
+translation shards execute up to two isolated test file processes when four
+processors and ten GiB of memory are available. Smaller runners, local checks
+and the separate evidence suite execute the same file scopes sequentially.
+The fifteen-minute deadline and all fixtures and assertions remain in force.
+Every partition transports feedback with a LiNo receipt of the exact
 commit, selected files and payload hashes. A required merge validates every
 partition, permits an empty
 individual partition, rejects missing, stale or conflicting inputs, and restores

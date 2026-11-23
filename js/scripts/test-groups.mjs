@@ -13,6 +13,7 @@ import { spawnSync,execFileSync } from 'node:child_process';
 import { readdirSync,readFileSync } from 'node:fs';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
+import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {readProjectData,writeProjectData} from './project-data.mjs';
@@ -171,6 +172,18 @@ export function partitionGroupFiles(files, shard = '1/1') {
   return files.filter((_, offset) => offset % count === index - 1);
 }
 
+export function testFileConcurrency(group, shard, {
+  environment = process.env,
+  processors = availableParallelism(),
+  availableBytes = process.availableMemory(),
+} = {}) {
+  // The initial GitHub translation jobs use process-isolated file execution.
+  // Leave room for both test processes and their nested archive or compiler work.
+  const hostedTranslation = environment.GITHUB_ACTIONS === 'true'
+    && group === 'translation' && environment.TEST_GROUP === group && /^[1-6]\/6$/u.test(shard);
+  return hostedTranslation && processors >= 4 && availableBytes >= 10 * 1024 ** 3 ? 2 : 1;
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if(process.argv[2]==='--capture-costs'){
     assert.equal(process.argv.length,4);const result=captureMeasuredWorkloadCosts(process.argv[3]);
@@ -189,12 +202,15 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const counts = Object.entries(partition.groups).map(([name, files]) => `${name} ${files.length}`);
     console.log(`JavaScript test groups cover every test file: ${counts.join(', ')}`);
   } else if ((mode === '--list' || mode === '--run') && group in partition.groups) {
-    const files = partitionGroupFiles(partition.groups[group], options[1] ?? process.env.TEST_GROUP_SHARD ?? '1/1')
+    const shard = options[1] ?? process.env.TEST_GROUP_SHARD ?? '1/1';
+    const files = partitionGroupFiles(partition.groups[group], shard)
       .map((file) => path.join('tests', file));
     if (mode === '--list') {
       console.log(files.join('\n'));
     } else {
-      const { status, signal } = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...files], {
+      const concurrency = testFileConcurrency(group, shard);
+      if (concurrency > 1) console.log(`Running at most ${concurrency} test files at a time in translation shard ${shard}.`);
+      const { status, signal } = spawnSync(process.execPath, ['--test', `--test-concurrency=${concurrency}`, ...files], {
         cwd: packageRoot,
         stdio: 'inherit',
       });
