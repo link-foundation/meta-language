@@ -2707,8 +2707,9 @@ dependency line. The JSON package manifest records it in `dependencyBlockers`,
 keyed by dependency section and package name, with the exact `requirement` and
 the `issue` URL. The registry refresh verifies that the issue is open in the
 dependency's GitHub repository and records it in the audit. A closed, missing,
-or unrelated blocker fails the freshness check. The scheduled
-report also runs `npm outdated` and `cargo update --dry-run` for both Rust locks.
+or unrelated blocker fails the freshness check. The scheduled report runs
+`npm outdated`, `cargo outdated --root-deps-only --exit-code 1`, and
+`cargo update --dry-run` for both Rust locks.
 The scheduled registry refresh runs only on main
 as a non-blocking live report: it preserves the actual audit outcome, complete
 log and refreshed audit artifact, and opens or updates the repair PR even when
