@@ -42,10 +42,12 @@ export const nativeRepairNamingSources = Object.freeze([
   'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
   'rust/tests/unit/translation_javascript_record_parameters.rs',
   'rust/tests/unit/translation_surface_reference_analysis.rs',
+  'js/tests/support/platform-test-deadline-history.js',
+  'rust/tests/unit/ci-cd/workflow_release.rs',
 ]);
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '5719788f697b837825773d1b67e25e6d80037513a1ce0572ffcb56cbdb8815cc';
+const archiveDigest = 'a1c50f5714fe428fa023255c180ac33792bf61dc82557ed187749eeda6105b14';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
@@ -66,7 +68,8 @@ export function restoreAutomatedTranslationPauseSource(source, file, revision) {
     'js/tests/issue-195-formal-ai-partitions.test.js', 'js/tests/issue-195-naming.test.js', 'js/tests/link-network-binary.test.js',
     'js/tests/own-codebase-baseline-naming-history.test.js',
     'js/tests/test-groups.test.js', 'rust/src/formal_concept_definition.rs', 'rust/src/shared_numeric_function_model.rs',
-    'rust/src/translation/javascript/declarations.rs', 'rust/tests/unit/translation_surface_reference_analysis.rs'].includes(file)) {
+    'parity/fixtures/grammar-selection-diagnostic-order.lino', 'rust/src/translation/javascript/declarations.rs',
+    'rust/tests/unit/translation_surface_reference_analysis.rs'].includes(file)) {
     return source;
   }
   if (!history) {

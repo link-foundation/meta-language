@@ -3,8 +3,10 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 
+import { captureDiagnosticDependencyProfile, diagnosticFixturePath } from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -25,11 +27,20 @@ const step = (job, name) => {
   return value;
 };
 
-test('the frozen native grammar experiment uses a toolchain covered by its compiler profile', () => {
+test('native CI uses the covered toolchain for test harnesses, grammar artifacts and frozen compiler profiles', () => {
   const experiment = rust['native-grammar-outcome-experiment'];
-  assert.match(step(experiment, 'Setup Rust').text, /^\s*uses: dtolnay\/rust-toolchain@1\.99\.0$/mu);
+  for (const job of [rust.check, rust['fresh-merge'], rust.test, rust.coverage, rust['original-link-raw-observations'], experiment, ci['rust-suite']]) {
+    assert.match(step(job, 'Setup Rust').text, /^\s*uses: dtolnay\/rust-toolchain@1\.99\.0$/mu, job.id);
+  }
+  assert.match(step(rust.lint, 'Setup Rust').text, /^\s*uses: dtolnay\/rust-toolchain@stable$/mu);
   assert.match(step(experiment, 'Compile and execute the bounded frozen native candidate').run,
     /native-transport\/runner\/run\.mjs --native$/mu);
+});
+
+test('the native diagnostic fixture authenticates the active manifest and lock', () => {
+  const fixture = readProjectData(new URL(diagnosticFixturePath, root));
+  assert.deepEqual(fixture.dependencyProfile, captureDiagnosticDependencyProfile(fileURLToPath(root)));
+  assert.equal(fixture.cases.length, 2);
 });
 
 test('the two new tooling tests preserve all established shard assignments', () => {
@@ -75,6 +86,23 @@ function when(text, overrides = {}) {
     ...overrides,
   });
 }
+
+test('the native raw observation oracle checks the exact opt-in and independent prerequisites', () => {
+  const oracle = read('rust/tests/unit/ci-cd/workflow_release.rs');
+  const expected = /let prerequisites = r"([\s\S]+?)";/u.exec(oracle)?.[1];
+  const { header } = rust['original-link-raw-observations'];
+  assert.ok(expected && header.includes(expected));
+  const needs = {
+    'cargo-lock': { result: 'success' }, check: { result: 'success' }, changelog: { result: 'success' },
+    'detect-changes': { outputs: {} },
+  };
+  const context = { needs, github: { event_name: 'push' } };
+  const optIn = { ...context, inputs: { automated_translation: true } };
+  assert.equal(when(header, context), false);
+  assert.equal(when(header, optIn), true);
+  assert.equal(when(header, { ...optIn, cancelled: () => true }), false);
+  assert.equal(when(header, { ...optIn, needs: { ...needs, check: { result: 'failure' } } }), false);
+});
 
 test('ordinary workflows pause automated translation and fail on independent check failures', (context) => {
   assert.match(workflow('ci'), /workflow_dispatch:\n    inputs:\n      automated_translation:[\s\S]*?default: false/u);

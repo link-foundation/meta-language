@@ -24,7 +24,7 @@ test('fresh merge restores the existing successful check cache before every unch
     +"        uses: actions/cache/restore@v6\n        with:\n          path: |\n"
     +"            ~/.cargo/registry\n            ~/.cargo/git\n            rust/target\n"
     +"          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}\n\n";
-  assert.equal(source.split(block).length,2);
+  assert.equal(source.split(block.replace('-cargo-check-', '-cargo-check-1.99.0-')).length,2);
   const original=captureGitArtifactCertificate('90636f9fb52b1b9095defbac041c8089608b8576','.github/workflows/rust.yml');
   assert.equal(source.split(coverageProfile).length,2);
   const predecessor=removePartitionUploadRetry(prePause(source).replace(block,'').replace(coverageProfile,''));

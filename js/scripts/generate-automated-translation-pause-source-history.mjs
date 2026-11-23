@@ -48,6 +48,7 @@ const files = [...new Set([
 files.push({ file: 'js/tests/test-groups.test.js', revision: '231c6610fc93225fccb1682ab2943729e0c0e52e' });
 files.push({ file: 'js/scripts/scheduling-source-history.mjs', revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917' });
 files.push({ file: 'js/scripts/tooling-frozen-source-history.mjs', revision: '269c48e497280025271ade3765f808b2f372d1b6' });
+files.push({ file: 'parity/fixtures/grammar-selection-diagnostic-order.lino', revision });
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const trees = {};
 const commits = {};
