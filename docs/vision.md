@@ -3785,8 +3785,12 @@ The initial native grammar group uses six file partitions after
 Each original three-way partition is exactly the union of two current
 partitions. The JavaScript job deadline remains fifteen minutes.
 Six initial translation partitions retain the fifteen-minute deadline after
-run 39394008799 exhausted it while still progressing. Each
-transports feedback with a LiNo receipt of the exact commit, selected files and
+run 39394008799 exhausted it while still progressing. In
+[run 45153024974](https://github.com/link-foundation/meta-language/actions/runs/45153024974/job/137618911601),
+the complete current source descriptor and recursive declaration ownership
+checks each took more than a minute in shard 5. Both files now run in shard 3,
+which had finished in under ten minutes. Every partition transports feedback
+with a LiNo receipt of the exact commit, selected files and
 payload hashes. A required merge validates every partition, permits an empty
 individual partition, rejects missing, stale or conflicting inputs, and restores
 the original combined artifact name, paths and retention. An empty complete

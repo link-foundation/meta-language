@@ -41,6 +41,20 @@ test('six bounded translation partitions retain every previous file once and pre
   for(const file of partitionTests(originalFiles).groups.translation)assert.ok(files.includes(file),file);
 });
 
+test('the six translation shards move only the two measured checks out of the timed-out shard',()=>{
+  const files=partitionTests(testFiles()).groups.translation;
+  const moved=['translation-current-own-codebase-raw-source-descriptors.test.js','translation-self-recursive-declaration-owners.test.js'];
+  for(const file of moved)assert.ok(files.includes(file),file);
+  for(let shard=1;shard<=6;shard++){
+    const previous=files.filter((file,offset)=>!moved.includes(file)&&offset%6===shard-1);
+    const expected=shard===3?[...previous,...moved].sort():previous;
+    assert.deepEqual(partitionGroupFiles(files,shard+'/6'),expected);
+  }
+  for(let shard=1;shard<=3;shard++){
+    assert.deepEqual(partitionGroupFiles(files,shard+'/3'),files.filter((_,offset)=>offset%3===shard-1));
+  }
+});
+
 test('six feedback partitions merge exact scope and bytes while missing foreign and tampered cohorts refuse',(t)=>{
   const root=realpathSync(mkdtempSync(join(tmpdir(),'meta-language-six-feedback-')));
   t.after(()=>rmSync(root,{recursive:true}));

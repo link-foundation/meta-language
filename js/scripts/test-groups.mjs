@@ -151,9 +151,14 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
-  // historical modulo cohorts retain their independent exact partition rules.
+  // Native and historical modulo cohorts retain their exact partition rules.
+  // Translation shard 5 timed out in run 45153024974 while shard 3 finished
+  // in under ten minutes. Move its two complete source checks (85 s and 70 s).
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  if(count===6&&files.includes('translation-owned-number-facts.test.js')){
+    const moved=new Set(['translation-current-own-codebase-raw-source-descriptors.test.js','translation-self-recursive-declaration-owners.test.js']);
+    return files.filter((file,offset)=>moved.has(file)?index===3:offset%count===index-1);
+  }
   return files.filter((_, offset) => offset % count === index - 1);
 }
 
