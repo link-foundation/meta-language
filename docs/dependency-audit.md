@@ -150,7 +150,6 @@ they are.
 | `anstyle-query` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.5` | transitive |  | 1.1.5 (crates.io, anstyle-query) | version | current |  |
 | `anstyle-wincon` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.0.11` | transitive |  | 3.0.11 (crates.io, anstyle-wincon) | version | current |  |
 | `anstyle` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.14` | transitive |  | 1.0.14 (crates.io, anstyle) | version | current |  |
-| `anyhow` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.105` | transitive |  | 1.0.105 (crates.io, anyhow) | version | current |  |
 | `autocfg` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.1` | transitive |  | 1.5.1 (crates.io, autocfg) | version | current |  |
 | `base64` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.23.1` | transitive |  | 0.23.1 (crates.io, base64) | version | current |  |
 | `beef` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.2` | transitive |  | 0.5.2 (crates.io, beef) | version | current |  |
@@ -351,6 +350,7 @@ they are.
 | `serde_derive` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.229` | transitive |  | 1.0.229 (crates.io, serde_derive) | version | current |  |
 | `serde` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.229` | transitive |  | 1.0.229 (crates.io, serde) | version | current |  |
 | `zmij` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, zmij) | version | current |  |
+| `anyhow` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.105` | transitive |  | 1.0.105 (crates.io, anyhow) | version | current |  |
 | `ar_archive_writer` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.5` | transitive |  | 0.5.5 (crates.io, ar_archive_writer) | version | current |  |
 | `bitflags` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.3.2` | transitive |  | 2.13.2 (crates.io, bitflags) | version | behind | Held by the requirement of `kanaria` 0.2.0 (`^1.2.1`), which does not admit 2.13.2; it moves when that dependent does. |
 | `bumpalo` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.20.4` | transitive |  | 3.20.4 (crates.io, bumpalo) | version | current |  |
