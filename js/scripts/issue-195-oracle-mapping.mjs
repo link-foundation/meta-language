@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 
 import { languageSupport } from '../src/index.js';
 import { grammarFile } from './grammar-files.mjs';
+import { fixtureOracleToolMatches } from './native-oracle-baselines.mjs';
 
 const COMMIT = /^[0-9a-f]{40}$/u;
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -34,7 +35,7 @@ export function conformanceOracleProblems(manifest, { lock, read, readRepository
       return false;
     }
   };
-  if (manifest.oracle?.tool !== lock.treeSitterCli) {
+  if (!fixtureOracleToolMatches(manifest.oracle?.tool, lock)) {
     problems.push(`the oracle tool ${manifest.oracle?.tool} is not the pinned ${lock.treeSitterCli}`);
   }
   for (const [file, expected] of Object.entries(manifest.inputs ?? {})) {

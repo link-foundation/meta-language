@@ -30,12 +30,12 @@ import { gunzipSync } from 'node:zlib';
 import { Parser } from 'web-tree-sitter';
 import '../src/tree-sitter-runtime.js';
 
-import { languageEntry } from '../src/language-catalog.js';
+import { canonicalLanguageName, languageEntry } from '../src/language-catalog.js';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
 import { grammarFile } from './grammar-files.mjs';
 import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
-import { nativeOracleBaseline } from './native-oracle-baselines.mjs';
+import { nativeOracleBaseline, nativeProfileOracleBaseline } from './native-oracle-baselines.mjs';
 import { readProjectData } from './project-data.mjs';
 
 const encoder = new TextEncoder();
@@ -69,7 +69,10 @@ export function oracleLanguage(language) {
   if (locked.id !== id || locked.version !== version || locked.parserSha256 !== parserSha256) {
     throw new Error(`unregistered oracle for ${language}: ${id} ${version}`);
   }
-  const file = baseline?.wasmPath ?? grammarFile(locked, `${id}.wasm.gz`);
+  return oracleGrammarAsset(baseline?.wasmPath ?? grammarFile(locked, `${id}.wasm.gz`));
+}
+
+function oracleGrammarAsset(file) {
   let grammar = ORACLES.get(file);
   if (!grammar) {
     grammar = loadGrammarLanguage(gunzipSync(readExternalGrammarAsset(file)));
@@ -118,6 +121,13 @@ export function oracleSnapshot(source, language) {
   const isolated = isolatedOracle(source, language);
   if (isolated) return isolated;
   return withOracleTree(source, language, root => ({ rows: oracleTreeRows(root), recovers: root.hasError }));
+}
+
+/** Match the oracle of a native scanner profile, including an opt-in candidate. */
+export function nativeProfileOracleSnapshot(source, language) {
+  const baseline = nativeProfileOracleBaseline(canonicalLanguageName(language));
+  if (!baseline) return oracleSnapshot(source, language);
+  return oracleSnapshotFromGrammar(source, oracleGrammarAsset(baseline.wasmPath));
 }
 
 /** The rows of the oracle's tree of `source` as `language`. */

@@ -56,4 +56,12 @@ native_oracle_baselines! {
         "tree_sitter_sql",
         tree_sitter_sql_baseline,
     ),
+    (
+        "csharp",
+        "0.23.5",
+        "tree-sitter-c-sharp-0.23.5",
+        "rust/vendor/tree-sitter-oracle-baselines/tree-sitter-c-sharp-0.23.5.crate",
+        "tree_sitter_c_sharp",
+        tree_sitter_c_sharp_baseline,
+    ),
 }

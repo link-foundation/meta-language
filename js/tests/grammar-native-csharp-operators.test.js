@@ -5,7 +5,7 @@ import test from 'node:test';
 
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { grammarSourceOf, importSource, sourceText } from '../scripts/import-native-grammars.mjs';
-import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 
 const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
 const readData = file => readProjectData(new URL(`../../${file}`, import.meta.url));
@@ -22,7 +22,7 @@ const imported = importSource(sourceEntry, new Map(naming.words.map(({ word, rep
 const parser = compileGrammar(parseGrammarLinks(imported.text));
 const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 
-function agreesWithOracle(source, rows = oracleSnapshot(source, fixture.language).rows) {
+function agreesWithOracle(source, rows = nativeProfileOracleSnapshot(source, fixture.language).rows) {
   const result = parser.parseTree(source);
   assert.equal(result.ok, true, source);
   assert.deepEqual(result.ambiguities, [], source);
@@ -41,7 +41,7 @@ test('C# cast and initializer reproductions retain exact CI sources and independ
   assert.equal(first[1].content.value, fixture.sourceTransforms[0].sourceOperator);
   for (const { file, title, source, rows } of fixture.cases) {
     assert.equal(corpus.find(entry => entry.file === file && entry.title === title)?.source, source, title);
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, title);
     assert.deepEqual(oracle.rows, rows, title);
     agreesWithOracle(source, rows);
@@ -56,7 +56,7 @@ test('C# operand preferences preserve arithmetic, conjunction, generic calls and
     'var x = (Café) && b;', 'var x = (Namespace.Type) && b;',
     'var x = (@type) && b;', 'var x = (\\u0061) && b;',
   ]) {
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, source);
     agreesWithOracle(source, oracle.rows);
   }

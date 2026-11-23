@@ -6,7 +6,7 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { grammarSourceOf, nativeName, ruleConcept, scannerText, sourceText } from '../scripts/import-native-grammars.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
-import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
@@ -52,7 +52,7 @@ const parser = parserOf(source);
 const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
 
 function exactCase({ source: input, rows, title }) {
-  const oracle = oracleSnapshot(input, fixture.language);
+  const oracle = nativeProfileOracleSnapshot(input, fixture.language);
   assert.equal(oracle.recovers, false, title);
   assert.deepEqual(oracle.rows, rows, `${title}: independent oracle`);
   const native = parser.parseTree(input);

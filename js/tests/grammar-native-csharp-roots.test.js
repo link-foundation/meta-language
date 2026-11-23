@@ -5,7 +5,7 @@ import test from 'node:test';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { grammarSourceOf, importSource, sourceText } from '../scripts/import-native-grammars.mjs';
 import { nativeOracleKinds } from '../scripts/build-language-catalog.mjs';
-import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot } from '../scripts/native-grammar-rows.mjs';
 import { applyRootSourceTransform } from '../scripts/native-csharp-roots.mjs';
 
 const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
@@ -53,7 +53,7 @@ test('CSharp class and switch root contexts reproduce every bounded CI failure e
   assert.equal(fixture.matches.length, 19);
   assert.equal(fixture.matches.filter(({ file }) => file).length, 4);
   for (const { title, source, rows } of fixture.matches) {
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, title);
     assert.deepEqual(oracle.rows, rows, title);
     const actual = parser.parseTree(source);

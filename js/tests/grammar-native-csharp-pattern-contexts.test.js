@@ -5,7 +5,9 @@ import test from 'node:test';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { grammarSourceOf, importSource } from '../scripts/import-native-grammars.mjs';
-import { nativeRows, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot, oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeProfileOracleBaseline } from '../scripts/native-oracle-baselines.mjs';
+import { grammarProvenance } from '../src/language-catalog.js';
 import { applySourceContextPreference } from '../scripts/native-source-preferences.mjs';
 
 const read = file => readProjectData(new URL(`../../${file}`, import.meta.url));
@@ -58,7 +60,7 @@ test('CSharp enclosing pattern contexts retain exact second-run CI trees and sou
   const corpus = read('parity/fixtures/native-grammars/csharp-profile-corpus.json').cases;
   for (const { file, title, source, rows } of fixture.cases) {
     assert.equal(corpus.find(item => item.file === file && item.title === title)?.source, source, title);
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, title);
     assert.deepEqual(oracle.rows, rows, title);
     const result = parser.parseTree(source);
@@ -67,4 +69,14 @@ test('CSharp enclosing pattern contexts retain exact second-run CI trees and sou
     assert.deepEqual(nativeRows(result.tree, source, projection), rows, title);
     assert.equal(text(result.tree), source, title);
   }
+});
+
+test('CSharp current catalog and native profile select their independent list pattern oracles', () => {
+  assert.equal(nativeProfileOracleBaseline(fixture.language).grammar.version, '0.23.5');
+  assert.equal(grammarProvenance(fixture.language)[0].version, '0.24.0');
+  const { source, rows } = fixture.cases.find(({ title }) => title === 'List patterns');
+  const current = oracleSnapshot(source, fixture.language);
+  assert.equal(current.recovers, false);
+  assert.ok(current.rows.some(([, , kind, named]) => kind === 'slice_pattern' && named === 1));
+  assert.deepEqual(nativeProfileOracleSnapshot(source, fixture.language).rows, rows);
 });

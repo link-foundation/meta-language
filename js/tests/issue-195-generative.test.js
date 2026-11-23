@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 
 import { test } from 'node:test';
+import { fixtureOracleToolMatches } from '../scripts/native-oracle-baselines.mjs';
 
 import { LinkNetwork } from '../src/index.js';
 import { documentGrammarRoots, documentOracleProblems, parseCstLines, renderCstLines } from './support/cst-lines.js';
@@ -75,7 +76,7 @@ const renderPublic = (language, source) => {
 };
 
 test('the generative fixtures record their seed and oracle, and the seed regenerates their inputs', () => {
-  assert.equal(manifest.oracle.tool, lock.treeSitterCli);
+  assert.ok(fixtureOracleToolMatches(manifest.oracle.tool, lock));
   assert.equal(manifest.inputs['reproducers.json'], sha256(read('reproducers.json')));
   assert.equal(manifest.inputs['issue-195-conformance/manifest.json'],
     sha256(readFixtureSourceBytes(new URL('parity/fixtures/issue-195-conformance/manifest.json', repositoryRoot))));

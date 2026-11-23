@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { compileGrammar, parseGrammarLinks, renderGrammarLinks } from '../src/index.js';
-import { nativeRows, oracleSnapshot, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, nativeProfileOracleSnapshot, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { nativeScannerProfileFixture, nativeScannerProfileCorpus } from '../scripts/generate-native-scanner-profile-fixtures.mjs';
 
 const read = file => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
@@ -20,7 +20,7 @@ test('CSharp scanner profile focused fixtures are canonical and independently ge
 
 test('CSharp scanner profile focused trees exactly match the independent oracle', () => {
   for (const { source, rows } of fixture.matches) {
-    const oracle = oracleSnapshot(source, fixture.language);
+    const oracle = nativeProfileOracleSnapshot(source, fixture.language);
     assert.equal(oracle.recovers, false, source);
     assert.deepEqual(oracle.rows, rows, source);
     const native = parser.parseTree(source);
@@ -33,7 +33,7 @@ test('CSharp scanner profile focused trees exactly match the independent oracle'
 
 test('CSharp scanner profile focused invalid inputs reject and recover losslessly', () => {
   for (const { source } of fixture.rejections) {
-    assert.equal(oracleSnapshot(source, fixture.language).recovers, true, source);
+    assert.equal(nativeProfileOracleSnapshot(source, fixture.language).recovers, true, source);
     assert.equal(parser.parseTree(source).ok, false, source);
     const native = parser.parseTree(source, { errorRecovery: true });
     assert.equal(native.rejection.reason, 'recovered', source);
@@ -51,7 +51,7 @@ test('CSharp scanner profile complete pinned upstream corpus matches its oracle'
     const label = `${file}: ${title}`;
     try {
       const native = parser.parseTree(source);
-      const oracle = oracleSnapshot(source, fixture.language);
+      const oracle = nativeProfileOracleSnapshot(source, fixture.language);
       if (oracle.recovers) assert.equal(native.ok, false, label);
       else {
         assert.equal(native.ok, true, label);
