@@ -103,6 +103,17 @@ test('ordinary workflows pause automated translation and fail on independent che
   assert.equal(when(ci.rust.header, { cancelled: () => true }), false);
   assert.equal(when(ci.rust.header, { needs: { changes: { result: 'success' }, js: { result: 'failure' } } }), false);
   assert.equal(when(ci.candidates.header), true);
+  // Delivery candidates must admit these jobs even when an earlier report was skipped.
+  for (const id of ['consumers', 'rml-workloads', 'formal-ai-workload-parts', 'formal-ai-workloads']) {
+    const { header } = ci[id];
+    assert.match(header, /\bcancelled\(\)/u, id);
+    assert.equal(when(header), true, id);
+    assert.equal(when(header, optIn), true, id);
+    assert.equal(when(header, { cancelled: () => true }), false, id);
+    for (const result of ['failure', 'skipped']) {
+      assert.equal(when(header, { needs: { candidates: { result } } }), false, id);
+    }
+  }
   assert.equal(when(js.reports.header), false);
   assert.equal(when(js.reports.header, optIn), true);
   assert.match(workflow('js'), /META_LANGUAGE_AUTOMATED_TRANSLATION: \$\{\{ inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' \}\}/u);

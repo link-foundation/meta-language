@@ -387,6 +387,8 @@ jobs:
   consumers:
     name: Clean Consumer (${{ matrix.os }})
     needs: candidates
+    # The skipped translation report is an ancestor of Delivery Candidates.
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     concurrency:
@@ -549,6 +551,7 @@ jobs:
   rml-workloads:
     name: Relative Meta Logic Workloads
     needs: candidates
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
     # theory-network.test.mjs alone takes minutes, and the Rust workloads build RML from scratch.
     timeout-minutes: 90
@@ -617,6 +620,7 @@ jobs:
   formal-ai-workload-parts:
     name: Formal AI Workloads (${{ matrix.partition }})
     needs: candidates
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

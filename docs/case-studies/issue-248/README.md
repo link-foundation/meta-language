@@ -98,6 +98,16 @@ gate still reports the cause when the prerequisite is missing.
 [JavaScript package job](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137485087833),
 [aggregate](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137485771286)
 
+On `d460599c7`, Delivery Candidates packed both packages at log line 535
+and uploaded them at line 589. The clean consumers, Relative Meta Logic
+workloads, and Formal AI partitions still showed as skipped. GitHub's default
+success condition propagates the skipped translation report through the
+dependency chain. Each of these jobs now explicitly requires successful
+Delivery Candidates and a run that has not been cancelled.
+[Delivery Candidates](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137540929225),
+[PR run](https://github.com/link-foundation/meta-language/actions/runs/45112972070),
+[GitHub job dependencies](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
