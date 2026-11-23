@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { isDeepStrictEqual } from 'node:util';
 import { GrammarBuilder as Expression } from '../grammar.js';
 import { collectReferences } from '../grammar-emitters/structural.js';
 import { parseGrammarLinks } from '../grammar-links.js';
@@ -289,6 +290,12 @@ function combineNumericConstraints(layers, membership, combination) {
   return { type: membership === integerType ? 'integer' : 'number', limits };
 }
 
+function compatiblePropertySchema(schemas) {
+  if (schemas.includes(false)) return false;
+  const rule = schemas.find(schema => schema !== true) ?? true;
+  return schemas.every(schema => schema === true || isDeepStrictEqual(schema, rule)) ? rule : undefined;
+}
+
 function branchesUseDisjointTypes(branches, allowedTypes, referenceLayers) {
   if (branches.length < 2) return true;
   let seen = 0;
@@ -547,27 +554,29 @@ export function importJsonSchema(schema) {
     }
     return conjunction;
   }
-  function referenceCollectionLayout(layers, membership, keywords, usesLayout, combination) {
-    let layout;
-    for (const [index, layer] of layers.entries()) {
-      if (Object.keys(layer).some(key => activeConjunctionKeyword(key, index, combination, membership)
-        && !keywords.includes(key))) return undefined;
-      if (usesLayout(layer)) {
-        if (layout) return undefined;
-        layout = layer;
-      }
-    }
-    return layout ?? {};
-  }
   function collectionConstraints(layers, membership, combination) {
+    const keywords = membership === jsonTypes.get('object') ? jsonDocumentPolicy.objectAssertion : jsonDocumentPolicy.arrayAssertion;
+    if (layers.some((layer, index) => Object.keys(layer).some(key => (
+      activeConjunctionKeyword(key, index, combination, membership) && !keywords.includes(key)
+    )))) return undefined;
     if (membership === jsonTypes.get('object')) {
-      const layout = referenceCollectionLayout(layers, membership, jsonDocumentPolicy.objectAssertion, layer => (
-        Object.keys(layer.properties ?? {}).length > 0 || (layer.additionalProperties !== undefined && layer.additionalProperties !== true)
-      ), combination);
-      if (!layout) return undefined;
+      const fields = layers.map(layer => layer.properties ?? {});
+      const defaults = layers.map(layer => layer.additionalProperties ?? true);
+      const additionalProperties = compatiblePropertySchema(defaults);
+      if (additionalProperties === undefined) return undefined;
+      const keys = new Set(fields.flatMap(Object.keys));
+      const entries = [];
+      for (const name of keys) {
+        // Defaults apply only in the layers that leave this property undeclared.
+        const rule = compatiblePropertySchema(fields.map((properties, index) => (
+          Object.hasOwn(properties, name) ? properties[name] : defaults[index]
+        )));
+        if (rule === undefined) return undefined;
+        entries.push([name, rule]);
+      }
       return { lower: objectExpression, rules: {
-        properties: layout.properties,
-        additionalProperties: layout.additionalProperties,
+        properties: Object.fromEntries(entries),
+        additionalProperties,
         required: layers.flatMap(layer => layer.required ?? []),
       } };
     }
@@ -576,10 +585,11 @@ export function importJsonSchema(schema) {
         const itemLimit = layer.items === false ? layer.prefixItems?.length ?? 0 : Infinity;
         return Math.min(limit, layer.maxItems ?? Infinity, itemLimit);
       }, Infinity);
-      const layout = referenceCollectionLayout(layers, membership, jsonDocumentPolicy.arrayAssertion, layer => (
-        maximum !== 0 && ((layer.prefixItems?.length ?? 0) > 0 || (layer.items !== undefined && typeof layer.items !== 'boolean'))
-      ), combination);
-      if (!layout) return undefined;
+      const layouts = maximum === 0 ? [] : layers.filter(layer => (
+        (layer.prefixItems?.length ?? 0) > 0 || (layer.items !== undefined && typeof layer.items !== 'boolean')
+      ));
+      if (layouts.length > 1) return undefined;
+      const layout = layouts[0] ?? {};
       return { lower: arrayExpression, rules: {
         prefixItems: layout.prefixItems,
         items: layout.items,

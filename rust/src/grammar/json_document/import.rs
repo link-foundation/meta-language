@@ -20,6 +20,7 @@ use super::{JsonSchemaIssue, pointer_child};
 
 type Expression = GrammarExpr;
 const EXPRESSION: ExprBuilder = ExprBuilder;
+static UNRESTRICTED_SCHEMA: Value = Value::Bool(true);
 
 const INTEGER_TYPE: u8 = 1 << 3;
 const FRACTIONAL_TYPE: u8 = 1 << 4;
@@ -250,7 +251,8 @@ struct ObjectMembers<'members> {
 
 enum CollectionConstraints<'schema> {
     Object {
-        layout: &'schema Value,
+        properties: Vec<(&'schema str, &'schema Value)>,
+        additional: &'schema Value,
         required: Vec<&'schema str>,
     },
     Array {
@@ -506,30 +508,29 @@ impl<'schema> Importer<'schema> {
     }
 
     fn object(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
-        self.object_with_required(schema, required_property_names(schema), pointer)
+        self.object_with_properties(
+            property_schemas(schema).collect(),
+            additional_property_schema(schema),
+            required_property_names(schema),
+            pointer,
+        )
     }
 
-    fn object_with_required(
+    fn object_with_properties(
         &mut self,
-        schema: &'schema Value,
+        fields: Vec<(&'schema str, &'schema Value)>,
+        additional: &'schema Value,
         required: impl Iterator<Item = &'schema str>,
         pointer: &str,
     ) -> Option<Expression> {
-        let fields = schema["properties"].as_object();
-        let mut keys: Vec<_> = fields
-            .into_iter()
-            .flat_map(serde_json::Map::keys)
-            .map(String::as_str)
-            .collect();
+        let mut keys: Vec<_> = fields.iter().map(|&(name, _)| name).collect();
+        let fields: HashMap<_, _> = fields.into_iter().collect();
         let mut required_names = HashSet::new();
         for key in required {
-            if required_names.insert(key) && fields.is_none_or(|fields| !fields.contains_key(key)) {
+            if required_names.insert(key) && !fields.contains_key(key) {
                 keys.push(key);
             }
         }
-        let additional = schema
-            .get("additionalProperties")
-            .unwrap_or(&Value::Bool(true));
         if keys.is_empty() {
             let body = match additional {
                 Value::Bool(false) => EXPRESSION.empty(),
@@ -567,9 +568,7 @@ impl<'schema> Importer<'schema> {
             });
         let mut members = Vec::new();
         for key in keys {
-            let child = fields
-                .and_then(|fields| fields.get(key))
-                .unwrap_or(additional);
+            let child = fields.get(key).copied().unwrap_or(additional);
             let is_required = required_names.contains(key);
             if let Some(item) = self.named(
                 child,
@@ -899,9 +898,11 @@ impl<'schema> Importer<'schema> {
         pointer: &str,
     ) -> Option<Expression> {
         match constraints {
-            CollectionConstraints::Object { layout, required } => {
-                self.object_with_required(layout, required.into_iter(), pointer)
-            }
+            CollectionConstraints::Object {
+                properties,
+                additional,
+                required,
+            } => self.object_with_properties(properties, additional, required.into_iter(), pointer),
             CollectionConstraints::Array {
                 layout,
                 minimum,
@@ -1270,28 +1271,49 @@ fn required_property_names(schema: &Value) -> impl Iterator<Item = &str> {
         .filter_map(Value::as_str)
 }
 
-fn reference_collection_layout<'schema>(
-    layers: &[&'schema Value],
+fn property_schemas(schema: &Value) -> impl Iterator<Item = (&str, &Value)> {
+    schema["properties"]
+        .as_object()
+        .into_iter()
+        .flat_map(|fields| fields.iter().map(|(name, rule)| (name.as_str(), rule)))
+}
+
+fn additional_property_schema(schema: &Value) -> &Value {
+    schema
+        .get("additionalProperties")
+        .unwrap_or(&UNRESTRICTED_SCHEMA)
+}
+
+fn compatible_property_schema<'schema>(
+    schemas: impl Iterator<Item = &'schema Value>,
+) -> Option<&'schema Value> {
+    let mut rule = &UNRESTRICTED_SCHEMA;
+    let mut agrees = true;
+    for candidate in schemas {
+        match candidate {
+            Value::Bool(false) => return Some(candidate),
+            Value::Bool(true) => (),
+            _ if rule == &UNRESTRICTED_SCHEMA => rule = candidate,
+            _ => agrees &= rule == candidate,
+        }
+    }
+    agrees.then_some(rule)
+}
+
+fn collection_keywords_are_supported(
+    layers: &[&Value],
     membership: u8,
     category: &str,
-    uses_layout: impl Fn(&Value) -> bool,
     combination: Option<&str>,
-) -> Option<&'schema Value> {
-    let mut layout = None;
-    for (index, &layer) in layers.iter().enumerate() {
-        if layer.as_object().is_some_and(|fields| {
+) -> bool {
+    layers.iter().enumerate().all(|(index, layer)| {
+        !layer.as_object().is_some_and(|fields| {
             fields.keys().any(|key| {
                 active_conjunction_keyword(key, index, combination, membership)
                     && !keywords(category).any(|name| name == key.as_str())
             })
-        }) {
-            return None;
-        }
-        if uses_layout(layer) && layout.replace(layer).is_some() {
-            return None;
-        }
-    }
-    Some(layout.unwrap_or(&Value::Bool(true)))
+        })
+    })
 }
 
 fn collection_constraints<'schema>(
@@ -1300,27 +1322,40 @@ fn collection_constraints<'schema>(
     combination: Option<&str>,
 ) -> Option<CollectionConstraints<'schema>> {
     if membership == type_membership("object") {
-        let layout = reference_collection_layout(
-            layers,
-            membership,
-            "objectAssertion",
-            |layer| {
+        if !collection_keywords_are_supported(layers, membership, "objectAssertion", combination) {
+            return None;
+        }
+        let additional =
+            compatible_property_schema(layers.iter().copied().map(additional_property_schema))?;
+        let mut seen = HashSet::new();
+        let keys = layers
+            .iter()
+            .flat_map(|&layer| property_schemas(layer).map(|(name, _)| name))
+            .filter(|&name| seen.insert(name));
+        let mut properties = Vec::new();
+        for name in keys {
+            // Defaults apply only in the layers that leave this property undeclared.
+            let rule = compatible_property_schema(layers.iter().map(|&layer| {
                 layer["properties"]
-                    .as_object()
-                    .is_some_and(|fields| !fields.is_empty())
-                    || layer
-                        .get("additionalProperties")
-                        .is_some_and(|schema| schema != &Value::Bool(true))
-            },
-            combination,
-        )?;
+                    .get(name)
+                    .unwrap_or_else(|| additional_property_schema(layer))
+            }))?;
+            properties.push((name, rule));
+        }
         let required = layers
             .iter()
             .flat_map(|&layer| required_property_names(layer))
             .collect();
-        return Some(CollectionConstraints::Object { layout, required });
+        return Some(CollectionConstraints::Object {
+            properties,
+            additional,
+            required,
+        });
     }
     if membership == type_membership("array") {
+        if !collection_keywords_are_supported(layers, membership, "arrayAssertion", combination) {
+            return None;
+        }
         let maximum = layers
             .iter()
             .filter_map(|layer| {
@@ -1332,21 +1367,19 @@ fn collection_constraints<'schema>(
                 bound
             })
             .min();
-        let layout = reference_collection_layout(
-            layers,
-            membership,
-            "arrayAssertion",
-            |layer| {
-                maximum != Some(0)
-                    && (layer["prefixItems"]
-                        .as_array()
-                        .is_some_and(|items| !items.is_empty())
-                        || layer
-                            .get("items")
-                            .is_some_and(|schema| !schema.is_boolean()))
-            },
-            combination,
-        )?;
+        let mut layouts = layers.iter().copied().filter(|layer| {
+            maximum != Some(0)
+                && (layer["prefixItems"]
+                    .as_array()
+                    .is_some_and(|items| !items.is_empty())
+                    || layer
+                        .get("items")
+                        .is_some_and(|schema| !schema.is_boolean()))
+        });
+        let layout = layouts.next().unwrap_or(&UNRESTRICTED_SCHEMA);
+        if layouts.next().is_some() {
+            return None;
+        }
         let minimum = layers
             .iter()
             .filter_map(|layer| layer["minItems"].as_u64())

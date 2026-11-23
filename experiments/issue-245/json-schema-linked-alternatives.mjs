@@ -174,6 +174,43 @@ const cases = [
       ['{}', false], ['{"value":1}', false], ['{"value":"a","extra":null}', false]],
     [],
   ],
+  [
+    { $ref: '#/$defs/record', properties: { active: { type: 'boolean' }, value: { type: 'string' } }, required: ['active'],
+      $defs: { record: { type: 'object', properties: { kind: { const: 'record' }, value: { type: 'string' } }, required: ['kind'] } } },
+    [['{"kind":"record","active":false}', true], ['{"active":true,"other":null,"kind":"record","value":"a"}', true],
+      ['{"act\\u0069ve":true,"kind":"record"}', true], ['{"active":1,"kind":"record"}', false],
+      ['{"active":true,"kind":"other"}', false], ['{"kind":"record"}', false], ['{"active":true}', false],
+      ['{"kind":"record","active":true,"value":null}', false]],
+    [],
+  ],
+  [
+    { type: 'object', $ref: '#/$defs/closed', properties: { label: { type: 'string' }, ignored: true },
+      additionalProperties: { type: 'boolean' }, $defs: { closed: {
+        properties: { label: true, enabled: { type: 'boolean' } }, required: ['label'], additionalProperties: false,
+      } } },
+    [['{"label":"a"}', true], ['{"enabled":false,"label":"b"}', true], ['{"label":false}', false],
+      ['{"label":"c","enabled":null}', false], ['{"label":"a","ignored":true}', false],
+      ['{"label":"a","other":false}', false], ['{}', false]],
+    [],
+  ],
+  [
+    { type: 'object', required: ['active'], properties: { active: { type: 'boolean' } }, anyOf: [
+      { properties: { label: { type: 'string' } }, required: ['label'] },
+      { properties: { count: { type: 'number' } }, required: ['count'] },
+    ] },
+    [['{"active":true,"label":"a"}', true], ['{"count":3,"active":false}', true],
+      ['{"label":"a","active":null}', false], ['{"count":true,"active":false}', false],
+      ['{"active":true,"label":null,"count":3}', true], ['{"label":"a"}', false], ['{"active":true}', false]],
+    [],
+  ],
+  [
+    { type: 'object', $ref: '#/$defs/record', properties: { value: { pattern: 'z$' } }, $defs: { record: {
+      properties: { value: { type: 'string', pattern: '^a' } }, required: ['value'],
+    } } },
+    [['{"value":"az"}', true], ['{"value":"ax"}', true], ['{"value":"xz"}', false]],
+    ['/$ref'],
+    [['{"value":"az"}', true], ['{"value":"ax"}', false], ['{"value":"xz"}', false]],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -183,6 +220,8 @@ const impossible = [
   { $defs: collectionDefinitions, $ref: '#/$defs/identified', required: ['extra'] },
   { type: 'array', minItems: 2, anyOf: [{ maxItems: 1 }, { maxItems: 0 }] },
   { ...closedArrayReference, minItems: 1 },
+  { $ref: '#/$defs/record', properties: { active: { type: 'boolean' } }, additionalProperties: false,
+    $defs: { record: { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] } } },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

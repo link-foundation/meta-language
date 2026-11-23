@@ -43,3 +43,11 @@ The same experiment checks a reference to `{ minItems: 1 }` with a sibling
 validation rejected it. The grammar now combines both bounds for arrays and
 still admits other JSON types. Additional fixtures exercise type-scoped
 assertions across mixed-type references and inclusive and exclusive branches.
+
+Object reference and alternative controls exercise properties supplied by
+different schema objects. Before the change, the decoder accepted
+`{"active":1,"kind":"record"}` even though the reference sibling requires
+a Boolean `active` property. The fixture checks both property orders, escaped
+names, additional properties, and impossible requirements under a closed
+layout. A property with distinct patterns in two layers retains a decoder
+diagnostic and both checks in document validation.
