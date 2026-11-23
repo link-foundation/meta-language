@@ -113,3 +113,9 @@ through overlapping number and integer branches. The importer now checks
 exclusivity within each applicable JSON instance type. Another fixture exercises
 two overlapping string branches, two overlapping numeric branches, a Boolean
 branch, and sibling constraints for the string and numeric instances.
+
+Combining a numeric range with an enum previously rejected `-1.00` when the
+enum alone admitted its value. The fixture now checks that spelling and rejects
+`2.500` because both branches admit it. A second fixture checks finite values
+from a local reference, removes a value outside a sibling bound, and counts a
+value repeated within the same `anyOf` branch once.

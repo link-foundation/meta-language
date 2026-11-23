@@ -763,12 +763,30 @@ export function importJsonSchema(schema) {
   }
   function alternativeNumericExpression(rules, alternatives, allowedTypes, keyword, pointer) {
     const branches = [];
+    const finiteWork = { remaining: 16_384 };
     for (const [index, branch] of alternatives.entries()) {
       if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
       const layers = referenceLayers(branch);
       if (!layers) return undefined;
       const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
       if (membership === 0) continue;
+      const finite = keyword === 'oneOf' && (membership & numberType) === membership
+        && finiteSchemaCandidates(branch, analysis.target, finiteWork);
+      if (finite) {
+        if (finite.values.length > finiteWork.remaining) return undefined;
+        finiteWork.remaining -= finite.values.length;
+        const common = combineNumericConstraints([rules], numberType, keyword);
+        if (!common) return undefined;
+        // Distinct values within one branch contribute disjoint point intervals.
+        for (const item of new Set(finite.values)) {
+          if (typeof item !== 'number' || !(membership & valueTypeMembership(item))) continue;
+          const document = readJsonDocument(JSON.stringify(item));
+          if ([branch, common.limits].every(rule => validateJsonDocument(document, rule, analysis).errors.length === 0)) {
+            branches.push({ index, type: 'number', limits: { minimum: item, maximum: item } });
+          }
+        }
+        continue;
+      }
       const constraints = combineNumericConstraints([rules, ...layers], membership, keyword);
       if (!constraints) return undefined;
       branches.push({ index, ...constraints });

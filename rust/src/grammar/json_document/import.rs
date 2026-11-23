@@ -1220,6 +1220,7 @@ impl<'schema> Importer<'schema> {
         pointer: &str,
     ) -> Option<Option<Expression>> {
         let mut alternatives = Vec::new();
+        let mut finite_work = 16_384;
         for (index, branch) in branches.iter().enumerate() {
             if possible_type_membership(branch, allowed_types) == 0 {
                 continue;
@@ -1229,6 +1230,36 @@ impl<'schema> Importer<'schema> {
                 possible_type_membership(layer, types)
             });
             if membership == 0 {
+                continue;
+            }
+            if keyword == "oneOf"
+                && membership & NUMBER_TYPE == membership
+                && let Some((candidates, _)) = finite_schema_candidates(
+                    self.root,
+                    branch,
+                    &mut HashSet::new(),
+                    &mut finite_work,
+                    0,
+                )
+            {
+                finite_work = finite_work.checked_sub(candidates.len())?;
+                let (_, common) =
+                    combine_numeric_constraints(&[schema], NUMBER_TYPE, Some(keyword))?;
+                // Distinct values within one branch contribute disjoint point intervals.
+                let mut seen = HashSet::new();
+                for value in candidates {
+                    let Some(number) = value.as_f64() else {
+                        continue;
+                    };
+                    let identity = if number == 0.0 { 0 } else { number.to_bits() };
+                    if membership & value_type_membership(value) != 0
+                        && seen.insert(identity)
+                        && super::validation::accepts_constant(self.root, [branch, &common], value)
+                    {
+                        let point = serde_json::json!({ "minimum": value, "maximum": value });
+                        alternatives.push((index, "number", point));
+                    }
+                }
                 continue;
             }
             layers.insert(0, schema);

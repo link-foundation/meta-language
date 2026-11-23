@@ -463,6 +463,26 @@ const cases = [
       ['0.00', false], ['3.5', true], ['6', true], ['6.5', false], ['true', true], ['false', true], ['null', false]],
     ['/oneOf'],
   ],
+  [
+    {
+      type: 'number', minimum: -2, maximum: 4,
+      oneOf: [{ type: 'number', exclusiveMinimum: -1 }, { enum: [-1, 0, 2.5, 5] }],
+    },
+    [['-2', false], ['-1.00', true], ['-0.00', false], ['0', false], ['2.500', false],
+      ['2.499', true], ['4.0', true], ['4.1', false], ['5', false], ['false', false]],
+    ['/oneOf'],
+  ],
+  [
+    {
+      $defs: { exact: { type: 'number', anyOf: [{ enum: [-3, -2, 0.5, 2.5, 3] }, { const: 0.5 }] } },
+      oneOf: [{ type: 'integer', minimum: -2, maximum: 2 }, { $ref: '#/$defs/exact', maximum: 2.5 }, { type: 'null' }],
+    },
+    [['null', true], ['-3.00', true], ['-2', false], ['-2.0', false], ['-1.00', true], ['0.50', true],
+      ['2.50', true], ['3', false], ['5e-1', false], ['0.75', false], ['false', false]],
+    ['/oneOf'],
+    [['null', true], ['-3.00', true], ['-2', false], ['-2.0', false], ['-1.00', true], ['0.50', true],
+      ['2.50', true], ['3', false], ['5e-1', true], ['0.75', false], ['false', false]],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -484,6 +504,7 @@ const impossible = [
   { type: 'number', oneOf: [{ minimum: -1.25 }, { minimum: -1.25 }] },
   { type: 'number', oneOf: [{ maximum: 0 }, { maximum: 0 }, { type: 'integer', minimum: 0, maximum: 0 }] },
   { oneOf: [{ type: 'number' }, { type: 'number' }, { type: 'string' }, { type: 'string' }] },
+  { type: 'number', oneOf: [{ minimum: 1.25, maximum: 1.25 }, { const: 1.25 }] },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
