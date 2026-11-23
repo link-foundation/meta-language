@@ -52,14 +52,22 @@ const overlappingTag = { oneOf: [
 const examples = [
   [schema, cases, []],
   [pairwise, pairwiseCases, []],
-  [optionalTag, [['{}', true]], ['/oneOf'], [['{}', false]]],
-  [overlappingTag, [['{"kind":"shared"}', true]], ['/oneOf'], [['{"kind":"shared"}', false]]],
+  [optionalTag, [['{}', false], ['{"kind":"first"}', true], ['{"kind":"second"}', true]], [], [['{}', false]]],
+  [overlappingTag, [['{"kind":"shared"}', false], ['{"kind":"second"}', true]], [], [['{"kind":"shared"}', false]]],
 ];
 
 const file = new URL('../../parity/fixtures/json-schema-and-recovery.lino', import.meta.url);
 const data = readProjectData(file);
-const missing = examples.filter(([grammar]) => !data.grammars.some(([existing]) => JSON.stringify(existing) === JSON.stringify(grammar)));
-if (missing.length) {
-  data.grammars.push(...missing);
-  writeProjectData(file, data);
+let changed = false;
+for (const example of examples) {
+  const [schema] = example;
+  const index = data.grammars.findIndex(([existing]) => JSON.stringify(existing) === JSON.stringify(schema));
+  if (index < 0) {
+    data.grammars.push(example);
+    changed = true;
+  } else if (JSON.stringify(data.grammars[index]) !== JSON.stringify(example)) {
+    data.grammars[index] = example;
+    changed = true;
+  }
 }
+if (changed) writeProjectData(file, data);

@@ -1,10 +1,9 @@
 # JSON Schema decoder conformance
 
 The experiment emits both decoder formats from the schemas and expected results
-in `parity/fixtures/json-schema-and-recovery.lino` and
-`parity/fixtures/json-schema-exclusive-array-lengths.lino`. It checks acceptance
-with a byte vocabulary and the provider grammar engines. It requires no model
-weights.
+in `parity/fixtures/json-schema-and-recovery.lino` and the shared exclusive array
+and object fixtures. It checks acceptance with a byte vocabulary and the
+provider grammar engines. It requires no model weights.
 
 Run from the repository root with Node and Python 3.12. The example uses a
 virtual environment and puts temporary data in a separate directory.
@@ -75,7 +74,8 @@ accept `false` twice. The old decoder admitted `{"flag":false}` from the
 property's enum. The constrained grammar now retains `true` alone. Further
 cases check numeric bounds on enumerated array items, member permutations for
 enumerated objects, and a required property whose constants contradict each
-other.
+other. The bounded array enumeration keeps its `/items/enum` diagnostic,
+and the decoder and validator agree on all eight original documents.
 
 The nested collection cases combine required fields of objects in an array and
 intersect item types with length bounds in an object property. Before the change,
@@ -105,6 +105,15 @@ zero items. Both branches match it, so the decoder now omits that spelling.
 The fixtures cover an empty array accepted by one branch, overlapping lengths
 within a shared item layout, disjoint layouts connected by local references,
 and a common item rule inherited by an unrestricted branch.
+
+Run `node experiments/issue-245/json-schema-exclusive-object-property.mjs`
+to check overlapping property enumerations in objects with an unrestricted
+text field. The previous grammar accepted the shared choice. It now rejects
+that choice and accepts each value covered by a single branch. The original
+shared fixture likewise rejects an absent optional tag and a tag accepted by
+both branches. A local reference and its alias resolve to the same object
+schema, so their exclusive combination has no generatable document. Both
+original documents for that schema remain in the fixture and fail validation.
 
 The required prefix cases share a length range and distinguish branches by
 their first string value. One minimum length comes from a sibling of the

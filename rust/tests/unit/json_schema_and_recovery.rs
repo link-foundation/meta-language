@@ -155,6 +155,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
         };
         assert!(error.to_string().contains("no generatable document"));
     }
+    assert_ungeneratable_alternatives(fixture["ungeneratable"].as_array().unwrap());
     for row in fixture["numericValidation"].as_array().unwrap() {
         let source = row[0].as_str().unwrap();
         let expected = row[2].as_array().unwrap();
@@ -246,7 +247,11 @@ fn check_exclusive_alternatives(fixtures: &str) {
         assert_validation_cases(&row[0], cases);
         assert_decoder_cases(&imported.grammar, cases);
     }
-    for row in fixture["ungeneratable"].as_array().unwrap() {
+    assert_ungeneratable_alternatives(fixture["ungeneratable"].as_array().unwrap());
+}
+
+fn assert_ungeneratable_alternatives(alternatives: &[Value]) {
+    for row in alternatives {
         assert_validation_cases(&row[0], row[1].as_array().unwrap());
         let Err(error) = import_json_schema(&row[0]) else {
             panic!("schema unexpectedly generated a grammar: {}", row[0]);

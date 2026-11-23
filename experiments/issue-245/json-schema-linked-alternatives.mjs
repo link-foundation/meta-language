@@ -41,6 +41,10 @@ const layeredPatternItem = {
   type: 'array', $ref: '#/$defs/row', prefixItems: [{ type: 'string', pattern: 'z$' }],
   $defs: { row: { prefixItems: [{ type: 'string', pattern: '^a' }] } },
 };
+const duplicateReferenceAlternative = [
+  { $defs: { item: tag('item', 'string'), alias: { $ref: '#/$defs/item' } }, oneOf: [{ $ref: '#/$defs/item' }, { $ref: '#/$defs/alias' }] },
+  [['{"kind":"item","value":"answer"}', false], ['{"kind":"item","value":true}', false]],
+];
 const cases = [
   [
     { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^ab' },
@@ -68,12 +72,6 @@ const cases = [
       ['{"kind":"other","value":false}', false], ['{"kind":"group"}', false],
     ],
     [],
-  ],
-  [
-    { $defs: { item: tag('item', 'string'), alias: { $ref: '#/$defs/item' } }, oneOf: [{ $ref: '#/$defs/item' }, { $ref: '#/$defs/alias' }] },
-    [['{"kind":"item","value":"answer"}', true], ['{"kind":"item","value":true}', false]],
-    ['/oneOf'],
-    [['{"kind":"item","value":"answer"}', false], ['{"kind":"item","value":true}', false]],
   ],
   [
     { $defs: numericDefinitions, $ref: '#/$defs/restricted', type: 'integer', maximum: 3, exclusiveMaximum: 4 },
@@ -328,7 +326,7 @@ const cases = [
       $defs: { row: { prefixItems: [{ type: 'null' }], items: { enum: [1, 2, 3, 4, true] } } } },
     [['[]', true], ['[null]', true], ['[null,2,3,true]', true], ['[null,1]', false], ['[null,4]', false],
       ['[null,2.5]', false], ['[null,"2"]', false], ['[true,2]', false]],
-    [],
+    ['/items/enum'],
   ],
   [
     { type: 'object', $ref: '#/$defs/record', properties: { value: { properties: { flag: { const: true } } } },
@@ -376,8 +374,8 @@ const cases = [
   ],
   [
     { type: 'array', items: { type: 'boolean' }, oneOf: [{ maxItems: 2 }, { minItems: 2, maxItems: 3 }] },
-    [['[]', true], ['[true,false]', true], ['[true,false,true]', true], ['[null]', true], ['[true,false,true,false]', false]],
-    ['/oneOf', '/oneOf'],
+    [['[]', true], ['[true,false]', false], ['[true,false,true]', true], ['[null]', false], ['[true,false,true,false]', false]],
+    [],
     [['[]', true], ['[true,false]', false], ['[true,false,true]', true], ['[null]', false], ['[true,false,true,false]', false]],
   ],
   [
@@ -532,6 +530,18 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const file = new URL('../../parity/fixtures/json-schema-and-recovery.lino', import.meta.url);
     const data = readProjectData(file);
     let changed = false;
+    const [duplicateSchema] = duplicateReferenceAlternative;
+    const duplicateKey = JSON.stringify(duplicateSchema);
+    const duplicateIndex = data.grammars.findIndex(([schema]) => JSON.stringify(schema) === duplicateKey);
+    if (duplicateIndex >= 0) {
+      data.grammars.splice(duplicateIndex, 1);
+      changed = true;
+    }
+    data.ungeneratable ??= [];
+    if (!data.ungeneratable.some(([schema]) => JSON.stringify(schema) === duplicateKey)) {
+      data.ungeneratable.push(duplicateReferenceAlternative);
+      changed = true;
+    }
     for (const corrected of [closedArrayReference, conflictingArrayReference, layeredPatternProperty, layeredPatternItem]) {
       const existing = data.grammars.findIndex(([schema]) => JSON.stringify(schema) === JSON.stringify(corrected));
       const replacement = cases.find(([schema]) => schema === corrected);
@@ -558,5 +568,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       assert.deepEqual(grammar.schemaDiagnostics.map(issue => issue.pointer), diagnostics);
     }
     for (const schema of impossible) assert.throws(() => importJsonSchema(schema), /no generatable document/u);
+    const [schema, validation] = duplicateReferenceAlternative;
+    for (const [text, valid] of validation) assert.equal(validateJson(text, schema).valid, valid, 'validator: ' + text);
+    assert.throws(() => importJsonSchema(schema), /no generatable document/u);
   }
 }

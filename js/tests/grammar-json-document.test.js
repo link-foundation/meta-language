@@ -245,6 +245,7 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   for (const schema of shared.ungeneratableSchemas) {
     assert.throws(() => importJsonSchema(schema), /no generatable document/u);
   }
+  checkUngeneratableAlternatives(shared.ungeneratable);
   for (const [source, schema, expected] of shared.numericValidation) {
     const report = validateJson(source, schema);
     assert.deepEqual(report.schemaIssues, []);
@@ -283,7 +284,11 @@ function checkExclusiveAlternatives(file) {
       for (const [source, accepted] of cases) assert.equal(parser.parseTree(source).ok, accepted, source);
     }
   }
-  for (const [schema, cases] of ungeneratable) {
+  checkUngeneratableAlternatives(ungeneratable);
+}
+
+function checkUngeneratableAlternatives(alternatives) {
+  for (const [schema, cases] of alternatives) {
     for (const [source, accepted] of cases) assert.equal(validateJson(source, schema).valid, accepted, source);
     assert.throws(() => importJsonSchema(schema), /no generatable document/u);
   }
