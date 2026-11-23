@@ -8,7 +8,7 @@ const bytes = readFileSync(path);
 const digest = createHash('sha256').update(bytes).digest('hex');
 assert.equal(digest, '2e1efc1dcb59c575eedf5ccae60f95229f706ee6d031835247d843c11d96470c');
 
-const ranges = { word: [], dash: [] };
+const ranges = { word: [], dash: [], connector: [] };
 let start;
 for (const record of bytes.toString('utf8').trim().split('\n')) {
   const [value, name, category] = record.split(';', 3);
@@ -24,8 +24,9 @@ for (const record of bytes.toString('utf8').trim().split('\n')) {
 
   const word = 'LMN'.includes(category[0]) || scalar === 0x005f;
   const dash = category === 'Pd' || scalar === 0x2212;
-  if (!word && !dash) continue;
-  const target = word ? ranges.word : ranges.dash;
+  const connector = category === 'Pc';
+  if (!word && !dash && !connector) continue;
+  const target = word ? ranges.word : dash ? ranges.dash : ranges.connector;
   const previous = target.at(-1);
   if (previous && previous.last + 1 === first) previous.last = scalar;
   else target.push({ first, last: scalar });

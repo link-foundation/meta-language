@@ -522,6 +522,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/grammar/feature_runtime/search.rs', 'rust/tests/unit/issue_195_grammar_feature_union.rs'],
       },
     })),
+    {
+      id: 'I195-I235-UNICODE-SEARCH-BOUNDARIES',
+      source: ISSUE_195_SOURCES.grammarSearch,
+      language: 'native grammar execution',
+      version: 'Unicode 17.0.0 General_Category',
+      construct: 'pinned Unicode word boundaries in grammar search',
+      expectedBehavior: 'Both executors use the Unicode 17.0 letters, marks, numbers and connector punctuation to identify word interiors. Whole-word and unrestricted search retain their original source coordinates and return the expected set of matches.',
+      fixture: 'parity/fixtures/grammar-search-unicode-boundaries.lino',
+      selector: 'whole-word and unrestricted match ranges around a supplementary-plane letter, a combining mark and two connector punctuation characters',
+      assertions: ['pinnedWordBoundariesKeepSourceSpans'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-runtime.js', 'js/src/text-location-character-classes.js', 'js/tests/grammar-search.test.js'],
+        rust: ['rust/src/grammar/feature_runtime/search.rs', 'rust/src/link_network/text_location.rs', 'rust/tests/unit/issue_195_grammar_feature_union.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I233-LARK-REGEX-TERMINALS',

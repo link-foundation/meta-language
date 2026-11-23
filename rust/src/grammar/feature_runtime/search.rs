@@ -3,13 +3,13 @@
 use super::search_policy::{inside_grammar_search_word, skip_grammar_search_start};
 use std::cell::Cell;
 use std::collections::BTreeMap;
-use std::sync::LazyLock;
 
 use super::{
     FeatureGrammarParser, GrammarRuntimeError, PARSE_STACK, SyntaxTree, decorate_syntax_tree,
     decorator_error, parse_program,
 };
 use crate::LinkNetwork;
+use crate::link_network::text_location::{CharacterClass, character_class};
 use crate::query::{QueryCaptures, QueryPredicate, QueryPredicateHost};
 use crate::transform::{SourceTextPredicateHost, captured_text};
 
@@ -92,12 +92,11 @@ impl QueryPredicateHost for GrammarSearchPredicate<'_> {
     }
 }
 
-static WORD_CHARACTER: LazyLock<regex::Regex> = LazyLock::new(|| {
-    regex::Regex::new(r"^[\p{L}\p{M}\p{N}\p{Pc}]$").expect("valid Unicode word categories")
-});
-
 fn is_word_character(character: char) -> bool {
-    WORD_CHARACTER.is_match(character.encode_utf8(&mut [0; 4]))
+    matches!(
+        character_class(character),
+        Some(CharacterClass::Word | CharacterClass::Connector)
+    )
 }
 
 pub(super) struct SearchAttempt<'a> {

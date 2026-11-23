@@ -12,6 +12,11 @@ function readCharacterClasses() {
 }
 
 export function textLocationCharacterClass(value) {
+  const codePoint = value.codePointAt(0);
+  if (codePoint < 128) {
+    if (/^[0-9A-Za-z_]/u.test(value)) return 'word';
+    return value[0] === '-' ? 'dash' : undefined;
+  }
   const ranges = classes ??= readCharacterClasses();
-  return rangeValue(ranges, value.codePointAt(0));
+  return rangeValue(ranges, codePoint);
 }

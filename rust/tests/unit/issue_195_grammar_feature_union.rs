@@ -263,6 +263,55 @@ fn grammar_search_reports_original_ranges_captures_and_query_results() {
     );
 }
 
+#[test]
+fn grammar_search_uses_pinned_unicode_word_boundaries() {
+    use meta_language::grammar::feature_runtime::GrammarSearchOptions;
+    use meta_language::import_ebnf;
+
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-search-unicode-boundaries.lino"
+    ))
+    .unwrap();
+    let parser = compile_feature_grammar(
+        &import_ebnf(text(&fixture, "grammar")).unwrap(),
+        None,
+        FeatureParseOptions::default(),
+    )
+    .unwrap();
+    let source = text(&fixture, "source");
+    for (word_boundaries, expected) in [(false, "unrestrictedMatches"), (true, "matches")] {
+        let matches = parser
+            .find_all(
+                source,
+                &GrammarSearchOptions {
+                    word_boundaries,
+                    ..GrammarSearchOptions::default()
+                },
+            )
+            .unwrap();
+        let ranges: Vec<_> = matches
+            .iter()
+            .map(|found| {
+                let (start, end) = (found.span.start, found.span.end);
+                assert_eq!((found.tree.start(), found.tree.end()), (start, end));
+                json!({
+                    "utf16": [source[..start].encode_utf16().count(), source[..end].encode_utf16().count()],
+                    "utf8": [start, end],
+                })
+            })
+            .collect();
+        assert_eq!(json!(ranges), fixture[expected]);
+    }
+    record(&Observation {
+        requirement_id: "I195-I235-UNICODE-SEARCH-BOUNDARIES",
+        suffix: "behavior",
+        fixture_id: "i195-i235-unicode-search-boundaries",
+        fixture_file: "parity/fixtures/grammar-search-unicode-boundaries.lino",
+        assertions: &["pinnedWordBoundariesKeepSourceSpans"],
+        test_name: "grammar_search_uses_pinned_unicode_word_boundaries",
+    });
+}
+
 fn languages(fixture: &Value) -> HashMap<String, Grammar> {
     fixture["languages"]
         .as_object()

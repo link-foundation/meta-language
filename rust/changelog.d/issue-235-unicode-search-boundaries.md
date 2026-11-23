@@ -1,0 +1,1 @@
+Use the same Unicode 17.0 word boundaries for grammar search in JavaScript and Rust. New letters, combining marks, and connector punctuation preserve the original source coordinates of whole-word matches.

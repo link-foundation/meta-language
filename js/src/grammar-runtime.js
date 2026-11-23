@@ -16,6 +16,7 @@ import { withGrammarSelectionSources } from './grammar-runtime/selection-source-
 import { readGrammarCompositionPublicationIssue } from './translation/grammar-rule-composition-rules.js';
 import { sourceTextPredicateHost } from './query.js';
 import { insideGrammarSearchWord, skipGrammarSearchStart } from './grammar-search-policy.js';
+import { textLocationCharacterClass } from './text-location-character-classes.js';
 
 export { GrammarRuntimeError, renderSyntaxTree };
 export { checkGrammarSelectionMappedTree } from './grammar-runtime/mapped-tree-validation.js';
@@ -175,14 +176,13 @@ function parseProgram(program, source, options, search) {
   return withGrammarSelectionSources({ ok: rejection === null, tree, ambiguities, rejection, ...(search ? { matchEnd } : {}) }, memory);
 }
 
-const WORD_CHARACTER = /^[\p{L}\p{M}\p{N}\p{Pc}]$/u;
-
 function wordCharacters(source) {
   const words = new Map();
   let offset = 0;
   let previous = false;
   for (const character of source) {
-    const current = WORD_CHARACTER.test(character);
+    const characterClass = textLocationCharacterClass(character);
+    const current = characterClass === 'word' || characterClass === 'connector';
     words.set(offset, insideGrammarSearchWord(previous, current));
     offset += character.length;
     previous = current;

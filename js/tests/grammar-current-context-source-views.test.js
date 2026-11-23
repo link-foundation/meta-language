@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {dirname,join} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -16,7 +17,7 @@ import {LinkNetwork} from '../src/network.js';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {outcomeWirePolicy} from '../../experiments/grammar-outcome-network/native-transport/wire/wire-policy.mjs';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import {runtimeSourceFiles,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
+import {javascriptRuntimeSource,runtimeSourceFiles,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 let candidate;
 
@@ -200,7 +201,13 @@ test('grammar search retains the original transport source and authenticates the
   for(const proof of view.searchSuccessors){
     const current=readFileSync(join(root,proof.file),'utf8'),pair=readIssue245SourcePair(proof.file);
     assert.equal(current,proof.currentSource);
-    assert.deepEqual(pair,{current,predecessor:proof.predecessorSource,versions:[proof.predecessorSource,current]});
+    assert.equal(pair.current,current);
+    assert.equal(pair.predecessor,proof.predecessorSource);
+    const [predecessor,...successors]=pair.versions;
+    assert.equal(predecessor,proof.predecessorSource);
+    assert.equal(successors.pop(),current);
+    assert.deepEqual(successors.map(source=>createHash('sha256').update(source).digest('hex')),
+      proof.file===javascriptRuntimeSource?['adbd70d41959110356341de44370a94a9b866ab5a0de906ea41fac1b13c5c2c5']:[]);
     const declarations=inventory.declarations.filter(row=>row.file===proof.file);
     assert.deepEqual(proof.selectedDeclarations.map(row=>row.name),declarations.map(row=>row.name));
     for(const [index,row]of proof.selectedDeclarations.entries()){

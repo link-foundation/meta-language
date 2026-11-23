@@ -8,6 +8,7 @@ import { verifyGitArtifactCertificate } from '../../js/scripts/git-object-certif
 const root = new URL('../../', import.meta.url);
 const archive = new URL('./source-history.lino', import.meta.url);
 const mainRevision = 'ec9f4efb0e9ef936114e09823981352f6db13700';
+const grammarSearchRevision = '4edb0a624fe7068bc125bd72ceca3b3fe2d13201';
 export const javascriptRuntimeSource = 'js/src/grammar-runtime.js';
 export const platformDeadlineTestSource = 'js/tests/issue-195-evidence-platform-test-deadline.test.js';
 export const larkEmitterSource = 'rust/src/grammar/emit/lark.rs';
@@ -35,7 +36,8 @@ const profiles = [
     current: '9e8b3180caf5bc4d4cd6c7562af41682eb0eec321f3f5c2affebda39528f02c8' }],
   [javascriptRuntimeSource, { revision: mainRevision,
     predecessor: '680498a6118102d91f039d911a50197dad41778b9ee543be76a65a36e45223c6',
-    current: 'adbd70d41959110356341de44370a94a9b866ab5a0de906ea41fac1b13c5c2c5' }],
+    current: 'adbd70d41959110356341de44370a94a9b866ab5a0de906ea41fac1b13c5c2c5',
+    successorRevision: grammarSearchRevision }],
   ['js/tests/issue-195-evidence-resources.test.js', { revision: '4edb0a624fe7068bc125bd72ceca3b3fe2d13201',
     predecessor: 'bd0048bcc1850c7e6f68db3ab01fb2468a0be639e513999f031976409cd024ac',
     current: '5cd085d696ba24466ad284cb7a22e04628d74f39be473d188410b13af96e48d0' }],
@@ -79,6 +81,9 @@ const profiles = [
   [javascriptTestGroupsSource, { revision: translationTimingRevision,
     predecessor: '842f0097fc91ef7a52bf565e59fa640672a09c3ea72380ddf3b205dc09629bc0',
     current: '40805d77e1a4aa59749ab2df63640c9fe7062ee5246e6bdfe13e45a4a88680dd' }],
+  [javascriptRuntimeSource, { revision: grammarSearchRevision,
+    predecessor: 'adbd70d41959110356341de44370a94a9b866ab5a0de906ea41fac1b13c5c2c5',
+    current: '7db56777697ee79ad3ee7d303ce65434297a82decd77388e8a950cea00e9a4c5' }],
 ];
 const reviewedFiles = new Set(profiles.map(([file]) => file));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');

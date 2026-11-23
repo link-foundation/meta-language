@@ -55,6 +55,24 @@ test('grammar search controls word boundaries, selection and overlap', context =
   observed('I195-I235-GRAMMAR-SEARCH-POLICY', context, ['wordBoundariesUseUnicode', 'matchPoliciesChooseAtEachStart', 'overlapAndEmptyMatchesAreControlled']);
 });
 
+test('grammar search uses Unicode 17 word boundaries and preserves both source coordinates', context => {
+  const fixtureFile = 'parity/fixtures/grammar-search-unicode-boundaries.lino';
+  const fixture = readProjectData(new URL('../../' + fixtureFile, import.meta.url));
+  const parser = parserFor(fixture.grammar);
+  for (const wordBoundaries of [false, true]) {
+    const matches = parser.findAll(fixture.source, { wordBoundaries });
+    const expected = wordBoundaries ? fixture.matches : fixture.unrestrictedMatches;
+    assert.deepEqual(matches.map(({ start, end, tree }) => ({
+      utf16: [start, end], utf8: [tree.start, tree.end],
+    })), expected);
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-I235-UNICODE-SEARCH-BOUNDARIES', suffix: 'behavior',
+    fixtureId: 'i195-i235-unicode-search-boundaries', fixtureFile,
+    assertions: ['pinnedWordBoundariesKeepSourceSpans'], testName: context.name,
+  });
+});
+
 test('grammar search composes with source text predicates in LinkQuery', context => {
   const parser = parserFor(fixture.grammar);
   const network = LinkNetwork.parse(fixture.html, 'HTML');

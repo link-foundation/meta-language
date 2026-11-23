@@ -114,9 +114,10 @@ pub struct WordNgramMatch {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum CharacterClass {
+pub(crate) enum CharacterClass {
     Word,
     Dash,
+    Connector,
 }
 
 static CHARACTER_CLASSES: LazyLock<Vec<(u32, u32, CharacterClass)>> = LazyLock::new(|| {
@@ -128,6 +129,7 @@ static CHARACTER_CLASSES: LazyLock<Vec<(u32, u32, CharacterClass)>> = LazyLock::
             let class = match fields.next() {
                 Some("word") => CharacterClass::Word,
                 Some("dash") => CharacterClass::Dash,
+                Some("connector") => CharacterClass::Connector,
                 _ => unreachable!("Unicode text location character class"),
             };
             let mut scalar = || {
@@ -139,7 +141,14 @@ static CHARACTER_CLASSES: LazyLock<Vec<(u32, u32, CharacterClass)>> = LazyLock::
         .collect()
 });
 
-fn character_class(value: char) -> Option<CharacterClass> {
+pub(crate) fn character_class(value: char) -> Option<CharacterClass> {
+    if value.is_ascii() {
+        return match value {
+            '0'..='9' | 'A'..='Z' | 'a'..='z' | '_' => Some(CharacterClass::Word),
+            '-' => Some(CharacterClass::Dash),
+            _ => None,
+        };
+    }
     let scalar = u32::from(value);
     let index = CHARACTER_CLASSES.partition_point(|(_, last, _)| *last < scalar);
     CHARACTER_CLASSES
