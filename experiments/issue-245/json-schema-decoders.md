@@ -74,3 +74,9 @@ property's enum. The constrained grammar now retains `true` alone. Further
 cases check numeric bounds on enumerated array items, member permutations for
 enumerated objects, and a required property whose constants contradict each
 other.
+
+The nested collection cases combine required fields of objects in an array and
+intersect item types with length bounds in an object property. Before the change,
+the decoder admitted `[{"active":true}]` despite a nested required `label`.
+The fixture also checks an impossible required array and diagnostic fallback
+when mutually recursive layouts reach the shared construction bound.

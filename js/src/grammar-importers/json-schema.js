@@ -28,6 +28,7 @@ const assertionTypes = new Map([
   ['string', jsonDocumentPolicy.stringAssertion], ['number', jsonDocumentPolicy.limit],
 ].flatMap(([type, keywords]) => keywords.map(keyword => [keyword, jsonTypes.get(type)])));
 const allJsonTypes = (1 << 7) - 1;
+const [maximumNestedCollectionDepth, maximumNestedCollections] = jsonDocumentPolicy.nestedCollectionLimits.map(Number);
 const characters = (value) => charClass(Array.from(value, character => ({ kind: 'char', value: character })));
 const importedSchemas = new WeakMap();
 const baseFile = new URL('../data/json-document/decoder.lino', import.meta.url);
@@ -350,6 +351,7 @@ export function importJsonSchema(schema) {
     keyword, pointer: pointerChild(pointer, keyword), message,
   });
   let next = 1;
+  let remainingNestedCollections = maximumNestedCollections;
   const patternRules = new Map();
   function patternRule(expression) {
     const key = JSON.stringify(expression);
@@ -560,7 +562,7 @@ export function importJsonSchema(schema) {
     }
     return conjunction;
   }
-  function combineChildSchemas(schemas, pointer) {
+  function combineChildSchemas(schemas, pointer, depth) {
     const compatible = compatibleChildSchema(schemas);
     if (compatible !== undefined) return compatible;
     const budget = { remaining: 16_384 };
@@ -582,15 +584,17 @@ export function importJsonSchema(schema) {
     }
     const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allJsonTypes);
     const collections = membership & (jsonTypes.get('object') | jsonTypes.get('array'));
-    // Scalar intersections reuse conjunction lowering without descending into child collections.
+    // Recursive definitions can revisit the same collection through different member paths.
     if (collections && layers.some(layer => Object.keys(layer).some(keyword => (assertionTypes.get(keyword) ?? 0) & collections))) {
-      return undefined;
+      if (depth >= maximumNestedCollectionDepth || remainingNestedCollections === 0) return undefined;
+      remainingNestedCollections -= 1;
+      depth += 1;
     }
-    const entries = conjunctionEntries(layers, membership, pointer);
+    const entries = conjunctionEntries(layers, membership, pointer, undefined, depth);
     if (!entries) return undefined;
     return entries.length ? () => lowerConjunction(entries) : false;
   }
-  function collectionConstraints(layers, membership, combination, pointer) {
+  function collectionConstraints(layers, membership, combination, pointer, depth) {
     const keywords = membership === jsonTypes.get('object') ? jsonDocumentPolicy.objectAssertion : jsonDocumentPolicy.arrayAssertion;
     if (layers.some((layer, index) => Object.keys(layer).some(key => (
       activeConjunctionKeyword(key, index, combination, membership) && !keywords.includes(key)
@@ -598,7 +602,7 @@ export function importJsonSchema(schema) {
     if (membership === jsonTypes.get('object')) {
       const fields = layers.map(layer => layer.properties ?? {});
       const defaults = layers.map(layer => layer.additionalProperties ?? true);
-      const additionalProperties = combineChildSchemas(defaults, pointerChild(pointer, 'additionalProperties'));
+      const additionalProperties = combineChildSchemas(defaults, pointerChild(pointer, 'additionalProperties'), depth);
       if (additionalProperties === undefined) return undefined;
       const keys = new Set(fields.flatMap(Object.keys));
       const entries = [];
@@ -606,7 +610,7 @@ export function importJsonSchema(schema) {
         // Defaults apply only in the layers that leave this property undeclared.
         const rule = combineChildSchemas(fields.map((properties, index) => (
           Object.hasOwn(properties, name) ? properties[name] : defaults[index]
-        )), pointerChild(pointerChild(pointer, 'properties'), name));
+        )), pointerChild(pointerChild(pointer, 'properties'), name), depth);
         if (rule === undefined) return undefined;
         entries.push([name, rule]);
       }
@@ -634,13 +638,13 @@ export function importJsonSchema(schema) {
       const prefixItems = [];
       for (let index = 0; index < Math.min(prefixLength, maximum); index += 1) {
         const item = combineChildSchemas(layouts.map(layer => layer.prefixItems?.[index] ?? layer.items ?? true),
-          pointerChild(pointerChild(pointer, 'prefixItems'), index));
+          pointerChild(pointerChild(pointer, 'prefixItems'), index), depth);
         if (item === undefined) return undefined;
         // An array cannot reach any position after a forbidden item.
         if (item === false) return { lower: arrayExpression, rules: { prefixItems, ...bounds, maxItems: index } };
         prefixItems.push(item);
       }
-      const items = maximum <= prefixLength ? true : combineChildSchemas(layouts.map(layer => layer.items ?? true), pointerChild(pointer, 'items'));
+      const items = maximum <= prefixLength ? true : combineChildSchemas(layouts.map(layer => layer.items ?? true), pointerChild(pointer, 'items'), depth);
       if (items === undefined) return undefined;
       return { lower: arrayExpression, rules: { prefixItems, items, ...bounds } };
     }
@@ -656,7 +660,7 @@ export function importJsonSchema(schema) {
     const expressions = entries.map(lower => lower()).filter(Boolean);
     return expressions.length ? choice(...expressions) : null;
   }
-  function conjunctionEntries(layers, allowedTypes, pointer, combination) {
+  function conjunctionEntries(layers, allowedTypes, pointer, combination, depth = 0) {
     const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
     if ((membership & numberType) === fractionalType) return undefined;
     const entries = [];
@@ -680,7 +684,7 @@ export function importJsonSchema(schema) {
         return constraints && (() => numberExpression(type, constraints.limits, pointer));
       }
       if (type === 'object' || type === 'array') {
-        const collection = collectionConstraints(layers, mask, combination, pointer);
+        const collection = collectionConstraints(layers, mask, combination, pointer, depth);
         return collection && (() => collection.lower(collection.rules, pointer));
       }
       const residual = layers.some((layer, index) => Object.keys(layer).some(key => (

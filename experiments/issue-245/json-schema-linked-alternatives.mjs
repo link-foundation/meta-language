@@ -340,6 +340,30 @@ const cases = [
       ['{"value":{"label":"a"}}', false], ['{}', false]],
     [],
   ],
+  [
+    { type: 'array', $ref: '#/$defs/rows', items: { properties: { label: { type: 'string' } }, required: ['label'] },
+      $defs: { rows: { items: { type: 'object', properties: { active: { type: 'boolean' } }, required: ['active'] } } } },
+    [['[]', true], ['[{"active":true,"label":"a"}]', true],
+      ['[{"label":"a","active":false},{"active":true,"l\\u0061bel":"b"}]', true],
+      ['[{"active":true}]', false], ['[{"label":"a"}]', false], ['[{"active":true,"label":1}]', false], ['[null]', false]],
+    [],
+  ],
+  [
+    { type: 'object', $ref: '#/$defs/record', properties: { entries: { maxItems: 2, items: { type: 'boolean' } } },
+      $defs: { record: { required: ['entries'], properties: { entries: { type: 'array', minItems: 1 } } } } },
+    [['{"entries":[true]}', true], ['{"entries":[true,false]}', true], ['{"entries":[]}', false],
+      ['{"entries":[true,false,true]}', false], ['{"entries":[null]}', false], ['{"entries":false}', false], ['{}', false]],
+    [],
+  ],
+  [
+    { type: 'array', $ref: '#/$defs/first', items: { $ref: '#/$defs/second' }, $defs: {
+      first: { type: ['array', 'boolean'], items: { $ref: '#/$defs/first' } },
+      second: { type: ['array', 'boolean'], items: { $ref: '#/$defs/second' }, maxItems: 1 },
+    } },
+    [['[]', true], ['[true,[false]]', true], ['[[true,false]]', true], ['[null]', false], ['true', false]],
+    ['/$ref'],
+    [['[]', true], ['[true,[false]]', true], ['[[true,false]]', false], ['[null]', false], ['true', false]],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -355,6 +379,9 @@ const impossible = [
     $defs: { record: { required: ['flag'], properties: { flag: { const: true } } } } },
   { $ref: '#/$defs/record', properties: { active: { type: 'boolean' } }, additionalProperties: false,
     $defs: { record: { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] } } },
+  { type: 'object', $ref: '#/$defs/record', properties: { entries: { items: false } }, $defs: { record: {
+    required: ['entries'], properties: { entries: { type: 'array', minItems: 1 } },
+  } } },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -7,4 +7,5 @@
 (objectAssertion properties additionalProperties required)
 (arrayAssertion prefixItems items minItems maxItems)
 (stringAssertion pattern format)
+(nestedCollectionLimits 32 4096)
 (repair closeOpenContainers dropTrailingCommas stripCodeFence extractFirstValue stripTrailingGarbage repairEscapes)

@@ -4728,10 +4728,13 @@ grammar construction bounds. Assertions still apply only to their own instance
 types. When any layer enumerates a finite set of property or item values,
 including through local references and alternatives, the decoder validates
 each candidate against every contributing schema within the inspection bound.
-An empty set forbids that property or item. Incompatible lengths or required
-names forbidden by the property layout leave no generatable collection. Other
-intersections of property or item schemas carry a diagnostic for document
-validation.
+An empty set forbids that property or item. A nested property or item collection
+combines compatible layouts by the same rules. The shared policy allows up to
+32 nested layout intersections along a path and 4096 during one import.
+Recursive or wider intersections that exceed the bound report a diagnostic for
+document validation. Incompatible lengths or required names forbidden by the
+property layout leave no generatable collection. Other unsupported intersections
+also carry a diagnostic for document validation.
 The shared keyword policy scopes collection, string, and numeric assertions
 to their respective instance types. Local reference chains build a production
 for each applicable type, including chains without a declared type. Inclusive

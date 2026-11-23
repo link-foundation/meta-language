@@ -36,6 +36,16 @@ const JSON_TYPES: [(&str, u8); 7] = [
     ("null", 1 << 6),
 ];
 const ALL_JSON_TYPES: u8 = (1 << 7) - 1;
+static NESTED_COLLECTION_LIMITS: LazyLock<[usize; 2]> = LazyLock::new(|| {
+    let mut limits = keywords("nestedCollectionLimits");
+    std::array::from_fn(|_| {
+        limits
+            .next()
+            .expect("nested collection limit")
+            .parse()
+            .expect("numeric nested collection limit")
+    })
+});
 static ASSERTION_TYPES: LazyLock<HashMap<&'static str, u8>> = LazyLock::new(|| {
     [
         ("object", "objectAssertion"),
@@ -194,6 +204,7 @@ pub fn import_json_schema(schema: &Value) -> Result<JsonSchemaGrammar, JsonSchem
         compiled: HashMap::new(),
         diagnostics: Analysis::new(schema).issues,
         next: 1,
+        remaining_nested_collections: NESTED_COLLECTION_LIMITS[1],
         pattern_rules: Vec::new(),
     };
     importer.grammar.add_rule(GrammarRule::new(
@@ -289,6 +300,7 @@ struct Importer<'schema> {
     compiled: HashMap<(*const Value, u8), String>,
     diagnostics: Vec<JsonSchemaIssue>,
     next: usize,
+    remaining_nested_collections: usize,
     pattern_rules: Vec<GrammarExpr>,
 }
 
@@ -928,6 +940,7 @@ impl<'schema> Importer<'schema> {
         &mut self,
         schemas: Vec<&'schema Value>,
         pointer: &str,
+        mut depth: usize,
     ) -> Option<CollectionChild<'schema>> {
         if let Some(schema) = compatible_child_schema(schemas.iter().copied()) {
             return Some(CollectionChild::Schema(schema));
@@ -972,7 +985,7 @@ impl<'schema> Importer<'schema> {
             possible_type_membership(layer, types)
         });
         let collections = membership & (type_membership("object") | type_membership("array"));
-        // Scalar intersections reuse conjunction lowering without descending into child collections.
+        // Recursive definitions can revisit the same collection through different member paths.
         if collections != 0
             && layers.iter().any(|layer| {
                 layer.as_object().is_some_and(|fields| {
@@ -984,9 +997,13 @@ impl<'schema> Importer<'schema> {
                 })
             })
         {
-            return None;
+            if depth >= NESTED_COLLECTION_LIMITS[0] || self.remaining_nested_collections == 0 {
+                return None;
+            }
+            self.remaining_nested_collections -= 1;
+            depth += 1;
         }
-        let entries = self.conjunction_entries(&layers, membership, None, pointer)?;
+        let entries = self.conjunction_entries(&layers, membership, None, pointer, depth)?;
         if entries.is_empty() {
             return Some(CollectionChild::Schema(&PROHIBITED_SCHEMA));
         }
@@ -1026,7 +1043,7 @@ impl<'schema> Importer<'schema> {
         pointer: &str,
     ) -> Option<Option<Expression>> {
         let layers = reference_layers(self.root, schema)?;
-        let entries = self.conjunction_entries(&layers, allowed_types, None, pointer)?;
+        let entries = self.conjunction_entries(&layers, allowed_types, None, pointer, 0)?;
         Some(self.lower_conjunction(entries, pointer))
     }
 
@@ -1054,6 +1071,7 @@ impl<'schema> Importer<'schema> {
         allowed_types: u8,
         combination: Option<&str>,
         pointer: &str,
+        depth: usize,
     ) -> Option<Vec<ConjunctionEntry<'schema>>> {
         let membership = layers.iter().fold(allowed_types, |types, layer| {
             possible_type_membership(layer, types)
@@ -1073,7 +1091,7 @@ impl<'schema> Importer<'schema> {
                     mask,
                     combination,
                     pointer,
-                    |schemas, location| self.combine_child_schemas(schemas, location),
+                    |schemas, location| self.combine_child_schemas(schemas, location, depth),
                 )?),
                 "number" | "integer" => {
                     let (name, limits) = combine_numeric_constraints(layers, mask, combination)?;
@@ -1234,7 +1252,7 @@ impl<'schema> Importer<'schema> {
             layers.insert(0, schema);
             let location = pointer_child(&location, &index.to_string());
             let entries =
-                self.conjunction_entries(&layers, allowed_types, Some(keyword), &location)?;
+                self.conjunction_entries(&layers, allowed_types, Some(keyword), &location, 0)?;
             alternatives.push((location, entries));
         }
         let entries: Vec<_> = alternatives
