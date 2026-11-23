@@ -29,3 +29,11 @@ tree, or link its `tests/test-gbnf-validator.cpp` to the prebuilt release's
 `--llama-validator` with `llama.cpp` as the provider. The validator reads the
 exact emitted GBNF and the unmodified fixture bytes.
 [Pinned llama.cpp validator](https://github.com/ggml-org/llama.cpp/blob/b12633/tests/test-gbnf-validator.cpp)
+
+Run `node experiments/issue-245/json-schema-linked-alternatives.mjs` to check
+the array reference with `items: false` beside `$ref`. Before the correction,
+the decoder accepted `[true]` while document validation rejected it. The
+`items` keyword uses the prefix declared in the same schema object, which is
+empty in this case. The fixture retains all four inputs and checks the
+validation diagnostic with independent, conflicting prefix schemas.
+[JSON Schema Core, draft 2020-12, section 10.3.1.2](https://json-schema.org/draft/2020-12/json-schema-core#section-10.3.1.2)

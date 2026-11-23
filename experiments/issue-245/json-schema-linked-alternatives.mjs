@@ -22,6 +22,9 @@ const collectionDefinitions = {
   record: { type: 'object', properties: { kind: { const: 'item' }, value: { type: 'string' } }, additionalProperties: false },
   identified: { $ref: '#/$defs/record', required: ['kind'] },
 };
+const closedArrayReference = {
+  $ref: '#/$defs/prefix', items: false, $defs: { prefix: { type: 'array', prefixItems: [{ type: 'boolean' }] } },
+};
 const cases = [
   [
     { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^ab' },
@@ -101,7 +104,12 @@ const cases = [
     [],
   ],
   [
-    { $ref: '#/$defs/prefix', items: false, $defs: { prefix: { type: 'array', prefixItems: [{ type: 'boolean' }] } } },
+    closedArrayReference,
+    [['[]', true], ['[true]', false], ['[false,0]', false], ['[1]', false]],
+    [],
+  ],
+  [
+    { $ref: '#/$defs/prefix', prefixItems: [{ type: 'string' }], $defs: closedArrayReference.$defs },
     [['[]', true], ['[true]', true], ['[false,0]', true], ['[1]', false]],
     ['/$ref'],
     [['[]', true], ['[true]', false], ['[false,0]', false], ['[1]', false]],
@@ -124,6 +132,20 @@ const cases = [
       ['{"kind":"group"}', false], ['{"kind":"item"}', false], ['{"kind":"group","value":"a"}', false], ['{}', false]],
     [],
   ],
+  [
+    { type: 'array', items: false, anyOf: [
+      { prefixItems: [{ type: 'integer' }], items: { type: 'number' } },
+      { items: { type: 'string' } },
+    ] },
+    [['[]', true], ['[ \t ]', true], ['[1]', false], ['[1,2]', false], ['["a"]', false], ['{}', false]],
+    [],
+  ],
+  [
+    { $ref: '#/$defs/prefix', minItems: 1, maxItems: 2,
+      $defs: { prefix: { type: 'array', prefixItems: [{ type: 'boolean' }], items: false } } },
+    [['[true]', true], ['[false]', true], ['[]', false], ['[true,false]', false], ['[1]', false]],
+    [],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -132,17 +154,22 @@ const impossible = [
   { $defs: collectionDefinitions, $ref: '#/$defs/limited', maxItems: 1 },
   { $defs: collectionDefinitions, $ref: '#/$defs/identified', required: ['extra'] },
   { type: 'array', minItems: 2, anyOf: [{ maxItems: 1 }, { maxItems: 0 }] },
+  { ...closedArrayReference, minItems: 1 },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv.includes('--write')) {
     const file = new URL('../../parity/fixtures/json-schema-and-recovery.lino', import.meta.url);
     const data = readProjectData(file);
+    const corrected = data.grammars.findIndex(([schema]) => JSON.stringify(schema) === JSON.stringify(closedArrayReference));
+    const replacement = cases.find(([schema]) => schema === closedArrayReference);
+    const changed = corrected >= 0 && JSON.stringify(data.grammars[corrected]) !== JSON.stringify(replacement);
+    if (changed) data.grammars[corrected] = replacement;
     const grammars = new Set(data.grammars.map(([schema]) => JSON.stringify(schema)));
     const empty = new Set(data.ungeneratableSchemas.map(schema => JSON.stringify(schema)));
     const newGrammars = cases.filter(([schema]) => !grammars.has(JSON.stringify(schema)));
     const newEmpty = impossible.filter(schema => !empty.has(JSON.stringify(schema)));
-    if (newGrammars.length || newEmpty.length) {
+    if (changed || newGrammars.length || newEmpty.length) {
       data.grammars.push(...newGrammars);
       data.ungeneratableSchemas.push(...newEmpty);
       writeProjectData(file, data);

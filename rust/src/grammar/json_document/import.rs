@@ -690,6 +690,12 @@ impl<'schema> Importer<'schema> {
         max: Option<usize>,
         pointer: &str,
     ) -> Option<Expression> {
+        if max.is_some_and(|max| max < min) {
+            return None;
+        }
+        if max == Some(0) {
+            return Some(collection("[", "]", EXPRESSION.empty()));
+        }
         let location = pointer_child(pointer, "prefixItems");
         let prefix: Vec<_> = schema["prefixItems"]
             .as_array()
@@ -702,9 +708,6 @@ impl<'schema> Importer<'schema> {
             schema.get("items").unwrap_or(&Value::Bool(true)),
             &pointer_child(pointer, "items"),
         );
-        if max.is_some_and(|max| max < min) {
-            return None;
-        }
         let mut alternatives = Vec::new();
         let mut members = Vec::new();
         for length in 0..=max.unwrap_or(prefix.len()).min(prefix.len()) {
@@ -1219,14 +1222,28 @@ fn collection_constraints<'schema>(
         return Some(CollectionConstraints::Object { layout, required });
     }
     if membership == type_membership("array") {
+        let maximum = layers
+            .iter()
+            .filter_map(|layer| {
+                let bound = layer["maxItems"].as_u64();
+                if layer["items"] == Value::Bool(false) {
+                    let prefix = layer["prefixItems"].as_array().map_or(0, Vec::len) as u64;
+                    return Some(bound.map_or(prefix, |bound| bound.min(prefix)));
+                }
+                bound
+            })
+            .min();
         let layout = reference_collection_layout(
             layers,
             &["prefixItems", "items", "minItems", "maxItems"],
             |layer| {
-                layer.get("prefixItems").is_some()
-                    || layer
-                        .get("items")
-                        .is_some_and(|schema| schema != &Value::Bool(true))
+                maximum != Some(0)
+                    && (layer["prefixItems"]
+                        .as_array()
+                        .is_some_and(|items| !items.is_empty())
+                        || layer
+                            .get("items")
+                            .is_some_and(|schema| !schema.is_boolean()))
             },
             combination,
         )?;
@@ -1235,10 +1252,6 @@ fn collection_constraints<'schema>(
             .filter_map(|layer| layer["minItems"].as_u64())
             .max()
             .unwrap_or(0);
-        let maximum = layers
-            .iter()
-            .filter_map(|layer| layer["maxItems"].as_u64())
-            .min();
         return Some(CollectionConstraints::Array {
             layout,
             minimum,

@@ -442,11 +442,12 @@ export function importJsonSchema(schema) {
     return collection('{', '}', unordered(0, false));
   }
   function arrayExpression(rules, pointer) {
-    const prefix = (rules.prefixItems ?? []).map((item, index) => named(item, pointerChild(pointerChild(pointer, 'prefixItems'), index)));
-    const tail = named(rules.items ?? true, pointerChild(pointer, 'items'));
     const min = rules.minItems ?? 0;
     const max = rules.maxItems ?? null;
     if (max !== null && max < min) return null;
+    if (max === 0) return collection('[', ']', empty());
+    const prefix = (rules.prefixItems ?? []).map((item, index) => named(item, pointerChild(pointerChild(pointer, 'prefixItems'), index)));
+    const tail = named(rules.items ?? true, pointerChild(pointer, 'items'));
     const alternatives = [];
     const members = [];
     for (let length = 0; length <= prefix.length && (max === null || length <= max); length += 1) {
@@ -557,16 +558,19 @@ export function importJsonSchema(schema) {
       } };
     }
     if (membership === jsonTypes.get('array')) {
+      const maximum = layers.reduce((limit, layer) => {
+        const itemLimit = layer.items === false ? layer.prefixItems?.length ?? 0 : Infinity;
+        return Math.min(limit, layer.maxItems ?? Infinity, itemLimit);
+      }, Infinity);
       const layout = referenceCollectionLayout(layers, ['prefixItems', 'items', 'minItems', 'maxItems'], layer => (
-        layer.prefixItems !== undefined || (layer.items !== undefined && layer.items !== true)
+        maximum !== 0 && ((layer.prefixItems?.length ?? 0) > 0 || (layer.items !== undefined && typeof layer.items !== 'boolean'))
       ), combination);
       if (!layout) return undefined;
       return { lower: arrayExpression, rules: {
         prefixItems: layout.prefixItems,
         items: layout.items,
         minItems: layers.reduce((minimum, layer) => Math.max(minimum, layer.minItems ?? 0), 0),
-        maxItems: layers.reduce((maximum, layer) => layer.maxItems === undefined
-          ? maximum : Math.min(maximum ?? layer.maxItems, layer.maxItems), null),
+        maxItems: Number.isFinite(maximum) ? maximum : null,
       } };
     }
     return undefined;

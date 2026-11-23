@@ -4703,7 +4703,9 @@ property layout. The decoder takes the union of the required names and uses
 that layout's additional-property policy for names without a declared schema.
 An array-only chain can add minimum and maximum lengths to a single item
 layout. The decoder keeps the strongest bound in each direction and applies
-both to the prefix and tail. Incompatible lengths or required names forbidden
+both to the prefix and tail. A layer with `items: false` bounds the length by
+that layer's own prefix length, including zero when it has no prefix.
+Incompatible lengths or required names forbidden
 by the property layout leave no generatable collection. When two layers
 independently constrain properties or items, a reference diagnostic identifies
 the assertions checked during document validation.
