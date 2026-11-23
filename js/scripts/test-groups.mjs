@@ -154,7 +154,7 @@ export function partitionGroupFiles(files, shard = '1/1') {
   // Only the measured general-grammar cohort changes owners. Native and
   // historical modulo cohorts retain their independent exact partition rules.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
-  if (count === 6 && files.includes('translation-ascii-text-predicates.test.js')
+  if ((count === 6 || count === 9) && files.includes('translation-ascii-text-predicates.test.js')
     && files.includes('translation-raw-data-freeze.test.js')) {
     const originalPartition = (index - 1) % 3;
     const cohort = files.filter((_, offset) => offset % 3 === originalPartition);
@@ -163,9 +163,20 @@ export function partitionGroupFiles(files, shard = '1/1') {
     assert.equal(measured.schemaVersion, 1);
     assert.equal(measured.run, 45076523061);
     assert.equal(new Set(measured.entries.map(row => row.file)).size, measured.entries.length);
-    // Keep each original three-way cohort intact while balancing its two jobs.
-    const costs = { ...baseline, entries: [...baseline.entries, ...measured.entries] };
-    const assignments = partitionMeasuredWorkloads(cohort.map(file => 'js/tests/' + file), 2, { costs });
+    let entries = [...baseline.entries, ...measured.entries];
+    if (count === 9) {
+      const wall = readProjectData(new URL('../../parity/fixtures/ci-45089575521-translation-test-wall-costs.lino', import.meta.url));
+      assert.equal(wall.schemaVersion, 1);
+      assert.equal(wall.run, 45089575521);
+      assert.equal(wall.revision, '0deae514483822ffd2a42a4fa0f4c88744d0745d');
+      assert.equal(new Set(wall.entries.map(row => row.file)).size, wall.entries.length);
+      const recent = new Map(entries.map(row => [row.file, row]));
+      for (const row of wall.entries) recent.set(row.file, row);
+      entries = [...recent.values()];
+    }
+    // Balance whole files within their original three-way cohort.
+    const costs = { ...baseline, entries };
+    const assignments = partitionMeasuredWorkloads(cohort.map(file => 'js/tests/' + file), count / 3, { costs });
     return assignments[Math.floor((index - 1) / 3)].map(file => file.slice('js/tests/'.length));
   }
   return files.filter((_, offset) => offset % count === index - 1);

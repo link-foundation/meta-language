@@ -12,6 +12,7 @@ export const javascriptRuntimeSource = 'js/src/grammar-runtime.js';
 export const platformDeadlineTestSource = 'js/tests/issue-195-evidence-platform-test-deadline.test.js';
 export const larkEmitterSource = 'rust/src/grammar/emit/lark.rs';
 export const javascriptTestGroupsSource = 'js/scripts/test-groups.mjs';
+export const javascriptWorkflowSource = '.github/workflows/js.yml';
 export const nodeDependencyTestSource = 'js/tests/issue-195-evidence-node-dependency.test.js';
 export const typedProgramLinksValidationSource = 'js/src/typed-program-links-validation.js';
 export const asciiPredicateAssertionSource = 'js/tests/translation-ascii-text-predicates.test.js';
@@ -21,7 +22,8 @@ export const runtimeSourceFiles = Object.freeze([
   'rust/src/grammar/feature_runtime/operations.rs',
   javascriptRuntimeSource,
 ]);
-const profiles = new Map([
+const schedulingRevision = '0deae514483822ffd2a42a4fa0f4c88744d0745d';
+const profiles = [
   [runtimeSourceFiles[0], { revision: mainRevision,
     predecessor: '7b0c3936262249a43ce687a315737a59af51fed7c79ed616faddd35cd1aab221',
     current: '341e3a90ddd61d23d10966c68756c8756ae49edc1d1e5ec526fca8d1d38e9d66' }],
@@ -42,7 +44,8 @@ const profiles = new Map([
     current: 'd7759822bcf37a897ddb1da22dd5c2250753a7346a7c87b156e0227922a3a207' }],
   [javascriptTestGroupsSource, { revision: '5b2a0f71350c96520c1cda8efe004e644aa53158',
     predecessor: '4dce7b79635607f76fe6b0216775bac1293df47ae5f27580be2015a1d7897678',
-    current: '027b53e855b0992612c91e32f2d3f75acba994a4d8994f0cda1acb556890b3d9' }],
+    current: '027b53e855b0992612c91e32f2d3f75acba994a4d8994f0cda1acb556890b3d9',
+    successorRevision: schedulingRevision }],
   [nodeDependencyTestSource, { revision: mainRevision,
     predecessor: '0f2f9cfdd17ad49c46b62f805738f7e43b35ee1d1e44a11db04102f75f1f731b',
     current: '0299e111c4080f248603a32ecaa53427fff053f47e50270dccb8cb7e52e0af5e' }],
@@ -55,7 +58,14 @@ const profiles = new Map([
   [nativeNumberObservationSource, { revision: mainRevision,
     predecessor: '75d3ad2a41c3ca7ffb615b6f6c78e94c67191bb60b3f0c010dec4bb61b171150',
     current: 'b467cdfb67daa832a262e9ddb861adb270e027fe8076dad513bce95a421955e0' }],
-]);
+  [javascriptTestGroupsSource, { revision: schedulingRevision,
+    predecessor: '027b53e855b0992612c91e32f2d3f75acba994a4d8994f0cda1acb556890b3d9',
+    current: '842f0097fc91ef7a52bf565e59fa640672a09c3ea72380ddf3b205dc09629bc0' }],
+  [javascriptWorkflowSource, { revision: schedulingRevision,
+    predecessor: '6274838f6f901b71b1f0540b40b741640a8c23abde25b7afde91368bee4186bf',
+    current: 'f92347173c03d0ca6998379b4d5c13b2d264079455e8fe1f7746423889285bcf' }],
+];
+const reviewedFiles = new Set(profiles.map(([file]) => file));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const text = bytes => {
   const source = bytes.toString('utf8');
@@ -66,10 +76,11 @@ let pairs;
 
 function verifySourceHistory(history) {
   assert.equal(history.schemaVersion, 1);
-  assert.deepEqual(history.sources.map(row => row.file), [...profiles.keys()]);
-  return new Map(history.sources.map(row => {
+  assert.deepEqual(history.sources.map(row => row.file), profiles.map(([file]) => file));
+  const verified = new Map();
+  for (const [index, row] of history.sources.entries()) {
     const { file, predecessor, certificate, edit } = row;
-    const { revision, predecessor: originalHash, current: currentHash } = profiles.get(file);
+    const { revision, predecessor: originalHash, current: currentHash } = profiles[index][1];
     const before = Buffer.from(predecessor);
     assert.equal(text(before), predecessor);
     assert.equal(digest(before), originalHash);
@@ -83,34 +94,44 @@ function verifySourceHistory(history) {
     assert.equal(digest(after), currentHash);
     const inverse = Buffer.concat([after.subarray(0, start), before.subarray(start, end), after.subarray(start + replacement.length)]);
     assert.ok(inverse.equals(before));
-    return [file, Object.freeze({ predecessor, current: text(after) })];
-  }));
+    const earlier = verified.get(file);
+    assert.ok(!earlier || earlier.current === predecessor);
+    const current = text(after);
+    verified.set(file, Object.freeze({
+      predecessor: earlier?.predecessor ?? predecessor,
+      current,
+      versions: Object.freeze(earlier ? [...earlier.versions, current] : [predecessor, current]),
+    }));
+  }
+  return verified;
 }
 
 export function readIssue245SourcePair(file) {
-  assert.ok(profiles.has(file), `no reviewed successor for ${file}`);
+  assert.ok(reviewedFiles.has(file), `no reviewed successor for ${file}`);
   pairs ??= verifySourceHistory(readProjectData(archive));
   return pairs.get(file);
 }
 
 export function restoreIssue245Source(file, source) {
-  const { predecessor, current } = readIssue245SourcePair(file);
-  assert.ok(source === predecessor || source === current, `unreviewed complete source for ${file}`);
+  const { predecessor, versions } = readIssue245SourcePair(file);
+  assert.ok(versions.includes(source), `unreviewed complete source for ${file}`);
   return predecessor;
 }
 
 export function restoreIssue245SourceSuccessor(file, source) {
-  if (!profiles.has(file)) return source;
-  const { predecessor, current } = readIssue245SourcePair(file);
-  return source === current ? predecessor : source;
+  if (!reviewedFiles.has(file)) return source;
+  const { predecessor, versions } = readIssue245SourcePair(file);
+  return versions.includes(source) ? predecessor : source;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   assert.deepEqual(process.argv.slice(2), ['--write']);
   const { captureGitArtifactCertificate } = await import('../../js/scripts/capture-git-artifact-certificate.mjs');
-  const sources = [...profiles].map(([file, { revision }]) => {
+  const sources = profiles.map(([file, { revision, successorRevision }]) => {
     const { blob, certificate } = captureGitArtifactCertificate(revision, file);
-    const current = readFileSync(new URL(file, root));
+    const current = successorRevision
+      ? captureGitArtifactCertificate(successorRevision, file).blob
+      : readFileSync(new URL(file, root));
     let start = 0;
     let end = blob.length;
     let currentEnd = current.length;
