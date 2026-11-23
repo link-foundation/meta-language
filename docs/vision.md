@@ -3931,9 +3931,13 @@ actual current six-way matrix, feedback cohort and native artifact uploads.
 
 A separate JavaScript test group checks these published reports after all
 sixteen report shards finish. The producer assigns each complete module to one
-shard by measured workload. The verifier uses the producers' exact checkout and
-source hashes, reuses their measurements, and must pass before Rust or delivery
-stages start.
+shard by measured workload. The [CI workload sample](../parity/fixtures/ci-45104457483-report-workload-costs.lino)
+binds recorded module durations to their source bytes. It divides time shared by
+import resolution and measurement equally between the two concurrent modules.
+An unfinished module uses the preceding sample for matching source bytes or a
+size estimate. The sixteen shards retain their thirty-minute job deadlines.
+The verifier uses the producers' exact checkout and source hashes, reuses their
+measurements, and must pass before Rust or delivery stages start.
 Standalone JavaScript workflow runs produce and check their own report shards.
 
 Real target-tool interchange reports identify the emitted target format, its

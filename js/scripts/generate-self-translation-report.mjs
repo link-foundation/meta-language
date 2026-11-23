@@ -91,14 +91,16 @@ function listSourceModules() {
  */
 export function partitionSelfTranslationReportModules(files, count) {
   const baseline = readProjectData(join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
-  const measured = readProjectData(join(root, 'parity/fixtures/ci-45076523061-report-workload-costs.lino'));
-  assert.equal(measured.run, 45076523061);
-  assert.equal(measured.attempt, 2);
-  assert.equal(measured.schemaVersion, 1);
-  assert.equal(measured.entries.length, 364);
-  assert.equal(new Set(measured.entries.map(row => requireReportSourcePath(row.file))).size, measured.entries.length);
   const entries = new Map(baseline.entries.map(row => [row.file, row]));
-  for (const row of measured.entries) entries.set(row.file, row);
+  for (const [run, moduleCount] of [[45076523061, 364], [45104457483, 376]]) {
+    const measured = readProjectData(join(root, `parity/fixtures/ci-${run}-report-workload-costs.lino`));
+    assert.equal(measured.run, run);
+    assert.equal(measured.attempt, 2);
+    assert.equal(measured.schemaVersion, 1);
+    assert.equal(measured.entries.length, moduleCount);
+    assert.equal(new Set(measured.entries.map(row => requireReportSourcePath(row.file))).size, moduleCount);
+    for (const row of measured.entries) entries.set(row.file, row);
+  }
   return partitionMeasuredWorkloads(files, count, { costs: { ...baseline, entries: [...entries.values()] } });
 }
 

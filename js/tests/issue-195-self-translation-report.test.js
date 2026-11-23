@@ -19,12 +19,27 @@ test('recent report timings balance all complete module workloads across the sam
   const record = readProjectData(new URL('../../parity/fixtures/ci-45076523061-report-workload-costs.lino', import.meta.url));
   assert.deepEqual(record.logs.map(row => row.number), Array.from({ length: 16 }, (_, index) => index + 1));
   const elapsed = new Map(record.entries.map(row => [row.file, row.milliseconds]));
+  const baseline = readProjectData(new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino', import.meta.url));
+  const priorEntries = new Map([...baseline.entries, ...record.entries].map(row => [row.file, row]));
   const previous = partitionMeasuredWorkloads(sources, 16);
-  const current = partitionSelfTranslationReportModules(sources, 16);
+  const historical = partitionMeasuredWorkloads(sources, 16, { costs: { ...baseline, entries: [...priorEntries.values()] } });
   const longest = shards => Math.max(...shards.map(shard => shard.reduce((sum, file) => sum + (elapsed.get(file) ?? 0), 0)));
-  assert.deepEqual(current.flat().sort(), sources);
+  assert.deepEqual(historical.flat().sort(), sources);
   assert.ok(longest(previous) >= 30 * 60 * 1000, 'recent elapsed samples reproduce the uneven prior assignment');
-  assert.ok(longest(current) <= 18 * 60 * 1000, 'the recent elapsed samples are spread across the sixteen owners');
+  assert.ok(longest(historical) <= 18 * 60 * 1000, 'the recent elapsed samples are spread across the sixteen owners');
+
+  const pipeline = readProjectData(new URL('../../parity/fixtures/ci-45104457483-report-workload-costs.lino', import.meta.url));
+  assert.deepEqual(pipeline.logs.map(row => row.number), record.logs.map(row => row.number));
+  const unfinished = pipeline.logs.flatMap(row => row.unfinished);
+  assert.deepEqual(unfinished, ['js/src/typed-program-links.js', 'js/src/typescript-erasure-rules.js']);
+  for (const row of pipeline.entries) {
+    assert.ok(!unfinished.includes(row.file));
+    elapsed.set(row.file, row.milliseconds);
+  }
+  const current = partitionSelfTranslationReportModules(sources, 16);
+  assert.deepEqual(current.flat().sort(), sources);
+  assert.ok(longest(historical) >= 30 * 60 * 1000, 'overlap-adjusted samples expose the prior overloaded shard');
+  assert.ok(longest(current) <= 20 * 60 * 1000, 'overlap-adjusted samples leave headroom within the deadline');
 });
 
 test('recent translation test timings balance both jobs in each original three-way partition', () => {
