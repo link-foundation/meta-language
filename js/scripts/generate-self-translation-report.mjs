@@ -46,9 +46,10 @@ const reportSchedulingFile = new URL('../../parity/fixtures/ci-45080642295-repor
 // CI run 45133354161 showed that the historical timings attributed blocked
 // worker completions to the wrong module. Shard 2 spent another 281 seconds
 // resolving the program translator's imports after the shared cold start.
-// Move that import graph and two large translations to jobs with headroom.
+// Move that import graph and two large translations to jobs with headroom,
+// preserving the catalog's traversal of cyclic imports.
 const reportShardAssignments = [
-  ['js/src/grammar-emitters/antlr.js', 6],
+  ['js/src/grammar-emitters/antlr.js', 7],
   ['js/src/program-translation.js', 7],
   ['js/src/translation/emit-rust.js', 8],
 ];

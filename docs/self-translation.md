@@ -209,9 +209,10 @@ retain the translator's carried-item diagnostics.
 In CI run [45133354161](https://github.com/link-foundation/meta-language/actions/runs/45133354161),
 shard 2 spent 999 seconds resolving its first module's imports and another 281
 seconds resolving the program translator's imports. The report assigns
-`grammar-emitters/antlr.js`, `program-translation.js` and
-`translation/emit-rust.js` to shards 6, 7 and 8. Those jobs finished in 16 to
-21 minutes within the 30-minute deadline.
+`grammar-emitters/antlr.js` and `program-translation.js` to shard 7 and
+`translation/emit-rust.js` to shard 8. These assignments preserve the
+catalog's traversal of cyclic imports. Those jobs finished in 16 and 21
+minutes, respectively, within the 30-minute deadline.
 
 The same measurements retain each item's exact range, concrete syntax term and
 actual translation error. Report-only diagnostic capture preserves the ordinary

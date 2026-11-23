@@ -25,7 +25,7 @@ test('report scheduling separates shard 2 import and measurement work while keep
   const previous = partitionMeasuredWorkloads(files, 8, { costs });
   const expected = previous.map(shard => [...shard]);
   for (const [module, destination] of [
-    ['js/src/grammar-emitters/antlr.js', 6],
+    ['js/src/grammar-emitters/antlr.js', 7],
     ['js/src/program-translation.js', 7],
     ['js/src/translation/emit-rust.js', 8],
   ]) {
