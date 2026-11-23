@@ -261,6 +261,20 @@ function possibleTypeMembership(rules, allowedTypes) {
   return constants ? constants.reduce((types, value) => types | valueTypeMembership(value), 0) & declared : declared;
 }
 
+function combineNumericConstraints(layers, membership, combination) {
+  if (membership !== numberType && membership !== integerType) return undefined;
+  const limits = {};
+  for (const [index, layer] of layers.entries()) {
+    for (const [key, value] of Object.entries(layer)) {
+      if (key === 'type' || referenceKeys.has(key) || (index === 0 && key === combination)) continue;
+      if (!numericLimitKeywords.includes(key) || !Number.isFinite(value)) return undefined;
+      const tighten = key === 'minimum' || key === 'exclusiveMinimum' ? Math.max : Math.min;
+      limits[key] = tighten(limits[key] ?? value, value);
+    }
+  }
+  return { type: membership === integerType ? 'integer' : 'number', limits };
+}
+
 function branchesUseDisjointTypes(branches, allowedTypes) {
   if (branches.length < 2) return true;
   let seen = 0;
@@ -518,11 +532,13 @@ export function importJsonSchema(schema) {
     }
     return conjunction;
   }
-  function referencedStringExpression(rules, allowedTypes) {
+  function referencedExpression(rules, allowedTypes, pointer) {
     const layers = referenceLayers(rules);
     if (!layers) return undefined;
     const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
     if (membership === 0) return null;
+    const constraints = combineNumericConstraints(layers, membership);
+    if (constraints) return numberExpression(constraints.type, constraints.limits, pointer);
     if (membership !== jsonTypes.get('string')) return undefined;
     const conjunction = regularStringChain(layers);
     if (!conjunction) return conjunction;
@@ -555,6 +571,28 @@ export function importJsonSchema(schema) {
       if (entry === undefined) return undefined;
       if (entry) entries.push(entry);
     }
+    return entries.length ? choice(...entries) : null;
+  }
+  function alternativeNumericExpression(rules, alternatives, allowedTypes, keyword, pointer) {
+    const branches = [];
+    for (const [index, branch] of alternatives.entries()) {
+      if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
+      const layers = referenceLayers(branch);
+      if (!layers) return undefined;
+      const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+      if (membership === 0) continue;
+      const constraints = combineNumericConstraints([rules, ...layers], membership, keyword);
+      if (!constraints) return undefined;
+      branches.push({ index, ...constraints });
+    }
+    if (keyword === 'oneOf') {
+      if (branches.some(branch => branch.type !== 'integer')) return undefined;
+      const integer = exclusiveIntegerRange(branches.map(branch => integerBounds(branch.limits)));
+      if (integer) report(pointer, keyword, 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
+      return integer;
+    }
+    const location = pointerChild(pointer, keyword);
+    const entries = branches.map(({ index, type, limits }) => numberExpression(type, limits, pointerChild(location, index))).filter(Boolean);
     return entries.length ? choice(...entries) : null;
   }
   function numberExpression(type, rules, pointer) {
@@ -595,7 +633,7 @@ export function importJsonSchema(schema) {
       const target = analysis.target(rules.$ref);
       if (typeof target === 'boolean' || (target && typeof target === 'object' && !Array.isArray(target))) {
         if (Object.keys(rules).some(key => key !== 'type' && !referenceKeys.has(key))) {
-          const conjunction = referencedStringExpression(rules, allowedTypes);
+          const conjunction = referencedExpression(rules, allowedTypes, pointer);
           if (conjunction !== undefined) return conjunction;
           report(pointer, '$ref', 'Sibling reference assertions are checked during document validation.');
         }
@@ -610,14 +648,11 @@ export function importJsonSchema(schema) {
       if (overlaps || hasSiblingAssertions) {
         const combined = alternativeStringExpression(rules, alternatives, allowedTypes, keyword);
         if (combined !== undefined) return combined;
+        const numeric = alternativeNumericExpression(rules, alternatives, allowedTypes, keyword, pointer);
+        if (numeric !== undefined) return numeric;
       }
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
       if (overlaps) {
-        const integer = exclusiveIntegerRange(alternatives, referenceKeys);
-        if (integer !== undefined) {
-          if (integer) report(pointer, 'oneOf', 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
-          return integer;
-        }
         report(pointer, keyword, 'Exclusive branch selection is checked during document validation.');
       }
       const entries = alternatives.map((child, index) => named(child, pointerChild(pointerChild(pointer, keyword), index), allowedTypes)).filter(Boolean);

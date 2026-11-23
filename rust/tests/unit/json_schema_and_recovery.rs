@@ -186,6 +186,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "decoderSelectsExclusiveRegularStrings",
             "decoderIntersectsSiblingRegularStrings",
             "decoderResolvesLinkedAlternatives",
+            "decoderCombinesLinkedNumericBounds",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });

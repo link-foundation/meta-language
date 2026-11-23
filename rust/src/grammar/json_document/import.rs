@@ -358,7 +358,8 @@ impl<'schema> Importer<'schema> {
                 .keys()
                 .any(|key| key != "type" && !reference_keyword(key))
             {
-                if let Some(expression) = self.referenced_string_expression(schema, allowed_types) {
+                if let Some(expression) = self.referenced_expression(schema, allowed_types, pointer)
+                {
                     return expression;
                 }
                 self.report(
@@ -378,22 +379,26 @@ impl<'schema> Importer<'schema> {
                 let overlaps = keyword == "oneOf"
                     && !branches_use_disjoint_types(branches.iter(), allowed_types)
                     && !branches_use_disjoint_required_tags(self.root, branches, allowed_types);
-                if (overlaps || has_sibling_assertions)
-                    && let Some(expression) =
+                if overlaps || has_sibling_assertions {
+                    if let Some(expression) =
                         self.alternative_string_expression(schema, branches, allowed_types, keyword)
-                {
-                    return expression;
+                    {
+                        return expression;
+                    }
+                    if let Some(expression) = self.alternative_numeric_expression(
+                        schema,
+                        branches,
+                        allowed_types,
+                        keyword,
+                        pointer,
+                    ) {
+                        return expression;
+                    }
                 }
                 if has_sibling_assertions {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
                 }
                 if overlaps {
-                    if let Some(integer) = exclusive_integer_range(branches) {
-                        if integer.is_some() {
-                            self.report(pointer, keyword, "The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.");
-                        }
-                        return integer;
-                    }
                     self.report(
                         pointer,
                         keyword,
@@ -821,10 +826,11 @@ impl<'schema> Importer<'schema> {
         Some(Some(conjunction))
     }
 
-    fn referenced_string_expression(
+    fn referenced_expression(
         &mut self,
         schema: &'schema Value,
         allowed_types: u8,
+        pointer: &str,
     ) -> Option<Option<Expression>> {
         let layers = reference_layers(self.root, schema)?;
         let membership = layers.iter().fold(allowed_types, |types, layer| {
@@ -832,6 +838,9 @@ impl<'schema> Importer<'schema> {
         });
         if membership == 0 {
             return Some(None);
+        }
+        if let Some((name, limits)) = combine_numeric_constraints(&layers, membership, None) {
+            return Some(self.number(name, &limits, pointer));
         }
         if membership != type_membership("string") {
             return None;
@@ -899,6 +908,54 @@ impl<'schema> Importer<'schema> {
         Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
     }
 
+    fn alternative_numeric_expression(
+        &mut self,
+        schema: &'schema Value,
+        branches: &'schema [Value],
+        allowed_types: u8,
+        keyword: &str,
+        pointer: &str,
+    ) -> Option<Option<Expression>> {
+        let mut alternatives = Vec::new();
+        for (index, branch) in branches.iter().enumerate() {
+            if possible_type_membership(branch, allowed_types) == 0 {
+                continue;
+            }
+            let mut layers = reference_layers(self.root, branch)?;
+            let membership = layers.iter().fold(allowed_types, |types, layer| {
+                possible_type_membership(layer, types)
+            });
+            if membership == 0 {
+                continue;
+            }
+            layers.insert(0, schema);
+            let (name, limits) = combine_numeric_constraints(&layers, membership, Some(keyword))?;
+            alternatives.push((index, name, limits));
+        }
+        if keyword == "oneOf" {
+            if alternatives.iter().any(|(_, name, _)| *name != "integer") {
+                return None;
+            }
+            let integer = exclusive_integer_range(
+                alternatives
+                    .iter()
+                    .map(|(_, _, limits)| integer_bounds(limits)),
+            )?;
+            if integer.is_some() {
+                self.report(pointer, keyword, "The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.");
+            }
+            return Some(integer);
+        }
+        let location = pointer_child(pointer, keyword);
+        let entries: Vec<_> = alternatives
+            .into_iter()
+            .filter_map(|(index, name, limits)| {
+                self.number(name, &limits, &pointer_child(&location, &index.to_string()))
+            })
+            .collect();
+        Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
+    }
+
     fn number(&mut self, name: &str, schema: &Value, pointer: &str) -> Option<Expression> {
         let limits: Vec<_> = keywords("limit")
             .filter(|keyword| schema.get(keyword).is_some())
@@ -961,24 +1018,12 @@ fn integer_bounds(schema: &Value) -> (f64, f64) {
     (minimum, maximum)
 }
 
-fn exclusive_integer_range(branches: &[Value]) -> Option<Option<Expression>> {
+fn exclusive_integer_range(
+    intervals: impl IntoIterator<Item = (f64, f64)>,
+) -> Option<Option<Expression>> {
     let mut boundaries = BTreeMap::new();
     let mut coverage = 0.0;
-    for branch in branches {
-        if branch == &Value::Bool(false) {
-            continue;
-        }
-        if !matches!(types(branch.get("type")?), [value] if value.as_str() == Some("integer"))
-            || branch.get("$ref").is_some()
-            || branch.as_object()?.keys().any(|key| {
-                key != "type"
-                    && !reference_keyword(key)
-                    && !keywords("limit").any(|name| name == key.as_str())
-            })
-        {
-            return None;
-        }
-        let (first, last) = integer_bounds(branch);
+    for (first, last) in intervals {
         if first > last {
             continue;
         }
@@ -1018,6 +1063,49 @@ fn exclusive_integer_range(branches: &[Value]) -> Option<Option<Expression>> {
 
 fn reference_keyword(keyword: &str) -> bool {
     matches!(keyword, "$ref" | "$defs") || keywords("annotation").any(|name| name == keyword)
+}
+
+fn combine_numeric_constraints(
+    layers: &[&Value],
+    membership: u8,
+    combination: Option<&str>,
+) -> Option<(&'static str, Value)> {
+    let name = match membership {
+        INTEGER_TYPE => "integer",
+        NUMBER_TYPE => "number",
+        _ => return None,
+    };
+    let mut limits = serde_json::Map::new();
+    for (index, layer) in layers.iter().enumerate() {
+        let Some(fields) = layer.as_object() else {
+            continue;
+        };
+        for (key, bound) in fields {
+            let key = key.as_str();
+            if key == "type" || reference_keyword(key) || (index == 0 && Some(key) == combination) {
+                continue;
+            }
+            if !keywords("limit").any(|name| name == key) {
+                return None;
+            }
+            let value = bound.as_f64().filter(|value| value.is_finite())?;
+            let lower = matches!(key, "minimum" | "exclusiveMinimum");
+            if limits
+                .get(key)
+                .and_then(Value::as_f64)
+                .is_none_or(|previous| {
+                    if lower {
+                        value > previous
+                    } else {
+                        value < previous
+                    }
+                })
+            {
+                limits.insert(key.to_owned(), bound.clone());
+            }
+        }
+    }
+    Some((name, Value::Object(limits)))
 }
 
 fn finite_constants(schema: &Value) -> Option<Vec<&Value>> {

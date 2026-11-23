@@ -47,15 +47,11 @@ export function integerBounds(rules) {
   ];
 }
 
-export function exclusiveIntegerRange(branches, annotations) {
+export function exclusiveIntegerRange(intervals) {
   const boundaries = new Map();
   const changeAt = (point, change) => boundaries.set(point, (boundaries.get(point) ?? 0) + change);
   let coverage = 0;
-  for (const branch of branches) {
-    if (branch === false) continue;
-    if (branch.type !== 'integer' && !(Array.isArray(branch.type) && branch.type.length === 1 && branch.type[0] === 'integer')) return undefined;
-    if (branch.$ref !== undefined || Object.keys(branch).some(key => key !== 'type' && !annotations.has(key) && !numericLimitKeywords.includes(key))) return undefined;
-    const [first, last] = integerBounds(branch);
+  for (const [first, last] of intervals) {
     if (first > last) continue;
     if (first !== -Infinity && (!Number.isSafeInteger(first) || !Number.isSafeInteger(first - 1))) return undefined;
     if (last !== Infinity && (!Number.isSafeInteger(last) || !Number.isSafeInteger(last + 1))) return undefined;

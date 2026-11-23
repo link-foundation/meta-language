@@ -4688,6 +4688,14 @@ reference or the schema inspection depth limit. For string
 union. Each intersection has the shared automaton work and state limits. If a
 branch exceeds those limits, a diagnostic identifies the validation assertion.
 
+Numeric local references combine inclusive and exclusive limits across the
+reference chain. For numeric `anyOf` branches, the decoder intersects the
+common limits with each branch before forming their union. For `oneOf`
+branches restricted to integers, the decoder intersects each branch with the
+common limits and generates spellings covered by exactly one interval. The
+same diagnostics describe numeric spelling limits and assertions that require
+document validation.
+
 An unrestricted integer decoder over all JSON spellings exceeds the portable
 context-free grammar model. Restrict number spellings to `1.0*1e10*`, with
 `n` zeroes between the two `1` digits in the significand and `k` zeroes in
