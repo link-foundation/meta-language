@@ -12,6 +12,7 @@ const caseFoldingFixtureFile = 'parity/fixtures/text-location-case-folding.lino'
 const caseFoldingFixture = readProjectData(new URL('../../' + caseFoldingFixtureFile, import.meta.url));
 const graphemeFixtureFile = 'parity/fixtures/text-location-grapheme-conformance.lino';
 const normalizationFixtureFile = 'parity/fixtures/text-location-normalization-conformance.lino';
+const characterClassFixtureFile = 'parity/fixtures/text-location-character-class-cases.lino';
 
 function observe(context, requirementId, assertions, evidenceFile = fixtureFile) {
   recordIssue195Observations({
@@ -160,4 +161,41 @@ test('Unicode 17 compatibility composition locates complete original ranges', co
   observe(context, 'I195-I243-UNICODE-COMPATIBILITY-COMPOSITION', [
     'unicode17CompatibilityNormalization', 'compatibilityCompositionsKeepOriginalSourceRanges',
   ], normalizationFixtureFile);
+});
+
+test('Unicode 17 word and dash classifications retain original quote ranges', context => {
+  const { version, wordCases, dashes } = readProjectData(new URL('../../' + characterClassFixtureFile, import.meta.url));
+  assert.equal(version, '17.0.0');
+  const prefix = '🚀 ';
+  for (const { text, words } of wordCases) {
+    const left = `${prefix}${text}`;
+    const right = words.join(' ');
+    assert.deepEqual(wordNgramOverlap(left, right, { size: 1 }), words.map(word => {
+      const leftStart = left.indexOf(word, prefix.length);
+      const rightStart = right.indexOf(word);
+      return {
+        words: [word], left: { start: leftStart, end: leftStart + word.length },
+        right: { start: rightStart, end: rightStart + word.length },
+      };
+    }), text);
+    if (words.length !== 1) continue;
+    const sourceStart = `${prefix}begin `.length;
+    const source = `${prefix}begin ${text} end`;
+    const found = locate(source, 'begin clue end', { maxEdits: 1, unit: 'word' })
+      .find(match => match.start === prefix.length && match.end === source.length);
+    assert.equal(found?.distance, 1, text);
+    assert.deepEqual(found.edits, [{
+      kind: 'replace', fragment: { text: 'clue', start: 6, end: 10 },
+      source: { text, start: sourceStart, end: sourceStart + text.length },
+    }], text);
+  }
+  for (const dash of dashes) {
+    assert.deepEqual(locate(`${prefix}${dash} end`, '-', { normalize: ['dashes'] }), [{
+      start: prefix.length, end: prefix.length + dash.length, text: dash,
+      normalizations: dash === '-' ? [] : ['dashes'], distance: 0, edits: [],
+    }], dash);
+  }
+  observe(context, 'I195-I243-UNICODE-WORD-AND-DASH-CLASSES', [
+    'unicode17WordClassesKeepSourceRanges', 'unicode17DashClassKeepsSourceRanges',
+  ], characterClassFixtureFile);
 });

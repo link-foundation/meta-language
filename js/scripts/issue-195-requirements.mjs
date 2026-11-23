@@ -846,6 +846,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
       },
     },
+    {
+      id: 'I195-I243-UNICODE-WORD-AND-DASH-CLASSES',
+      source: ISSUE_195_SOURCES.normalizedTextLocation,
+      language: 'Unicode text search',
+      version: 'Unicode 17.0.0 General_Category',
+      construct: 'shared word and dash character classifications',
+      expectedBehavior: 'Word alignment and word sequence overlap use the same Unicode 17.0.0 letters, marks, numbers, and underscore in both runtimes. Dash normalization uses the same Unicode dash punctuation and minus sign. Both retain original spans.',
+      fixture: 'parity/fixtures/text-location-character-class-cases.lino',
+      selector: 'new Unicode 17.0.0 CJK and Beria Erfe letters, Tolong Siki digits, combining marks, fractions, underscore, punctuation boundaries, word replacements and dash equivalence',
+      assertions: ['unicode17WordClassesKeepSourceRanges', 'unicode17DashClassKeepsSourceRanges'],
+      implementationEntryPoints: {
+        javascript: ['js/src/text-location.js', 'js/src/text-location-character-classes.js', 'js/tests/language-text-location.test.js'],
+        rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I238-HTML-VISIBLE-TEXT',

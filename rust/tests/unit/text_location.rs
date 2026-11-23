@@ -13,6 +13,7 @@ const FIXTURE: &str = "parity/fixtures/text-location.lino";
 const CASE_FOLDING_FIXTURE: &str = "parity/fixtures/text-location-case-folding.lino";
 const GRAPHEME_FIXTURE: &str = "parity/fixtures/text-location-grapheme-conformance.lino";
 const NORMALIZATION_FIXTURE: &str = "parity/fixtures/text-location-normalization-conformance.lino";
+const CHARACTER_CLASS_FIXTURE: &str = "parity/fixtures/text-location-character-class-cases.lino";
 
 fn fixture() -> Value {
     read_structured_data_lino(include_str!("../../../parity/fixtures/text-location.lino"))
@@ -389,5 +390,97 @@ fn unicode_compatibility_composition_locates_complete_original_ranges() {
             "compatibilityCompositionsKeepOriginalSourceRanges",
         ],
         test_name: "unicode_compatibility_composition_locates_complete_original_ranges",
+    });
+}
+
+#[test]
+fn unicode_word_and_dash_classifications_keep_original_ranges() {
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/text-location-character-class-cases.lino"
+    ))
+    .expect("text location character classes");
+    assert_eq!(fixture["version"], "17.0.0");
+    let prefix = "🚀 ";
+    for case in fixture["wordCases"].as_array().unwrap() {
+        let text = case["text"].as_str().unwrap();
+        let words: Vec<_> = case["words"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|word| word.as_str().unwrap())
+            .collect();
+        let left = format!("{prefix}{text}");
+        let right = words.join(" ");
+        let pairs = word_ngram_overlap(&left, &right, 1, &[]);
+        assert_eq!(pairs.len(), words.len(), "{text}");
+        for (pair, word) in pairs.iter().zip(&words) {
+            assert_eq!(pair.words.len(), 1, "{text}");
+            assert_eq!(pair.words[0], *word, "{text}");
+            let left_start = prefix.len() + text.find(*word).unwrap();
+            let right_start = right.find(*word).unwrap();
+            assert_eq!(pair.left.start(), left_start);
+            assert_eq!(pair.left.end(), left_start + word.len());
+            assert_eq!(pair.right.start(), right_start);
+            assert_eq!(pair.right.end(), right_start + word.len());
+        }
+        if words.len() != 1 {
+            continue;
+        }
+        let source_start = prefix.len() + "begin ".len();
+        let source = format!("{prefix}begin {text} end");
+        let found = locate(
+            &source,
+            "begin clue end",
+            TextLocationOptions {
+                max_edits: 1,
+                unit: TextEditUnit::Word,
+                ..TextLocationOptions::default()
+            },
+        )
+        .into_iter()
+        .find(|result| result.range.start() == prefix.len() && result.range.end() == source.len())
+        .unwrap_or_else(|| panic!("missing complete word replacement for {text}"));
+        assert_eq!(found.distance, 1);
+        let [TextLocationEdit::Replace { fragment, source }] = found.edits.as_slice() else {
+            panic!("expected one word replacement for {text}");
+        };
+        assert_eq!(fragment.text, "clue");
+        assert_eq!(fragment.range.start(), 6);
+        assert_eq!(fragment.range.end(), 10);
+        assert_eq!(source.text, text);
+        assert_eq!(source.range.start(), source_start);
+        assert_eq!(source.range.end(), source_start + text.len());
+    }
+    let options = TextLocationOptions {
+        normalize: &[TextNormalization::Dashes],
+        ..TextLocationOptions::default()
+    };
+    for dash in fixture["dashes"].as_array().unwrap() {
+        let dash = dash.as_str().unwrap();
+        let source = format!("{prefix}{dash} end");
+        let matches = locate(&source, "-", options);
+        assert_eq!(matches.len(), 1, "{dash}");
+        assert_eq!(matches[0].range.start(), prefix.len());
+        assert_eq!(matches[0].range.end(), prefix.len() + dash.len());
+        assert_eq!(matches[0].text, dash);
+        let required = if dash == "-" {
+            &[][..]
+        } else {
+            options.normalize
+        };
+        assert_eq!(matches[0].normalizations.as_slice(), required);
+        assert_eq!(matches[0].distance, 0);
+        assert!(matches[0].edits.is_empty());
+    }
+    record(&Observation {
+        requirement_id: "I195-I243-UNICODE-WORD-AND-DASH-CLASSES",
+        suffix: "behavior",
+        fixture_id: "i195-i243-unicode-word-and-dash-classes",
+        fixture_file: CHARACTER_CLASS_FIXTURE,
+        assertions: &[
+            "unicode17WordClassesKeepSourceRanges",
+            "unicode17DashClassKeepsSourceRanges",
+        ],
+        test_name: "unicode_word_and_dash_classifications_keep_original_ranges",
     });
 }

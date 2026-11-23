@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
+import { textLocationCharacterClass } from './text-location-character-classes.js';
 import { segmentGraphemes } from './text-location-graphemes.js';
 import { normalizeCompatibility } from './text-location-normalization.js';
 import { normalizeQuoteScalar, normalizeYoScalar, selectTextEdit } from './text-location-policy.js';
 
 const normalizationOrder = ['nfkc', 'quotes', 'dashes', 'yo', 'case', 'softHyphen', 'whitespace'];
-const wordCharacter = /[\p{L}\p{M}\p{N}_]/u;
 
 let caseFolding;
 
@@ -44,7 +44,7 @@ function projection(source, names) {
   for (const { text: segment, index, end } of segments) {
     let text = segment;
     if (names.has('quotes')) text = Array.from(text, value => String.fromCodePoint(normalizeQuoteScalar(value.codePointAt(0)))).join('');
-    if (names.has('dashes')) text = text.replace(/[\p{Pd}−]/gu, '-');
+    if (names.has('dashes')) text = Array.from(text, value => textLocationCharacterClass(value) === 'dash' ? '-' : value).join('');
     if (names.has('yo')) text = Array.from(text, value => String.fromCodePoint(normalizeYoScalar(value.codePointAt(0)))).join('');
     if (names.has('case')) text = Array.from(text, foldCase).join('');
     if (names.has('softHyphen')) text = text.replace(/\u00ad/gu, '');
@@ -65,7 +65,7 @@ function groupProjection(entries, unit) {
   if (unit === 'word') {
     let previous = false;
     for (const entry of entries) {
-      const word = wordCharacter.test(entry.text);
+      const word = textLocationCharacterClass(entry.text) === 'word';
       if (word && previous) {
         groups.at(-1).text += entry.text;
         groups.at(-1).end = entry.end;

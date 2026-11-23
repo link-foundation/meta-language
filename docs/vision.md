@@ -2371,8 +2371,12 @@ conformance cases through `js/scripts/build-text-location-normalization.mjs`.
 A positive edit budget compares graphemes or word segments and returns the
 lowest-distance nonempty match at each start, preferring the shorter match on
 ties. Word n-gram overlap returns every pair of source ranges for each shared
-projected word sequence. JavaScript exposes UTF-16 offsets and Rust exposes
-UTF-8 offsets for these operations.
+projected word sequence. The word and dash classifications use the same
+generated Unicode 17.0 character category ranges in both runtimes. A word is
+a consecutive sequence of letters, marks, numbers or underscores. Dash
+normalization maps dash punctuation and the minus sign to the ASCII hyphen.
+JavaScript exposes UTF-16 offsets and Rust exposes UTF-8 offsets for these
+operations. [Unicode 17.0 character data](https://www.unicode.org/Public/17.0.0/ucd/UnicodeData.txt)
 
 The JavaScript Yacc/Lex draft lowers declared token rules, left and right
 precedence, `%prec`, lexical modes, trivia and supported arithmetic or textual

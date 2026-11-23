@@ -3,7 +3,6 @@
 use std::collections::BTreeMap;
 use std::sync::LazyLock;
 
-use regex::Regex;
 use unicode_normalization::char::{canonical_combining_class, compose, decompose_compatible};
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -114,9 +113,40 @@ pub struct WordNgramMatch {
     pub right: ByteRange,
 }
 
-static DASH: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[\p{Pd}−]$").expect("dash category"));
-static WORD: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^[\p{L}\p{M}\p{N}_]$").expect("word categories"));
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum CharacterClass {
+    Word,
+    Dash,
+}
+
+static CHARACTER_CLASSES: LazyLock<Vec<(u32, u32, CharacterClass)>> = LazyLock::new(|| {
+    include_str!("../data/text-location-character-classes.lino")
+        .lines()
+        .skip(1)
+        .map(|line| {
+            let mut fields = line[1..line.len() - 1].split_whitespace();
+            let class = match fields.next() {
+                Some("word") => CharacterClass::Word,
+                Some("dash") => CharacterClass::Dash,
+                _ => unreachable!("Unicode text location character class"),
+            };
+            let mut scalar = || {
+                u32::from_str_radix(fields.next().expect("character class boundary"), 16)
+                    .expect("character class scalar")
+            };
+            (scalar(), scalar(), class)
+        })
+        .collect()
+});
+
+fn character_class(value: char) -> Option<CharacterClass> {
+    let scalar = u32::from(value);
+    let index = CHARACTER_CLASSES.partition_point(|(_, last, _)| *last < scalar);
+    CHARACTER_CLASSES
+        .get(index)
+        .filter(|(first, _, _)| *first <= scalar)
+        .map(|(_, _, class)| *class)
+}
 
 static CASE_FOLDING: LazyLock<BTreeMap<char, Vec<char>>> = LazyLock::new(|| {
     include_str!("../data/text-location-case-folding.lino")
@@ -237,7 +267,7 @@ fn project(source: &str, names: &[TextNormalization]) -> Vec<TextLocationUnit> {
             if names.contains(&Quotes) {
                 value = mapped_scalar(value, policy::normalize_quote_scalar);
             }
-            if names.contains(&Dashes) && DASH.is_match(value.encode_utf8(&mut [0; 4])) {
+            if names.contains(&Dashes) && character_class(value) == Some(CharacterClass::Dash) {
                 value = '-';
             }
             if names.contains(&Yo) {
@@ -295,7 +325,8 @@ fn word_units(entries: Vec<TextLocationUnit>) -> Vec<TextLocationUnit> {
     let mut result: Vec<TextLocationUnit> = Vec::new();
     let mut previous = false;
     for entry in entries {
-        let word = WORD.is_match(&entry.text);
+        let word =
+            entry.text.chars().next().and_then(character_class) == Some(CharacterClass::Word);
         if word && previous {
             let group = result.last_mut().expect("previous word");
             group.text.push_str(&entry.text);

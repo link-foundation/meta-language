@@ -20,7 +20,7 @@ function readGraphemeProperties() {
   return tables;
 }
 
-function rangeValue(ranges, codePoint) {
+export function rangeValue(ranges, codePoint) {
   let first = 0;
   let end = ranges.length;
   while (first < end) {
