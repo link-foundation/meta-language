@@ -127,7 +127,11 @@ function restoreRustCastParserPlacement(source) {
   const current = pinRequiredFieldNativeHostSource(source);
   if (current.sha256 !== 'e611a419aa9996b071557f94f9187db1177b4cb75f636917e8f17c8b4ab2fa53') return source;
 
-  const castParser = readFileSync(new URL('rust/src/translation/rust/expressions/cast.rs', root), 'utf8');
+  const currentCastParser = readFileSync(new URL('rust/src/translation/rust/expressions/cast.rs', root), 'utf8');
+  const { source: castParser } = replayAsciiHostEdits(currentCastParser, [{
+    before: '    pub(super) fn require_cast_following_token(',
+    after: '    fn require_cast_following_token(',
+  }]);
   assert.deepEqual(pinRequiredFieldNativeHostSource(castParser), {
     bytes: 1888,
     sha256: '99e26de92be80ad4ba3d8b7dcc0a6da5e9e000d0068f542a38d16ada2cd7212a',

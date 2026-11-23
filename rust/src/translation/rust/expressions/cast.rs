@@ -37,7 +37,7 @@ impl RustParser {
         Ok(value)
     }
 
-    fn require_cast_following_token(&self, parenthesized_type: bool) -> Result<()> {
+    pub(super) fn require_cast_following_token(&self, parenthesized_type: bool) -> Result<()> {
         let token = self.cursor.peek();
         if accept_rust_cast_following_token(&token.value, parenthesized_type) {
             Ok(())
