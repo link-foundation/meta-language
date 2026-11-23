@@ -162,6 +162,31 @@ summarized at log line 1028.
 [Conformance partition 2](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589212564),
 [bulk grammar pipeline](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589213975)
 
+On `3be026bb2`, all four tooling partitions, the JavaScript downstream
+partition, all 15 package partitions, and the JavaScript aggregate passed.
+Package contracts checked 474 requirements, 495 fixture identities and 819
+dependency entries. The raw schema job passed 11 tests with zero skips. The
+bulk grammar pipeline again produced the 67-language matrix.
+[JavaScript aggregate](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137750507373),
+[package contracts](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137693504082),
+[raw schema and consumer checks](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137693504298),
+[bulk grammar pipeline](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137664120628)
+
+Delivery Candidates failed Rust package verification with E0382 at log lines
+549–567. Our first correction for Clippy's `redundant_clone` diagnostic at
+log line 4157 removed the clone and moved the original lexer mode before
+the replay array consumed it. The corrected generator review borrows the
+mode for rendering, keeps `DEFAULT_MODE` for the default mode, and transfers
+the original mode to replay. A regression checks that the generated function
+borrows the mode before preserving it in the replay array. It failed before
+the correction and passed after regeneration. The focused run passed 19 tests,
+including ordinary modes, default modes and ordered actions. One automated
+translation test reported the pause.
+[Delivery Candidates compiler error](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137753170118),
+[original Clippy diagnostic](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137557959068),
+[JavaScript lexer tests](../../../js/tests/grammar-lexer-rules.test.js),
+[native lexer tests](../../../rust/tests/unit/grammar_lexer_transport.rs)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
