@@ -87,6 +87,13 @@ A workflow dispatch on a tag executes the workflow stored on that tag; an
 older tag does not acquire checks added by a later commit. Future releases use
 the updated workflow through the dispatch in step 2.
 
+The published Rust crate and the `v1.0.0` tag identify commit `a79782093`.
+Native HTML support landed later. A matched release containing native HTML
+requires a new version with both packages built from the new tag.
+[Published crate](https://crates.io/crates/meta-language/1.0.0) ·
+[Release tag](https://github.com/link-foundation/meta-language/releases/tag/v1.0.0) ·
+[Native HTML change](https://github.com/link-foundation/meta-language/commit/5f723fc410d8383ce8de58f7439e91ad1b6ad49b)
+
 `js/scripts/release-publication.mjs` rejects publishing from a branch or a
 different commit. It checks the tag, requested version, npm manifest, both
 lockfile version fields and crate manifest before authentication. The registry
