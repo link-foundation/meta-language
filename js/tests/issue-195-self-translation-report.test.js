@@ -3,8 +3,31 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { partitionGroupFiles, partitionMeasuredWorkloads, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
+
+test('report scheduling retains every source across eight balanced shards', () => {
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-report-costs.lino', import.meta.url));
+  const elapsed = new Map(costs.entries.map(row => [row.file, row.milliseconds]));
+  const files = [...elapsed.keys()].sort();
+  const shards = partitionMeasuredWorkloads(files, 8, { costs });
+  assert.equal(costs.logs.length, 8);
+  assert.deepEqual(shards.flat().sort(), files);
+  const loads = shards.map(shard => shard.reduce((sum, file) => sum + elapsed.get(file), 0));
+  assert.ok(Math.max(...loads) < 1_500_000, 'recorded costs leave a margin in the existing deadline');
+});
+
+test('translation scheduling retains every test across six balanced shards', () => {
+  const files = partitionTests(testFiles()).groups.translation;
+  const shards = Array.from({ length: 6 }, (_, index) => partitionGroupFiles(files, `${index + 1}/6`));
+  assert.deepEqual(shards.flat().sort(), files);
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino', import.meta.url));
+  const elapsed = new Map(costs.entries.map(row => [row.file, row.milliseconds]));
+  const loads = shards.map(shard => shard.reduce((sum, file) => sum + (elapsed.get('js/tests/' + file) ?? 0), 0));
+  assert.ok(Math.max(...loads) < 600_000, 'balance the observed workload within the existing deadline');
+});
 
 test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', async () => {
   const module = 'js/src/translation/primitive-value-rules.js';

@@ -19,7 +19,12 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
+const translationSchedulingFile=new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino',import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
+const workloadRevisions=new Map([
+ [39615628279,schedulingRevision],
+ [45080642295,'016ed6eed0c376a682299dd6463533a620a6a36f'],
+]);
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
 /** Largest observed workload first; source changes use a byte-size estimate.
@@ -29,7 +34,8 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
  const measured=costs??readProjectData(schedulingFile);
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
- assert.equal(measured.run,39615628279);assert.equal(measured.revision,schedulingRevision);
+ assert.ok(workloadRevisions.has(measured.run),'costs identify a recorded CI run');
+ assert.equal(measured.revision,workloadRevisions.get(measured.run));
  assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
  const known=new Map();
  for(const row of measured.entries){
@@ -151,9 +157,12 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
-  // historical modulo cohorts retain their independent exact partition rules.
+  // Balance the two measured cohorts at their current six-job width.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  if(count===6&&files.includes('translation-native-library-receipt-history.test.js')){
+    const costs=readProjectData(translationSchedulingFile);
+    return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count,{costs})[index-1].map(file=>file.slice(9));
+  }
   return files.filter((_, offset) => offset % count === index - 1);
 }
 

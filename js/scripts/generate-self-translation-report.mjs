@@ -41,6 +41,7 @@ import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMar
 import {partitionMeasuredWorkloads} from './test-groups.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const reportSchedulingFile = new URL('../../parity/fixtures/ci-45080642295-report-costs.lino', import.meta.url);
 const STATUSES = ['translated', 'carried', 'comment'];
 const DEFAULT_DECORATORS = 'parity/self-translation/decorators.lino';
 // The native codec keeps pattern graph scope admission in this component.
@@ -90,7 +91,7 @@ function listSourceModules() {
  * The K-th measured-cost shard; every complete current source appears once.
  */
 function shardOf(files, index, count) {
-  return partitionMeasuredWorkloads(files,count)[index-1];
+  return partitionMeasuredWorkloads(files, count, { costs: readProjectData(reportSchedulingFile) })[index - 1];
 }
 
 function selectedModules(replayPlan) {
