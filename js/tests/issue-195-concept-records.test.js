@@ -48,16 +48,19 @@ function observe(requirementId, assertions, testName) {
   });
 }
 
-// The alias links of the concept `id` in `network`, as `vocabulary name` strings.
-function aliasesOf(network, id) {
-  const concept = network.findTerm(id);
-  return network.links()
-    .filter((link) => {
-      const references = link.references();
-      return link.metadata().linkType === LinkType.Semantic && references.length === 2 &&
-        references[0].equals(concept) && network.link(references[1]).metadata().linkType === LinkType.Type;
-    })
-    .map((link) => `${link.metadata().language} ${link.metadata().term}`);
+// Index the alias links once before checking every registered concept.
+function aliasesByConceptLink(network) {
+  const aliases = new Map();
+  for (const link of network.links()) {
+    const { linkType, language, term } = link.metadata();
+    if (linkType !== LinkType.Semantic) continue;
+    const references = link.references();
+    if (references.length !== 2 || network.link(references[1]).metadata().linkType !== LinkType.Type) continue;
+    const conceptLink = references[0].asU64();
+    if (!aliases.has(conceptLink)) aliases.set(conceptLink, new Set());
+    aliases.get(conceptLink).add(`${language} ${term}`);
+  }
+  return aliases;
 }
 
 test('the runtime records are the register: identity, phrase, definition, constraints and source aliases', () => {
@@ -120,15 +123,17 @@ test('original and former names stay aliases that decode to the canonical concep
   const report = network.seedConceptRecords();
   assert.equal(report.concepts, CONCEPT_RECORDS.length);
   assert.equal(network.seedConceptRecords().links, 0, 'assigning the records again adds nothing');
+  const indexedAliases = aliasesByConceptLink(network);
   for (const record of CONCEPT_RECORDS) {
-    const concept = network.link(network.findTerm(record.id)).metadata();
+    const conceptLink = network.findTerm(record.id);
+    const concept = network.link(conceptLink).metadata();
     assert.equal(concept.linkType, LinkType.Concept);
     assert.equal(concept.definition, record.definition);
     assert.equal(network.reconstructConcept(record.id, 'en'), record.phrase);
-    const aliases = aliasesOf(network, record.id);
-    for (const { source, name } of record.sourceAliases) assert.ok(aliases.includes(`${source} ${name}`), `${record.id} keeps ${source} ${name}`);
+    const aliases = indexedAliases.get(conceptLink.asU64());
+    for (const { source, name } of record.sourceAliases) assert.ok(aliases?.has(`${source} ${name}`), `${record.id} keeps ${source} ${name}`);
     for (const former of record.formerNames) {
-      assert.ok(aliases.includes(`${FORMER_CONCEPT_ID_VOCABULARY} ${former}`), `${record.id} keeps ${former}`);
+      assert.ok(aliases?.has(`${FORMER_CONCEPT_ID_VOCABULARY} ${former}`), `${record.id} keeps ${former}`);
       assert.equal(conceptRecord(former), record);
     }
   }
@@ -156,10 +161,12 @@ test('import assigns records and renames former identities; source round trips a
   assert.deepEqual(report, { concepts: 2, assigned: 1, renamed: 1, aliasLinks: 1, syntaxMappings: 1 });
   assert.equal(merged.findTerm('grammar.char-class'), undefined, 'the former identity is not a concept');
   const record = conceptRecord('grammar.character-class');
-  assert.equal(merged.link(merged.findTerm(record.id)).metadata().definition, record.definition);
+  const conceptLink = merged.findTerm(record.id);
+  assert.equal(merged.link(conceptLink).metadata().definition, record.definition);
   assert.equal(merged.reconstructConcept(record.id, 'ru'), 'класс символов');
-  assert.ok(aliasesOf(merged, record.id).includes('wikidata Q5089612'));
-  assert.ok(aliasesOf(merged, record.id).includes(`${FORMER_CONCEPT_ID_VOCABULARY} grammar.char-class`));
+  const aliases = aliasesByConceptLink(merged).get(conceptLink.asU64());
+  assert.ok(aliases?.has('wikidata Q5089612'));
+  assert.ok(aliases?.has(`${FORMER_CONCEPT_ID_VOCABULARY} grammar.char-class`));
   assert.equal(merged.link(merged.findTerm('project.custom-concept')).metadata().definition, 'A concept without a record.');
   const size = merged.len();
   merged.importConceptOntology(older);
