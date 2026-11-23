@@ -153,7 +153,19 @@ export function partitionGroupFiles(files, shard = '1/1') {
   }
   // Only the measured general-grammar cohort changes owners. Native and
   // historical modulo cohorts retain their independent exact partition rules.
-  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  if (count === 6 && files.includes('issue-195-interchange-api-cli.test.js')) {
+    const baseline = readProjectData(schedulingFile);
+    const measured = readProjectData(new URL('../../parity/fixtures/ci-45250356617-grammar-test-wall-costs.lino', import.meta.url));
+    assert.equal(measured.schemaVersion, 1);
+    assert.equal(measured.run, 45250356617);
+    assert.equal(measured.revision, '3224c9a1d9e26d7eebe31e7cbfd563555bd69b9b');
+    assert.equal(new Set(measured.entries.map(row => row.file)).size, measured.entries.length);
+    const entries = new Map(baseline.entries.map(row => [row.file, row]));
+    for (const row of measured.entries) entries.set(row.file, row);
+    const costs = { ...baseline, entries: [...entries.values()] };
+    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { costs })[index - 1]
+      .map(file => file.slice('js/tests/'.length));
+  }
   if ((count === 6 || count === 9) && files.includes('translation-ascii-text-predicates.test.js')
     && files.includes('translation-raw-data-freeze.test.js')) {
     const originalPartition = (index - 1) % 3;
