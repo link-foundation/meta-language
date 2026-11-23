@@ -32,7 +32,7 @@ test('one CI measurement worker preserves full source coverage, hashes and both 
   } finally { await worker.close(); }
 });
 
-test('the hosted report overlaps two measurements and preserves the sequential report', () => {
+test('the hosted report reuses an available worker and preserves the sequential report', () => {
   const directory = mkdtempSync(join(tmpdir(), 'self-translation-report-'));
   const script = fileURLToPath(new URL('../scripts/generate-self-translation-report.mjs', import.meta.url));
   const modules = ['javascript-line-terminator-rules.js', 'rust-completion-panic.js', 'rust-cast-syntax-rules.js']
@@ -42,6 +42,7 @@ test('the hosted report overlaps two measurements and preserves the sequential r
     const result = spawnSync(process.execPath, [...imports, script, '--out-dir', outDir, '--modules', modules.join(',')], {
       encoding: 'utf8',
       env: { ...process.env, CI: String(mode === 'hosted'), GITHUB_ACTIONS: String(mode === 'hosted') },
+      timeout: 60_000,
     });
     assert.equal(result.status, 0, result.error ?? result.stderr);
     const report = readProjectData(join(outDir, 'self-translation-report.lino'));
@@ -56,13 +57,26 @@ test('the hosted report overlaps two measurements and preserves the sequential r
   try {
     const preload = `import os from 'node:os';
       import { syncBuiltinESMExports } from 'node:module';
+      import { Worker } from 'node:worker_threads';
       os.availableParallelism = () => 4;
       process.availableMemory = () => 8 * 1024 ** 3;
-      syncBuiltinESMExports();`;
+      syncBuiltinESMExports();
+      const postMessage = Worker.prototype.postMessage;
+      let firstMeasurement;
+      let dispatches = 0;
+      Worker.prototype.postMessage = function (...args) {
+        dispatches++;
+        if (dispatches === 1) {
+          firstMeasurement = () => postMessage.apply(this, args);
+          return;
+        }
+        postMessage.apply(this, args);
+        if (dispatches === 3) firstMeasurement();
+      };`;
     const sequential = run('local');
     const concurrent = run('hosted', ['--import', `data:text/javascript,${encodeURIComponent(preload)}`]);
     assert.deepEqual(concurrent.report, sequential.report);
-    assert.match(concurrent.progress, /measuring js\/src\/translation\/rust-completion-panic\.js[\s\S]*recorded js\/src\/translation\/javascript-line-terminator-rules\.js/u);
+    assert.match(concurrent.progress, /recorded js\/src\/translation\/rust-completion-panic\.js[\s\S]*measuring js\/src\/translation\/rust-cast-syntax-rules\.js[\s\S]*recorded js\/src\/translation\/javascript-line-terminator-rules\.js/u);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

@@ -513,8 +513,6 @@ async function main() {
   }
   const decoratorsText = readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8');
   const decorators = DecoratorSet.fromLino(decoratorsText);
-  const rows = [];
-  const failures = [];
   const replay = option('--replay-plan') ? readProjectData(option('--replay-plan')) : null;
   if (replay?.origin?.decorators !== null && replay?.origin?.decorators !== undefined) {
     assert.deepEqual(decorators.ids(), replay.origin.decorators, 'replay decorator selections differ');
@@ -530,14 +528,13 @@ async function main() {
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
   const workers = [];
-  const pending = [];
-  let nextWorker = 0;
+  const pending = new Map();
+  const outcomes = new Map();
   const finish = async () => {
-    const { module, started, result } = pending.shift();
-    const outcome = await result;
-    if (outcome.error) failures.push({ module, error: outcome.error });
-    else {
-      rows.push(outcome.row);
+    const { worker, module, started, row, error } = await Promise.race(pending.values());
+    pending.delete(worker);
+    outcomes.set(module, { row, error });
+    if (row) {
       console.error(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
     }
   };
@@ -549,29 +546,41 @@ async function main() {
         workers.push(createReportMeasurementWorker(decoratorsText));
       }
     }
-    const window = Math.max(workers.length, 1);
+    const slots = workers.length ? workers : [null];
     for (const module of selected) {
       const started = performance.now();
       console.error(`self-translation report: resolving ${module}`);
       try {
         const moduleContext = context(posix.relative('js/src', module));
         const importMilliseconds = Math.round(performance.now() - started);
-        // Resolve ahead of measurement, then free the oldest worker slot.
-        // This bounds outstanding work and retains the selected module order.
-        if (pending.length === window) await finish();
+        // Resolve ahead of measurement and reuse the first available slot.
+        if (pending.size === slots.length) await finish();
         console.error(`self-translation report: measuring ${module} (imports ${importMilliseconds} ms)`);
-        const worker = workers[nextWorker];
-        const result = worker
-          ? worker.measure(module, moduleContext).then(row => ({ row }), error => ({ error: String(error?.message ?? error) }))
-          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) });
-        pending.push({ module, started, result });
-        nextWorker = (nextWorker + 1) % window;
+        const worker = slots.find(slot => !pending.has(slot));
+        const result = (async () => {
+          try {
+            const row = worker
+              ? await worker.measure(module, moduleContext)
+              : measureSelfTranslationModule(module, decorators, moduleContext);
+            return { worker, module, started, row };
+          } catch (error) {
+            return { worker, module, started, error: String(error?.message ?? error) };
+          }
+        })();
+        pending.set(worker, result);
       } catch (error) {
-        failures.push({ module, error: String(error?.message ?? error) });
+        outcomes.set(module, { error: String(error?.message ?? error) });
       }
     }
-    while (pending.length > 0) await finish();
+    while (pending.size > 0) await finish();
   } finally { await Promise.all(workers.map(worker => worker.close())); }
+  const rows = [];
+  const failures = [];
+  for (const module of selected) {
+    const { row, error } = outcomes.get(module);
+    if (row) rows.push(row);
+    else failures.push({ module, error });
+  }
   mkdirSync(outDir, { recursive: true });
   const data = {
     schemaVersion: 1,
