@@ -4,9 +4,9 @@
 // pinned tree-sitter grammar.json natively and the pinned antlr/grammars-v4
 // grammar of parity/grammars-v4-sources.json, compiles both, parses the
 // inventory's sample source with each, compares the native rows with the
-// oracle rows of parity/fixtures/default-cst-expected.json, merges the
-// grammars that imported, and lists every feature still missing: unsupported
-// constructs, undefined rules, compile errors and rejected samples.
+// registered historical oracle or the current CST fixture, and merges the
+// imported grammars. The report lists unsupported constructs, undefined rules,
+// compile errors, rejected samples and row differences.
 //
 //   node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir DIR [--only A,B] [--jobs N] [--timeout SECONDS] [--formal-definitions FILE]
 //
@@ -34,6 +34,7 @@ import { readGrammarReport, writeGrammarReport } from './grammar-report-files.mj
 import { planGrammarWorkOrder } from './grammar-work-order.mjs';
 import { describeGrammarRejection } from './grammar-rejection-description.mjs';
 import { readNativeGrammarProjection } from './native-grammar-projection.mjs';
+import { nativeOracleBaseline } from './native-oracle-baselines.mjs';
 import { acquireAntlrAuxiliarySources } from './antlr-auxiliary-sources.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -203,10 +204,9 @@ async function importPinned(pinned) {
 
 /** Runs every stage of one language, calling `report(row)` after each. */
 export async function bulkLanguageRow(entry, report = () => {}, options = {}) {
-  const { compileGrammar, importAntlr, mergeGrammars, parseGrammarLinks, sharedRuleDecisions } = await import('../src/index.js');
+  const { compileGrammar, importAntlr, languageEntry, mergeGrammars, parseGrammarLinks, sharedRuleDecisions } = await import('../src/index.js');
   const { importTreeSitterNative, renderTreeSitterNative } = await import('../src/grammar-importers/tree-sitter-native.js');
-  const { nativeRows } = await import('./native-grammar-rows.mjs');
-  const oracle = readJson('parity/fixtures/default-cst-expected.json').languages[entry.name]?.positive ?? null;
+  const { nativeRows, oracleRows } = await import('./native-grammar-rows.mjs');
   const row = { language: entry.name, grammars: entry.grammars, treeSitter: { stage: 'source' }, grammarsV4: null, additionalSources: [], merge: null };
   const grammars = [];
   // Preserve the original first-source row and merge identity. Other catalog
@@ -257,8 +257,17 @@ export async function bulkLanguageRow(entry, report = () => {}, options = {}) {
       }
       componentDefinitions.set(definitionKey, component.sourceOrigin);
       const result = compileAndParse(tree, grammar, entry.source, compileGrammar);
+      if (component.position === 0 && result.tree) {
+        tree.stage = 'rows';
+        const native = languageEntry(entry.name)?.grammars[0];
+        const baseline = native && native.id === pinned?.native ? nativeOracleBaseline(native) : null;
+        if (baseline) tree.oracle = baseline.grammar;
+        report(row);
+        const oracle = baseline ? oracleRows(entry.source, entry.name)
+          : readJson('parity/fixtures/default-cst-expected.json').languages[entry.name]?.positive;
+        if (oracle) tree.rowsMatch = JSON.stringify(nativeRows(result.tree, entry.source, projection)) === JSON.stringify(oracle);
+      }
       tree.stage = 'done';
-      if (component.position === 0 && result.tree && oracle) tree.rowsMatch = JSON.stringify(nativeRows(result.tree, entry.source, projection)) === JSON.stringify(oracle);
     } catch (error) {
       tree.error = message(error);
     }

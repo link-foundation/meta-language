@@ -120,6 +120,32 @@ test('a bulk row imports, compiles, parses and merges a pinned grammar and lists
   observe(['everyCatalogLanguageImported', 'missingFeaturesListed'], 'bulk row on a pinned grammar');
 });
 
+test('bulk rows use the exact independent oracles of the pinned native grammars', async () => {
+  const languages = bulkLanguages();
+  const comparisonFinished = new Error('the primary Tree-sitter stage reported its result');
+  for (const [name, id, version] of [
+    ['Dart', 'dart', '0.2.0'],
+    ['sql-mysql', 'sql', '0.3.11'],
+    ['sql-bigquery', 'sql', '0.3.11'],
+    ['Protocol Buffers', 'proto', '0.6.0'],
+  ]) {
+    const entry = languages.find((language) => language.name === name);
+    let comparison;
+    // The primary stage reports before the independent imports and merge.
+    await assert.rejects(bulkLanguageRow(entry, ({ treeSitter }) => {
+      if (treeSitter.stage === 'done' || treeSitter.error) {
+        comparison = treeSitter;
+        throw comparisonFinished;
+      }
+    }), (error) => error === comparisonFinished);
+    assert.equal(comparison.stage, 'done', comparison.error);
+    assert.equal(comparison.sample, 'accepted', comparison.rejection);
+    assert.equal(comparison.rowsMatch, true, name);
+    assert.equal(comparison.oracle.id, id, name);
+    assert.equal(comparison.oracle.version, version, name);
+  }
+});
+
 test('a grammars-v4 grammar starts at the entry point its desc.xml names', () => {
   const desc = '<desc>\n   <targets>Java</targets>\n   <entry-point>program</entry-point>\n</desc>\n';
   assert.equal(descEntryPoint(desc), 'program');
