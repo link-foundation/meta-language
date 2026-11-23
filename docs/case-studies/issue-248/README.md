@@ -139,6 +139,14 @@ failing assertions.
 [tooling partition 4, log lines 920–944](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211838),
 [downstream partition, log lines 750–791](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211619)
 
+Tooling partition 2 found a stale acceptance manifest at log lines 956–964.
+The naming changes had updated the canonical concept register while three
+fixtures still carried its previous digest. The manifest refresh updates
+those three fixtures and the two fixtures whose input is the extended
+dependency inventory. All fixture identities, requirements and assertions
+remain in the generated manifest.
+[Tooling partition 2](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589212106)
+
 The naming conformance partition on that revision passed its 81 active tests.
 It checked the current and historical naming owners at log lines 950–951.
 Two executable translation tests reported the pause at lines 873 and 981.
