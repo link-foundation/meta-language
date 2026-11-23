@@ -3870,14 +3870,14 @@ refuse. Original sixty-minute evidence deadlines, compiler checks, commands,
 artifact paths, toolchain pins and all other workflow bytes remain unchanged.
 Historical guard views retain the certified original fifteen-scope workflow and
 verify the complete inverse for the later six-partition workflow.
-The translation and conformance test jobs now each use eight partitions after
+The translation and conformance test jobs each moved to eight partitions after
 [run 45098181978](https://github.com/link-foundation/meta-language/actions/runs/45098181978)
 hit their fifteen-minute job deadline. Translation uses measured workloads to
 assign each file once. Capture and merge explicitly select all eight exact
 partitions. Each four-way conformance partition is the union of its two
 successors. Complete original workflow bytes authenticate the historical
 three- and six-part translation transport controls and the four-part
-conformance controls. The current workflow checks cover the eight-way matrices,
+conformance controls. The certified workflow checks cover the eight-way matrices,
 feedback cohort and native artifact uploads.
 After [run 45159625352](https://github.com/link-foundation/meta-language/actions/runs/45159625352)
 exhausted the eighth translation job's deadline, the schedule moved the
@@ -3905,6 +3905,18 @@ from six archived jobs. The packet includes measured durations with matching
 source hashes for 93 of 94 files, and the scheduler estimates any changed or
 unmeasured file by size. The complete four-partition test union and
 fifteen-minute deadline remain in effect.
+
+In [run 45276612669](https://github.com/link-foundation/meta-language/actions/runs/45276612669/job/138049949159),
+the seventh translation job spent 218 seconds in setup and reached its
+fifteen-minute deadline after 236 passing assertions. The preceding job with
+the same file assignment passed all 260 assertions. Ten required translation
+jobs now share the complete file set using the recorded costs. The feedback
+merge requires all ten exact-commit partitions. The timing experiment checks
+a 500-second advisory test budget. The workflow regression verifies the
+complete file union and the original deadline. The former eight-partition
+workflow remains an authenticated input.
+The six acceptance evidence partitions and eight conformance jobs retain their
+existing schedules.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,

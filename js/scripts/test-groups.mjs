@@ -163,8 +163,8 @@ export function partitionGroupFiles(files, shard = '1/1') {
   }
   // Balance cohorts with observed file durations at the recorded widths.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
-  if ((count === 6 || count === 8) && files.includes('translation-native-library-receipt-history.test.js')) {
-    const costs = readProjectData(count === 8 ? translationWallSchedulingFile : translationSchedulingFile);
+  if ([6, 8, 10].includes(count) && files.includes('translation-native-library-receipt-history.test.js')) {
+    const costs = readProjectData(count === 6 ? translationSchedulingFile : translationWallSchedulingFile);
     return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs })[index - 1]
       .map(file => file.slice('js/tests/'.length));
   }

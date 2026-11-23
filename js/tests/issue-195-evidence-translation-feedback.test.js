@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
+import { dependencyWorkflowHistoricalPredecessors, restoreDependencyWorkflowSource } from '../scripts/dependency-workflow-source-history.mjs';
 import { captureTranslationTestFeedbackPartition, mergeTranslationTestFeedbackPartitions } from '../scripts/translation-test-feedback.mjs';
 import { readProjectData, writeProjectData } from '../scripts/project-data.mjs';
 import { partitionGroupFiles, partitionTests, testFiles, TEST_GROUPS } from '../scripts/test-groups.mjs';
@@ -19,7 +20,7 @@ function fixture(parts = [{ [compilerFile]: '(compiler feedback)\n' }, { [native
   const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'translation-feedback-')));
   mkdirSync(path.join(root, 'js/tests'), { recursive: true });
   const partitions = parts.length;
-  for (const name of 'abcdefgh'.slice(0, Math.max(partitions, 6))) {
+  for (const name of 'abcdefghij'.slice(0, Math.max(partitions, 6))) {
     writeFileSync(path.join(root, `js/tests/translation-${name}.test.js`), '');
   }
   const inputDirectory = path.join(root, '.issue-195-work/parts');
@@ -190,28 +191,40 @@ test('initial translation shards retain every file, native flag, original deadli
   assert.match(acceptance.get('javascript-suite-independent').header, /timeout-minutes: 60/u);
 });
 
-test('the current eight translation jobs retain every file, exact feedback partition and the original job deadline', () => {
-  const workflow = readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+function assertTranslationFeedbackJobs(workflow, partitions) {
   const jobs = new Map(parseWorkflow(workflow).map(job => [job.id, job]));
   const tests = jobs.get('tests');
   assert.match(tests.header, /timeout-minutes: 15\n/u);
   const shards = [...tests.header.matchAll(/\{group: translation, partition: (\d+), shards: (\d+)\}/gu)]
     .map(([, index, count]) => `${index}/${count}`);
-  assert.deepEqual(shards, Array.from({ length: 8 }, (_, index) => `${index + 1}/8`));
+  assert.deepEqual(shards, Array.from({ length: partitions }, (_, index) => `${index + 1}/${partitions}`));
   const files = partitionTests(testFiles()).groups.translation;
   assert.deepEqual(shards.flatMap(shard => partitionGroupFiles(files, shard)).sort(), files);
 
   const merge = jobs.get('translation-test-feedback');
-  assert.match(merge.steps.find(step => step.name === 'Download every translation feedback partition separately').text,
-    /pattern: translation-test-feedback-\$\{\{ github.sha \}\}-\*-of-8/u);
-  assert.match(merge.steps.find(step => /translation-test-feedback\.mjs merge/u.test(step.run)).run, /--partitions 8/u);
-  const value = fixture([{ [compilerFile]: '(compiler feedback)\n' }, ...Array.from({ length: 7 }, () => ({}))]);
+  const download = merge.steps.find(step => step.name === 'Download every translation feedback partition separately');
+  assert.ok(download.text.includes('pattern: translation-test-feedback-${{ github.sha }}-*-of-' + partitions + '\n'));
+  const combine = merge.steps.find(step => /translation-test-feedback\.mjs merge/u.test(step.run));
+  assert.ok(combine.run.includes(`--partitions ${partitions} `));
+  const value = fixture([{ [compilerFile]: '(compiler feedback)\n' }, ...Array.from({ length: partitions - 1 }, () => ({}))]);
   try {
-    assert.deepEqual(mergeTranslationTestFeedbackPartitions({ ...value, partitions: 8 }),
-      { commit, partitions: 8, files: [compilerFile] });
+    assert.deepEqual(mergeTranslationTestFeedbackPartitions({ ...value, partitions }),
+      { commit, partitions, files: [compilerFile] });
   } finally {
     rmSync(value.root, { recursive: true, force: true });
   }
+}
+
+test('the current ten translation jobs retain every file, exact feedback partition and the original job deadline', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  assertTranslationFeedbackJobs(workflow, 10);
+});
+
+test('the certified eight translation jobs retain every file and their complete feedback partition', () => {
+  const source = '.github/workflows/js.yml';
+  const workflow = readFileSync(new URL(`../../${source}`, import.meta.url), 'utf8');
+  const previous = restoreDependencyWorkflowSource(workflow, source, dependencyWorkflowHistoricalPredecessors[source]);
+  assertTranslationFeedbackJobs(previous, 8);
 });
 
 test('omitted or duplicate initial shards, flattened feedback and a weakened final gate fail conservation', () => {

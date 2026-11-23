@@ -100,6 +100,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'rust/tests/unit/grammar_outcome_number_kind_rules.rs': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
 });
 export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
+  '.github/workflows/js.yml': '331e4b5f158f68ec9b2bf2c3e8dacb6c6c44c341',
   'js/tests/ci-workflow-structure.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-translation-feedback.test.js': '3f72318d4d63e26323f86b50dcf389d5a531e4c4',
   'js/tests/support/platform-test-deadline-history.js': '3f72318d4d63e26323f86b50dcf389d5a531e4c4',
@@ -107,7 +108,7 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = 'b60161580a7efe4709af3ea748513d4b7caded1cd1176dd4ffe2b37ebe7ee777';
+const archiveDigest = 'c7beabb9763e586ceac0f4ad02d362a59a71553c5b4f2f02298a419773347fb7';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 const verifiedPredecessors = new WeakMap();
