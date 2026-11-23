@@ -70,7 +70,7 @@ function executionRuns(inventory, partition) {
   });
 }
 
-function passingPair() {
+function passingPair(rustVersion = '1.99.0') {
   const expected = {
     identity: { repository: 'link-foundation/meta-language', commit: 'b'.repeat(40), run: '123', attempt: '2',
       fixtureSha256: 'c'.repeat(64), semanticProjectionFixtureSha256: 'd'.repeat(64),
@@ -80,7 +80,7 @@ function passingPair() {
       crate: { file: 'meta-language-1.2.3.crate', sha256: '2'.repeat(64) } },
     profile: { CARGO_BUILD_JOBS: '2', CARGO_INCREMENTAL: '0', CARGO_PROFILE_DEV_DEBUG: '0',
       CARGO_PROFILE_TEST_DEBUG: '0', RUST_TEST_THREADS: '1', patchedCrateOptLevel: 3 },
-    platform: 'linux-x64', nativeWorkloads: 134, javascriptWorkloads: 148, producerResult: 'success',
+    platform: 'linux-x64', nativeWorkloads: 134, javascriptWorkloads: 148, producerResult: 'success', rustVersion,
   };
   const listed = inventoryRuns();
   const inventory = readFormalAiNativeInventory(listed, fixture);
@@ -105,7 +105,7 @@ function passingPair() {
       (partition === 'corpus-ratchet' ? entry.target === 'unit' && entry.name === ratchet : !(entry.target === 'unit' && entry.name === ratchet)));
     const rows = (isProbe) => selected.filter(({ probe }) => probe === isProbe).map(({ file, name }) => ({ file, name, outcome: 'passed' }));
     const javascriptProbe = { outputs, sharedConceptsReused: assertion(), distinctionsPreserved: assertion(), semanticProjectionObservations: [] };
-    const compiler = 'rustc 1.99.0\nrelease: 1.99.0\nhost: x86_64-unknown-linux-gnu\n';
+    const compiler = `rustc ${rustVersion}\nrelease: ${rustVersion}\nhost: x86_64-unknown-linux-gnu\n`;
     const profileEnvironment = { CARGO_PROFILE_DEV_DEBUG: '0', CARGO_PROFILE_TEST_DEBUG: '0' };
     const configuration = ['--config', `patch.crates-io.meta-language.path=${JSON.stringify(`/different-${partition}/crate`)}`,
       '--config', 'profile.dev.package.meta-language.opt-level=3'];
@@ -248,6 +248,7 @@ test('formal AI merger refuses absent duplicate stale foreign compiler profile l
     assert.ok(result.problems.length); assert.equal(result.report, null);
   }
   assert.equal(mergeFormalAiWorkloadPartitions(pair, fixture, { ...expected, producerResult: 'failure' }).report, null);
+  assert.equal(mergeFormalAiWorkloadPartitions(pair, fixture, { ...expected, rustVersion: '1.100.0' }).report, null);
 });
 
 test('formal AI independent bundle validation refuses tampered inputs outputs events and undeclared paths before publication', () => {
@@ -360,7 +361,7 @@ test('formal AI source-only connected merger authenticates its own candidates an
     const environment = { CI: 'true', GITHUB_ACTIONS: 'true', GITHUB_REPOSITORY: 'link-foundation/meta-language',
       GITHUB_SHA: 'b'.repeat(40), GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '2' };
     const expected = await formalAiPartitionExpectations({ root, tarball, crate, fixture, environment });
-    const { pair } = passingPair();
+    const { pair } = passingPair(expected.rustVersion);
     const directories = [];
     for (const part of pair) {
       const { envelope } = part;

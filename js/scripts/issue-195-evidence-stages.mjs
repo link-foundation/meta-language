@@ -23,7 +23,7 @@ export const RUNTIMES = Object.freeze(['javascript', 'rust']);
 export const NATIVE_TARGETS = Object.freeze(['JavaScript', 'Rust', 'Lean', 'Rocq']);
 
 /** The toolchain versions the issue #195 evidence declares. */
-export const DECLARED_TOOLCHAINS = Object.freeze({ rustc: '1.99.0', lean: '4.34.1', rocq: '9.3' });
+export const DECLARED_TOOLCHAINS = Object.freeze({ rustc: '1.100.0', lean: '4.36.0', rocq: '9.3' });
 
 const NATIVE_TOOLS = Object.freeze({ JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' });
 // The suites' tests run the native toolchains on emitted translations.
@@ -64,7 +64,7 @@ export const EVIDENCE_STAGES = Object.freeze({
   // Live default-branch rule inspection runs on main after merge, as a
   // non-blocking report: no pull request check may depend on it.
   'post-merge': Object.freeze([
-    { name: 'merge-enforcement', groups: ['merge-enforcement'], tools: ['node'] },
+    { name: 'merge-enforcement', groups: ['merge-enforcement'], tools: ['node', 'rustc', 'cargo'] },
   ]),
   'release-delivery': Object.freeze([
     {

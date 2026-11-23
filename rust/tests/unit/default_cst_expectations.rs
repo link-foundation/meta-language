@@ -800,6 +800,49 @@ fn every_rust_inventory_language_parses_to_its_complete_lossless_default_cst() {
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+    record_dependency_grammar_observation("allConcreteSyntaxTreesRoundTrip", POSITIVE_TEST_NAME);
+}
+
+fn record_dependency_grammar_observation(assertion: &str, test_name: &str) {
+    super::issue_195_observations::record(&super::issue_195_observations::Observation {
+        requirement_id: "I195-ISSUE-197-GRAMMARS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-issue-197-grammars",
+        fixture_file: "parity/language-grammar-inventory.lino",
+        assertions: &[assertion],
+        test_name,
+    });
+}
+
+#[test]
+fn tree_sitter_accepts_the_abi_of_every_upgraded_grammar() {
+    let grammars = [
+        ("csharp", tree_sitter_c_sharp::LANGUAGE),
+        ("dart", tree_sitter_dart::LANGUAGE),
+        ("erlang", tree_sitter_erlang::LANGUAGE),
+        ("graphql", tree_sitter_graphql::LANGUAGE),
+        ("json5", tree_sitter_json5_orchard::LANGUAGE),
+        ("lua", tree_sitter_lua::LANGUAGE),
+        ("matlab", tree_sitter_matlab::LANGUAGE),
+        ("perl", ts_parser_perl::LANGUAGE),
+        ("php", tree_sitter_php::LANGUAGE_PHP),
+        ("php_only", tree_sitter_php::LANGUAGE_PHP_ONLY),
+        ("powershell", tree_sitter_powershell::LANGUAGE),
+        ("proto", tree_sitter_proto::LANGUAGE),
+        ("scala", tree_sitter_scala::LANGUAGE),
+        ("scheme", tree_sitter_scheme::LANGUAGE),
+        ("sql", tree_sitter_sequel::LANGUAGE),
+    ];
+    let mut parser = tree_sitter::Parser::new();
+    for (name, grammar) in grammars {
+        parser
+            .set_language(&grammar.into())
+            .unwrap_or_else(|error| panic!("{name}: {error}"));
+    }
+    record_dependency_grammar_observation(
+        "grammarLanguageAbiAccepted",
+        "tree_sitter_accepts_the_abi_of_every_upgraded_grammar",
+    );
 }
 
 const EMBEDDED_TEST_NAME: &str =

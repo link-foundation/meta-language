@@ -15,15 +15,18 @@ export function generateDependencyInventoryOrderHistory({check=false}={}) {
     return{revision,path,source:value.blob.toString('utf8'),certificate:value.certificate};};
   const original=capture('9ac3038132953e6a220bba6f06a3e6147d39836f');
   const predecessor=capture('394103f912aaac8e2f69147519ab97c6c5107528');
+  const lastCertifiedAudit=capture('ec9f4efb0e9ef936114e09823981352f6db13700');
   const first=readStructuredDataLino(original.source),previous=readStructuredDataLino(predecessor.source);
+  const certified=readStructuredDataLino(lastCertifiedAudit.source);
   const actual=readProjectData(new URL(path,root));
   assert.equal(first.items.length,745);assert.equal(previous.items.length,773);
   const declarations=collectDependencies(fileURLToPath(root));assert.deepEqual(checkInventory(actual,declarations),[]);
-  const byId=new Map(actual.items.map(row=>[row.id,row]));assert.equal(byId.size,actual.items.length);
+  const byId=new Map(certified.items.map(row=>[row.id,row]));assert.equal(byId.size,certified.items.length);
   for(const row of previous.items)assert.deepEqual(byId.get(row.id),row,'all complete preceding facts remain exact: '+row.id);
   for(const row of first.items)assert.deepEqual(byId.get(row.id),row,'all complete original facts remain exact: '+row.id);
-  assert.equal(actual.auditDate,first.auditDate);assert.equal(actual.auditDate,previous.auditDate);
-  const ordered=retainDependencyInventoryOrder(first,actual);
+  assert.equal(certified.auditDate,first.auditDate);assert.equal(certified.auditDate,previous.auditDate);
+  assert.ok(actual.auditDate >= certified.auditDate);
+  const ordered=retainDependencyInventoryOrder(first,certified);
   const prefix={...ordered,items:ordered.items.slice(0,first.items.length)};
   assert.equal(serializeProjectData(prefix,path),original.source);
   const oldIds=new Set(previous.items.map(row=>row.id));
@@ -33,8 +36,9 @@ export function generateDependencyInventoryOrderHistory({check=false}={}) {
     retainedIds:previous.items.map(row=>row.id),
     boundary:'Identity-based order repair preserves all 745 original and 773 preceding complete records, original audit date, every current declaration and both exact certified source inverses. Newly declared identities append. This is no live registry audit or native execution evidence.'};
   assert.equal(ordered.items.filter(row=>oldIds.has(row.id)).length,773);
-  if(check)checkProjectData(new URL(path,root),ordered);else writeProjectData(new URL(path,root),ordered);
-  const document=new URL('docs/dependency-audit.md',root),rendered=renderAuditDocument(ordered);
+  const current=retainDependencyInventoryOrder(certified,actual);
+  if(check)checkProjectData(new URL(path,root),current);else writeProjectData(new URL(path,root),current);
+  const document=new URL('docs/dependency-audit.md',root),rendered=renderAuditDocument(current);
   if(check)assert.equal(readFileSync(document,'utf8'),rendered);else writeFileSync(document,rendered);
   const history=new URL('parity/fixtures/dependency-inventory-order-history.lino',root);
   if(check)checkProjectData(history,value);else writeProjectData(history,value);

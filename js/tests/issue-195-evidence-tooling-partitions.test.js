@@ -66,7 +66,7 @@ test('tooling partition adapters reconstruct both complete preceding raw guards 
       "  const workflow = restoreRawContractPartitionHistory(await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));",
       "\nimport {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';\n"],
   ]){
-    const source=read(file);assert.equal(source.split(after).length,2);assert.equal(source.split(insertion).length,2);
+    const source=restoreDependencyWorkflowSource(read(file),file);assert.equal(source.split(after).length,2);assert.equal(source.split(insertion).length,2);
     assert.equal(source.replace(insertion,'').replace(after,before),previous(file));
   }
 });
@@ -74,3 +74,4 @@ test('tooling partition adapters reconstruct both complete preceding raw guards 
 import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';
 
 import {restoreSchedulingSourceHistory} from '../scripts/scheduling-source-history.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';

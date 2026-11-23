@@ -127,7 +127,9 @@ export function parseCargoManifest(text) {
       const renamed = value.match(/package\s*=\s*"([^"]+)"/u)?.[1];
       const kind = section.endsWith('dev-dependencies') ? 'development' : section.endsWith('build-dependencies') ? 'build' : 'runtime';
       const localPath = value.match(/path\s*=\s*"([^"]+)"/u)?.[1];
-      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value), ...(localPath ? { path: localPath } : {}) });
+      const blocker = value.match(/\s+#\s*blocked:\s*(\S+)\s*$/u)?.[1];
+      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value),
+        ...(localPath ? { path: localPath } : {}), ...(blocker ? { blocker } : {}) });
     }
   }
   return { settings, dependencies };

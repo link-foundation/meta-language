@@ -23,6 +23,7 @@ const output = path.resolve(required('--out'));
 const corpus = readProjectData(corpusPath);
 const platform = `${process.platform}-${process.arch}`;
 const corpusWirePath = path.join(workDirectory, 'consumer-inputs.wire.json');
+const checkDependencyUpgrade = process.argv.includes('--dependency-upgrade');
 
 // Crates that open network connections; none may be a normal dependency of
 // the parse path the consumer exercises.
@@ -53,6 +54,17 @@ async function main() {
   await mkdir(path.dirname(output), { recursive: true });
   writeProjectData(output, report);
   console.log(`issue-195 consumer: wrote ${platform} report to ${output}`);
+  if (checkDependencyUpgrade) {
+    const npm = report.npm.dependencyUpgrade;
+    const { currentLinks, current } = report.crate.dependencyUpgrade;
+    if (npm.linksNotation !== npm.expectedLinksNotation || npm.declaration !== npm.expectedDeclaration
+      || npm.localOverrides.length !== 0) throw new Error('npm consumer did not resolve the audited Links Notation dependency');
+    for (const { patch, linksNotation, treeSitter } of current) {
+      if (linksNotation.join() !== currentLinks || treeSitter.join() !== patch) {
+        throw new Error(`crate consumer did not resolve one Links Notation ${currentLinks} and one Tree-sitter ${patch}`);
+      }
+    }
+  }
 }
 
 async function npmConsumer() {
@@ -95,6 +107,8 @@ async function npmConsumer() {
     '--import', './deny-network.mjs', 'consumer.mjs', corpusWirePath, observationPath,
   ], { cwd: directory, env: { ...environment, NODE_OPTIONS: '' } });
   const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
+  const consumerPackage = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'));
+  const dependencyUpgrade = checkDependencyUpgrade ? observeNpmDependencyUpgrade(lock, installedPackage, consumerPackage) : undefined;
   return {
     version: installedPackage.version,
     checksum,
@@ -102,6 +116,18 @@ async function npmConsumer() {
     publicEntryPoints: observed.publicEntryPoints,
     offline: observed.offline,
     observations: observed.observations,
+    ...(dependencyUpgrade && { dependencyUpgrade }),
+  };
+}
+
+function observeNpmDependencyUpgrade(lock, installedPackage, consumerPackage) {
+  const packageLock = readProjectData(path.join(root, 'js/package-lock.json'), { format: 'json' });
+  return {
+    linksNotation: lock.packages?.['node_modules/links-notation']?.version ?? null,
+    expectedLinksNotation: packageLock.packages['node_modules/links-notation'].version,
+    declaration: installedPackage.dependencies?.['links-notation'] ?? null,
+    expectedDeclaration: packageLock.packages[''].dependencies['links-notation'],
+    localOverrides: Object.keys(consumerPackage.overrides ?? {}),
   };
 }
 
@@ -177,6 +203,7 @@ async function crateConsumer() {
   });
   const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
   const sources = await rustSources(path.join(crateSource, 'src'));
+  const dependencyUpgrade = checkDependencyUpgrade ? await observeCrateDependencyUpgrade(crateSource, environment) : undefined;
   return {
     version,
     checksum,
@@ -191,7 +218,47 @@ async function crateConsumer() {
         .map(({ file }) => path.relative(crateSource, file).split(path.sep).join('/')),
     },
     observations: observed.observations,
+    ...(dependencyUpgrade && { dependencyUpgrade }),
   };
+}
+
+async function observeCrateDependencyUpgrade(crateSource, env) {
+  const directory = path.join(workDirectory, 'crate-dependency-consumer');
+  await mkdir(path.join(directory, 'src'), { recursive: true });
+  const lock = await readFile(path.join(root, 'rust/Cargo.lock'), 'utf8');
+  const currentLinks = /^name = "links-notation"\nversion = "([^"]+)"/mu.exec(lock)[1];
+  const currentTree = /^name = "tree-sitter"\nversion = "([^"]+)"/mu.exec(lock)[1];
+  const treeSitterPatches = [...new Set(['0.27.1', currentTree])];
+
+  async function resolve(links, treeSitter, label) {
+    await writeFile(path.join(directory, 'Cargo.toml'), [
+      '[package]', 'name = "dependency-consumer"', 'version = "0.0.0"', 'edition = "2024"',
+      '[dependencies]',
+      `meta-language = { path = ${JSON.stringify(crateSource.split(path.sep).join('/'))}, default-features = false }`,
+      `links-notation = "=${links}"`, `tree-sitter = "=${treeSitter}"`, '',
+    ].join('\n'));
+    const graph = await run(`dependency-consumer-tree-${label}`, 'cargo', [
+      'tree', '-e', 'normal', '--prefix', 'none', '--format', '{p}',
+    ], { cwd: directory, env });
+    const versions = (name) => [...new Set([...graph.matchAll(new RegExp(`^${name} v(\\S+)`, 'gmu'))]
+      .map(([, version]) => version))].sort();
+    return { linksNotation: versions('links-notation'), treeSitter: versions('tree-sitter') };
+  }
+
+  await writeFile(path.join(directory, 'src/main.rs'), `fn main() {
+    let value: meta_language::links_notation::LiNo<String> =
+        links_notation::parse_lino_to_links("x").unwrap().remove(0);
+    assert_eq!(meta_language::links_notation::format_links(&[value]), "x");
+    let _parser = tree_sitter::Parser::new();
+}\n`);
+  const current = [];
+  for (const patch of treeSitterPatches) {
+    const versions = await resolve(currentLinks, patch, patch);
+    await run(`dependency-consumer-type-${patch}`, 'cargo', ['check', '--locked', '--quiet'], { cwd: directory, env });
+    current.push({ patch, ...versions });
+  }
+  const historical = await resolve('0.22.0', '0.27.1', 'links-notation-0.22.0');
+  return { currentLinks, treeSitterPatches, current, historical };
 }
 
 function agreement(left, right) {

@@ -3,8 +3,14 @@ import { readProjectData, resolveProjectDataPath } from '../scripts/project-data
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { appendFile, readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
+import { Parser } from 'web-tree-sitter';
 import { structuredDataRecordToLino } from '../src/structured-data-records.js';
 import { test } from 'node:test';
+import { readExternalGrammarAsset } from '../scripts/external-grammar-cache.mjs';
+import { loadGrammarLanguage } from '../src/grammar-tiering.js';
+import '../src/tree-sitter-runtime.js';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 import {
   LinkNetwork,
@@ -346,6 +352,33 @@ function embeddedProblems(network, language, source, want, label) {
 
 const TEST_NAME = 'every JavaScript inventory language parses to its complete lossless default CST';
 
+function recordDependencyGrammarObservation(assertion, testName) {
+  recordIssue195Observations({
+    requirementId: 'I195-ISSUE-197-GRAMMARS',
+    suffix: 'behavior',
+    fixtureId: 'planned:repository-directive:i195-issue-197-grammars',
+    fixtureFile: 'parity/language-grammar-inventory.lino',
+    assertions: [assertion],
+    testName,
+  });
+}
+
+test('Tree-sitter accepts the ABI of every rebuilt grammar', () => {
+  const assets = readProjectData(new URL('../../parity/grammars/external-assets.lino', import.meta.url)).assets;
+  const rebuilt = Object.entries(assets).filter(([, asset]) => asset.build);
+  assert.ok(rebuilt.length > 0);
+  const parser = new Parser();
+  try {
+    for (const [file] of rebuilt) {
+      const language = loadGrammarLanguage(gunzipSync(readExternalGrammarAsset(file)));
+      assert.doesNotThrow(() => parser.setLanguage(language), file);
+    }
+  } finally {
+    parser.delete();
+  }
+  recordDependencyGrammarObservation('grammarLanguageAbiAccepted', 'Tree-sitter accepts the ABI of every rebuilt grammar');
+});
+
 test(TEST_NAME, async () => {
   const failures = [];
   for (const language of inventory.languages) {
@@ -368,6 +401,7 @@ test(TEST_NAME, async () => {
     else await recordPositiveCstObservations(language.name, TEST_NAME);
   }
   assert.deepEqual(failures, []);
+  recordDependencyGrammarObservation('allConcreteSyntaxTreesRoundTrip', TEST_NAME);
 });
 
 const evidenceBytes = await readFile(resolveProjectDataPath(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url)));

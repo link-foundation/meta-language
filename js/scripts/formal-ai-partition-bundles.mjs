@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
 import { lstat, mkdir, open, opendir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
 import { readProjectFileBytes, writeProjectData } from './project-data.mjs';
 import {
@@ -59,6 +60,11 @@ export async function formalAiPartitionExpectations({ root, tarball, crate, fixt
   requireValue(environment.CI === 'true' && environment.GITHUB_ACTIONS === 'true', 'partitions require the actual GitHub Actions context');
   requireValue(/^[0-9a-f]{40}$/u.test(environment.GITHUB_SHA ?? '') && /^\d+$/u.test(environment.GITHUB_RUN_ID ?? '') &&
     /^[1-9]\d*$/u.test(environment.GITHUB_RUN_ATTEMPT ?? '') && environment.GITHUB_REPOSITORY === 'link-foundation/meta-language', 'invalid same-run repository/commit/attempt identity');
+  const workflow = (await regularBytes(path.join(root, '.github/workflows/ci.yml'), 1024 * 1024)).toString('utf8');
+  const producer = parseWorkflow(workflow).find(({ id }) => id === 'formal-ai-workload-parts');
+  const setup = producer?.steps.filter(({ name }) => name === 'Setup Rust');
+  const rustVersion = setup?.length === 1 && /^\s*uses: dtolnay\/rust-toolchain@(\d+\.\d+\.\d+)\s*$/mu.exec(setup[0].text)?.[1];
+  requireValue(rustVersion, 'the producer workflow must pin one exact Rust release');
   const candidate = async (file, npm) => {
     const bytes = await regularBytes(file, FORMAL_AI_PARTITION_BUNDLE_LIMITS.fileBytes);
     const checksum = (await regularBytes(`${file}.sha256`, 1024)).toString('utf8').trim().split(/\s+/u);
@@ -80,7 +86,7 @@ export async function formalAiPartitionExpectations({ root, tarball, crate, fixt
       `issue-195-formal-ai-partition-${partition}-${identity.commit}-${identity.run}-${identity.attempt}`])),
     candidates: { npm: await candidate(tarball, true), crate: await candidate(crate, false) },
     platform: `${process.platform}-${process.arch}`, profile: FORMAL_AI_PARTITION_PROFILE,
-    nativeWorkloads: 134, javascriptWorkloads: 148, producerResult,
+    nativeWorkloads: 134, javascriptWorkloads: 148, producerResult, rustVersion,
   };
 }
 

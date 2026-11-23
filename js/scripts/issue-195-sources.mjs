@@ -8,7 +8,7 @@
 // so the ledger cannot silently keep a stale or incomplete requirement snapshot.
 // The offline check (the default) validates the committed register against the
 // ledger and captured direct instructions; `--online` also compares it with
-// the live issue #195/#199 and pull request #196/#201 discussions.
+// the live tracked issue and pull request discussions.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -19,8 +19,8 @@ export const ISSUE_195_SOURCE_REGISTER_PATH = 'parity/issue-195-sources.json';
 export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
-export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226]);
+export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 197]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 249]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never
@@ -304,6 +304,28 @@ export function refreshRegister(register, { issue, issues = [], comments }) {
     requirementSources: register.requirementSources.map(refresh),
     statusReports: register.statusReports.map(refresh),
   };
+}
+
+/** Add the reviewed issue #197 sources, then resolve their exact live revisions. */
+export function appendDependencyUpgradeSources(register, sources) {
+  const reviewed = [
+    ['dependencyUpgradeIssue', 197, 'issue', 'Update all dependencies to their latest releases and enforce freshness in CI',
+      'Dependency and grammar upgrades, lockfile resolution, freshness rules and publication',
+      ['I195-ISSUE-197-DEPENDENCIES', 'I195-ISSUE-197-GRAMMARS', 'I195-ISSUE-197-LOCKFILES', 'I195-ISSUE-197-FRESHNESS', 'I195-ISSUE-197-CRATE-PUBLISHED', 'I195-ISSUE-197-NPM-PUBLISHED', 'I195-ISSUE-197-LINKS-CONSUMER']],
+    ['dependencyConsumerTracking', 5887340274, 'comment', 'Formal AI consumer tracking',
+      'Tracks the dependency upgrades and freshness gate from the downstream application', ['I195-ISSUE-197-FRESHNESS']],
+    ['treeSitterConsumerResolution', 6382129935, 'comment', 'Tree-sitter patch compatibility and crate publication',
+      'Reproduce the conflict at tree-sitter 0.27.1 and protect compatible patch updates in the released Cargo package',
+      ['I195-ISSUE-197-TREE-SITTER-CONSUMER', 'I195-ISSUE-197-CRATE-PUBLISHED']],
+    ['npmConsumerResolution', 6878955660, 'comment', 'JavaScript parser dependency resolution and npm publication',
+      'Upgrade Links Notation, Peggy and source-map-generator, run grammar and translation tests, and publish metadata without consumer overrides',
+      ['I195-ISSUE-197-NPM-CONSUMER', 'I195-ISSUE-197-NPM-PUBLISHED']],
+  ];
+  const reviewedKeys = new Set(reviewed.map(([key]) => key));
+  const retained = register.requirementSources.filter(({ key }) => !reviewedKeys.has(key));
+  const additions = reviewed.map(([key, id, kind, title, role, ledgerCoverage]) =>
+    ({ key, id, kind, url: sources[key], title, role, ledgerCoverage }));
+  return { ...register, requirementSources: [...retained, ...additions] };
 }
 
 /** Captured conversation instructions are checked from their committed bytes. */

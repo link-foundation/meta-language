@@ -319,12 +319,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       # The evidence runner reads the language catalog, whose native grammar
       # source names are parsed with links-notation.
@@ -393,7 +393,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -404,7 +404,7 @@ jobs:
         working-directory: js
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
@@ -488,6 +488,7 @@ jobs:
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-consumer"
+          --dependency-upgrade
           --out issue-195-artifacts/platform/report.lino
 
       # The delivery gate: every retained item is current or at its verified
@@ -504,7 +505,7 @@ jobs:
       # Post-merge report: a release published after the audit date is moved to
       # by the scheduled dependency refresh, never by failing a check.
       - name: Compare the delivered dependencies with the live registries
-        if: ${{ !cancelled() && matrix.os == 'ubuntu-latest' && github.event_name != 'pull_request' }}
+        if: ${{ !cancelled() && matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         continue-on-error: true
         shell: bash
         env:
@@ -550,7 +551,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -561,7 +562,7 @@ jobs:
         working-directory: js
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - uses: actions/download-artifact@v8
         with:
@@ -622,7 +623,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -633,7 +634,7 @@ jobs:
         working-directory: js
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       # The runner was shut down (signal 15, status 143) without output while cargo built
       # formal-ai's test targets from scratch. The workload runner bounds the
@@ -669,7 +670,7 @@ jobs:
         id: formal-ai-cache-key
         shell: bash
         env:
-          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.99.0-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs', 'js/scripts/formal-ai-workload-partitions.mjs', 'js/scripts/formal-ai-partition-bundles.mjs') }}
+          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.100.0-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs', 'js/scripts/formal-ai-workload-partitions.mjs', 'js/scripts/formal-ai-partition-bundles.mjs') }}
         run: |
           set -euo pipefail
           candidate_crates=(.issue-195-work/candidates/*.crate)
@@ -678,7 +679,7 @@ jobs:
           (cd "$(dirname "$candidate_crate")" && sha256sum --check "$(basename "$candidate_crate").sha256")
           candidate_digest="$(sha256sum "$candidate_crate" | cut -d ' ' -f 1)"
           compiler_identity="$(rustc -vV)"
-          printf '%s\n' "$compiler_identity" | grep -Fx 'release: 1.99.0'
+          printf '%s\n' "$compiler_identity" | grep -Fx 'release: 1.100.0'
           compiler_digest="$(printf '%s\n' "$compiler_identity" | sha256sum | cut -d ' ' -f 1)"
           dependency_key="$CACHE_CONTEXT-$compiler_digest"
           printf 'dependency_key=%s\nkey=%s\n' "$dependency_key" "$dependency_key-$candidate_digest" >> "$GITHUB_OUTPUT"
@@ -767,7 +768,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -860,12 +861,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -931,12 +932,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -996,12 +997,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -1071,19 +1072,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Setup Lean
         if: ${{ matrix.target == 'lean' }}
         env:
           ELAN_HOME: ${{ runner.temp }}/elan-home
-          ELAN_VERSION: v4.2.4
-          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+          ELAN_VERSION: v4.4.0
+          ELAN_ARCHIVE_SHA256: 0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2
         run: |
           archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
@@ -1091,7 +1092,7 @@ jobs:
             --output "$archive"
           echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
-          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.36.0
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
           echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
           if ! "${ELAN_HOME}/bin/lean" --version; then
@@ -1270,12 +1271,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
         with:
           # JavaScript self-translation acceptance checks the emitted Rust.
           components: rustfmt, clippy
@@ -1283,8 +1284,8 @@ jobs:
       - name: Setup Lean
         env:
           ELAN_HOME: ${{ runner.temp }}/elan-home
-          ELAN_VERSION: v4.2.4
-          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+          ELAN_VERSION: v4.4.0
+          ELAN_ARCHIVE_SHA256: 0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2
         run: |
           archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
@@ -1292,7 +1293,7 @@ jobs:
             --output "$archive"
           echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
-          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.36.0
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
           echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
           if ! "${ELAN_HOME}/bin/lean" --version; then
@@ -1431,12 +1432,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
         with:
           # JavaScript self-translation acceptance checks the emitted Rust.
           components: rustfmt, clippy
@@ -1444,8 +1445,8 @@ jobs:
       - name: Setup Lean
         env:
           ELAN_HOME: ${{ runner.temp }}/elan-home
-          ELAN_VERSION: v4.2.4
-          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+          ELAN_VERSION: v4.4.0
+          ELAN_ARCHIVE_SHA256: 0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2
         run: |
           archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
@@ -1453,7 +1454,7 @@ jobs:
             --output "$archive"
           echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
-          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.36.0
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
           echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
           if ! "${ELAN_HOME}/bin/lean" --version; then
@@ -1608,12 +1609,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
         with:
           # The self-translation tests check translated Rust with clippy-driver.
           components: rustfmt, clippy
@@ -1621,8 +1622,8 @@ jobs:
       - name: Setup Lean
         env:
           ELAN_HOME: ${{ runner.temp }}/elan-home
-          ELAN_VERSION: v4.2.4
-          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+          ELAN_VERSION: v4.4.0
+          ELAN_ARCHIVE_SHA256: 0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2
         run: |
           archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
@@ -1630,7 +1631,7 @@ jobs:
             --output "$archive"
           echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
-          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.36.0
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
           echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
           if ! "${ELAN_HOME}/bin/lean" --version; then
@@ -1786,12 +1787,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.99.0
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -1861,7 +1862,7 @@ jobs:
   post-merge:
     name: Post-merge Report
     needs: [js, self-translation-report-validation]
-    if: ${{ github.event_name == 'push' && needs.js.result == 'success' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.js.result == 'success' }}
     continue-on-error: true
     permissions:
       contents: read
@@ -1878,13 +1879,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.100.0
 
       - name: Inspect the default-branch rules with the workflow token
         env:
@@ -1971,7 +1975,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: js/package-lock.json
 

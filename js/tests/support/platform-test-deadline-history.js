@@ -9,6 +9,8 @@ const history=readProjectData(new URL('../../../parity/naming/platform-test-dead
 
 export function restorePlatformTestDeadlineHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreDependencyWorkflowSource(source,'.github/workflows/js.yml');
+  source=restoreDependencyWorkflowSource(source,'.github/workflows/dependency-refresh.yml');
   source=restoreCurrentCiRepairSource(source,'.github/workflows/rust.yml');
   source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);
   source=restoreConformancePartitionHistory(source);
@@ -26,3 +28,5 @@ import {restoreConformancePartitionHistory} from './conformance-partition-histor
 import {restoreEvidenceTranslationSourceHistory} from '../../scripts/evidence-translation-source-history.mjs';
 
 import {restoreCurrentCiRepairSource} from '../../scripts/current-ci-repair-source-history.mjs';
+
+import {restoreDependencyWorkflowSource} from '../../scripts/dependency-workflow-source-history.mjs';

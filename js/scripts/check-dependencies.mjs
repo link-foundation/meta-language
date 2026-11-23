@@ -22,6 +22,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
 import {retainDependencyInventoryOrder} from './dependency-inventory-order.mjs';
+import { checkDependencyFreshness, refreshDependencyBlockers } from './dependency-freshness.mjs';
 
 import {
   AUDIT_DOCUMENT,
@@ -44,6 +45,30 @@ const http = registryHttp();
 function github(route) {
   return Promise.resolve(JSON.parse(execFileSync('gh', ['api', route], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] })));
 }
+
+async function githubIssue(route) {
+  try {
+    return await github(route);
+  } catch (error) {
+    if (String(error.stderr).includes('HTTP 404')) return null;
+    throw error;
+  }
+}
+
+async function dependencyRepository(source) {
+  let repository;
+  if (source.type === 'crate') {
+    const document = JSON.parse(await http(`https://crates.io/api/v1/crates/${encodeURIComponent(source.crate)}`));
+    repository = document.crate?.repository;
+  } else if (source.type === 'npm') {
+    const document = JSON.parse(await http(`https://registry.npmjs.org/${encodeURIComponent(source.package)}/latest`));
+    repository = document.repository?.url ?? document.repository;
+  }
+  if (typeof repository !== 'string') return undefined;
+  return /^(?:github:|(?:git\+)?(?:https?|git|ssh):\/\/(?:git@)?github\.com\/|git@github\.com:)([\w.-]+\/[\w.-]+?)(?:\.git)?\/?$/iu.exec(repository)?.[1];
+}
+
+const blockerSources = { github: githubIssue, repository: dependencyRepository };
 
 const metadata = new Map();
 function cargoMetadata(manifest) {
@@ -79,9 +104,10 @@ async function main(argv) {
   }
   if (argv.includes('--refresh')) {
     const today = new Date().toISOString().slice(0, 10);
-    const inventory = await refreshInventory({
+    const previous = readInventory();
+    const refreshed = await refreshInventory({
       root,
-      previous: readInventory(),
+      previous,
       collected,
       resolvers: releaseResolvers({ http, github, today }),
       cargoMetadata,
@@ -90,6 +116,8 @@ async function main(argv) {
         if (done % 50 === 0 || done === total) process.stderr.write(`resolved ${done}/${total}\n`);
       },
     });
+    const audited = await refreshDependencyBlockers(root, refreshed, blockerSources);
+    const inventory = previous ? retainDependencyInventoryOrder(previous, audited) : audited;
     writeProjectData(path.join(root, INVENTORY_FILE), inventory);
     writeFileSync(path.join(root, AUDIT_DOCUMENT), renderAuditDocument(inventory));
     console.log(`wrote ${INVENTORY_FILE} and ${AUDIT_DOCUMENT} (${inventory.items.length} items, audit date ${inventory.auditDate})`);
@@ -111,11 +139,13 @@ async function main(argv) {
   const problems = delivery
     ? checkDeliveredDependencies(inventory, collected, { npmConsumerLock })
     : checkInventory(inventory, collected);
+  problems.push(...checkDependencyFreshness(root, inventory));
   if (live) {
     try {
       const today = new Date().toISOString().slice(0, 10);
       const current = await refreshInventory({ root, previous: inventory, collected, resolvers: releaseResolvers({ http, github, today }), cargoMetadata, today });
       problems.push(...compareAudits(inventory, current));
+      problems.push(...checkDependencyFreshness(root, await refreshDependencyBlockers(root, current, blockerSources)));
       if (delivery) {
         for (const problem of checkDeliveredDependencies(current, collected, { npmConsumerLock })) {
           if (problem.kind === 'stale-delivered-dependency') problems.push({ kind: 'stale-live-dependency', message: problem.message });

@@ -413,18 +413,42 @@ function readGrammarVersions() {
 
 async function produceMergeEnforcementEvidence() {
   const reportPath = path.join(artifactsDirectory, 'merge-enforcement.lino');
+  await rm(reportPath, { force: true });
   const execution = await runCommand('merge-enforcement', 'node', [
     path.join(root, 'js/scripts/check-issue-195-merge-enforcement.mjs'),
     '--commit', commit, '--report', reportPath,
   ], { allowFailure: true });
-  const report = readProjectData(reportPath, { format: 'lino' });
-  for (const [assertionId, holds] of Object.entries(report.checks)) {
-    if (holds === true) observe(
-      'i195-acceptance-required-merge-check-tooling-behavior', assertionId,
-      'live GitHub merge enforcement and separate release checkpoint inspection',
-    );
+  const cargo = [];
+  for (const [name, manifestFile] of [['native', 'rust/Cargo.toml'], ['web', 'rust/web/Cargo.toml']]) {
+    cargo.push(await runCommand(`dependency-update-${name}`, 'cargo', [
+      'update', '--manifest-path', manifestFile, '--dry-run', '--color', 'never',
+    ], { allowFailure: true }));
   }
-  return { ...bundle(execution), artifacts: [relative(reportPath)] };
+  const failureLogs = cargo.filter(({ ok }) => !ok).map((entry) => entry.artifacts[0]);
+  for (const entry of cargo.filter(({ ok }) => ok)) {
+    const log = await readFile(path.join(root, entry.artifacts[0]), 'utf8');
+    if (!/^\s*Locking 0 packages\b/mu.test(log)
+      || /^\s*(?:Updating|Adding|Removing|Downgrading)\s+\S+ v\d/mu.test(log)) failureLogs.push(entry.artifacts[0]);
+  }
+  if (failureLogs.length === 0) {
+    observe('i195-issue-197-lockfiles-tooling-behavior', 'noCompatibleCargoUpdate',
+      'live native and web Cargo update dry runs');
+  }
+  const artifacts = [];
+  try {
+    const report = readProjectData(reportPath, { format: 'lino' });
+    for (const [assertionId, holds] of Object.entries(report.checks)) {
+      if (holds === true) observe(
+        'i195-acceptance-required-merge-check-tooling-behavior', assertionId,
+        'live GitHub merge enforcement and separate release checkpoint inspection',
+      );
+    }
+    artifacts.push(relative(reportPath));
+  } catch (error) {
+    if (execution.ok) throw error;
+  }
+  if (!execution.ok) failureLogs.push(execution.artifacts[0]);
+  return bundle(execution, ...cargo, { commands: [], artifacts, failureLogs });
 }
 
 /**
@@ -662,6 +686,7 @@ async function produceDeliveryEvidence(kind) {
     '--crate', candidates.crate,
     '--work-dir', consumerDirectory,
     '--out', localReport,
+    ...(kind === 'published' ? ['--dependency-upgrade'] : []),
   ], { allowFailure: true });
   const reports = await readPlatformReports(consumer.ok ? localReport : null);
   const crateSource = path.join(
@@ -679,6 +704,7 @@ async function produceDeliveryEvidence(kind) {
   };
   const reportArtifacts = { commands: [], artifacts: reports.map(({ artifact }) => artifact) };
   const local = reports.find(({ file }) => file === localReport)?.report ?? null;
+  if (kind === 'published') await recordDependencyUpgradeDelivery(local, candidates);
   const groups = [];
   for (const deliveryPackage of ['npm', 'crate', 'rml']) {
     for (const runtime of ['javascript', 'rust']) {
@@ -738,11 +764,11 @@ async function candidateArtifacts() {
     `meta-language-${packageMetadata.version}.crate`,
   ];
   const artifacts = [];
-  for (const name of names) {
-    for (const file of [name, `${name}.sha256`]) {
-      await copyFile(path.join(source, file), path.join(artifactsDirectory, file));
-      artifacts.push(relative(path.join(artifactsDirectory, file)));
-    }
+  const files = names.flatMap((name) => [name, `${name}.sha256`]);
+  if (checkpoint === 'release-delivery') files.push('npm-registry.lino', 'crates-io.lino');
+  for (const file of files) {
+    await copyFile(path.join(source, file), path.join(artifactsDirectory, file));
+    artifacts.push(relative(path.join(artifactsDirectory, file)));
   }
   return {
     commands: record.commands,
@@ -750,6 +776,43 @@ async function candidateArtifacts() {
     tarball: path.join(artifactsDirectory, names[0]),
     crate: path.join(artifactsDirectory, names[1]),
   };
+}
+
+async function recordDependencyUpgradeDelivery(report, candidates) {
+  const npmMetadata = readProjectData(path.join(artifactsDirectory, 'npm-registry.lino'));
+  const crateMetadata = readProjectData(path.join(artifactsDirectory, 'crates-io.lino'));
+  const integrity = `sha512-${createHash('sha512').update(await readFile(candidates.tarball)).digest('base64')}`;
+  const npmValid = npmMetadata.version === packageMetadata.version && npmMetadata.dist?.integrity === integrity;
+  const crateValid = crateMetadata.version?.num === packageMetadata.version
+    && crateMetadata.version?.checksum === await sha256File(candidates.crate);
+  const npm = report?.npm.dependencyUpgrade;
+  const crate = report?.crate.dependencyUpgrade;
+  if (npmValid) {
+    observe('i195-issue-197-npm-published-javascript-published', 'npmRegistryServesCheckedArtifact', 'released npm package and registry integrity');
+    if (npm && npm.linksNotation === npm.expectedLinksNotation && npm.declaration === npm.expectedDeclaration
+      && npm.localOverrides.length === 0 && npmMetadata.dependencies?.['links-notation'] === npm.declaration) {
+      observe('i195-issue-197-npm-consumer-javascript-published', 'publishedLinksNotationDependencyCurrent', 'clean released npm dependency resolution');
+    }
+  }
+  if (crateValid) {
+    observe('i195-issue-197-crate-published-rust-published', 'crateRegistryServesCheckedArtifact', 'released crate and registry checksum');
+    if (!crate) return;
+    const linksTest = 'i195-issue-197-links-consumer-rust-published';
+    if (crate.current.length && crate.current.every(({ linksNotation }) => linksNotation.join() === crate.currentLinks)) {
+      observe(linksTest, 'singleLinksNotationVersion', `clean released crate resolves Links Notation ${crate.currentLinks} once`);
+      observe(linksTest, 'sharedLinksNotationType', `compiled downstream adapter for Links Notation ${crate.currentLinks}`);
+    }
+    if (crate.historical.linksNotation.join() === '0.22.0') {
+      observe(linksTest, 'historicalLinksNotation022ResolvesOnce', 'clean released crate resolves Links Notation 0.22.0 once');
+    } else {
+      console.log(`issue-195 evidence: the original Links Notation 0.22.0 consumer resolves ${crate.historical.linksNotation.join(', ')}`);
+    }
+    if (crate.current.map(({ patch }) => patch).join() === crate.treeSitterPatches.join()
+      && crate.current.every(({ patch, treeSitter }) => treeSitter.join() === patch)) {
+      observe('i195-issue-197-tree-sitter-consumer-rust-published', 'treeSitterPatchConsumerResolves',
+        `compiled clean crate consumers of Tree-sitter ${crate.treeSitterPatches.join(', ')}`);
+    }
+  }
 }
 
 async function readPlatformReports(localReport) {

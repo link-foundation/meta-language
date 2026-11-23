@@ -248,9 +248,12 @@ test('the acceptance Rust command reuses only the checked fresh-merge test optim
 });
 
 test('declared toolchains must match exactly; tools a stage does not use are not required', () => {
-  assert.deepEqual(toolchainProblems({ node: 'v24.0.0', rustc: 'rustc 1.99.0 (abc 2026-09-01)' }), []);
+  assert.deepEqual(toolchainProblems({ node: 'v26.13.1', rustc: 'rustc 1.100.0 (abc 2026-11-22)' }), []);
+  assert.deepEqual(toolchainProblems({ rustc: 'rustc 1.99.0 (abc 2026-09-01)' }), [
+    'rustc version does not match declared toolchain 1.100.0: rustc 1.99.0 (abc 2026-09-01)',
+  ]);
   assert.deepEqual(toolchainProblems({ lean: 'Lean (version 4.33.0)' }), [
-    'lean version does not match declared toolchain 4.34.1: Lean (version 4.33.0)',
+    'lean version does not match declared toolchain 4.36.0: Lean (version 4.33.0)',
   ]);
 });
 
@@ -291,9 +294,11 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
   }
   // The post-merge report runs on main only and never blocks.
   const postMerge = job('post-merge');
-  assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}/u);
+  assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' && github\.ref == 'refs\/heads\/main' && needs\.js\.result == 'success' \}\}/u);
   assert.match(postMerge, /continue-on-error: true/u);
   assert.match(postMerge, /--checkpoint post-merge/u);
+  assert.match(postMerge, /uses: dtolnay\/rust-toolchain@1\.100\.0/u);
+  assert.ok(evidenceStage('post-merge', 'merge-enforcement').tools.includes('cargo'));
   assert.doesNotMatch(job('acceptance'), /post-merge/u);
   // A release reruns only the delivery stage.
   for (const stage of ['native-javascript', 'native-rust', 'native-translations', 'javascript-suite', 'rust-suite']) {

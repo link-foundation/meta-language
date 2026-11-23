@@ -3,7 +3,7 @@ import {existsSync,mkdtempSync,readFileSync,readdirSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import {installFixedLean,LEAN_RELEASE_SHA256} from '../../scripts/install-ci-lean.mjs';
+import {installFixedLean,LEAN_RELEASE_SHA256,LEAN_RELEASE_VERSION} from '../../scripts/install-ci-lean.mjs';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 
 function createLeanDownloadFixture(t){
@@ -19,19 +19,21 @@ test('the Lean fallback refuses local and unsupported runners before creating or
  }
 });
 
-test('the Lean fallback authenticates the exact release before extraction linking and version selection',t=>{
+for(const [release,checksum] of [
+ ['4.34.1','47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4'],
+ ['4.36.0','2b7ab1ed8b92d2e6abfaf41344823b510064dbc9c0260cac73eb496ab2dea6eb'],
+]) test(`the Lean ${release} fallback authenticates the exact release before extraction linking and version selection`,t=>{
  const fixture=createLeanDownloadFixture(t),calls=[];
- const result=installFixedLean({...fixture,run:(command,args,options)=>{
-  calls.push({command,args,options});return {status:0,stdout:args.includes('--version')?'Lean (version 4.34.1, x86_64-unknown-linux-gnu, Release)\n':'',stderr:''};
+ const result=installFixedLean({...fixture,release,run:(command,args,options)=>{
+  calls.push({command,args,options});return {status:0,stdout:args.includes('--version')?`Lean (version ${release}, x86_64-unknown-linux-gnu, Release)\n`:'',stderr:''};
  }});
  assert.deepEqual(calls.map(value=>path.basename(value.command)),['curl','sha256sum','tar','elan','elan','elan']);
- assert.ok(calls[0].args.includes('https://github.com/leanprover/lean4/releases/download/v4.34.1/lean-4.34.1-linux.tar.zst'));
- assert.equal(LEAN_RELEASE_SHA256,'47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4');
- assert.equal(calls[1].options.input,LEAN_RELEASE_SHA256+'  '+path.join(result.directory,'release.tar.zst')+'\n');
- assert.deepEqual(calls[3].args,['toolchain','link','meta-language-lean-4.34.1',path.join(result.directory,'lean-4.34.1-linux')]);
- assert.deepEqual(calls[4].args,['run','meta-language-lean-4.34.1','lean','--version']);
- assert.deepEqual(calls[5].args,['default','meta-language-lean-4.34.1']);assert.ok(existsSync(result.directory));
- assert.equal(result.version,'4.34.1');assert.equal(result.sha256,LEAN_RELEASE_SHA256);
+ assert.ok(calls[0].args.includes(`https://github.com/leanprover/lean4/releases/download/v${release}/lean-${release}-linux.tar.zst`));
+ assert.equal(calls[1].options.input,checksum+'  '+path.join(result.directory,'release.tar.zst')+'\n');
+ assert.deepEqual(calls[3].args,['toolchain','link',`meta-language-lean-${release}`,path.join(result.directory,`lean-${release}-linux`)]);
+ assert.deepEqual(calls[4].args,['run',`meta-language-lean-${release}`,'lean','--version']);
+ assert.deepEqual(calls[5].args,['default',`meta-language-lean-${release}`]);assert.ok(existsSync(result.directory));
+ assert.equal(result.version,release);assert.equal(result.sha256,checksum);
 });
 
 test('download checksum and version failures stop Lean selection and clear only the owned temporary directory',t=>{
@@ -47,11 +49,13 @@ test('download checksum and version failures stop Lean selection and clear only 
 });
 
 test('every Lean setup preserves the same version and forwards its selected home to later evidence steps',()=>{
+ assert.equal(LEAN_RELEASE_VERSION,'4.36.0');
+ assert.equal(LEAN_RELEASE_SHA256,'2b7ab1ed8b92d2e6abfaf41344823b510064dbc9c0260cac73eb496ab2dea6eb');
  const workflow=readFileSync(new URL('../../.github/workflows/ci.yml',import.meta.url),'utf8');
  const setups=parseWorkflow(workflow).flatMap(job=>job.steps.filter(step=>step.name==='Setup Lean'));
  assert.equal(setups.length,4);
  for(const step of setups){
-  assert.match(step.run,/elan-init.*--default-toolchain leanprover\/lean4:v4\.34\.1/u);
+  assert.match(step.run,/elan-init.*--default-toolchain leanprover\/lean4:v4\.36\.0/u);
   assert.match(step.run,/echo "ELAN_HOME=\$\{ELAN_HOME\}" >> "\$GITHUB_ENV"/u);
   assert.match(step.run,/if ! "\$\{ELAN_HOME\}\/bin\/lean" --version; then\n\s+node scripts\/install-ci-lean\.mjs\n\s+fi/u);
   assert.match(step.run,/"\$\{ELAN_HOME\}\/bin\/lean" --version\s*$/u);

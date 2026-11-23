@@ -7,8 +7,8 @@ publish = false
 [workspace]
 
 [dependencies]
-tree-sitter = "=0.27.0"
-tree-sitter-language = "=0.1.8"
+tree-sitter = "=0.27.2"
+tree-sitter-language = "=0.1.9"
 
 [build-dependencies]
-cc = "=1.6.0"
+cc = "=1.11.3"

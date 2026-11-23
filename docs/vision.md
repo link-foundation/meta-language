@@ -2705,8 +2705,9 @@ release must link an open GitHub blocker from its pin. Cargo records it with
 `# blocked: https://github.com/owner/repository/issues/number` on each affected
 dependency line. The JSON package manifest records it in `dependencyBlockers`,
 keyed by dependency section and package name, with the exact `requirement` and
-the `issue` URL. The registry refresh verifies the issue state and records it in
-the audit. A closed or missing blocker fails the freshness check. The scheduled
+the `issue` URL. The registry refresh verifies that the issue is open in the
+dependency's GitHub repository and records it in the audit. A closed, missing,
+or unrelated blocker fails the freshness check. The scheduled
 report also runs `npm outdated` and `cargo update --dry-run` for both Rust locks.
 The scheduled registry refresh runs only on main
 as a non-blocking live report: it preserves the actual audit outcome, complete

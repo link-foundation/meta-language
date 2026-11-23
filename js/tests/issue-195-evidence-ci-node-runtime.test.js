@@ -7,6 +7,7 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {mergeRustSuitePartitions} from '../scripts/issue-195-rust-suite-partitions.mjs';
 import {restoreCiNodeRuntimeHistory} from './support/ci-node-runtime-history.js';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 
 test('actual mixed Node and npm evidence retains exact partition gates and pins every original setup without changing scope',()=>{
   const history=readProjectData(new URL('../../parity/naming/ci-node-runtime-source-history.lino',import.meta.url));
@@ -110,7 +111,8 @@ test('runtime pin adapters preserve all complete preceding workflow guard module
     let expected=original.sourceText;
     for(const [before,after]of view.edits){assert.equal(expected.split(before).length,2);expected=expected.replace(before,after);}
     expected+=view.addition;
-    const current=restoreCurrentCiRepairSource(restoreToolingFrozenHostSource(readFileSync(new URL('../../'+view.file,import.meta.url),'utf8'),view.file),view.file);assert.equal(current,expected);
+    const source=restoreDependencyWorkflowSource(readFileSync(new URL('../../'+view.file,import.meta.url),'utf8'),view.file);
+    const current=restoreCurrentCiRepairSource(restoreToolingFrozenHostSource(source,view.file),view.file);assert.equal(current,expected);
     let restored=current.slice(0,-view.addition.length);
     for(const [before,after]of [...view.edits].reverse()){assert.equal(restored.split(after).length,2);restored=restored.replace(after,before);}
     assert.equal(restored,original.sourceText,'every original assertion and source context reconstructs exactly');

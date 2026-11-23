@@ -1,18 +1,24 @@
 #!/usr/bin/env node
 // CI fallback for an unavailable release.lean-lang.org index. The exact
 // official GitHub release and its published SHA-256 remain pinned:
-// https://github.com/leanprover/lean4/releases/tag/v4.34.1
+// https://github.com/leanprover/lean4/releases/tag/v4.36.0
 import {spawnSync} from 'node:child_process';
 import {mkdtempSync,rmSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-export const LEAN_RELEASE_VERSION='4.34.1';
-export const LEAN_RELEASE_SHA256='47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4';
+export const LEAN_RELEASE_VERSION='4.36.0';
+export const LEAN_RELEASE_SHA256='2b7ab1ed8b92d2e6abfaf41344823b510064dbc9c0260cac73eb496ab2dea6eb';
+const releaseChecksums = new Map([
+ ['4.34.1', '47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4'],
+ [LEAN_RELEASE_VERSION, LEAN_RELEASE_SHA256],
+]);
 
-export function installFixedLean({env=process.env,platform=process.platform,architecture=process.arch,run=spawnSync}={}){
+export function installFixedLean({env=process.env,platform=process.platform,architecture=process.arch,run=spawnSync,release=LEAN_RELEASE_VERSION}={}){
  if(env.CI!=='true'||env.GITHUB_ACTIONS!=='true'||platform!=='linux'||architecture!=='x64')throw new Error('The pinned Lean fallback runs only on Linux x64 GitHub Actions runners.');
  if(!env.RUNNER_TEMP||!env.ELAN_HOME)throw new Error('The pinned Lean fallback requires RUNNER_TEMP and ELAN_HOME.');
+ const checksum=releaseChecksums.get(release);
+ if(!checksum)throw new Error('Unknown Lean release: '+release);
  const directory=mkdtempSync(path.join(env.RUNNER_TEMP,'meta-language-lean-')),archive=path.join(directory,'release.tar.zst');
  const execute=(command,args,options={})=>{
   const result=run(command,args,{env,encoding:'utf8',stdio:['pipe','pipe','pipe'],...options});
@@ -22,17 +28,17 @@ export function installFixedLean({env=process.env,platform=process.platform,arch
  };
  let linked=false;
  try{
-  execute('curl',['--proto','=https','--tlsv1.2','--retry','3','--retry-all-errors','--max-time','600','--location','--silent','--show-error','--fail',`https://github.com/leanprover/lean4/releases/download/v${LEAN_RELEASE_VERSION}/lean-${LEAN_RELEASE_VERSION}-linux.tar.zst`,'--output',archive]);
-  execute('sha256sum',['--check','--strict'],{input:`${LEAN_RELEASE_SHA256}  ${archive}\n`});
+  execute('curl',['--proto','=https','--tlsv1.2','--retry','3','--retry-all-errors','--max-time','600','--location','--silent','--show-error','--fail',`https://github.com/leanprover/lean4/releases/download/v${release}/lean-${release}-linux.tar.zst`,'--output',archive]);
+  execute('sha256sum',['--check','--strict'],{input:`${checksum}  ${archive}\n`});
   execute('tar',['--extract','--zstd','--file',archive,'--directory',directory]);
-  const elan=path.join(env.ELAN_HOME,'bin','elan'),name='meta-language-lean-'+LEAN_RELEASE_VERSION;
-  execute(elan,['toolchain','link',name,path.join(directory,`lean-${LEAN_RELEASE_VERSION}-linux`)]);
+  const elan=path.join(env.ELAN_HOME,'bin','elan'),name='meta-language-lean-'+release;
+  execute(elan,['toolchain','link',name,path.join(directory,`lean-${release}-linux`)]);
   // Verify the selected binary before making it the default. A corrupt or
   // different release must fail the job, rather than silently changing Lean.
   const version=execute(elan,['run',name,'lean','--version']);
-  if(!/^Lean \(version 4\.34\.1(?:,|\))/u.test(version))throw new Error('The pinned Lean release returned an unexpected version: '+version);
+  if(!version.startsWith(`Lean (version ${release},`)&&!version.startsWith(`Lean (version ${release})`))throw new Error('The pinned Lean release returned an unexpected version: '+version);
   execute(elan,['default',name]);linked=true;
-  return {version:LEAN_RELEASE_VERSION,sha256:LEAN_RELEASE_SHA256,directory};
+  return {version:release,sha256:checksum,directory};
  }finally{
   rmSync(archive,{force:true});
   if(!linked)rmSync(directory,{recursive:true,force:true});

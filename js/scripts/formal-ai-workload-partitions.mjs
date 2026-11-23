@@ -234,8 +234,11 @@ export function validateFormalAiWorkloadPartition(envelope, fixture, expected, f
     for (const name of ['CARGO_PROFILE_DEV_DEBUG', 'CARGO_PROFILE_TEST_DEBUG']) {
       equal(envelope.build.profileEnvironment[name], expected.profile[name] ?? '0', `actual ${name} differs from the original bounded profile`);
     }
-    if (typeof envelope.build.compiler !== 'string' ||
-        envelope.build.compiler.split(/\r?\n/u).filter((line) => line === 'release: 1.99.0').length !== 1) fail('missing actual pinned rustc -vV identity');
+    if (!/^\d+\.\d+\.\d+$/u.test(expected.rustVersion ?? '') || typeof envelope.build.compiler !== 'string') {
+      fail('missing actual pinned rustc -vV identity');
+    }
+    equal(envelope.build.compiler.split(/\r?\n/u).filter((line) => line.startsWith('release: ')),
+      [`release: ${expected.rustVersion}`], 'actual rustc -vV release differs from the producer workflow pin');
     for (const [runtime, part] of [['npm', report.npm], ['crate', report.crate]]) {
       const candidate = expected.candidates[runtime];
       equal({ file: part.checksum.artifact, sha256: part.checksum.sha256 },
