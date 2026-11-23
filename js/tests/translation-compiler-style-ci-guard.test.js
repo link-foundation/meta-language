@@ -30,6 +30,17 @@ test('reviewed lexer command emission borrows the mode before preserving it for 
   assert.match(loop, /let argument = default_mode\.as_ref\(\)\.unwrap_or\(&mode\);[\s\S]*?\.concat\(argument\)[\s\S]*?vec!\[operation, mode\]/u);
 });
 
+test('generated binary codecs return the reviewed output expressions directly', () => {
+  const returnedBindings = /\blet\s+(output_\d+|length_output)\s*=\s*[^;]+;\s*\1\s*\}/u;
+  for (const family of ['link_network_binary_rules', 'link_network_binary_record_rules']) {
+    for (const name of ['part_1.rs', 'part_2.rs', 'part_3.rs']) {
+      const path = `rust/src/${family}/${name}`;
+      const source = readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
+      assert.ok(!returnedBindings.test(source), path);
+    }
+  }
+});
+
 test('global concept compiler check retains both entire generated modules and original flags',()=>{
   const {baseline}=controls;
   assert.equal(baseline.revision,'61a96299e459aee352c57fb2abe04d4a77dd6f93');

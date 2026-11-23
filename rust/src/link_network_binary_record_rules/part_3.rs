@@ -69,15 +69,13 @@ pub fn ml_transcode_link_network_binary_loop7(
                                         {
                                             let output_4 = if binary {
                                                 {
-                                                    let output_2 = output.concat(&super::render_link_network_binary_field(identity, binary));
-                                                    output_2
+                                                    output.concat(&super::render_link_network_binary_field(identity, binary))
                                                 }
                                             } else {
                                                 {
                                                     let index = 0f64;
                                                     {
-                                                        let output_3 = super::ml_transcode_link_network_binary_loop18(binary, output.clone(), identity, index);
-                                                        output_3
+                                                        super::ml_transcode_link_network_binary_loop18(binary, output.clone(), identity, index)
                                                     }
                                                 }
                                             };
@@ -95,15 +93,13 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                         {
                                                             let output_7 = if binary {
                                                                 {
-                                                                    let output_5 = output_4.concat(&super::render_link_network_binary_field(references, binary));
-                                                                    output_5
+                                                                    output_4.concat(&super::render_link_network_binary_field(references, binary))
                                                                 }
                                                             } else {
                                                                 {
                                                                     let index_2 = 0f64;
                                                                     {
-                                                                        let output_6 = super::ml_transcode_link_network_binary_loop19(binary, output_4, references, index_2);
-                                                                        output_6
+                                                                        super::ml_transcode_link_network_binary_loop19(binary, output_4, references, index_2)
                                                                     }
                                                                 }
                                                             };
@@ -208,8 +204,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                                                                 {
                                                                                                                                                                                                     let encoded_length_2 = super::ml_transcode_link_network_binary_loop25(length_2, encoded_length, index_4);
                                                                                                                                                                                                     {
-                                                                                                                                                                                                        let length_output = ((output_16.slice(0f64, length_slot)).concat(&encoded_length_2)).concat(&output_16.slice((length_slot + 16f64), f64::INFINITY));
-                                                                                                                                                                                                        length_output
+                                                                                                                                                                                                        ((output_16.slice(0f64, length_slot)).concat(&encoded_length_2)).concat(&output_16.slice((length_slot + 16f64), f64::INFINITY))
                                                                                                                                                                                                     }
                                                                                                                                                                                                 }
                                                                                                                                                                                             }
