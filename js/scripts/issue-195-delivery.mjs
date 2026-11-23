@@ -78,6 +78,25 @@ export function deliveryAssertions(report, sides, expected, context) {
   ]));
 }
 
+/** Verifies the native HTML observations for the exact published 1.0.0 release. */
+export function publishedNativeHtmlAssertions(report, expected, context, { metadata, commit, ref, fixtureSha256 }) {
+  const version = '1.0.0';
+  const result = { samePublishedRelease: false, installedNativeHtmlTreeAndSpans: false };
+  if (context.version !== version || metadata?.version !== version || ref !== `refs/tags/v${version}` || !report?.npm) {
+    return result;
+  }
+  const npm = deliveryAssertions(report, ['npm'], expected, context);
+  const integrity = metadata.dist?.integrity;
+  const publishedNpm = npm.exactArtifactChecksum && typeof integrity === 'string' && integrity.length > 0 &&
+    integrity === report.npm.checksum.expectedIntegrity;
+  const bothPackages = deliveryAssertions(report, ['npm', 'crate'], expected, context);
+  result.samePublishedRelease = publishedNpm && bothPackages.exactArtifactChecksum &&
+    report.crate.gitRevision === commit && report.crate.gitCheckoutClean === true && metadata.gitHead === commit;
+  result.installedNativeHtmlTreeAndSpans = publishedNpm && npm.cleanEnvironment && npm.offlineFirstParse &&
+    report.npm.nativeHtmlFixtureSha256 === fixtureSha256;
+  return result;
+}
+
 /**
  * Whether every supported platform produced at least one report and every report
  * for it satisfies all consumer assertions, with a reason for each platform that

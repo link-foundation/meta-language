@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   deliveryAssertions,
+  publishedNativeHtmlAssertions,
   supportedPlatformCoverage,
 } from '../scripts/issue-195-delivery.mjs';
 
@@ -129,6 +130,40 @@ test('a checksum or version for another candidate is not accepted', () => {
   );
   const otherCandidate = { ...expected, npm: 'c'.repeat(64) };
   assert.equal(supportedPlatformCoverage(allPlatforms(), ['npm'], otherCandidate, context).observed, false);
+});
+
+test('the native HTML release evidence requires the scoped release and identifies the tested artifacts', () => {
+  const commit = 'a'.repeat(40);
+  const fixtureSha256 = sha256('native HTML fixture');
+  const releaseContext = { ...context, version: '1.0.0' };
+  const provenance = {
+    commit, ref: 'refs/tags/v1.0.0', fixtureSha256,
+    metadata: { version: '1.0.0', gitHead: commit, dist: { integrity: 'sha512-x' } },
+  };
+  const report = consumerReport('linux-x64');
+  Object.assign(report.npm, { version: '1.0.0', nativeHtmlFixtureSha256: fixtureSha256 });
+  Object.assign(report.crate, { version: '1.0.0', gitRevision: commit, gitCheckoutClean: true });
+  const verify = (result = report, release = releaseContext, source = provenance) =>
+    publishedNativeHtmlAssertions(result, expected, release, source);
+
+  assert.deepEqual(verify(), { samePublishedRelease: true, installedNativeHtmlTreeAndSpans: true });
+  const missing = { samePublishedRelease: false, installedNativeHtmlTreeAndSpans: false };
+  assert.deepEqual(verify(report, releaseContext, { ...provenance, ref: 'refs/heads/main' }), missing);
+  const later = '1.0.1';
+  assert.deepEqual(verify({
+    ...report, npm: { ...report.npm, version: later }, crate: { ...report.crate, version: later },
+  }, { ...releaseContext, version: later }, {
+    ...provenance, ref: `refs/tags/v${later}`, metadata: { ...provenance.metadata, version: later },
+  }), missing);
+  assert.deepEqual(verify(report, releaseContext, {
+    ...provenance, metadata: { ...provenance.metadata, dist: { integrity: 'sha512-other' } },
+  }), missing);
+  assert.deepEqual(verify({ ...report, crate: { ...report.crate, gitCheckoutClean: false } }), {
+    samePublishedRelease: false, installedNativeHtmlTreeAndSpans: true,
+  });
+  assert.deepEqual(verify({ ...report, npm: { ...report.npm, nativeHtmlFixtureSha256: 'changed' } }), {
+    samePublishedRelease: true, installedNativeHtmlTreeAndSpans: false,
+  });
 });
 
 test('the hashed evidence corpus is checked out with LF line endings on every platform', () => {
