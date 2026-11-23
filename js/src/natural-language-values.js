@@ -94,7 +94,7 @@ function numericSpelling(text, locale) {
 
 const numberWordRules = ['small_number_word', 'ones_number_word', 'tens_number_word', 'hundreds_number_word',
   'large_number_word_1', 'large_number_word_2', 'large_number_word_3'];
-const captureNames = ['amount', 'numeral', 'scale', ...numberWordRules,
+const captureNames = ['amount', 'numeral', 'scale', 'word_scale', ...numberWordRules,
   'first_amount', 'last_amount', 'currency', 'first_money', 'last_money', 'money_amount',
   'duration_amount', 'duration_unit', 'duration_comparison', 'first_date', 'last_date',
   'calendar_year', 'calendar_month', 'calendar_day', 'month_name', 'open_date'];
@@ -103,11 +103,16 @@ const inside = (outer, inner) => inner.start >= outer.start && inner.end <= oute
 const capturesInside = (match, range, name) => match.captures[name].filter(item => inside(range, item));
 const wordValue = (profile, kind, value) => profile.words.get(kind)?.get(value?.toLowerCase());
 
+function readScale(match, range, profile) {
+  const abbreviated = capturesInside(match, range, 'scale')[0];
+  const written = capturesInside(match, range, 'word_scale')[0];
+  return wordValue(profile, 'scale', abbreviated?.text) ?? wordValue(profile, 'number', written?.text);
+}
+
 function readAmount(match, range, profile) {
   const numeral = capturesInside(match, range, 'numeral')[0];
   if (numeral) {
-    const scale = capturesInside(match, range, 'scale')[0];
-    return scaleDecimal(exactDecimal(numericSpelling(numeral.text, profile.locale)), wordValue(profile, 'scale', scale?.text) ?? 1);
+    return scaleDecimal(exactDecimal(numericSpelling(numeral.text, profile.locale)), readScale(match, range, profile) ?? 1);
   }
   const words = numberWordRules.flatMap(rule => capturesInside(match, range, rule)).sort((left, right) => left.start - right.start);
   let total = exactDecimal('0');
@@ -180,9 +185,9 @@ function numberRange(match, profile, money) {
   const last = match.captures[money ? 'last_money' : 'last_amount'][0];
   let left = readAmount(match, first, profile);
   const right = readAmount(match, last, profile);
-  const trailingScale = capturesInside(match, last, 'scale')[0];
-  if (trailingScale && capturesInside(match, first, 'numeral').length && !capturesInside(match, first, 'scale').length) {
-    left = scaleDecimal(left, wordValue(profile, 'scale', trailingScale.text));
+  const trailingScale = readScale(match, last, profile);
+  if (trailingScale && capturesInside(match, first, 'numeral').length && readScale(match, first, profile) === undefined) {
+    left = scaleDecimal(left, trailingScale);
   }
   const comparison = addDecimals(left, scaleDecimal(right, -1)).coefficient;
   const [minimum, maximum] = comparison <= 0n ? [left, right] : [right, left];

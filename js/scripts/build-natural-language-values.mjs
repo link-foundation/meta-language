@@ -91,9 +91,12 @@ function profile(locale) {
   }))), 'token');
   builder.rule('numeral', seq(optional(characters('+-−')), choice(groupedNumeral, punctuatedNumeral, plainNumeral)), 'token');
   builder.rule('scale', vocabulary('scale'), 'token');
-  builder.rule('amount', choice(seq(ref('numeral'), optional(seq(gap, ref('scale')))),
+  const abbreviatedScale = seq(gap, ref('scale'));
+  const numeralScale = local ? choice(abbreviatedScale, seq(separator, ref('word_scale'))) : abbreviatedScale;
+  builder.rule('amount', choice(seq(ref('numeral'), optional(numeralScale)),
     ...(local ? [ref('word_amount')] : [])));
   if (local) {
+    builder.rule('word_scale', vocabulary('number', value => value >= 1000), 'token');
     builder.rule('small_number_word', vocabulary('number', value => value < 20), 'token');
     builder.rule('ones_number_word', vocabulary('number', value => value > 0 && value < 10 && Number.isInteger(value)), 'token');
     builder.rule('tens_number_word', vocabulary('number', value => value >= 20 && value < 100), 'token');

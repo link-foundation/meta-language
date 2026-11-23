@@ -708,6 +708,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
       },
     },
+    {
+      id: 'I195-I242-WRITTEN-MULTIPLIERS',
+      source: ISSUE_195_SOURCES.naturalLanguageValues,
+      language: 'English and Russian typed value syntax',
+      version: 'Unicode 17.0.0 Decimal_Number, ISO 4217 List One 2026-09-17, exact decimal arithmetic',
+      construct: 'digit amounts with written multipliers',
+      expectedBehavior: 'English and Russian written scale words multiply digit amounts exactly. A trailing scale applies to both digit endpoints when the first has no scale. Independently scaled endpoints, explicit zero, and original UTF-8 spans are preserved.',
+      fixture: 'parity/fixtures/natural-language-written-multipliers.lino',
+      selector: 'Russian inflected scale words, Unicode digits, English decimal and currency ranges, independent endpoint scales, exact durations and zero, unchanged abbreviations and date alternatives, rejected attached scale words and invalid currencies',
+      assertions: ['writtenMultipliersNormalizeExactValues', 'writtenMultiplierRangesPreserveEndpointScales', 'writtenMultipliersKeepOriginalSpans'],
+      implementationEntryPoints: {
+        javascript: ['js/src/natural-language-values.js', 'js/tests/natural-language-values.test.js'],
+        rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I243-NORMALIZED-TEXT-LOCATION',

@@ -32,9 +32,10 @@ const VALUE_RULES: [&str; 9] = [
     "month_date",
     "short_date",
 ];
-const CAPTURE_NAMES: [&str; 19] = [
+const CAPTURE_NAMES: [&str; 20] = [
     "numeral",
     "scale",
+    "word_scale",
     "first_amount",
     "last_amount",
     "currency",
@@ -242,16 +243,29 @@ fn within<'capture>(
         .filter(move |span| span.start >= start && span.end <= end)
 }
 
+fn read_scale(
+    matched: &GrammarSearchMatch,
+    range: &GrammarSearchSpan,
+    profile: &ValueProfile,
+) -> Option<&'static str> {
+    within(matched, range, "scale")
+        .next()
+        .and_then(|span| profile.word("scale", &span.text))
+        .or_else(|| {
+            within(matched, range, "word_scale")
+                .next()
+                .and_then(|span| profile.word("number", &span.text))
+        })
+}
+
 fn read_amount(
     matched: &GrammarSearchMatch,
     range: &GrammarSearchSpan,
     profile: &ValueProfile,
 ) -> Option<ExactDecimal> {
     if let Some(numeral) = within(matched, range, "numeral").next() {
-        let scale = within(matched, range, "scale")
-            .next()
-            .and_then(|span| profile.word("scale", &span.text))
-            .map_or(Some(1), |value| value.parse().ok())?;
+        let scale =
+            read_scale(matched, range, profile).map_or(Some(1), |value| value.parse().ok())?;
         return Some(
             ExactDecimal::parse(&normalize_numeral(&numeral.text, profile.locale))?.scale(scale),
         );
@@ -403,11 +417,11 @@ fn read_range(matched: &GrammarSearchMatch, profile: &ValueProfile, money: bool)
     let last = matched.captures[last_kind].first()?;
     let mut left = read_amount(matched, first, profile)?;
     let right = read_amount(matched, last, profile)?;
-    if let Some(scale) = within(matched, last, "scale").next()
+    if let Some(scale) = read_scale(matched, last, profile)
         && within(matched, first, "numeral").next().is_some()
-        && within(matched, first, "scale").next().is_none()
+        && read_scale(matched, first, profile).is_none()
     {
-        left = left.scale(profile.word("scale", &scale.text)?.parse().ok()?);
+        left = left.scale(scale.parse().ok()?);
     }
     let (minimum, maximum) = if left.add(right.scale(-1)).coefficient <= 0 {
         (left, right)

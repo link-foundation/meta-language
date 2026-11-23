@@ -6,6 +6,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 
 const fixtureFile = 'parity/fixtures/natural-language-values.lino';
 const unicodeFixtureFile = 'parity/fixtures/natural-language-unicode-decimal-values.lino';
+const writtenMultiplierFixtureFile = 'parity/fixtures/natural-language-written-multipliers.lino';
 
 function checkValueFixtures(file) {
   const { fixtures } = readProjectData(new URL(`../../${file}`, import.meta.url));
@@ -43,6 +44,16 @@ test('Unicode decimal digits retain typed values and original UTF-8 spans', (con
     requirementId: 'I195-I242-UNICODE-DECIMAL-VALUES', suffix: 'behavior',
     fixtureId: 'i195-i242-unicode-decimal-values', fixtureFile: unicodeFixtureFile,
     assertions: ['unicodeDecimalsAndGrouping', 'unicodeCalendarValidationAndAlternatives', 'unicodeValueSourceSpans'],
+    testName: context.name,
+  });
+});
+
+test('digit amounts with written multipliers preserve exact values and original spans', (context) => {
+  checkValueFixtures(writtenMultiplierFixtureFile);
+  recordIssue195Observations({
+    requirementId: 'I195-I242-WRITTEN-MULTIPLIERS', suffix: 'behavior',
+    fixtureId: 'i195-i242-written-multipliers', fixtureFile: writtenMultiplierFixtureFile,
+    assertions: ['writtenMultipliersNormalizeExactValues', 'writtenMultiplierRangesPreserveEndpointScales', 'writtenMultipliersKeepOriginalSpans'],
     testName: context.name,
   });
 });

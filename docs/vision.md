@@ -1596,10 +1596,11 @@ ISO 4217 codes, and validates calendar dates. Both runtimes derive numeric and
 calendar fields from one pinned Unicode 17.0 decimal digit table. The shared
 grammar recognizes Arabic decimal and grouping separators, and value actions
 normalize digit spellings after search preserves their original source spans.
-A spelling such as `5-7` can carry
-both a numeric range and a date. An unqualified number word scale implies one
-unit of that scale. An explicit count, including zero, multiplies the scale and
-flows through compound numbers and durations.
+A spelling such as `5-7` can carry both a numeric range and a date. An
+unqualified scale word implies one unit of that scale. An explicit count in
+digits or words multiplies the scale, including zero. A scale after the last
+digit amount in a range also applies to the first digit amount when that amount
+has no scale of its own.
 
 ## Grammar feature union
 

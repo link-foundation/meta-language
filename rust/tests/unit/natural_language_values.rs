@@ -7,6 +7,8 @@ use super::project_data::read_project_data;
 
 const FIXTURE: &str = "parity/fixtures/natural-language-values.lino";
 const UNICODE_FIXTURE: &str = "parity/fixtures/natural-language-unicode-decimal-values.lino";
+const WRITTEN_MULTIPLIER_FIXTURE: &str =
+    "parity/fixtures/natural-language-written-multipliers.lino";
 
 fn check_value_fixtures(fixtures: &str) {
     let data: Value = read_project_data(fixtures).expect("value fixtures");
@@ -84,5 +86,24 @@ fn unicode_decimal_digits_retain_typed_values_and_original_spans() {
             "unicodeValueSourceSpans",
         ],
         test_name: "unicode_decimal_digits_retain_typed_values_and_original_spans",
+    });
+}
+
+#[test]
+fn digit_amounts_with_written_multipliers_preserve_values_and_spans() {
+    check_value_fixtures(include_str!(
+        "../../../parity/fixtures/natural-language-written-multipliers.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I242-WRITTEN-MULTIPLIERS",
+        suffix: "behavior",
+        fixture_id: "i195-i242-written-multipliers",
+        fixture_file: WRITTEN_MULTIPLIER_FIXTURE,
+        assertions: &[
+            "writtenMultipliersNormalizeExactValues",
+            "writtenMultiplierRangesPreserveEndpointScales",
+            "writtenMultipliersKeepOriginalSpans",
+        ],
+        test_name: "digit_amounts_with_written_multipliers_preserve_values_and_spans",
     });
 }
