@@ -15,6 +15,8 @@ const EXCLUSIVE_ARRAY_LENGTHS_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-array-lengths.lino";
 const EXCLUSIVE_TYPED_ARRAY_ITEMS_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-typed-array-items.lino";
+const EXCLUSIVE_TYPED_ARRAY_PREFIXES_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino";
 
 fn fixture() -> Value {
     read_project_data(include_str!(
@@ -284,6 +286,21 @@ fn exclusive_array_alternatives_with_disjoint_item_types_count_the_empty_array_s
             "decoderCountsEmptyArrayBranchMembership",
         ],
         test_name: "exclusive_array_alternatives_with_disjoint_item_types_count_the_empty_array_separately",
+    });
+}
+
+#[test]
+fn exclusive_array_alternatives_distinguish_disjoint_first_item_types() {
+    check_exclusive_array_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-PREFIX-TYPES",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-array-prefix-types",
+        fixture_file: EXCLUSIVE_TYPED_ARRAY_PREFIXES_FIXTURE,
+        assertions: &["decoderDistinguishesDisjointArrayPrefixTypes"],
+        test_name: "exclusive_array_alternatives_distinguish_disjoint_first_item_types",
     });
 }
 

@@ -4821,9 +4821,11 @@ share an item layout, the decoder clips each length interval to common sibling
 bounds and generates only lengths covered by exactly one branch. A layer with
 a closed tail contributes its own prefix length as an upper bound. The same
 layout constrains items in the remaining lengths, including an unbounded tail.
-For branches without prefixes and with disjoint item types, the decoder counts
-the positive lengths separately for each shared layout. It emits the empty
-array when exactly one branch admits zero items. A common item rule supplies
+When the first position in each layout has a disjoint instance type, the
+decoder counts positive lengths separately for each shared layout. That
+position uses the first prefix schema when present and the recurring item
+schema otherwise. The decoder emits the empty array when exactly one branch
+admits zero items. A common item rule supplies
 the layout for unrestricted branches. If no layout admits a length covered by
 one branch, there is no generatable array. Two branches with different item
 layouts can also be distinguished by disjoint finite string sets at a

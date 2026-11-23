@@ -709,6 +709,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-PREFIX-TYPES',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive alternatives over array layouts with disjoint first-item types',
+      expectedBehavior: 'For nonempty arrays, use the disjoint instance types at the first position to separate item layouts, and generate positive lengths covered by exactly one branch within each layout. Count empty array membership across all branches, including a branch with an impossible first item.',
+      fixture: 'parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino',
+      selector: 'optional typed prefixes, referenced first-item schema, a recurring item constraint, sibling length guards, overlapping branches with a shared prefix and an impossible prefix',
+      assertions: ['decoderDistinguishesDisjointArrayPrefixTypes'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I241-JSON-RECOVERY',
       source: ISSUE_195_SOURCES.jsonRecovery,
       language: 'JSON document recovery',

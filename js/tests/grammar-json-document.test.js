@@ -13,6 +13,7 @@ const fixtureFile = 'parity/fixtures/json-schema-and-recovery.lino';
 const shared = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
 const exclusiveArrayLengthsFixture = 'parity/fixtures/json-schema-exclusive-array-lengths.lino';
 const exclusiveTypedArrayItemsFixture = 'parity/fixtures/json-schema-exclusive-typed-array-items.lino';
+const exclusiveTypedArrayPrefixesFixture = 'parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino';
 
 const answerSchema = {
   type: 'object', additionalProperties: false, required: ['status', 'evidence'],
@@ -303,6 +304,16 @@ test('exclusive array alternatives with disjoint item types count the empty arra
     requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-TYPED-ARRAY-ITEMS', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-exclusive-typed-array-items', fixtureFile: exclusiveTypedArrayItemsFixture,
     assertions: ['decoderDistinguishesDisjointArrayItemTypes', 'decoderCountsEmptyArrayBranchMembership'],
+    testName: context.name,
+  });
+});
+
+test('exclusive array alternatives distinguish disjoint first-item types', context => {
+  checkExclusiveArrayAlternatives(exclusiveTypedArrayPrefixesFixture);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-PREFIX-TYPES', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-array-prefix-types', fixtureFile: exclusiveTypedArrayPrefixesFixture,
+    assertions: ['decoderDistinguishesDisjointArrayPrefixTypes'],
     testName: context.name,
   });
 });

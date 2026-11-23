@@ -1336,14 +1336,15 @@ impl<'schema> Importer<'schema> {
                 *boundaries.entry(maximum.checked_add(1)?).or_default() -= 1;
             }
         }
-        // With no prefix, the first item distinguishes nonempty arrays of disjoint item types.
+        // The first item distinguishes nonempty arrays with disjoint first-item types.
         if groups.len() > 1
-            && (groups.iter().any(|(layout, _)| !layout.prefix.is_empty())
-                || !branches_use_disjoint_types(
-                    self.root,
-                    groups.iter().map(|(layout, _)| layout.items),
-                    ALL_JSON_TYPES,
-                ))
+            && !branches_use_disjoint_types(
+                self.root,
+                groups
+                    .iter()
+                    .map(|(layout, _)| layout.prefix.first().unwrap_or(layout.items)),
+                ALL_JSON_TYPES,
+            )
         {
             return None;
         }

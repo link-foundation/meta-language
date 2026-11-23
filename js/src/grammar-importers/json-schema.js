@@ -957,9 +957,10 @@ export function importJsonSchema(schema) {
       changeAt(Math.max(minimum, 1), 1);
       if (Number.isFinite(maximum)) changeAt(maximum + 1, -1);
     }
-    // With no prefix, the first item distinguishes nonempty arrays of disjoint item types.
-    if (groups.length > 1 && (groups.some(({ layout }) => layout?.prefixItems.length)
-      || !branchesUseDisjointTypes(groups.map(({ layout }) => layout?.items ?? true), allJsonTypes, referenceLayers))) return undefined;
+    // The first item distinguishes nonempty arrays with disjoint first-item types.
+    if (groups.length > 1 && !branchesUseDisjointTypes(
+      groups.map(({ layout }) => layout?.prefixItems[0] ?? layout?.items ?? true), allJsonTypes, referenceLayers,
+    )) return undefined;
     const expressions = emptyCoverage === 1 ? [arrayExpression({ maxItems: 0 }, pointer)] : [];
     for (const { layout, boundaries } of groups) {
       const addInterval = (minItems, maxItems) => {

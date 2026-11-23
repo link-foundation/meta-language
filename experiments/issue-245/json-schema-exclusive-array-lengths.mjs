@@ -5,6 +5,7 @@ import { compileGrammar, importJsonSchema, validateJson } from '../../js/src/ind
 const fixtures = [
   'json-schema-exclusive-array-lengths.lino',
   'json-schema-exclusive-typed-array-items.lino',
+  'json-schema-exclusive-typed-array-prefixes.lino',
 ];
 
 for (const file of fixtures) {
