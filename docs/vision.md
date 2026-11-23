@@ -2744,7 +2744,9 @@ or unrelated blocker fails the freshness check. The scheduled report runs
 The scheduled registry refresh runs only on main
 as a non-blocking live report: it preserves the actual audit outcome, complete
 log and refreshed audit artifact, and opens or updates the repair PR even when
-new upstream releases leave unresolved findings. The PR body and job summary
+new upstream releases leave unresolved findings. Before pushing, the refresh
+regenerates the dependency history and acceptance fixture fingerprints and
+checks the ledger against the committed scope. The PR body and job summary
 retain those findings; required offline PR and delivery gates still fail until
 the applicable dependency problems are repaired. An unavailable registry cannot
 be presented as a current audit.

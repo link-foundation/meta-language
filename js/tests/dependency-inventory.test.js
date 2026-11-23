@@ -63,6 +63,7 @@ test('main dependency refresh retains failed live findings and delivers their ou
   const outdated = job.steps.find(step => step.name === 'Report available updates from npm and Cargo');
   const retain = job.steps.find(step => step.name === 'Retain the live dependency report');
   const summary = job.steps.find(step => step.name === 'Report the live audit outcome');
+  const regenerate = job.steps.find(step => step.name === 'Regenerate dependency history and acceptance fixtures');
   const publish = job.steps.find(step => step.name === 'Open or update the refresh pull request');
   assert.match(audit.text, /id: audit/u);assert.match(audit.text, /continue-on-error: true/u);
   assert.deepEqual(job.steps.filter(step => /continue-on-error:/u.test(step.text)), [lockfiles, outdated, audit]);
@@ -73,12 +74,28 @@ test('main dependency refresh retains failed live findings and delivers their ou
   assert.doesNotMatch(publish.text, /continue-on-error/u);
   assert.match(job.header, /group: dependency-refresh-\$\{\{ github\.repository \}\}-write\n\s+cancel-in-progress: false/u);
   const script = step => step.run.replace(/^\|\s*\n/u, '').replace(/^ {10}/gmu, '');
-  for (const step of [lockfiles, audit, outdated, summary, publish]) {
+  assert.ok(job.steps.indexOf(regenerate) > job.steps.indexOf(summary));
+  assert.ok(job.steps.indexOf(regenerate) < job.steps.indexOf(publish));
+  assert.doesNotMatch(regenerate.text, /continue-on-error/u);
+  for (const step of [lockfiles, audit, outdated, summary, regenerate, publish]) {
     const syntax = spawnSync('bash', ['-n', '-c', script(step)], {encoding: 'utf8'});
     assert.equal(syntax.status, 0, syntax.stderr);
   }
   const directory = mkdtempSync(path.join(os.tmpdir(), 'meta-language-live-audit-contract-'));
   try {
+    const regenerateCommands = `
+      npm() { printf 'npm %s\\n' "$*"; }
+      node() { printf 'node %s\\n' "$*"; }
+    `;
+    const regeneration = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', regenerateCommands + script(regenerate)],
+      { cwd: directory, encoding: 'utf8' });
+    assert.equal(regeneration.status, 0, regeneration.stderr);
+    assert.deepEqual(regeneration.stdout.trim().split('\n'), [
+      'npm --prefix js ci --ignore-scripts',
+      'node js/scripts/generate-dependency-workflow-source-history.mjs',
+      'npm --prefix js run acceptance:issue-195:refresh',
+      'node js/scripts/check-issue-195-acceptance.mjs --scope-baseline HEAD',
+    ]);
     const failure = spawnSync('bash', ['-e', '-o', 'pipefail', '-c',
       "npm() { printf '23 dependency inventory problem(s)\\n' >&2; return 1; }\n" + script(audit)],
     {cwd: directory, encoding: 'utf8'});

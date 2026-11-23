@@ -459,7 +459,6 @@ they are.
 | `zeroize` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.9.2` | transitive |  | 1.9.2 (crates.io, zeroize) | version | current |  |
 | `zerovec-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.7` | transitive |  | 0.11.7 (crates.io, zerovec-derive) | version | current |  |
 | `zerovec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.9` | transitive |  | 0.11.9 (crates.io, zerovec) | version | current |  |
-| `zip` | `rust/Cargo.lock` | `rust/Cargo.lock` | `9.8.1` | transitive |  | 9.8.1 (crates.io, zip) | version | current |  |
 | `bumpalo` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `3.20.4` | transitive |  | 3.20.4 (crates.io, bumpalo) | version | current |  |
 | `itoa` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.19` | transitive |  | 1.0.19 (crates.io, itoa) | version | current |  |
 | `links-notation` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `0.31.8` | direct, runtime | `0.31.8` | 0.31.8 (crates.io, links-notation) | version | current |  |
@@ -470,6 +469,7 @@ they are.
 | `wasm-bindgen-macro` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.130` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-macro) | version | current |  |
 | `wasm-bindgen-shared` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.130` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-shared) | version | current |  |
 | `wasm-bindgen` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `0.2.130` | direct, runtime | `0.2` | 0.2.130 (crates.io, wasm-bindgen) | version | current |  |
+| `zip` | `rust/Cargo.lock` | `rust/Cargo.lock` | `9.8.2` | transitive |  | 9.8.2 (crates.io, zip) | version | current |  |
 
 ## Experiment manifests
 

@@ -121,6 +121,13 @@ jobs:
             echo '::warning::The live dependency audit reported failures. Its retained findings require repair; no PR or delivery gate is waived.'
           fi
 
+      - name: Regenerate dependency history and acceptance fixtures
+        run: |
+          npm --prefix js ci --ignore-scripts
+          node js/scripts/generate-dependency-workflow-source-history.mjs
+          npm --prefix js run acceptance:issue-195:refresh
+          node js/scripts/check-issue-195-acceptance.mjs --scope-baseline HEAD
+
       - name: Open or update the refresh pull request
         env:
           GH_TOKEN: ${{ github.token }}
