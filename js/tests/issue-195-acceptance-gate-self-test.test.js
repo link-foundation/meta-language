@@ -8,6 +8,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 
 import { buildIssue195Manifest, evaluateIssue195Acceptance } from '../scripts/issue-195-acceptance-lib.mjs';
 import { readAssertionVersionPolicy, selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
@@ -181,7 +182,31 @@ test('pull request checks use no post-merge state, and post-merge reports never 
   }
   const acceptance = read('.github/workflows/ci.yml');
   assert.match(acceptance, /check-dependencies\.mjs --delivery --offline/u);
-  assert.match(acceptance, /\n {2}post-merge:\n {4}name: Post-merge Report\n {4}needs: \[js, self-translation-report-validation\]\n {4}if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}\n {4}continue-on-error: true\n/u);
+  const postMerge = steps(acceptance).find(({ job }) => job.id === 'post-merge').job.header.join('\n');
+  assert.match(postMerge, / {4}name: Post-merge Report\n {4}needs: \[js, self-translation-report-validation\]\n/u);
+  assert.match(postMerge, /^ {4}continue-on-error: true$/mu);
+  const [, condition] = /^ {4}if: \$\{\{ (.+) \}\}$/mu.exec(postMerge);
+  const expression = condition.replace('needs.self-translation-report-validation', 'needs["self-translation-report-validation"]');
+  for (const eventName of ['pull_request', 'push']) {
+    for (const [workflowInput, repositoryVariable] of [[false, ''], [true, ''], [false, 'true']]) {
+      for (const js of ['success', 'failure']) {
+        for (const report of ['success', 'skipped', 'failure']) {
+          for (const cancelled of [false, true]) {
+            const actual = runInNewContext(expression, {
+              cancelled: () => cancelled,
+              github: { event_name: eventName },
+              inputs: { automated_translation: workflowInput },
+              vars: { META_LANGUAGE_AUTOMATED_TRANSLATION: repositoryVariable },
+              needs: { js: { result: js }, 'self-translation-report-validation': { result: report } },
+            });
+            const requiresTranslation = workflowInput || repositoryVariable === 'true';
+            assert.equal(actual, !cancelled && eventName === 'push' && js === 'success' &&
+              (!requiresTranslation || report === 'success'));
+          }
+        }
+      }
+    }
+  }
   observe('I195-ACCEPTANCE-PR-CHECKS-PASSABLE', ['pullRequestChecksUseNoPostMergeState', 'postMergeReportsAreNonBlocking'],
     'pull request checks use no post-merge state, and post-merge reports never block');
 });

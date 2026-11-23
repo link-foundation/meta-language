@@ -32,6 +32,21 @@ and report shards.
 | Binary candidates | The modified-input regression at line 1000 expected a frozen candidate model refusal and received a digest assertion. The native candidate profiles and their original assertions remain in the opt-in path. [Job log](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137333777739) |
 | Conformance and tooling | Naming failed at lines 854–879 and an inherited assertion's source comparison failed at line 1145. These checks need independent fixes and remain active. [Conformance](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137321256178), [tooling](https://github.com/link-foundation/meta-language/actions/runs/45059254685/job/137321255968) |
 
+The first complete tooling shard for the pause surfaced assertions tied to
+earlier inputs at log lines 1157, 3571, 4049 and 8411. The source checks still
+authenticate the original compact instructions and the original six-part
+matrix. The contributor fixture also authenticates the single clause that
+issue #248 revises. The workflow and source discovery tests exercise both
+translation modes and include the new issue and comment endpoints.
+[PR tooling job](https://github.com/link-foundation/meta-language/actions/runs/45086449179/job/137406065515)
+
+Tooling partition 4 reached its 15-minute job deadline at log line 1220.
+The two new tests had moved the native coverage history and fixture storage
+replays into the same partition as the gate mutation test. The scheduler
+preserves every established tooling assignment and adds the two controls
+to the next slots. A test verifies the full union and placement.
+[Tooling partition 4](https://github.com/link-foundation/meta-language/actions/runs/45086449179/job/137406065487)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |

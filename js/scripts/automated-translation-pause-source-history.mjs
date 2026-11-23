@@ -6,7 +6,7 @@ import { readBootstrapStructuredDataLino } from '../../scripts/lib/structured-da
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = 'fd5fce31cbcdbdd389a72c78aae9fbafefdfdf2dcde5ab98ef8ee9ec8c8657ff';
+const archiveDigest = 'b31cfbd1638f8755e615517915eb89bcf854a5f347c25c1498b5a8bcc345df5a';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
@@ -14,8 +14,15 @@ export function restoreAutomatedTranslationPauseSource(source, file, revision) {
   const workflow = file.startsWith('.github/workflows/');
   if (!workflow && !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs',
     'js/scripts/grammar-test-partition-history.mjs', 'js/tests/cache-fresh-merge-dependencies.test.js',
-    'js/scripts/own-codebase-baseline-naming-history.mjs', 'js/scripts/run-issue-195-consumer.mjs',
+    'js/scripts/own-codebase-baseline-naming-history.mjs', 'js/scripts/own-codebase-test-registration-history.mjs',
+    'js/scripts/run-issue-195-consumer.mjs', 'js/scripts/test-groups.mjs',
     'js/scripts/scheduling-source-history.mjs', 'js/scripts/tooling-frozen-source-history.mjs',
+    'js/scripts/formal-ai-partition-bundles.mjs', 'js/scripts/formal-ai-workload-partitions.mjs',
+    'js/scripts/contributor-instruction-coverage.mjs', 'js/scripts/generate-contributor-instruction-coverage.mjs',
+    'js/scripts/issue-195-formal-ai-workloads.mjs', 'js/tests/grammar-embedded-region-rules.test.js',
+    'js/tests/issue-195-evidence-contributor-instructions.test.js', 'js/tests/issue-195-evidence-node-dependency.test.js',
+    'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
+    'js/tests/issue-195-formal-ai-partitions.test.js', 'js/tests/link-network-binary.test.js',
     'js/tests/test-groups.test.js'].includes(file)) {
     return source;
   }

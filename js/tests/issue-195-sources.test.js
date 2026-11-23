@@ -194,15 +194,17 @@ test('source discovery includes every original and follow-up discussion endpoint
     'issues/195', 'issues/195/comments?per_page=100',
     'issues/199', 'issues/199/comments?per_page=100',
     'issues/224', 'issues/224/comments?per_page=100',
+    'issues/248', 'issues/248/comments?per_page=100',
     'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
     'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
     'issues/226/comments?per_page=100', 'pulls/226/comments?per_page=100', 'pulls/226/reviews?per_page=100',
   ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
   assert.equal(discussion.issue.number, 195);
-  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224]);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224, 248]);
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/226/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/248/comments')));
   const reviews = discussion.comments.filter(({ body }) => body === 'A reviewed requirement');
   assert.equal(reviews.length, 3);
   assert.ok(reviews.every(({ created_at, updated_at }) => created_at === updated_at && updated_at === '2026-10-12T00:00:00Z'));
@@ -216,6 +218,7 @@ test('follow-up comment permalinks are validated without assuming pull request 1
     'https://github.com/link-foundation/meta-language/pull/201#issuecomment-1',
     'https://github.com/link-foundation/meta-language/pull/226#issuecomment-1',
     'https://github.com/link-foundation/meta-language/issues/199#issuecomment-1',
+    'https://github.com/link-foundation/meta-language/issues/248#issuecomment-1',
   ]) {
     discussion.register.requirementSources[1].url = url;
     const sources = Object.fromEntries(discussion.register.requirementSources.map(({ key, url }) => [key, url]));

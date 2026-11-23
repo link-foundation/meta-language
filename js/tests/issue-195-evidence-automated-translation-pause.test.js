@@ -9,6 +9,7 @@ import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { executePhysicalHarness, matchesLogicalFilters, nativeTestArguments, verifyHarnessExecution } from '../scripts/rust-test-shards.mjs';
+import { partitionGroupFiles, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { recordIssue195DirectiveObservation } from './support/issue-195-observations.js';
 
 const root = new URL('../../', import.meta.url);
@@ -23,6 +24,25 @@ const step = (job, name) => {
   assert.ok(value, `${job.id}: ${name}`);
   return value;
 };
+
+test('the two new tooling tests preserve all established shard assignments', () => {
+  const files = partitionTests(testFiles()).groups.tooling;
+  const pauseTests = [
+    'issue-195-evidence-automated-translation-pause.test.js',
+    'issue-195-evidence-automated-translation-rollout.test.js',
+  ];
+  const established = files.filter(file => !pauseTests.includes(file));
+  const partitions = [1, 2, 3, 4].map(partition => partitionGroupFiles(files, partition + '/4'));
+  for (const [index, partition] of partitions.entries()) {
+    assert.deepEqual(partition.filter(file => !pauseTests.includes(file)),
+      partitionGroupFiles(established, index + 1 + '/4'));
+  }
+  assert.deepEqual(partitions.flat().sort(), files);
+  assert.ok(partitions[2].includes(pauseTests[0]));
+  assert.ok(partitions[3].includes(pauseTests[1]));
+  assert.ok(partitions[1].includes('project-data-fixture-links-storage.test.js'));
+  assert.ok(partitions[3].includes('issue-195-acceptance-gate-mutations.test.js'));
+});
 const observe = (scope, assertions, name) =>
   recordIssue195DirectiveObservation(`I195-AUTOMATED-TRANSLATION-PAUSE-${scope}`, assertions, name);
 

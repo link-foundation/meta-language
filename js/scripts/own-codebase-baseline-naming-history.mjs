@@ -181,22 +181,34 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     }
   }
   const baseline = 'ec9f4efb0e9ef936114e09823981352f6db13700';
-  for (const [file, revision] of [
+  for (const [file, revision, sourceInventory = 'B70 physical field source view names'] of [
+    ['js/scripts/contributor-instruction-coverage.mjs', baseline],
     ['js/scripts/current-ci-repair-source-history.mjs', baseline],
+    ['js/scripts/generate-contributor-instruction-coverage.mjs', baseline],
     ['js/scripts/grammar-test-partition-history.mjs', baseline],
     ['js/scripts/own-codebase-baseline-naming-history.mjs', baseline],
+    ['js/scripts/own-codebase-test-registration-history.mjs', baseline],
     ['js/scripts/rust-test-shards.mjs', baseline],
+    ['js/scripts/test-groups.mjs', baseline],
     ['js/scripts/scheduling-source-history.mjs', '15745ffcd322c48bdd537ccb48a5f7c9deb96917'],
     ['js/scripts/tooling-frozen-source-history.mjs', '269c48e497280025271ade3765f808b2f372d1b6'],
     ['js/tests/cache-fresh-merge-dependencies.test.js', baseline],
+    ['js/tests/issue-195-evidence-contributor-instructions.test.js', baseline],
+    ['js/tests/issue-195-evidence-translation-partition-conservation.test.js', baseline],
     ['js/tests/test-groups.test.js', baseline],
+    ['js/tests/grammar-embedded-region-rules.test.js', baseline, 'B60 recursive default region source names'],
+    ['js/scripts/formal-ai-partition-bundles.mjs', baseline, 'B63 actual source names'],
+    ['js/scripts/formal-ai-workload-partitions.mjs', baseline, 'B63 actual source names'],
+    ['js/scripts/issue-195-formal-ai-workloads.mjs', baseline, 'B63 actual source names'],
+    ['js/tests/issue-195-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
+    ['js/tests/link-network-binary.test.js', baseline],
   ]) {
-    const inventory = 'B70 physical field source view names for ' + file;
+    const inventory = sourceInventory + ' for ' + file;
     const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));
     const input = resolve(root, file);
     if (!entry || !existsSync(input)) continue;
     const current = readFileSync(input, 'utf8');
-    const previous = restoreAutomatedTranslationPauseSource(current, file);
+    const previous = restoreAutomatedTranslationPauseSource(current, file, revision);
     if (previous === current) continue;
     const currentNames = new Set(entry.extract(current, file));
     for (const name of new Set(entry.extract(previous, file))) {
