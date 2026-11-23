@@ -16,7 +16,7 @@ export async function inspectAutomatedTranslationRollout(repository, query = git
   const baseCommits = new Map();
   for (const ref of new Set(pulls.map(pull => pull.base.ref))) {
     const branch = ref.split('/').map(encodeURIComponent).join('/');
-    const reference = await query(['api', `${api}/git/ref/heads/${branch}`, '--allow-escape-sequences']);
+    const reference = await query(['api', `${api}/git/ref/heads/${branch}`]);
     baseCommits.set(ref, reference.object.sha);
   }
   const observations = [];
