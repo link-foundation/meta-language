@@ -127,15 +127,25 @@ lint and runtime results come from CI on the updated revision.
 [Rust lint](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137557959068),
 [review data](../../../parity/self-translation/native-source-style-review-137557959068.lino)
 
-On `35ce88bc8`, seven assertions across three tooling partitions found that
-the crate allowlist entry for the relocated ownership metadata test was
-missing from the dependency inventory. The declaration refresh appended that
-entry and regenerated the audit document with the same audit date and prior
-818 entries. The focused package, inventory, and certified history checks
-passed all 20 tests, including all seven failing assertions.
+On `35ce88bc8`, nine assertions across three tooling partitions and the
+JavaScript downstream partition found that the crate allowlist entry for the
+relocated ownership metadata test was missing from the dependency inventory.
+The declaration refresh appended that entry and regenerated the audit document
+with the same audit date and prior 818 entries. The focused package, inventory,
+certified history, and delivery checks passed all 22 tests, including all nine
+failing assertions.
 [Tooling partition 1, log lines 1262–1324](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211095),
 [tooling partition 3, log lines 762–1025](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211407),
-[tooling partition 4, log lines 920–944](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211838)
+[tooling partition 4, log lines 920–944](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211838),
+[downstream partition, log lines 750–791](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589211619)
+
+The naming conformance partition on that revision passed its 81 active tests.
+It checked the current and historical naming owners at log lines 950–951.
+Two executable translation tests reported the pause at lines 873 and 981.
+The bulk grammar pipeline also passed and published its 67-language matrix,
+summarized at log line 1028.
+[Conformance partition 2](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589212564),
+[bulk grammar pipeline](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589213975)
 
 ## Requirements and implementation plan
 
