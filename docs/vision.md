@@ -3665,6 +3665,10 @@ missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
 Successful timing and full native execution still require corrected-commit CI.
+The current and consuming raw emissions within one plan share one checked
+program. The consuming emission still verifies both complete typed archive
+replays and its recorded profile. Each complete Rust source is replayed through
+text and binary archives before the plan allocates its observation matrix.
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. The existing modulo file partitioner
 assigns every current test file exactly once; all commands, assertions, flags,
