@@ -108,6 +108,25 @@ Delivery Candidates and a run that has not been cancelled.
 [PR run](https://github.com/link-foundation/meta-language/actions/runs/45112972070),
 [GitHub job dependencies](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds)
 
+That run completed with a failed Rust check. Cargo Check reported three calls
+to a missing observation helper and four uses of unsupported hexadecimal
+formatting from log lines 1149 through 2388. The test repair reuses the existing
+SHA-256 string encoder and restores the JavaScript subprocess observations.
+The same run found an inline test under `src/` and two files over the line
+limit at log lines 1138–1140 and 4425–4426. The corresponding bodies moved
+to dedicated files and retain their assertions and inputs.
+[Cargo Check](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137557959187),
+[Rust lint](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137557959068)
+
+Clippy reported 199 diagnostics in the same Rust job at log line 4305.
+The reviewed corrections preserve the native lint command and pass through
+the existing JavaScript generators for generated Rust. The review data keeps
+the input module digests, the exact edited spans and their original rendered
+diagnostic locations. This data records the source review. Native compile,
+lint and runtime results come from CI on the updated revision.
+[Rust lint](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137557959068),
+[review data](../../../parity/self-translation/native-source-style-review-137557959068.lino)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
