@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -25,6 +26,7 @@ import { selectVersionedAssertion } from '../scripts/assertion-version-ranges.mj
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const FIXTURE = 'parity/self-translation/cases.lino';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -389,17 +391,25 @@ test('languages are named by name or extension, and others are refused', () => {
   assert.throws(() => selfTranslate('x\n', 'python', 'rust'), SelfTranslationError);
 });
 
-test('the report splits the modules into shards of about the same size', () => {
+test('the report balances the workload of complete modules between shards', () => {
   const script = path.join(root, 'js/scripts/generate-self-translation-report.mjs');
   const list = (...args) => execFileSync(process.execPath, [script, '--list', ...args], { encoding: 'utf8' }).trim().split('\n');
   const all = list();
   const shards = [1, 2, 3].map((shard) => list('--shard', `${shard}/3`));
   // Every module is in exactly one shard.
   assert.deepEqual(shards.flat().sort(), [...all].sort());
-  const bytes = (modules) => modules.reduce((sum, module) => sum + readFileSync(path.join(root, module)).length, 0);
-  const largest = Math.max(...all.map((module) => bytes([module])));
-  const sizes = shards.map(bytes);
-  // Largest first to the lightest shard keeps the shards within one module of each other.
+  const { entries } = readProjectData(path.join(root, 'parity/fixtures/ci-39615628279-workload-costs.lino'));
+  const rates = entries.map(({ milliseconds, bytes }) => milliseconds / bytes).sort((a, b) => a - b);
+  const medianRate = rates[Math.floor(rates.length / 2)];
+  const estimates = new Map(all.map((module) => {
+    const source = readFileSync(path.join(root, module));
+    const digest = createHash('sha256').update(source).digest('hex');
+    const sample = entries.find(({ file, bytes, sha256 }) => file === module && bytes === source.length && sha256 === digest);
+    return [module, sample?.milliseconds ?? Math.max(1, Math.ceil(source.length * medianRate))];
+  }));
+  const largest = Math.max(...estimates.values());
+  const sizes = shards.map((shard) => shard.reduce((sum, module) => sum + estimates.get(module), 0));
+  // A whole-module assignment keeps the estimated shard costs within one module of each other.
   assert.ok(Math.max(...sizes) - Math.min(...sizes) <= largest, String(sizes));
   assert.deepEqual(list('--modules', 'language-support.js,self-translation.js', '--shard', '2/2').length, 1);
   assert.throws(() => list('--shard', '3/2'), /--shard takes K\/N/u);
