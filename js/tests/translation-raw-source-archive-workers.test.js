@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {EventEmitter} from 'node:events';
+import {readFileSync} from 'node:fs';
 import {Worker} from 'node:worker_threads';
 import test from 'node:test';
 import {runOriginalLinkRawArchiveJobs,runOriginalLinkRawArchiveWorker,replayOriginalLinkRawSourceArchives,
   readOriginalLinkRawArchiveWorkerSources,prepareOriginalLinkRawArchiveBatch,canOverlapOriginalLinkRawSourcePreparation} from '../../experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs';
+import {readOriginalLinkRawArchiveSources} from '../../experiments/original-link-complete-table-projection/raw-native-observations.mjs';
 
 test('bounded source archive jobs retain every complete input and deterministic result order',async()=>{
   const sources=['first complete source','second complete source','third complete source'],original=[...sources];
@@ -56,6 +58,21 @@ test('parallel source preparation admits only identical sources and waits for ev
   assert.equal(canOverlapOriginalLinkRawSourcePreparation({},3,5*1024**3),false);
   assert.equal(canOverlapOriginalLinkRawSourcePreparation({},4,5*1024**3-1),false);
   assert.equal(canOverlapOriginalLinkRawSourcePreparation({META_LANGUAGE_JOBS:'2'},4,5*1024**3),false);
+});
+
+test('provisional archive source reads retain the three complete inputs and reject a changed receipt', () => {
+  const sources = readOriginalLinkRawArchiveSources();
+  assert.deepEqual(sources.map(source => [Buffer.byteLength(source), createHash('sha256').update(source).digest('hex')]), [
+    [351680, '54388dca2da4b7f1a5bcbb7308d31d5f049997898b89a4bf940b2f7bb664aec5'],
+    [351559, 'b0820a709afb3c66fc88321ceaa84e00baa795b0f07290896db6d00c740d9c7c'],
+    [345744, 'bc87e15215c99ba3694f0d08e66b30252908fd2ce776f7f875b76b82af103095'],
+  ]);
+  assert.throws(() => readOriginalLinkRawArchiveSources((file, encoding) => {
+    const text = readFileSync(file, encoding);
+    return file.pathname.endsWith('/raw-borrowed-parameter-receipt.lino')
+      ? text.replace('(def: 345744)', '(def: 345745)') : text;
+  }), {name: 'AssertionError', actual: {bytes: 345744, sha256: 'bc87e15215c99ba3694f0d08e66b30252908fd2ce776f7f875b76b82af103095'}});
+  assert.deepEqual(readOriginalLinkRawArchiveSources(), sources);
 });
 
 test('complete archive receipts require one full matching message and a successful worker exit',async()=>{
