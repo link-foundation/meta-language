@@ -691,7 +691,8 @@ async function produceDeliveryEvidence(kind) {
       observe(nativeHtmlRelease, 'samePublishedRelease', 'npm integrity, registry gitHead, crate VCS revision and v1.0.0 tag agree');
     }
     const npmChecks = deliveryAssertions(local, ['npm'], expected, deliveryContext);
-    if (npmChecks.cleanEnvironment && npmChecks.exactArtifactChecksum && metadata.dist?.integrity === npmIntegrity &&
+    if (npmChecks.cleanEnvironment && npmChecks.exactArtifactChecksum && npmChecks.offlineFirstParse &&
+        metadata.dist?.integrity === npmIntegrity &&
         local.npm.nativeHtmlFixtureSha256 === manifest.fixtureCatalog['npm:native-html'].sha256) {
       observe(nativeHtmlRelease, 'installedNativeHtmlTreeAndSpans', 'offline native HTML test of the installed npm release');
     }
@@ -761,12 +762,19 @@ async function candidateArtifacts() {
       artifacts.push(relative(path.join(artifactsDirectory, file)));
     }
   }
+  let npmRegistry = null;
+  if (checkpoint === 'release-delivery') {
+    const name = 'npm-registry.lino';
+    npmRegistry = path.join(artifactsDirectory, name);
+    await copyFile(path.join(source, name), npmRegistry);
+    artifacts.push(relative(npmRegistry));
+  }
   return {
     commands: record.commands,
     artifacts: [...record.artifacts, ...artifacts],
     tarball: path.join(artifactsDirectory, names[0]),
     crate: path.join(artifactsDirectory, names[1]),
-    npmRegistry: checkpoint === 'release-delivery' ? path.join(source, 'npm-registry.lino') : null,
+    npmRegistry,
   };
 }
 
