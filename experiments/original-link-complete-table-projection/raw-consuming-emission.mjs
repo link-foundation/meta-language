@@ -33,6 +33,25 @@ const root = new URL('../../',import.meta.url);
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const sourceArtifact = ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR.currentArtifact;
 const maximumRecords = 1_000_000, maximumArchiveBytes = 64 * 1024 * 1024;
+// Both current archive decoders reproduce the complete emission. Restore the
+// three recorded transport fields only for the certified historical snapshot.
+const archiveReceiptChanges = Object.freeze([
+  ['textBytes', 8864557, 8864555],
+  ['textSha256', '1b6ab57437e999959ead8d158f69e94ca1060bd74c46604dee57a49fd7aa5303',
+    '37ecd238ca3038f2dcc706746725bd08730a7ad0fe8d0bfecf9ea96ff3c02f85'],
+  ['binarySha256', '3bcca11784d5029c4e0e432ab2698395e397afe621102ae19e4f3ec6da191bf2',
+    '93fdb5b42acb76602f8e0bd466648cc08036163a9d56dce7703c081c660170ff'],
+]);
+
+function restoreRawConsumingArchiveReceipt(archive) {
+  const historical = { ...archive };
+  for (const [field, previous, current] of archiveReceiptChanges) {
+    assert.equal(archive[field], current, 'the regenerated archive receipt is exact: ' + field);
+    historical[field] = previous;
+  }
+  return historical;
+}
+
 const decisionFiles = Object.freeze([
   'experiments/original-link-complete-table-projection/raw-consuming-emission.mjs',
   'js/src/translation/javascript.js', 'js/src/translation/javascript-infer.js',
@@ -246,13 +265,13 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
     nativeCompilation:false,nativeExecution:false,
     boundary:'Whole checked source, all106owners and both complete source-free typed archives. Tokenized clone/append sites observe emitted syntax only; the existing emitter performs its actual checked final-use decisions. No internal proof-node inventory, native timing or completion claim.',
     predecessorConservation:structuredClone(ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR)};
-  // Retain the real producer's physical metadata separately. Only the frozen
-  // snapshot comparison gets certified source identities; every emitted value
-  // and both complete source-free archive replays above remain actual/current.
+  // Retain the real producer's physical metadata and archive receipts. The
+  // complete original snapshot check gets the exact historical metadata view.
   const currentArtifact=artifact;
   const currentDecisionSources=decisionSources(readFileSync);
   assert.deepEqual(currentArtifact.decisionSources,currentDecisionSources,'actual current producer decision sources changed');
-  const snapshotArtifact={...currentArtifact,decisionSources:decisionSources(rawConsumingSnapshotSourceReader(readFileSync))};
+  const snapshotArtifact={...currentArtifact,decisionSources:decisionSources(rawConsumingSnapshotSourceReader(readFileSync)),
+    archive:restoreRawConsumingArchiveReceipt(currentArtifact.archive)};
   verifyOriginalLinkRawConsumingConservation(snapshotArtifact);
   if(check)checkProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,snapshotArtifact);
   return {artifact:snapshotArtifact,currentArtifact,currentDecisionSources,rust:emitted,profile:{profile:'consuming',sourceBytes:artifact.sourceBytes,sourceSha256:artifact.sourceSha256,
@@ -260,7 +279,7 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
     sourceArtifact,declarationNames:artifact.declarationNames,definitionCount:106,
     proof:{artifactSha256:sha256(structuredDataToLino(snapshotArtifact)),predecessor,
       predecessorConservation:snapshotArtifact.predecessorConservation,decisionSources:snapshotArtifact.decisionSources,
-      options:artifact.options,archive:artifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
+      options:artifact.options,archive:snapshotArtifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
       boundary:'Actual emitted token sites and existing checked final-use decision source pins; not an internal graph-fact inventory or native performance observation.'}}};
 }
 
