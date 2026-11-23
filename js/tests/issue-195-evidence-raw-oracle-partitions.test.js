@@ -82,7 +82,10 @@ test('two required raw contract cells preserve complete commands limits and the 
   const plan=after.steps.find(row=>row.name===old.name);
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
   const actual=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
-  assert.equal(actual.header,after.header);
+  const rawContractHeader=actual.header
+    .replace(" || matrix.generated_slice == 'third' && ' / third'",'')
+    .replace('          - group: generated\n            generated_slice: third\n','');
+  assert.equal(rawContractHeader,after.header);
   for(const step of [schema,plan])assert.deepEqual(actual.steps.find(row=>row.name===step.name),step);
   assert.equal(plan.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'",''),old.text);
   assert.equal(schema.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'",'')

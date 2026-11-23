@@ -338,7 +338,7 @@ jobs:
   # Separate the native import and oracle fixture costs from other package
   # checks. Every group is required; a failure never cancels its siblings.
   package-checks:
-    name: JavaScript Package Checks (${{ matrix.group }})${{ matrix.generated_slice == 'second' && ' / second' || '' }}
+    name: JavaScript Package Checks (${{ matrix.group }})${{ matrix.generated_slice == 'second' && ' / second' || matrix.generated_slice == 'third' && ' / third' || '' }}
     needs: [tests, report-assertions]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -370,6 +370,8 @@ jobs:
             generated_slice: first
           - group: raw-borrowed-emission
             generated_slice: first
+          - group: generated
+            generated_slice: third
     steps:
       - uses: actions/checkout@v7
         with:
@@ -913,17 +915,17 @@ jobs:
         run: node scripts/generate-javascript-line-terminator-rules.mjs --check
 
       - name: Check generated JavaScript Unit module experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../experiments/generated-javascript-unit/generate-rules.mjs --check
 
       - name: Check complete generated JavaScript Unit module experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../experiments/generated-javascript-unit/generate-fixtures.mjs --check
 
       - name: Run generated JavaScript Unit module experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -931,17 +933,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-javascript-unit/model.test.mjs
 
       - name: Check generated owned Rust module experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-rules.mjs --check
 
       - name: Check complete generated owned Rust module experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-fixtures.mjs --check
 
       - name: Run generated owned Rust module experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -967,17 +969,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/value-edits.test.mjs
 
       - name: Check generated Rust text value projection experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../experiments/rust-text-value-projection/generate-rules.mjs --check
 
       - name: Check complete Rust text value projection experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../experiments/rust-text-value-projection/generate-fixtures.mjs --check
 
       - name: Run Rust text value projection experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1322,12 +1324,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/program-numeric-metadata.test.mjs
 
       - name: Check shared owned occurrence position fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../experiments/generate-owned-occurrence-position-fixture.mjs --check
 
       - name: Run owned occurrence position checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-occurrence-position.test.mjs
       - name: Check generated closed Rust const predicate rules
@@ -1477,7 +1479,7 @@ jobs:
         run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc
 
       - name: Authenticate reviewed generated-stage migration refreshes
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'third' }}
         run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
 
       - name: Check the generated Rust source product rules against JavaScript

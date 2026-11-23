@@ -58,3 +58,48 @@ test('actual generated scheduling preserves every check once under both original
 });
 
 import {restoreCiNodeRuntimeHistory} from './support/ci-node-runtime-history.js';
+
+test('a third required generated slice keeps every command and feedback producer under the ten-minute deadline', () => {
+  const current = readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const jobs = parseWorkflow(current);
+  const checks = jobs.find(job => job.id === 'package-checks');
+  const extraCell = '          - group: generated\n            generated_slice: third\n';
+  const extraLabel = " || matrix.generated_slice == 'third' && ' / third'";
+  assert.equal(checks.header.split(extraCell).length, 2, 'the overloaded generated slice gains one distinct required peer');
+  assert.equal(checks.header.split(extraLabel).length, 2, 'the extra slice has its own check name');
+  assert.match(checks.header, /timeout-minutes: 10\n/u);
+  assert.match(checks.header, /-\$\{\{ matrix\.generated_slice \}\}\n/u);
+  const moved = [
+    'Check generated JavaScript Unit module experiment rules',
+    'Check complete generated JavaScript Unit module experiment fixtures',
+    'Run generated JavaScript Unit module experiment',
+    'Check generated owned Rust module experiment rules',
+    'Check complete generated owned Rust module experiment fixtures',
+    'Run generated owned Rust module experiment',
+    'Check generated Rust text value projection experiment rules',
+    'Check complete Rust text value projection experiment fixtures',
+    'Run Rust text value projection experiment',
+    'Check shared owned occurrence position fixtures',
+    'Run owned occurrence position checks',
+    'Authenticate reviewed generated-stage migration refreshes',
+  ];
+  const thirdSlice = "matrix.generated_slice == 'third'";
+  assert.deepEqual(checks.steps.filter(step => step.text.includes(thirdSlice)).map(step => step.name), moved);
+  const previousHeader = checks.header.replace(extraCell, '').replace(extraLabel, '');
+  const previousSteps = checks.steps.map(step => {
+    if (!moved.includes(step.name)) return step.text;
+    assert.equal(step.text.split(thirdSlice).length, 2);
+    assert.ok(step.afterFailure);
+    const oldSlice = step.name === 'Authenticate reviewed generated-stage migration refreshes' ? 'first' : 'second';
+    return step.text.replace(thirdSlice, `matrix.generated_slice == '${oldSlice}'`);
+  });
+  // The timed-out run used 897b1f6b2ff7df5e094ca5d420b9c6e0057ef030.
+  assert.equal(createHash('sha256').update(previousHeader + previousSteps.join('')).digest('hex'),
+    '715f120d38b81b51a9b6cad39f496d1f2a3cc67be4f19410e7c3519335b58de6',
+    'the schedule preserves every original command, setup step, artifact and predicate');
+  const aggregate = jobs.find(job => job.id === 'test');
+  const gate = aggregate.steps.find(step => step.name === 'Require every JavaScript test group');
+  assert.equal(createHash('sha256').update(aggregate.header + gate.text).digest('hex'),
+    'eeb8ab8db81f053f173fe98e55e847a990e04fabd038907e2ea287c614e8c7a6',
+    'every generated slice feeds the same required package gate');
+});

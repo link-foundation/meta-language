@@ -3757,19 +3757,24 @@ authenticate the old Git blobs and replay only reviewed runner changes, with
 separate complete helper and verifier hashes. These transport and source checks
 cannot supply successful native observations or a performance result.
 
-Package validation runs nine required logical check groups across ten parallel
-jobs: native imports, native fixtures, grammar, contracts, generated code and
-source models, complete original-link tables, binary candidates and raw graph
-preflight. The
-generated group has two physical slices. The first retains the literal-edit
-rule, fixture and experiment triplet, owned local container checks, strict public
-declaration consumers and the reviewed generated-stage migration refresh. The
-second retains every remaining generated check, including both compiler-feedback
-producers and their single upload. All checks execute exactly once in their
-original relative order;
-each runner keeps the same setup and ten-minute deadline. Distinct concurrency
-identities prevent sibling cancellation. All six earlier check-context names
-remain, and the additional generated slice has its own name. The
+The initial package validation split ran nine required logical check groups
+across ten parallel jobs: native imports, native fixtures, grammar, contracts,
+generated code and source models, complete original-link tables, binary
+candidates and raw graph preflight. That split gave the generated group two
+physical slices. The first ran the literal-edit rule, fixture and experiment
+triplet, owned local container checks, strict public declaration consumers and
+the reviewed generated-stage migration refresh. The second ran every remaining
+generated check, including both compiler-feedback producers and their single
+upload. All checks executed exactly once in their original relative order. Each
+runner kept the same setup and ten-minute deadline. Distinct concurrency
+identities prevented sibling cancellation. The split preserved the six earlier
+check-context names and named the additional generated slice. After the second
+slice reached its ten-minute deadline, package validation added a third
+required generated slice for the JavaScript Unit, owned Rust module and text
+projection experiments, occurrence-position checks and reviewed stage migration
+refresh. All twelve checks keep their original commands and relative order.
+Both compiler-feedback producers and their single upload stay on the second slice.
+Each slice uses the same setup and deadline. The
 source-model group executes the new raw-binding and complete text-certificate
 checks, isolated owned-certificate adapters, original-identity and role
 projection checks, complete String-symbol and eleven-table projection checks,
