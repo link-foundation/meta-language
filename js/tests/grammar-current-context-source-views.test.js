@@ -200,7 +200,7 @@ test('grammar search retains the original transport source and authenticates the
   for(const proof of view.searchSuccessors){
     const current=readFileSync(join(root,proof.file),'utf8'),pair=readIssue245SourcePair(proof.file);
     assert.equal(current,proof.currentSource);
-    assert.deepEqual(pair,{current,predecessor:proof.predecessorSource});
+    assert.deepEqual(pair,{current,predecessor:proof.predecessorSource,versions:[proof.predecessorSource,current]});
     const declarations=inventory.declarations.filter(row=>row.file===proof.file);
     assert.deepEqual(proof.selectedDeclarations.map(row=>row.name),declarations.map(row=>row.name));
     for(const [index,row]of proof.selectedDeclarations.entries()){
