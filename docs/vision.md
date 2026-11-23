@@ -4725,8 +4725,11 @@ When overlapping exclusive alternatives span several JSON instance types,
 the decoder checks each type separately. The numeric production keeps integer
 and non-integral values together so both numeric branch counts are available.
 String and numeric intersections can therefore enforce exclusivity alongside
-other disjoint alternatives. Any unresolved overlap still carries a validation
-diagnostic for that type.
+other disjoint alternatives. For Boolean and null alternatives, the decoder
+validates each value in that finite type domain against the complete schema.
+The same check applies to local references with sibling assertions when their
+allowed type domain is Boolean, null, or both. Any unresolved overlap still
+carries a validation diagnostic for that type.
 
 An object local reference chain takes the union of the required names and
 the declared property names. For each name, the decoder uses each layer's

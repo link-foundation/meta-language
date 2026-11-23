@@ -483,6 +483,25 @@ const cases = [
     [['null', true], ['-3.00', true], ['-2', false], ['-2.0', false], ['-1.00', true], ['0.50', true],
       ['2.50', true], ['3', false], ['5e-1', true], ['0.75', false], ['false', false]],
   ],
+  [
+    { type: 'boolean', oneOf: [true, { const: true }] },
+    [['false', true], [' true ', false], ['null', false], ['0', false], ['"false"', false]],
+    [],
+  ],
+  [
+    { oneOf: [{ type: ['boolean', 'null', 'string'] }, { enum: [null, true] }] },
+    [['false', true], ['true', false], ['null', false], ['"answer"', true], ['""', true], ['[]', false]],
+    [],
+  ],
+  [
+    {
+      type: ['boolean', 'null'], $ref: '#/$defs/input',
+      $defs: { input: { anyOf: [{ type: 'boolean' }, { type: 'null' }] } },
+      anyOf: [{ type: 'boolean' }, { type: 'null' }], oneOf: [true, { const: null }],
+    },
+    [[' false ', true], ['true', true], ['null', false], ['"answer"', false], ['1', false]],
+    [],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -505,6 +524,7 @@ const impossible = [
   { type: 'number', oneOf: [{ maximum: 0 }, { maximum: 0 }, { type: 'integer', minimum: 0, maximum: 0 }] },
   { oneOf: [{ type: 'number' }, { type: 'number' }, { type: 'string' }, { type: 'string' }] },
   { type: 'number', oneOf: [{ minimum: 1.25, maximum: 1.25 }, { const: 1.25 }] },
+  { type: 'null', oneOf: [true, { type: 'null' }] },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -856,9 +856,15 @@ export function importJsonSchema(schema) {
     const referenceHasSiblings = rules.$ref !== undefined && Object.keys(rules).some(key => !referenceKeys.has(key));
     const constants = finiteConstants(rules)
       ?? (alternatives?.every(child => finiteConstants(child)) ? alternatives.flatMap(finiteConstants) : undefined);
-    const candidates = constants
-      ? { values: constants, keyword: ['const', 'enum', 'anyOf', 'oneOf'].find(key => Object.hasOwn(rules, key)) }
-      : (referenceHasSiblings || alternatives) && finiteSchemaCandidates(rules, analysis.target);
+    let candidates;
+    if (constants) {
+      candidates = { values: constants, keyword: ['const', 'enum', 'anyOf', 'oneOf'].find(key => Object.hasOwn(rules, key)) };
+    } else if (referenceHasSiblings || alternatives) {
+      const finiteTypes = jsonTypes.get('boolean') | jsonTypes.get('null');
+      candidates = (allowedTypes & finiteTypes) === allowedTypes
+        ? { values: [false, true, null], keyword: 'type' }
+        : finiteSchemaCandidates(rules, analysis.target);
+    }
     if (candidates) {
       const { values, keyword } = candidates;
       const entries = values.filter(item => (allowedTypes & valueTypeMembership(item))

@@ -202,6 +202,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "decoderDistinguishesIntegerValuesWithinNumberAlternatives",
             "decoderChecksExclusiveAlternativesWithinInstanceTypes",
             "decoderCountsFiniteNumericBranchesInExclusiveAlternatives",
+            "decoderChecksBooleanAndNullAlternativeValues",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });

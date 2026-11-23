@@ -399,7 +399,20 @@ impl<'schema> Importer<'schema> {
             })
             .or_else(|| {
                 if reference_has_siblings || combination.is_some() {
-                    finite_schema_candidates(self.root, schema, &mut HashSet::new(), &mut 16_384, 0)
+                    let finite_types = type_membership("boolean") | type_membership("null");
+                    if allowed_types & finite_types == allowed_types {
+                        static VALUES: [Value; 3] =
+                            [Value::Bool(false), Value::Bool(true), Value::Null];
+                        Some((VALUES.iter().collect(), "type"))
+                    } else {
+                        finite_schema_candidates(
+                            self.root,
+                            schema,
+                            &mut HashSet::new(),
+                            &mut 16_384,
+                            0,
+                        )
+                    }
                 } else {
                     None
                 }

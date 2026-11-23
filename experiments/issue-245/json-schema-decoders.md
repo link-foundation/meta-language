@@ -119,3 +119,9 @@ enum alone admitted its value. The fixture now checks that spelling and rejects
 `2.500` because both branches admit it. A second fixture checks finite values
 from a local reference, removes a value outside a sibling bound, and counts a
 value repeated within the same `anyOf` branch once.
+
+In `{ type: 'boolean', oneOf: [true, { const: true }] }`, the decoder
+previously admitted `true` through both branches. The fixture now accepts
+only `false`, including when an independent string branch remains available.
+Related fixtures check a local reference with simultaneous `anyOf` and
+`oneOf` siblings, and a null value that matches both branches of its schema.
