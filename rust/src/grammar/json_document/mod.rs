@@ -10,6 +10,7 @@ mod patterns;
 mod property_names;
 mod recovery;
 mod schema;
+mod tag_policy;
 mod validation;
 
 use std::sync::LazyLock;

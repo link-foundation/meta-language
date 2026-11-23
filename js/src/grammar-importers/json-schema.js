@@ -6,6 +6,7 @@ import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-doc
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-patterns.js';
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
+import { stringSetsAreDisjoint } from './json-schema-tag-policy.js';
 import { exclusiveIntegerRange, integerBounds, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
@@ -218,6 +219,30 @@ function branchesUseDisjointTypes(branches) {
   return true;
 }
 
+function requiredStringTags(schema) {
+  const tags = new Map();
+  const declared = Array.isArray(schema?.type) ? schema.type : [schema?.type];
+  if (declared.length !== 1 || declared[0] !== 'object' || !Array.isArray(schema.required)
+      || ['$ref', 'anyOf', 'oneOf'].some(key => Object.hasOwn(schema, key))) return tags;
+  for (const key of schema.required) {
+    if (!schema.properties || !Object.hasOwn(schema.properties, key)) continue;
+    const values = finiteConstants(schema.properties[key]);
+    if (Array.isArray(values) && values.every(value => typeof value === 'string' && value.isWellFormed())) {
+      tags.set(key, values);
+    }
+  }
+  return tags;
+}
+
+function branchesUseDisjointRequiredTags(branches) {
+  const tags = branches.map(requiredStringTags);
+  return branches.every((branch, index) => branches.slice(0, index).every((previous, other) => (
+    branchesUseDisjointTypes([branch, previous]) || [...tags[index]].some(([key, values]) => (
+      tags[other].has(key) && stringSetsAreDisjoint(values, tags[other].get(key))
+    ))
+  )));
+}
+
 function formatRule(format) {
   return `json_format_${format.replaceAll('-', '_')}`;
 }
@@ -414,7 +439,7 @@ export function importJsonSchema(schema) {
       const keyword = rules.anyOf ? 'anyOf' : 'oneOf';
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== keyword && !referenceKeys.has(key));
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
-      if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives)) {
+      if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives) && !branchesUseDisjointRequiredTags(alternatives)) {
         const integer = exclusiveIntegerRange(alternatives, referenceKeys);
         if (integer !== undefined) {
           if (integer) report(pointer, 'oneOf', 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');

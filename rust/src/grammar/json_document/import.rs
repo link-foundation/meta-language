@@ -11,6 +11,7 @@ use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_r
 use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
+use super::tag_policy::string_sets_are_disjoint;
 use super::{JsonSchemaIssue, pointer_child};
 
 type Expression = GrammarExpr;
@@ -317,7 +318,10 @@ impl<'schema> Importer<'schema> {
                 {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
                 }
-                if keyword == "oneOf" && !branches_use_disjoint_types(branches) {
+                if keyword == "oneOf"
+                    && !branches_use_disjoint_types(branches.iter())
+                    && !branches_use_disjoint_required_tags(branches)
+                {
                     if let Some(integer) = exclusive_integer_range(branches) {
                         if integer.is_some() {
                             self.report(pointer, keyword, "The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.");
@@ -801,7 +805,7 @@ fn finite_constants(schema: &Value) -> Option<Vec<&Value>> {
     }
 }
 
-fn branches_use_disjoint_types(branches: &[Value]) -> bool {
+fn branches_use_disjoint_types<'a>(branches: impl ExactSizeIterator<Item = &'a Value>) -> bool {
     const JSON_TYPES: [&str; 6] = ["object", "array", "string", "number", "boolean", "null"];
     if branches.len() < 2 {
         return true;
@@ -848,4 +852,45 @@ fn branches_use_disjoint_types(branches: &[Value]) -> bool {
         }
     }
     true
+}
+
+fn required_string_tags(schema: &Value) -> HashMap<&str, Vec<&str>> {
+    if !matches!(schema.get("type").map(types), Some([value]) if value.as_str() == Some("object"))
+        || ["$ref", "anyOf", "oneOf"]
+            .iter()
+            .any(|key| schema.get(*key).is_some())
+    {
+        return HashMap::new();
+    }
+    let Some(required) = schema["required"].as_array() else {
+        return HashMap::new();
+    };
+    required
+        .iter()
+        .filter_map(|key| {
+            let key = key.as_str()?;
+            let values = finite_constants(schema["properties"].get(key)?)?
+                .into_iter()
+                .map(Value::as_str)
+                .collect::<Option<Vec<_>>>()?;
+            Some((key, values))
+        })
+        .collect()
+}
+
+fn branches_use_disjoint_required_tags(branches: &[Value]) -> bool {
+    let tags: Vec<_> = branches.iter().map(required_string_tags).collect();
+    branches.iter().enumerate().all(|(index, branch)| {
+        branches[..index]
+            .iter()
+            .enumerate()
+            .all(|(other, previous)| {
+                branches_use_disjoint_types([branch, previous].into_iter())
+                    || tags[index].iter().any(|(key, values)| {
+                        tags[other].get(key).is_some_and(|other_values| {
+                            string_sets_are_disjoint(values, other_values)
+                        })
+                    })
+            })
+    })
 }
