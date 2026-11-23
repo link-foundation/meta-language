@@ -743,7 +743,7 @@ export function importJsonSchema(schema) {
     if (!entries) return undefined;
     return entries.length ? () => lowerConjunction(entries) : false;
   }
-  function collectionConstraints(layers, membership, combination, pointer, depth) {
+  function collectionConstraints(layers, membership, combination, pointer, depth, selectedProperty) {
     const keywords = membership === jsonTypes.get('object') ? jsonDocumentPolicy.objectAssertion : jsonDocumentPolicy.arrayAssertion;
     if (layers.some((layer, index) => Object.keys(layer).some(key => (
       activeConjunctionKeyword(key, index, combination, membership) && !keywords.includes(key)
@@ -757,9 +757,10 @@ export function importJsonSchema(schema) {
       const entries = [];
       for (const name of keys) {
         // Defaults apply only in the layers that leave this property undeclared.
-        const rule = combineChildSchemas(fields.map((properties, index) => (
-          Object.hasOwn(properties, name) ? properties[name] : defaults[index]
-        )), pointerChild(pointerChild(pointer, 'properties'), name), depth);
+        const rule = selectedProperty?.name === name ? selectedProperty.expression
+          : combineChildSchemas(fields.map((properties, index) => (
+            Object.hasOwn(properties, name) ? properties[name] : defaults[index]
+          )), pointerChild(pointerChild(pointer, 'properties'), name), depth);
         if (rule === undefined) return undefined;
         entries.push([name, rule]);
       }
@@ -981,7 +982,8 @@ export function importJsonSchema(schema) {
   }
   function exclusiveObjectPropertyExpression(rules, alternatives, allowedTypes, pointer) {
     const object = jsonTypes.get('object');
-    if (Object.keys(rules).some(key => activeConjunctionKeyword(key, 0, 'oneOf', object))) return undefined;
+    const siblingAssertions = Object.keys(rules).filter(key => activeConjunctionKeyword(key, 0, 'oneOf', object));
+    if (siblingAssertions.some(key => !jsonDocumentPolicy.objectAssertion.includes(key))) return undefined;
     const layouts = [];
     for (const [index, branch] of alternatives.entries()) {
       if (!possibleTypeMembership(branch, allowedTypes)) continue;
@@ -996,6 +998,7 @@ export function importJsonSchema(schema) {
       const leaf = layers.at(-1);
       const reference = layers.at(-2)?.$ref;
       layouts.push({
+        rules: leaf,
         properties: leaf.properties ?? {}, required: new Set(leaf.required ?? []),
         additionalProperties: leaf.additionalProperties ?? true,
         pointer: reference ? reference.slice(1) : pointerChild(pointerChild(pointer, 'oneOf'), index),
@@ -1022,25 +1025,36 @@ export function importJsonSchema(schema) {
     // Unchanged assertions apply to every branch. Without the differing property,
     // an object matches either all branches or none.
     const schemas = layouts.map(layout => layout.properties[name]);
+    const sibling = Object.hasOwn(rules.properties ?? {}, name)
+      ? rules.properties[name] : rules.additionalProperties ?? true;
+    const checks = schemas.length + Number(sibling !== true);
     const budget = { remaining: 16_384 };
     const candidates = new Map();
     for (const schema of schemas) {
       const finite = finiteSchemaCandidates(schema, analysis.target, budget);
       if (!finite) return undefined;
       for (const item of finite.values) {
-        if (!chargeCollectionValue(item, schemas.length, budget)) return undefined;
+        if (!chargeCollectionValue(item, checks, budget)) return undefined;
         candidates.set(JSON.stringify(item), item);
       }
     }
     const accepted = [];
     for (const [source, item] of candidates) {
       const document = readJsonDocument(source);
-      if (schemas.filter(rule => validateJsonDocument(document, rule, analysis).errors.length === 0).length === 1) {
+      if ((sibling === true || validateJsonDocument(document, sibling, analysis).errors.length === 0)
+          && schemas.filter(rule => validateJsonDocument(document, rule, analysis).errors.length === 0).length === 1) {
         accepted.push(constantExpression(item, pointer, 'oneOf'));
       }
     }
     if (!accepted.length) return null;
-    const properties = { ...base.properties, [name]: () => choice(...accepted) };
+    const selected = () => choice(...accepted);
+    if (siblingAssertions.length) {
+      const collection = collectionConstraints([rules, base.rules], object, 'oneOf', pointer, 0, { name, expression: selected });
+      if (!collection) return undefined;
+      const { properties, required, additionalProperties } = collection.rules;
+      return objectExpression({ properties, required: [...required, name], additionalProperties }, pointer);
+    }
+    const properties = { ...base.properties, [name]: selected };
     return objectExpression({ properties, required: [...base.required, name], additionalProperties: base.additionalProperties }, base.pointer);
   }
   function alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer) {

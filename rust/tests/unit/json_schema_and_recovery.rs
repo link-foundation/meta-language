@@ -19,6 +19,8 @@ const EXCLUSIVE_TYPED_ARRAY_PREFIXES_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino";
 const EXCLUSIVE_OBJECT_PROPERTY_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-object-property.lino";
+const EXCLUSIVE_OBJECT_SIBLINGS_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-object-siblings.lino";
 
 fn fixture() -> Value {
     read_project_data(include_str!(
@@ -326,6 +328,24 @@ fn exclusive_object_alternatives_count_values_of_a_single_differing_property() {
             "duplicateObjectAlternativesHaveNoGeneratableDocument",
         ],
         test_name: "exclusive_object_alternatives_count_values_of_a_single_differing_property",
+    });
+}
+
+#[test]
+fn exclusive_object_alternatives_apply_parent_object_assertions() {
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-object-siblings.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-SIBLINGS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-object-siblings",
+        fixture_file: EXCLUSIVE_OBJECT_SIBLINGS_FIXTURE,
+        assertions: &[
+            "decoderAppliesSiblingObjectAssertionsToExclusiveAlternatives",
+            "siblingObjectAssertionsCanExcludeEveryAlternative",
+        ],
+        test_name: "exclusive_object_alternatives_apply_parent_object_assertions",
     });
 }
 

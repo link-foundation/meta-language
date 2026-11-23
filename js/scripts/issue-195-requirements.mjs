@@ -754,6 +754,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-SIBLINGS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'parent object assertions beside exclusive alternatives with a shared layout',
+      expectedBehavior: 'Conjoin parent property, required-name and additional-property schemas with the object layout. Generate a differing property value only when exactly one branch accepts it and the parent permits it. Report an empty exclusive language when the parent excludes every such value.',
+      fixture: 'parity/fixtures/json-schema-exclusive-object-siblings.lino',
+      selector: 'parent properties and defaults, local reference, escaped keys and values, required parent fields, sibling pattern constraints, closed parent objects and exclusion of every exclusive value',
+      assertions: ['decoderAppliesSiblingObjectAssertionsToExclusiveAlternatives', 'siblingObjectAssertionsCanExcludeEveryAlternative'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I241-JSON-RECOVERY',
       source: ISSUE_195_SOURCES.jsonRecovery,
       language: 'JSON document recovery',

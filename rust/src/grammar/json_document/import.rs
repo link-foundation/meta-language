@@ -1401,13 +1401,13 @@ impl<'schema> Importer<'schema> {
         pointer: &str,
     ) -> Option<Option<Expression>> {
         let object = type_membership("object");
-        if schema
-            .as_object()?
-            .keys()
-            .any(|key| active_conjunction_keyword(key, 0, Some("oneOf"), object))
-        {
+        if !collection_keywords_are_supported(&[schema], object, "objectAssertion", Some("oneOf")) {
             return None;
         }
+        let has_sibling_assertions = schema
+            .as_object()?
+            .keys()
+            .any(|key| active_conjunction_keyword(key, 0, Some("oneOf"), object));
         let mut layouts = Vec::new();
         for (index, branch) in branches.iter().enumerate() {
             if possible_type_membership(branch, allowed_types) == 0 {
@@ -1480,6 +1480,10 @@ impl<'schema> Importer<'schema> {
             .iter()
             .map(|&(layout, _)| &layout["properties"][name])
             .collect();
+        let sibling = schema["properties"]
+            .get(name)
+            .unwrap_or_else(|| additional_property_schema(schema));
+        let checks = schemas.len() + usize::from(sibling != &UNRESTRICTED_SCHEMA);
         let mut work = 16_384;
         let mut seen = HashSet::new();
         let mut candidates = Vec::new();
@@ -1493,7 +1497,7 @@ impl<'schema> Importer<'schema> {
                 ALL_JSON_TYPES,
             )?;
             for value in values {
-                charge_collection_value(value.as_ref(), schemas.len(), &mut work, 0)?;
+                charge_collection_value(value.as_ref(), checks, &mut work, 0)?;
                 if seen.insert(value.to_string()) {
                     candidates.push(value);
                 }
@@ -1501,6 +1505,11 @@ impl<'schema> Importer<'schema> {
         }
         let mut accepted = Vec::new();
         for value in &candidates {
+            if sibling != &UNRESTRICTED_SCHEMA
+                && !super::validation::accepts_constant(self.root, [sibling], value.as_ref())
+            {
+                continue;
+            }
             let matches = schemas
                 .iter()
                 .filter(|&&schema| {
@@ -1515,6 +1524,36 @@ impl<'schema> Importer<'schema> {
             return Some(None);
         }
         let selected = EXPRESSION.choice_unordered(accepted);
+        if has_sibling_assertions {
+            let selected_location = pointer_child(&pointer_child(pointer, "properties"), name);
+            let CollectionConstraints::Object {
+                properties,
+                additional,
+                required,
+            } = collection_constraints(
+                &[schema, base],
+                object,
+                Some("oneOf"),
+                pointer,
+                |children, location| {
+                    if location == selected_location.as_str() {
+                        return Some(CollectionChild::Conjunction(vec![
+                            ConjunctionEntry::Expression(selected.clone()),
+                        ]));
+                    }
+                    self.combine_child_schemas(children, location, 0)
+                },
+            )?
+            else {
+                return None;
+            };
+            return Some(self.object_with_properties(
+                properties,
+                additional,
+                required.into_iter().chain(std::iter::once(name)),
+                pointer,
+            ));
+        }
         let fields = properties
             .into_iter()
             .map(|(key, rule)| {

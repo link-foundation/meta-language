@@ -4844,6 +4844,10 @@ the original branches and retains each value accepted by exactly one branch.
 The common layout still constrains the other properties. The differing property
 becomes required because omitting it would give all branches the same result.
 Local references can supply the common layout or the finite property schemas.
+Parent object assertions intersect with the common layout. For the differing
+property, the decoder applies the parent's explicit property schema or its
+additional-property policy to the values selected by branch membership.
+If this excludes every selected value, the decoder has no generatable object.
 Identical object alternatives with no other branch have no generatable document.
 For finite collection branches,
 the importer forms candidate values from the allowed members of a closed

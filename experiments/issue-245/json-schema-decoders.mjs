@@ -7,6 +7,7 @@ const fixtures = [
   'json-schema-exclusive-typed-array-items.lino',
   'json-schema-exclusive-typed-array-prefixes.lino',
   'json-schema-exclusive-object-property.lino',
+  'json-schema-exclusive-object-siblings.lino',
 ];
 
 const grammars = fixtures.flatMap(file => readProjectData(new URL(`../../parity/fixtures/${file}`, import.meta.url)).grammars);
