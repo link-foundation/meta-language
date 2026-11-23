@@ -50,7 +50,17 @@ test('the post-merge report needs an active strict rule and an open pull request
   assert.deepEqual(result.notes, []);
   assert.equal(Object.values(result.checks).every(Boolean), true);
   assert.equal(result.blockedPullRequest, 200);
-  assert.equal(result.delivery.releaseRequirements.length, 4);
+  assert.deepEqual(result.delivery.releaseRequirements, [
+    'I195-DELIVERY-CRATE-PUBLISHED',
+    'I195-DELIVERY-NPM-PUBLISHED',
+    'I195-DELIVERY-RML-PUBLISHED',
+    'I195-DOWNSTREAM-FORMAL-AI-PUBLISHED',
+    'I195-ISSUE-197-CRATE-PUBLISHED',
+    'I195-ISSUE-197-LINKS-CONSUMER',
+    'I195-ISSUE-197-NPM-CONSUMER',
+    'I195-ISSUE-197-NPM-PUBLISHED',
+    'I195-ISSUE-197-TREE-SITTER-CONSUMER',
+  ]);
   assert.equal(result.delivery.releaseEvidencePassed, false);
 });
 
