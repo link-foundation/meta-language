@@ -43,6 +43,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/issue-195-downstream-formal-ai-workloads.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-conformance-history.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-dependency-appends.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/tests/issue-195-evidence-generated-owner-history.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-node-dependency.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-node-test-placement.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-producer.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -106,7 +107,7 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = 'e68aab66b4f4b8a8ff784d2f6c656253ab9c58e044ad0b5211baaf5b959960be';
+const archiveDigest = 'b60161580a7efe4709af3ea748513d4b7caded1cd1176dd4ffe2b37ebe7ee777';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 const verifiedPredecessors = new WeakMap();
