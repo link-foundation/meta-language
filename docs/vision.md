@@ -4696,6 +4696,16 @@ common limits and generates spellings covered by exactly one interval. The
 same diagnostics describe numeric spelling limits and assertions that require
 document validation.
 
+An object-only local reference chain can add required names to a single
+property layout. The decoder takes the union of the required names and uses
+that layout's additional-property policy for names without a declared schema.
+An array-only chain can add minimum and maximum lengths to a single item
+layout. The decoder keeps the strongest bound in each direction and applies
+both to the prefix and tail. Incompatible lengths or required names forbidden
+by the property layout leave no generatable collection. When two layers
+independently constrain properties or items, a reference diagnostic identifies
+the assertions checked during document validation.
+
 An unrestricted integer decoder over all JSON spellings exceeds the portable
 context-free grammar model. Restrict number spellings to `1.0*1e10*`, with
 `n` zeroes between the two `1` digits in the significand and `k` zeroes in

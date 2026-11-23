@@ -532,6 +532,44 @@ export function importJsonSchema(schema) {
     }
     return conjunction;
   }
+  function referenceCollectionLayout(layers, keywords, usesLayout) {
+    let layout;
+    for (const layer of layers) {
+      if (Object.keys(layer).some(key => key !== 'type' && !referenceKeys.has(key) && !keywords.includes(key))) return undefined;
+      if (usesLayout(layer)) {
+        if (layout) return undefined;
+        layout = layer;
+      }
+    }
+    return layout ?? {};
+  }
+  function referencedCollectionExpression(layers, membership, pointer) {
+    if (membership === jsonTypes.get('object')) {
+      const layout = referenceCollectionLayout(layers, ['properties', 'additionalProperties', 'required'], layer => (
+        Object.keys(layer.properties ?? {}).length > 0 || (layer.additionalProperties !== undefined && layer.additionalProperties !== true)
+      ));
+      if (!layout) return undefined;
+      return objectExpression({
+        properties: layout.properties,
+        additionalProperties: layout.additionalProperties,
+        required: layers.flatMap(layer => layer.required ?? []),
+      }, pointer);
+    }
+    if (membership === jsonTypes.get('array')) {
+      const layout = referenceCollectionLayout(layers, ['prefixItems', 'items', 'minItems', 'maxItems'], layer => (
+        layer.prefixItems !== undefined || (layer.items !== undefined && layer.items !== true)
+      ));
+      if (!layout) return undefined;
+      return arrayExpression({
+        prefixItems: layout.prefixItems,
+        items: layout.items,
+        minItems: layers.reduce((minimum, layer) => Math.max(minimum, layer.minItems ?? 0), 0),
+        maxItems: layers.reduce((maximum, layer) => layer.maxItems === undefined
+          ? maximum : Math.min(maximum ?? layer.maxItems, layer.maxItems), null),
+      }, pointer);
+    }
+    return undefined;
+  }
   function referencedExpression(rules, allowedTypes, pointer) {
     const layers = referenceLayers(rules);
     if (!layers) return undefined;
@@ -539,7 +577,7 @@ export function importJsonSchema(schema) {
     if (membership === 0) return null;
     const constraints = combineNumericConstraints(layers, membership);
     if (constraints) return numberExpression(constraints.type, constraints.limits, pointer);
-    if (membership !== jsonTypes.get('string')) return undefined;
+    if (membership !== jsonTypes.get('string')) return referencedCollectionExpression(layers, membership, pointer);
     const conjunction = regularStringChain(layers);
     if (!conjunction) return conjunction;
     return conjunction.length ? stringBranchProduct([conjunction]) : ref('string');

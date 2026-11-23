@@ -464,23 +464,25 @@ impl<'schema> Importer<'schema> {
     }
 
     fn object(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
-        let required: HashSet<_> = schema["required"]
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter_map(Value::as_str)
-            .collect();
+        self.object_with_required(schema, required_property_names(schema), pointer)
+    }
+
+    fn object_with_required(
+        &mut self,
+        schema: &'schema Value,
+        required: impl Iterator<Item = &'schema str>,
+        pointer: &str,
+    ) -> Option<Expression> {
         let fields = schema["properties"].as_object();
         let mut keys: Vec<_> = fields
             .into_iter()
             .flat_map(serde_json::Map::keys)
             .map(String::as_str)
             .collect();
-        if let Some(names) = schema["required"].as_array() {
-            for key in names.iter().filter_map(Value::as_str) {
-                if !keys.contains(&key) {
-                    keys.push(key);
-                }
+        let mut required_names = HashSet::new();
+        for key in required {
+            if required_names.insert(key) && fields.is_none_or(|fields| !fields.contains_key(key)) {
+                keys.push(key);
             }
         }
         let additional = schema
@@ -526,7 +528,7 @@ impl<'schema> Importer<'schema> {
             let child = fields
                 .and_then(|fields| fields.get(key))
                 .unwrap_or(additional);
-            let is_required = required.contains(key);
+            let is_required = required_names.contains(key);
             if let Some(item) = self.named(
                 child,
                 &pointer_child(&pointer_child(pointer, "properties"), key),
@@ -649,6 +651,22 @@ impl<'schema> Importer<'schema> {
     }
 
     fn array(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
+        let min = schema["minItems"]
+            .as_u64()
+            .map_or(Some(0), |value| usize::try_from(value).ok())?;
+        let max = schema["maxItems"]
+            .as_u64()
+            .and_then(|value| usize::try_from(value).ok());
+        self.array_with_length(schema, min, max, pointer)
+    }
+
+    fn array_with_length(
+        &mut self,
+        schema: &'schema Value,
+        min: usize,
+        max: Option<usize>,
+        pointer: &str,
+    ) -> Option<Expression> {
         let location = pointer_child(pointer, "prefixItems");
         let prefix: Vec<_> = schema["prefixItems"]
             .as_array()
@@ -661,12 +679,6 @@ impl<'schema> Importer<'schema> {
             schema.get("items").unwrap_or(&Value::Bool(true)),
             &pointer_child(pointer, "items"),
         );
-        let min = schema["minItems"]
-            .as_u64()
-            .map_or(Some(0), |value| usize::try_from(value).ok())?;
-        let max = schema["maxItems"]
-            .as_u64()
-            .and_then(|value| usize::try_from(value).ok());
         if max.is_some_and(|max| max < min) {
             return None;
         }
@@ -826,6 +838,63 @@ impl<'schema> Importer<'schema> {
         Some(Some(conjunction))
     }
 
+    fn referenced_collection_expression(
+        &mut self,
+        layers: &[&'schema Value],
+        membership: u8,
+        pointer: &str,
+    ) -> Option<Option<Expression>> {
+        if membership == type_membership("object") {
+            let layout = reference_collection_layout(
+                layers,
+                &["properties", "additionalProperties", "required"],
+                |layer| {
+                    layer["properties"]
+                        .as_object()
+                        .is_some_and(|fields| !fields.is_empty())
+                        || layer
+                            .get("additionalProperties")
+                            .is_some_and(|schema| schema != &Value::Bool(true))
+                },
+            )?;
+            let required = layers
+                .iter()
+                .flat_map(|&layer| required_property_names(layer));
+            return Some(self.object_with_required(layout, required, pointer));
+        }
+        if membership == type_membership("array") {
+            let layout = reference_collection_layout(
+                layers,
+                &["prefixItems", "items", "minItems", "maxItems"],
+                |layer| {
+                    layer.get("prefixItems").is_some()
+                        || layer
+                            .get("items")
+                            .is_some_and(|schema| schema != &Value::Bool(true))
+                },
+            )?;
+            let minimum = layers
+                .iter()
+                .filter_map(|layer| layer["minItems"].as_u64())
+                .max()
+                .unwrap_or(0);
+            let maximum = layers
+                .iter()
+                .filter_map(|layer| layer["maxItems"].as_u64())
+                .min();
+            let expression = usize::try_from(minimum).ok().and_then(|min| {
+                self.array_with_length(
+                    layout,
+                    min,
+                    maximum.and_then(|max| usize::try_from(max).ok()),
+                    pointer,
+                )
+            });
+            return Some(expression);
+        }
+        None
+    }
+
     fn referenced_expression(
         &mut self,
         schema: &'schema Value,
@@ -843,7 +912,7 @@ impl<'schema> Importer<'schema> {
             return Some(self.number(name, &limits, pointer));
         }
         if membership != type_membership("string") {
-            return None;
+            return self.referenced_collection_expression(&layers, membership, pointer);
         }
         let Some(conjunction) = self.regular_string_chain(&layers)? else {
             return Some(None);
@@ -1063,6 +1132,37 @@ fn exclusive_integer_range(
 
 fn reference_keyword(keyword: &str) -> bool {
     matches!(keyword, "$ref" | "$defs") || keywords("annotation").any(|name| name == keyword)
+}
+
+fn required_property_names(schema: &Value) -> impl Iterator<Item = &str> {
+    schema["required"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+}
+
+fn reference_collection_layout<'schema>(
+    layers: &[&'schema Value],
+    collection_keywords: &[&str],
+    uses_layout: impl Fn(&Value) -> bool,
+) -> Option<&'schema Value> {
+    let mut layout = None;
+    for &layer in layers {
+        if layer.as_object().is_some_and(|fields| {
+            fields.keys().any(|key| {
+                key != "type"
+                    && !reference_keyword(key)
+                    && !collection_keywords.contains(&key.as_str())
+            })
+        }) {
+            return None;
+        }
+        if uses_layout(layer) && layout.replace(layer).is_some() {
+            return None;
+        }
+    }
+    Some(layout.unwrap_or(&Value::Bool(true)))
 }
 
 fn combine_numeric_constraints(

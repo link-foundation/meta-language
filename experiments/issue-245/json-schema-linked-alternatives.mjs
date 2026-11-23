@@ -16,6 +16,12 @@ const numericDefinitions = {
   number: { type: 'number', minimum: -3, maximum: 9 },
   restricted: { $ref: '#/$defs/number', exclusiveMinimum: -1, maximum: 5 },
 };
+const collectionDefinitions = {
+  tuple: { type: 'array', prefixItems: [{ type: 'boolean' }], items: { type: 'string' }, maxItems: 4 },
+  limited: { $ref: '#/$defs/tuple', minItems: 2, maxItems: 3 },
+  record: { type: 'object', properties: { kind: { const: 'item' }, value: { type: 'string' } }, additionalProperties: false },
+  identified: { $ref: '#/$defs/record', required: ['kind'] },
+};
 const cases = [
   [
     { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^ab' },
@@ -78,11 +84,35 @@ const cases = [
     ['/oneOf'],
     [['0', true], ['2', true], ['6', true], ['-1', false], ['3', false], ['5', false], ['7', false], ['6.0', true]],
   ],
+  [
+    { $defs: collectionDefinitions, $ref: '#/$defs/limited', minItems: 1, maxItems: 2 },
+    [['[true,"a"]', true], ['[false, "b"]', true], ['[]', false], ['[true]', false], ['[true,"a","b"]', false], ['["a","b"]', false], ['[true,1]', false]],
+    [],
+  ],
+  [
+    { $defs: collectionDefinitions, $ref: '#/$defs/identified', required: ['value', 'kind'] },
+    [['{"kind":"item","value":"a"}', true], ['{"value":"b","k\\u0069nd":"item"}', true], ['{}', false], ['{"kind":"item"}', false],
+      ['{"value":"a"}', false], ['{"kind":"item","value":"a","extra":null}', false]],
+    [],
+  ],
+  [
+    { type: 'object', required: ['new'], $ref: '#/$defs/open', $defs: { open: { additionalProperties: { type: 'boolean' } } } },
+    [['{"new":true}', true], ['{"x":false,"new":true}', true], ['{}', false], ['{"x":true}', false], ['{"new":1}', false]],
+    [],
+  ],
+  [
+    { $ref: '#/$defs/prefix', items: false, $defs: { prefix: { type: 'array', prefixItems: [{ type: 'boolean' }] } } },
+    [['[]', true], ['[true]', true], ['[false,0]', true], ['[1]', false]],
+    ['/$ref'],
+    [['[]', true], ['[true]', false], ['[false,0]', false], ['[1]', false]],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
   { $defs: numericDefinitions, $ref: '#/$defs/restricted', type: 'integer', maximum: -1 },
   { type: 'integer', minimum: 5, anyOf: [{ maximum: 3 }, { exclusiveMaximum: 5 }] },
+  { $defs: collectionDefinitions, $ref: '#/$defs/limited', maxItems: 1 },
+  { $defs: collectionDefinitions, $ref: '#/$defs/identified', required: ['extra'] },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
