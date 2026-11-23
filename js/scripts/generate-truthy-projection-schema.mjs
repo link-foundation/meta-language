@@ -4,6 +4,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {writeProjectData,checkProjectData,readProjectData} from './project-data.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 import {inspectedTruthyPreimages,TRUTHY_PROJECTION_REVISION,TRUTHY_PROJECTION_OUTPUT,
  TRUTHY_PROJECTION_ENTRIES,pinTruthyProjectionSource,deriveTruthyProjectionSchema,
  deriveTruthyProjectionHostSource,verifyTruthyProjectionSchemaPacket,readTruthyProjectionSchemaPacket,
@@ -40,11 +41,12 @@ export function generateTruthyProjectionSchema({check=false}={}) {
 
 export function generateTruthyProjectionHostSuccessors({check=false}={}) {
  const output=new URL(TRUTHY_PROJECTION_HOST_SUCCESSORS,root);
- if(check){const packet=verifyTruthyProjectionHostSuccessors(readProjectData(output));for(const row of packet.sources)assert.equal(readFileSync(new URL(row.file,root),'utf8'),row.current.source);checkProjectData(output,packet);return packet;}
+ const readCertifiedSource=file=>restoreIssue245SourceSuccessor(file,readFileSync(new URL(file,root),'utf8'));
+ if(check){const packet=verifyTruthyProjectionHostSuccessors(readProjectData(output));for(const row of packet.sources)assert.equal(readCertifiedSource(row.file),row.current.source);checkProjectData(output,packet);return packet;}
  const previousRevision='6ffff3b2dc530a5f24c128dadf877f3fa106932b',revision='3fe3a9f9decfa6431b5b0718729a5d123b5f236b';
  const sources=['js/src/translation/check.js','rust/src/translation/surface/nodes.rs','rust/src/translation/check/expressions.rs'].map(file=>{
   const capture=commit=>{const {blob,certificate}=captureGitArtifactCertificate(commit,file);const source=blob.toString('utf8');assert.deepEqual(Buffer.from(source),blob);return {source,...pinTruthyProjectionSource(source),certificate};};
-  const previous=capture(previousRevision),current=capture(revision);assert.equal(readFileSync(new URL(file,root),'utf8'),current.source);
+  const previous=capture(previousRevision),current=capture(revision);assert.equal(readCertifiedSource(file),current.source);
   let start=0,end=0;while(previous.source[start]===current.source[start]&&start<Math.min(previous.source.length,current.source.length))start++;
   while(end<Math.min(previous.source.length,current.source.length)-start&&previous.source.at(-end-1)===current.source.at(-end-1))end++;
   return {file,previous,current,edit:{start,removed:previous.source.slice(start,previous.source.length-end),inserted:current.source.slice(start,current.source.length-end)}};

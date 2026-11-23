@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {javascriptWorkflowSource,restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 const archiveHash='97bc907646b4f88823015ce1c5775a2ca3a4a3d7b6f4da798a96bc2265e14f60';
 let history;
@@ -20,6 +21,7 @@ const reportScheduleHistory = new Map([
 
 /** Admit only the complete reviewed report matrix change for historical tests. */
 export function restoreReportScheduleHistory(source) {
+  source = restoreIssue245SourceSuccessor(javascriptWorkflowSource,source);
   const previous = reportScheduleHistory.get(createHash('sha256').update(source).digest('hex'));
   if (!previous) return source;
   const original = source

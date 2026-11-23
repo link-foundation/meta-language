@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {serializeProjectData,readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreIssue245SourceSuccessor} from '../../experiments/issue-245/source-history.mjs';
 function freezeTruthyProjectionData(value){if(value&&typeof value==='object')for(const child of Object.values(value))freezeTruthyProjectionData(child);return Object.freeze(value);}
 export const truthyProjectionHostRecipes = freezeTruthyProjectionData({
   "js/src/translation/check.js": [
@@ -189,7 +190,8 @@ export function restoreTruthyProjectionHostSource(source,file) {
  if(!['js/src/translation/check.js','rust/src/translation/surface/nodes.rs','rust/src/translation/check/expressions.rs'].includes(file))return source;
  const packet=verifyTruthyProjectionHostSuccessors(readProjectData(new URL(TRUTHY_PROJECTION_HOST_SUCCESSORS,root)));
  const row=packet.sources.find(value=>value.file===file);
- return source===row.current.source?row.previous.source:source;
+ const retained=restoreIssue245SourceSuccessor(file,source);
+ return retained===row.current.source?row.previous.source:source;
 }
 
 // Explicit historical readers only. Runtime schema/checkers always use actual

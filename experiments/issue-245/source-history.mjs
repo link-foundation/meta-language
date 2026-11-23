@@ -17,6 +17,7 @@ export const nodeDependencyTestSource = 'js/tests/issue-195-evidence-node-depend
 export const typedProgramLinksValidationSource = 'js/src/typed-program-links-validation.js';
 export const asciiPredicateAssertionSource = 'js/tests/translation-ascii-text-predicates.test.js';
 export const nativeNumberObservationSource = 'parity/fixtures/original-native-number-observations.lino';
+export const booleanProjectionCheckerSource = 'js/src/translation/check.js';
 export const runtimeSourceFiles = Object.freeze([
   'rust/src/grammar/feature_runtime/mod.rs',
   'rust/src/grammar/feature_runtime/operations.rs',
@@ -64,6 +65,10 @@ const profiles = [
   [javascriptWorkflowSource, { revision: schedulingRevision,
     predecessor: '6274838f6f901b71b1f0540b40b741640a8c23abde25b7afde91368bee4186bf',
     current: 'f92347173c03d0ca6998379b4d5c13b2d264079455e8fe1f7746423889285bcf' }],
+  [booleanProjectionCheckerSource, { revision: '3fe3a9f9decfa6431b5b0718729a5d123b5f236b',
+    predecessor: 'b07b8ffb95d6bf4274d8bf5a16c43b2673d1869a08b1173a3fc65bcf1c14daf2',
+    current: 'c0b461b416fd1ab812cb1a8670b6911a3ee905015872e689959826e932f40709',
+    successorRevision: 'da38bf7a9a3cadcd3d768cb6f87a1bbf9e02e257' }],
 ];
 const reviewedFiles = new Set(profiles.map(([file]) => file));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
