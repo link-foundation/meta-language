@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
-const sourceArchiveHash='c0e64da43e9fc0fa4627b442380e1deb7f4da3cb5554abfd8094ad71c3d5e1a4';
+const sourceArchiveHash='f0feffc2952453e4aea2230e5a8799bac83bcd2ef55671334bb05c6948777a55';
 let history;
 
 /** Authenticate the complete immediate predecessor of the raw partition guard. */

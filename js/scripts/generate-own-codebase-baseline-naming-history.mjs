@@ -50,6 +50,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/scripts/current-ci-repair-source-history.mjs',
     'js/scripts/generate-continuation-historical-inputs.mjs',
     'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
+    'js/scripts/native-compatibility-source-history.mjs',
     'js/scripts/own-codebase-baseline-naming-history.mjs',
     'js/scripts/raw-consuming-snapshot-source-profile.mjs',
     'js/scripts/scheduling-source-history.mjs',
