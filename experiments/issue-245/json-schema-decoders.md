@@ -67,3 +67,10 @@ bounds from both sides of a reference. An untyped string constraint still
 allows a nonstring item. The bounded integer example admits `[false,2,4]` and
 rejects `[true,1]` and `[true,5]`. Document validation also admits equivalent
 decimal spellings for integer values.
+
+For a required `flag` property, a local reference uses `oneOf` branches that
+accept `false` twice. The old decoder admitted `{"flag":false}` from the
+property's enum. The constrained grammar now retains `true` alone. Further
+cases check numeric bounds on enumerated array items, member permutations for
+enumerated objects, and a required property whose constants contradict each
+other.

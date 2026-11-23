@@ -211,12 +211,11 @@ function finiteConstants(rules) {
   return Array.isArray(rules.enum) ? rules.enum : undefined;
 }
 
-function finiteSchemaCandidates(schema, resolve) {
+function finiteSchemaCandidates(schema, resolve, budget = { remaining: 16_384 }) {
   const active = new Set();
-  let work = 16_384;
   function collect(rules, depth) {
-    work -= 1;
-    if (work < 0 || depth > 128 || active.has(rules)) return undefined;
+    budget.remaining -= 1;
+    if (budget.remaining < 0 || depth > 128 || active.has(rules)) return undefined;
     const values = finiteConstants(rules);
     if (values) return { values, keyword: Object.hasOwn(rules, 'const') ? 'const' : 'enum' };
     if (!rules || typeof rules !== 'object') return undefined;
@@ -232,11 +231,11 @@ function finiteSchemaCandidates(schema, resolve) {
         let complete = true;
         for (const child of rules[keyword]) {
           const candidate = collect(child, depth + 1);
-          if (!candidate || candidate.values.length > work) {
+          if (!candidate || candidate.values.length > budget.remaining) {
             complete = false;
             break;
           }
-          work -= candidate.values.length;
+          budget.remaining -= candidate.values.length;
           for (const value of candidate.values) values.push(value);
         }
         if (complete) return { values, keyword };
@@ -564,6 +563,16 @@ export function importJsonSchema(schema) {
   function combineChildSchemas(schemas, pointer) {
     const compatible = compatibleChildSchema(schemas);
     if (compatible !== undefined) return compatible;
+    const budget = { remaining: 16_384 };
+    for (const schema of schemas) {
+      const candidates = finiteSchemaCandidates(schema, analysis.target, budget);
+      if (!candidates || candidates.values.length * schemas.length > budget.remaining) continue;
+      const entries = candidates.values.filter(item => {
+        const document = readJsonDocument(JSON.stringify(item));
+        return schemas.every(rule => validateJsonDocument(document, rule, analysis).errors.length === 0);
+      });
+      return entries.length ? () => choice(...entries.map(item => constantExpression(item, pointer, candidates.keyword))) : false;
+    }
     const layers = [];
     for (const schema of schemas) {
       if (schema === true) continue;

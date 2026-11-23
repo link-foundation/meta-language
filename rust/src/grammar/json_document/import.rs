@@ -395,7 +395,7 @@ impl<'schema> Importer<'schema> {
                 .into_iter()
                 .filter(|value| {
                     allowed_types & value_type_membership(value) != 0
-                        && super::validation::accepts_constant(root, schema, value)
+                        && super::validation::accepts_constant(root, [schema], value)
                 })
                 .map(|value| self.constant(value, pointer, keyword))
                 .collect();
@@ -931,6 +931,31 @@ impl<'schema> Importer<'schema> {
     ) -> Option<CollectionChild<'schema>> {
         if let Some(schema) = compatible_child_schema(schemas.iter().copied()) {
             return Some(CollectionChild::Schema(schema));
+        }
+        let root = self.root;
+        let mut work = 16_384;
+        for schema in &schemas {
+            let Some((candidates, keyword)) =
+                finite_schema_candidates(root, schema, &mut HashSet::new(), &mut work, 0)
+            else {
+                continue;
+            };
+            if candidates.len() > work / schemas.len() {
+                continue;
+            }
+            let entries: Vec<_> = candidates
+                .into_iter()
+                .filter(|value| {
+                    super::validation::accepts_constant(root, schemas.iter().copied(), value)
+                })
+                .map(|value| self.constant(value, pointer, keyword))
+                .collect();
+            if entries.is_empty() {
+                return Some(CollectionChild::Schema(&PROHIBITED_SCHEMA));
+            }
+            return Some(CollectionChild::Conjunction(vec![
+                ConjunctionEntry::Expression(EXPRESSION.choice_unordered(entries)),
+            ]));
         }
         let mut layers = Vec::new();
         for schema in schemas {

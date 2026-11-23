@@ -314,6 +314,32 @@ const cases = [
     [],
     [['[]', true], ['["az",null,true,2,{},[]]', true], ['["ax"]', false], ['["xz"]', false], ['[true,"ax"]', false]],
   ],
+  [
+    { type: 'object', $ref: '#/$defs/record', properties: { flag: { $ref: '#/$defs/enabled' } }, $defs: {
+      record: { required: ['flag'], properties: { flag: { enum: [true, false, null] } } },
+      enabled: { oneOf: [{ const: true }, { const: false }, { enum: [false, null] }, { const: null }] },
+    } },
+    [['{"flag":true}', true], ['{"fl\\u0061g":true}', true], ['{"flag":false}', false],
+      ['{"flag":null}', false], ['{"flag":"true"}', false], ['{}', false]],
+    [],
+  ],
+  [
+    { type: 'array', $ref: '#/$defs/row', items: { minimum: 2, maximum: 3 },
+      $defs: { row: { prefixItems: [{ type: 'null' }], items: { enum: [1, 2, 3, 4, true] } } } },
+    [['[]', true], ['[null]', true], ['[null,2,3,true]', true], ['[null,1]', false], ['[null,4]', false],
+      ['[null,2.5]', false], ['[null,"2"]', false], ['[true,2]', false]],
+    [],
+  ],
+  [
+    { type: 'object', $ref: '#/$defs/record', properties: { value: { properties: { flag: { const: true } } } },
+      $defs: { record: { required: ['value'], properties: { value: { enum: [
+        { flag: false, label: 'a' }, { flag: true, label: 'a' }, { flag: true, label: 'b' },
+      ] } } } } },
+    [['{"value":{"flag":true,"label":"a"}}', true], ['{"value":{"label":"\\u0062","flag":true}}', true],
+      ['{"value":{"label":"a","flag":false}}', false], ['{"value":{"flag":true,"label":"c"}}', false],
+      ['{"value":{"label":"a"}}', false], ['{}', false]],
+    [],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -325,6 +351,8 @@ const impossible = [
   { ...closedArrayReference, minItems: 1 },
   { ...conflictingArrayReference, minItems: 1 },
   { ...layeredPatternProperty, properties: { value: { pattern: '^x' } } },
+  { type: 'object', $ref: '#/$defs/record', properties: { flag: { const: false } },
+    $defs: { record: { required: ['flag'], properties: { flag: { const: true } } } } },
   { $ref: '#/$defs/record', properties: { active: { type: 'boolean' } }, additionalProperties: false,
     $defs: { record: { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] } } },
 ];

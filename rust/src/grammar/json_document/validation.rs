@@ -318,7 +318,11 @@ impl<'schema> Validator<'schema> {
     }
 }
 
-pub(super) fn accepts_constant(root: &Value, schema: &Value, instance: &Value) -> bool {
+pub(super) fn accepts_constant<'schema>(
+    root: &'schema Value,
+    schemas: impl IntoIterator<Item = &'schema Value>,
+    instance: &Value,
+) -> bool {
     let source = instance.to_string();
     let document = Document::read(&source);
     let Some(node) = document.value() else {
@@ -329,6 +333,9 @@ pub(super) fn accepts_constant(root: &Value, schema: &Value, instance: &Value) -
         active: HashSet::new(),
         errors: document.syntax_issue().into_iter().collect(),
     };
-    validator.visit(schema, node);
     validator.errors.is_empty()
+        && schemas.into_iter().all(|schema| {
+            validator.visit(schema, node);
+            validator.errors.is_empty()
+        })
 }
