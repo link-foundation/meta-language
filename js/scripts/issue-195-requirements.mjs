@@ -693,6 +693,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
       },
     },
+    {
+      id: 'I195-I242-UNICODE-DECIMAL-VALUES',
+      source: ISSUE_195_SOURCES.naturalLanguageValues,
+      language: 'shared digit-based value syntax across natural-language profiles',
+      version: 'Unicode 17.0.0 Decimal_Number, ISO 4217 List One 2026-09-17, proleptic Gregorian dates',
+      construct: 'Unicode decimal digits and Arabic number separators in typed values',
+      expectedBehavior: 'Shared value grammars recognize Unicode decimal digit fields and Arabic decimal and grouping separators. Value actions preserve exact amounts, ranges, date alternatives, and original UTF-8 spelling. Nondecimal characters and invalid calendar dates do not become corresponding values.',
+      fixture: 'parity/fixtures/natural-language-unicode-decimal-values.lino',
+      selector: 'Modern Standard Arabic amount and money, Hindi grouping and range, Bengali leap date and alternatives, English supplementary digits and nondecimal superscript, Russian duration and fullwidth dates, and supplementary Tolong Siki digits in common Spanish money syntax',
+      assertions: ['unicodeDecimalsAndGrouping', 'unicodeCalendarValidationAndAlternatives', 'unicodeValueSourceSpans'],
+      implementationEntryPoints: {
+        javascript: ['js/src/natural-language-values.js', 'js/tests/natural-language-values.test.js'],
+        rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I243-NORMALIZED-TEXT-LOCATION',

@@ -1592,7 +1592,11 @@ interpretation as a semantic link at its original UTF-8 extent. The shared
 Links grammars recognize the shape of numeric expressions, currencies,
 durations and dates. Locale vocabularies provide number words, units and month
 names. A value action reads the captured fields, normalizes exact decimals and
-ISO 4217 codes, and validates calendar dates. A spelling such as `5-7` can carry
+ISO 4217 codes, and validates calendar dates. Both runtimes derive numeric and
+calendar fields from one pinned Unicode 17.0 decimal digit table. The shared
+grammar recognizes Arabic decimal and grouping separators, and value actions
+normalize digit spellings after search preserves their original source spans.
+A spelling such as `5-7` can carry
 both a numeric range and a date. An unqualified number word scale implies one
 unit of that scale. An explicit count, including zero, multiplies the scale and
 flows through compound numbers and durations.

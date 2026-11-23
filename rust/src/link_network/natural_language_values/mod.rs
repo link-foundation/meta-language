@@ -120,6 +120,23 @@ static CURRENCIES: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         .skip(2)
         .collect()
 });
+static DECIMAL_DIGITS: LazyLock<HashMap<char, char>> = LazyLock::new(|| {
+    include_str!("../../data/natural-language-values/decimal-digits.lino")
+        .trim()
+        .trim_matches(['(', ')'])
+        .split_ascii_whitespace()
+        .skip(3)
+        .flat_map(|zero| {
+            let start = u32::from_str_radix(zero, 16).expect("decimal digit block start");
+            (0..=9).map(move |digit| {
+                (
+                    char::from_u32(start + digit).expect("decimal digit code point"),
+                    char::from_digit(digit, 10).expect("ASCII decimal digit"),
+                )
+            })
+        })
+        .collect()
+});
 static WORD_SEPARATOR: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(r"[^\p{L}\p{M}]+").expect("value word separator"));
 
@@ -175,10 +192,19 @@ impl fmt::Display for ExactDecimal {
     }
 }
 
+fn normalize_decimal_digits(text: &str) -> String {
+    text.chars()
+        .map(|character| DECIMAL_DIGITS.get(&character).copied().unwrap_or(character))
+        .collect()
+}
+
 fn normalize_numeral(text: &str, locale: &str) -> String {
-    let signed = text
-        .replace([' ', '\u{a0}', '\u{202f}'], "")
+    let signed = normalize_decimal_digits(text)
+        .replace([' ', '\u{a0}', '\u{202f}', '٬'], "")
         .replace('−', "-");
+    if signed.contains('٫') {
+        return signed.replace('٫', ".");
+    }
     let comma = signed.rfind(',');
     let period = signed.rfind('.');
     if let (Some(comma), Some(period)) = (comma, period) {
@@ -308,14 +334,20 @@ fn read_date(
     if part("open_date").is_some() {
         return Some("open".to_owned());
     }
-    let year = part("calendar_year");
-    let month = part("calendar_month").or_else(|| profile.word("month", part("month_name")?));
-    let day = part("calendar_day");
-    if year == Some("0000") {
+    let year = part("calendar_year").map(normalize_decimal_digits);
+    let month = part("calendar_month")
+        .map(normalize_decimal_digits)
+        .or_else(|| {
+            profile
+                .word("month", part("month_name")?)
+                .map(str::to_owned)
+        });
+    let day = part("calendar_day").map(normalize_decimal_digits);
+    if year.as_deref() == Some("0000") {
         return None;
     }
     let Some(month) = month else {
-        return year.map(str::to_owned);
+        return year;
     };
     let month = month.parse::<u8>().ok()?;
     if !(1..=12).contains(&month) {
@@ -323,11 +355,14 @@ fn read_date(
     }
     if let Some(day) = day {
         let day = day.parse::<u8>().ok()?;
-        let year_number = year.unwrap_or("2000").parse::<u16>().ok()?;
+        let year_number = year.as_deref().unwrap_or("2000").parse::<u16>().ok()?;
         if day == 0 || day > calendar_month_days(year_number, month) {
             return None;
         }
-        return Some(format!("{}-{month:02}-{day:02}", year.unwrap_or("-")));
+        return Some(format!(
+            "{}-{month:02}-{day:02}",
+            year.as_deref().unwrap_or("-")
+        ));
     }
     Some(format!("{}-{month:02}", year?))
 }
@@ -434,7 +469,9 @@ pub fn natural_language_values(text: &str, language: &str) -> Vec<NaturalLanguag
         "english" | "en" => &*ENGLISH,
         _ => &*COMMON,
     };
-    if !text.bytes().any(|byte| byte.is_ascii_digit())
+    if !text
+        .chars()
+        .any(|character| DECIMAL_DIGITS.contains_key(&character))
         && !WORD_SEPARATOR
             .split(text)
             .any(|word| profile.word("number", word).is_some())
@@ -477,9 +514,10 @@ pub fn natural_language_values(text: &str, language: &str) -> Vec<NaturalLanguag
             if (rule == "number_range" && compounds.contains(&range))
                 || (rule == "amount"
                     && spelling.starts_with(['-', '−'])
-                    && start
-                        .checked_sub(1)
-                        .is_some_and(|index| text.as_bytes()[index].is_ascii_digit()))
+                    && text[..*start]
+                        .chars()
+                        .next_back()
+                        .is_some_and(|character| DECIMAL_DIGITS.contains_key(&character)))
             {
                 continue;
             }

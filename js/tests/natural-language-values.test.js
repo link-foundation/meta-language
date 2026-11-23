@@ -5,9 +5,10 @@ import { LinkNetwork, LinkType, naturalLanguageValues } from '../src/index.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureFile = 'parity/fixtures/natural-language-values.lino';
-const { fixtures } = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
+const unicodeFixtureFile = 'parity/fixtures/natural-language-unicode-decimal-values.lino';
 
-test('natural-language values preserve the original spelling, spans, and alternatives', (context) => {
+function checkValueFixtures(file) {
+  const { fixtures } = readProjectData(new URL(`../../${file}`, import.meta.url));
   for (const { source, language, expected, absent = [] } of fixtures) {
     const network = LinkNetwork.parse(source, language);
     const bytes = Buffer.from(source);
@@ -24,10 +25,24 @@ test('natural-language values preserve the original spelling, spans, and alterna
     for (const entry of expected) assert.ok(values.some(value => value.every((part, index) => part === entry[index])), entry.join(' → '));
     for (const entry of absent) assert.ok(!values.some(value => value.every((part, index) => part === entry[index])), entry.join(' → '));
   }
+}
+
+test('natural-language values preserve the original spelling, spans, and alternatives', (context) => {
+  checkValueFixtures(fixtureFile);
   recordIssue195Observations({
     requirementId: 'I195-I242-NATURAL-LANGUAGE-VALUES', suffix: 'behavior',
     fixtureId: 'i195-i242-natural-language-values', fixtureFile,
     assertions: ['localizedExactNumbers', 'currencyRanges', 'inflectedDurations', 'dateAlternatives', 'utf8SourceSpans', 'explicitZeroInNumberWordCompounds'],
+    testName: context.name,
+  });
+});
+
+test('Unicode decimal digits retain typed values and original UTF-8 spans', (context) => {
+  checkValueFixtures(unicodeFixtureFile);
+  recordIssue195Observations({
+    requirementId: 'I195-I242-UNICODE-DECIMAL-VALUES', suffix: 'behavior',
+    fixtureId: 'i195-i242-unicode-decimal-values', fixtureFile: unicodeFixtureFile,
+    assertions: ['unicodeDecimalsAndGrouping', 'unicodeCalendarValidationAndAlternatives', 'unicodeValueSourceSpans'],
     testName: context.name,
   });
 });

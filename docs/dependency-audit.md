@@ -72,7 +72,7 @@ they are.
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 102 | 0 | 0 | 102 |
+| Published artifact contents | 103 | 0 | 0 | 103 |
 
 ## JavaScript engines
 
@@ -987,6 +987,7 @@ they are.
 | `src/data/pdf-glyph-map.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/pest-built-ins-license.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/pest-built-ins.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/natural-language-values/UNICODE-LICENSE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

@@ -7,7 +7,14 @@ import { renderGrammarLinks } from '../src/grammar-links.js';
 const data = new URL('../src/data/natural-language-values/', import.meta.url);
 const nativeData = new URL('../../rust/src/data/natural-language-values/', import.meta.url);
 const check = process.argv.includes('--check');
-const isoSource = process.argv.slice(2).find(argument => argument !== '--check');
+const argumentsToRead = process.argv.slice(2).filter(argument => argument !== '--check');
+const unicodeOption = argumentsToRead.indexOf('--unicode-data');
+let unicodeSource;
+if (unicodeOption >= 0) {
+  [, unicodeSource] = argumentsToRead.splice(unicodeOption, 2);
+  assert.ok(unicodeSource, '--unicode-data requires the UnicodeData.txt path');
+}
+const [isoSource] = argumentsToRead;
 const lexicon = readFileSync(new URL('lexicon.lino', data), 'utf8');
 const rows = lexicon.trim().split('\n').map(line => line.slice(1, -1).split(' '));
 let currencies = readFileSync(new URL('currencies.lino', data), 'utf8');
@@ -17,15 +24,39 @@ if (isoSource) {
   const codes = [...new Set(Array.from(xml.toString().matchAll(/<Ccy>([A-Z]{3})<\/Ccy>/gu), match => match[1]))].sort();
   currencies = `(iso4217 2026-09-17 ${codes.join(' ')})\n`;
 }
+
+// https://www.unicode.org/Public/17.0.0/ucd/UnicodeData.txt
+function collectDecimalDigits(path) {
+  const unicodeData = readFileSync(path);
+  const digest = createHash('sha256').update(unicodeData).digest('hex');
+  assert.equal(digest, '2e1efc1dcb59c575eedf5ccae60f95229f706ee6d031835247d843c11d96470c');
+  const zeros = [];
+  let decimalValue = 0;
+  for (const record of unicodeData.toString().split('\n')) {
+    const [code, , category, , , , value] = record.split(';');
+    if (category !== 'Nd') continue;
+    const point = Number.parseInt(code, 16);
+    assert.equal(Number(value), decimalValue);
+    if (decimalValue === 0) zeros.push(point);
+    assert.equal(point, zeros.at(-1) + decimalValue);
+    decimalValue = (decimalValue + 1) % 10;
+  }
+  assert.equal(decimalValue, 0);
+  return `(unicode-decimal-digits 17.0.0 ${digest} ${zeros.map(point => point.toString(16)).join(' ')})\n`;
+}
+
+const digitData = unicodeSource ? collectDecimalDigits(unicodeSource) : readFileSync(new URL('decimal-digits.lino', data), 'utf8');
+const unicodeLicense = readFileSync(new URL('UNICODE-LICENSE.txt', data), 'utf8');
+const digitBlocks = digitData.trim().slice(1, -1).split(' ').slice(3).map(zero => Number.parseInt(zero, 16));
 const { seq, choice, literal, literalInsensitive, charClass, charRange, ref, optional, repeat } = GrammarBuilder;
-const digit = charRange('0', '9');
+const digit = ref('decimal_digit');
 const characters = symbols => charClass(Array.from(symbols, value => ({ kind: 'char', value })));
 const spaces = characters(' \u00a0\u202f\t');
 const gap = repeat(spaces, 0, 8);
 const separator = repeat(spaces, 1, 8);
 const words = spellings => choice(...[...new Set(spellings)].sort((left, right) => right.length - left.length).map(literalInsensitive));
 const fixedDigits = count => repeat(digit, count, count);
-const decimal = characters('.,');
+const decimal = characters('.,٫');
 const dash = characters('-–—−');
 const letter = charRange('A', 'Z');
 const threeDigits = fixedDigits(3);
@@ -35,6 +66,7 @@ const groupedNumeral = seq(group(characters(' \u00a0\u202f')), optional(seq(deci
 const punctuatedNumeral = choice(
   seq(group(literal(',')), optional(seq(literal('.'), fraction))),
   seq(group(literal('.')), optional(seq(literal(','), fraction))),
+  seq(group(literal('٬')), optional(seq(literal('٫'), fraction))),
 );
 const plainNumeral = seq(repeat(digit, 1, 18), optional(seq(decimal, fraction)));
 const range = (left, right, between) => seq(left, between, right);
@@ -54,6 +86,9 @@ function profile(locale) {
     seq(literalInsensitive('н.'), gap, literalInsensitive('в.')), literalInsensitive('сейчас'))
     : words(['present', 'now', 'today']);
 
+  builder.rule('decimal_digit', charClass(digitBlocks.map(zero => ({
+    kind: 'range', start: String.fromCodePoint(zero), end: String.fromCodePoint(zero + 9),
+  }))), 'token');
   builder.rule('numeral', seq(optional(characters('+-−')), choice(groupedNumeral, punctuatedNumeral, plainNumeral)), 'token');
   builder.rule('scale', vocabulary('scale'), 'token');
   builder.rule('amount', choice(seq(ref('numeral'), optional(seq(gap, ref('scale')))),
@@ -122,6 +157,7 @@ function profile(locale) {
 
 for (const [name, value] of [
   ['lexicon.lino', lexicon], ['currencies.lino', currencies],
+  ['decimal-digits.lino', digitData], ['UNICODE-LICENSE.txt', unicodeLicense],
   ...['en', 'ru', 'common'].map(locale => [`${locale}.lino`, profile(locale)]),
 ]) {
   for (const directory of [data, nativeData]) {

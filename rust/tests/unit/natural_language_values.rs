@@ -5,13 +5,10 @@ use super::issue_195_observations::{Observation, record};
 use super::project_data::read_project_data;
 
 const FIXTURE: &str = "parity/fixtures/natural-language-values.lino";
+const UNICODE_FIXTURE: &str = "parity/fixtures/natural-language-unicode-decimal-values.lino";
 
-#[test]
-fn natural_language_values_preserve_spans_and_alternatives() {
-    let data = read_project_data(include_str!(
-        "../../../parity/fixtures/natural-language-values.lino"
-    ))
-    .expect("value fixtures");
+fn check_value_fixtures(fixtures: &str) {
+    let data = read_project_data(fixtures).expect("value fixtures");
     for fixture in data["fixtures"].as_array().expect("fixture list") {
         let source = fixture["source"].as_str().expect("source");
         let language = fixture["language"].as_str().expect("language");
@@ -46,6 +43,13 @@ fn natural_language_values_preserve_spans_and_alternatives() {
             }
         }
     }
+}
+
+#[test]
+fn natural_language_values_preserve_spans_and_alternatives() {
+    check_value_fixtures(include_str!(
+        "../../../parity/fixtures/natural-language-values.lino"
+    ));
     record(&Observation {
         requirement_id: "I195-I242-NATURAL-LANGUAGE-VALUES",
         suffix: "behavior",
@@ -60,5 +64,24 @@ fn natural_language_values_preserve_spans_and_alternatives() {
             "explicitZeroInNumberWordCompounds",
         ],
         test_name: "natural_language_values_preserve_spans_and_alternatives",
+    });
+}
+
+#[test]
+fn unicode_decimal_digits_retain_typed_values_and_original_spans() {
+    check_value_fixtures(include_str!(
+        "../../../parity/fixtures/natural-language-unicode-decimal-values.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I242-UNICODE-DECIMAL-VALUES",
+        suffix: "behavior",
+        fixture_id: "i195-i242-unicode-decimal-values",
+        fixture_file: UNICODE_FIXTURE,
+        assertions: &[
+            "unicodeDecimalsAndGrouping",
+            "unicodeCalendarValidationAndAlternatives",
+            "unicodeValueSourceSpans",
+        ],
+        test_name: "unicode_decimal_digits_retain_typed_values_and_original_spans",
     });
 }

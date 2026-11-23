@@ -9,6 +9,17 @@ const parsers = new Map();
 const data = new URL('./data/natural-language-values/', import.meta.url);
 let vocabulary;
 let currencyCodes;
+let decimalDigits;
+
+function loadDecimalDigits() {
+  const source = readFileSync(new URL('decimal-digits.lino', data), 'utf8');
+  const result = new Map();
+  for (const zero of source.trim().slice(1, -1).split(' ').slice(3)) {
+    const start = Number.parseInt(zero, 16);
+    for (let digit = 0; digit < 10; digit += 1) result.set(String.fromCodePoint(start + digit), String(digit));
+  }
+  return result;
+}
 
 function valueProfile(language) {
   const name = language.toLowerCase();
@@ -18,6 +29,7 @@ function valueProfile(language) {
     vocabulary = source.trim().split('\n').map(line => line.slice(1, -1).split(' '));
     const codes = readFileSync(new URL('currencies.lino', data), 'utf8');
     currencyCodes = new Set(codes.trim().slice(1, -1).split(' ').slice(2));
+    decimalDigits = loadDecimalDigits();
   }
   let profile = parsers.get(locale);
   if (!profile) {
@@ -57,8 +69,15 @@ function scaleDecimal(decimal, factor) {
   return { coefficient: decimal.coefficient * BigInt(factor), scale: decimal.scale };
 }
 
+function normalizeDecimalDigits(text) {
+  let normalized = '';
+  for (const character of text) normalized += decimalDigits.get(character) ?? character;
+  return normalized;
+}
+
 function numericSpelling(text, locale) {
-  const signed = text.replaceAll(/[ \u00a0\u202f]/gu, '').replace('−', '-');
+  const signed = normalizeDecimalDigits(text).replaceAll(/[ \u00a0\u202f٬]/gu, '').replace('−', '-');
+  if (signed.includes('٫')) return signed.replace('٫', '.');
   const comma = signed.lastIndexOf(',');
   const period = signed.lastIndexOf('.');
   if (comma >= 0 && period >= 0) {
@@ -128,10 +147,14 @@ function readCurrency(match, profile) {
 
 function readDate(match, range, profile) {
   const part = name => capturesInside(match, range, name)[0]?.text;
+  const calendarPart = name => {
+    const value = part(name);
+    return value && normalizeDecimalDigits(value);
+  };
   if (part('open_date')) return 'open';
-  const year = part('calendar_year');
-  const month = part('calendar_month') ?? wordValue(profile, 'month', part('month_name'));
-  const day = part('calendar_day');
+  const year = calendarPart('calendar_year');
+  const month = calendarPart('calendar_month') ?? wordValue(profile, 'month', part('month_name'));
+  const day = calendarPart('calendar_day');
   if (year === '0000' || (month && (Number(month) < 1 || Number(month) > 12))) return undefined;
   if (!month) return year;
   const paddedMonth = month.padStart(2, '0');
@@ -193,10 +216,22 @@ function termFor(rule, match, profile) {
   }
 }
 
+function containsDecimalDigit(text) {
+  for (const character of text) if (decimalDigits.has(character)) return true;
+  return false;
+}
+
+function precededByDecimalDigit(text, offset) {
+  // The previous code point can occupy two UTF-16 code units.
+  let previous;
+  for (const character of text.slice(Math.max(0, offset - 2), offset)) previous = character;
+  return decimalDigits.has(previous);
+}
+
 /** Typed values with offsets in the original UTF-8 source. */
 export function naturalLanguageValues(text, language) {
   const profile = valueProfile(language);
-  if (!/[0-9]/u.test(text) && !text.toLowerCase().split(/[^\p{L}\p{M}]+/u).some(word => profile.words.get('number')?.has(word))) return [];
+  if (!containsDecimalDigit(text) && !text.toLowerCase().split(/[^\p{L}\p{M}]+/u).some(word => profile.words.get('number')?.has(word))) return [];
   const boundaries = sourceBoundaries(text);
   const results = [];
   const seen = new Set();
@@ -215,7 +250,7 @@ export function naturalLanguageValues(text, language) {
       const range = `${match.start}:${match.end}`;
       if (rule === 'amount' && numberWordRules.some(name => match.captures[name].length)) compounds.add(range);
       if (rule === 'number_range' && compounds.has(range)) continue;
-      if (rule === 'amount' && /^[-−]/u.test(match.text) && /[0-9]/u.test(text[match.start - 1] ?? '')) continue;
+      if (rule === 'amount' && /^[-−]/u.test(match.text) && precededByDecimalDigit(text, match.start)) continue;
       const term = termFor(rule, match, profile);
       if (!term) continue;
       const start = boundaries.get(match.start).byte;
