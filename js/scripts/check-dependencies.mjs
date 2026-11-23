@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 // Checks the dependency inventory (requirement I195-DEPENDENCY-INVENTORY):
-// every dependency the repository declares is in parity/dependency-inventory.json
+// every dependency the repository declares is in parity/dependency-inventory.lino
 // with its recorded pin, the audit date is valid, every retained item behind its
 // current stable release records a compatibility reason, and
 // docs/dependency-audit.md is the inventory's rendering.
 //
 // --delivery is the delivery gate (I195-DEPENDENCY-CURRENT-STABLE-DELIVERY):
 // every retained item must be at its current stable release or at its
-// verified newest compatible release; a reason alone is stale. With --live,
-// and by default when CI or ACCEPTANCE_CHECKPOINT is set, it also refreshes
-// the inventory from the registries in memory and fails when the recorded
-// audit no longer matches them; --offline compares with the recorded audit only.
+// verified newest compatible release. Pass --live to refresh the inventory from
+// the registries in memory and check that it agrees with the recorded audit.
+// The default and --offline both use the recorded audit.
 //
 //   node js/scripts/check-dependencies.mjs            offline check (CI)
 //   node js/scripts/check-dependencies.mjs --refresh  query the registries and rewrite
