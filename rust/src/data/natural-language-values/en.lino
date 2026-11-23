@@ -28,7 +28,7 @@
 (rule calendar_year token (repeat 4 4 (ref decimal_digit)))
 (rule calendar_month token (repeat 1 2 (ref decimal_digit)))
 (rule calendar_day token (repeat 1 2 (ref decimal_digit)))
-(rule full_date normal (choice unordered (seq (ref calendar_year) (literal -) (ref calendar_month) (literal -) (ref calendar_day)) (seq (ref calendar_day) (literal .) (ref calendar_month) (literal .) (ref calendar_year))))
+(rule full_date normal (choice unordered (seq (ref calendar_year) (literal -) (ref calendar_month) (literal -) (ref calendar_day)) (seq (ref calendar_day) (literal .) (ref calendar_month) (literal .) (ref calendar_year)) (seq (ref calendar_day) (repeat 1 8 (class plain (char %20) (char %C2%A0) (char %E2%80%AF) (char %09))) (ref month_name) (repeat 1 8 (class plain (char %20) (char %C2%A0) (char %E2%80%AF) (char %09))) (ref calendar_year)) (seq (ref month_name) (repeat 1 8 (class plain (char %20) (char %C2%A0) (char %E2%80%AF) (char %09))) (ref calendar_day) (choice unordered (seq (literal %2C) (repeat 0 8 (class plain (char %20) (char %C2%A0) (char %E2%80%AF) (char %09)))) (repeat 1 8 (class plain (char %20) (char %C2%A0) (char %E2%80%AF) (char %09)))) (ref calendar_year))))
 (rule month_date normal (choice unordered (seq (ref calendar_month) (literal .) (ref calendar_year)) (seq (ref calendar_year) (literal -) (ref calendar_month)) (seq (ref month_name) (repeat 1 8 (class plain (char %20) (char %C2%A0) (char %E2%80%AF) (char %09))) (ref calendar_year))))
 (rule short_date normal (seq (ref calendar_month) (class plain (char -) (char %E2%80%93) (char %E2%80%94) (char %E2%88%92)) (ref calendar_day)))
 (rule date_endpoint normal (choice unordered (ref full_date) (ref month_date) (ref calendar_year)))

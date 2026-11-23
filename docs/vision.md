@@ -1596,6 +1596,9 @@ ISO 4217 codes, and validates calendar dates. Both runtimes derive numeric and
 calendar fields from one pinned Unicode 17.0 decimal digit table. The shared
 grammar recognizes Arabic decimal and grouping separators, and value actions
 normalize digit spellings after search preserves their original source spans.
+A named month can occur after the day in English and Russian or before the day
+in English. These full dates use the same calendar validation as digit-only
+dates and can be endpoints of bounded or open date ranges.
 A spelling such as `5-7` can carry both a numeric range and a date. An
 unqualified scale word implies one unit of that scale. An explicit count in
 digits or words multiplies the scale, including zero. A scale after the last

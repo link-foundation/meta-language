@@ -1628,7 +1628,7 @@
 (1628: 67 1627 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1629: (meta: (t: semantic) (n: 1) (term: string%20value) (def: Original%20requirements%20for%20typed%20localized%20numbers%2C%20money%2C%20durations%2C%20dates%20and%20retained%20alternatives.) (lang: meta-language%20structured%20data)))
 (1630: 38 1629 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(1631: 1632 2061 2062 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
+(1631: 1632 2061 2062 2066 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
 (1632: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I242-NATURAL-LANGUAGE-VALUES) (lang: meta-language%20structured%20data)))
 (1633: 41 1631 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1634: 1636 1638 1639 1641 1643 1644 1646 1647 1649 1651 1653 1656 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
@@ -2062,3 +2062,4 @@
 (2063: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-UNICODE-CASE-FOLDING) (lang: meta-language%20structured%20data)))
 (2064: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA-NUMERIC-CONSTANTS) (lang: meta-language%20structured%20data)))
 (2065: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-LENGTHS) (lang: meta-language%20structured%20data)))
+(2066: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I242-NAMED-CALENDAR-DATES) (lang: meta-language%20structured%20data)))

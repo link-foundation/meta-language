@@ -9,6 +9,8 @@ const FIXTURE: &str = "parity/fixtures/natural-language-values.lino";
 const UNICODE_FIXTURE: &str = "parity/fixtures/natural-language-unicode-decimal-values.lino";
 const WRITTEN_MULTIPLIER_FIXTURE: &str =
     "parity/fixtures/natural-language-written-multipliers.lino";
+const NAMED_CALENDAR_DATE_FIXTURE: &str =
+    "parity/fixtures/natural-language-named-calendar-dates.lino";
 
 fn check_value_fixtures(fixtures: &str) {
     let data: Value = read_project_data(fixtures).expect("value fixtures");
@@ -105,5 +107,23 @@ fn digit_amounts_with_written_multipliers_preserve_values_and_spans() {
             "writtenMultipliersKeepOriginalSpans",
         ],
         test_name: "digit_amounts_with_written_multipliers_preserve_values_and_spans",
+    });
+}
+
+#[test]
+fn named_calendar_dates_and_ranges_preserve_valid_days_and_spans() {
+    check_value_fixtures(include_str!(
+        "../../../parity/fixtures/natural-language-named-calendar-dates.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I242-NAMED-CALENDAR-DATES",
+        suffix: "behavior",
+        fixture_id: "i195-i242-named-calendar-dates",
+        fixture_file: NAMED_CALENDAR_DATE_FIXTURE,
+        assertions: &[
+            "namedCalendarDatesAndRanges",
+            "namedCalendarDateSpansAndValidation",
+        ],
+        test_name: "named_calendar_dates_and_ranges_preserve_valid_days_and_spans",
     });
 }

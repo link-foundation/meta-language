@@ -738,6 +738,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
       },
     },
+    {
+      id: 'I195-I242-NAMED-CALENDAR-DATES',
+      source: ISSUE_195_SOURCES.naturalLanguageValues,
+      language: 'English and Russian typed value syntax',
+      version: 'Proleptic Gregorian dates and Unicode 17.0.0 Decimal_Number',
+      construct: 'full calendar dates with written month names',
+      expectedBehavior: 'Recognize day-first dates in English and Russian and month-first dates in English. Use the same Gregorian date validation in standalone matches and bounded or open ranges. Preserve original UTF-8 source spans, including when a numeric field uses Unicode decimal digits.',
+      fixture: 'parity/fixtures/natural-language-named-calendar-dates.lino',
+      selector: 'day-first and month-first dates, English month abbreviation and optional comma, Russian inflected months, leap days, invalid month days, bounded and open ranges, mixed Unicode decimal digits and surrounding UTF-8 text',
+      assertions: ['namedCalendarDatesAndRanges', 'namedCalendarDateSpansAndValidation'],
+      implementationEntryPoints: {
+        javascript: ['js/scripts/build-natural-language-values.mjs', 'js/src/natural-language-values.js', 'js/tests/natural-language-values.test.js'],
+        rust: ['js/scripts/build-natural-language-values.mjs', 'rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I243-NORMALIZED-TEXT-LOCATION',

@@ -141,6 +141,9 @@ function profile(locale) {
   builder.rule('full_date', choice(
     seq(ref('calendar_year'), literal('-'), ref('calendar_month'), literal('-'), ref('calendar_day')),
     seq(ref('calendar_day'), literal('.'), ref('calendar_month'), literal('.'), ref('calendar_year')),
+    ...(local ? [seq(ref('calendar_day'), separator, ref('month_name'), separator, ref('calendar_year'))] : []),
+    ...(locale === 'en' ? [seq(ref('month_name'), separator, ref('calendar_day'),
+      choice(seq(literal(','), gap), separator), ref('calendar_year'))] : []),
   ));
   builder.rule('month_date', choice(
     seq(ref('calendar_month'), literal('.'), ref('calendar_year')),
