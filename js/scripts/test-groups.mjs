@@ -165,13 +165,18 @@ export function partitionGroupFiles(files, shard = '1/1') {
     assert.equal(new Set(measured.entries.map(row => row.file)).size, measured.entries.length);
     let entries = [...baseline.entries, ...measured.entries];
     if (count === 9) {
-      const wall = readProjectData(new URL('../../parity/fixtures/ci-45089575521-translation-test-wall-costs.lino', import.meta.url));
-      assert.equal(wall.schemaVersion, 1);
-      assert.equal(wall.run, 45089575521);
-      assert.equal(wall.revision, '0deae514483822ffd2a42a4fa0f4c88744d0745d');
-      assert.equal(new Set(wall.entries.map(row => row.file)).size, wall.entries.length);
       const recent = new Map(entries.map(row => [row.file, row]));
-      for (const row of wall.entries) recent.set(row.file, row);
+      for (const [run, revision] of [
+        [45089575521, '0deae514483822ffd2a42a4fa0f4c88744d0745d'],
+        [45118414652, 'a0853ceb85613f91513e82ccd5ebc62215528a5a'],
+      ]) {
+        const wall = readProjectData(new URL(`../../parity/fixtures/ci-${run}-translation-test-wall-costs.lino`, import.meta.url));
+        assert.equal(wall.schemaVersion, 1);
+        assert.equal(wall.run, run);
+        assert.equal(wall.revision, revision);
+        assert.equal(new Set(wall.entries.map(row => row.file)).size, wall.entries.length);
+        for (const row of wall.entries) recent.set(row.file, row);
+      }
       entries = [...recent.values()];
     }
     // Balance whole files within their original three-way cohort.
