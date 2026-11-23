@@ -45,7 +45,7 @@ export const nativeRepairNamingSources = Object.freeze([
 ]);
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '7686344958c34d6b84ab7ea7822c9ef5ddd701882161929aa8e584b0c6fd586c';
+const archiveDigest = '3ceb7a15a97b4de9c05ee1f78fb916a81cfd31570159da358c2c7899cfd1caa6';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
