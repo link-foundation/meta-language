@@ -770,14 +770,24 @@ export function importJsonSchema(schema) {
       branches.push({ index, ...constraints });
     }
     if (keyword === 'oneOf') {
-      if (branches.length && branches.every(branch => branch.type === 'number')) {
-        const decimal = exclusiveDecimalRange(branches.map(branch => branch.limits));
+      const numberBranches = branches.filter(branch => branch.type === 'number');
+      if (numberBranches.length) {
+        const mixed = numberBranches.length !== branches.length;
+        let decimal = exclusiveDecimalRange(numberBranches.map(branch => branch.limits), mixed);
+        if (decimal === undefined) return undefined;
+        if (mixed) {
+          // Count both schema types for an integer, including its zero-padded decimal spellings.
+          const integer = exclusiveIntegerRange(branches.map(branch => integerBounds(branch.limits)));
+          if (integer === undefined) return undefined;
+          const integerSpellings = integer && seq(integer, optional(seq(literal('.'), repeat(literal('0'), 1))));
+          const entries = [decimal, integerSpellings].filter(Boolean);
+          decimal = entries.length ? choice(...entries) : null;
+        }
         if (decimal && decimal.kind !== 'ref') {
           report(pointer, keyword, 'The exclusive number decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.');
         }
         return decimal;
       }
-      if (branches.some(branch => branch.type !== 'integer')) return undefined;
       const integer = exclusiveIntegerRange(branches.map(branch => integerBounds(branch.limits)));
       if (integer) report(pointer, keyword, 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
       return integer;

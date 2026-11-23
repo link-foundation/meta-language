@@ -1218,23 +1218,42 @@ impl<'schema> Importer<'schema> {
             alternatives.push((index, name, limits));
         }
         if keyword == "oneOf" {
-            if !alternatives.is_empty() && alternatives.iter().all(|(_, name, _)| *name == "number")
-            {
-                return match exclusive_decimal_range(
-                    alternatives.iter().map(|(_, _, limits)| limits),
-                ) {
-                    DecimalRange::Unsupported => None,
-                    DecimalRange::Empty => Some(None),
-                    DecimalRange::Allowed(decimal) => {
-                        if !matches!(&decimal, Expression::NonTerminal(_)) {
-                            self.report(pointer, keyword, "The exclusive number decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.");
-                        }
-                        Some(Some(decimal))
-                    }
+            let number_limits: Vec<_> = alternatives
+                .iter()
+                .filter_map(|(_, name, limits)| (*name == "number").then_some(limits))
+                .collect();
+            if !number_limits.is_empty() {
+                let mixed = number_limits.len() != alternatives.len();
+                let mut decimal = match exclusive_decimal_range(number_limits, mixed) {
+                    DecimalRange::Unsupported => return None,
+                    DecimalRange::Empty => None,
+                    DecimalRange::Allowed(expression) => Some(expression),
                 };
-            }
-            if alternatives.iter().any(|(_, name, _)| *name != "integer") {
-                return None;
+                if mixed {
+                    // Both schema types count for an integer, including zero-padded decimals.
+                    let integer = exclusive_integer_range(
+                        alternatives
+                            .iter()
+                            .map(|(_, _, limits)| integer_bounds(limits)),
+                    )?
+                    .map(|expression| {
+                        EXPRESSION.seq([
+                            expression,
+                            EXPRESSION.opt(EXPRESSION.seq([
+                                EXPRESSION.term("."),
+                                EXPRESSION.repeat(EXPRESSION.term("0"), 1, None),
+                            ])),
+                        ])
+                    });
+                    let entries: Vec<_> = decimal.into_iter().chain(integer).collect();
+                    decimal = (!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries));
+                }
+                if let Some(expression) = &decimal
+                    && !matches!(expression, Expression::NonTerminal(_))
+                {
+                    self.report(pointer, keyword, "The exclusive number decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.");
+                }
+                return Some(decimal);
             }
             let integer = exclusive_integer_range(
                 alternatives

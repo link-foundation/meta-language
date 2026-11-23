@@ -114,28 +114,30 @@ function fractionDigits(lower, upper, index, consumed) {
   return alternatives(expressions);
 }
 
-function fractionalSuffix(lower, upper) {
+function fractionalSuffix(lower, upper, excludeIntegers) {
+  // A zero fractional part represents an integer even with a decimal point.
+  if (excludeIntegers && !lower?.fraction.length) lower = { fraction: '', inclusive: false };
   const decimals = fractionDigits(lower, upper, 0, false);
   const dot = decimals && seq(literal('.'), decimals);
   if (acceptsZeroes(lower, 0, true) && acceptsZeroes(upper, 0, false)) return dot ? optional(dot) : empty();
   return dot;
 }
 
-function unsignedDecimalRange(lower, upper) {
+function unsignedDecimalRange(lower, upper, excludeIntegers) {
   const first = lower && decimalParts(lower);
   const last = upper && decimalParts(upper);
   const expressions = [];
   const lowInteger = first ? first.whole + 1 : 0;
   const highInteger = last ? last.whole - 1 : null;
   if (highInteger === null || lowInteger <= highInteger) {
-    expressions.push(seq(unsignedIntegerRange(lowInteger, highInteger), fractionalSuffix(null, null)));
+    expressions.push(seq(unsignedIntegerRange(lowInteger, highInteger), fractionalSuffix(null, null, excludeIntegers)));
   }
   if (first) {
-    const suffix = fractionalSuffix(first, last?.whole === first.whole ? last : null);
+    const suffix = fractionalSuffix(first, last?.whole === first.whole ? last : null, excludeIntegers);
     if (suffix) expressions.push(seq(literal(String(first.whole)), suffix));
   }
   if (last && first?.whole !== last.whole) {
-    const suffix = fractionalSuffix(null, last);
+    const suffix = fractionalSuffix(null, last, excludeIntegers);
     if (suffix) expressions.push(seq(literal(String(last.whole)), suffix));
   }
   return alternatives(expressions);
@@ -159,15 +161,15 @@ function emptyDecimalInterval(first, last) {
     && (first.value > last.value || (first.value === last.value && !(first.inclusive && last.inclusive)));
 }
 
-function decimalRange(first, last) {
+function decimalRange(first, last, excludeIntegers = false) {
   if ([first, last].some(bound => bound && (Math.abs(bound.value) >= Number.MAX_SAFE_INTEGER ||
       decimalParts({ ...bound, value: Math.abs(bound.value) }).fraction.length > 128))) return undefined;
   if (emptyDecimalInterval(first, last)) return null;
   const mirrored = bound => ({ value: -bound.value, inclusive: bound.inclusive });
   const negative = !first || first.value < 0 || (first.value === 0 && first.inclusive)
-    ? unsignedDecimalRange(last && last.value <= 0 ? mirrored(last) : null, first && mirrored(first)) : null;
+    ? unsignedDecimalRange(last && last.value <= 0 ? mirrored(last) : null, first && mirrored(first), excludeIntegers) : null;
   const positive = !last || last.value > 0 || (last.value === 0 && last.inclusive)
-    ? unsignedDecimalRange(first && first.value >= 0 ? first : null, last) : null;
+    ? unsignedDecimalRange(first && first.value >= 0 ? first : null, last, excludeIntegers) : null;
   return alternatives([negative && seq(literal('-'), negative), positive].filter(Boolean));
 }
 
@@ -176,7 +178,7 @@ export function signedDecimalRange(rules) {
   return decimalRange(...decimalLimits(rules));
 }
 
-export function exclusiveDecimalRange(branchLimits) {
+export function exclusiveDecimalRange(branchLimits, excludeIntegers) {
   const boundaries = new Map();
   function changeAt(value, at, after) {
     const change = boundaries.get(value) ?? { at: 0, after: 0 };
@@ -205,7 +207,7 @@ export function exclusiveDecimalRange(branchLimits) {
     coverage = after;
   }
   if (coverage === 1) intervals.push([first, null]);
-  if (intervals.length === 1 && intervals[0].every(bound => bound === null)) return Expression.ref('number');
-  const expressions = intervals.map(([first, last]) => decimalRange(first, last));
+  if (!excludeIntegers && intervals.length === 1 && intervals[0].every(bound => bound === null)) return Expression.ref('number');
+  const expressions = intervals.map(([first, last]) => decimalRange(first, last, excludeIntegers));
   return expressions.includes(undefined) ? undefined : alternatives(expressions.filter(Boolean));
 }

@@ -101,3 +101,9 @@ shared fixture also checks a single accepted endpoint, an excluded zero,
 adjacent intervals covering every number, and two identical branches with
 no generatable number. Document validation checks equivalent exponent
 spellings where the decoder reports a spelling restriction.
+
+A mixed integer and number alternative previously admitted `-1.00` even
+though both linked branches accept its value. The fixture also checks
+`-2.00`, which only the integer branch accepts, and fractional values that
+only the number branch accepts. Separate controls exercise unbounded
+alternatives, signed zero, and a mixed alternative with no generatable value.

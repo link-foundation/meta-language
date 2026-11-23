@@ -4708,9 +4708,12 @@ branches over integers or over numbers, the decoder intersects each branch
 with the common limits and generates spellings covered by exactly one
 interval. For decimal ranges it counts branch membership at each endpoint
 and on both sides, so open boundaries and isolated accepted values retain
-their exact semantics. A range covering every number retains exponent
-spellings. Other bounded ranges use decimal spelling and report the
-equivalent exponent spellings checked by document validation.
+their exact semantics. In mixed integer and number alternatives, integral
+values count both kinds of branch and may have a zero-only fractional suffix.
+Non-integral values count the number branches. A number-only range covering
+every number retains exponent spellings. Bounded and mixed ranges use decimal
+spelling and report the equivalent exponent spellings checked by document
+validation.
 
 An object local reference chain takes the union of the required names and
 the declared property names. For each name, the decoder uses each layer's

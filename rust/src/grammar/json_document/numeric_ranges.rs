@@ -198,7 +198,19 @@ fn fraction_digits(
 fn fractional_suffix(
     lower: Option<&DecimalParts>,
     upper: Option<&DecimalParts>,
+    exclude_integers: bool,
 ) -> Option<Expression> {
+    // A zero fractional part represents an integer even with a decimal point.
+    let strict_zero = DecimalParts {
+        whole: 0,
+        fraction: Vec::new(),
+        inclusive: false,
+    };
+    let lower = if exclude_integers && lower.is_none_or(|limit| limit.fraction.is_empty()) {
+        Some(&strict_zero)
+    } else {
+        lower
+    };
     let decimals = fraction_digits(lower, upper, 0, false)
         .map(|digits| EXPRESSION.seq([EXPRESSION.term("."), digits]));
     if accepts_zeroes(lower, 0, true) && accepts_zeroes(upper, 0, false) {
@@ -207,7 +219,11 @@ fn fractional_suffix(
     decimals
 }
 
-fn unsigned_decimal_range(lower: Option<Limit>, upper: Option<Limit>) -> Option<Expression> {
+fn unsigned_decimal_range(
+    lower: Option<Limit>,
+    upper: Option<Limit>,
+    exclude_integers: bool,
+) -> Option<Expression> {
     let first = lower.map(Limit::parts);
     let last = upper.map(Limit::parts);
     let mut parts = Vec::new();
@@ -216,20 +232,21 @@ fn unsigned_decimal_range(lower: Option<Limit>, upper: Option<Limit>) -> Option<
     if last.is_none() || high_integer.is_some_and(|high| low_integer <= high) {
         parts.push(EXPRESSION.seq([
             unsigned_range(low_integer, high_integer),
-            fractional_suffix(None, None).expect("unbounded fractional suffix"),
+            fractional_suffix(None, None, exclude_integers).expect("unbounded fractional suffix"),
         ]));
     }
     if let Some(first) = &first
         && let Some(suffix) = fractional_suffix(
             Some(first),
             last.as_ref().filter(|last| last.whole == first.whole),
+            exclude_integers,
         )
     {
         parts.push(EXPRESSION.seq([EXPRESSION.term(first.whole.to_string()), suffix]));
     }
     if let Some(last) = &last
         && first.as_ref().is_none_or(|first| first.whole != last.whole)
-        && let Some(suffix) = fractional_suffix(None, Some(last))
+        && let Some(suffix) = fractional_suffix(None, Some(last), exclude_integers)
     {
         parts.push(EXPRESSION.seq([EXPRESSION.term(last.whole.to_string()), suffix]));
     }
@@ -276,7 +293,11 @@ fn empty_decimal_interval(first: Option<Limit>, last: Option<Limit>) -> bool {
         || (first.value >= last.value && !(first.inclusive && last.inclusive)))
 }
 
-fn decimal_range(first: Option<Limit>, last: Option<Limit>) -> DecimalRange {
+fn decimal_range(
+    first: Option<Limit>,
+    last: Option<Limit>,
+    exclude_integers: bool,
+) -> DecimalRange {
     if [first, last].into_iter().flatten().any(|limit| {
         limit.value.abs() >= 9_007_199_254_740_991.0 || limit.parts().fraction.len() > 128
     }) {
@@ -290,6 +311,7 @@ fn decimal_range(first: Option<Limit>, last: Option<Limit>) -> DecimalRange {
             unsigned_decimal_range(
                 last.filter(|limit| limit.value <= 0.0).map(Limit::mirrored),
                 first.map(Limit::mirrored),
+                exclude_integers,
             )
             .map(|digits| EXPRESSION.seq([EXPRESSION.term("-"), digits]))
         } else {
@@ -297,7 +319,11 @@ fn decimal_range(first: Option<Limit>, last: Option<Limit>) -> DecimalRange {
         };
     let positive =
         if last.is_none_or(|limit| limit.value > 0.0 || (limit.value >= 0.0 && limit.inclusive)) {
-            unsigned_decimal_range(first.filter(|limit| limit.value >= 0.0), last)
+            unsigned_decimal_range(
+                first.filter(|limit| limit.value >= 0.0),
+                last,
+                exclude_integers,
+            )
         } else {
             None
         };
@@ -307,7 +333,7 @@ fn decimal_range(first: Option<Limit>, last: Option<Limit>) -> DecimalRange {
 
 pub(super) fn signed_decimal_range(schema: &Value) -> DecimalRange {
     let (first, last) = decimal_limits(schema);
-    decimal_range(first, last)
+    decimal_range(first, last, false)
 }
 
 struct DecimalEndpoint {
@@ -318,6 +344,7 @@ struct DecimalEndpoint {
 
 pub(super) fn exclusive_decimal_range<'schema>(
     branch_limits: impl IntoIterator<Item = &'schema Value>,
+    exclude_integers: bool,
 ) -> DecimalRange {
     let mut endpoints = Vec::new();
     let mut coverage = 0;
@@ -380,12 +407,12 @@ pub(super) fn exclusive_decimal_range<'schema>(
     if coverage == 1 {
         intervals.push((first, None));
     }
-    if matches!(intervals.as_slice(), [(None, None)]) {
+    if !exclude_integers && matches!(intervals.as_slice(), [(None, None)]) {
         return DecimalRange::Allowed(EXPRESSION.nt("number"));
     }
     let mut parts = Vec::new();
     for (first, last) in intervals {
-        match decimal_range(first, last) {
+        match decimal_range(first, last, exclude_integers) {
             DecimalRange::Unsupported => return DecimalRange::Unsupported,
             DecimalRange::Empty => {}
             DecimalRange::Allowed(expression) => parts.push(expression),

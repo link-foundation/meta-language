@@ -423,6 +423,30 @@ const cases = [
     [['0.0', true], ['-0.00', true], ['-1e-5', true], ['1.2e309', true], ['null', false]],
     [],
   ],
+  [
+    {
+      type: 'number', minimum: -2.5, maximum: 3.5,
+      $defs: { decimals: { type: 'number', minimum: -1.25 }, integers: { type: 'integer', maximum: 1 } },
+      oneOf: [{ $ref: '#/$defs/decimals', exclusiveMaximum: 3.25 }, { $ref: '#/$defs/integers' }],
+    },
+    [['-1.00', false], ['-3', false], ['-2.00', true], ['-2.50', false], ['-1.2501', false], ['-1.25', true],
+      ['-0.00', false], ['0.001', true], ['1', false], ['1.5', true], ['2.00', true], ['3.20', true],
+      ['3.25', false], ['2e0', false], ['null', false]],
+    ['/oneOf'],
+    [['-1.00', false], ['-2.00', true], ['-1.2501', false], ['-1.25', true], ['-0.00', false], ['0.001', true],
+      ['1', false], ['2.00', true], ['3.20', true], ['3.25', false], ['2e0', true]],
+  ],
+  [
+    { oneOf: [{ type: 'number' }, { type: 'integer' }] },
+    [['0.002', true], ['-13.20', true], ['123', false], ['-0.0', false], ['123.000', false], ['1e-1', false], ['true', false]],
+    ['/oneOf'],
+    [['0.002', true], ['-13.20', true], ['123', false], ['-0.0', false], ['123.000', false], ['1e-1', true], ['true', false]],
+  ],
+  [
+    { type: 'number', oneOf: [{ maximum: 0 }, { minimum: 0 }, { type: 'integer', minimum: 0 }] },
+    [['-1.00', true], ['-0.01', true], ['-0.0', false], ['0.000', false], ['0.01', true], ['1', false], ['1.1', true]],
+    ['/oneOf'],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -442,6 +466,7 @@ const impossible = [
     required: ['entries'], properties: { entries: { type: 'array', minItems: 1 } },
   } } },
   { type: 'number', oneOf: [{ minimum: -1.25 }, { minimum: -1.25 }] },
+  { type: 'number', oneOf: [{ maximum: 0 }, { maximum: 0 }, { type: 'integer', minimum: 0, maximum: 0 }] },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
