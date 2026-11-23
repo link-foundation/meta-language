@@ -2,6 +2,7 @@ use std::collections::{BTreeSet, HashMap};
 
 use super::super::{CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule};
 use super::pattern_policy::string_intersection_limits;
+use super::patterns::complement_scalar_ranges;
 
 const EXPRESSION: ExprBuilder = ExprBuilder;
 
@@ -110,16 +111,29 @@ impl<'grammar> Automaton<'grammar> {
                 }
             }
             GrammarExpr::CharRange(first, last) => self.range(*first, *last, start, end, work)?,
-            GrammarExpr::CharClass {
-                negated: false,
-                items,
-            } => {
-                for item in items {
-                    let (first, last) = match *item {
-                        CharClassItem::Char(character) => (character, character),
-                        CharClassItem::Range(first, last) => (first, last),
-                    };
-                    self.range(first, last, start, end, work)?;
+            GrammarExpr::CharClass { negated, items } => {
+                let mut intervals: Vec<_> = items
+                    .iter()
+                    .map(|item| match *item {
+                        CharClassItem::Char(character) => {
+                            (u32::from(character), u32::from(character))
+                        }
+                        CharClassItem::Range(first, last) => (u32::from(first), u32::from(last)),
+                    })
+                    .collect();
+                if *negated {
+                    work.charge(intervals.len())?;
+                    intervals.sort_unstable();
+                    intervals = complement_scalar_ranges(&intervals);
+                }
+                for (first, last) in intervals {
+                    self.range(
+                        char::from_u32(first)?,
+                        char::from_u32(last)?,
+                        start,
+                        end,
+                        work,
+                    )?;
                 }
             }
             GrammarExpr::NonTerminal(name) => {
@@ -384,6 +398,14 @@ pub(super) fn select_exclusive_json_string_expressions(
 ) -> Option<StringIntersection> {
     if branches.is_empty() {
         return Some(StringIntersection::Impossible);
+    }
+    if let [branch] = branches
+        && let [expression] = branch.as_slice()
+    {
+        return Some(StringIntersection::Match(
+            (**expression).clone(),
+            Vec::new(),
+        ));
     }
     let (maximum_source_states, maximum_product_states, maximum_work) =
         string_intersection_limits();

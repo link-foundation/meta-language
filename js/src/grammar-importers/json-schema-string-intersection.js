@@ -1,5 +1,6 @@
 import { GrammarBuilder as Expression } from '../grammar.js';
 import { stringIntersectionLimits } from './json-schema-pattern-policy.js';
+import { complementScalarRanges } from './json-schema-patterns.js';
 
 const { charClass, choice, empty, ref, seq } = Expression;
 const [maximumSourceStates, maximumProductStates, maximumWork] = stringIntersectionLimits();
@@ -39,12 +40,18 @@ function automaton(expression, resolve, charge) {
       case 'charRange':
         ranges([[node.start.codePointAt(0), node.end.codePointAt(0)]], start, end);
         break;
-      case 'charClass':
-        if (node.negated || !node.items) throw exhausted;
-        ranges(node.items.map(item => item.kind === 'char'
+      case 'charClass': {
+        if (!node.items) throw exhausted;
+        const intervals = node.items.map(item => item.kind === 'char'
           ? [item.value.codePointAt(0), item.value.codePointAt(0)]
-          : [item.start.codePointAt(0), item.end.codePointAt(0)]), start, end);
+          : [item.start.codePointAt(0), item.end.codePointAt(0)]);
+        if (node.negated) {
+          charge(intervals.length);
+          intervals.sort(([first], [second]) => first - second);
+        }
+        ranges(node.negated ? complementScalarRanges(intervals) : intervals, start, end);
         break;
+      }
       case 'ref': {
         const referenced = resolve(node.name);
         if (!referenced) throw exhausted;
@@ -107,6 +114,7 @@ export function intersectJsonStringExpressions(leftExpression, rightExpression, 
 /** Each branch is a conjunction. The decoder accepts when exactly one branch matches. */
 export function selectExclusiveJsonStringExpressions(branches, resolve, rulePrefix) {
   if (branches.length === 0) return null;
+  if (branches.length === 1 && branches[0].length === 1) return { expression: branches[0][0], rules: [] };
   try {
     let work = maximumWork;
     function charge(cost) {

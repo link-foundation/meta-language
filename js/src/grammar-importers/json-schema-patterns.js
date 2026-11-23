@@ -23,7 +23,7 @@ function union(ranges) {
   return result;
 }
 
-function complement(ranges) {
+export function complementScalarRanges(ranges) {
   const result = [];
   for (const [start, end] of scalars) {
     let offset = start;
@@ -44,7 +44,7 @@ function single(value) {
 
 function characterRanges(term, spelling) {
   if (['pattern_character', 'class_character'].includes(term)) return single(spelling.codePointAt(0));
-  if (term === 'any_character') return complement([[10, 10], [13, 13], [0x2028, 0x2029]]);
+  if (term === 'any_character') return complementScalarRanges([[10, 10], [13, 13], [0x2028, 0x2029]]);
   if (term === 'identity_escape' && /^\\[\^$\\.*+?()[\]{}|/\-]$/u.test(spelling)) return single(spelling.codePointAt(1));
   if (term === 'control_escape') {
     return single(controls.get(spelling[1]) ?? (/^\\x[0-9a-f]{2}$/iu.test(spelling) ? Number.parseInt(spelling.slice(2), 16) : undefined));
@@ -54,7 +54,7 @@ function characterRanges(term, spelling) {
   const escape = spelling[1];
   if (classes.has(escape.toLowerCase())) {
     const ranges = classes.get(escape.toLowerCase());
-    return escape === escape.toLowerCase() ? ranges : complement(ranges);
+    return escape === escape.toLowerCase() ? ranges : complementScalarRanges(ranges);
   }
   const unicode = /^\\u(?:([0-9a-f]{4})|\{([0-9a-f]+)\})$/iu.exec(spelling);
   return unicode ? single(Number.parseInt(unicode[1] ?? unicode[2], 16)) : null;
@@ -130,7 +130,7 @@ export function lowerJsonStringPattern(source, registerPatternRule) {
         }
       }
       ranges = union(items);
-      if (text(node).startsWith('[^')) ranges = complement(ranges);
+      if (text(node).startsWith('[^')) ranges = complementScalarRanges(ranges);
     } else ranges = characterRanges(node.term, text(node));
     if (!ranges) return null;
     const key = JSON.stringify(ranges);

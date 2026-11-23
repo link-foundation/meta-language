@@ -4679,6 +4679,11 @@ It counts branches whose supported patterns, formats and finite value assertions
 all match the JSON spelling. A sibling string assertion restricts every branch.
 The decoder accepts exactly one matching branch and omits a production when
 the product has no accepting path.
+For a string-only local reference, the importer intersects supported sibling
+patterns and formats with the referenced schema's string language. For string
+`anyOf`, it intersects each branch with the common assertions and emits their
+union. Each intersection has the shared automaton work and state limits. If a
+branch exceeds those limits, a diagnostic identifies the validation assertion.
 
 An unrestricted integer decoder over all JSON spellings exceeds the portable
 context-free grammar model. Restrict number spellings to `1.0*1e10*`, with

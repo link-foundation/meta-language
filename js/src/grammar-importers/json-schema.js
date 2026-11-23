@@ -466,8 +466,8 @@ export function importJsonSchema(schema) {
     return format ?? ref('string');
   }
   function regularStringConstraints(rules, combination) {
-    if (rules.$ref !== undefined || Object.keys(rules).some(key => key !== combination && !referenceKeys.has(key)
-      && !['type', 'const', 'enum', 'pattern', 'format'].includes(key))) return undefined;
+    if (Object.keys(rules).some(key => key !== combination && (key === '$ref'
+      || (!referenceKeys.has(key) && !['type', 'const', 'enum', 'pattern', 'format'].includes(key))))) return undefined;
     const expressions = [];
     if (rules.format !== undefined) {
       if (!formatExpressions.has(rules.format)) return undefined;
@@ -488,11 +488,27 @@ export function importJsonSchema(schema) {
     }
     return expressions;
   }
-  function exclusiveStringExpression(rules, alternatives, allowedTypes) {
+  function stringBranchProduct(branches) {
+    const product = selectExclusiveJsonStringExpressions(branches, name => builder.rules.get(name)?.expression,
+      `json_string_exclusive_${next++}`);
+    if (!product) return product;
+    for (const [name, expression] of product.rules) builder.rule(name, expression);
+    return product.expression;
+  }
+  function referencedStringExpression(rules, target, allowedTypes) {
+    if (possibleTypeMembership(target, allowedTypes) !== jsonTypes.get('string')) return undefined;
+    const guard = regularStringConstraints(rules, '$ref');
+    if (!guard) return guard;
+    const constraints = regularStringConstraints(target);
+    if (!constraints) return constraints;
+    const conjunction = [...guard, ...constraints];
+    return conjunction.length ? stringBranchProduct([conjunction]) : ref('string');
+  }
+  function alternativeStringExpression(rules, alternatives, allowedTypes, keyword) {
     const string = jsonTypes.get('string');
     const types = alternatives.map(branch => possibleTypeMembership(branch, allowedTypes));
     if (types.some(membership => membership !== 0 && membership !== string)) return undefined;
-    const guard = regularStringConstraints(rules, 'oneOf');
+    const guard = regularStringConstraints(rules, keyword);
     if (!guard) return guard;
     const branches = [];
     for (const [index, branch] of alternatives.entries()) {
@@ -504,11 +520,15 @@ export function importJsonSchema(schema) {
         branches.push(conjunction.length ? conjunction : [ref('string')]);
       }
     }
-    const product = selectExclusiveJsonStringExpressions(branches, name => builder.rules.get(name)?.expression,
-      `json_string_exclusive_${next++}`);
-    if (!product) return product;
-    for (const [name, expression] of product.rules) builder.rule(name, expression);
-    return product.expression;
+    if (keyword === 'oneOf') return stringBranchProduct(branches);
+    // Distribute the common assertions to bound each intersection independently.
+    const entries = [];
+    for (const branch of branches) {
+      const entry = stringBranchProduct([branch]);
+      if (entry === undefined) return undefined;
+      if (entry) entries.push(entry);
+    }
+    return entries.length ? choice(...entries) : null;
   }
   function numberExpression(type, rules, pointer) {
     const keywords = numericLimitKeywords.filter(key => rules[key] !== undefined);
@@ -548,6 +568,8 @@ export function importJsonSchema(schema) {
       const target = analysis.target(rules.$ref);
       if (typeof target === 'boolean' || (target && typeof target === 'object' && !Array.isArray(target))) {
         if (Object.keys(rules).some(key => key !== 'type' && !referenceKeys.has(key))) {
+          const conjunction = referencedStringExpression(rules, target, allowedTypes);
+          if (conjunction !== undefined) return conjunction;
           report(pointer, '$ref', 'Sibling reference assertions are checked during document validation.');
         }
         return named(target, rules.$ref.slice(1), allowedTypes);
@@ -558,9 +580,9 @@ export function importJsonSchema(schema) {
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== 'type' && key !== keyword && !referenceKeys.has(key));
       const overlaps = keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes)
         && !branchesUseDisjointRequiredTags(alternatives, allowedTypes);
-      if (keyword === 'oneOf' && (overlaps || hasSiblingAssertions)) {
-        const exclusive = exclusiveStringExpression(rules, alternatives, allowedTypes);
-        if (exclusive !== undefined) return exclusive;
+      if (overlaps || hasSiblingAssertions) {
+        const combined = alternativeStringExpression(rules, alternatives, allowedTypes, keyword);
+        if (combined !== undefined) return combined;
       }
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
       if (overlaps) {

@@ -358,6 +358,11 @@ impl<'schema> Importer<'schema> {
                 .keys()
                 .any(|key| key != "type" && !reference_keyword(key))
             {
+                if let Some(expression) =
+                    self.referenced_string_expression(schema, target, allowed_types)
+                {
+                    return expression;
+                }
                 self.report(
                     pointer,
                     "$ref",
@@ -375,20 +380,11 @@ impl<'schema> Importer<'schema> {
                 let overlaps = keyword == "oneOf"
                     && !branches_use_disjoint_types(branches.iter(), allowed_types)
                     && !branches_use_disjoint_required_tags(branches, allowed_types);
-                if keyword == "oneOf"
-                    && (overlaps || has_sibling_assertions)
-                    && let Some(product) =
-                        self.exclusive_string_expression(schema, branches, allowed_types)
+                if (overlaps || has_sibling_assertions)
+                    && let Some(expression) =
+                        self.alternative_string_expression(schema, branches, allowed_types, keyword)
                 {
-                    return match product {
-                        StringIntersection::Match(expression, rules) => {
-                            for rule in rules {
-                                self.grammar.add_rule(rule);
-                            }
-                            Some(expression)
-                        }
-                        StringIntersection::Impossible => None,
-                    };
+                    return expression;
                 }
                 if has_sibling_assertions {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
@@ -758,18 +754,17 @@ impl<'schema> Importer<'schema> {
         schema: &Value,
         combination: Option<&str>,
     ) -> Option<Option<Vec<Expression>>> {
-        if schema.get("$ref").is_some()
-            || schema.as_object().is_some_and(|rules| {
-                rules.keys().any(|key| {
-                    Some(key.as_str()) != combination
-                        && !reference_keyword(key)
-                        && !matches!(
-                            key.as_str(),
-                            "type" | "const" | "enum" | "pattern" | "format"
-                        )
-                })
+        if schema.as_object().is_some_and(|rules| {
+            rules.keys().any(|key| {
+                Some(key.as_str()) != combination
+                    && (key == "$ref"
+                        || (!reference_keyword(key)
+                            && !matches!(
+                                key.as_str(),
+                                "type" | "const" | "enum" | "pattern" | "format"
+                            )))
             })
-        {
+        }) {
             return None;
         }
         let mut expressions = Vec::new();
@@ -801,12 +796,51 @@ impl<'schema> Importer<'schema> {
         Some(Some(expressions))
     }
 
-    fn exclusive_string_expression(
+    fn string_branch_product(
+        &mut self,
+        branches: &[Vec<&Expression>],
+    ) -> Option<Option<Expression>> {
+        let rule_prefix = format!("json_string_exclusive_{}", self.next());
+        match select_exclusive_json_string_expressions(&self.grammar, branches, &rule_prefix)? {
+            StringIntersection::Match(expression, rules) => {
+                for rule in rules {
+                    self.grammar.add_rule(rule);
+                }
+                Some(Some(expression))
+            }
+            StringIntersection::Impossible => Some(None),
+        }
+    }
+
+    fn referenced_string_expression(
+        &mut self,
+        schema: &Value,
+        target: &Value,
+        allowed_types: u8,
+    ) -> Option<Option<Expression>> {
+        if possible_type_membership(target, allowed_types) != type_membership("string") {
+            return None;
+        }
+        let Some(guard) = self.regular_string_constraints(schema, Some("$ref"))? else {
+            return Some(None);
+        };
+        let Some(constraints) = self.regular_string_constraints(target, None)? else {
+            return Some(None);
+        };
+        let conjunction: Vec<_> = guard.iter().chain(&constraints).collect();
+        if conjunction.is_empty() {
+            return Some(Some(reference_expression("string")));
+        }
+        self.string_branch_product(&[conjunction])
+    }
+
+    fn alternative_string_expression(
         &mut self,
         schema: &Value,
         branches: &[Value],
         allowed_types: u8,
-    ) -> Option<StringIntersection> {
+        keyword: &str,
+    ) -> Option<Option<Expression>> {
         let string = type_membership("string");
         let types: Vec<_> = branches
             .iter()
@@ -818,8 +852,8 @@ impl<'schema> Importer<'schema> {
         {
             return None;
         }
-        let Some(guard) = self.regular_string_constraints(schema, Some("oneOf"))? else {
-            return Some(StringIntersection::Impossible);
+        let Some(guard) = self.regular_string_constraints(schema, Some(keyword))? else {
+            return Some(None);
         };
         let mut choices = Vec::new();
         for (branch, membership) in branches.iter().zip(types) {
@@ -840,8 +874,17 @@ impl<'schema> Importer<'schema> {
                 }
             })
             .collect();
-        let rule_prefix = format!("json_string_exclusive_{}", self.next());
-        select_exclusive_json_string_expressions(&self.grammar, &choices, &rule_prefix)
+        if keyword == "oneOf" {
+            return self.string_branch_product(&choices);
+        }
+        // Distribute the common assertions to bound each intersection independently.
+        let mut entries = Vec::new();
+        for choice in choices {
+            if let Some(expression) = self.string_branch_product(&[choice])? {
+                entries.push(expression);
+            }
+        }
+        Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
     }
 
     fn number(&mut self, name: &str, schema: &Value, pointer: &str) -> Option<Expression> {

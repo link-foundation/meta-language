@@ -49,7 +49,7 @@ fn union(mut ranges: Intervals) -> Intervals {
     result
 }
 
-fn complement(ranges: &[(u32, u32)]) -> Intervals {
+pub(super) fn complement_scalar_ranges(ranges: &[(u32, u32)]) -> Intervals {
     let mut result = Vec::new();
     for (start, end) in SCALARS {
         let mut offset = start;
@@ -78,7 +78,11 @@ fn character_ranges(term: &str, spelling: &str) -> Option<Intervals> {
     let first = characters.next()?;
     match term {
         "pattern_character" | "class_character" => single(u32::from(first)),
-        "any_character" => Some(complement(&[(10, 10), (13, 13), (0x2028, 0x2029)])),
+        "any_character" => Some(complement_scalar_ranges(&[
+            (10, 10),
+            (13, 13),
+            (0x2028, 0x2029),
+        ])),
         "identity_escape" => {
             let escaped = characters.next()?;
             "^$\\.*+?()[]{}|/-"
@@ -117,7 +121,7 @@ fn character_ranges(term: &str, spelling: &str) -> Option<Intervals> {
                 _ => return None,
             };
             Some(if escaped.is_ascii_uppercase() {
-                complement(ranges)
+                complement_scalar_ranges(ranges)
             } else {
                 ranges.to_vec()
             })
@@ -159,7 +163,7 @@ fn class_ranges(source: &str, node: &NativeNode) -> Option<Intervals> {
     }
     let ranges = union(items);
     Some(if spelling(source, node).starts_with("[^") {
-        complement(&ranges)
+        complement_scalar_ranges(&ranges)
     } else {
         ranges
     })
