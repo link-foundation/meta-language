@@ -19,21 +19,23 @@ test('the Lean fallback refuses local and unsupported runners before creating or
  }
 });
 
-for(const [release,checksum] of [
- ['4.34.1','47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4'],
- ['4.36.0','2b7ab1ed8b92d2e6abfaf41344823b510064dbc9c0260cac73eb496ab2dea6eb'],
-]) test(`the Lean ${release} fallback authenticates the exact release before extraction linking and version selection`,t=>{
- const fixture=createLeanDownloadFixture(t),calls=[];
- const result=installFixedLean({...fixture,release,run:(command,args,options)=>{
-  calls.push({command,args,options});return {status:0,stdout:args.includes('--version')?`Lean (version ${release}, x86_64-unknown-linux-gnu, Release)\n`:'',stderr:''};
- }});
- assert.deepEqual(calls.map(value=>path.basename(value.command)),['curl','sha256sum','tar','elan','elan','elan']);
- assert.ok(calls[0].args.includes(`https://github.com/leanprover/lean4/releases/download/v${release}/lean-${release}-linux.tar.zst`));
- assert.equal(calls[1].options.input,checksum+'  '+path.join(result.directory,'release.tar.zst')+'\n');
- assert.deepEqual(calls[3].args,['toolchain','link',`meta-language-lean-${release}`,path.join(result.directory,`lean-${release}-linux`)]);
- assert.deepEqual(calls[4].args,['run',`meta-language-lean-${release}`,'lean','--version']);
- assert.deepEqual(calls[5].args,['default',`meta-language-lean-${release}`]);assert.ok(existsSync(result.directory));
- assert.equal(result.version,release);assert.equal(result.sha256,checksum);
+test('the Lean fallback authenticates the exact release before extraction linking and version selection',t=>{
+ for(const [release,checksum] of [
+  ['4.34.1','47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4'],
+  ['4.36.0','2b7ab1ed8b92d2e6abfaf41344823b510064dbc9c0260cac73eb496ab2dea6eb'],
+ ]){
+  const fixture=createLeanDownloadFixture(t),calls=[];
+  const result=installFixedLean({...fixture,release,run:(command,args,options)=>{
+   calls.push({command,args,options});return {status:0,stdout:args.includes('--version')?`Lean (version ${release}, x86_64-unknown-linux-gnu, Release)\n`:'',stderr:''};
+  }});
+  assert.deepEqual(calls.map(value=>path.basename(value.command)),['curl','sha256sum','tar','elan','elan','elan']);
+  assert.ok(calls[0].args.includes(`https://github.com/leanprover/lean4/releases/download/v${release}/lean-${release}-linux.tar.zst`));
+  assert.equal(calls[1].options.input,checksum+'  '+path.join(result.directory,'release.tar.zst')+'\n');
+  assert.deepEqual(calls[3].args,['toolchain','link',`meta-language-lean-${release}`,path.join(result.directory,`lean-${release}-linux`)]);
+  assert.deepEqual(calls[4].args,['run',`meta-language-lean-${release}`,'lean','--version']);
+  assert.deepEqual(calls[5].args,['default',`meta-language-lean-${release}`]);assert.ok(existsSync(result.directory));
+  assert.equal(result.version,release);assert.equal(result.sha256,checksum);
+ }
 });
 
 test('download checksum and version failures stop Lean selection and clear only the owned temporary directory',t=>{

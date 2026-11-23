@@ -13,10 +13,10 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/ci-workflow-structure.test.js': '269c48e497280025271ade3765f808b2f372d1b6',
   'js/tests/support/generated-package-owner-history.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/test-groups.test.js': '8bc0ef9725388c7927acf1854870bf46f5e365be',
-  'rust/Cargo.toml': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'rust/Cargo.toml': '753e163487ccbb59e22844d402b9938464064c41',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = 'cc0075bd5efbb57d4e3a3567e80736af3c0782499b6fecafe0496e0cde90958c';
+const archiveDigest = 'dfd1878093b7f885eeac0f467592e7a02d7813862c7f896bb1ab23ed971c76b0';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let rows;
 
