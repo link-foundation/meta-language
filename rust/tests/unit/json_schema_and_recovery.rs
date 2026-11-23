@@ -13,6 +13,8 @@ use super::project_data::read_project_data;
 const FIXTURE: &str = "parity/fixtures/json-schema-and-recovery.lino";
 const EXCLUSIVE_ARRAY_LENGTHS_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-array-lengths.lino";
+const EXCLUSIVE_TYPED_ARRAY_ITEMS_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-typed-array-items.lino";
 
 fn fixture() -> Value {
     read_project_data(include_str!(
@@ -227,12 +229,8 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
     });
 }
 
-#[test]
-fn exclusive_array_alternatives_count_matching_branches_for_each_length() {
-    let fixture: Value = read_project_data(include_str!(
-        "../../../parity/fixtures/json-schema-exclusive-array-lengths.lino"
-    ))
-    .expect("shared exclusive array length fixtures");
+fn check_exclusive_array_alternatives(fixtures: &str) {
+    let fixture = read_project_data(fixtures).expect("shared exclusive array fixtures");
     for row in fixture["grammars"].as_array().unwrap() {
         let imported = import_json_schema(&row[0]).unwrap();
         let cases = row[1].as_array().unwrap();
@@ -251,6 +249,13 @@ fn exclusive_array_alternatives_count_matching_branches_for_each_length() {
         };
         assert!(error.to_string().contains("no generatable document"));
     }
+}
+
+#[test]
+fn exclusive_array_alternatives_count_matching_branches_for_each_length() {
+    check_exclusive_array_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-array-lengths.lino"
+    ));
     record(&Observation {
         requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-LENGTHS",
         suffix: "behavior",
@@ -261,6 +266,24 @@ fn exclusive_array_alternatives_count_matching_branches_for_each_length() {
             "duplicateArrayAlternativesHaveNoGeneratableDocument",
         ],
         test_name: "exclusive_array_alternatives_count_matching_branches_for_each_length",
+    });
+}
+
+#[test]
+fn exclusive_array_alternatives_with_disjoint_item_types_count_the_empty_array_separately() {
+    check_exclusive_array_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-typed-array-items.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-TYPED-ARRAY-ITEMS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-typed-array-items",
+        fixture_file: EXCLUSIVE_TYPED_ARRAY_ITEMS_FIXTURE,
+        assertions: &[
+            "decoderDistinguishesDisjointArrayItemTypes",
+            "decoderCountsEmptyArrayBranchMembership",
+        ],
+        test_name: "exclusive_array_alternatives_with_disjoint_item_types_count_the_empty_array_separately",
     });
 }
 

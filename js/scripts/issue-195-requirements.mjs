@@ -679,6 +679,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-TYPED-ARRAY-ITEMS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive alternatives over homogeneous arrays with disjoint item types',
+      expectedBehavior: 'For prefix-free arrays, distinguish nonempty arrays by disjoint item types and generate positive lengths covered by exactly one branch with the same item layout. Generate the empty array when exactly one branch accepts zero items. Apply a common sibling item schema to otherwise unrestricted branches.',
+      fixture: 'parity/fixtures/json-schema-exclusive-typed-array-items.lino',
+      selector: 'string, number and Boolean item layouts, local array and item references, overlaps within one item layout, common item constraints, mixed item types and the empty array',
+      assertions: ['decoderDistinguishesDisjointArrayItemTypes', 'decoderCountsEmptyArrayBranchMembership'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I241-JSON-RECOVERY',
       source: ISSUE_195_SOURCES.jsonRecovery,
       language: 'JSON document recovery',

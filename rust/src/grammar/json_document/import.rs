@@ -1284,8 +1284,8 @@ impl<'schema> Importer<'schema> {
     ) -> Option<Option<Expression>> {
         let array = type_membership("array");
         let guard = array_length_profile(&[schema], Some("oneOf"))?;
-        let mut shared_profile: Option<ArrayLengthProfile<'schema>> = None;
-        let mut boundaries = BTreeMap::<usize, i64>::new();
+        let mut groups = Vec::<(ArrayItemLayout<'schema>, BTreeMap<usize, i64>)>::new();
+        let mut empty_coverage = 0;
         for branch in branches {
             if possible_type_membership(branch, allowed_types) == 0 {
                 continue;
@@ -1306,57 +1306,78 @@ impl<'schema> Importer<'schema> {
             if maximum.is_some_and(|maximum| minimum > maximum) {
                 continue;
             }
-            if maximum != Some(0) {
-                if shared_profile
-                    .as_ref()
-                    .is_some_and(|shared| shared.layout != profile.layout)
-                {
-                    return None;
-                }
-                shared_profile = Some(profile);
+            if minimum == 0 {
+                empty_coverage += 1;
             }
+            if maximum == Some(0) {
+                continue;
+            }
+            if let (Some(guard_layout), Some(branch_layout)) = (guard.layout, profile.layout)
+                && guard_layout != branch_layout
+            {
+                return None;
+            }
+            let layout = guard.layout.or(profile.layout).unwrap_or(ArrayItemLayout {
+                prefix: &[],
+                items: &UNRESTRICTED_SCHEMA,
+            });
+            let index = groups
+                .iter()
+                .position(|(candidate, _)| *candidate == layout)
+                .unwrap_or_else(|| {
+                    let index = groups.len();
+                    groups.push((layout, BTreeMap::new()));
+                    index
+                });
+            let boundaries = &mut groups[index].1;
             // Coverage changes at the first included length and the first length after the interval.
-            *boundaries.entry(minimum).or_default() += 1;
+            *boundaries.entry(minimum.max(1)).or_default() += 1;
             if let Some(maximum) = maximum {
                 *boundaries.entry(maximum.checked_add(1)?).or_default() -= 1;
             }
         }
-        let branch_layout = shared_profile.and_then(|profile| profile.layout);
-        if let (Some(guard_layout), Some(branch_layout)) = (guard.layout, branch_layout)
-            && guard_layout != branch_layout
+        // With no prefix, the first item distinguishes nonempty arrays of disjoint item types.
+        if groups.len() > 1
+            && (groups.iter().any(|(layout, _)| !layout.prefix.is_empty())
+                || !branches_use_disjoint_types(
+                    self.root,
+                    groups.iter().map(|(layout, _)| layout.items),
+                    ALL_JSON_TYPES,
+                ))
         {
             return None;
         }
-        let layout = guard.layout.or(branch_layout).unwrap_or(ArrayItemLayout {
-            prefix: &[],
-            items: &UNRESTRICTED_SCHEMA,
-        });
         let mut expressions = Vec::new();
-        let mut add_interval = |minimum, maximum| {
-            if let Some(expression) = self.array_with_length(
-                layout.prefix.iter().map(CollectionChild::Schema),
-                CollectionChild::Schema(layout.items),
-                minimum,
-                maximum,
-                pointer,
-            ) {
-                expressions.push(expression);
-            }
-        };
-        let mut count = 0;
-        let mut minimum = 0;
-        for (length, change) in boundaries {
-            let next_count = count + change;
-            if count == 1 && next_count != 1 {
-                add_interval(minimum, Some(length - 1));
-            }
-            if count != 1 && next_count == 1 {
-                minimum = length;
-            }
-            count = next_count;
+        if empty_coverage == 1 {
+            expressions.push(collection("[", "]", EXPRESSION.empty()));
         }
-        if count == 1 {
-            add_interval(minimum, None);
+        for (layout, boundaries) in groups {
+            let mut add_interval = |minimum, maximum| {
+                if let Some(expression) = self.array_with_length(
+                    layout.prefix.iter().map(CollectionChild::Schema),
+                    CollectionChild::Schema(layout.items),
+                    minimum,
+                    maximum,
+                    pointer,
+                ) {
+                    expressions.push(expression);
+                }
+            };
+            let mut count = 0;
+            let mut minimum = 0;
+            for (length, change) in boundaries {
+                let next_count = count + change;
+                if count == 1 && next_count != 1 {
+                    add_interval(minimum, Some(length - 1));
+                }
+                if count != 1 && next_count == 1 {
+                    minimum = length;
+                }
+                count = next_count;
+            }
+            if count == 1 {
+                add_interval(minimum, None);
+            }
         }
         Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
     }

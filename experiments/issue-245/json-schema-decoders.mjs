@@ -1,11 +1,14 @@
 import { readProjectData } from '../../js/scripts/project-data.mjs';
 import { emitGbnf, emitLark, importJsonSchema } from '../../js/src/index.js';
 
-const fixture = new URL('../../parity/fixtures/json-schema-and-recovery.lino', import.meta.url);
-const { grammars } = readProjectData(fixture);
-const exclusiveArrays = new URL('../../parity/fixtures/json-schema-exclusive-array-lengths.lino', import.meta.url);
+const fixtures = [
+  'json-schema-and-recovery.lino',
+  'json-schema-exclusive-array-lengths.lino',
+  'json-schema-exclusive-typed-array-items.lino',
+];
 
-const samples = [...grammars, ...readProjectData(exclusiveArrays).grammars].map(([schema, cases]) => {
+const grammars = fixtures.flatMap(file => readProjectData(new URL(`../../parity/fixtures/${file}`, import.meta.url)).grammars);
+const samples = grammars.map(([schema, cases]) => {
   const grammar = importJsonSchema(schema);
   return { gbnf: emitGbnf(grammar).source, lark: emitLark(grammar).source, cases };
 });

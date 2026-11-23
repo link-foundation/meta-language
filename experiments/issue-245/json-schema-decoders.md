@@ -99,6 +99,13 @@ retains both original diagnostic pointers. Further cases cover three-way
 overlap, linked closed prefixes, unbounded intervals, and duplicate
 alternatives with no generatable document.
 
+The same experiment checks `oneOf` branches for string arrays and number
+arrays. The decoder previously admitted `[]` because either item rule permits
+zero items. Both branches match it, so the decoder now omits that spelling.
+The fixtures cover an empty array accepted by one branch, overlapping lengths
+within a shared item layout, disjoint layouts connected by local references,
+and a common item rule inherited by an unrestricted branch.
+
 The required prefix cases share a length range and distinguish branches by
 their first string value. One minimum length comes from a sibling of the
 local reference. The decoder previously admitted `["selected",null]` and now

@@ -928,9 +928,8 @@ export function importJsonSchema(schema) {
     const array = jsonTypes.get('array');
     const guard = arrayLengthProfile([rules], 'oneOf');
     if (!guard) return undefined;
-    let sharedLayout;
-    const boundaries = new Map();
-    const changeAt = (length, change) => boundaries.set(length, (boundaries.get(length) ?? 0) + change);
+    const groups = [];
+    let emptyCoverage = 0;
     for (const branch of alternatives) {
       if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
       const layers = referenceLayers(branch);
@@ -943,31 +942,40 @@ export function importJsonSchema(schema) {
       const minimum = Math.max(guard.minimum, profile.minimum);
       const maximum = Math.min(guard.maximum, profile.maximum);
       if (minimum > maximum) continue;
-      if (maximum > 0) {
-        if (sharedLayout && !isDeepStrictEqual(sharedLayout.layout, profile.layout)) return undefined;
-        sharedLayout = profile;
+      if (minimum === 0) emptyCoverage += 1;
+      if (maximum === 0) continue;
+      if (guard.layout && profile.layout && !isDeepStrictEqual(guard.layout, profile.layout)) return undefined;
+      const layout = guard.layout ?? profile.layout;
+      let group = groups.find(candidate => isDeepStrictEqual(candidate.layout, layout));
+      if (!group) {
+        group = { layout, boundaries: new Map() };
+        groups.push(group);
       }
+      const { boundaries } = group;
+      const changeAt = (length, change) => boundaries.set(length, (boundaries.get(length) ?? 0) + change);
       // Coverage changes at the first included length and the first length after the interval.
-      changeAt(minimum, 1);
+      changeAt(Math.max(minimum, 1), 1);
       if (Number.isFinite(maximum)) changeAt(maximum + 1, -1);
     }
-    const branchLayout = sharedLayout?.layout;
-    if (guard.layout && branchLayout && !isDeepStrictEqual(guard.layout, branchLayout)) return undefined;
-    const layout = guard.layout ?? branchLayout;
-    const expressions = [];
-    const addInterval = (minItems, maxItems) => {
-      const expression = arrayExpression({ ...layout, minItems, maxItems }, pointer);
-      if (expression) expressions.push(expression);
-    };
-    let count = 0;
-    let minimum;
-    for (const [length, change] of [...boundaries].sort(([left], [right]) => left - right)) {
-      const nextCount = count + change;
-      if (count === 1 && nextCount !== 1) addInterval(minimum, length - 1);
-      if (count !== 1 && nextCount === 1) minimum = length;
-      count = nextCount;
+    // With no prefix, the first item distinguishes nonempty arrays of disjoint item types.
+    if (groups.length > 1 && (groups.some(({ layout }) => layout?.prefixItems.length)
+      || !branchesUseDisjointTypes(groups.map(({ layout }) => layout?.items ?? true), allJsonTypes, referenceLayers))) return undefined;
+    const expressions = emptyCoverage === 1 ? [arrayExpression({ maxItems: 0 }, pointer)] : [];
+    for (const { layout, boundaries } of groups) {
+      const addInterval = (minItems, maxItems) => {
+        const expression = arrayExpression({ ...layout, minItems, maxItems }, pointer);
+        if (expression) expressions.push(expression);
+      };
+      let count = 0;
+      let minimum;
+      for (const [length, change] of [...boundaries].sort(([left], [right]) => left - right)) {
+        const nextCount = count + change;
+        if (count === 1 && nextCount !== 1) addInterval(minimum, length - 1);
+        if (count !== 1 && nextCount === 1) minimum = length;
+        count = nextCount;
+      }
+      if (count === 1) addInterval(minimum, null);
     }
-    if (count === 1) addInterval(minimum, null);
     return expressions.length ? choice(...expressions) : null;
   }
   function alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer) {

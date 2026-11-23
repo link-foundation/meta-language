@@ -12,6 +12,7 @@ import {
 const fixtureFile = 'parity/fixtures/json-schema-and-recovery.lino';
 const shared = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
 const exclusiveArrayLengthsFixture = 'parity/fixtures/json-schema-exclusive-array-lengths.lino';
+const exclusiveTypedArrayItemsFixture = 'parity/fixtures/json-schema-exclusive-typed-array-items.lino';
 
 const answerSchema = {
   type: 'object', additionalProperties: false, required: ['status', 'evidence'],
@@ -271,8 +272,8 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   });
 });
 
-test('exclusive array alternatives count matching branches for each length', context => {
-  const { grammars, ungeneratable } = readProjectData(new URL(`../../${exclusiveArrayLengthsFixture}`, import.meta.url));
+function checkExclusiveArrayAlternatives(file) {
+  const { grammars, ungeneratable } = readProjectData(new URL(`../../${file}`, import.meta.url));
   for (const [schema, cases] of grammars) {
     assert.deepEqual(importJsonSchema(schema).schemaDiagnostics, []);
     for (const [source, accepted] of cases) assert.equal(validateJson(source, schema).valid, accepted, source);
@@ -284,10 +285,24 @@ test('exclusive array alternatives count matching branches for each length', con
     for (const [source, accepted] of cases) assert.equal(validateJson(source, schema).valid, accepted, source);
     assert.throws(() => importJsonSchema(schema), /no generatable document/u);
   }
+}
+
+test('exclusive array alternatives count matching branches for each length', context => {
+  checkExclusiveArrayAlternatives(exclusiveArrayLengthsFixture);
   recordIssue195Observations({
     requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-LENGTHS', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-exclusive-array-lengths', fixtureFile: exclusiveArrayLengthsFixture,
     assertions: ['decoderCountsExclusiveArrayLengthIntervals', 'duplicateArrayAlternativesHaveNoGeneratableDocument'],
+    testName: context.name,
+  });
+});
+
+test('exclusive array alternatives with disjoint item types count the empty array separately', context => {
+  checkExclusiveArrayAlternatives(exclusiveTypedArrayItemsFixture);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-TYPED-ARRAY-ITEMS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-typed-array-items', fixtureFile: exclusiveTypedArrayItemsFixture,
+    assertions: ['decoderDistinguishesDisjointArrayItemTypes', 'decoderCountsEmptyArrayBranchMembership'],
     testName: context.name,
   });
 });

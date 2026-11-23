@@ -4797,8 +4797,12 @@ share an item layout, the decoder clips each length interval to common sibling
 bounds and generates only lengths covered by exactly one branch. A layer with
 a closed tail contributes its own prefix length as an upper bound. The same
 layout constrains items in the remaining lengths, including an unbounded tail.
-If no length remains, there is no generatable array. Two branches with different
-item layouts can still be distinguished by disjoint finite string sets at a
+For branches without prefixes and with disjoint item types, the decoder counts
+the positive lengths separately for each shared layout. It emits the empty
+array when exactly one branch admits zero items. A common item rule supplies
+the layout for unrestricted branches. If no layout admits a length covered by
+one branch, there is no generatable array. Two branches with different item
+layouts can also be distinguished by disjoint finite string sets at a
 common required prefix position. Optional positions and overlapping string sets
 cannot establish that proof. An unresolved overlap retains a diagnostic for
 validation. For finite collection branches,
