@@ -88,10 +88,22 @@ function listSourceModules() {
 }
 
 /**
- * The K-th measured-cost shard; every complete current source appears once.
+ * CI uses the eight measured shards. Other shard counts balance source bytes.
  */
 function shardOf(files, index, count) {
-  return partitionMeasuredWorkloads(files, count, { costs: readProjectData(reportSchedulingFile) })[index - 1];
+  if (count === 8 && files.length >= count) {
+    return partitionMeasuredWorkloads(files, count, { costs: readProjectData(reportSchedulingFile) })[index - 1];
+  }
+  const loads = Array(count).fill(0);
+  const shards = Array.from({ length: count }, () => []);
+  const sized = files.map((file) => ({ file, size: readFileSync(join(root, file)).length }));
+  sized.sort((a, b) => b.size - a.size || a.file.localeCompare(b.file));
+  for (const { file, size } of sized) {
+    const target = loads.indexOf(Math.min(...loads));
+    loads[target] += size;
+    shards[target].push(file);
+  }
+  return shards[index - 1].sort();
 }
 
 function selectedModules(replayPlan) {
