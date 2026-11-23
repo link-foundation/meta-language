@@ -54,6 +54,16 @@ comparison still verifies the complete predecessor through authenticated
 source replay. The contributor guide links to the retained opt-in workflow.
 [Tooling partition 2](https://github.com/link-foundation/meta-language/actions/runs/45086449179/job/137406065607)
 
+Conformance partition 2 reached the same 15-minute deadline after the runtime
+concept record assertions passed. The next suite repeatedly reloaded the
+unchanged naming registers and re-extracted source descriptions for in-memory
+mutations. The mutation tests now reuse the complete extracted naming inputs
+and invoke the same validators as the normal naming command for every mutation.
+The historical assertion still verifies its 208 existing rows and now verifies
+the 63 pre-pause owners added by this change against their certified source.
+The archive retains the complete previous test module.
+[Conformance partition 2, log line 914](https://github.com/link-foundation/meta-language/actions/runs/45092978360/job/137426480751)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |

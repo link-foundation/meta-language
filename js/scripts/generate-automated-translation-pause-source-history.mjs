@@ -31,6 +31,7 @@ const files = [
   'js/tests/issue-195-evidence-node-dependency.test.js',
   'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
   'js/tests/issue-195-formal-ai-partitions.test.js',
+  'js/tests/issue-195-naming.test.js',
   'js/tests/link-network-binary.test.js',
   'js/tests/test-groups.test.js',
 ].map((file) => ({ file, revision }));

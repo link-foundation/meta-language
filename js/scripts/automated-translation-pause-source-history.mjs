@@ -6,7 +6,7 @@ import { readBootstrapStructuredDataLino } from '../../scripts/lib/structured-da
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = 'd4ab0a789ae5da4b36cf098aee7e9ef7bd354607a5397dc11b8a24bdf3c705e9';
+const archiveDigest = 'b6f49830df79476bc5afe3b29eba1991ca7a279abb50b6f7431e6bfdbd00b277';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
@@ -23,7 +23,7 @@ export function restoreAutomatedTranslationPauseSource(source, file, revision) {
     'js/scripts/issue-195-formal-ai-workloads.mjs', 'js/tests/grammar-embedded-region-rules.test.js',
     'js/tests/issue-195-evidence-contributor-instructions.test.js', 'js/tests/issue-195-evidence-node-dependency.test.js',
     'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
-    'js/tests/issue-195-formal-ai-partitions.test.js', 'js/tests/link-network-binary.test.js',
+    'js/tests/issue-195-formal-ai-partitions.test.js', 'js/tests/issue-195-naming.test.js', 'js/tests/link-network-binary.test.js',
     'js/tests/test-groups.test.js'].includes(file)) {
     return source;
   }
