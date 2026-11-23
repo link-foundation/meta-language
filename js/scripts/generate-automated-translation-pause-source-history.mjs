@@ -28,11 +28,14 @@ const files = [
   'js/tests/cache-fresh-merge-dependencies.test.js',
   'js/tests/grammar-embedded-region-rules.test.js',
   'js/tests/issue-195-evidence-contributor-instructions.test.js',
+  'js/tests/issue-195-evidence-formal-ai-partitions.test.js',
   'js/tests/issue-195-evidence-node-dependency.test.js',
+  'js/tests/issue-195-evidence-node-test-placement.test.js',
   'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
   'js/tests/issue-195-formal-ai-partitions.test.js',
   'js/tests/issue-195-naming.test.js',
   'js/tests/link-network-binary.test.js',
+  'js/tests/own-codebase-baseline-naming-history.test.js',
   'js/tests/test-groups.test.js',
 ].map((file) => ({ file, revision }));
 files.push({ file: 'js/tests/test-groups.test.js', revision: '231c6610fc93225fccb1682ab2943729e0c0e52e' });

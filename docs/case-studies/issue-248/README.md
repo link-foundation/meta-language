@@ -64,6 +64,29 @@ the 63 pre-pause owners added by this change against their certified source.
 The archive retains the complete previous test module.
 [Conformance partition 2, log line 914](https://github.com/link-foundation/meta-language/actions/runs/45092978360/job/137426480751)
 
+On the next run, conformance partition 2 passed in 6 minutes 51 seconds, and
+tooling partition 4 passed in 12 minutes 12 seconds. Both jobs ran with the
+existing 15-minute deadline.
+[Conformance partition 2](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137442894195),
+[tooling partition 4](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137442894138)
+
+Tooling partition 1 failed the scratch checkout comparison at log line 1607.
+The fixture copied the original required source files and omitted the additional
+files that contributed historical naming rows. It now copies every contributing
+file, verifies the complete comparison, and checks each altered file. The
+original required sources still fail on any change. Altered files added during
+the pause lose the historical rows they would otherwise authenticate. The
+Git-certified archive retains the previous test file and its naming record.
+[Tooling partition 1](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137442894177)
+
+Tooling partition 2 compared the current Formal AI validator to an earlier
+12,317-byte prefix and looked for four previous naming bindings in the current
+Node dependency test file. The original digest, validator export and all four
+bindings are now checked against the Git-certified sources. The current
+placement test still exercises inventory discovery and rejection of altered
+owner expressions.
+[Tooling partition 2, log lines 1431 and 1489](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137442894199)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |

@@ -6,7 +6,7 @@ import { readBootstrapStructuredDataLino } from '../../scripts/lib/structured-da
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = 'b6f49830df79476bc5afe3b29eba1991ca7a279abb50b6f7431e6bfdbd00b277';
+const archiveDigest = '0fcd698336efc91997e1fe49e9bde575ec5e534723bd9dcf2a133160ba886ba9';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
@@ -21,9 +21,11 @@ export function restoreAutomatedTranslationPauseSource(source, file, revision) {
     'js/scripts/contributor-instruction-coverage.mjs', 'js/scripts/generate-contributor-instruction-coverage.mjs',
     'js/scripts/generate-raw-oracle-contract-partitions.mjs', 'js/scripts/raw-oracle-contract-partition-history.mjs',
     'js/scripts/issue-195-formal-ai-workloads.mjs', 'js/tests/grammar-embedded-region-rules.test.js',
-    'js/tests/issue-195-evidence-contributor-instructions.test.js', 'js/tests/issue-195-evidence-node-dependency.test.js',
+    'js/tests/issue-195-evidence-contributor-instructions.test.js', 'js/tests/issue-195-evidence-formal-ai-partitions.test.js',
+    'js/tests/issue-195-evidence-node-dependency.test.js', 'js/tests/issue-195-evidence-node-test-placement.test.js',
     'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
     'js/tests/issue-195-formal-ai-partitions.test.js', 'js/tests/issue-195-naming.test.js', 'js/tests/link-network-binary.test.js',
+    'js/tests/own-codebase-baseline-naming-history.test.js',
     'js/tests/test-groups.test.js'].includes(file)) {
     return source;
   }
