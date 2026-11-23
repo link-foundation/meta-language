@@ -1819,8 +1819,10 @@ coordinates belong to the child network. Uncompressed selections can resolve
 to individual physical spans. Compressed selections resolve to the covering
 encoded stream or ZIP entry. Optional PDF decoding applies bounded Flate,
 ASCIIHex, ASCII85 and LZW filters in the declared order and keeps the original
-content bytes. LZW respects each filter's code-width setting. Invalid streams
-and package entries carry diagnostics with a physical source span.
+content bytes. Declared page and form streams keep decoded trees even when
+empty or containing only comments or inline images. LZW respects each filter's
+code-width setting. Invalid streams and package entries carry diagnostics with
+a physical source span.
 WordprocessingML package relationships
 select the main part and its internal headers, footers, and notes. A package
 without relationship metadata can use conventional part names.

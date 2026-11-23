@@ -58,6 +58,33 @@ function checkCorruptDecoding() {
   assert.equal(network.visibleText().text, 'A€é');
 }
 
+function checkDeclaredContent() {
+  for (const { encoded, streams } of fixture.declaredContent) {
+    const bytes = Buffer.from(encoded, 'hex');
+    const source = bytes.toString('latin1');
+    for (const [raw, original] of [[false, LinkNetwork.parse(source, 'PDF')], [true, LinkNetwork.parseBytes(bytes, 'PDF')]]) {
+      const network = LinkNetwork.fromLino(original.toLino());
+      assert.equal(network.verifyFullMatch().isClean(), true);
+      if (raw) assert.deepEqual(Buffer.from(network.reconstructBytes()), bytes);
+      else assert.equal(network.reconstructText(), source);
+      assert.equal(network.visibleText().text, '');
+      const decoded = network.derivedDocuments();
+      assert.equal(decoded.length, streams.length);
+      for (const [index, expected] of streams.entries()) {
+        const stream = decoded[index];
+        const offset = position => raw ? position : Buffer.byteLength(source.slice(0, position));
+        assert.equal(stream.name, 'content_stream');
+        assert.equal(stream.compression, 'FlateDecode');
+        assert.equal(stream.network.reconstructText(), expected.content);
+        assert.deepEqual({ ...stream.sourceRange }, { start: offset(expected.start), end: offset(expected.end) });
+        const terms = stream.network.links().map(link => link.metadata().term);
+        assert.ok(terms.includes('content_stream'));
+        if (expected.content.startsWith('BI ')) assert.ok(terms.includes('inline_image'));
+      }
+    }
+  }
+}
+
 function checkReadingOrder({ page, text, ranges }) {
   const bytes = Buffer.from(page);
   for (const [raw, input] of [[false, LinkNetwork.parse(page, 'PDF')], [true, LinkNetwork.parseBytes(bytes, 'PDF')]]) {
@@ -124,8 +151,9 @@ test('PDF streams and font Unicode keep the original ranges with both byte entry
   checkReadingOrder(fixture.transformedReadingOrder);
   checkReadingOrder(fixture.taggedReadingOrder);
   checkLzwDecoding();
+  checkDeclaredContent();
   for (const [requirementId, assertions] of [
-    ['I195-I239-PDF-CONTENT-STREAMS', ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError']],
+    ['I195-I239-PDF-CONTENT-STREAMS', ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError', 'pdfDeclaredContentWithoutTextKeepsEncodedRanges']],
     ['I195-I239-PDF-FONT-UNICODE', ['pdfTextUsesFontMappingsAndPageOrder', 'pdfVisibleTextKeepsEncodedAndLiteralRanges', 'pdfPositionedLinesKeepReadingOrderAndRanges', 'pdfTransformedLinesKeepReadingOrderAndRanges', 'pdfTaggedSequencesKeepReadingOrderAndRanges']],
   ]) {
     recordIssue195Observations({ requirementId, suffix: 'behavior', fixtureId: requirementId.toLowerCase(),

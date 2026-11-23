@@ -423,9 +423,9 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       {
         id: 'I195-I239-PDF-CONTENT-STREAMS',
         construct: 'linked decoded page content and located stream errors',
-        expectedBehavior: 'Both PDF parse entry points preserve the original file and expose Flate- and LZW-decoded content operators in linked documents with the encoded range. LZW supports both standard code-width transitions and chained ASCIIHex decoding. An option disables stream decoding and corrupt encoded data identifies the affected range.',
-        selector: 'Flate and LZW page content, both binary input modes, disabled decoding, both LZW EarlyChange values, a chained filter and corrupt data',
-        assertions: ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError'],
+        expectedBehavior: 'Both PDF parse entry points preserve the original file and expose Flate- and LZW-decoded content operators in linked documents with the encoded range. LZW supports both standard code-width transitions and chained ASCIIHex decoding. An option disables stream decoding and corrupt encoded data identifies the affected range. Declared page and form content keeps a decoded tree and encoded range when empty or containing only comments or inline images.',
+        selector: 'Flate and LZW page content, both binary input modes, disabled decoding, both LZW EarlyChange values, a chained filter, corrupt data, and declared page and form streams without text operators',
+        assertions: ['pdfDerivedOperatorsKeepEncodedRange', 'pdfFiltersCanBeDisabled', 'corruptPdfFilterKeepsLocatedError', 'pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange', 'corruptPdfLzwKeepsLocatedError', 'pdfDeclaredContentWithoutTextKeepsEncodedRanges'],
       },
       {
         id: 'I195-I239-PDF-FONT-UNICODE',

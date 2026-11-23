@@ -139,6 +139,67 @@ fn check_lzw_decoding(fixture: &Value) {
     }
 }
 
+fn check_declared_content(fixture: &Value) {
+    for entry in fixture.as_array().expect("declared content documents") {
+        let bytes = octets(&entry["encoded"]);
+        let source = binary_string(&bytes);
+        let expected = entry["streams"].as_array().expect("declared streams");
+        for (raw, original) in [
+            (true, LinkNetwork::parse_bytes(&bytes, "PDF")),
+            (
+                false,
+                LinkNetwork::parse(&source, "PDF", ParseConfiguration::default()),
+            ),
+        ] {
+            let network = LinkNetwork::from_lino(&original.to_lino()).expect("PDF round trip");
+            assert!(network.verify_full_match(None).is_clean());
+            check_reconstruction(&network, raw, &bytes, &source);
+            assert!(
+                network
+                    .visible_text(VisibleDocumentTextOptions::default())
+                    .text
+                    .is_empty()
+            );
+            let decoded = network.derived_documents();
+            assert_eq!(decoded.len(), expected.len());
+            let coordinate = |position| {
+                if raw {
+                    position
+                } else {
+                    binary_string(&bytes[..position]).len()
+                }
+            };
+            for (stream, expected) in decoded.iter().zip(expected) {
+                let content = expected["content"].as_str().expect("decoded content");
+                assert_eq!(stream.name, "content_stream");
+                assert_eq!(stream.compression, "FlateDecode");
+                assert_eq!(stream.network.reconstruct_text(), content);
+                assert_eq!(
+                    stream.source_range,
+                    ByteRange::new(
+                        coordinate(offset(&expected["start"])),
+                        coordinate(offset(&expected["end"])),
+                    )
+                );
+                assert!(
+                    stream
+                        .network
+                        .links()
+                        .any(|link| link.metadata().term() == Some("content_stream"))
+                );
+                if content.starts_with("BI ") {
+                    assert!(
+                        stream
+                            .network
+                            .links()
+                            .any(|link| link.metadata().term() == Some("inline_image"))
+                    );
+                }
+            }
+        }
+    }
+}
+
 #[test]
 fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
     let fixture = read_project_data(include_str!("../../../parity/fixtures/pdf-document.lino"))
@@ -252,6 +313,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
     check_reading_order(&fixture["transformedReadingOrder"]);
     check_reading_order(&fixture["taggedReadingOrder"]);
     check_lzw_decoding(&fixture["lzw"]);
+    check_declared_content(&fixture["declaredContent"]);
     for (requirement_id, assertions) in [
         (
             "I195-I239-PDF-CONTENT-STREAMS",
@@ -261,6 +323,7 @@ fn pdf_streams_and_font_unicode_keep_the_original_ranges() {
                 "corruptPdfFilterKeepsLocatedError",
                 "pdfLzwCodeWidthsAndFilterChainsKeepEncodedRange",
                 "corruptPdfLzwKeepsLocatedError",
+                "pdfDeclaredContentWithoutTextKeepsEncodedRanges",
             ][..],
         ),
         (

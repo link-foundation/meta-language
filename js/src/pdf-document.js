@@ -167,7 +167,10 @@ export function readPdfDocument(text, tree, decodeStreams) {
     const stream = readStream(node);
     if (!stream) return;
     const content = parsePdfContentCst(stream.source);
-    if (!content || !content.children.some(operation => operation.term === 'operation' && pageOperator(stream.source, operation))) return;
+    if (!content) return;
+    // A page or form declares content even when the decoded stream has no text operators.
+    const declared = state.page || depth > 0 || nameOf(text, get(field(node, 'dictionary'), 'Subtype')) === 'Form';
+    if (!declared && !content.children.some(operation => operation.term === 'operation' && pageOperator(stream.source, operation))) return;
     if (stream.filter && !attached.has(node)) {
       streams.push({ ...stream, tree: content });
       attached.add(node);

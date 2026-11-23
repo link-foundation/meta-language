@@ -693,13 +693,22 @@ impl<'source> PdfReader<'source> {
         let Some(tree) = parse_pdf_content_cst(&stream.source) else {
             return;
         };
-        if !tree.children.iter().any(|operation| {
-            let operator = text_of(&stream.source, field(Some(operation), "operator"));
-            operation.term == "operation"
-                && (pdf_text_operator_kind(operator) != 0
-                    || pdf_drawing_operator(operator)
-                    || operator == "TL")
-        }) {
+        // A page or form declares content even when the decoded stream has no text operators.
+        let declared = state.page.is_some()
+            || depth > 0
+            || name_of(
+                self.text,
+                self.get(field(Some(node), "dictionary"), "Subtype"),
+            ) == "Form";
+        if !declared
+            && !tree.children.iter().any(|operation| {
+                let operator = text_of(&stream.source, field(Some(operation), "operator"));
+                operation.term == "operation"
+                    && (pdf_text_operator_kind(operator) != 0
+                        || pdf_drawing_operator(operator)
+                        || operator == "TL")
+            })
+        {
             return;
         }
         let tree = Rc::new(tree);
