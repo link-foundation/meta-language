@@ -686,9 +686,9 @@ async function produceDeliveryEvidence(kind) {
     const npmIntegrity = local.npm.checksum.expectedIntegrity;
     if (installedChecks.exactArtifactChecksum && local.npm.version === '1.0.0' &&
         local.crate.version === '1.0.0' && metadata.version === '1.0.0' &&
-        metadata.dist?.integrity === npmIntegrity && local.crate.gitRevision === commit &&
+        metadata.dist?.integrity === npmIntegrity && local.crate.gitRevision === commit && local.crate.gitCheckoutClean === true &&
         metadata.gitHead === commit && process.env.GITHUB_REF === 'refs/tags/v1.0.0') {
-      observe(nativeHtmlRelease, 'samePublishedRelease', 'npm integrity, registry gitHead, crate VCS revision and v1.0.0 tag agree');
+      observe(nativeHtmlRelease, 'samePublishedRelease', 'npm integrity, registry gitHead, clean crate VCS revision and v1.0.0 tag agree');
     }
     const npmChecks = deliveryAssertions(local, ['npm'], expected, deliveryContext);
     if (npmChecks.cleanEnvironment && npmChecks.exactArtifactChecksum && npmChecks.offlineFirstParse &&

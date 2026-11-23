@@ -134,9 +134,10 @@ async function crateConsumer() {
   const manifest = await readFile(path.join(crateSource, 'Cargo.toml'), 'utf8');
   const version = /^version = "([^"]+)"/mu.exec(manifest)?.[1] ?? null;
   const sourceInformation = path.join(crateSource, '.cargo_vcs_info.json');
-  const gitRevision = existsSync(sourceInformation)
-    ? JSON.parse(await readFile(sourceInformation, 'utf8')).git?.sha1 ?? null
+  const crateGit = existsSync(sourceInformation)
+    ? JSON.parse(await readFile(sourceInformation, 'utf8')).git
     : null;
+  const gitRevision = crateGit?.sha1 ?? null;
   await writeFile(path.join(directory, 'Cargo.toml'), [
     '[package]',
     'name = "issue-195-crate-consumer"',
@@ -192,6 +193,7 @@ async function crateConsumer() {
   return {
     version,
     gitRevision,
+    gitCheckoutClean: gitRevision !== null && (crateGit.dirty === undefined || crateGit.dirty === false),
     checksum,
     clean,
     publicEntryPoints: { ...observed.publicEntryPoints, privatePathRejected },
