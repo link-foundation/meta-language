@@ -11,6 +11,7 @@ import {
 
 const fixtureFile = 'parity/fixtures/json-schema-and-recovery.lino';
 const shared = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
+const exclusiveArrayLengthsFixture = 'parity/fixtures/json-schema-exclusive-array-lengths.lino';
 
 const answerSchema = {
   type: 'object', additionalProperties: false, required: ['status', 'evidence'],
@@ -266,6 +267,27 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
     requirementId: 'I195-I240-JSON-SCHEMA-NUMERIC-CONSTANTS', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-numeric-constants', fixtureFile,
     assertions: ['decoderNumericConstantsRespectEquivalentSpellings'],
+    testName: context.name,
+  });
+});
+
+test('exclusive array alternatives count matching branches for each length', context => {
+  const { grammars, ungeneratable } = readProjectData(new URL(`../../${exclusiveArrayLengthsFixture}`, import.meta.url));
+  for (const [schema, cases] of grammars) {
+    assert.deepEqual(importJsonSchema(schema).schemaDiagnostics, []);
+    for (const [source, accepted] of cases) assert.equal(validateJson(source, schema).valid, accepted, source);
+    for (const parser of schemaParsers(schema)) {
+      for (const [source, accepted] of cases) assert.equal(parser.parseTree(source).ok, accepted, source);
+    }
+  }
+  for (const [schema, cases] of ungeneratable) {
+    for (const [source, accepted] of cases) assert.equal(validateJson(source, schema).valid, accepted, source);
+    assert.throws(() => importJsonSchema(schema), /no generatable document/u);
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-LENGTHS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-array-lengths', fixtureFile: exclusiveArrayLengthsFixture,
+    assertions: ['decoderCountsExclusiveArrayLengthIntervals', 'duplicateArrayAlternativesHaveNoGeneratableDocument'],
     testName: context.name,
   });
 });

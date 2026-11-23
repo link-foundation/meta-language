@@ -388,6 +388,26 @@ function arrayLengthBounds(layers) {
   return [minimum, maximum];
 }
 
+function arrayLengthProfile(layers, combination) {
+  const array = jsonTypes.get('array');
+  if (layers.some((layer, index) => Object.keys(layer).some(key => (
+    activeConjunctionKeyword(key, index, combination, array) && !jsonDocumentPolicy.arrayAssertion.includes(key)
+  )))) return undefined;
+  const [minimum, maximum] = arrayLengthBounds(layers);
+  if (!Number.isSafeInteger(minimum) || (maximum !== Infinity && !Number.isSafeInteger(maximum + 1))) return undefined;
+  let layout;
+  for (const rules of layers) {
+    const prefixItems = rules.prefixItems ?? [];
+    // A closed tail already contributes its limit to the length interval.
+    const items = rules.items === false ? true : rules.items ?? true;
+    if (prefixItems.length === 0 && items === true) continue;
+    const candidate = { prefixItems, items };
+    if (layout && !isDeepStrictEqual(layout, candidate)) return undefined;
+    layout = candidate;
+  }
+  return { minimum, maximum, layout };
+}
+
 function branchesUseDisjointTypes(branches, allowedTypes, referenceLayers) {
   if (branches.length < 2) return true;
   let seen = 0;
@@ -904,6 +924,52 @@ export function importJsonSchema(schema) {
     const entries = branches.map(({ index, type, limits }) => numberExpression(type, limits, pointerChild(location, index))).filter(Boolean);
     return entries.length ? choice(...entries) : null;
   }
+  function exclusiveArrayLengthExpression(rules, alternatives, allowedTypes, pointer) {
+    const array = jsonTypes.get('array');
+    const guard = arrayLengthProfile([rules], 'oneOf');
+    if (!guard) return undefined;
+    let sharedLayout;
+    const boundaries = new Map();
+    const changeAt = (length, change) => boundaries.set(length, (boundaries.get(length) ?? 0) + change);
+    for (const branch of alternatives) {
+      if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
+      const layers = referenceLayers(branch);
+      if (!layers) return undefined;
+      const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+      if (membership === 0) continue;
+      if (membership !== array) return undefined;
+      const profile = arrayLengthProfile(layers);
+      if (!profile) return undefined;
+      const minimum = Math.max(guard.minimum, profile.minimum);
+      const maximum = Math.min(guard.maximum, profile.maximum);
+      if (minimum > maximum) continue;
+      if (maximum > 0) {
+        if (sharedLayout && !isDeepStrictEqual(sharedLayout.layout, profile.layout)) return undefined;
+        sharedLayout = profile;
+      }
+      // Coverage changes at the first included length and the first length after the interval.
+      changeAt(minimum, 1);
+      if (Number.isFinite(maximum)) changeAt(maximum + 1, -1);
+    }
+    const branchLayout = sharedLayout?.layout;
+    if (guard.layout && branchLayout && !isDeepStrictEqual(guard.layout, branchLayout)) return undefined;
+    const layout = guard.layout ?? branchLayout;
+    const expressions = [];
+    const addInterval = (minItems, maxItems) => {
+      const expression = arrayExpression({ ...layout, minItems, maxItems }, pointer);
+      if (expression) expressions.push(expression);
+    };
+    let count = 0;
+    let minimum;
+    for (const [length, change] of [...boundaries].sort(([left], [right]) => left - right)) {
+      const nextCount = count + change;
+      if (count === 1 && nextCount !== 1) addInterval(minimum, length - 1);
+      if (count !== 1 && nextCount === 1) minimum = length;
+      count = nextCount;
+    }
+    if (count === 1) addInterval(minimum, null);
+    return expressions.length ? choice(...expressions) : null;
+  }
   function alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer) {
     const entries = [];
     const location = pointerChild(pointer, keyword);
@@ -975,6 +1041,10 @@ export function importJsonSchema(schema) {
         if (combined !== undefined) return combined;
         const numeric = alternativeNumericExpression(rules, alternatives, allowedTypes, keyword, pointer);
         if (numeric !== undefined) return numeric;
+        if (overlaps) {
+          const array = exclusiveArrayLengthExpression(rules, alternatives, allowedTypes, pointer);
+          if (array !== undefined) return array;
+        }
         if (!overlaps) {
           const conjunction = alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer);
           if (conjunction !== undefined) return conjunction;

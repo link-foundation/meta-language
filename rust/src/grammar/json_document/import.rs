@@ -292,6 +292,18 @@ enum CollectionConstraints<'schema> {
     },
 }
 
+#[derive(Clone, Copy, PartialEq)]
+struct ArrayItemLayout<'schema> {
+    prefix: &'schema [Value],
+    items: &'schema Value,
+}
+
+struct ArrayLengthProfile<'schema> {
+    minimum: usize,
+    maximum: Option<usize>,
+    layout: Option<ArrayItemLayout<'schema>>,
+}
+
 enum CollectionChild<'schema> {
     Schema(&'schema Value),
     Conjunction(Vec<ConjunctionEntry<'schema>>),
@@ -484,6 +496,16 @@ impl<'schema> Importer<'schema> {
                         keyword,
                         pointer,
                     ) {
+                        return expression;
+                    }
+                    if overlaps
+                        && let Some(expression) = self.exclusive_array_length_expression(
+                            schema,
+                            branches,
+                            allowed_types,
+                            pointer,
+                        )
+                    {
                         return expression;
                     }
                     if !overlaps
@@ -1253,6 +1275,92 @@ impl<'schema> Importer<'schema> {
         Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
     }
 
+    fn exclusive_array_length_expression(
+        &mut self,
+        schema: &'schema Value,
+        branches: &'schema [Value],
+        allowed_types: u8,
+        pointer: &str,
+    ) -> Option<Option<Expression>> {
+        let array = type_membership("array");
+        let guard = array_length_profile(&[schema], Some("oneOf"))?;
+        let mut shared_profile: Option<ArrayLengthProfile<'schema>> = None;
+        let mut boundaries = BTreeMap::<usize, i64>::new();
+        for branch in branches {
+            if possible_type_membership(branch, allowed_types) == 0 {
+                continue;
+            }
+            let layers = reference_layers(self.root, branch)?;
+            let membership = layers.iter().fold(allowed_types, |types, layer| {
+                possible_type_membership(layer, types)
+            });
+            if membership == 0 {
+                continue;
+            }
+            if membership != array {
+                return None;
+            }
+            let profile = array_length_profile(&layers, None)?;
+            let minimum = guard.minimum.max(profile.minimum);
+            let maximum = guard.maximum.into_iter().chain(profile.maximum).min();
+            if maximum.is_some_and(|maximum| minimum > maximum) {
+                continue;
+            }
+            if maximum != Some(0) {
+                if shared_profile
+                    .as_ref()
+                    .is_some_and(|shared| shared.layout != profile.layout)
+                {
+                    return None;
+                }
+                shared_profile = Some(profile);
+            }
+            // Coverage changes at the first included length and the first length after the interval.
+            *boundaries.entry(minimum).or_default() += 1;
+            if let Some(maximum) = maximum {
+                *boundaries.entry(maximum.checked_add(1)?).or_default() -= 1;
+            }
+        }
+        let branch_layout = shared_profile.and_then(|profile| profile.layout);
+        if let (Some(guard_layout), Some(branch_layout)) = (guard.layout, branch_layout)
+            && guard_layout != branch_layout
+        {
+            return None;
+        }
+        let layout = guard.layout.or(branch_layout).unwrap_or(ArrayItemLayout {
+            prefix: &[],
+            items: &UNRESTRICTED_SCHEMA,
+        });
+        let mut expressions = Vec::new();
+        let mut add_interval = |minimum, maximum| {
+            if let Some(expression) = self.array_with_length(
+                layout.prefix.iter().map(CollectionChild::Schema),
+                CollectionChild::Schema(layout.items),
+                minimum,
+                maximum,
+                pointer,
+            ) {
+                expressions.push(expression);
+            }
+        };
+        let mut count = 0;
+        let mut minimum = 0;
+        for (length, change) in boundaries {
+            let next_count = count + change;
+            if count == 1 && next_count != 1 {
+                add_interval(minimum, Some(length - 1));
+            }
+            if count != 1 && next_count == 1 {
+                minimum = length;
+            }
+            count = next_count;
+        }
+        if count == 1 {
+            add_interval(minimum, None);
+        }
+        Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
+    }
+
     fn alternative_numeric_expression(
         &mut self,
         schema: &'schema Value,
@@ -1569,6 +1677,54 @@ fn array_length_bounds(layers: &[&Value]) -> (u64, Option<u64>) {
         })
         .min();
     (minimum, maximum)
+}
+
+fn array_length_profile<'schema>(
+    layers: &[&'schema Value],
+    combination: Option<&str>,
+) -> Option<ArrayLengthProfile<'schema>> {
+    const MAXIMUM_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
+    if !collection_keywords_are_supported(
+        layers,
+        type_membership("array"),
+        "arrayAssertion",
+        combination,
+    ) {
+        return None;
+    }
+    let (minimum, maximum) = array_length_bounds(layers);
+    if minimum > MAXIMUM_SAFE_INTEGER
+        || maximum.is_some_and(|maximum| maximum >= MAXIMUM_SAFE_INTEGER)
+    {
+        return None;
+    }
+    let minimum = usize::try_from(minimum).ok()?;
+    let maximum = match maximum {
+        Some(maximum) => Some(usize::try_from(maximum).ok()?),
+        None => None,
+    };
+    let mut layout = None;
+    for &layer in layers {
+        let prefix = prefix_item_schemas(layer);
+        // A closed tail already contributes its limit to the length interval.
+        let items = match tail_item_schema(layer) {
+            Value::Bool(false) => &UNRESTRICTED_SCHEMA,
+            items => items,
+        };
+        if prefix.is_empty() && items == &UNRESTRICTED_SCHEMA {
+            continue;
+        }
+        let candidate = ArrayItemLayout { prefix, items };
+        if layout.is_some_and(|layout| layout != candidate) {
+            return None;
+        }
+        layout = Some(candidate);
+    }
+    Some(ArrayLengthProfile {
+        minimum,
+        maximum,
+        layout,
+    })
 }
 
 fn compatible_child_schema<'schema>(

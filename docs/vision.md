@@ -4789,11 +4789,16 @@ for each applicable type, including chains without a declared type. Inclusive
 alternatives apply sibling constraints to each branch. Exclusive alternatives
 use this construction when disjoint types, required object tags, or array
 layouts distinguish every pair. For array-only branches, the proof includes
-the bounds and closed prefixes along each local reference chain. If lengths
-overlap, disjoint finite string sets at a common required prefix position
-can distinguish the branches. Optional positions and overlapping sets leave
-the exclusivity diagnostic in place when the length proof also fails and
-finite enumeration cannot resolve the overlap. For finite collection branches,
+the bounds and closed prefixes along each local reference chain. When branches
+share an item layout, the decoder clips each length interval to common sibling
+bounds and generates only lengths covered by exactly one branch. A layer with
+a closed tail contributes its own prefix length as an upper bound. The same
+layout constrains items in the remaining lengths, including an unbounded tail.
+If no length remains, there is no generatable array. Two branches with different
+item layouts can still be distinguished by disjoint finite string sets at a
+common required prefix position. Optional positions and overlapping string sets
+cannot establish that proof. An unresolved overlap retains a diagnostic for
+validation. For finite collection branches,
 the importer forms candidate values from the allowed members of a closed
 object or bounded array. The validator checks every candidate against the full
 schema, including common sibling restrictions and the exclusive branch count.

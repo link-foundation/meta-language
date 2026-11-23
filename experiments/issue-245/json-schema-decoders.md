@@ -1,8 +1,10 @@
 # JSON Schema decoder conformance
 
 The experiment emits both decoder formats from the schemas and expected results
-in `parity/fixtures/json-schema-and-recovery.lino`. It checks acceptance with a
-byte vocabulary and the provider grammar engines. It requires no model weights.
+in `parity/fixtures/json-schema-and-recovery.lino` and
+`parity/fixtures/json-schema-exclusive-array-lengths.lino`. It checks acceptance
+with a byte vocabulary and the provider grammar engines. It requires no model
+weights.
 
 Run from the repository root with Node and Python 3.12. The example uses a
 virtual environment and puts temporary data in a separate directory.
@@ -84,9 +86,18 @@ when mutually recursive layouts reach the shared construction bound.
 The exclusive array cases distinguish a closed prefix of length one from a
 reference chain that requires at least two elements. Both branches apply the
 sibling Boolean item schema. The decoder previously admitted `["x"]` through
-the short branch. The fixture also checks an independent `null` branch and
-intervals that overlap at length two, where document validation still checks
-exclusivity and the sibling item schema.
+the short branch. The fixture also checks an independent `null` branch.
+
+Run `node experiments/issue-245/json-schema-exclusive-array-lengths.mjs` to
+check two string array branches whose length intervals meet at three. The
+decoder previously admitted a three-item array even though both branches
+accept it. The array with a common Boolean item schema retains all five
+original inputs and their validator expectations. Its decoder now rejects
+`[true,false]`, which matches both length intervals, and `[null]`, which fails
+the common item schema. A separate control with different item patterns
+retains both original diagnostic pointers. Further cases cover three-way
+overlap, linked closed prefixes, unbounded intervals, and duplicate
+alternatives with no generatable document.
 
 The required prefix cases share a length range and distinguish branches by
 their first string value. One minimum length comes from a sibling of the

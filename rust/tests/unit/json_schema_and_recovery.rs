@@ -11,12 +11,45 @@ use super::issue_195_observations::{Observation, record};
 use super::project_data::read_project_data;
 
 const FIXTURE: &str = "parity/fixtures/json-schema-and-recovery.lino";
+const EXCLUSIVE_ARRAY_LENGTHS_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-array-lengths.lino";
 
 fn fixture() -> Value {
     read_project_data(include_str!(
         "../../../parity/fixtures/json-schema-and-recovery.lino"
     ))
     .expect("shared JSON Schema and recovery fixtures")
+}
+
+fn assert_validation_cases(schema: &Value, cases: &[Value]) {
+    for case in cases {
+        let source = case[0].as_str().unwrap();
+        assert_eq!(
+            Some(validate_json(source, schema).valid),
+            case[1].as_bool(),
+            "{source}"
+        );
+    }
+}
+
+fn assert_decoder_cases(grammar: &Grammar, cases: &[Value]) {
+    let (gbnf, _) = emit_gbnf(grammar).unwrap();
+    let (lark, _) = emit_lark(grammar).unwrap();
+    for grammar in [
+        grammar,
+        &import_gbnf(&gbnf).unwrap(),
+        &import_lark(&lark).unwrap(),
+    ] {
+        let parser =
+            compile_feature_grammar(grammar, None, FeatureParseOptions::default()).unwrap();
+        for case in cases {
+            let source = case[0].as_str().unwrap();
+            let outcome = parser
+                .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+                .unwrap();
+            assert_eq!(Some(outcome.ok), case[1].as_bool(), "{source}");
+        }
+    }
 }
 
 #[test]
@@ -38,42 +71,12 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
                     .collect::<Vec<_>>()
             );
             if expected.is_empty() {
-                for case in row[1].as_array().unwrap() {
-                    let source = case[0].as_str().unwrap();
-                    assert_eq!(
-                        Some(validate_json(source, &row[0]).valid),
-                        case[1].as_bool(),
-                        "{source}"
-                    );
-                }
+                assert_validation_cases(&row[0], row[1].as_array().unwrap());
             }
         }
-        let (gbnf, _) = emit_gbnf(&imported.grammar).unwrap();
-        let (lark, _) = emit_lark(&imported.grammar).unwrap();
-        for grammar in [
-            &imported.grammar,
-            &import_gbnf(&gbnf).unwrap(),
-            &import_lark(&lark).unwrap(),
-        ] {
-            let parser =
-                compile_feature_grammar(grammar, None, FeatureParseOptions::default()).unwrap();
-            for case in row[1].as_array().unwrap() {
-                let source = case[0].as_str().unwrap();
-                let outcome = parser
-                    .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
-                    .unwrap();
-                assert_eq!(Some(outcome.ok), case[1].as_bool(), "{source}");
-            }
-        }
+        assert_decoder_cases(&imported.grammar, row[1].as_array().unwrap());
         if let Some(cases) = row.get(3).and_then(Value::as_array) {
-            for case in cases {
-                let source = case[0].as_str().unwrap();
-                assert_eq!(
-                    Some(validate_json(source, &row[0]).valid),
-                    case[1].as_bool(),
-                    "{source}"
-                );
-            }
+            assert_validation_cases(&row[0], cases);
         }
     }
     let schema = &fixture["schema"];
@@ -221,6 +224,43 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
         fixture_file: FIXTURE,
         assertions: &["decoderNumericConstantsRespectEquivalentSpellings"],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
+    });
+}
+
+#[test]
+fn exclusive_array_alternatives_count_matching_branches_for_each_length() {
+    let fixture: Value = read_project_data(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-array-lengths.lino"
+    ))
+    .expect("shared exclusive array length fixtures");
+    for row in fixture["grammars"].as_array().unwrap() {
+        let imported = import_json_schema(&row[0]).unwrap();
+        let cases = row[1].as_array().unwrap();
+        assert!(
+            imported.diagnostics.is_empty(),
+            "{:?}",
+            imported.diagnostics
+        );
+        assert_validation_cases(&row[0], cases);
+        assert_decoder_cases(&imported.grammar, cases);
+    }
+    for row in fixture["ungeneratable"].as_array().unwrap() {
+        assert_validation_cases(&row[0], row[1].as_array().unwrap());
+        let Err(error) = import_json_schema(&row[0]) else {
+            panic!("schema unexpectedly generated a grammar: {}", row[0]);
+        };
+        assert!(error.to_string().contains("no generatable document"));
+    }
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-LENGTHS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-array-lengths",
+        fixture_file: EXCLUSIVE_ARRAY_LENGTHS_FIXTURE,
+        assertions: &[
+            "decoderCountsExclusiveArrayLengthIntervals",
+            "duplicateArrayAlternativesHaveNoGeneratableDocument",
+        ],
+        test_name: "exclusive_array_alternatives_count_matching_branches_for_each_length",
     });
 }
 
