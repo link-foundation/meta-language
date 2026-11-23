@@ -4705,6 +4705,11 @@ both to the prefix and tail. Incompatible lengths or required names forbidden
 by the property layout leave no generatable collection. When two layers
 independently constrain properties or items, a reference diagnostic identifies
 the assertions checked during document validation.
+Inclusive collection alternatives apply these same sibling constraints to
+each branch. Exclusive collection alternatives use this construction when the
+branches have disjoint types or required tags. The decoder removes branches
+with impossible bounds or required names and reports a residual when branch
+exclusivity or a layout intersection needs document validation.
 
 An unrestricted integer decoder over all JSON spellings exceeds the portable
 context-free grammar model. Restrict number spellings to `1.0*1e10*`, with

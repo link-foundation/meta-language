@@ -235,6 +235,18 @@ struct ObjectMembers<'members> {
     group: usize,
 }
 
+enum CollectionConstraints<'schema> {
+    Object {
+        layout: &'schema Value,
+        required: Vec<&'schema str>,
+    },
+    Array {
+        layout: &'schema Value,
+        minimum: u64,
+        maximum: Option<u64>,
+    },
+}
+
 fn append_member(item: &Expression, started: bool) -> Expression {
     if started {
         separated(item.clone())
@@ -392,6 +404,17 @@ impl<'schema> Importer<'schema> {
                         keyword,
                         pointer,
                     ) {
+                        return expression;
+                    }
+                    if !overlaps
+                        && let Some(expression) = self.alternative_collection_expression(
+                            schema,
+                            branches,
+                            allowed_types,
+                            keyword,
+                            pointer,
+                        )
+                    {
                         return expression;
                     }
                 }
@@ -838,61 +861,26 @@ impl<'schema> Importer<'schema> {
         Some(Some(conjunction))
     }
 
-    fn referenced_collection_expression(
+    fn collection_expression(
         &mut self,
-        layers: &[&'schema Value],
-        membership: u8,
+        constraints: CollectionConstraints<'schema>,
         pointer: &str,
-    ) -> Option<Option<Expression>> {
-        if membership == type_membership("object") {
-            let layout = reference_collection_layout(
-                layers,
-                &["properties", "additionalProperties", "required"],
-                |layer| {
-                    layer["properties"]
-                        .as_object()
-                        .is_some_and(|fields| !fields.is_empty())
-                        || layer
-                            .get("additionalProperties")
-                            .is_some_and(|schema| schema != &Value::Bool(true))
-                },
-            )?;
-            let required = layers
-                .iter()
-                .flat_map(|&layer| required_property_names(layer));
-            return Some(self.object_with_required(layout, required, pointer));
+    ) -> Option<Expression> {
+        match constraints {
+            CollectionConstraints::Object { layout, required } => {
+                self.object_with_required(layout, required.into_iter(), pointer)
+            }
+            CollectionConstraints::Array {
+                layout,
+                minimum,
+                maximum,
+            } => self.array_with_length(
+                layout,
+                usize::try_from(minimum).ok()?,
+                maximum.and_then(|max| usize::try_from(max).ok()),
+                pointer,
+            ),
         }
-        if membership == type_membership("array") {
-            let layout = reference_collection_layout(
-                layers,
-                &["prefixItems", "items", "minItems", "maxItems"],
-                |layer| {
-                    layer.get("prefixItems").is_some()
-                        || layer
-                            .get("items")
-                            .is_some_and(|schema| schema != &Value::Bool(true))
-                },
-            )?;
-            let minimum = layers
-                .iter()
-                .filter_map(|layer| layer["minItems"].as_u64())
-                .max()
-                .unwrap_or(0);
-            let maximum = layers
-                .iter()
-                .filter_map(|layer| layer["maxItems"].as_u64())
-                .min();
-            let expression = usize::try_from(minimum).ok().and_then(|min| {
-                self.array_with_length(
-                    layout,
-                    min,
-                    maximum.and_then(|max| usize::try_from(max).ok()),
-                    pointer,
-                )
-            });
-            return Some(expression);
-        }
-        None
     }
 
     fn referenced_expression(
@@ -912,7 +900,8 @@ impl<'schema> Importer<'schema> {
             return Some(self.number(name, &limits, pointer));
         }
         if membership != type_membership("string") {
-            return self.referenced_collection_expression(&layers, membership, pointer);
+            let constraints = collection_constraints(&layers, membership, None)?;
+            return Some(self.collection_expression(constraints, pointer));
         }
         let Some(conjunction) = self.regular_string_chain(&layers)? else {
             return Some(None);
@@ -1020,6 +1009,43 @@ impl<'schema> Importer<'schema> {
             .into_iter()
             .filter_map(|(index, name, limits)| {
                 self.number(name, &limits, &pointer_child(&location, &index.to_string()))
+            })
+            .collect();
+        Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
+    }
+
+    fn alternative_collection_expression(
+        &mut self,
+        schema: &'schema Value,
+        branches: &'schema [Value],
+        allowed_types: u8,
+        keyword: &str,
+        pointer: &str,
+    ) -> Option<Option<Expression>> {
+        let mut alternatives = Vec::new();
+        for (index, branch) in branches.iter().enumerate() {
+            if possible_type_membership(branch, allowed_types) == 0 {
+                continue;
+            }
+            let mut layers = reference_layers(self.root, branch)?;
+            let membership = layers.iter().fold(allowed_types, |types, layer| {
+                possible_type_membership(layer, types)
+            });
+            if membership == 0 {
+                continue;
+            }
+            layers.insert(0, schema);
+            let constraints = collection_constraints(&layers, membership, Some(keyword))?;
+            alternatives.push((index, constraints));
+        }
+        let location = pointer_child(pointer, keyword);
+        let entries: Vec<_> = alternatives
+            .into_iter()
+            .filter_map(|(index, constraints)| {
+                self.collection_expression(
+                    constraints,
+                    &pointer_child(&location, &index.to_string()),
+                )
             })
             .collect();
         Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
@@ -1146,14 +1172,16 @@ fn reference_collection_layout<'schema>(
     layers: &[&'schema Value],
     collection_keywords: &[&str],
     uses_layout: impl Fn(&Value) -> bool,
+    combination: Option<&str>,
 ) -> Option<&'schema Value> {
     let mut layout = None;
-    for &layer in layers {
+    for (index, &layer) in layers.iter().enumerate() {
         if layer.as_object().is_some_and(|fields| {
             fields.keys().any(|key| {
                 key != "type"
                     && !reference_keyword(key)
                     && !collection_keywords.contains(&key.as_str())
+                    && !(index == 0 && Some(key.as_str()) == combination)
             })
         }) {
             return None;
@@ -1163,6 +1191,61 @@ fn reference_collection_layout<'schema>(
         }
     }
     Some(layout.unwrap_or(&Value::Bool(true)))
+}
+
+fn collection_constraints<'schema>(
+    layers: &[&'schema Value],
+    membership: u8,
+    combination: Option<&str>,
+) -> Option<CollectionConstraints<'schema>> {
+    if membership == type_membership("object") {
+        let layout = reference_collection_layout(
+            layers,
+            &["properties", "additionalProperties", "required"],
+            |layer| {
+                layer["properties"]
+                    .as_object()
+                    .is_some_and(|fields| !fields.is_empty())
+                    || layer
+                        .get("additionalProperties")
+                        .is_some_and(|schema| schema != &Value::Bool(true))
+            },
+            combination,
+        )?;
+        let required = layers
+            .iter()
+            .flat_map(|&layer| required_property_names(layer))
+            .collect();
+        return Some(CollectionConstraints::Object { layout, required });
+    }
+    if membership == type_membership("array") {
+        let layout = reference_collection_layout(
+            layers,
+            &["prefixItems", "items", "minItems", "maxItems"],
+            |layer| {
+                layer.get("prefixItems").is_some()
+                    || layer
+                        .get("items")
+                        .is_some_and(|schema| schema != &Value::Bool(true))
+            },
+            combination,
+        )?;
+        let minimum = layers
+            .iter()
+            .filter_map(|layer| layer["minItems"].as_u64())
+            .max()
+            .unwrap_or(0);
+        let maximum = layers
+            .iter()
+            .filter_map(|layer| layer["maxItems"].as_u64())
+            .min();
+        return Some(CollectionConstraints::Array {
+            layout,
+            minimum,
+            maximum,
+        });
+    }
+    None
 }
 
 fn combine_numeric_constraints(

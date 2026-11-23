@@ -106,6 +106,24 @@ const cases = [
     ['/$ref'],
     [['[]', true], ['[true]', false], ['[false,0]', false], ['[1]', false]],
   ],
+  [
+    { type: 'array', minItems: 2, maxItems: 2, $defs: collectionDefinitions, anyOf: [
+      { $ref: '#/$defs/tuple' }, { type: 'array', items: { type: 'null' } }, false,
+    ] },
+    [['[true,"a"]', true], ['[null,null]', true], ['[]', false], ['[true]', false], ['[null]', false],
+      ['[true,"a","b"]', false], ['[null,true]', false], ['null', false]],
+    [],
+  ],
+  [
+    { type: 'object', required: ['value'], $defs: { item: tag('item', 'string') }, oneOf: [
+      { $ref: '#/$defs/item' },
+      { type: 'object', required: ['kind'], additionalProperties: false,
+        properties: { kind: { const: 'group' }, value: { type: 'boolean' } } },
+    ] },
+    [['{"kind":"item","value":"a"}', true], ['{"value":false,"kind":"group"}', true],
+      ['{"kind":"group"}', false], ['{"kind":"item"}', false], ['{"kind":"group","value":"a"}', false], ['{}', false]],
+    [],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -113,6 +131,7 @@ const impossible = [
   { type: 'integer', minimum: 5, anyOf: [{ maximum: 3 }, { exclusiveMaximum: 5 }] },
   { $defs: collectionDefinitions, $ref: '#/$defs/limited', maxItems: 1 },
   { $defs: collectionDefinitions, $ref: '#/$defs/identified', required: ['extra'] },
+  { type: 'array', minItems: 2, anyOf: [{ maxItems: 1 }, { maxItems: 0 }] },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

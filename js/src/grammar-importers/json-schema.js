@@ -532,10 +532,11 @@ export function importJsonSchema(schema) {
     }
     return conjunction;
   }
-  function referenceCollectionLayout(layers, keywords, usesLayout) {
+  function referenceCollectionLayout(layers, keywords, usesLayout, combination) {
     let layout;
-    for (const layer of layers) {
-      if (Object.keys(layer).some(key => key !== 'type' && !referenceKeys.has(key) && !keywords.includes(key))) return undefined;
+    for (const [index, layer] of layers.entries()) {
+      if (Object.keys(layer).some(key => key !== 'type' && !referenceKeys.has(key) && !keywords.includes(key)
+        && !(index === 0 && key === combination))) return undefined;
       if (usesLayout(layer)) {
         if (layout) return undefined;
         layout = layer;
@@ -543,30 +544,30 @@ export function importJsonSchema(schema) {
     }
     return layout ?? {};
   }
-  function referencedCollectionExpression(layers, membership, pointer) {
+  function collectionConstraints(layers, membership, combination) {
     if (membership === jsonTypes.get('object')) {
       const layout = referenceCollectionLayout(layers, ['properties', 'additionalProperties', 'required'], layer => (
         Object.keys(layer.properties ?? {}).length > 0 || (layer.additionalProperties !== undefined && layer.additionalProperties !== true)
-      ));
+      ), combination);
       if (!layout) return undefined;
-      return objectExpression({
+      return { lower: objectExpression, rules: {
         properties: layout.properties,
         additionalProperties: layout.additionalProperties,
         required: layers.flatMap(layer => layer.required ?? []),
-      }, pointer);
+      } };
     }
     if (membership === jsonTypes.get('array')) {
       const layout = referenceCollectionLayout(layers, ['prefixItems', 'items', 'minItems', 'maxItems'], layer => (
         layer.prefixItems !== undefined || (layer.items !== undefined && layer.items !== true)
-      ));
+      ), combination);
       if (!layout) return undefined;
-      return arrayExpression({
+      return { lower: arrayExpression, rules: {
         prefixItems: layout.prefixItems,
         items: layout.items,
         minItems: layers.reduce((minimum, layer) => Math.max(minimum, layer.minItems ?? 0), 0),
         maxItems: layers.reduce((maximum, layer) => layer.maxItems === undefined
           ? maximum : Math.min(maximum ?? layer.maxItems, layer.maxItems), null),
-      }, pointer);
+      } };
     }
     return undefined;
   }
@@ -577,7 +578,10 @@ export function importJsonSchema(schema) {
     if (membership === 0) return null;
     const constraints = combineNumericConstraints(layers, membership);
     if (constraints) return numberExpression(constraints.type, constraints.limits, pointer);
-    if (membership !== jsonTypes.get('string')) return referencedCollectionExpression(layers, membership, pointer);
+    if (membership !== jsonTypes.get('string')) {
+      const collection = collectionConstraints(layers, membership);
+      return collection?.lower(collection.rules, pointer);
+    }
     const conjunction = regularStringChain(layers);
     if (!conjunction) return conjunction;
     return conjunction.length ? stringBranchProduct([conjunction]) : ref('string');
@@ -631,6 +635,24 @@ export function importJsonSchema(schema) {
     }
     const location = pointerChild(pointer, keyword);
     const entries = branches.map(({ index, type, limits }) => numberExpression(type, limits, pointerChild(location, index))).filter(Boolean);
+    return entries.length ? choice(...entries) : null;
+  }
+  function alternativeCollectionExpression(rules, alternatives, allowedTypes, keyword, pointer) {
+    const branches = [];
+    for (const [index, branch] of alternatives.entries()) {
+      if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
+      const layers = referenceLayers(branch);
+      if (!layers) return undefined;
+      const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+      if (membership === 0) continue;
+      const constraints = collectionConstraints([rules, ...layers], membership, keyword);
+      if (!constraints) return undefined;
+      branches.push({ index, constraints });
+    }
+    const location = pointerChild(pointer, keyword);
+    const entries = branches.map(({ index, constraints }) => (
+      constraints.lower(constraints.rules, pointerChild(location, index))
+    )).filter(Boolean);
     return entries.length ? choice(...entries) : null;
   }
   function numberExpression(type, rules, pointer) {
@@ -688,6 +710,10 @@ export function importJsonSchema(schema) {
         if (combined !== undefined) return combined;
         const numeric = alternativeNumericExpression(rules, alternatives, allowedTypes, keyword, pointer);
         if (numeric !== undefined) return numeric;
+        if (!overlaps) {
+          const collections = alternativeCollectionExpression(rules, alternatives, allowedTypes, keyword, pointer);
+          if (collections !== undefined) return collections;
+        }
       }
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
       if (overlaps) {
