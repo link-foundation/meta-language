@@ -125,6 +125,8 @@ test('bulk rows use the exact independent oracles of the pinned native grammars'
   const comparisonFinished = new Error('the primary Tree-sitter stage reported its result');
   for (const [name, id, version] of [
     ['Dart', 'dart', '0.2.0'],
+    ['Erlang', 'erlang', '0.20.0'],
+    ['PowerShell', 'powershell', '0.26.4'],
     ['sql-mysql', 'sql', '0.3.11'],
     ['sql-bigquery', 'sql', '0.3.11'],
     ['Protocol Buffers', 'proto', '0.6.0'],
