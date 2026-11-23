@@ -326,6 +326,7 @@ struct ObjectFieldVariants<'schema> {
 struct ObjectFieldVariant<'schema> {
     branches: Vec<usize>,
     use_common_schema: bool,
+    child: Option<CollectionChild<'schema>>,
     values: Vec<Cow<'schema, Value>>,
     expression: Option<Expression>,
 }
@@ -1511,19 +1512,25 @@ impl<'schema> Importer<'schema> {
         let (base, location) = (first.0, &first.1);
         let properties: Vec<_> = property_schemas(base).collect();
         let additional = additional_property_schema(base);
-        let mut differing = Vec::new();
-        for (layout, _) in others {
-            if additional_property_schema(layout) != additional
-                || property_schemas(layout).count() != properties.len()
-            {
-                return None;
-            }
-            for &(name, property) in &properties {
-                if layout["properties"].get(name)? != property && !differing.contains(&name) {
-                    differing.push(name);
-                }
-            }
+        if others
+            .iter()
+            .any(|(layout, _)| additional_property_schema(layout) != additional)
+        {
+            return None;
         }
+        let names: BTreeSet<_> = layouts
+            .iter()
+            .flat_map(|&(layout, _)| property_schemas(layout).map(|(name, _)| name))
+            .collect();
+        let differing: Vec<_> = names
+            .iter()
+            .copied()
+            .filter(|&name| {
+                others.iter().any(|(layout, _)| {
+                    object_property_schema(base, name) != object_property_schema(layout, name)
+                })
+            })
+            .collect();
         let branch_required: Vec<BTreeSet<_>> = layouts
             .iter()
             .map(|(layout, _)| required_property_names(layout).collect())
@@ -1556,20 +1563,25 @@ impl<'schema> Importer<'schema> {
             .collect();
         let mut work = 16_384;
         let mut fields = Vec::new();
+        let properties_pointer = pointer_child(pointer, "properties");
         for name in affected {
             let mut variants = if differing.contains(&name) {
                 let schemas: Vec<_> = layouts
                     .iter()
-                    .map(|&(layout, _)| &layout["properties"][name])
+                    .map(|&(layout, _)| object_property_schema(layout, name))
                     .collect();
-                let sibling = schema["properties"]
-                    .get(name)
-                    .unwrap_or_else(|| additional_property_schema(schema));
-                self.exclusive_property_variants(&schemas, sibling, &mut work)?
+                let sibling = object_property_schema(schema, name);
+                self.exclusive_property_variants(
+                    &schemas,
+                    sibling,
+                    &pointer_child(&properties_pointer, name),
+                    &mut work,
+                )?
             } else {
                 vec![ObjectFieldVariant {
                     branches: all_branches.clone(),
                     use_common_schema: true,
+                    child: None,
                     values: Vec::new(),
                     expression: None,
                 }]
@@ -1584,6 +1596,7 @@ impl<'schema> Importer<'schema> {
                     variants.push(ObjectFieldVariant {
                         branches,
                         use_common_schema: false,
+                        child: None,
                         values: Vec::new(),
                         expression: None,
                     });
@@ -1595,28 +1608,36 @@ impl<'schema> Importer<'schema> {
         if differing_required.is_empty()
             && let [field] = fields.as_mut_slice()
         {
-            let values: Vec<_> = field
+            let mut values = Vec::new();
+            let mut shared = None;
+            for variant in field
                 .variants
                 .drain(..)
                 .filter(|variant| variant.branches.len() == 1)
-                .flat_map(|variant| variant.values)
-                .collect();
-            if values.is_empty() {
+            {
+                if variant.child.is_some() {
+                    shared = Some(variant);
+                } else {
+                    values.extend(variant.values);
+                }
+            }
+            if shared.is_none() && values.is_empty() {
                 return Some(None);
             }
-            field.variants.push(ObjectFieldVariant {
+            field.variants.push(shared.unwrap_or(ObjectFieldVariant {
                 branches: Vec::new(),
                 use_common_schema: false,
+                child: None,
                 values,
                 expression: None,
-            });
+            }));
             selections.push(vec![0]);
         } else {
             // An absent field admits only branches that leave it optional. Each selected
             // combination has its own ordinary object grammar and budget cost.
-            let names: HashSet<_> = properties
+            let names: HashSet<_> = names
                 .iter()
-                .map(|&(name, _)| name)
+                .copied()
                 .chain(required.iter().copied())
                 .chain(all_required.iter().copied())
                 .chain(property_schemas(schema).map(|(name, _)| name))
@@ -1639,10 +1660,9 @@ impl<'schema> Importer<'schema> {
         }
 
         let (properties, additional, location) = if has_sibling_assertions {
-            let property_location = pointer_child(pointer, "properties");
             let selected_locations: HashSet<_> = differing
                 .iter()
-                .map(|name| pointer_child(&property_location, name))
+                .map(|name| pointer_child(&properties_pointer, name))
                 .collect();
             let CollectionConstraints::Object {
                 properties,
@@ -1681,6 +1701,11 @@ impl<'schema> Importer<'schema> {
             for (field, selected) in fields.iter_mut().zip(selection) {
                 let variant = &mut field.variants[selected];
                 if variant.use_common_schema {
+                    required_names.push(field.name);
+                    continue;
+                }
+                if let Some(child) = &variant.child {
+                    overrides.insert(field.name, child.clone());
                     required_names.push(field.name);
                     continue;
                 }
@@ -1734,15 +1759,42 @@ impl<'schema> Importer<'schema> {
     }
 
     fn exclusive_property_variants(
-        &self,
+        &mut self,
         schemas: &[&'schema Value],
         sibling: &'schema Value,
+        pointer: &str,
         work: &mut usize,
     ) -> Option<Vec<ObjectFieldVariant<'schema>>> {
+        if sibling == &PROHIBITED_SCHEMA {
+            return Some(Vec::new());
+        }
+        let allowed: Vec<_> = schemas
+            .iter()
+            .copied()
+            .enumerate()
+            .filter(|&(_, rule)| rule != &PROHIBITED_SCHEMA)
+            .collect();
+        let Some((&(_, first), rest)) = allowed.split_first() else {
+            return Some(Vec::new());
+        };
+        // A closed layout can forbid a field whose present values share one ordinary schema.
+        if allowed.len() < schemas.len() && rest.iter().all(|&(_, rule)| rule == first) {
+            let child = self.combine_child_schemas(vec![first, sibling], pointer, 0)?;
+            if matches!(child, CollectionChild::Schema(Value::Bool(false))) {
+                return Some(Vec::new());
+            }
+            return Some(vec![ObjectFieldVariant {
+                branches: allowed.iter().map(|&(index, _)| index).collect(),
+                use_common_schema: false,
+                child: Some(child),
+                values: Vec::new(),
+                expression: None,
+            }]);
+        }
         let checks = schemas.len() + usize::from(sibling != &UNRESTRICTED_SCHEMA);
         let mut seen = HashSet::new();
         let mut candidates = Vec::new();
-        for child in schemas {
+        for (_, child) in allowed {
             let (values, _) = finite_schema_candidates(
                 self.root,
                 child,
@@ -1782,6 +1834,7 @@ impl<'schema> Importer<'schema> {
                 variants.push(ObjectFieldVariant {
                     branches,
                     use_common_schema: false,
+                    child: None,
                     values: Vec::new(),
                     expression: None,
                 });
@@ -2082,6 +2135,12 @@ fn additional_property_schema(schema: &Value) -> &Value {
         .unwrap_or(&UNRESTRICTED_SCHEMA)
 }
 
+fn object_property_schema<'schema>(schema: &'schema Value, name: &str) -> &'schema Value {
+    schema["properties"]
+        .get(name)
+        .unwrap_or_else(|| additional_property_schema(schema))
+}
+
 fn prefix_item_schemas(schema: &Value) -> &[Value] {
     schema["prefixItems"].as_array().map_or(&[], Vec::as_slice)
 }
@@ -2225,11 +2284,7 @@ fn collection_constraints<'schema>(
             // Defaults apply only in the layers that leave this property undeclared.
             let schemas = layers
                 .iter()
-                .map(|&layer| {
-                    layer["properties"]
-                        .get(name)
-                        .unwrap_or_else(|| additional_property_schema(layer))
-                })
+                .map(|&layer| object_property_schema(layer, name))
                 .collect();
             let rule = combine(schemas, &pointer_child(&location, name))?;
             properties.push((name, rule));

@@ -138,6 +138,12 @@ schemas, additional properties including an undeclared required key, a
 combination of required names and finite values, and a parent requiring both
 contact properties, which leaves no generatable document.
 
+Run `node experiments/issue-245/json-schema-exclusive-declared-properties.mjs`
+for closed alternatives with different optional property names. The earlier
+decoder admitted `{}` even though both branches matched. The fixture also
+checks parent constraints on a declared property, finite values under a typed
+default, and an empty language when the parent requires both contact fields.
+
 The required prefix cases share a length range and distinguish branches by
 their first string value. One minimum length comes from a sibling of the
 local reference. The decoder previously admitted `["selected",null]` and now

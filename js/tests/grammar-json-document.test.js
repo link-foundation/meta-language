@@ -18,6 +18,7 @@ const exclusiveObjectPropertyFixture = 'parity/fixtures/json-schema-exclusive-ob
 const exclusiveObjectSiblingsFixture = 'parity/fixtures/json-schema-exclusive-object-siblings.lino';
 const exclusiveObjectFieldsFixture = 'parity/fixtures/json-schema-exclusive-object-fields.lino';
 const exclusiveRequiredPropertiesFixture = 'parity/fixtures/json-schema-exclusive-required-properties.lino';
+const exclusiveDeclaredPropertiesFixture = 'parity/fixtures/json-schema-exclusive-declared-properties.lino';
 
 const answerSchema = {
   type: 'object', additionalProperties: false, required: ['status', 'evidence'],
@@ -363,6 +364,16 @@ test('exclusive object alternatives count distinct required property names', con
     requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-REQUIRED-PROPERTIES', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-exclusive-required-properties', fixtureFile: exclusiveRequiredPropertiesFixture,
     assertions: ['decoderCountsExclusiveRequiredPropertyNames', 'requiredPropertyNamesCanExcludeEveryAlternative'],
+    testName: context.name,
+  });
+});
+
+test('exclusive object alternatives use each layout to decide which properties are allowed', context => {
+  checkExclusiveAlternatives(exclusiveDeclaredPropertiesFixture);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-DECLARED-PROPERTIES', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-declared-properties', fixtureFile: exclusiveDeclaredPropertiesFixture,
+    assertions: ['decoderCountsExclusiveDeclaredPropertyNames', 'declaredPropertyNamesCanExcludeEveryAlternative'],
     testName: context.name,
   });
 });

@@ -4837,12 +4837,14 @@ one branch, there is no generatable array. Two branches with different item
 layouts can also be distinguished by disjoint finite string sets at a
 common required prefix position. Optional positions and overlapping string sets
 cannot establish that proof. An unresolved overlap retains a diagnostic for
-validation. For object alternatives with the same declared names and
-additional-property rule, the decoder can factor differences in finite property
-domains and required names. It groups each property's values by the branches
-that accept them. When every branch shares a property's schema, presence follows
-that common schema, including the additional-property rule for undeclared
-names. Absence contributes only the branches in which the property is optional.
+validation. For object alternatives with a common additional-property rule,
+the decoder compares effective property schemas across the union of declared
+names. The default applies to names a branch leaves undeclared. The decoder
+can factor finite property domains, including typed defaults, and group values
+by the branches that accept them. When all branches that allow a property share
+its schema, that schema constrains its presence. In closed layouts this lets
+the decoder distinguish optional properties that other branches prohibit.
+Absence contributes only the branches in which the property is optional.
 The decoder intersects branch sets across these properties and emits the object
 when exactly one branch remains. The common layout constrains the other
 properties. When branches differ only in the value of one optional property,

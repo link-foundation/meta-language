@@ -799,6 +799,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-DECLARED-PROPERTIES',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive object alternatives with distinct declared properties and a common additional-property rule',
+      expectedBehavior: 'Apply each branch default to names it leaves undeclared. Count the branches that permit each property value or its absence, and generate objects only when exactly one branch remains. Preserve parent property and presence constraints and report an empty language when the parent excludes every exclusive layout.',
+      fixture: 'parity/fixtures/json-schema-exclusive-declared-properties.lino',
+      selector: 'closed alternative layouts with optional contact fields, escaped names, an overlapping enumeration, a common typed default, sibling schemas and incompatible parent requirements',
+      assertions: ['decoderCountsExclusiveDeclaredPropertyNames', 'declaredPropertyNamesCanExcludeEveryAlternative'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I241-JSON-RECOVERY',
       source: ISSUE_195_SOURCES.jsonRecovery,
       language: 'JSON document recovery',

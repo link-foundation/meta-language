@@ -25,6 +25,8 @@ const EXCLUSIVE_OBJECT_FIELDS_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-object-fields.lino";
 const EXCLUSIVE_REQUIRED_PROPERTIES_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-required-properties.lino";
+const EXCLUSIVE_DECLARED_PROPERTIES_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-declared-properties.lino";
 
 fn fixture() -> Value {
     read_project_data(include_str!(
@@ -386,6 +388,24 @@ fn exclusive_object_alternatives_count_distinct_required_property_names() {
             "requiredPropertyNamesCanExcludeEveryAlternative",
         ],
         test_name: "exclusive_object_alternatives_count_distinct_required_property_names",
+    });
+}
+
+#[test]
+fn exclusive_object_alternatives_use_each_layout_to_decide_which_properties_are_allowed() {
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-declared-properties.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-DECLARED-PROPERTIES",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-declared-properties",
+        fixture_file: EXCLUSIVE_DECLARED_PROPERTIES_FIXTURE,
+        assertions: &[
+            "decoderCountsExclusiveDeclaredPropertyNames",
+            "declaredPropertyNamesCanExcludeEveryAlternative",
+        ],
+        test_name: "exclusive_object_alternatives_use_each_layout_to_decide_which_properties_are_allowed",
     });
 }
 

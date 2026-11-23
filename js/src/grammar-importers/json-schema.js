@@ -1006,16 +1006,13 @@ export function importJsonSchema(schema) {
     }
     if (layouts.length < 2) return undefined;
     const [base, ...others] = layouts;
-    const names = Object.keys(base.properties);
-    const differing = new Set();
-    for (const layout of others) {
-      if (!isDeepStrictEqual(base.additionalProperties, layout.additionalProperties)
-          || Object.keys(layout.properties).length !== names.length) return undefined;
-      for (const key of names) {
-        if (!Object.hasOwn(layout.properties, key)) return undefined;
-        if (!isDeepStrictEqual(base.properties[key], layout.properties[key])) differing.add(key);
-      }
-    }
+    if (others.some(layout => !isDeepStrictEqual(base.additionalProperties, layout.additionalProperties))) return undefined;
+    const names = new Set(layouts.flatMap(layout => Object.keys(layout.properties)));
+    const propertySchema = (layout, name) => Object.hasOwn(layout.properties, name)
+      ? layout.properties[name] : layout.additionalProperties;
+    const differing = new Set([...names].filter(name => others.some(layout => (
+      !isDeepStrictEqual(propertySchema(base, name), propertySchema(layout, name))
+    ))));
     const branchRequired = new Set(layouts.flatMap(layout => [...layout.required]));
     const differingRequired = new Set([...branchRequired].filter(name => layouts.some(layout => !layout.required.has(name))));
     const affected = new Set([...differing, ...differingRequired]);
@@ -1024,13 +1021,14 @@ export function importJsonSchema(schema) {
     const allBranches = layouts.map((_, index) => index);
     const budget = { remaining: 16_384 };
     const dimensions = [];
+    const propertiesPointer = pointerChild(pointer, 'properties');
     for (const name of affected) {
       let variants = [{ matches: allBranches, useCommonSchema: true }];
       if (differing.has(name)) {
-        const schemas = layouts.map(layout => layout.properties[name]);
+        const schemas = layouts.map(layout => propertySchema(layout, name));
         const sibling = Object.hasOwn(rules.properties ?? {}, name)
           ? rules.properties[name] : rules.additionalProperties ?? true;
-        variants = exclusivePropertyVariants(schemas, sibling, budget);
+        variants = exclusivePropertyVariants(schemas, sibling, pointerChild(propertiesPointer, name), budget);
         if (!variants) return undefined;
       }
       if (!required.has(name)) {
@@ -1043,9 +1041,11 @@ export function importJsonSchema(schema) {
     let selections;
     if (dimensions.length === 1 && differingRequired.size === 0) {
       const [dimension] = dimensions;
-      const values = dimension.variants.filter(variant => variant.matches.length === 1).flatMap(variant => variant.values);
-      dimension.variants = [{ values }];
-      selections = values.length ? [[0]] : [];
+      const exclusive = dimension.variants.filter(variant => variant.matches.length === 1);
+      const shared = exclusive.find(variant => variant.schema !== undefined);
+      const values = exclusive.flatMap(variant => variant.values ?? []);
+      dimension.variants = [shared ?? { values }];
+      selections = shared || values.length ? [[0]] : [];
     } else {
       // An absent field matches only branches that leave it optional.
       // The ordinary object emitter tracks each field subset for every selection.
@@ -1090,6 +1090,11 @@ export function importJsonSchema(schema) {
           requiredNames.push(name);
           continue;
         }
+        if (variant.schema !== undefined) {
+          properties[name] = variant.schema;
+          requiredNames.push(name);
+          continue;
+        }
         const { values } = variant;
         if (values.length && !variant.expression) {
           const rule = `json_exclusive_property_${next++}`;
@@ -1103,10 +1108,20 @@ export function importJsonSchema(schema) {
     }).filter(Boolean);
     return expressions.length ? choice(...expressions) : null;
   }
-  function exclusivePropertyVariants(schemas, sibling, budget) {
+  function exclusivePropertyVariants(schemas, sibling, pointer, budget) {
+    if (sibling === false) return [];
+    const allowed = schemas.filter(schema => schema !== false);
+    // A closed layout can forbid a field whose present values share one ordinary schema.
+    if (allowed.length < schemas.length && allowed.every(schema => isDeepStrictEqual(schema, allowed[0]))) {
+      if (!allowed.length) return [];
+      const schema = combineChildSchemas([allowed[0], sibling], pointer, 0);
+      if (schema === undefined) return undefined;
+      if (schema === false) return [];
+      return [{ matches: schemas.flatMap((rule, index) => rule === false ? [] : [index]), schema }];
+    }
     const checks = schemas.length + Number(sibling !== true);
     const candidates = new Map();
-    for (const schema of schemas) {
+    for (const schema of allowed) {
       const finite = finiteSchemaCandidates(schema, analysis.target, budget);
       if (!finite) return undefined;
       for (const item of finite.values) {
