@@ -83,8 +83,9 @@ fn ranks_cyrillic_languages_and_reports_mixed_script_byte_spans() {
             Err(InvalidLanguageConfidence)
         );
     }
-    record(&[Observation {
+    record(&Observation {
         requirement_id: "I195-NATURAL-LANGUAGE-IDENTIFICATION-RANKING",
+        suffix: "behavior",
         fixture_id: "i195-natural-language-identification-ranking",
         fixture_file: "parity/fixtures/ranked-language-identification.lino",
         assertions: &[
@@ -93,5 +94,6 @@ fn ranks_cyrillic_languages_and_reports_mixed_script_byte_spans() {
             "shortTextEvidence",
             "utf8ScriptSpans",
         ],
-    }]);
+        test_name: "ranks_cyrillic_languages_and_reports_mixed_script_byte_spans",
+    });
 }

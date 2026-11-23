@@ -84,15 +84,17 @@ fn normalization_maps_every_quote_back_to_its_original_bytes() {
             from = result.range.start() + result.text.chars().next().unwrap().len_utf8();
         }
     }
-    record(&[Observation {
+    record(&Observation {
         requirement_id: "I195-I243-NORMALIZED-TEXT-LOCATION",
+        suffix: "behavior",
         fixture_id: "i195-i243-normalized-text-location",
         fixture_file: FIXTURE,
         assertions: &[
             "allNormalizedMatchesKeepSourceRanges",
             "neededNormalizationsAreReported",
         ],
-    }]);
+        test_name: "normalization_maps_every_quote_back_to_its_original_bytes",
+    });
 }
 
 #[test]
@@ -143,15 +145,17 @@ fn approximation_returns_an_edit_script_in_the_chosen_unit() {
             assert_eq!(&source[unit.range.start()..unit.range.end()], unit.text);
         }
     }
-    record(&[Observation {
+    record(&Observation {
         requirement_id: "I195-I243-APPROXIMATE-TEXT-LOCATION",
+        suffix: "behavior",
         fixture_id: "i195-i243-approximate-text-location",
         fixture_file: FIXTURE,
         assertions: &[
             "editBudgetAndUnitControlMatches",
             "reportedEditScriptsKeepSourceRanges",
         ],
-    }]);
+        test_name: "approximation_returns_an_edit_script_in_the_chosen_unit",
+    });
 }
 
 #[test]
@@ -175,10 +179,12 @@ fn shared_word_ngrams_keep_every_pair_of_original_ranges() {
             .collect();
         assert_eq!(json!(actual), entry["matches"]);
     }
-    record(&[Observation {
+    record(&Observation {
         requirement_id: "I195-I243-WORD-NGRAM-OVERLAP",
+        suffix: "behavior",
         fixture_id: "i195-i243-word-ngram-overlap",
         fixture_file: FIXTURE,
         assertions: &["wordNgramsReportEverySharedSourcePair"],
-    }]);
+        test_name: "shared_word_ngrams_keep_every_pair_of_original_ranges",
+    });
 }
