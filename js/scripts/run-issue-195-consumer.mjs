@@ -226,7 +226,7 @@ async function observeCrateDependencyUpgrade(crateSource, env) {
   const lock = await readFile(path.join(root, 'rust/Cargo.lock'), 'utf8');
   const currentLinks = /^name = "links-notation"\nversion = "([^"]+)"/mu.exec(lock)[1];
   const currentTree = /^name = "tree-sitter"\nversion = "([^"]+)"/mu.exec(lock)[1];
-  const treeSitterPatches = [...new Set(['0.27.1', currentTree])];
+  const treeSitterPatches = [...new Set(['0.27.0', '0.27.1', currentTree])];
   const sourcePath = JSON.stringify(crateSource.split(path.sep).join('/'));
 
   async function resolve(label, dependencies, source) {
