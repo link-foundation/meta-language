@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import test from 'node:test';
@@ -16,15 +17,25 @@ test('recent report timings balance all complete module workloads across the sam
     .filter(entry => entry.isFile() && entry.name.endsWith('.js'))
     .map(entry => relative(repository, join(entry.parentPath, entry.name)).split(sep).join('/'))
     .sort();
+  // Replay the old assignments on the source tree used to evaluate the scheduling change.
+  const comparisonRevision = 'b964c412ed4efd5a0b9d04002780b7306f0e92b4';
+  const git = (...args) => execFileSync('git', ['--no-replace-objects', ...args], { cwd: repository, maxBuffer: 2 * 1024 * 1024 });
+  const historicalSources = git('ls-tree', '-r', '--name-only', comparisonRevision, 'js/src')
+    .toString().trimEnd().split('\n').filter(file => file.endsWith('.js')).sort();
+  const historicalBytes = new Map(historicalSources.map(file => [file, git('show', `${comparisonRevision}:${file}`)]));
+  const historicalInput = { readSource: file => historicalBytes.get(file) };
   const record = readProjectData(new URL('../../parity/fixtures/ci-45076523061-report-workload-costs.lino', import.meta.url));
   assert.deepEqual(record.logs.map(row => row.number), Array.from({ length: 16 }, (_, index) => index + 1));
   const elapsed = new Map(record.entries.map(row => [row.file, row.milliseconds]));
   const baseline = readProjectData(new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino', import.meta.url));
   const priorEntries = new Map([...baseline.entries, ...record.entries].map(row => [row.file, row]));
-  const previous = partitionMeasuredWorkloads(sources, 16);
-  const historical = partitionMeasuredWorkloads(sources, 16, { costs: { ...baseline, entries: [...priorEntries.values()] } });
+  const previous = partitionMeasuredWorkloads(historicalSources, 16, historicalInput);
+  const historical = partitionMeasuredWorkloads(historicalSources, 16, {
+    ...historicalInput, costs: { ...baseline, entries: [...priorEntries.values()] },
+  });
   const longest = shards => Math.max(...shards.map(shard => shard.reduce((sum, file) => sum + (elapsed.get(file) ?? 0), 0)));
-  assert.deepEqual(historical.flat().sort(), sources);
+  assert.deepEqual(previous.flat().sort(), historicalSources);
+  assert.deepEqual(historical.flat().sort(), historicalSources);
   assert.ok(longest(previous) >= 30 * 60 * 1000, 'recent elapsed samples reproduce the uneven prior assignment');
   assert.ok(longest(historical) <= 18 * 60 * 1000, 'the recent elapsed samples are spread across the sixteen owners');
 
