@@ -9,7 +9,9 @@ use super::super::{
 };
 use super::integer_policy::exclusive_integer_boundary;
 use super::number_spelling::NumberSpelling;
-use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_range};
+use super::numeric_ranges::{
+    DecimalRange, exclusive_decimal_range, signed_decimal_range, signed_integer_range,
+};
 use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
@@ -1216,6 +1218,21 @@ impl<'schema> Importer<'schema> {
             alternatives.push((index, name, limits));
         }
         if keyword == "oneOf" {
+            if !alternatives.is_empty() && alternatives.iter().all(|(_, name, _)| *name == "number")
+            {
+                return match exclusive_decimal_range(
+                    alternatives.iter().map(|(_, _, limits)| limits),
+                ) {
+                    DecimalRange::Unsupported => None,
+                    DecimalRange::Empty => Some(None),
+                    DecimalRange::Allowed(decimal) => {
+                        if !matches!(&decimal, Expression::NonTerminal(_)) {
+                            self.report(pointer, keyword, "The exclusive number decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.");
+                        }
+                        Some(Some(decimal))
+                    }
+                };
+            }
             if alternatives.iter().any(|(_, name, _)| *name != "integer") {
                 return None;
             }

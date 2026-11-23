@@ -263,19 +263,26 @@ pub(super) enum DecimalRange {
     Allowed(Expression),
 }
 
-pub(super) fn signed_decimal_range(schema: &Value) -> DecimalRange {
+fn decimal_limits(schema: &Value) -> (Option<Limit>, Option<Limit>) {
     let number = |name| schema.get(name).and_then(Value::as_f64);
-    let first = narrower(number("minimum"), number("exclusiveMinimum"), true);
-    let last = narrower(number("maximum"), number("exclusiveMaximum"), false);
+    (
+        narrower(number("minimum"), number("exclusiveMinimum"), true),
+        narrower(number("maximum"), number("exclusiveMaximum"), false),
+    )
+}
+
+fn empty_decimal_interval(first: Option<Limit>, last: Option<Limit>) -> bool {
+    matches!((first, last), (Some(first), Some(last)) if first.value > last.value
+        || (first.value >= last.value && !(first.inclusive && last.inclusive)))
+}
+
+fn decimal_range(first: Option<Limit>, last: Option<Limit>) -> DecimalRange {
     if [first, last].into_iter().flatten().any(|limit| {
         limit.value.abs() >= 9_007_199_254_740_991.0 || limit.parts().fraction.len() > 128
     }) {
         return DecimalRange::Unsupported;
     }
-    if let (Some(first), Some(last)) = (first, last)
-        && (first.value > last.value
-            || (first.value >= last.value && !(first.inclusive && last.inclusive)))
-    {
+    if empty_decimal_interval(first, last) {
         return DecimalRange::Empty;
     }
     let negative =
@@ -296,4 +303,93 @@ pub(super) fn signed_decimal_range(schema: &Value) -> DecimalRange {
         };
     alternatives(negative.into_iter().chain(positive).collect())
         .map_or(DecimalRange::Empty, DecimalRange::Allowed)
+}
+
+pub(super) fn signed_decimal_range(schema: &Value) -> DecimalRange {
+    let (first, last) = decimal_limits(schema);
+    decimal_range(first, last)
+}
+
+struct DecimalEndpoint {
+    value: f64,
+    at: i64,
+    after: i64,
+}
+
+pub(super) fn exclusive_decimal_range<'schema>(
+    branch_limits: impl IntoIterator<Item = &'schema Value>,
+) -> DecimalRange {
+    let mut endpoints = Vec::new();
+    let mut coverage = 0;
+    for schema in branch_limits {
+        let (first, last) = decimal_limits(schema);
+        if empty_decimal_interval(first, last) {
+            continue;
+        }
+        if let Some(first) = first {
+            endpoints.push(DecimalEndpoint {
+                value: first.value,
+                at: i64::from(first.inclusive),
+                after: 1,
+            });
+        } else {
+            coverage += 1;
+        }
+        if let Some(last) = last {
+            endpoints.push(DecimalEndpoint {
+                value: last.value,
+                at: -i64::from(!last.inclusive),
+                after: -1,
+            });
+        }
+    }
+    endpoints.sort_by(|left, right| left.value.total_cmp(&right.value));
+    let mut intervals = Vec::new();
+    let mut first = None;
+    for changes in endpoints.chunk_by(|left, right| {
+        left.value
+            .partial_cmp(&right.value)
+            .is_some_and(std::cmp::Ordering::is_eq)
+    }) {
+        // Signed zeroes share an endpoint and therefore one branch count.
+        let value = changes[0].value;
+        let at = coverage + changes.iter().map(|change| change.at).sum::<i64>();
+        let after = coverage + changes.iter().map(|change| change.after).sum::<i64>();
+        let open = Some(Limit {
+            value,
+            inclusive: false,
+        });
+        let closed = Some(Limit {
+            value,
+            inclusive: true,
+        });
+        if coverage == 1 && at != 1 {
+            intervals.push((first, open));
+        }
+        if coverage != 1 && at == 1 {
+            first = closed;
+        }
+        if at == 1 && after != 1 {
+            intervals.push((first, closed));
+        }
+        if at != 1 && after == 1 {
+            first = open;
+        }
+        coverage = after;
+    }
+    if coverage == 1 {
+        intervals.push((first, None));
+    }
+    if matches!(intervals.as_slice(), [(None, None)]) {
+        return DecimalRange::Allowed(EXPRESSION.nt("number"));
+    }
+    let mut parts = Vec::new();
+    for (first, last) in intervals {
+        match decimal_range(first, last) {
+            DecimalRange::Unsupported => return DecimalRange::Unsupported,
+            DecimalRange::Empty => {}
+            DecimalRange::Allowed(expression) => parts.push(expression),
+        }
+    }
+    alternatives(parts).map_or(DecimalRange::Empty, DecimalRange::Allowed)
 }

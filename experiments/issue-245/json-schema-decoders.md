@@ -93,3 +93,11 @@ their first string value. One minimum length comes from a sibling of the
 local reference. The decoder previously admitted `["selected",null]` and now
 applies the common Boolean tail rule. A control with optional prefix positions
 retains the exclusivity diagnostic because both branches match the empty array.
+
+The decimal cases use overlapping `oneOf` intervals with limits from linked
+schemas and their containing schema. Before the change, the decoder admitted
+`-0.7501`, outside the common minimum, and `2.5`, inside both branches. The
+shared fixture also checks a single accepted endpoint, an excluded zero,
+adjacent intervals covering every number, and two identical branches with
+no generatable number. Document validation checks equivalent exponent
+spellings where the decoder reports a spelling restriction.

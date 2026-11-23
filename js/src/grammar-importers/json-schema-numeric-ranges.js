@@ -149,17 +149,63 @@ function narrower(inclusive, exclusive, lower) {
   return { value: exclusive, inclusive: false };
 }
 
-/** Return undefined for decimal bounds outside the finite provider grammar budget. */
-export function signedDecimalRange(rules) {
-  const first = narrower(rules.minimum, rules.exclusiveMinimum, true);
-  const last = narrower(rules.maximum, rules.exclusiveMaximum, false);
+function decimalLimits(rules) {
+  return [narrower(rules.minimum, rules.exclusiveMinimum, true),
+    narrower(rules.maximum, rules.exclusiveMaximum, false)];
+}
+
+function emptyDecimalInterval(first, last) {
+  return first !== null && last !== null
+    && (first.value > last.value || (first.value === last.value && !(first.inclusive && last.inclusive)));
+}
+
+function decimalRange(first, last) {
   if ([first, last].some(bound => bound && (Math.abs(bound.value) >= Number.MAX_SAFE_INTEGER ||
       decimalParts({ ...bound, value: Math.abs(bound.value) }).fraction.length > 128))) return undefined;
-  if (first && last && (first.value > last.value || (first.value === last.value && !(first.inclusive && last.inclusive)))) return null;
+  if (emptyDecimalInterval(first, last)) return null;
   const mirrored = bound => ({ value: -bound.value, inclusive: bound.inclusive });
   const negative = !first || first.value < 0 || (first.value === 0 && first.inclusive)
     ? unsignedDecimalRange(last && last.value <= 0 ? mirrored(last) : null, first && mirrored(first)) : null;
   const positive = !last || last.value > 0 || (last.value === 0 && last.inclusive)
     ? unsignedDecimalRange(first && first.value >= 0 ? first : null, last) : null;
   return alternatives([negative && seq(literal('-'), negative), positive].filter(Boolean));
+}
+
+/** Return undefined for decimal bounds outside the finite provider grammar budget. */
+export function signedDecimalRange(rules) {
+  return decimalRange(...decimalLimits(rules));
+}
+
+export function exclusiveDecimalRange(branchLimits) {
+  const boundaries = new Map();
+  function changeAt(value, at, after) {
+    const change = boundaries.get(value) ?? { at: 0, after: 0 };
+    change.at += at;
+    change.after += after;
+    boundaries.set(value, change);
+  }
+  let coverage = 0;
+  for (const rules of branchLimits) {
+    const [first, last] = decimalLimits(rules);
+    if (emptyDecimalInterval(first, last)) continue;
+    if (first) changeAt(first.value, Number(first.inclusive), 1);
+    else coverage += 1;
+    if (last) changeAt(last.value, last.inclusive ? 0 : -1, -1);
+  }
+  const intervals = [];
+  let first = null;
+  for (const [value, change] of [...boundaries].sort(([left], [right]) => left - right)) {
+    // An endpoint can belong to a different number of branches than either side.
+    const at = coverage + change.at;
+    const after = coverage + change.after;
+    if (coverage === 1 && at !== 1) intervals.push([first, { value, inclusive: false }]);
+    if (coverage !== 1 && at === 1) first = { value, inclusive: true };
+    if (at === 1 && after !== 1) intervals.push([first, { value, inclusive: true }]);
+    if (at !== 1 && after === 1) first = { value, inclusive: false };
+    coverage = after;
+  }
+  if (coverage === 1) intervals.push([first, null]);
+  if (intervals.length === 1 && intervals[0].every(bound => bound === null)) return Expression.ref('number');
+  const expressions = intervals.map(([first, last]) => decimalRange(first, last));
+  return expressions.includes(undefined) ? undefined : alternatives(expressions.filter(Boolean));
 }

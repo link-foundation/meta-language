@@ -10,7 +10,7 @@ import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-p
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
 import { intersectJsonStringExpressions, selectExclusiveJsonStringExpressions } from './json-schema-string-intersection.js';
 import { stringSetsAreDisjoint } from './json-schema-tag-policy.js';
-import { exclusiveIntegerRange, integerBounds, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
+import { exclusiveDecimalRange, exclusiveIntegerRange, integerBounds, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
 const space = ref('json_space');
@@ -770,6 +770,13 @@ export function importJsonSchema(schema) {
       branches.push({ index, ...constraints });
     }
     if (keyword === 'oneOf') {
+      if (branches.length && branches.every(branch => branch.type === 'number')) {
+        const decimal = exclusiveDecimalRange(branches.map(branch => branch.limits));
+        if (decimal && decimal.kind !== 'ref') {
+          report(pointer, keyword, 'The exclusive number decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.');
+        }
+        return decimal;
+      }
       if (branches.some(branch => branch.type !== 'integer')) return undefined;
       const integer = exclusiveIntegerRange(branches.map(branch => integerBounds(branch.limits)));
       if (integer) report(pointer, keyword, 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');

@@ -4704,10 +4704,13 @@ branch exceeds those limits, a diagnostic identifies the validation assertion.
 Numeric local references combine inclusive and exclusive limits across the
 reference chain. For numeric `anyOf` branches, the decoder intersects the
 common limits with each branch before forming their union. For `oneOf`
-branches restricted to integers, the decoder intersects each branch with the
-common limits and generates spellings covered by exactly one interval. The
-same diagnostics describe numeric spelling limits and assertions that require
-document validation.
+branches over integers or over numbers, the decoder intersects each branch
+with the common limits and generates spellings covered by exactly one
+interval. For decimal ranges it counts branch membership at each endpoint
+and on both sides, so open boundaries and isolated accepted values retain
+their exact semantics. A range covering every number retains exponent
+spellings. Other bounded ranges use decimal spelling and report the
+equivalent exponent spellings checked by document validation.
 
 An object local reference chain takes the union of the required names and
 the declared property names. For each name, the decoder uses each layer's

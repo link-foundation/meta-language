@@ -396,6 +396,33 @@ const cases = [
     ['/oneOf'],
     [['[]', false], ['["selected"]', true], ['["pending"]', true], ['["other"]', false]],
   ],
+  [
+    { type: 'number', minimum: -0.75, maximum: 4, $defs: numericDefinitions, oneOf: [
+      { $ref: '#/$defs/restricted', maximum: 2.5 }, { exclusiveMinimum: 1.25 }, false,
+    ] },
+    [['-0.75', true], ['-0.7501', false], ['-0', true], ['1.2500', true], ['1.2501', false], ['2.5', false],
+      ['2.5001', true], ['4.00', true], ['4.001', false], ['-7.5e-1', false], ['null', false]],
+    ['/oneOf'],
+    [['-0.75', true], ['-0.7501', false], ['1.2500', true], ['1.2501', false], ['2.5', false], ['2.5001', true],
+      ['4.00', true], ['4.001', false], ['-7.5e-1', true], ['null', false]],
+  ],
+  [
+    { type: 'number', oneOf: [{ maximum: 1.25 }, { exclusiveMaximum: 1.25 }, { minimum: 1.25, exclusiveMaximum: 1.25 }] },
+    [['1.25', true], ['1.25000', true], ['1.25001', false], ['1.24999', false], ['0', false], ['125e-2', false]],
+    ['/oneOf'],
+    [['1.25000', true], ['1.25001', false], ['1.24999', false], ['125e-2', true]],
+  ],
+  [
+    { type: 'number', oneOf: [{ exclusiveMaximum: 0 }, { exclusiveMinimum: 0 }] },
+    [['0', false], ['-0.00', false], ['0.0001', true], ['-0.0001', true], ['123456789.0', true], ['-123456789', true]],
+    ['/oneOf'],
+    [['0', false], ['-0.00', false], ['0.0001', true], ['-0.0001', true], ['123456789.0', true], ['-123456789', true]],
+  ],
+  [
+    { type: 'number', oneOf: [{ exclusiveMaximum: 0 }, { minimum: 0 }] },
+    [['0.0', true], ['-0.00', true], ['-1e-5', true], ['1.2e309', true], ['null', false]],
+    [],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -414,6 +441,7 @@ const impossible = [
   { type: 'object', $ref: '#/$defs/record', properties: { entries: { items: false } }, $defs: { record: {
     required: ['entries'], properties: { entries: { type: 'array', minItems: 1 } },
   } } },
+  { type: 'number', oneOf: [{ minimum: -1.25 }, { minimum: -1.25 }] },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
