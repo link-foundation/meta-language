@@ -4653,8 +4653,13 @@ decoder generates each integer spelling covered by exactly one interval. Pattern
 compile character classes, alternation, top-level anchors, and bounded or
 unbounded repetitions from the catalog regex syntax tree. They match decoded
 Unicode scalars and admit their raw and escaped JSON spellings, including
-surrogate pairs. Grammar diagnostics identify assertions that require
-validation, including exponent spellings, other overlapping alternatives,
+surrogate pairs. The importer can collect finite candidates through local
+references and nested alternatives. It validates each candidate against the
+whole schema, including sibling assertions and exclusive branch counts,
+before emitting its production. The search has a work and depth bound and
+uses the regular importer path for a recursive or unbounded domain. Grammar
+diagnostics identify assertions that require validation, including exponent
+spellings, other overlapping alternatives,
 unsupported patterns, and objects that exceed the decoder's field-order or
 key-spelling bounds. Decoder and validation rules share the JSON grammar and
 keyword policy. The reverse API preserves an imported schema and can infer

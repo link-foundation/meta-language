@@ -274,6 +274,11 @@ impl<'schema> Importer<'schema> {
         let combination = schema["anyOf"]
             .as_array()
             .or_else(|| schema["oneOf"].as_array());
+        let reference_has_siblings = schema.get("$ref").is_some()
+            && schema
+                .as_object()?
+                .keys()
+                .any(|key| !reference_keyword(key));
         let constants = finite_constants(schema).or_else(|| {
             let branches = combination?;
             branches.iter().try_fold(Vec::new(), |mut values, branch| {
@@ -281,11 +286,22 @@ impl<'schema> Importer<'schema> {
                 Some(values)
             })
         });
-        if let Some(constants) = constants {
-            let keyword = ["const", "enum", "anyOf", "oneOf"]
-                .into_iter()
-                .find(|key| schema.get(*key).is_some())
-                .expect("each finite schema belongs to an assertion");
+        let candidates = constants
+            .map(|constants| {
+                let keyword = ["const", "enum", "anyOf", "oneOf"]
+                    .into_iter()
+                    .find(|key| schema.get(*key).is_some())
+                    .expect("each finite schema belongs to an assertion");
+                (constants, keyword)
+            })
+            .or_else(|| {
+                if reference_has_siblings || combination.is_some() {
+                    finite_schema_candidates(self.root, schema, &mut HashSet::new(), &mut 16_384, 0)
+                } else {
+                    None
+                }
+            });
+        if let Some((constants, keyword)) = candidates {
             let root = self.root;
             let entries: Vec<_> = constants
                 .into_iter()
@@ -297,11 +313,7 @@ impl<'schema> Importer<'schema> {
         if let Some(name) = schema["$ref"].as_str()
             && let Some(target) = reference(self.root, name)
         {
-            if schema
-                .as_object()?
-                .keys()
-                .any(|key| !reference_keyword(key))
-            {
+            if reference_has_siblings {
                 self.report(
                     pointer,
                     "$ref",
@@ -811,6 +823,59 @@ fn finite_constants(schema: &Value) -> Option<Vec<&Value>> {
             .as_array()
             .map(|values| values.iter().collect())
     }
+}
+
+fn finite_schema_candidates<'schema>(
+    root: &'schema Value,
+    schema: &'schema Value,
+    active: &mut HashSet<*const Value>,
+    work: &mut usize,
+    depth: usize,
+) -> Option<(Vec<&'schema Value>, &'static str)> {
+    *work = work.checked_sub(1)?;
+    let identity = std::ptr::from_ref(schema);
+    if depth > 128 || active.contains(&identity) {
+        return None;
+    }
+    if let Some(values) = finite_constants(schema) {
+        let keyword = if schema.get("const").is_some() {
+            "const"
+        } else {
+            "enum"
+        };
+        return Some((values, keyword));
+    }
+    let rules = schema.as_object()?;
+    active.insert(identity);
+    let result = (|| {
+        if let Some(target) = rules
+            .get("$ref")
+            .and_then(Value::as_str)
+            .and_then(|name| reference(root, name))
+            && let Some((values, _)) =
+                finite_schema_candidates(root, target, active, work, depth + 1)
+        {
+            return Some((values, "$ref"));
+        }
+        for keyword in ["anyOf", "oneOf"] {
+            let Some(branches) = rules.get(keyword).and_then(Value::as_array) else {
+                continue;
+            };
+            let values = branches.iter().try_fold(Vec::new(), |mut values, child| {
+                let (candidates, _) =
+                    finite_schema_candidates(root, child, active, work, depth + 1)?;
+                *work = work.checked_sub(candidates.len())?;
+                values.extend(candidates);
+                Some(values)
+            });
+            if let Some(values) = values {
+                return Some((values, keyword));
+            }
+        }
+        None
+    })();
+    active.remove(&identity);
+    result
 }
 
 fn branches_use_disjoint_types<'a>(branches: impl ExactSizeIterator<Item = &'a Value>) -> bool {

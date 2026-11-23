@@ -195,7 +195,45 @@ function finiteConstants(rules) {
   if (rules === false) return [];
   if (rules === null || typeof rules !== 'object') return undefined;
   if (Object.hasOwn(rules, 'const')) return [rules.const];
-  return rules.enum;
+  return Array.isArray(rules.enum) ? rules.enum : undefined;
+}
+
+function finiteSchemaCandidates(schema, resolve) {
+  const active = new Set();
+  let work = 16_384;
+  function collect(rules, depth) {
+    work -= 1;
+    if (work < 0 || depth > 128 || active.has(rules)) return undefined;
+    const values = finiteConstants(rules);
+    if (values) return { values, keyword: Object.hasOwn(rules, 'const') ? 'const' : 'enum' };
+    if (!rules || typeof rules !== 'object') return undefined;
+    active.add(rules);
+    try {
+      if (typeof rules.$ref === 'string') {
+        const target = collect(resolve(rules.$ref), depth + 1);
+        if (target) return { values: target.values, keyword: '$ref' };
+      }
+      for (const keyword of ['anyOf', 'oneOf']) {
+        if (!Array.isArray(rules[keyword])) continue;
+        const values = [];
+        let complete = true;
+        for (const child of rules[keyword]) {
+          const candidate = collect(child, depth + 1);
+          if (!candidate || candidate.values.length > work) {
+            complete = false;
+            break;
+          }
+          work -= candidate.values.length;
+          for (const value of candidate.values) values.push(value);
+        }
+        if (complete) return { values, keyword };
+      }
+    } finally {
+      active.delete(rules);
+    }
+    return undefined;
+  }
+  return collect(schema, 0);
 }
 
 function branchesUseDisjointTypes(branches) {
@@ -429,24 +467,27 @@ export function importJsonSchema(schema) {
   function lower(rules, pointer) {
     if (rules === true) return value;
     if (rules === false) return null;
+    const alternatives = [rules.anyOf, rules.oneOf].find(Array.isArray);
+    const referenceHasSiblings = rules.$ref !== undefined && Object.keys(rules).some(key => !referenceKeys.has(key));
     const constants = finiteConstants(rules)
-      ?? ((rules.anyOf ?? rules.oneOf)?.every(child => finiteConstants(child))
-        ? (rules.anyOf ?? rules.oneOf).flatMap(finiteConstants) : undefined);
-    if (constants) {
-      const entries = constants.filter(item => validateJsonDocument(readJsonDocument(JSON.stringify(item)), rules, analysis).errors.length === 0);
-      const keyword = ['const', 'enum', 'anyOf', 'oneOf'].find(key => Object.hasOwn(rules, key));
+      ?? (alternatives?.every(child => finiteConstants(child)) ? alternatives.flatMap(finiteConstants) : undefined);
+    const candidates = constants
+      ? { values: constants, keyword: ['const', 'enum', 'anyOf', 'oneOf'].find(key => Object.hasOwn(rules, key)) }
+      : (referenceHasSiblings || alternatives) && finiteSchemaCandidates(rules, analysis.target);
+    if (candidates) {
+      const { values, keyword } = candidates;
+      const entries = values.filter(item => validateJsonDocument(readJsonDocument(JSON.stringify(item)), rules, analysis).errors.length === 0);
       return entries.length ? choice(...entries.map(item => constantExpression(item, pointer, keyword))) : null;
     }
     if (rules.$ref !== undefined) {
       const target = analysis.target(rules.$ref);
       if (typeof target === 'boolean' || (target && typeof target === 'object' && !Array.isArray(target))) {
-        if (Object.keys(rules).some(key => !referenceKeys.has(key))) report(pointer, '$ref', 'Sibling reference assertions are checked during document validation.');
+        if (referenceHasSiblings) report(pointer, '$ref', 'Sibling reference assertions are checked during document validation.');
         return named(target, rules.$ref.slice(1));
       }
     }
-    const alternatives = rules.anyOf ?? rules.oneOf;
     if (alternatives) {
-      const keyword = rules.anyOf ? 'anyOf' : 'oneOf';
+      const keyword = alternatives === rules.anyOf ? 'anyOf' : 'oneOf';
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== keyword && !referenceKeys.has(key));
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
       if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives) && !branchesUseDisjointRequiredTags(alternatives)) {
