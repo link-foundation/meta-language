@@ -173,16 +173,26 @@ bulk grammar pipeline again produced the 67-language matrix.
 [bulk grammar pipeline](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137664120628)
 
 Delivery Candidates failed Rust package verification with E0382 at log lines
-549–567. Our first correction for Clippy's `redundant_clone` diagnostic at
-log line 4157 removed the clone and moved the original lexer mode before
-the replay array consumed it. The corrected generator review borrows the
-mode for rendering, keeps `DEFAULT_MODE` for the default mode, and transfers
-the original mode to replay. A regression checks that the generated function
-borrows the mode before preserving it in the replay array. It failed before
-the correction and passed after regeneration. The focused run passed 19 tests,
-including ordinary modes, default modes and ordered actions. One automated
-translation test reported the pause.
+549–567. Cargo Check reported the same error at log lines 1154–1178. The
+Rust lint job reproduced it in both Clippy and the docs.rs feature check at
+lines 1653–1676 and 1716–1737. Our first correction for Clippy's
+`redundant_clone` diagnostic at log line 4157 removed the clone and moved
+the original lexer mode before the replay array consumed it. The corrected
+generator review borrows the mode for rendering, keeps `DEFAULT_MODE` for
+the default mode, and transfers the original mode to replay. The regression
+checks that the generated function borrows the mode before preserving it in
+the replay array. It failed before the correction and passed after
+regeneration. The focused run passed 19 tests, including ordinary modes,
+default modes and ordered actions. One automated translation test reported
+the pause. The naming source replay needed the regenerated partition digest
+to authenticate five historical names. The source history refresh changes
+that digest and retains the original Git
+certificate and historical source. The full aggregate reported the delivery
+failure at log line 58.
 [Delivery Candidates compiler error](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137753170118),
+[Cargo Check](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137759304962),
+[Rust lint](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137759304939),
+[full aggregate](https://github.com/link-foundation/meta-language/actions/runs/45166331688/job/137768732121),
 [original Clippy diagnostic](https://github.com/link-foundation/meta-language/actions/runs/45112972070/job/137557959068),
 [JavaScript lexer tests](../../../js/tests/grammar-lexer-rules.test.js),
 [native lexer tests](../../../rust/tests/unit/grammar_lexer_transport.rs)
