@@ -90,14 +90,14 @@ the updated workflow through the dispatch in step 2.
 `js/scripts/release-publication.mjs` rejects publishing from a branch or a
 different commit. It checks the tag, requested version, npm manifest, both
 lockfile version fields and crate manifest before authentication. The registry
-preflight requires the matching non-yanked crate and its checksum. Only an
-npm HTTP 404 means the npm artifact is absent; authentication, network and
-server failures stop publication. After publishing, the workflow waits for
-the npm artifact and verifies that both registries serve that same version.
-An already published version runs this verification without requesting a
-publish credential. Registry presence alone does not establish the downstream
-delivery requirements: the post-merge evidence jobs must still install and
-test the published artifacts.
+preflight requires the matching non-yanked crate, verifies its archive against
+the registry checksum and reads the archive's Cargo Git provenance. The crate
+must identify the clean `rust` directory at the tagged commit. Only an npm
+HTTP 404 establishes absence. Authentication, network and server failures stop
+publication. The workflow waits for the published npm artifact and verifies
+that its `gitHead` matches the tag. An already published version runs this
+verification without requesting a publish credential. The post-merge evidence
+jobs install and test the published artifacts to verify downstream delivery.
 
 ## Reference
 

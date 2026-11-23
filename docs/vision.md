@@ -4445,10 +4445,13 @@ capabilities.
 
 Release publication verifies the release tag, checked-out commit, package
 versions and lockfiles before either registry write. A registry preflight fails
-closed when existing publication state cannot be established. The release then
-checks that npm and crates.io expose the same intended version and verifies its
-self-translation API through installed consumers. Trusted-publisher settings
-and the release-tag workflow are documented alongside the publishing machinery.
+closed when existing publication state cannot be established. Before npm
+publication, it verifies the published crate against the crates.io checksum
+and checks that the Cargo provenance identifies the clean tagged commit.
+The npm version metadata identifies the same commit after publication or
+when the version already exists. The release verifies the self-translation
+API through installed consumers. Trusted-publisher settings and the
+release-tag workflow are documented alongside the publishing machinery.
 
 ## Documentation consistency
 

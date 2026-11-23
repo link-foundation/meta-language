@@ -1421,6 +1421,25 @@ function buildValidationAndDeliveryRequirements(fixtureCatalog, extensions) {
       }),
     );
   }
+  const releaseProvenanceId = 'I195-I230-PAIRED-RELEASE-PROVENANCE';
+  const releaseProvenanceFixture = 'i195-i230-paired-release-provenance';
+  fixtureCatalog[releaseProvenanceFixture] = pinnedFixture('js/tests/downstream-release-provenance.test.js', 'registry release provenance and checksum verification');
+  requirements.push(requirement({
+    id: releaseProvenanceId,
+    source: ISSUE_195_SOURCES.htmlPackageDelivery,
+    area: 'release-workflow',
+    scope: {
+      language: 'JavaScript', version: 'Node.js >=22', edition: 'tagged release workflow',
+      construct: 'paired npm and crates.io release provenance', aliases: [], extensions: [],
+    },
+    expectedBehavior: 'The release checks verify the published crate bytes against the registry checksum, require clean Cargo provenance at the release commit, and require matching npm Git metadata whenever the npm version exists.',
+    requiredRuntimes: ['javascript'],
+    implementationEntryPoints: { javascript: ['js/scripts/release-publication.mjs', '.github/workflows/js.yml'] },
+    verifications: [verification({
+      requirementId: releaseProvenanceId, runtime: 'javascript', suffix: 'behavior', fixtureIds: [releaseProvenanceFixture],
+      assertions: ['crateArchiveMatchesRegistryChecksum', 'crateArchiveIdentifiesCleanReleaseCommit', 'npmMetadataIdentifiesReleaseCommit'],
+    })],
+  }));
   const exampleFixture = 'i195-installed-document-tasks';
   fixtureCatalog[exampleFixture] = pinnedFixture(DOCUMENT_TASK_EXAMPLE, 'installed public API document task examples');
   for (const [id, source, scenario, assertion, expectedBehavior] of DOCUMENT_TASK_CASES) {
