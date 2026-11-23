@@ -14,8 +14,20 @@ let history;
 
 let integrationSources;
 
+/** Restore the complete workflow before the job-page retry for historical controls. */
+export function restoreRustJobAdmissionSource(source) {
+  if (pin(source).sha256 !== '3b31f67ab3224accb94bbe2175594bdded76689f9c4bf2a2111f42bae13ee462') return source;
+  const restored = source.replace(
+    /^ {10}if ! (gh api "[^\n]+\/jobs\?per_page=100" --paginate --slurp > "[^"\n]+"); then\n {12}gh api [^\n]+\n {10}fi$/mu,
+    '          $1',
+  );
+  assert.equal(pin(restored).sha256, '3bc9784ef73d8e69cd693ce23884ff8d4454c7d8b9be8c98e4ebccccae331b3a');
+  return restored;
+}
+
 /** Return the certified predecessor only for a complete integration successor. */
 export function restoreIntegrationSource(source,path) {
+  if (path === '.github/workflows/ci.yml') source = restoreRustJobAdmissionSource(source);
   if(!integrationSources){
     const bytes=readFileSync(new URL('parity/self-translation/integration-source-history.lino',root));
     assert.equal(pin(bytes).sha256,'a67a0934fcce2f2c6be67284f45370b83a56899198dd01092d5ec336e203d1d9');

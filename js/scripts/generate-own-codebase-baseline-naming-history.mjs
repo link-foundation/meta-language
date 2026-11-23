@@ -82,12 +82,16 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   if(check)sources=stored.sources;
   else{
     sources=stored.sources.map(row=>({...row,current:pin(readFileSync(new URL(row.file,root)))}));
-    for(const path of integrationFiles){
-      if(sources.some(row=>row.file===path&&row.predecessor.revision===integration))continue;
+    const namedPredecessors = [
+      ...integrationFiles.map(path => [integration, path]),
+      ['3866f25f3dde30644152829fb5d3bf8d680ba2fd', 'js/tests/issue-195-evidence-translation-partition-conservation.test.js'],
+    ];
+    for(const [revision,path] of namedPredecessors){
+      if(sources.some(row=>row.file===path&&row.predecessor.revision===revision))continue;
       globalThis.gc?.();
-      const {blob,certificate}=captureGitArtifactCertificate(integration,path);
-      assert.deepEqual(verifyGitArtifactCertificate(certificate,blob,{revision:integration,path}),blob);
-      sources.push({file:path,predecessor:{revision:integration,source:blob.toString('utf8'),...pin(blob),certificate},
+      const {blob,certificate}=captureGitArtifactCertificate(revision,path);
+      assert.deepEqual(verifyGitArtifactCertificate(certificate,blob,{revision,path}),blob);
+      sources.push({file:path,predecessor:{revision,source:blob.toString('utf8'),...pin(blob),certificate},
         current:pin(readFileSync(new URL(path,root)))});
     }
   }

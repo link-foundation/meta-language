@@ -1988,7 +1988,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"
+          if ! gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=20" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"
+          fi
           node js/scripts/rust-test-shards.mjs --admission "$RUNNER_TEMP/rust-physical-jobs.json"
 
       - name: Download complete Rust physical partitions
