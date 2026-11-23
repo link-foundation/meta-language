@@ -95,8 +95,8 @@ whose commit includes the grammar. [Issue #230](https://github.com/link-foundati
 `js/scripts/release-publication.mjs` rejects publishing from a branch or a
 different commit. It checks the tag, requested version, npm manifest, both
 lockfile version fields and crate manifest before authentication. The preflight
-downloads the non-yanked crate, checks its registry SHA-256 and compares the
-commit in `.cargo_vcs_info.json` with the checked-out release commit. Only an
+downloads the non-yanked crate, checks its registry SHA-256 and requires
+`.cargo_vcs_info.json` to record a clean checkout of the release commit. Only an
 npm HTTP 404 establishes that the npm artifact is absent. Authentication, network
 and server failures stop publication. After publishing, the workflow waits for
 npm to serve the same version and checks that its `gitHead` matches the release

@@ -105,17 +105,20 @@ export async function verifyReleaseProvenance(state, { fetchImpl = fetch } = {})
   if (createHash('sha256').update(contents).digest('hex') !== crateChecksum) {
     throw new Error(`the published ${name}@${version} crate does not match its registry checksum`);
   }
-  let revision;
+  let git;
   try {
     const vcsInfo = execFileSync('tar', ['-xzOf', '-', `${archiveName}/.cargo_vcs_info.json`], {
       input: contents, encoding: 'utf8', maxBuffer: 4096, stdio: ['pipe', 'pipe', 'pipe'],
     });
-    revision = JSON.parse(vcsInfo)?.git?.sha1;
+    git = JSON.parse(vcsInfo)?.git;
   } catch (cause) {
     throw new Error(`the published ${name}@${version} crate has no readable Git provenance`, { cause });
   }
-  if (revision !== commit) {
-    throw new Error(`the published ${name}@${version} crate records commit ${revision ?? '(missing)'}, expected ${commit}`);
+  if (git?.sha1 !== commit) {
+    throw new Error(`the published ${name}@${version} crate records commit ${git?.sha1 ?? '(missing)'}, expected ${commit}`);
+  }
+  if (git.dirty !== undefined && git.dirty !== false) {
+    throw new Error(`the published ${name}@${version} crate does not record a clean Git checkout`);
   }
 }
 

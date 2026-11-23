@@ -15,12 +15,12 @@ const release = {
   npmGitHead: 'a'.repeat(40),
 };
 
-function crateArchive() {
+function crateArchive(git = { sha1: release.commit }) {
   const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-release-test-'));
   const member = 'meta-language-1.0.0/.cargo_vcs_info.json';
   try {
     mkdirSync(path.join(directory, 'meta-language-1.0.0'));
-    writeFileSync(path.join(directory, member), JSON.stringify({ git: { sha1: release.commit } }));
+    writeFileSync(path.join(directory, member), JSON.stringify({ git }));
     return execFileSync('tar', ['-czf', '-', '-C', directory, member]);
   } finally {
     rmSync(directory, { force: true, recursive: true });
@@ -45,6 +45,10 @@ test('release preflight verifies the exact crate checksum and commit before npm 
     /crate does not match its registry checksum/u);
   await assert.rejects(verifyReleaseProvenance({ ...state, commit: 'c'.repeat(40) }, { fetchImpl }),
     new RegExp(`crate records commit ${release.commit}, expected ${'c'.repeat(40)}`, 'u'));
+
+  const dirty = registryDownload(crateArchive({ sha1: release.commit, dirty: true }));
+  await assert.rejects(verifyReleaseProvenance({ ...state, crateChecksum: dirty.crateChecksum }, dirty),
+    /crate does not record a clean Git checkout/u);
 
   const invalid = registryDownload(Buffer.from('not a tar archive'));
   await assert.rejects(verifyReleaseProvenance({ ...state, crateChecksum: invalid.crateChecksum }, invalid),
