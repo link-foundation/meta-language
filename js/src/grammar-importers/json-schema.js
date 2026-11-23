@@ -743,7 +743,7 @@ export function importJsonSchema(schema) {
     if (!entries) return undefined;
     return entries.length ? () => lowerConjunction(entries) : false;
   }
-  function collectionConstraints(layers, membership, combination, pointer, depth, selectedProperty) {
+  function collectionConstraints(layers, membership, combination, pointer, depth, selectedProperties) {
     const keywords = membership === jsonTypes.get('object') ? jsonDocumentPolicy.objectAssertion : jsonDocumentPolicy.arrayAssertion;
     if (layers.some((layer, index) => Object.keys(layer).some(key => (
       activeConjunctionKeyword(key, index, combination, membership) && !keywords.includes(key)
@@ -757,7 +757,7 @@ export function importJsonSchema(schema) {
       const entries = [];
       for (const name of keys) {
         // Defaults apply only in the layers that leave this property undeclared.
-        const rule = selectedProperty?.name === name ? selectedProperty.expression
+        const rule = selectedProperties?.has(name) ? true
           : combineChildSchemas(fields.map((properties, index) => (
             Object.hasOwn(properties, name) ? properties[name] : defaults[index]
           )), pointerChild(pointerChild(pointer, 'properties'), name), depth);
@@ -980,7 +980,7 @@ export function importJsonSchema(schema) {
     }
     return expressions.length ? choice(...expressions) : null;
   }
-  function exclusiveObjectPropertyExpression(rules, alternatives, allowedTypes, pointer) {
+  function exclusiveObjectFieldExpression(rules, alternatives, allowedTypes, pointer) {
     const object = jsonTypes.get('object');
     const siblingAssertions = Object.keys(rules).filter(key => activeConjunctionKeyword(key, 0, 'oneOf', object));
     if (siblingAssertions.some(key => !jsonDocumentPolicy.objectAssertion.includes(key))) return undefined;
@@ -1007,28 +1007,92 @@ export function importJsonSchema(schema) {
     if (layouts.length < 2) return undefined;
     const [base, ...others] = layouts;
     const names = Object.keys(base.properties);
-    let name;
+    const differing = new Set();
     for (const layout of others) {
       if (!isDeepStrictEqual(base.required, layout.required)
           || !isDeepStrictEqual(base.additionalProperties, layout.additionalProperties)
           || Object.keys(layout.properties).length !== names.length) return undefined;
       for (const key of names) {
         if (!Object.hasOwn(layout.properties, key)) return undefined;
-        if (!isDeepStrictEqual(base.properties[key], layout.properties[key])) {
-          if (name !== undefined && name !== key) return undefined;
-          name = key;
-        }
+        if (!isDeepStrictEqual(base.properties[key], layout.properties[key])) differing.add(key);
       }
     }
-    if (name === undefined) return null;
-
-    // Unchanged assertions apply to every branch. Without the differing property,
-    // an object matches either all branches or none.
-    const schemas = layouts.map(layout => layout.properties[name]);
-    const sibling = Object.hasOwn(rules.properties ?? {}, name)
-      ? rules.properties[name] : rules.additionalProperties ?? true;
-    const checks = schemas.length + Number(sibling !== true);
+    if (!differing.size) return null;
+    const required = new Set([...base.required, ...(rules.required ?? [])]);
+    const allBranches = layouts.map((_, index) => index);
     const budget = { remaining: 16_384 };
+    const dimensions = [];
+    for (const name of differing) {
+      const schemas = layouts.map(layout => layout.properties[name]);
+      const sibling = Object.hasOwn(rules.properties ?? {}, name)
+        ? rules.properties[name] : rules.additionalProperties ?? true;
+      const variants = exclusivePropertyVariants(schemas, sibling, budget);
+      if (!variants) return undefined;
+      if (!required.has(name) && differing.size > 1) variants.push({ matches: allBranches, values: [] });
+      dimensions.push({ name, variants });
+    }
+
+    let selections;
+    if (dimensions.length === 1) {
+      const [dimension] = dimensions;
+      const values = dimension.variants.filter(variant => variant.matches.length === 1).flatMap(variant => variant.values);
+      dimension.variants = [{ values }];
+      selections = values.length ? [[0]] : [];
+    } else {
+      // Treat presence separately because an absent optional field matches every branch.
+      // The ordinary object emitter tracks each field subset for every selection.
+      const keys = new Set([...names, ...required, ...Object.keys(rules.properties ?? {})]);
+      if (keys.size > 12) return undefined;
+      const workPerObject = (2 ** keys.size + 1) * (2 + keys.size);
+      selections = [];
+      if (!selectObjectFields(0, allBranches, [])) return undefined;
+
+      function selectObjectFields(depth, matches, selected) {
+        if (depth === dimensions.length) {
+          if (matches.length !== 1) return true;
+          if (budget.remaining < workPerObject) return false;
+          budget.remaining -= workPerObject;
+          selections.push(selected.slice());
+          return true;
+        }
+        for (const [index, variant] of dimensions[depth].variants.entries()) {
+          budget.remaining -= 1 + matches.length * variant.matches.length;
+          if (budget.remaining < 0) return false;
+          const remaining = matches.filter(index => variant.matches.includes(index));
+          if (remaining.length === 0) continue;
+          selected.push(index);
+          if (!selectObjectFields(depth + 1, remaining, selected)) return false;
+          selected.pop();
+        }
+        return true;
+      }
+    }
+    if (!selections.length) return null;
+    const layout = siblingAssertions.length
+      ? collectionConstraints([rules, base.rules], object, 'oneOf', pointer, 0, differing)?.rules
+      : { properties: base.properties, additionalProperties: base.additionalProperties, required: [...base.required] };
+    if (!layout) return undefined;
+    const location = siblingAssertions.length ? pointer : base.pointer;
+    const expressions = selections.map(selection => {
+      const properties = { ...layout.properties };
+      const required = [...layout.required];
+      for (const [index, { name, variants }] of dimensions.entries()) {
+        const variant = variants[selection[index]];
+        const { values } = variant;
+        if (values.length && !variant.expression) {
+          const rule = `json_exclusive_property_${next++}`;
+          builder.rule(rule, choice(...values.map(item => constantExpression(item, pointer, 'oneOf'))));
+          variant.expression = ref(rule);
+        }
+        properties[name] = values.length ? () => variant.expression : false;
+        if (values.length) required.push(name);
+      }
+      return objectExpression({ properties, required, additionalProperties: layout.additionalProperties }, location);
+    }).filter(Boolean);
+    return expressions.length ? choice(...expressions) : null;
+  }
+  function exclusivePropertyVariants(schemas, sibling, budget) {
+    const checks = schemas.length + Number(sibling !== true);
     const candidates = new Map();
     for (const schema of schemas) {
       const finite = finiteSchemaCandidates(schema, analysis.target, budget);
@@ -1038,24 +1102,20 @@ export function importJsonSchema(schema) {
         candidates.set(JSON.stringify(item), item);
       }
     }
-    const accepted = [];
+    const variants = new Map();
     for (const [source, item] of candidates) {
       const document = readJsonDocument(source);
-      if ((sibling === true || validateJsonDocument(document, sibling, analysis).errors.length === 0)
-          && schemas.filter(rule => validateJsonDocument(document, rule, analysis).errors.length === 0).length === 1) {
-        accepted.push(constantExpression(item, pointer, 'oneOf'));
+      if (sibling !== true && validateJsonDocument(document, sibling, analysis).errors.length !== 0) continue;
+      const matches = [];
+      for (const [index, rule] of schemas.entries()) {
+        if (validateJsonDocument(document, rule, analysis).errors.length === 0) matches.push(index);
       }
+      if (!matches.length) continue;
+      const key = matches.join(',');
+      if (!variants.has(key)) variants.set(key, { matches, values: [] });
+      variants.get(key).values.push(item);
     }
-    if (!accepted.length) return null;
-    const selected = () => choice(...accepted);
-    if (siblingAssertions.length) {
-      const collection = collectionConstraints([rules, base.rules], object, 'oneOf', pointer, 0, { name, expression: selected });
-      if (!collection) return undefined;
-      const { properties, required, additionalProperties } = collection.rules;
-      return objectExpression({ properties, required: [...required, name], additionalProperties }, pointer);
-    }
-    const properties = { ...base.properties, [name]: selected };
-    return objectExpression({ properties, required: [...base.required, name], additionalProperties: base.additionalProperties }, base.pointer);
+    return [...variants.values()];
   }
   function alternativeConjunctionExpression(rules, alternatives, allowedTypes, keyword, pointer) {
     const entries = [];
@@ -1131,7 +1191,7 @@ export function importJsonSchema(schema) {
         if (overlaps) {
           const array = exclusiveArrayLengthExpression(rules, alternatives, allowedTypes, pointer);
           if (array !== undefined) return array;
-          const object = exclusiveObjectPropertyExpression(rules, alternatives, allowedTypes, pointer);
+          const object = exclusiveObjectFieldExpression(rules, alternatives, allowedTypes, pointer);
           if (object !== undefined) return object;
         }
         if (!overlaps) {

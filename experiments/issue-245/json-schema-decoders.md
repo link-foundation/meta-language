@@ -123,6 +123,13 @@ required fields, escaped names and values, and the additional-property schema
 when the parent leaves the exclusive property undeclared. It also checks when
 the parent excludes every value accepted by exactly one branch.
 
+Run `node experiments/issue-245/json-schema-exclusive-object-fields.mjs`
+to check when several finite properties jointly distinguish object alternatives.
+The earlier decoder admitted `{"mode":"shared","region":"central","evidence":"quote"}`
+even though both branches matched. The fixture exercises two and three
+branches, absent optional fields, field ordering, escaped keys, local
+references, and shared and parent constraints.
+
 The required prefix cases share a length range and distinguish branches by
 their first string value. One minimum length comes from a sibling of the
 local reference. The decoder previously admitted `["selected",null]` and now

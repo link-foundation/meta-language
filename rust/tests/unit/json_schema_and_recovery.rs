@@ -21,6 +21,8 @@ const EXCLUSIVE_OBJECT_PROPERTY_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-object-property.lino";
 const EXCLUSIVE_OBJECT_SIBLINGS_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-object-siblings.lino";
+const EXCLUSIVE_OBJECT_FIELDS_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-object-fields.lino";
 
 fn fixture() -> Value {
     read_project_data(include_str!(
@@ -346,6 +348,24 @@ fn exclusive_object_alternatives_apply_parent_object_assertions() {
             "siblingObjectAssertionsCanExcludeEveryAlternative",
         ],
         test_name: "exclusive_object_alternatives_apply_parent_object_assertions",
+    });
+}
+
+#[test]
+fn exclusive_object_alternatives_count_branches_across_several_finite_fields() {
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-object-fields.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-FIELDS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-object-fields",
+        fixture_file: EXCLUSIVE_OBJECT_FIELDS_FIXTURE,
+        assertions: &[
+            "decoderCountsExclusiveObjectFieldCombinations",
+            "incompatibleExclusiveObjectFieldsHaveNoGeneratableDocument",
+        ],
+        test_name: "exclusive_object_alternatives_count_branches_across_several_finite_fields",
     });
 }
 

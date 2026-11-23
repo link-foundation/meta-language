@@ -278,6 +278,7 @@ struct ObjectMembers<'members> {
     group: usize,
 }
 
+#[derive(Clone)]
 enum CollectionConstraints<'schema> {
     Object {
         properties: Vec<(&'schema str, CollectionChild<'schema>)>,
@@ -304,15 +305,71 @@ struct ArrayLengthProfile<'schema> {
     layout: Option<ArrayItemLayout<'schema>>,
 }
 
+#[derive(Clone)]
 enum CollectionChild<'schema> {
     Schema(&'schema Value),
     Conjunction(Vec<ConjunctionEntry<'schema>>),
 }
 
+#[derive(Clone)]
 enum ConjunctionEntry<'schema> {
     Expression(Expression),
     Number(&'static str, Value),
     Collection(CollectionConstraints<'schema>),
+}
+
+struct ObjectFieldVariants<'schema> {
+    name: &'schema str,
+    variants: Vec<ObjectFieldVariant<'schema>>,
+}
+
+struct ObjectFieldVariant<'schema> {
+    branches: Vec<usize>,
+    values: Vec<Cow<'schema, Value>>,
+    expression: Option<Expression>,
+}
+
+fn select_exclusive_object_fields(
+    fields: &[ObjectFieldVariants<'_>],
+    branches: &[usize],
+    work_per_object: usize,
+    remaining_work: &mut usize,
+    selected: &mut Vec<usize>,
+    selections: &mut Vec<Vec<usize>>,
+) -> Option<()> {
+    let Some((field, rest)) = fields.split_first() else {
+        if branches.len() == 1 {
+            *remaining_work = remaining_work.checked_sub(work_per_object)?;
+            selections.push(selected.clone());
+        }
+        return Some(());
+    };
+    for (index, variant) in field.variants.iter().enumerate() {
+        let cost = branches
+            .len()
+            .checked_mul(variant.branches.len())?
+            .checked_add(1)?;
+        *remaining_work = remaining_work.checked_sub(cost)?;
+        let matching: Vec<_> = branches
+            .iter()
+            .copied()
+            .filter(|branch| variant.branches.contains(branch))
+            .collect();
+        if matching.is_empty() {
+            continue;
+        }
+        selected.push(index);
+        select_exclusive_object_fields(
+            rest,
+            &matching,
+            work_per_object,
+            remaining_work,
+            selected,
+            selections,
+        )?;
+        selected.pop();
+    }
+    Some(())
 }
 
 fn append_member(item: &Expression, started: bool) -> Expression {
@@ -509,7 +566,7 @@ impl<'schema> Importer<'schema> {
                         return expression;
                     }
                     if overlaps
-                        && let Some(expression) = self.exclusive_object_property_expression(
+                        && let Some(expression) = self.exclusive_object_field_expression(
                             schema,
                             branches,
                             allowed_types,
@@ -1393,7 +1450,7 @@ impl<'schema> Importer<'schema> {
         Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
     }
 
-    fn exclusive_object_property_expression(
+    fn exclusive_object_field_expression(
         &mut self,
         schema: &'schema Value,
         branches: &'schema [Value],
@@ -1454,7 +1511,7 @@ impl<'schema> Importer<'schema> {
         let properties: Vec<_> = property_schemas(base).collect();
         let required: BTreeSet<_> = required_property_names(base).collect();
         let additional = additional_property_schema(base);
-        let mut differing = None;
+        let mut differing = Vec::new();
         for (layout, _) in others {
             if required_property_names(layout).collect::<BTreeSet<_>>() != required
                 || additional_property_schema(layout) != additional
@@ -1463,69 +1520,88 @@ impl<'schema> Importer<'schema> {
                 return None;
             }
             for &(name, property) in &properties {
-                if layout["properties"].get(name)? != property {
-                    if differing.is_some_and(|previous| previous != name) {
-                        return None;
-                    }
-                    differing = Some(name);
+                if layout["properties"].get(name)? != property && !differing.contains(&name) {
+                    differing.push(name);
                 }
             }
         }
-        let Some(name) = differing else {
+        if differing.is_empty() {
             return Some(None);
-        };
-
-        // Without the differing property, an object matches every branch or none.
-        let schemas: Vec<_> = layouts
-            .iter()
-            .map(|&(layout, _)| &layout["properties"][name])
+        }
+        let all_branches: Vec<_> = (0..layouts.len()).collect();
+        let required: BTreeSet<_> = required
+            .into_iter()
+            .chain(required_property_names(schema))
             .collect();
-        let sibling = schema["properties"]
-            .get(name)
-            .unwrap_or_else(|| additional_property_schema(schema));
-        let checks = schemas.len() + usize::from(sibling != &UNRESTRICTED_SCHEMA);
         let mut work = 16_384;
-        let mut seen = HashSet::new();
-        let mut candidates = Vec::new();
-        for child in &schemas {
-            let (values, _) = finite_schema_candidates(
-                self.root,
-                child,
-                &mut HashSet::new(),
-                &mut work,
-                0,
-                ALL_JSON_TYPES,
-            )?;
-            for value in values {
-                charge_collection_value(value.as_ref(), checks, &mut work, 0)?;
-                if seen.insert(value.to_string()) {
-                    candidates.push(value);
-                }
-            }
-        }
-        let mut accepted = Vec::new();
-        for value in &candidates {
-            if sibling != &UNRESTRICTED_SCHEMA
-                && !super::validation::accepts_constant(self.root, [sibling], value.as_ref())
-            {
-                continue;
-            }
-            let matches = schemas
+        let mut fields = Vec::new();
+        for &name in &differing {
+            let schemas: Vec<_> = layouts
                 .iter()
-                .filter(|&&schema| {
-                    super::validation::accepts_constant(self.root, [schema], value.as_ref())
-                })
-                .count();
-            if matches == 1 {
-                accepted.push(self.constant(value.as_ref(), pointer, "oneOf"));
+                .map(|&(layout, _)| &layout["properties"][name])
+                .collect();
+            let sibling = schema["properties"]
+                .get(name)
+                .unwrap_or_else(|| additional_property_schema(schema));
+            let mut variants = self.exclusive_property_variants(&schemas, sibling, &mut work)?;
+            if !required.contains(name) && differing.len() > 1 {
+                variants.push(ObjectFieldVariant {
+                    branches: all_branches.clone(),
+                    values: Vec::new(),
+                    expression: None,
+                });
             }
+            fields.push(ObjectFieldVariants { name, variants });
         }
-        if accepted.is_empty() {
+        let mut selections = Vec::new();
+        if let [field] = fields.as_mut_slice() {
+            let values: Vec<_> = field
+                .variants
+                .drain(..)
+                .filter(|variant| variant.branches.len() == 1)
+                .flat_map(|variant| variant.values)
+                .collect();
+            if values.is_empty() {
+                return Some(None);
+            }
+            field.variants.push(ObjectFieldVariant {
+                branches: Vec::new(),
+                values,
+                expression: None,
+            });
+            selections.push(vec![0]);
+        } else {
+            // An absent optional field admits every branch. Each selected
+            // combination has its own ordinary object grammar and budget cost.
+            let names: HashSet<_> = properties
+                .iter()
+                .map(|&(name, _)| name)
+                .chain(required.iter().copied())
+                .chain(property_schemas(schema).map(|(name, _)| name))
+                .collect();
+            if names.len() > 12 {
+                return None;
+            }
+            let work_per_object = ((1 << names.len()) + 1) * (2 + names.len());
+            select_exclusive_object_fields(
+                &fields,
+                &all_branches,
+                work_per_object,
+                &mut work,
+                &mut Vec::new(),
+                &mut selections,
+            )?;
+        }
+        if selections.is_empty() {
             return Some(None);
         }
-        let selected = EXPRESSION.choice_unordered(accepted);
-        if has_sibling_assertions {
-            let selected_location = pointer_child(&pointer_child(pointer, "properties"), name);
+
+        let (properties, additional, required, location) = if has_sibling_assertions {
+            let property_location = pointer_child(pointer, "properties");
+            let selected_locations: HashSet<_> = differing
+                .iter()
+                .map(|name| pointer_child(&property_location, name))
+                .collect();
             let CollectionConstraints::Object {
                 properties,
                 additional,
@@ -1536,10 +1612,8 @@ impl<'schema> Importer<'schema> {
                 Some("oneOf"),
                 pointer,
                 |children, location| {
-                    if location == selected_location.as_str() {
-                        return Some(CollectionChild::Conjunction(vec![
-                            ConjunctionEntry::Expression(selected.clone()),
-                        ]));
+                    if selected_locations.contains(location) {
+                        return Some(CollectionChild::Schema(&UNRESTRICTED_SCHEMA));
                     }
                     self.combine_child_schemas(children, location, 0)
                 },
@@ -1547,32 +1621,124 @@ impl<'schema> Importer<'schema> {
             else {
                 return None;
             };
-            return Some(self.object_with_properties(
-                properties,
-                additional,
-                required.into_iter().chain(std::iter::once(name)),
-                pointer,
-            ));
+            (properties, additional, required, pointer)
+        } else {
+            (
+                properties
+                    .into_iter()
+                    .map(|(name, value)| (name, CollectionChild::Schema(value)))
+                    .collect(),
+                CollectionChild::Schema(additional),
+                required.into_iter().collect(),
+                location.as_str(),
+            )
+        };
+        let mut expressions = Vec::new();
+        for selection in selections {
+            let mut overrides = HashMap::new();
+            let mut required = required.clone();
+            for (field, selected) in fields.iter_mut().zip(selection) {
+                let variant = &mut field.variants[selected];
+                if variant.values.is_empty() {
+                    overrides.insert(field.name, CollectionChild::Schema(&PROHIBITED_SCHEMA));
+                    continue;
+                }
+                if variant.expression.is_none() {
+                    let rule = format!("json_exclusive_property_{}", self.next());
+                    let expression = EXPRESSION.choice_unordered(
+                        variant
+                            .values
+                            .iter()
+                            .map(|value| self.constant(value.as_ref(), pointer, "oneOf"))
+                            .collect::<Vec<_>>(),
+                    );
+                    self.grammar.add_rule(GrammarRule::new(&rule, expression));
+                    variant.expression = Some(reference_expression(&rule));
+                }
+                let expression = variant.expression.as_ref()?.clone();
+                overrides.insert(
+                    field.name,
+                    CollectionChild::Conjunction(vec![ConjunctionEntry::Expression(expression)]),
+                );
+                required.push(field.name);
+            }
+            let fields = properties
+                .iter()
+                .map(|(name, child)| {
+                    (
+                        *name,
+                        overrides.remove(name).unwrap_or_else(|| child.clone()),
+                    )
+                })
+                .collect();
+            if let Some(expression) = self.object_with_properties(
+                fields,
+                additional.clone(),
+                required.into_iter(),
+                location,
+            ) {
+                expressions.push(expression);
+            }
         }
-        let fields = properties
-            .into_iter()
-            .map(|(key, rule)| {
-                let child = if key == name {
-                    CollectionChild::Conjunction(vec![ConjunctionEntry::Expression(
-                        selected.clone(),
-                    )])
-                } else {
-                    CollectionChild::Schema(rule)
-                };
-                (key, child)
-            })
-            .collect();
-        Some(self.object_with_properties(
-            fields,
-            CollectionChild::Schema(additional),
-            required.into_iter().chain(std::iter::once(name)),
-            location,
-        ))
+        Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
+    }
+
+    fn exclusive_property_variants(
+        &self,
+        schemas: &[&'schema Value],
+        sibling: &'schema Value,
+        work: &mut usize,
+    ) -> Option<Vec<ObjectFieldVariant<'schema>>> {
+        let checks = schemas.len() + usize::from(sibling != &UNRESTRICTED_SCHEMA);
+        let mut seen = HashSet::new();
+        let mut candidates = Vec::new();
+        for child in schemas {
+            let (values, _) = finite_schema_candidates(
+                self.root,
+                child,
+                &mut HashSet::new(),
+                work,
+                0,
+                ALL_JSON_TYPES,
+            )?;
+            for value in values {
+                charge_collection_value(value.as_ref(), checks, work, 0)?;
+                if seen.insert(value.to_string()) {
+                    candidates.push(value);
+                }
+            }
+        }
+        let mut signatures = HashMap::new();
+        let mut variants = Vec::new();
+        for value in candidates {
+            if sibling != &UNRESTRICTED_SCHEMA
+                && !super::validation::accepts_constant(self.root, [sibling], value.as_ref())
+            {
+                continue;
+            }
+            let branches: Vec<_> = schemas
+                .iter()
+                .enumerate()
+                .filter_map(|(index, &schema)| {
+                    super::validation::accepts_constant(self.root, [schema], value.as_ref())
+                        .then_some(index)
+                })
+                .collect();
+            if branches.is_empty() {
+                continue;
+            }
+            let index = *signatures.entry(branches.clone()).or_insert_with(|| {
+                let index = variants.len();
+                variants.push(ObjectFieldVariant {
+                    branches,
+                    values: Vec::new(),
+                    expression: None,
+                });
+                index
+            });
+            variants[index].values.push(value);
+        }
+        Some(variants)
     }
 
     fn alternative_numeric_expression(
