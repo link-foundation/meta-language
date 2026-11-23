@@ -182,8 +182,10 @@ the generic translation and by the translation with the shared emitter
 [decorators](decorators.md) of `parity/self-translation/decorators.lino`
 (`--decorators` names another set), so the report shows how much of the
 difference the decorators close. The whole of `js/src` takes over an hour on
-one runner, so `--shard K/N` measures one of N shards that hold about the same
-number of source bytes, and `--list` prints a shard's modules. CI's
+one runner, so `--shard K/N` measures one of N shards, and `--list` prints a
+shard's modules. The eight CI shards use source-bound timing estimates and
+adjust assignments for observed import resolution and measurement costs.
+Other shard counts use source bytes. CI's
 `Self-Translation Report` jobs in `ci.yml` run eight shards beside the
 JavaScript tests. Each shard publishes its part of the report in
 its job summary and as a `self-translation-report-<sha>-<shard>` artifact.
@@ -203,6 +205,13 @@ the providers' checked translated-export signatures and each module's directory
 to both measurements. It caches source reads, signatures and dependency contexts
 within a shard. Missing providers, unsupported exports and unresolved cycles
 retain the translator's carried-item diagnostics.
+
+In CI run [45133354161](https://github.com/link-foundation/meta-language/actions/runs/45133354161),
+shard 2 spent 999 seconds resolving its first module's imports and another 281
+seconds resolving the program translator's imports. The report assigns
+`grammar-emitters/antlr.js`, `program-translation.js` and
+`translation/emit-rust.js` to shards 6, 7 and 8. Those jobs finished in 16 to
+21 minutes within the 30-minute deadline.
 
 The same measurements retain each item's exact range, concrete syntax term and
 actual translation error. Report-only diagnostic capture preserves the ordinary

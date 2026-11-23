@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { compareRustDefinitions, createModuleContext, measureReportModules, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { compareRustDefinitions, createModuleContext, measureReportModules, measureSelfTranslationModule, partitionReportModules, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { partitionGroupFiles, partitionMeasuredWorkloads, partitionTests, testFiles } from '../scripts/test-groups.mjs';
@@ -17,6 +17,25 @@ test('report scheduling retains every source across eight balanced shards', () =
   assert.deepEqual(shards.flat().sort(), files);
   const loads = shards.map(shard => shard.reduce((sum, file) => sum + elapsed.get(file), 0));
   assert.ok(Math.max(...loads) < 1_500_000, 'recorded costs leave a margin in the existing deadline');
+});
+
+test('report scheduling separates shard 2 import and measurement work while keeping every module', () => {
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-report-costs.lino', import.meta.url));
+  const files = costs.entries.map(row => row.file).sort();
+  const previous = partitionMeasuredWorkloads(files, 8, { costs });
+  const expected = previous.map(shard => [...shard]);
+  for (const [module, destination] of [
+    ['js/src/grammar-emitters/antlr.js', 6],
+    ['js/src/program-translation.js', 7],
+    ['js/src/translation/emit-rust.js', 8],
+  ]) {
+    const old = expected.find(shard => shard.includes(module));
+    old.splice(old.indexOf(module), 1);
+    expected[destination - 1].push(module);
+  }
+  const shards = partitionReportModules(files);
+  assert.deepEqual(shards, expected.map(shard => shard.sort()));
+  assert.deepEqual(shards.flat().sort(), files);
 });
 
 test('translation scheduling retains every test across six balanced shards', () => {

@@ -43,6 +43,15 @@ import {partitionMeasuredWorkloads} from './test-groups.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const reportSchedulingFile = new URL('../../parity/fixtures/ci-45080642295-report-costs.lino', import.meta.url);
+// CI run 45133354161 showed that the historical timings attributed blocked
+// worker completions to the wrong module. Shard 2 spent another 281 seconds
+// resolving the program translator's imports after the shared cold start.
+// Move that import graph and two large translations to jobs with headroom.
+const reportShardAssignments = [
+  ['js/src/grammar-emitters/antlr.js', 6],
+  ['js/src/program-translation.js', 7],
+  ['js/src/translation/emit-rust.js', 8],
+];
 const STATUSES = ['translated', 'carried', 'comment'];
 const DEFAULT_DECORATORS = 'parity/self-translation/decorators.lino';
 // The native codec keeps pattern graph scope admission in this component.
@@ -93,7 +102,7 @@ function listSourceModules() {
  */
 function shardOf(files, index, count) {
   if (count === 8 && files.length >= count) {
-    return partitionMeasuredWorkloads(files, count, { costs: readProjectData(reportSchedulingFile) })[index - 1];
+    return partitionReportModules(files)[index - 1];
   }
   const loads = Array(count).fill(0);
   const shards = Array.from({ length: count }, () => []);
@@ -105,6 +114,17 @@ function shardOf(files, index, count) {
     shards[target].push(file);
   }
   return shards[index - 1].sort();
+}
+
+export function partitionReportModules(files) {
+  const shards = partitionMeasuredWorkloads(files, 8, { costs: readProjectData(reportSchedulingFile) });
+  for (const [module, destination] of reportShardAssignments) {
+    const source = shards.find(shard => shard.includes(module));
+    if (!source || source === shards[destination - 1]) continue;
+    source.splice(source.indexOf(module), 1);
+    shards[destination - 1].push(module);
+  }
+  return shards.map(shard => shard.sort());
 }
 
 function selectedModules(replayPlan) {
