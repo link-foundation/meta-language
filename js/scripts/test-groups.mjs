@@ -152,12 +152,17 @@ export function partitionGroupFiles(files, shard = '1/1') {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
   // Native and historical modulo cohorts retain their exact partition rules.
-  // Translation shard 5 timed out in run 45153024974 while shard 3 finished
-  // in under ten minutes. Move its two complete source checks (85 s and 70 s).
+  // Spread the two complete source checks from shard 5 (85 s and 70 s)
+  // across shards 3 and 4. Run 45173065418 showed both together exhausting shard 3.
+  // Shard 1 also timed out in that run. Its relative array history took 95 s.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
-  if(count===6&&files.includes('translation-owned-number-facts.test.js')){
-    const moved=new Set(['translation-current-own-codebase-raw-source-descriptors.test.js','translation-self-recursive-declaration-owners.test.js']);
-    return files.filter((file,offset)=>moved.has(file)?index===3:offset%count===index-1);
+  if (count === 6 && files.includes('translation-owned-number-facts.test.js')) {
+    const measuredPartitions = new Map([
+      ['translation-current-own-codebase-raw-source-descriptors.test.js', 3],
+      ['translation-self-recursive-declaration-owners.test.js', 4],
+      ['translation-array-relative-history.test.js', 4],
+    ]);
+    return files.filter((file, offset) => (measuredPartitions.get(file) ?? (offset % count) + 1) === index);
   }
   return files.filter((_, offset) => offset % count === index - 1);
 }

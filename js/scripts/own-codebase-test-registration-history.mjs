@@ -30,8 +30,8 @@ const policy={
         "sha256": "38be4eb51ddcb241e1a454616049be44a088aa35ac610d7dfdeb8fcc8535ddcb"
       },
       "current": {
-        "bytes": 14483,
-        "sha256": "c649cce4247d1d14fbd418bb9e2c24c81b087f0923b54abfea2d2b97d0216ac3"
+        "bytes": 14689,
+        "sha256": "3be830bca130d916cd4ce0895dd357ed6826a133b8cc0a59b4de297f29f5c306"
       },
       "edits": [
         {
@@ -49,6 +49,10 @@ const policy={
         {
           "before": "  // Only the measured general-grammar cohort changes owners. Native and\n  // historical modulo cohorts retain their independent exact partition rules.\n  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));\n",
           "after": "  // Native and historical modulo cohorts retain their exact partition rules.\n  // Translation shard 5 timed out in run 45153024974 while shard 3 finished\n  // in under ten minutes. Move its two complete source checks (85 s and 70 s).\n  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));\n  if(count===6&&files.includes('translation-owned-number-facts.test.js')){\n    const moved=new Set(['translation-current-own-codebase-raw-source-descriptors.test.js','translation-self-recursive-declaration-owners.test.js']);\n    return files.filter((file,offset)=>moved.has(file)?index===3:offset%count===index-1);\n  }\n"
+        },
+        {
+          "before": "  // Native and historical modulo cohorts retain their exact partition rules.\n  // Translation shard 5 timed out in run 45153024974 while shard 3 finished\n  // in under ten minutes. Move its two complete source checks (85 s and 70 s).\n  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));\n  if(count===6&&files.includes('translation-owned-number-facts.test.js')){\n    const moved=new Set(['translation-current-own-codebase-raw-source-descriptors.test.js','translation-self-recursive-declaration-owners.test.js']);\n    return files.filter((file,offset)=>moved.has(file)?index===3:offset%count===index-1);\n  }\n",
+          "after": "  // Native and historical modulo cohorts retain their exact partition rules.\n  // Spread the two complete source checks from shard 5 (85 s and 70 s)\n  // across shards 3 and 4. Run 45173065418 showed both together exhausting shard 3.\n  // Shard 1 also timed out in that run. Its relative array history took 95 s.\n  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));\n  if (count === 6 && files.includes('translation-owned-number-facts.test.js')) {\n    const measuredPartitions = new Map([\n      ['translation-current-own-codebase-raw-source-descriptors.test.js', 3],\n      ['translation-self-recursive-declaration-owners.test.js', 4],\n      ['translation-array-relative-history.test.js', 4],\n    ]);\n    return files.filter((file, offset) => (measuredPartitions.get(file) ?? (offset % count) + 1) === index);\n  }\n"
         }
       ]
     },

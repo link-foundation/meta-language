@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
-const archiveHash='d3c8ee0180fe6012f21ebc8f4bbe4522b329c48359b92b82a34fe00a406f7ee0';
+const archiveHash='8dfcdd7a4ebc5ca12ce76a02f79c8af888c0727e66987751f0f2370714a87e9c';
 let history;
 
 /** Restore complete certified predecessors for the original raw CI guards. */

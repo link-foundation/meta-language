@@ -172,6 +172,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          filter: ${{ matrix.group == 'translation' && 'blob:none' || '' }}
 
       - name: Simulate fresh merge with base branch
         if: github.event_name == 'pull_request'

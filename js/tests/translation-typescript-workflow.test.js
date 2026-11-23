@@ -26,6 +26,8 @@ test('six bounded translation partitions retain every previous file once and pre
   const workflow=read('.github/workflows/js.yml');
   const tests=parseWorkflow(workflow).find(job=>job.id==='tests');
   assert.match(tests.header,/timeout-minutes: 15/u);assert.match(tests.header,/fail-fast: false/u);
+  const checkout=tests.steps.find(value=>value.name==='- uses: actions/checkout@v7');
+  assert.match(checkout?.text??'',/fetch-depth: 0\n          filter: \$\{\{ matrix.group == 'translation' && 'blob:none' \|\| '' \}\}\n/u);
   const entries=[...tests.header.matchAll(/\{group: translation, partition: ([0-9]+), shards: ([0-9]+)\}/gu)]
     .map(([,index,count])=>[Number(index),Number(count)]);
   assert.deepEqual(entries,[[1,6],[2,6],[3,6],[4,6],[5,6],[6,6]]);
@@ -41,13 +43,18 @@ test('six bounded translation partitions retain every previous file once and pre
   for(const file of partitionTests(originalFiles).groups.translation)assert.ok(files.includes(file),file);
 });
 
-test('the six translation shards move only the two measured checks out of the timed-out shard',()=>{
+test('the six translation shards distribute only the three measured checks from the timed-out shards',()=>{
   const files=partitionTests(testFiles()).groups.translation;
-  const moved=['translation-current-own-codebase-raw-source-descriptors.test.js','translation-self-recursive-declaration-owners.test.js'];
-  for(const file of moved)assert.ok(files.includes(file),file);
+  const moved=new Map([
+    ['translation-current-own-codebase-raw-source-descriptors.test.js',3],
+    ['translation-self-recursive-declaration-owners.test.js',4],
+    ['translation-array-relative-history.test.js',4],
+  ]);
+  for(const file of moved.keys())assert.ok(files.includes(file),file);
   for(let shard=1;shard<=6;shard++){
-    const previous=files.filter((file,offset)=>!moved.includes(file)&&offset%6===shard-1);
-    const expected=shard===3?[...previous,...moved].sort():previous;
+    const previous=files.filter((file,offset)=>!moved.has(file)&&offset%6===shard-1);
+    const reassigned=[...moved].filter(([,owner])=>owner===shard).map(([file])=>file);
+    const expected=[...previous,...reassigned].sort();
     assert.deepEqual(partitionGroupFiles(files,shard+'/6'),expected);
   }
   for(let shard=1;shard<=3;shard++){

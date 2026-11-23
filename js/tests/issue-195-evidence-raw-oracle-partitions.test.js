@@ -88,9 +88,17 @@ test('two required raw contract cells preserve complete commands limits and the 
   assert.equal(after.header.replace('          - group: source-model-raw-schema\n            generated_slice: first\n',''),before.header);
   const checkoutFilter="          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n";
   assert.equal(after.steps.filter(step=>step.text.includes(checkoutFilter)).length,1);
+  const translationCheckoutFilter="          filter: ${{ matrix.group == 'translation' && 'blob:none' || '' }}\n";
   for(const oldJob of previous){
     const actual=current.find(row=>row.id===oldJob.id);
-    if(oldJob.id!=='package-checks')assert.deepEqual(actual,oldJob);
+    if(oldJob.id==='tests'){
+      const filtered=actual.steps.filter(step=>step.text.includes(translationCheckoutFilter));
+      assert.equal(filtered.length,1);
+      assert.equal(filtered[0].name,'- uses: actions/checkout@v7');
+      assert.match(filtered[0].text,/^ {10}fetch-depth: 0$/mu);
+      const steps=actual.steps.map(step=>({...step,text:step.text.replace(translationCheckoutFilter,'')}));
+      assert.deepEqual({...actual,steps},oldJob);
+    }else if(oldJob.id!=='package-checks')assert.deepEqual(actual,oldJob);
     else for(const step of oldJob.steps.filter(row=>row.name!==old.name)){
       const currentStep=actual.steps.find(row=>row.name===step.name).text;
       if(step.name==='- uses: actions/checkout@v7'){
@@ -100,7 +108,8 @@ test('two required raw contract cells preserve complete commands limits and the 
     }
   }
   for(const value of [currentSource+'\n# changed\n',currentSource.replace('timeout-minutes: 10','timeout-minutes: 11'),
-    currentSource.replace(checkoutFilter,''),currentSource.replace('blob:none','tree:0')]){
+    currentSource.replace(checkoutFilter,''),currentSource.replace(translationCheckoutFilter,''),
+    currentSource.replace('blob:none','tree:0')]){
     assert.equal(restoreRawOracleContractPartitionHistory(value,path),value);
   }
 });
