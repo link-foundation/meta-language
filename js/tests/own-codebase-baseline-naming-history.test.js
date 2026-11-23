@@ -38,8 +38,9 @@ test('historical naming retains complete certified definitions and every indepen
 
 test('unknown whole current naming sources and driver bytes cannot borrow historical authority',()=>{
   const history=readOwnCodebaseHistoricalNamingSources(),scratch=mkdtempSync(join(tmpdir(),'meta-language-own-naming-'));
-  const files=[...new Set([...history.views.map(view=>view.file),history.driver.file,
-    ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file),
+  const strictFiles=new Set([...history.views.map(view=>view.file),history.driver.file,
+    ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file)]);
+  const files=[...new Set([...strictFiles,
     ...NAME_INVENTORIES.filter(entry=>entry.inventory.startsWith('B70 physical field source view names for '))
       .flatMap(entry=>entry.files.filter(file=>Object.hasOwn(dependencyWorkflowPredecessors,file)))])];
   try{
@@ -48,9 +49,7 @@ test('unknown whole current naming sources and driver bytes cannot borrow histor
     assert.deepEqual(extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),expected);
     for(const file of files){
       const destination=join(scratch,file),source=readFileSync(destination);writeFileSync(destination,Buffer.concat([source,Buffer.from('\n')]));
-      const dependencyOnly=Object.hasOwn(dependencyWorkflowPredecessors,file)
-        && !history.views.some(view=>view.file===file)
-        && !readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.some(view=>view.file===file);
+      const dependencyOnly=Object.hasOwn(dependencyWorkflowPredecessors,file)&&!strictFiles.has(file);
       if(dependencyOnly) {
         assert.deepEqual(extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),expected.filter(row=>row.file!==file));
       } else {

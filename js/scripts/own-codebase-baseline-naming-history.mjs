@@ -74,10 +74,9 @@ const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:digest(bytes)});
 function exactKeys(value,keys){assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());}
 let additionalSnapshot,originalSnapshot;
 
-/** Return a detached copy; callers cannot change the trusted source anchors. */
-export function readOwnCodebaseHistoricalNamingPolicy(){
+function readAdditionalSourceViews(){
   const text=readFileSync(new URL('../../parity/naming/array-identity-historical-inventories.lino',import.meta.url),'utf8');
-  if(additionalSnapshot?.text===text)return{...structuredClone(policy),additionalSourceViews:structuredClone(additionalSnapshot.value)};
+  if(additionalSnapshot?.text===text)return additionalSnapshot.value;
   additionalSnapshot=undefined;
   const additional=readBootstrapStructuredDataLino(text);
   exactKeys(additional,['schemaVersion','model','revision','sources','views','boundary']);
@@ -101,8 +100,13 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
     assert.equal(typeof view.inventory,'string');assert.ok(Array.isArray(view.names)&&view.names.length>0);
     for(const row of view.names){exactKeys(row,['name','record']);assert.equal(typeof row.name,'string');assert.equal(typeof row.record,'string');}
   }
-  additionalSnapshot={text,value:structuredClone(additional)};
-  return{...structuredClone(policy),additionalSourceViews:additional};
+  additionalSnapshot={text,value:additional};
+  return additional;
+}
+
+/** Return detached copies; callers cannot change the trusted source anchors. */
+export function readOwnCodebaseHistoricalNamingPolicy(){
+  return {...structuredClone(policy),additionalSourceViews:structuredClone(readAdditionalSourceViews())};
 }
 
 /** Validate the compact complete source projection without loading the large archive. */
@@ -161,7 +165,7 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
       archive:'parity/naming/own-codebase-baseline-naming-history.lino',
       boundary:'Historical definitions keep their original identities. Every actual current inventory row is retained separately; changed source owners have distinct qualified records.'}})));
   }
-  const additional=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
+  const additional=readAdditionalSourceViews();
   for(const view of additional.views){
     const source=additional.sources.find(row=>row.file===view.file&&row.predecessor.revision===view.revision);
     const entries=inventories.filter(entry=>entry.inventory===view.inventory&&entry.files.includes(view.file));

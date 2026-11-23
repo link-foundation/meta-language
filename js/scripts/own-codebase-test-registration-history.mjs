@@ -145,16 +145,25 @@ export function verifyOwnCodebaseTestRegistrationHistory(history){
   return history;
 }
 
+let registrationSnapshot;
+
+function readVerifiedRegistrationHistory(){
+  const source=readFileSync(new URL('../../parity/naming/own-codebase-test-registration-source-history.lino',import.meta.url),'utf8');
+  if(registrationSnapshot?.source!==source){
+    registrationSnapshot={source,value:verifyOwnCodebaseTestRegistrationHistory(readBootstrapStructuredDataLino(source))};
+  }
+  return registrationSnapshot.value;
+}
+
 /** Normal offline controls need only this compact Links archive. */
 export function readOwnCodebaseTestRegistrationHistory(){
-  const source=readFileSync(new URL('../../parity/naming/own-codebase-test-registration-source-history.lino',import.meta.url),'utf8');
-  return verifyOwnCodebaseTestRegistrationHistory(readBootstrapStructuredDataLino(source));
+  return structuredClone(readVerifiedRegistrationHistory());
 }
 
 function restoreSource(source,file){
   assert.equal(typeof source,'string');
   source=restoreDependencyWorkflowSource(source,file);
-  const history=readOwnCodebaseTestRegistrationHistory();
+  const history=readVerifiedRegistrationHistory();
   const row=history.sources.find(row=>row.file===file);assert.ok(row);
   const current=replay(row.predecessor.source,row.edits);
   assert.ok(source===row.predecessor.source||source===current,'unknown complete sources cannot acquire historical test authority');

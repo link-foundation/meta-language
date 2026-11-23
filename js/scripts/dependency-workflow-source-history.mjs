@@ -104,9 +104,10 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = 'c261750dfef73c0d91c1d2052a6726dff0ceed515c50b44aa73c34263c460b68';
+const archiveDigest = '1e3a0ff83de369cdf8b81a3fa31ebd536765779210ab757480313072af1845c5';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
+const verifiedPredecessors = new WeakMap();
 
 /** Supply exact predecessor bytes to already registered historical assertions. */
 export function restoreDependencyWorkflowSource(source, file, revision = dependencyWorkflowPredecessors[file]) {
@@ -129,6 +130,7 @@ export function restoreDependencyWorkflowSource(source, file, revision = depende
   const bytes = Buffer.from(source);
   if (digest(bytes) !== row.currentDigest) return source;
   assert.equal(bytes.length, row.currentBytes);
+  if (verifiedPredecessors.has(row)) return verifiedPredecessors.get(row);
   const { offset, length, predecessor } = row.edit;
   assert.ok(Number.isSafeInteger(offset) && offset >= 0 && Number.isSafeInteger(length)
     && length >= 0 && offset + length <= bytes.length);
@@ -142,5 +144,7 @@ export function restoreDependencyWorkflowSource(source, file, revision = depende
     trees: row.certificate.ancestry.map((objectId) => archive.trees.get(objectId)),
     blob: row.certificate.blob,
   };
-  return verifyGitArtifactCertificate(certificate, previous, { revision, path: file }).toString('utf8');
+  const verified = verifyGitArtifactCertificate(certificate, previous, { revision, path: file }).toString('utf8');
+  verifiedPredecessors.set(row, verified);
+  return verified;
 }

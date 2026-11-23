@@ -2,9 +2,8 @@
 // declarations are checked independently before selecting that source view.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {readProjectData} from './project-data.mjs';
+import {readProjectData,readProjectFileBytes} from './project-data.mjs';
 import {structuredDataToLino,readStructuredDataLino} from '../src/structured-data-links.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {checkInventory,collectDependencies} from './dependency-inventory.mjs';
@@ -16,15 +15,20 @@ const testRevision='e4d60c822135ac3e4dc55d9141dabd30faf1e94a';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const policyHash='ae8dbb57e3f2d2df38c2e97765bf01ca58e358c0a1aab65681b2f82c5d3a23dc';
 const lastAppendRevision='ec9f4efb0e9ef936114e09823981352f6db13700';
-let originalInventory;
+let originalInventory,appendHistory;
+
+function readVerifiedAppendHistory() {
+  const bytes=readProjectFileBytes(file);assert.equal(digest(bytes),policyHash);
+  appendHistory??=readStructuredDataLino(bytes.toString('utf8'));
+  return appendHistory;
+}
 
 export function readDependencyInventoryAppendHistory() {
-  const bytes=readFileSync(file);assert.equal(digest(bytes),policyHash);
-  return readProjectData(file);
+  return structuredClone(readVerifiedAppendHistory());
 }
 
 export function restoreNodeDependencyInventoryTestSource(source) {
-  const history=readDependencyInventoryAppendHistory();
+  const history=readVerifiedAppendHistory();
   const original=history.test.source;
   let current=original;
   for(const edit of history.edits){assert.equal(current.split(edit.before).length,2);current=current.replace(edit.before,()=>edit.after);}
@@ -54,7 +58,7 @@ export function verifyDependencyInventoryAppends(inventory,declarations,history)
 
 function verifiedOriginalInventory(history) {
   if(history===undefined&&originalInventory)return originalInventory;
-  const original=history??readDependencyInventoryAppendHistory();
+  const original=history??readVerifiedAppendHistory();
   assert.equal(digest(structuredDataToLino(original)),policyHash);
   for(const [capture,revision,path]of [[original.inventory,inventoryRevision,'parity/dependency-inventory.lino'],
     [original.test,testRevision,'js/tests/issue-195-evidence-node-dependency.test.js']]){
