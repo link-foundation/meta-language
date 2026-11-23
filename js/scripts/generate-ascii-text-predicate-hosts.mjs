@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
+import { readIssue245SourcePair } from '../../experiments/issue-245/source-history.mjs';
 import { ASCII_HOST_REGISTRATIONS, asciiHostPin, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 
@@ -15,7 +16,11 @@ export function generateAsciiTextPredicateHosts({ check = false } = {}) {
   const artifact = readFileSync(new URL(archive.sourceArtifact.path, root));
   assert.deepEqual(asciiHostPin(artifact), archive.sourceArtifact.pin, 'the exact separately generated source artifact supplies this ABI');
   assert.deepEqual(readProjectData(new URL(archive.sourceArtifact.path, root)).libraryInterface, archive.sourceArtifact.libraryInterface);
-  assert.equal(readFileSync(new URL(archive.assertionCorrection.path, root), 'utf8'), archive.assertionCorrection.current.source,
+  const assertionPath = archive.assertionCorrection.path;
+  const assertion = readIssue245SourcePair(assertionPath);
+  assert.equal(readFileSync(new URL(assertionPath, root), 'utf8'), assertion.current,
+    'the actual test is the complete reviewed Lark source test');
+  assert.equal(assertion.predecessor, archive.assertionCorrection.current.source,
     'the exact complete current test retains the documented finite correction');
   for (const row of ASCII_HOST_REGISTRATIONS) {
     assert.equal(readFileSync(new URL(row.path, root), 'utf8').split(row.declaration).length, 2,

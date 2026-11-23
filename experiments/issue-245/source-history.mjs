@@ -14,6 +14,7 @@ export const larkEmitterSource = 'rust/src/grammar/emit/lark.rs';
 export const javascriptTestGroupsSource = 'js/scripts/test-groups.mjs';
 export const nodeDependencyTestSource = 'js/tests/issue-195-evidence-node-dependency.test.js';
 export const typedProgramLinksValidationSource = 'js/src/typed-program-links-validation.js';
+export const asciiPredicateAssertionSource = 'js/tests/translation-ascii-text-predicates.test.js';
 export const runtimeSourceFiles = Object.freeze([
   'rust/src/grammar/feature_runtime/mod.rs',
   'rust/src/grammar/feature_runtime/operations.rs',
@@ -47,6 +48,9 @@ const profiles = new Map([
   [typedProgramLinksValidationSource, { revision: mainRevision,
     predecessor: '6c2ea9bcb6266ef98af1b86708561dd8fd991e002f46c22dbfa047d90de39051',
     current: '0a3166246358793e5212c7f351f5e1d2254b27d699aceb15fc8ab71324e3e757' }],
+  [asciiPredicateAssertionSource, { revision: mainRevision,
+    predecessor: 'fbfe8f91bc813cd58ca68aab83a418c97824af6420f5683b0c72f2d98b012242',
+    current: '25aa26956e6db42b260269a4b30ac1681325eb3d9496a77c18fd54cb0fd68ebc' }],
 ]);
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const text = bytes => {

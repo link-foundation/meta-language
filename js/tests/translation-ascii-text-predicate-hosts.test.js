@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { asciiPredicateAssertionSource, restoreIssue245Source } from '../../experiments/issue-245/source-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { verifyAsciiTextPredicateHosts } from '../scripts/ascii-text-predicate-host-history.mjs';
 import { generateAsciiTextPredicateHosts } from '../scripts/generate-ascii-text-predicate-hosts.mjs';
@@ -11,6 +13,9 @@ test('complete ASCII native source hosts preserve certified predecessors actual 
   assert.equal(files.length, 4);
   assert.equal(archive.registrations.find(row => row.path === 'rust/tests/unit/mod.rs').declaration,
     'mod translation_ascii_text_predicates;');
+  const assertion = readFileSync(new URL(`../../${asciiPredicateAssertionSource}`, import.meta.url), 'utf8');
+  assert.equal(restoreIssue245Source(asciiPredicateAssertionSource, assertion), archive.assertionCorrection.current.source);
+  assert.throws(() => restoreIssue245Source(asciiPredicateAssertionSource, assertion + '\n'), /unreviewed complete source/u);
 });
 
 test('unknown host edits source corruption and forged predecessor certificates cannot produce a reviewed source view', () => {
