@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
+import {restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
 import {restoreRawOracleContractPartitionHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
@@ -70,9 +71,10 @@ test('the entire current test source retains every original call body hash and a
 
 test('two required raw contract cells preserve complete commands limits and the preceding whole workflow',()=>{
   const {history}=generateRawOracleContractPartitions({check:true}),path='.github/workflows/js.yml';
-  const currentSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const liveSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const currentSource=restoreAutomatedTranslationPauseSource(liveSource,path);
   const previousSource=history.sources.find(row=>row.path===path).source;
-  assert.equal(restoreRawOracleContractPartitionHistory(currentSource,path),previousSource);
+  assert.equal(restoreRawOracleContractPartitionHistory(liveSource,path),previousSource);
   const previous=parseWorkflow(previousSource),current=parseWorkflow(currentSource);
   assert.equal(current.length,previous.length);
   const before=previous.find(row=>row.id==='package-checks'),after=current.find(row=>row.id==='package-checks');
@@ -91,7 +93,12 @@ test('two required raw contract cells preserve complete commands limits and the 
     if(oldJob.id!=='package-checks')assert.deepEqual(actual,oldJob);
     else for(const step of oldJob.steps.filter(row=>row.name!==old.name))assert.equal(actual.steps.find(row=>row.name===step.name).text,step.text);
   }
-  for(const value of [currentSource+'\n# changed\n',currentSource.replace('timeout-minutes: 10','timeout-minutes: 11')]){
+  const livePackageChecks=parseWorkflow(liveSource).find(row=>row.id==='package-checks');
+  assert.equal(livePackageChecks.steps.find(row=>row.name===schema.name).text,schema.text);
+  assert.equal(livePackageChecks.steps.find(row=>row.name===plan.name).text,
+    plan.text.replace("matrix.group == 'source-model-raw'",
+      "matrix.group == 'source-model-raw' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'"));
+  for(const value of [liveSource+'\n# changed\n',liveSource.replace('timeout-minutes: 10','timeout-minutes: 11')]){
     assert.equal(restoreRawOracleContractPartitionHistory(value,path),value);
   }
 });

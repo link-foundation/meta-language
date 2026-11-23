@@ -1239,7 +1239,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-projection.test.mjs
 
       - name: Run complete original link raw schema and consumer contracts
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw-schema' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-schema' }}
         working-directory: js
         env:
           CI: 'true'

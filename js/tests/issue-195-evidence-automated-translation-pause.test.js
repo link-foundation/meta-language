@@ -114,6 +114,7 @@ test('ordinary workflows pause automated translation and fail on independent che
     ['Run portable Rust text certificate feasibility checks', 'source-models'],
     ['Run complete original link table projection checks', 'source-model-tables'],
     ['Run complete original link raw projection checks', 'source-model-raw-generation'],
+    ['Run complete original link raw native oracle contracts', 'source-model-raw'],
   ]) {
     const entry = step(js['package-checks'], name);
     const matrix = { group, generated_slice };
@@ -123,6 +124,7 @@ test('ordinary workflows pause automated translation and fail on independent che
   for (const [name, group, generated_slice] of [
     ['Check grammar-derived default CST expectations', 'grammar'],
     ['Check original link schema source closure', 'generated', 'second'],
+    ['Run complete original link raw schema and consumer contracts', 'source-model-raw-schema'],
   ]) {
     const entry = step(js['package-checks'], name);
     assert.equal(when(entry.text, { matrix: { group, generated_slice } }), true, name);

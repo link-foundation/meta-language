@@ -128,8 +128,9 @@ and [`js/scripts/issue-195-oracle-mapping.mjs`](js/scripts/issue-195-oracle-mapp
 Draft and debug a whole batch in JavaScript first. During the temporary
 automated translation pause, port changes by hand where needed and verify the
 same behavior in each affected runtime. Keep the shared fixtures and language
-feature inventory current. Grammars come from the automated pipeline, in bulk over every catalog
-language. Extend behavior through decorators stored as shared links data, not
+feature inventory current. The opt-in [self-translation checks](docs/self-translation.md)
+remain available. Grammars come from the automated pipeline, in bulk over every
+catalog language. Extend behavior through decorators stored as shared links data, not
 through special cases in host code. Make bulk changes and push once per batch.
 See [AGENTS.md](AGENTS.md#development-order) for the full rules.
 

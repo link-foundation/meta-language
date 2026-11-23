@@ -47,6 +47,13 @@ preserves every established tooling assignment and adds the two controls
 to the next slots. A test verifies the full union and placement.
 [Tooling partition 4](https://github.com/link-foundation/meta-language/actions/runs/45086449179/job/137406065487)
 
+The retained partition 2 log identified a stale generated manifest at line
+955, the historical grammar workflow comparison at line 1440, and a missing
+self-translation reference in the contributor guide at line 5557. The grammar
+comparison still verifies the complete predecessor through authenticated
+source replay. The contributor guide links to the retained opt-in workflow.
+[Tooling partition 2](https://github.com/link-foundation/meta-language/actions/runs/45086449179/job/137406065607)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
@@ -79,7 +86,10 @@ using the workflows' current conditions and shell commands.
 
 Normal PR, push and release runs leave `automated_translation` off. Clean
 consumers still exercise the installed or published packages against parsing
-and program fixtures. The Formal AI consumer retains 147 JavaScript workloads,
+and program fixtures. The raw schema partition still runs its graph integrity
+and consumer contracts. The raw execution-plan partition and the projection
+test that emits JavaScript from a Rust-derived graph require opt-in.
+The Formal AI consumer retains 147 JavaScript workloads,
 134 Rust workloads, and its cross-runtime probes. Its one JavaScript workload
 that runs Meta Language's translator in six directions and the matching probe
 operation require the opt-in. The rest still exercise Formal AI's own grammar
