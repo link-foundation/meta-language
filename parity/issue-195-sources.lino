@@ -1553,7 +1553,7 @@
 (1553: 67 1552 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1554: (meta: (t: semantic) (n: 1) (term: string%20value) (def: Original%20requirements%20for%20normalized%20quote%20ranges%2C%20approximate%20edit%20scripts%20and%20shared%20word%20sequence%20spans.) (lang: meta-language%20structured%20data)))
 (1555: 38 1554 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(1556: 1557 1558 1559 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
+(1556: 1557 1558 1559 2063 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
 (1557: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-NORMALIZED-TEXT-LOCATION) (lang: meta-language%20structured%20data)))
 (1558: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-APPROXIMATE-TEXT-LOCATION) (lang: meta-language%20structured%20data)))
 (1559: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-WORD-NGRAM-OVERLAP) (lang: meta-language%20structured%20data)))
@@ -2059,3 +2059,4 @@
 (2060: 1 (meta: (t: semantic) (n: 1) (term: structured%20data) (def: 1) (lang: meta-language%20structured%20data)))
 (2061: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I242-UNICODE-DECIMAL-VALUES) (lang: meta-language%20structured%20data)))
 (2062: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I242-WRITTEN-MULTIPLIERS) (lang: meta-language%20structured%20data)))
+(2063: (meta: (t: semantic) (n: 1) (term: string%20value) (def: I195-I243-UNICODE-CASE-FOLDING) (lang: meta-language%20structured%20data)))

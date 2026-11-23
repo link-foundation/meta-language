@@ -1,8 +1,22 @@
+import { readFileSync } from 'node:fs';
 import { normalizeQuoteScalar, normalizeYoScalar, selectTextEdit } from './text-location-policy.js';
 
 const graphemes = new Intl.Segmenter('und', { granularity: 'grapheme' });
 const normalizationOrder = ['nfkc', 'quotes', 'dashes', 'yo', 'case', 'softHyphen', 'whitespace'];
 const wordCharacter = /[\p{L}\p{M}\p{N}_]/u;
+
+let caseFolding;
+
+function foldCase(value) {
+  if (!caseFolding) {
+    const table = readFileSync(new URL('./data/text-location-case-folding.lino', import.meta.url), 'utf8');
+    caseFolding = new Map(table.trim().split('\n').slice(1).map(line => {
+      const [source, ...mapping] = line.slice(1, -1).split(' ').map(code => Number.parseInt(code, 16));
+      return [String.fromCodePoint(source), String.fromCodePoint(...mapping)];
+    }));
+  }
+  return caseFolding.get(value) ?? value;
+}
 
 function sourceText(input) {
   if (typeof input === 'string') return input;
@@ -31,7 +45,7 @@ function projection(source, names) {
     if (names.has('quotes')) text = Array.from(text, value => String.fromCodePoint(normalizeQuoteScalar(value.codePointAt(0)))).join('');
     if (names.has('dashes')) text = text.replace(/[\p{Pd}−]/gu, '-');
     if (names.has('yo')) text = Array.from(text, value => String.fromCodePoint(normalizeYoScalar(value.codePointAt(0)))).join('');
-    if (names.has('case')) text = Array.from(text, value => value.toLowerCase()).join('');
+    if (names.has('case')) text = Array.from(text, foldCase).join('');
     if (names.has('softHyphen')) text = text.replace(/\u00ad/gu, '');
     const end = index + segment.length;
     for (const value of text) {

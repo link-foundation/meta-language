@@ -2350,6 +2350,10 @@ fields still missing after recovery.
 Quote location builds a Unicode projection of the source and fragment and
 retains original offsets across character expansion, whitespace collapse and
 soft-hyphen removal. An exact occurrence reports the transformations it used.
+The `case` transformation uses the Unicode 17.0 default full case folding
+table. Folded characters retain their original spans, and exact matches span
+whole expansions. Both packages carry the same generated case folding table
+and include the Unicode data license under `src/data/natural-language-values/`.
 With a positive edit budget, the search compares graphemes or word segments
 and returns the lowest-distance nonempty match at each start, preferring the
 shorter match on ties. Word n-gram overlap returns every pair of source ranges

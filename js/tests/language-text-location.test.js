@@ -6,16 +6,18 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 
 const fixtureFile = 'parity/fixtures/text-location.lino';
 const fixture = readProjectData(new URL('../../' + fixtureFile, import.meta.url));
+const caseFoldingFixtureFile = 'parity/fixtures/text-location-case-folding.lino';
+const caseFoldingFixture = readProjectData(new URL('../../' + caseFoldingFixtureFile, import.meta.url));
 
-function observe(context, requirementId, assertions) {
+function observe(context, requirementId, assertions, evidenceFile = fixtureFile) {
   recordIssue195Observations({
-    requirementId, fixtureId: requirementId.toLowerCase(), fixtureFile,
+    requirementId, fixtureId: requirementId.toLowerCase(), fixtureFile: evidenceFile,
     assertions, suffix: 'behavior', testName: context.name,
   });
 }
 
-test('quote location maps typography and normalization back to each original source range', context => {
-  for (const { source, fragment, normalize, matches } of fixture.exact) {
+function verifyExactCases(cases) {
+  for (const { source, fragment, normalize, matches } of cases) {
     const network = LinkNetwork.parseLosslessText(source, 'English');
     const actual = locate(network, fragment, { normalize });
     assert.deepEqual(actual.map(({ text, normalizations }) => ({ text, normalizations })), matches);
@@ -29,6 +31,10 @@ test('quote location maps typography and normalization back to each original sou
       from = start + 1;
     }
   }
+}
+
+test('quote location maps typography and normalization back to each original source range', context => {
+  verifyExactCases(fixture.exact);
   assert.throws(() => locate('example', 'example', { normalize: ['unknown'] }), RangeError);
   observe(context, 'I195-I243-NORMALIZED-TEXT-LOCATION', ['allNormalizedMatchesKeepSourceRanges', 'neededNormalizationsAreReported']);
 });
@@ -51,8 +57,8 @@ test('approximate location gives bounded grapheme and word edit scripts', contex
   observe(context, 'I195-I243-APPROXIMATE-TEXT-LOCATION', ['editBudgetAndUnitControlMatches', 'reportedEditScriptsKeepSourceRanges']);
 });
 
-test('word n-gram overlap retains all source pairs', context => {
-  for (const { left, right, size, normalize, matches } of fixture.overlap) {
+function verifyOverlapCases(cases) {
+  for (const { left, right, size, normalize, matches } of cases) {
     const found = wordNgramOverlap(left, right, { size, normalize });
     assert.deepEqual(found.map(match => ({
       words: match.words,
@@ -61,6 +67,18 @@ test('word n-gram overlap retains all source pairs', context => {
     })), matches);
     assert.ok(found.every(match => match.words.length === size));
   }
+}
+
+test('word n-gram overlap retains all source pairs', context => {
+  verifyOverlapCases(fixture.overlap);
   assert.throws(() => wordNgramOverlap('abc', 'abc', { size: 0 }), RangeError);
   observe(context, 'I195-I243-WORD-NGRAM-OVERLAP', ['wordNgramsReportEverySharedSourcePair']);
+});
+
+test('Unicode full case folding keeps original quote and n-gram spans', context => {
+  verifyExactCases(caseFoldingFixture.exact);
+  verifyOverlapCases(caseFoldingFixture.overlap);
+  observe(context, 'I195-I243-UNICODE-CASE-FOLDING', [
+    'fullCaseFoldingMatchesKeepSourceRanges', 'caseFoldingOverlapKeepsBothSourceRanges',
+  ], caseFoldingFixtureFile);
 });

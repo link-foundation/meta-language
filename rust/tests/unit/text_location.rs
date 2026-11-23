@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE: &str = "parity/fixtures/text-location.lino";
+const CASE_FOLDING_FIXTURE: &str = "parity/fixtures/text-location-case-folding.lino";
 
 fn fixture() -> Value {
     read_structured_data_lino(include_str!("../../../parity/fixtures/text-location.lino"))
@@ -48,9 +49,8 @@ fn normalizations(value: &Value) -> Vec<TextNormalization> {
         .collect()
 }
 
-#[test]
-fn normalization_maps_every_quote_back_to_its_original_bytes() {
-    for entry in fixture()["exact"].as_array().unwrap() {
+fn verify_exact_cases(cases: &[Value]) {
+    for entry in cases {
         let source = entry["source"].as_str().unwrap();
         let fragment = entry["fragment"].as_str().unwrap();
         let normalize = normalizations(&entry["normalize"]);
@@ -84,6 +84,11 @@ fn normalization_maps_every_quote_back_to_its_original_bytes() {
             from = result.range.start() + result.text.chars().next().unwrap().len_utf8();
         }
     }
+}
+
+#[test]
+fn normalization_maps_every_quote_back_to_its_original_bytes() {
+    verify_exact_cases(fixture()["exact"].as_array().unwrap());
     record(&Observation {
         requirement_id: "I195-I243-NORMALIZED-TEXT-LOCATION",
         suffix: "behavior",
@@ -158,9 +163,8 @@ fn approximation_returns_an_edit_script_in_the_chosen_unit() {
     });
 }
 
-#[test]
-fn shared_word_ngrams_keep_every_pair_of_original_ranges() {
-    for entry in fixture()["overlap"].as_array().unwrap() {
+fn verify_overlap_cases(cases: &[Value]) {
+    for entry in cases {
         let left = entry["left"].as_str().unwrap();
         let right = entry["right"].as_str().unwrap();
         let size = entry["size"].as_u64().unwrap() as usize;
@@ -179,6 +183,11 @@ fn shared_word_ngrams_keep_every_pair_of_original_ranges() {
             .collect();
         assert_eq!(json!(actual), entry["matches"]);
     }
+}
+
+#[test]
+fn shared_word_ngrams_keep_every_pair_of_original_ranges() {
+    verify_overlap_cases(fixture()["overlap"].as_array().unwrap());
     record(&Observation {
         requirement_id: "I195-I243-WORD-NGRAM-OVERLAP",
         suffix: "behavior",
@@ -186,5 +195,26 @@ fn shared_word_ngrams_keep_every_pair_of_original_ranges() {
         fixture_file: FIXTURE,
         assertions: &["wordNgramsReportEverySharedSourcePair"],
         test_name: "shared_word_ngrams_keep_every_pair_of_original_ranges",
+    });
+}
+
+#[test]
+fn unicode_full_case_folding_keeps_original_quote_and_ngram_spans() {
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/text-location-case-folding.lino"
+    ))
+    .expect("text location case folding fixture");
+    verify_exact_cases(fixture["exact"].as_array().unwrap());
+    verify_overlap_cases(fixture["overlap"].as_array().unwrap());
+    record(&Observation {
+        requirement_id: "I195-I243-UNICODE-CASE-FOLDING",
+        suffix: "behavior",
+        fixture_id: "i195-i243-unicode-case-folding",
+        fixture_file: CASE_FOLDING_FIXTURE,
+        assertions: &[
+            "fullCaseFoldingMatchesKeepSourceRanges",
+            "caseFoldingOverlapKeepsBothSourceRanges",
+        ],
+        test_name: "unicode_full_case_folding_keeps_original_quote_and_ngram_spans",
     });
 }

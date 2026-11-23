@@ -756,6 +756,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
       },
     })),
+    {
+      id: 'I195-I243-UNICODE-CASE-FOLDING',
+      source: ISSUE_195_SOURCES.normalizedTextLocation,
+      language: 'Unicode text search',
+      version: 'Unicode 17.0.0 default full case folding, Unicode 13.0 through 17.0 fixture boundaries',
+      construct: 'full case folding for quote and word sequence comparisons',
+      expectedBehavior: 'The selected case normalization equates Unicode full case folding variants and preserves every original quote and word sequence span. Exact matches cover complete expansions, and case-dependent matches report the transformation.',
+      fixture: 'parity/fixtures/text-location-case-folding.lino',
+      selector: 'Greek final sigma, German sharp S, ligatures, dotted and dotless I, combined Cyrillic normalization, original offset controls, and common word sequences with case folding expansions',
+      assertions: ['fullCaseFoldingMatchesKeepSourceRanges', 'caseFoldingOverlapKeepsBothSourceRanges'],
+      implementationEntryPoints: {
+        javascript: ['js/src/text-location.js', 'js/tests/language-text-location.test.js'],
+        rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I238-HTML-VISIBLE-TEXT',

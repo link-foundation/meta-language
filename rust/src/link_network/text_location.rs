@@ -23,7 +23,7 @@ pub enum TextNormalization {
     Dashes,
     /// Cyrillic ё and Ё become е and Е respectively.
     Yo,
-    /// Lowercase each Unicode scalar value.
+    /// Apply Unicode 17.0 default full case folding.
     Case,
     /// Remove soft hyphens.
     SoftHyphen,
@@ -118,6 +118,21 @@ static DASH: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[\p{Pd}−]$").exp
 static WORD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[\p{L}\p{M}\p{N}_]$").expect("word categories"));
 
+static CASE_FOLDING: LazyLock<BTreeMap<char, Vec<char>>> = LazyLock::new(|| {
+    include_str!("../data/text-location-case-folding.lino")
+        .lines()
+        .skip(1)
+        .map(|line| {
+            let mut scalars = line[1..line.len() - 1].split_whitespace().map(|code| {
+                let value = u32::from_str_radix(code, 16).expect("case folding code point");
+                char::from_u32(value).expect("case folding scalar value")
+            });
+            let source = scalars.next().expect("case folding source scalar");
+            (source, scalars.collect())
+        })
+        .collect()
+});
+
 fn project(source: &str, names: &[TextNormalization]) -> Vec<TextLocationUnit> {
     let mut result: Vec<TextLocationUnit> = Vec::new();
     let mut emit = |segment: &str, start: usize| {
@@ -150,7 +165,10 @@ fn project(source: &str, names: &[TextNormalization]) -> Vec<TextLocationUnit> {
                     });
                 }
             } else if names.contains(&Case) {
-                result.extend(value.to_lowercase().map(|value| TextLocationUnit {
+                let folded = CASE_FOLDING
+                    .get(&value)
+                    .map_or(std::slice::from_ref(&value), Vec::as_slice);
+                result.extend(folded.iter().map(|value| TextLocationUnit {
                     range,
                     text: value.to_string(),
                 }));

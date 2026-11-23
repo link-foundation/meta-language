@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 269 | 268 | 1 | 0 |
+| Generators | 270 | 269 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 103 | 0 | 0 | 103 |
+| Published artifact contents | 104 | 0 | 0 | 104 |
 
 ## JavaScript engines
 
@@ -817,6 +817,7 @@ they are.
 | `js/scripts/build-text-location-policy.mjs` | `js/scripts/build-text-location-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-json-schema-pattern-policy.mjs` | `js/scripts/build-json-schema-pattern-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-json-schema-integer-policy.mjs` | `js/scripts/build-json-schema-integer-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-text-location-case-folding.mjs` | `js/scripts/build-text-location-case-folding.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -988,6 +989,7 @@ they are.
 | `src/data/pest-built-ins-license.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/pest-built-ins.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/natural-language-values/UNICODE-LICENSE.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/text-location-case-folding.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 
