@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
@@ -25,6 +30,40 @@ test('one CI measurement worker preserves full source coverage, hashes and both 
     assert.equal(repeated.sourceSha256, actual.sourceSha256);
     await assert.rejects(worker.measure('../outside.js', context), /inside js\/src/u);
   } finally { await worker.close(); }
+});
+
+test('the hosted report overlaps two measurements and preserves the sequential report', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'self-translation-report-'));
+  const script = fileURLToPath(new URL('../scripts/generate-self-translation-report.mjs', import.meta.url));
+  const modules = ['javascript-line-terminator-rules.js', 'rust-completion-panic.js', 'rust-cast-syntax-rules.js']
+    .map(file => `translation/${file}`);
+  const run = (mode, imports = []) => {
+    const outDir = join(directory, mode);
+    const result = spawnSync(process.execPath, [...imports, script, '--out-dir', outDir, '--modules', modules.join(',')], {
+      encoding: 'utf8',
+      env: { ...process.env, CI: String(mode === 'hosted'), GITHUB_ACTIONS: String(mode === 'hosted') },
+    });
+    assert.equal(result.status, 0, result.error ?? result.stderr);
+    const report = readProjectData(join(outDir, 'self-translation-report.lino'));
+    assert.deepEqual(report.modules.map(row => row.module), modules.map(module => `js/src/${module}`));
+    assert.deepEqual(report.failures, []);
+    for (const row of report.modules) {
+      assert.ok(row.milliseconds >= 0);
+      delete row.milliseconds;
+    }
+    return { report, progress: result.stderr };
+  };
+  try {
+    const preload = `import os from 'node:os';
+      import { syncBuiltinESMExports } from 'node:module';
+      os.availableParallelism = () => 4;
+      process.availableMemory = () => 8 * 1024 ** 3;
+      syncBuiltinESMExports();`;
+    const sequential = run('local');
+    const concurrent = run('hosted', ['--import', `data:text/javascript,${encodeURIComponent(preload)}`]);
+    assert.deepEqual(concurrent.report, sequential.report);
+    assert.match(concurrent.progress, /measuring js\/src\/translation\/rust-completion-panic\.js[\s\S]*recorded js\/src\/translation\/javascript-line-terminator-rules\.js/u);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
 test('report import resolution checks callable candidates and avoids dependencies of carried classes', () => {

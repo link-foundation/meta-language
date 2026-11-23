@@ -27,6 +27,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, posix, relative, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
+import { availableParallelism } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { isMainThread } from 'node:worker_threads';
 import { readProjectData, writeProjectData } from './project-data.mjs';
@@ -512,12 +513,11 @@ async function main() {
     const file = join(root, 'js/src', module);
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
-  const worker = process.env.CI === 'true' ? createReportMeasurementWorker(decoratorsText) : null;
-  let pending = null;
+  const workers = [];
+  const pending = [];
+  let nextWorker = 0;
   const finish = async () => {
-    if (!pending) return;
-    const { module, started, result } = pending;
-    pending = null;
+    const { module, started, result } = pending.shift();
     const outcome = await result;
     if (outcome.error) failures.push({ module, error: outcome.error });
     else {
@@ -526,24 +526,36 @@ async function main() {
     }
   };
   try {
+    if (process.env.CI === 'true') {
+      workers.push(createReportMeasurementWorker(decoratorsText));
+      if (process.env.GITHUB_ACTIONS === 'true' && availableParallelism() >= 4
+        && process.availableMemory() >= 6 * 1024 ** 3) {
+        workers.push(createReportMeasurementWorker(decoratorsText));
+      }
+    }
+    const window = Math.max(workers.length, 1);
     for (const module of selected) {
       const started = performance.now();
       console.error(`self-translation report: resolving ${module}`);
       try {
         const moduleContext = context(posix.relative('js/src', module));
-        // Resolve this context while the preceding module is being measured.
-        // Complete results in their original source order before starting another.
-        await finish();
-        console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
-        pending = { module, started, result: worker
+        const importMilliseconds = Math.round(performance.now() - started);
+        // Resolve ahead of measurement, then free the oldest worker slot.
+        // This bounds outstanding work and retains the selected module order.
+        if (pending.length === window) await finish();
+        console.error(`self-translation report: measuring ${module} (imports ${importMilliseconds} ms)`);
+        const worker = workers[nextWorker];
+        const result = worker
           ? worker.measure(module, moduleContext).then(row => ({ row }), error => ({ error: String(error?.message ?? error) }))
-          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) }) };
+          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) });
+        pending.push({ module, started, result });
+        nextWorker = (nextWorker + 1) % window;
       } catch (error) {
         failures.push({ module, error: String(error?.message ?? error) });
       }
     }
-    await finish();
-  } finally { await worker?.close(); }
+    while (pending.length > 0) await finish();
+  } finally { await Promise.all(workers.map(worker => worker.close())); }
   mkdirSync(outDir, { recursive: true });
   const data = {
     schemaVersion: 1,
