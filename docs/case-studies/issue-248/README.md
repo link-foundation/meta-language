@@ -147,6 +147,13 @@ dependency inventory. All fixture identities, requirements and assertions
 remain in the generated manifest.
 [Tooling partition 2](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137589212106)
 
+The package contracts job repeated the stale manifest and missing inventory
+errors at log lines 626 and 669. Its naming check passed at line 685 with
+16,688 concept records and all 25 WordNet fixtures. The separate raw schema
+and consumer job passed all 11 tests, with zero skips at lines 679–684.
+[Package contracts](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137639287457),
+[raw schema and consumer checks](https://github.com/link-foundation/meta-language/actions/runs/45144165350/job/137639287454)
+
 The naming conformance partition on that revision passed its 81 active tests.
 It checked the current and historical naming owners at log lines 950–951.
 Two executable translation tests reported the pause at lines 873 and 981.
