@@ -106,7 +106,7 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = '4642f885e5db8ef037e5e28be5c0260aff1580f9e7e475a8680fc2ef2ad3438c';
+const archiveDigest = 'c8181d89c10a8b2f9df553ea154e2c3003d731edb122307f24f2654505f4b5d2';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 const verifiedPredecessors = new WeakMap();

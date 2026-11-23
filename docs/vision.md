@@ -3871,6 +3871,13 @@ successors. Complete original workflow bytes authenticate the historical
 three- and six-part translation transport controls and the four-part
 conformance controls. The current workflow checks cover the eight-way matrices,
 feedback cohort and native artifact uploads.
+After [run 45159625352](https://github.com/link-foundation/meta-language/actions/runs/45159625352)
+exhausted the eighth translation job's deadline, the schedule moved the
+self-translation test file to shard five and the owned original-number test
+file to shard seven. Both files accounted for about 130 seconds each in that
+job's output intervals. The two destination jobs had room for these workloads
+in that run and in the preceding successful translation matrix. The eight
+feedback partitions, test file union and fifteen-minute deadline stay exact.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,

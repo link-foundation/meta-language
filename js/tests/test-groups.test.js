@@ -22,6 +22,25 @@ test('CI file partitions preserve every original native, conformance and transla
   for (const shard of ['0/3', '4/3', '1/0', '1/999', '1.5/3', '1/2x']) assert.throws(() => partitionGroupFiles(['a', 'b', 'c'], shard), /test group shard/u);
 });
 
+test('eight translation shards move the measured cold workloads without changing their exact coverage', () => {
+  const files = partitionTests(testFiles()).groups.translation;
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino', import.meta.url));
+  const expected = partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), 8, { costs })
+    .map(shard => shard.map(file => file.slice('js/tests/'.length)));
+  for (const [file, destination] of [
+    ['self-translation.test.js', 5],
+    ['translation-owned-original-numbers.test.js', 7],
+  ]) {
+    const owner = expected[7].indexOf(file);
+    assert.notEqual(owner, -1, `${file} was assigned to the shard that reached its deadline`);
+    expected[7].splice(owner, 1);
+    expected[destination - 1].push(file);
+  }
+  const actual = Array.from({ length: 8 }, (_, index) => partitionGroupFiles(files, `${index + 1}/8`));
+  assert.deepEqual(actual, expected.map(shard => shard.sort()));
+  assert.deepEqual(actual.flat().sort(), files);
+});
+
 test('measured workload scheduling balances complete sources and rejects duplicate owners or malformed costs',()=>{
   const sources=new Map([['slow-a.js','a'],['slow-b.js','b'],['fast-a.js','c'],['fast-b.js','d']]);
   const entries=[300,290,10,10].map((milliseconds,index)=>{const [file,source]=[...sources][index];return{file,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),milliseconds};});

@@ -163,7 +163,22 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
   if((count===6||count===8)&&files.includes('translation-native-library-receipt-history.test.js')){
     const costs=readProjectData(translationSchedulingFile);
-    return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count,{costs})[index-1].map(file=>file.slice(9));
+    const shards = partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs });
+    if (count === 8) {
+      // In run 45159625352 these two shard 8 files each occupied about 130
+      // seconds between TAP reports. Shards 5 and 7 had room in both runs.
+      const source = shards[7];
+      for (const [file, destination] of [
+        ['js/tests/self-translation.test.js', 5],
+        ['js/tests/translation-owned-original-numbers.test.js', 7],
+      ]) {
+        const position = source.indexOf(file);
+        if (position === -1 || source.length === 1) continue;
+        source.splice(position, 1);
+        shards[destination - 1].push(file);
+      }
+    }
+    return shards[index - 1].sort().map(file => file.slice('js/tests/'.length));
   }
   if(count===4&&files.includes('issue-195-evidence-tooling-partitions.test.js')){
     const costs=readProjectData(toolingSchedulingFile);
