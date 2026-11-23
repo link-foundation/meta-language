@@ -205,6 +205,7 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     ['js/scripts/formal-ai-partition-bundles.mjs', baseline, 'B63 actual source names'],
     ['js/scripts/formal-ai-workload-partitions.mjs', baseline, 'B63 actual source names'],
     ['js/scripts/issue-195-formal-ai-workloads.mjs', baseline, 'B63 actual source names'],
+    ['js/tests/issue-195-evidence-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
     ['js/tests/issue-195-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
     ['js/tests/link-network-binary.test.js', baseline],
   ]) {

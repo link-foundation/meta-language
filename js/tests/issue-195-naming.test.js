@@ -190,7 +190,7 @@ test('the normal naming source profile retains every actual current name and bot
   const precedingNames = historicalNames.slice(0, precedingCount);
   const pauseNames = historicalNames.slice(precedingCount);
   assert.equal(precedingNames.length, precedingCount);
-  assert.equal(pauseNames.length, 67, 'every pre-pause source owner remains present');
+  assert.equal(pauseNames.length, 68, 'every pre-pause source owner remains present');
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {

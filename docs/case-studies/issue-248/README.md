@@ -84,7 +84,8 @@ Tooling partition 2 compared the current Formal AI validator to an earlier
 Node dependency test file. The original digest, validator export and all four
 bindings are now checked against the Git-certified sources. The current
 placement test still exercises inventory discovery and rejection of altered
-owner expressions.
+owner expressions. The naming gate also validates the original Formal AI test
+body as a witness for its existing concept record.
 [Tooling partition 2, log lines 1431 and 1489](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137442894199)
 
 All 15 package jobs passed, including the 11 raw schema and consumer
