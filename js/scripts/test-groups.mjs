@@ -20,12 +20,14 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
 const translationSchedulingFile=new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino',import.meta.url);
+const translationWallSchedulingFile = new URL('../../parity/fixtures/ci-45186623729-translation-wall-costs.lino', import.meta.url);
 const toolingSchedulingFile=new URL('../../parity/fixtures/ci-45112870920-tooling-costs.lino',import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
 const workloadRevisions=new Map([
  [39615628279,schedulingRevision],
  [45080642295,'016ed6eed0c376a682299dd6463533a620a6a36f'],
  [45112870920,'f1d961d1a9d72bd4e6c99178d20e0aadb0415b63'],
+ [45186623729, '897b1f6b2ff7df5e094ca5d420b9c6e0057ef030'],
 ]);
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
@@ -161,24 +163,10 @@ export function partitionGroupFiles(files, shard = '1/1') {
   }
   // Balance cohorts with observed file durations at the recorded widths.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
-  if((count===6||count===8)&&files.includes('translation-native-library-receipt-history.test.js')){
-    const costs=readProjectData(translationSchedulingFile);
-    const shards = partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs });
-    if (count === 8) {
-      // In run 45159625352 these two shard 8 files each occupied about 130
-      // seconds between TAP reports. Shards 5 and 7 had room in both runs.
-      const source = shards[7];
-      for (const [file, destination] of [
-        ['js/tests/self-translation.test.js', 5],
-        ['js/tests/translation-owned-original-numbers.test.js', 7],
-      ]) {
-        const position = source.indexOf(file);
-        if (position === -1 || source.length === 1) continue;
-        source.splice(position, 1);
-        shards[destination - 1].push(file);
-      }
-    }
-    return shards[index - 1].sort().map(file => file.slice('js/tests/'.length));
+  if ((count === 6 || count === 8) && files.includes('translation-native-library-receipt-history.test.js')) {
+    const costs = readProjectData(count === 8 ? translationWallSchedulingFile : translationSchedulingFile);
+    return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs })[index - 1]
+      .map(file => file.slice('js/tests/'.length));
   }
   if(count===4&&files.includes('issue-195-evidence-tooling-partitions.test.js')){
     const costs=readProjectData(toolingSchedulingFile);

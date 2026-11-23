@@ -3878,6 +3878,15 @@ file to shard seven. Both files accounted for about 130 seconds each in that
 job's output intervals. The two destination jobs had room for these workloads
 in that run and in the preceding successful translation matrix. The eight
 feedback partitions, test file union and fifteen-minute deadline stay exact.
+All three affected jobs passed on the next run. Its fourth translation job
+reached the deadline after 234 passing assertions, five short of its preceding
+result. The schedule now balances all eight partitions with the largest elapsed
+output intervals and reported test durations observed across three runs. The
+[recorded costs](../parity/fixtures/ci-45186623729-translation-wall-costs.lino)
+cover all 299 file identities and retain the two deadline logs as partial timing
+inputs. Each scheduled load totals about 582 seconds using these costs. The
+regression enforces a 600-second advisory budget and complete eight-way coverage.
+The six evidence partitions keep their original assignment.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,

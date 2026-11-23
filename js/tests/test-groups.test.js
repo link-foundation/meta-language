@@ -22,23 +22,21 @@ test('CI file partitions preserve every original native, conformance and transla
   for (const shard of ['0/3', '4/3', '1/0', '1/999', '1.5/3', '1/2x']) assert.throws(() => partitionGroupFiles(['a', 'b', 'c'], shard), /test group shard/u);
 });
 
-test('eight translation shards move the measured cold workloads without changing their exact coverage', () => {
+test('eight translation shards balance observed whole-file costs and keep every test exactly once', () => {
   const files = partitionTests(testFiles()).groups.translation;
-  const costs = readProjectData(new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino', import.meta.url));
-  const expected = partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), 8, { costs })
-    .map(shard => shard.map(file => file.slice('js/tests/'.length)));
-  for (const [file, destination] of [
-    ['self-translation.test.js', 5],
-    ['translation-owned-original-numbers.test.js', 7],
-  ]) {
-    const owner = expected[7].indexOf(file);
-    assert.notEqual(owner, -1, `${file} was assigned to the shard that reached its deadline`);
-    expected[7].splice(owner, 1);
-    expected[destination - 1].push(file);
-  }
+  const costs = readProjectData(new URL('../../parity/fixtures/ci-45186623729-translation-wall-costs.lino', import.meta.url));
   const actual = Array.from({ length: 8 }, (_, index) => partitionGroupFiles(files, `${index + 1}/8`));
-  assert.deepEqual(actual, expected.map(shard => shard.sort()));
   assert.deepEqual(actual.flat().sort(), files);
+  const observedCosts = new Map(costs.entries.map(({ file, milliseconds }) => [file.slice('js/tests/'.length), milliseconds]));
+  const estimates = actual.map(shard => shard.reduce((total, file) => total + (observedCosts.get(file) ?? 0), 0));
+  assert.ok(Math.max(...estimates) <= 600_000, `observed test costs by shard: ${estimates.join(', ')} ms`);
+  assert.deepEqual(costs.logs.filter(log => !log.completed).map(log => log.job), [137641360015, 137733805489]);
+
+  const historicalCosts = readProjectData(new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino', import.meta.url));
+  const historical = partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), 6, { costs: historicalCosts });
+  for (const [index, shard] of historical.entries()) {
+    assert.deepEqual(partitionGroupFiles(files, `${index + 1}/6`), shard.map(file => file.slice('js/tests/'.length)));
+  }
 });
 
 test('measured workload scheduling balances complete sources and rejects duplicate owners or malformed costs',()=>{
