@@ -115,7 +115,7 @@ export async function verifyReleaseProvenance(state, { fetchImpl = fetch } = {})
     throw new Error(`the published ${name}@${version} crate has no readable Git provenance`, { cause });
   }
   if (git?.sha1 !== commit) {
-    throw new Error(`the published ${name}@${version} crate records commit ${git?.sha1 ?? '(missing)'}, expected ${commit}`);
+    throw new Error(`the published ${name}@${version} crate records commit ${git?.sha1 ?? '(missing)'}, expected ${commit}. Use a new version for both packages to release this commit.`);
   }
   if (git.dirty !== undefined && git.dirty !== false) {
     throw new Error(`the published ${name}@${version} crate does not record a clean Git checkout`);

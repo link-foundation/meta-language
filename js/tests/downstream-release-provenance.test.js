@@ -44,7 +44,7 @@ test('release preflight verifies the exact crate checksum and commit before npm 
   await assert.rejects(verifyReleaseProvenance({ ...state, crateChecksum: 'b'.repeat(64) }, { fetchImpl }),
     /crate does not match its registry checksum/u);
   await assert.rejects(verifyReleaseProvenance({ ...state, commit: 'c'.repeat(40) }, { fetchImpl }),
-    new RegExp(`crate records commit ${release.commit}, expected ${'c'.repeat(40)}`, 'u'));
+    new RegExp(`crate records commit ${release.commit}, expected ${'c'.repeat(40)}\\. Use a new version for both packages to release this commit\\.`, 'u'));
 
   const dirty = registryDownload(crateArchive({ sha1: release.commit, dirty: true }));
   await assert.rejects(verifyReleaseProvenance({ ...state, crateChecksum: dirty.crateChecksum }, dirty),
