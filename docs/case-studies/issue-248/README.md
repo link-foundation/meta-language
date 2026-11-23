@@ -209,6 +209,13 @@ for Linux, Windows and macOS, and Relative Meta Logic ran 80 JavaScript and
 [macOS](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902893300),
 [Relative Meta Logic](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902892881)
 
+Both Formal AI workload partitions passed on the same merge revision. Each
+recorded 147 of 148 JavaScript workload tests under the pause, completed its
+native workload probes, and uploaded its partition report. The aggregate also
+needs both reports and runs in a separate job.
+[Corpus ratchet](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902893106),
+[remaining workloads](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137902893167)
+
 Clippy 1.100.0 reached 24 more diagnostics at log lines 1658–2112.
 The 22 generated binary codec diagnostics identified a local binding that
 immediately returned its initializer. The second review authenticates all six
@@ -232,6 +239,37 @@ toolchain selection.
 [experiment job](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137915962477),
 [compiler profile](../../../experiments/grammar-outcome-network/native-transport/runner/compiler-profile.mjs),
 [workflow regression](../../../js/tests/issue-195-evidence-automated-translation-pause.test.js)
+
+The same run exposed a Cargo artifact layout change in the regular and
+fresh-merge native jobs. Cargo 1.100 put root test executables in
+`target/debug/build/meta-language/<hash>/out`, so the existing runner treated
+them as auxiliary commands. Fresh Merge Simulation (4) ran 1,761 unit tests
+in one cell and executed excluded translation tests at lines 2055, 2245 and
+2247 before reaching its existing deadline. The macOS grammar cell also
+failed to find `target/debug/deps` for the generated Rust parser and all five
+importer cases. The Windows log confirmed two additional Rust 1.100 compiler
+profile refusals. The native test jobs and their shared check cache now use
+Rust and Cargo 1.99.0, within the recorded profile and with the expected
+artifact layout. Lint continues to check the current stable compiler.
+[Cargo 1.100 release](https://github.com/rust-lang/rust/releases/tag/1.100.0),
+[fresh-merge job](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137915963849),
+[macOS grammar job](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137915970367),
+[Windows test job](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137915969517)
+
+Two independent assertions also failed. The diagnostic-order fixture's exact
+manifest hash predates the crate packaging entry for relocated test metadata.
+Regeneration updates the manifest hash, size and offsets while retaining
+both original cases, the locked `serde_json` release, and the dependency
+declaration and feature bounds. The cancellation oracle now checks the raw
+native-observation job's new opt-in alongside the exact original prerequisites
+and artifact checks. It rejects a mutation that removes the opt-in.
+[manifest mismatch](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137915963849),
+[cancellation assertion](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137915969517)
+
+After the repairs, all 14 focused workflow, cache and native test profile
+regressions passed on Node.js 22.23.5. The naming check retained 28,605 source
+names and all 25 WordNet cases. The protected-scope check confirmed all 474
+requirements and 495 fixture identities against the default branch.
 
 ## Requirements and implementation plan
 
