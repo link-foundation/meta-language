@@ -172,6 +172,12 @@ jobs:
             gh pr edit "$existing" --body-file "$body"
           fi
 
+      - name: Fail the unresolved live audit
+        if: ${{ !cancelled() && steps.audit.outcome == 'failure' }}
+        run: |
+          echo '::error::The live dependency audit failed. Review the retained audit and apply the dependency repairs.'
+          exit 1
+
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}

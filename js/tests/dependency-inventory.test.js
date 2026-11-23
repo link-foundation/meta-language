@@ -65,6 +65,8 @@ test('main dependency refresh retains failed live findings and delivers their ou
   const summary = job.steps.find(step => step.name === 'Report the live audit outcome');
   const regenerate = job.steps.find(step => step.name === 'Regenerate dependency history and acceptance fixtures');
   const publish = job.steps.find(step => step.name === 'Open or update the refresh pull request');
+  const reportFailure = job.steps.find(step => step.name === 'Fail the unresolved live audit');
+  assert.ok(reportFailure, 'the scheduled job must fail for an unresolved live audit');
   assert.match(audit.text, /id: audit/u);assert.match(audit.text, /continue-on-error: true/u);
   assert.deepEqual(job.steps.filter(step => /continue-on-error:/u.test(step.text)), [lockfiles, outdated, audit]);
   assert.ok(retain.afterFailure && summary.afterFailure);
@@ -77,7 +79,11 @@ test('main dependency refresh retains failed live findings and delivers their ou
   assert.ok(job.steps.indexOf(regenerate) > job.steps.indexOf(summary));
   assert.ok(job.steps.indexOf(regenerate) < job.steps.indexOf(publish));
   assert.doesNotMatch(regenerate.text, /continue-on-error/u);
-  for (const step of [lockfiles, audit, outdated, summary, regenerate, publish]) {
+  assert.ok(job.steps.indexOf(reportFailure) > job.steps.indexOf(publish));
+  assert.ok(reportFailure.afterFailure);
+  assert.match(reportFailure.text, /steps\.audit\.outcome == 'failure'/u);
+  assert.doesNotMatch(reportFailure.text, /continue-on-error/u);
+  for (const step of [lockfiles, audit, outdated, summary, regenerate, publish, reportFailure]) {
     const syntax = spawnSync('bash', ['-n', '-c', script(step)], {encoding: 'utf8'});
     assert.equal(syntax.status, 0, syntax.stderr);
   }
@@ -101,6 +107,10 @@ test('main dependency refresh retains failed live findings and delivers their ou
     {cwd: directory, encoding: 'utf8'});
     assert.equal(failure.status, 1, 'the real audit command keeps its failure status under pipefail');
     assert.equal(readFileSync(path.join(directory, 'dependency-refresh.log'), 'utf8'), '23 dependency inventory problem(s)\n');
+    const jobFailure = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', script(reportFailure)],
+      {cwd: directory, encoding: 'utf8'});
+    assert.equal(jobFailure.status, 1, jobFailure.stderr);
+    assert.match(jobFailure.stdout, /::error::The live dependency audit failed.*retained audit/u);
     mkdirSync(path.join(directory, 'js'));
     const probe = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', `
       npm() { printf '{"example":{"latest":"2.0.0"}}\\n'; return 1; }

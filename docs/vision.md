@@ -2741,15 +2741,15 @@ dependency's GitHub repository and records it in the audit. A closed, missing,
 or unrelated blocker fails the freshness check. The scheduled report runs
 `npm outdated`, `cargo outdated --root-deps-only --exit-code 1`, and
 `cargo update --dry-run` for both Rust locks.
-The scheduled registry refresh runs only on main
-as a non-blocking live report: it preserves the actual audit outcome, complete
-log and refreshed audit artifact, and opens or updates the repair PR even when
-new upstream releases leave unresolved findings. Before pushing, the refresh
-regenerates the dependency history and acceptance fixture fingerprints and
-checks the ledger against the committed scope. The PR body and job summary
-retain those findings; required offline PR and delivery gates still fail until
-the applicable dependency problems are repaired. An unavailable registry cannot
-be presented as a current audit.
+The scheduled registry refresh runs only on main as a non-blocking live report.
+It preserves the actual audit outcome, complete log and refreshed audit artifact.
+It opens or updates the repair PR even when new upstream releases leave unresolved
+findings. An unresolved live audit fails the scheduled job after this reporting
+and repair attempt. Before pushing, the refresh regenerates the dependency history
+and acceptance fixture fingerprints and checks the ledger against the committed
+scope. The PR body and job summary retain those findings. Required offline PR and
+delivery gates fail until the applicable dependency problems are repaired. An
+unavailable registry cannot be presented as a current audit.
 
 ## Acceptance and evidence
 
