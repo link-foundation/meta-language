@@ -10,9 +10,13 @@ fn translated_number_kind_selection_preserves_every_declared_profile_control() {
     ))
     .unwrap();
     let cases = fixture["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 160);
+    assert_eq!(cases.len(), 256);
     assert_eq!(fixture["declarations"].as_array().unwrap().len(), 1);
     assert_eq!(fixture["model"]["versionRange"], ">=1.0.151 <1.0.152");
+    assert_eq!(
+        fixture["model"]["additionalVersionRange"],
+        ">=1.0.154 <1.0.155"
+    );
     assert_eq!(fixture["model"]["excludedFeature"], "arbitrary_precision");
     for row in cases {
         assert_eq!(

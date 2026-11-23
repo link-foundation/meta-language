@@ -16,19 +16,21 @@ export function generateOwnedOutcomeNumberKindRules({check=false}={}) {
   assert.deepEqual([...program.declarations.keys()],declarations);
   const emitted=emitRust(program,{arrayConsumption:true});assert.equal(emitted.definitions.length,1);
   const files=writeRecordRuleLibrary(emitted,'owned_outcome_number_kind_rules',{check,sourceStyles:source=>{const primitive=readTypedBooleanParameterStyles(source,'read_owned_outcome_native_number_kind');const packed=readBooleanParameterTupleStyle(primitive.source,'read_owned_outcome_native_number_kind');return{source:packed.source,actions:[...primitive.actions,...packed.actions]};}});
-  // Independent exhaustive predicate table from the pinned dependency source.
+  // The authenticated 1.0.154 Number source changes only as_f32; the three
+  // predicates and as_i64, as_u64 and as_f64 are byte-identical to 1.0.151.
   const meanings=['','floating point','unsigned integer','','signed integer','','unsigned integer',''];
   const cases=[];
-  for(const profileAvailable of [false,true])for(const version of ['', '1.0.150','1.0.151','1.0.152','1.0.151-extra']){
+  for(const versions of [['', '1.0.150','1.0.151','1.0.152','1.0.151-extra'],['1.0.153','1.0.154','1.0.155']])for(const profileAvailable of [false,true])for(const version of versions){
     for(const arbitraryPrecision of [false,true])for(let flags=0;flags<8;flags++){
       cases.push({profileAvailable,version,arbitraryPrecision,signed:Boolean(flags&4),unsigned:Boolean(flags&2),floating:Boolean(flags&1),
-        expected:profileAvailable&&version==='1.0.151'&&!arbitraryPrecision?meanings[flags]:''});
+        expected:profileAvailable&&['1.0.151','1.0.154'].includes(version)&&!arbitraryPrecision?meanings[flags]:''});
     }
   }
   const fixture={schemaVersion:1,source:'experiments/grammar-outcome-network/native-transport/inverse/number-kind-rules.mjs',
     sourceSha256:createHash('sha256').update(source).digest('hex'),declarations,
     model:{dependency:'serde_json',versionRange:'>=1.0.151 <1.0.152',excludedFeature:'arbitrary_precision',
-      predicates:['is_i64','is_u64','is_f64'],authority:'https://docs.rs/serde_json/1.0.151/src/serde_json/number.rs.html'},cases,
+      predicates:['is_i64','is_u64','is_f64'],authority:'https://docs.rs/serde_json/1.0.151/src/serde_json/number.rs.html',
+      additionalVersionRange:'>=1.0.154 <1.0.155',additionalAuthority:'https://docs.rs/serde_json/1.0.154/src/serde_json/number.rs.html'},cases,
     boundary:'A complete predicate selector under an explicitly authenticated linked dependency profile. These synthetic control inputs are not an actual compiler feature attestation or original number observation. Unknown profiles and contradictory predicates refuse. Exact payloads, source occurrence ownership and complete native DTO reconstruction remain separate obligations. Native execution is CI-only.'};
   const output=new URL('../../../../parity/fixtures/grammar-outcome-number-kind-rules.lino',import.meta.url);
   if(check)checkProjectData(output,fixture);else writeProjectData(output,fixture);

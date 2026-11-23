@@ -125,6 +125,9 @@ Historical source guards authenticate the complete current module before
 inverting recorded, disjoint byte intervals and checking every predecessor byte.
 Original source hashes, receipt edges, assertions and refusal cases stay exact;
 current translation behavior uses current imports and independent controls.
+The dependency refresh archive stores each complete Git commit and tree once.
+Each historical source records its path through those objects and verifies the
+reconstructed bytes against the original Git blob.
 Naming extraction retains every actual current source name. Scoped historical
 inventory views may additionally recover names from complete independently
 certified predecessors, with explicit revision and archive provenance. Current
@@ -2087,20 +2090,26 @@ argument to exactly one actual Cargo compiler artifact, rather than combining
 different feature units of the same dependency. The receipt records complete
 stream hashes, selected artifact metadata and the executed primitive width.
 The current format profile selects Cargo and the actually invoked Rust compiler
-`>=1.90.0 <1.100.0` and the locked JSON
-dependency `>=1.0.151 <1.0.152`; uncovered versions and ambiguous bindings refuse.
+`>=1.90.0 <1.100.0` or `>=1.100.0 <1.100.1`, and the locked JSON dependency
+`>=1.0.151 <1.0.152` or `>=1.0.154 <1.0.155`. Uncovered versions and ambiguous
+bindings refuse.
 These observations require successful CI execution. Historical compiler logs and
 synthetic selectors establish source and transport controls only; number variant
 reconstruction and native DTO equality remain separate obligations.
 
 Native number representation selection now has one complete JavaScript decision
-module and its automatically generated Rust library. Its explicit model covers
-`serde_json >=1.0.151 <1.0.152` without `arbitrary_precision`; unknown profiles
-and contradictory native predicates refuse. Positive integers may satisfy both
-signed and unsigned admission, and retain the unsigned representation. A separate
-adapter binds this selection to the exact checked compiler artifact and refuses
-its unsupported precision feature without combining unrelated feature units.
-The 160 declared-profile controls, lossless source round trip and source-free
+module and its automatically generated Rust library. Both supported `serde_json`
+ranges use the same native predicates and 64-bit accessors without
+`arbitrary_precision`. The [1.0.154 source](https://docs.rs/serde_json/1.0.154/src/serde_json/number.rs.html)
+changes only the 32-bit floating conversion in the Number implementation compared
+with [1.0.151](https://docs.rs/serde_json/1.0.151/src/serde_json/number.rs.html).
+Unknown profiles and contradictory native predicates refuse. Positive integers
+may satisfy both signed and unsigned admission and retain the unsigned
+representation. A separate adapter binds this selection to the exact checked
+compiler artifact and refuses its unsupported precision feature without
+combining unrelated feature units.
+The original 160 declared-profile controls, 96 additional version-bound controls,
+lossless source round trip and source-free
 Links text/binary reloads establish selector behavior only. They do not capture
 an original native number, authenticate caller-supplied logs as a live execution,
 or reconstruct an owned DTO. Exact decimals, floating bits and source occurrence
@@ -2673,6 +2682,9 @@ changes the command-name span in the mixed-case switch fixture, Scheme 0.25.0
 accepts the empty bytevector rejection fixture, and SQL 0.3.13 changes the
 aggregate-query tree. The earlier release assertions still apply to the native
 port versions derived from those releases.
+The opt-in C# scanner profile retains its 0.23.5 oracle and complete corpus
+comparisons. The catalog's 0.24.0 grammar is checked independently, including
+its named slice-pattern node in the historical list-pattern source.
 
 CI provisions required inputs before checks and artifact construction. Temporary
 compiled fallback assets can still accompany an installed artifact while the
@@ -2700,6 +2712,11 @@ Compatibility changes are resolved rather than kept behind obsolete pins. As the
 native grammars replace external parsers, the production parser dependencies
 (tree-sitter, web-tree-sitter and the vendored grammar binaries) are removed.
 Independent oracles are kept only in their test and development role.
+Existing conformance and generative fixtures keep the Tree-sitter CLI version
+that produced their expected trees. The 0.27.0 fixtures remain applicable with
+the 0.27.2 grammar lock while all six parser digests, including the two
+mixed-language hosts, match the original lock. An unregistered CLI or changed
+parser identity requires a separately verified oracle.
 A recorded compatibility reason explains a stale item but does not complete its
 upgrade. Delivery evidence separately checks that retained dependencies,
 transitive resolutions, tools, actions, images and version-coupled artifacts are
@@ -2795,9 +2812,11 @@ hashes, and checks the selected range independently of the incoming test name.
 Missing or forged version context is an error. These bounded bindings do not
 establish version coverage for assertions that have not yet been registered.
 Agda oracle profiles separately select exact released WebAssembly and corrected
-scanner source identities within the registered 1.3.3 singleton range. Their
-fixture derivation authenticates source, patch, runtime and policy hashes;
-authored expected rows remain separate from execution observations.
+scanner source identities within the registered 1.3.3 singleton range. The
+runtime policy selects Tree-sitter 0.27.0 or 0.27.2 while retaining the 0.27.0
+oracle tool, released WebAssembly, and corrected scanner source pins. Fixture
+derivation authenticates source, patch and policy hashes. The focused tests
+compare the same expected rows against the selected runtime.
 
 - Native merged grammars run against pinned **independent** ANTLR, tree-sitter
   and official parser, compiler and prover corpora, and against real projects,
@@ -3830,12 +3849,17 @@ file must occur exactly once in the complete scope union before the logical
 suite can supply evidence. Missing, mixed, stale, failed or altered partitions
 refuse. Original sixty-minute evidence deadlines, compiler checks, commands,
 artifact paths, toolchain pins and all other workflow bytes remain unchanged.
-Historical guard views retain the certified original fifteen-scope workflow;
-independent current controls check the complete six-partition workflow inverse.
-Capture and merge explicitly select six partitions; the transport's historical
-three-part API remains separately checked. Complete original workflow bytes stay
-authenticated for historical controls, and independent controls inspect the
-actual current six-way matrix, feedback cohort and native artifact uploads.
+Historical guard views retain the certified original fifteen-scope workflow and
+verify the complete inverse for the later six-partition workflow.
+The translation and conformance test jobs now each use eight partitions after
+[run 45098181978](https://github.com/link-foundation/meta-language/actions/runs/45098181978)
+hit their fifteen-minute job deadline. Translation uses measured workloads to
+assign each file once. Capture and merge explicitly select all eight exact
+partitions. Each four-way conformance partition is the union of its two
+successors. Complete original workflow bytes authenticate the historical
+three- and six-part translation transport controls and the four-part
+conformance controls. The current workflow checks cover the eight-way matrices,
+feedback cohort and native artifact uploads.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,

@@ -135,6 +135,20 @@ test('four conformance jobs preserve each original two-job partition under its u
   }
 });
 
+test('eight current conformance jobs preserve each four-job partition and its configured deadline', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const tests = workflow.slice(workflow.indexOf('\n  tests:\n'), workflow.indexOf('\n  package-checks:\n'));
+  assert.match(tests, /timeout-minutes: 15\n/u);
+  const shards = [...tests.matchAll(/\{group: conformance, partition: (\d+), shards: (\d+)\}/gu)]
+    .map(([, index, count]) => `${index}/${count}`);
+  assert.deepEqual(shards, Array.from({ length: 8 }, (_, index) => `${index + 1}/8`));
+  const files = partitionTests(testFiles()).groups.conformance;
+  for (let index = 1; index <= 4; index++) {
+    assert.deepEqual([...partitionGroupFiles(files, shards[index - 1]), ...partitionGroupFiles(files, shards[index + 3])].sort(),
+      partitionGroupFiles(files, `${index}/4`));
+  }
+});
+
 test('the test group guard reports unassigned, ambiguous and empty groups', () => {
   const problems = partitionProblems(partitionTests(['grammar-a.test.js', 'unknown.test.js']));
   assert.ok(problems.includes('tests/unknown.test.js is in no test group of scripts/test-groups.mjs'));

@@ -17,7 +17,7 @@ const apply=(operation,row)=>operation(row.profileAvailable,row.version,row.arbi
 
 test('all native number predicate combinations retain the independently bounded complete truth table',()=>{
   const {fixture,files}=generateOwnedOutcomeNumberKindRules({check:true});
-  assert.equal(fixture.cases.length,160);assert.equal(files.length,2);
+  assert.equal(fixture.cases.length,256);assert.equal(files.length,2);
   assert.deepEqual(fixture.model.predicates,['is_i64','is_u64','is_f64']);
   for(const row of fixture.cases)assert.equal(apply(readOwnedOutcomeNativeNumberKind,row),row.expected,JSON.stringify(row));
   const canonical={profileAvailable:true,version:'1.0.151',arbitraryPrecision:false,signed:false,unsigned:false,floating:true};
@@ -65,4 +65,9 @@ test('native number profile contracts bind the selected linked feature unit and 
   }
   assert.throws(()=>readOwnedOutcomeNativeNumberProfile({...inputs(0),stderr:''}),/compiler invocation/u);
   assert.throws(()=>readOwnedOutcomeNativeNumberProfile({...inputs(0),lockSource:fixture.lockSource.replace('version = "1.0.151"','version = "1.0.152"')}),/uncovered JSON dependency version/u);
+  const input=inputs(0),profile=readOwnedOutcomeNativeNumberProfile({...input,
+    stdout:input.stdout.replaceAll('serde_json@1.0.151','serde_json@1.0.154'),
+    lockSource:input.lockSource.replace('version = "1.0.151"','version = "1.0.154"')});
+  assert.equal(profile.version,'1.0.154');
+  assert.equal(profile.compilerProfile.versionBounds.serdeJson,'>=1.0.154 <1.0.155');
 });

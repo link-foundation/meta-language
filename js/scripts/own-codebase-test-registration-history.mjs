@@ -153,6 +153,7 @@ export function readOwnCodebaseTestRegistrationHistory(){
 
 function restoreSource(source,file){
   assert.equal(typeof source,'string');
+  source=restoreDependencyWorkflowSource(source,file);
   const history=readOwnCodebaseTestRegistrationHistory();
   const row=history.sources.find(row=>row.file===file);assert.ok(row);
   const current=replay(row.predecessor.source,row.edits);
@@ -164,10 +165,13 @@ function restoreSource(source,file){
 export function restoreOwnCodebaseTestRegistrationClassifier(source){
   assert.ok(Buffer.isBuffer(source));
   const text=source.toString('utf8');assert.deepEqual(Buffer.from(text),source);
-  return Buffer.from(restoreSource(text,'js/scripts/test-groups.mjs'));
+  const file='js/scripts/test-groups.mjs';
+  return Buffer.from(restoreSource(text,file));
 }
 
 /** The preceding helper still independently checks its original two supported source forms. */
 export function restoreOwnCodebaseTestRegistrationTestSource(source){
   return restoreSource(source,'js/tests/issue-195-evidence-node-dependency.test.js');
 }
+
+import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';

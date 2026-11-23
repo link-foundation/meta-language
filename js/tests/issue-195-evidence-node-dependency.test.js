@@ -7,6 +7,7 @@ import {collectDependencies,ownStatus} from '../scripts/dependency-inventory.mjs
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {fileURLToPath} from 'node:url';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 
 test('exact Node runtime selectors compare all release coordinates and preserve moving and minimum engine profiles',()=>{
   for(const [pin,floor,expected]of [['24',false,'major'],['v24',false,'major'],['24.22',false,'minor'],
@@ -14,12 +15,15 @@ test('exact Node runtime selectors compare all release coordinates and preserve 
     assert.equal(readNodeRuntimeComparison(pin,floor),expected);
   }
   const root=fileURLToPath(new URL('../../',import.meta.url));
-  const node=collectDependencies(root).find(row=>row.id==='toolchain node@24.22.0');assert.ok(node);
+  const node=readNodeDependencyInventoryOriginalView().items.find(row=>row.id==='toolchain node@24.22.0');assert.ok(node);
   assert.equal(node.compare,'version');assert.equal(ownStatus({...node,current:'24.22.0'}),'current');
   assert.equal(ownStatus({...node,current:'24.22.1'}),'behind');
   assert.equal(ownStatus({...node,current:'24.23.0'}),'behind');
   assert.equal(ownStatus({...node,pinned:'24',compare:'major',current:'24.23.0'}),'current');
   assert.equal(ownStatus({...node,pinned:'24.22',compare:'minor',current:'24.22.1'}),'current');
+  const current=collectDependencies(root).filter(row=>row.category==='toolchain'&&row.name==='node'&&row.compare==='version');
+  assert.ok(current.length>0,'exact runtime selectors are still collected from the current project');
+  for(const row of current)assert.equal(ownStatus({...row,current:row.pinned}),'current');
 });
 
 test('one-source Node reconciliation retains every unrelated audit fact and exact original collector bytes',()=>{
@@ -29,7 +33,7 @@ test('one-source Node reconciliation retains every unrelated audit fact and exac
     assert.equal(createHash('sha256').update(source.sourceText).digest('hex'),source.sha256);
   }
   const collector=history.sources.find(row=>row.file==='js/scripts/dependency-inventory.mjs');
-  const actual=readFileSync(new URL('../../'+collector.file,import.meta.url),'utf8');
+  const actual=restoreDependencyWorkflowSource(readFileSync(new URL('../../'+collector.file,import.meta.url),'utf8'),collector.file);
   assert.equal(actual,collector.sourceText.replace(history.before,history.after)+history.insertion);
   assert.equal(actual.replace(history.insertion,'').replace(history.after,history.before),collector.sourceText);
   const original=history.sources.find(row=>row.file==='parity/dependency-inventory.lino');
@@ -74,7 +78,7 @@ test('original Node dependency test discovery preserves all draft source and the
   const registrationHistory=readOwnCodebaseTestRegistrationHistory();
   assert.equal(registrationHistory.revision,'52132727d7ce158762a4499b7032a42a9f16f3c3');
   for(const row of registrationHistory.sources){
-    const current=readFileSync(new URL('../../'+row.file,import.meta.url));
+    const current=Buffer.from(restoreDependencyWorkflowSource(readFileSync(new URL('../../'+row.file,import.meta.url),'utf8'),row.file));
     assert.equal(current.length,row.current.bytes);
     assert.equal(createHash('sha256').update(current).digest('hex'),row.current.sha256);
   }

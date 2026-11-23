@@ -112,7 +112,7 @@ fn both_packages_depend_on_the_audited_links_notation_release() {
             .expect("package.json");
     assert_eq!(
         package_json["dependencies"][package],
-        json!(text(npm, "version"))
+        json!(format!("^{}", text(npm, "version")))
     );
     assert_eq!(
         text(npm, "version"),

@@ -25,6 +25,7 @@ import {
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { extractOwnCodebaseHistoricalNames, readOwnCodebaseHistoricalNamingPolicy } from '../scripts/own-codebase-baseline-naming-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
+import { dependencyWorkflowHistoryPath, restoreDependencyWorkflowSource } from '../scripts/dependency-workflow-source-history.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const wordnet = loadWordNet();
@@ -178,7 +179,9 @@ test('the normal naming source profile retains every actual current name and bot
   const policy = readOwnCodebaseHistoricalNamingPolicy();
   assert.equal(policy.views.length, 2);
   assert.equal(historicalNames.slice(0,2).length,2,'both original certified owners remain first');
-  assert.equal(historicalNames.length,2+policy.additionalSourceViews.views.reduce((count,view)=>count+view.names.length,0));
+  const dependencyNames = historicalNames.filter(row => row.sourceView.archive === dependencyWorkflowHistoryPath);
+  assert.ok(dependencyNames.length > 0);
+  assert.equal(historicalNames.length,2+policy.additionalSourceViews.views.reduce((count,view)=>count+view.names.length,0)+dependencyNames.length);
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {
@@ -203,6 +206,16 @@ test('the normal naming source profile retains every actual current name and bot
     const rows=historicalNames.filter(row=>row.inventory===view.inventory&&row.file===view.file&&row.sourceView.revision===view.revision);
     assert.deepEqual(rows.map(({name,record})=>({name,record})),view.names);
     for(const row of rows){assert.equal(row.sourceView.revision,view.revision);assert.equal(row.sourceView.sha256,source.predecessor.sha256);assert.equal(row.sourceView.bytes,source.predecessor.bytes);}
+  }
+  for (const row of dependencyNames) {
+    const current = readFileSync(new URL(`../../${row.file}`, import.meta.url), 'utf8');
+    const predecessor = restoreDependencyWorkflowSource(current, row.file);
+    const entry = NAME_INVENTORIES.find(entry => entry.inventory === row.inventory);
+    assert.notEqual(predecessor, current);
+    assert.ok(entry.extract(predecessor, row.file).includes(row.name));
+    assert.equal(entry.extract(current, row.file).includes(row.name), false);
+    assert.equal(entry.recordOf(row.name), row.record);
+    assert.equal(restoreDependencyWorkflowSource(current + '\n# unknown edit', row.file), current + '\n# unknown edit');
   }
   const changed = structuredClone(historicalNames); changed[0].sourceView.path = 'unregistered/source.rs';
   assert.notDeepEqual(changed, historicalNames);

@@ -184,10 +184,10 @@ test('issue 195 weakening an oracle mapping fails the conformance oracle gate', 
   const readRepository = (path) => readFileSync(new URL(path, rootUrl));
   const conformance = readProjectData(new URL('manifest.json', fixtureRoot));
   const lock = readJson('js/src/vendor/grammars/grammar-lock.json');
-  const problemsOf = (change) => {
+  const problemsOf = (change, candidateLock = lock) => {
     const candidate = structuredClone(conformance);
     change(candidate);
-    return conformanceOracleProblems(candidate, { lock, read, readRepository });
+    return conformanceOracleProblems(candidate, { lock: candidateLock, read, readRepository });
   };
   assert.deepEqual(problemsOf(() => {}), []);
   const mutations = [
@@ -204,6 +204,10 @@ test('issue 195 weakening an oracle mapping fails the conformance oracle gate', 
     [({ languages }) => { languages.Rocq.oracleSha256 = '0'.repeat(64); }, /Rocq oracle does not match its digest/u],
   ];
   for (const [change, expected] of mutations) assert.match(problemsOf(change).join('\n'), expected);
+  const changedHost = structuredClone(lock);
+  changedHost.grammars.markdown.parserSha256 = '0'.repeat(64);
+  assert.match(problemsOf(() => {}, changedHost).join('\n'), /oracle tool .* is not the pinned/u);
+  assert.match(problemsOf(() => {}, { ...lock, treeSitterCli: 'tree-sitter 0.27.3' }).join('\n'), /oracle tool .* is not the pinned/u);
   record('weakenedOracleMappingFails', 'issue 195 weakening an oracle mapping fails the conformance oracle gate');
 });
 

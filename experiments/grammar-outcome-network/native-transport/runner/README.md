@@ -51,7 +51,7 @@ The same locked package can have several feature units; their feature sets are
 never combined. The collector checks complete build output, original stream
 hashes, source and executable paths and explicit version bounds: Cargo and the
 actually selected Rust compiler
-`>=1.90.0 <1.100.0`, JSON dependency `>=1.0.151 <1.0.152`. Missing, ambiguous or
+`>=1.90.0 <1.100.0` or `>=1.100.0 <1.100.1`, JSON dependency `>=1.0.151 <1.0.152` or `>=1.0.154 <1.0.155`. Missing, ambiguous or
 uncovered profiles refuse.
 
 The retained historical compiler fixture comes from a failed native probe. Its

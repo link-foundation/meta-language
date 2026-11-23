@@ -54,6 +54,7 @@ const kinds = (problems) => problems.map(({ kind }) => kind);
 test('main dependency refresh retains failed live findings and delivers their outcome to repair pull requests', () => {
   const text = readFileSync(path.join(root, '.github/workflows/dependency-refresh.yml'), 'utf8');
   const job = parseWorkflow(text).find(entry => entry.id === 'refresh');
+  assert.match(text, /^defaults:\n  run:\n    shell: bash$/mu);
   const triggers = /^on:\n((?: {2,}.*\n)+)/mu.exec(text)[1];
   assert.deepEqual([...triggers.matchAll(/^ {2}(\w+):/gmu)].map((match) => match[1]), ['schedule', 'workflow_dispatch']);
   assert.match(job.header, /github\.ref == 'refs\/heads\/main'/u);

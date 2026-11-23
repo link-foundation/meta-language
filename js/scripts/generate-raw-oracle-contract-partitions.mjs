@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
+import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
@@ -66,7 +67,7 @@ export function generateRawOracleContractPartitions({check=false}={}) {
     {path:workflowPath,source:previousWorkflow,certificate:workflow.certificate,edits:workflowEdits,currentSource:currentWorkflow},
   ].map(({currentSource,...row})=>{
     const file=new URL(row.path,root),actual=readFileSync(file,'utf8');
-    if(check)assert.equal(actual,currentSource,row.path);
+    if(check)assert.equal(restoreDependencyWorkflowSource(actual,row.path),currentSource,row.path);
     else {assert.ok(actual===row.source||actual===currentSource,'unknown current source '+row.path);writeFileSync(file,currentSource);}
     return{...row,current:{bytes:Buffer.byteLength(currentSource),sha256:createHash('sha256').update(currentSource).digest('hex')}};
   });

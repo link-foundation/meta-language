@@ -91,6 +91,21 @@ export function assertionVersionPolicy() {
         },
         evidence: 'The existing authenticated grammar lock pins this exact released Agda1.3.3 WebAssembly artifact. Existing JavaScript focused match/rejection/divergence assertions remain in this historical sandboxed profile; this does not select the unsafe original native C scanner or apply historical recovery expectations to corrected scanner sources.',
       }],
+    }, {
+      id: 'agda-tree-sitter-runtime',
+      subject: 'Tree-sitter runtime for Agda test oracles',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'agda-tree-sitter-0-27-0',
+        minimum: '0.27.0', maximum: '0.27.0', includeMinimum: true, includeMaximum: true,
+        expected: '0.27.0',
+        evidence: 'The original Agda assertions run with the locked Tree-sitter 0.27.0 runtime and maintain the exact released WebAssembly and corrected scanner inputs.',
+      }, {
+        id: 'agda-tree-sitter-0-27-2',
+        minimum: '0.27.2', maximum: '0.27.2', includeMinimum: true, includeMaximum: true,
+        expected: '0.27.0',
+        evidence: 'The 0.27.2 dependency lock retains the original released Agda parser and WebAssembly hashes. The corrected scanner is built from the original certified source and CLI. All original focused oracle comparisons still run against the selected runtime.',
+      }],
     }],
     observationBindings: [{
       testId: 'i195-assertion-explicit-version-ranges-tooling-antlr-command-order',

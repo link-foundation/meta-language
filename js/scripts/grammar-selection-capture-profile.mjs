@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {DecoratorSet} from '../src/decorators.js';
+import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
 import {readProjectData,readProjectFileBytes} from './project-data.mjs';
 
 export const GRAMMAR_SELECTION_CAPTURE_PROFILE='parity/fixtures/grammar-selection-capture-source-profile.lino';
@@ -20,6 +21,11 @@ export function originalGrammarSelectionCapture(relative,bytes,profile){
   assert.equal(digest(fixtureBytes),GRAMMAR_SELECTION_HISTORICAL_SHA256,'the complete original mapping fixture remains immutable');
   const originals=profile.sources.filter(source=>source.path===relative);
   assert.ok(originals.length<=1,'each corrected source has one complete profile');
+  if(['parity/language-grammar-inventory.lino', 'parity/fixtures/default-cst-expected.lino',
+    'parity/fixtures/native-default-cst-expected.lino'].includes(relative)){
+    const current=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+    return Buffer.from(restoreDependencyWorkflowSource(current,relative));
+  }
   if(originals.length===0)return bytes;
   const original=originals[0];
   const capture=readProjectData(new URL(GRAMMAR_SELECTION_HISTORICAL_FIXTURE,root)).captures.find(source=>source.path===relative);

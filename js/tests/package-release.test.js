@@ -5,6 +5,7 @@ import { gunzipSync } from 'node:zlib';
 import { test } from 'node:test';
 
 import { parseCargoManifest } from '../scripts/dependency-inventory.mjs';
+import { restoreDependencyWorkflowSource } from '../scripts/dependency-workflow-source-history.mjs';
 import { grammarFile, readGrammarLicense } from '../scripts/grammar-files.mjs';
 import { externalGrammarPath } from '../scripts/external-grammar-cache.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -108,13 +109,20 @@ test('npm lockfile carries no native or network-downloaded grammar packages', as
 });
 
 test('Rust delivery closes each decompressed vendored parser before compiling it', async () => {
-  const buildScript = await readFile(new URL('../../rust/oracles/native-source-oracles/build.rs', import.meta.url), 'utf8');
+  const file = 'rust/oracles/native-source-oracles/build.rs';
+  const buildScript = await readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
+  const original = restoreDependencyWorkflowSource(buildScript, file);
 
-  assert.match(buildScript, /fn decompress_parser\([^]*?\n}/);
+  assert.match(original, /fn decompress_parser\([^]*?\n\}/u);
   assert.match(
-    buildScript,
-    /decompress_parser\(&compressed, &parser\);\s+let mut compiler = cc::Build::new\(\)/,
+    original,
+    /decompress_parser\(&compressed, &parser\);\s+let mut compiler = cc::Build::new\(\)/u,
   );
+  assert.match(buildScript, /fn decompress_parser\([^]*?File::create\(parser\)[^]*?io::copy\(&mut input, &mut output\)[^]*?\n\}/u);
+  const vendored = /fn compile_grammar\([^]*?\n\}/u.exec(buildScript)?.[0] ?? '';
+  assert.match(vendored, /decompress_parser\(&compressed, &parser\);\s+let mut compiler = grammar_compiler\(&vendor, &parser\);[^]*?compiler\.compile\(/u);
+  const baseline = /fn compile_baseline\([^]*?\n\}/u.exec(buildScript)?.[0] ?? '';
+  assert.match(baseline, /\.status\(\)[^]*?assert!\(status\.success\(\)[^]*?grammar_compiler\(&sources, &sources\.join\("parser\.c"\)\)[^]*?compiler\.compile\(directory\)/u);
 });
 
 test('JavaScript workflow publishes to npm with trusted publishing provenance', async () => {
@@ -272,26 +280,29 @@ test('Rust release pipeline delegates npm publishing to the canonical JavaScript
 });
 
 test('issue 195 acceptance workflow produces exact-checkpoint evidence with pinned toolchains', async () => {
-  const workflow = await readFile(
-    new URL('../../.github/workflows/ci.yml', import.meta.url),
-    'utf8',
-  );
+  const file = '.github/workflows/ci.yml';
+  const workflow = await readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
+  const original = restoreDependencyWorkflowSource(workflow, file);
 
-  assert.match(workflow, /node-version:\s*24/);
-  assert.match(workflow, /dtolnay\/rust-toolchain@1\.99\.0/);
-  assert.match(workflow, /ocaml\/setup-ocaml@v3/);
-  assert.match(
-    workflow,
-    /opam repository add rocq-released https:\/\/rocq-prover\.org\/opam\/released/,
-  );
-  assert.match(workflow, /opam install[^\n]*rocq-core=9\.3\.0[^\n]*rocq-stdlib=9\.2\.0/);
-  assert.match(workflow, /opam var bin >> "\$GITHUB_PATH"/);
-  assert.doesNotMatch(workflow, /leanprover\/lean-action/);
-  assert.match(workflow, /elan-x86_64-unknown-linux-gnu\.tar\.gz/);
-  assert.match(workflow, /42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63/);
-  assert.match(workflow, /leanprover\/lean4:v4\.34\.1/);
-  assert.match(workflow, /node js\/scripts\/run-issue-195-evidence\.mjs/);
-  assert.match(workflow, /--checkpoint "\$ACCEPTANCE_CHECKPOINT"/);
-  assert.match(workflow, /--commit "\$GITHUB_SHA"/);
-  assert.match(workflow, /npm ci --ignore-scripts/);
+  assert.match(original, /node-version:\s*24/u);
+  assert.match(original, /dtolnay\/rust-toolchain@1\.99\.0/u);
+  assert.match(original, /42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63/u);
+  assert.match(original, /leanprover\/lean4:v4\.34\.1/u);
+  assert.match(workflow, /node-version:\s*26\.13\.1\s*\n/u);
+  assert.match(workflow, /dtolnay\/rust-toolchain@1\.100\.0\s*\n/u);
+  assert.match(workflow, /ELAN_VERSION: v4\.4\.0\s*\n/u);
+  assert.match(workflow, /0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2/u);
+  assert.match(workflow, /leanprover\/lean4:v4\.36\.0/u);
+  for (const source of [original, workflow]) {
+    assert.match(source, /ocaml\/setup-ocaml@v3/u);
+    assert.match(source, /opam repository add rocq-released https:\/\/rocq-prover\.org\/opam\/released/u);
+    assert.match(source, /opam install[^\n]*rocq-core=9\.3\.0[^\n]*rocq-stdlib=9\.2\.0/u);
+    assert.match(source, /opam var bin >> "\$GITHUB_PATH"/u);
+    assert.doesNotMatch(source, /leanprover\/lean-action/u);
+    assert.match(source, /elan-x86_64-unknown-linux-gnu\.tar\.gz/u);
+    assert.match(source, /node js\/scripts\/run-issue-195-evidence\.mjs/u);
+    assert.match(source, /--checkpoint "\$ACCEPTANCE_CHECKPOINT"/u);
+    assert.match(source, /--commit "\$GITHUB_SHA"/u);
+    assert.match(source, /npm ci --ignore-scripts/u);
+  }
 });

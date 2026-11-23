@@ -47,9 +47,12 @@ test('synthetic invocation contracts select the exact linked artifact without co
 
 test('active version contracts select explicit inclusive and exclusive bounds and reject uncovered profiles',()=>{
   for(const version of ['1.90.0','1.99.0','1.99.1','1.99.99'])assert.equal(readOutcomeCompilerProfile({...options(),cargoVersion:'cargo '+version+' (contract)\n'}).cargoVersion,version);
-  for(const version of ['1.89.99','1.100.0','2.0.0','1.99.1-nightly','1.099.1'])assert.throws(()=>readOutcomeCompilerProfile({...options(),cargoVersion:'cargo '+version+' (contract)\n'}),/uncovered Cargo version/u);
+  for(const version of ['1.89.99','1.100.1','2.0.0','1.99.1-nightly','1.100.0-nightly','1.099.1'])assert.throws(()=>readOutcomeCompilerProfile({...options(),cargoVersion:'cargo '+version+' (contract)\n'}),/uncovered Cargo version/u);
   for(const version of ['1.90.0','1.99.1'])assert.equal(readOutcomeCompilerProfile({...options(),rustcVersion:'rustc '+version+' (contract)\n'}).rustcVersion,version);
-  for(const version of ['1.89.99','1.100.0','1.99.1-nightly'])assert.throws(()=>readOutcomeCompilerProfile({...options(),rustcVersion:'rustc '+version+' (contract)\n'}),/uncovered Rust compiler version/u);
+  for(const version of ['1.89.99','1.100.1','1.99.1-nightly','1.100.0-nightly'])assert.throws(()=>readOutcomeCompilerProfile({...options(),rustcVersion:'rustc '+version+' (contract)\n'}),/uncovered Rust compiler version/u);
+  const updated=readOutcomeCompilerProfile({...options(),cargoVersion:'cargo 1.100.0 (contract)\n',rustcVersion:'rustc 1.100.0 (contract)\n'});
+  assert.equal(updated.cargoVersion,'1.100.0');assert.equal(updated.rustcVersion,'1.100.0');
+  assert.equal(updated.versionBounds.cargo,'>=1.100.0 <1.100.1');assert.equal(updated.versionBounds.rustc,'>=1.100.0 <1.100.1');
   for(const usizeBits of [16,128,0,null])assert.throws(()=>readOutcomeCompilerProfile({...options(),usizeBits}),/pointer width/u);
   assert.equal(readOutcomeCompilerProfile({...options(),usizeBits:32}).usizeBits,32);
   assert.throws(()=>readOutcomeCompilerProfile({...options(),lockSource:fixture.lockSource.replace('version = "1.0.151"','version = "1.0.152"')}),/uncovered JSON dependency version/u);

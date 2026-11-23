@@ -11,9 +11,17 @@ import { readStructuredDataLino } from '../src/structured-data-links.js';
 import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages, normalizeMigrationAntlrLexerDeclarations } from '../scripts/validate-structured-data-migration.mjs';
 import { captureTranslationStageRefreshHistory, retainTranslationStageRefreshScopes, validateTranslationStageRefreshHistory } from '../scripts/generate-translation-stage-refresh-receipt.mjs';
 import { structuredDataToLino } from '../src/structured-data-links.js';
+import { restoreDependencyWorkflowSource } from '../scripts/dependency-workflow-source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 const hash = value => createHash('sha256').update(value).digest('hex');
+const refreshedFixtures = new Map([
+  ['parity/fixtures/builtin-cst-expected.json', 'ec9f4efb0e9ef936114e09823981352f6db13700'],
+  ['parity/fixtures/default-cst-expected.json', 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711'],
+  ['parity/fixtures/native-default-cst-expected.json', 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711'],
+  ['parity/fixtures/lino-grammar-cases.json', 'ec9f4efb0e9ef936114e09823981352f6db13700'],
+  ['parity/fixtures/lino-compatibility-matrix.json', 'ec9f4efb0e9ef936114e09823981352f6db13700'],
+]);
 
 test('fixture Links data preserves every original ordered decoded baseline', () => {
   const baselines = readProjectData(new URL('../../parity/fixtures/structured-data-migration-baselines.lino', import.meta.url));
@@ -25,7 +33,8 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
     const file = new URL(logicalPath, root);
     assert.equal(existsSync(file), false, `${logicalPath} has one authoritative Links representation`);
     assert.ok(resolveProjectDataPath(file).endsWith('.lino'), logicalPath);
-    let protectedValue = readProjectData(file);
+    const currentValue = readProjectData(file);
+    let protectedValue = currentValue;
     if (logicalPath === 'parity/fixtures/typescript-erasure.json') {
       const history = readProjectData(new URL('../../parity/fixtures/typescript-named-import-expectation-history.lino', import.meta.url));
       assert.equal(history.path, logicalPath.replace(/\.json$/u, '.lino'));
@@ -44,6 +53,14 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
         revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917', path: 'parity/fixtures/typescript-erasure.lino',
       });
     }
+    const originalFixture = refreshedFixtures.get(logicalPath);
+    if (originalFixture) {
+      const path = logicalPath.replace(/\.json$/u, '.lino');
+      const current = readFileSync(resolveProjectDataPath(file), 'utf8');
+      assert.equal(serializeProjectData(protectedValue, path), current, `${logicalPath}: current ordered fixture round trip`);
+      const predecessor = restoreDependencyWorkflowSource(current, path, originalFixture);
+      protectedValue = readStructuredDataLino(predecessor);
+    }
     const freshness = contract.currentFreshnessChecks.find(check => check.logicalPaths.includes(logicalPath));
     const refresh = freshness?.providerReceiptRefresh;
     if (refresh || freshness?.translationStageRefresh || freshness?.antlrLexerDeclarationRefresh) {
@@ -55,7 +72,7 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
       for (const { language, provider } of refresh ?? []) {
         const catalog = readProjectData(new URL('../../js/src/data/language-catalog.lino', import.meta.url));
         const grammar = catalog.languages.find(entry => entry.name === language).grammars.find(entry => entry.id === provider);
-        assert.equal(protectedValue.languages[language].grammars[provider].parserSha256, grammar.parserSha256);
+        assert.equal(currentValue.languages[language].grammars[provider].parserSha256, grammar.parserSha256);
         for (const runtime of ['js', 'rust']) assert.equal(hash(readFileSync(new URL(`../../${runtime}/src/data/${catalog.nativeGrammars[provider].file}`, import.meta.url))), grammar.parserSha256);
       }
       if (refresh) protectedValue = normalizeMigrationProviderReceipts(historical, protectedValue, refresh);

@@ -9,6 +9,7 @@ const history=readStructuredDataLino(bytes.toString('utf8'));
 
 export function restoreWindowsLinkerLookupHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreDependencyWorkflowSource(source,'.github/workflows/ci.yml');
   source=restoreCurrentCiRepairSource(source,'.github/workflows/rust.yml');
   if(source.includes('node-version: 24.22.0'))source=restoreCiNodeRuntimeHistory(source);
   assert.equal(source.split(history.after).length,2,'one complete bounded Windows lookup retry block is required');
@@ -19,3 +20,4 @@ export function restoreWindowsLinkerLookupHistory(source) {
 import {restoreCiNodeRuntimeHistory} from './ci-node-runtime-history.js';
 
 import {restoreCurrentCiRepairSource} from '../../scripts/current-ci-repair-source-history.mjs';
+import {restoreDependencyWorkflowSource} from '../../scripts/dependency-workflow-source-history.mjs';

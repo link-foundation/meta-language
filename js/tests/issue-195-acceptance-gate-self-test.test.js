@@ -173,7 +173,10 @@ test('pull request checks use no post-merge state, and post-merge reports never 
     for (const { job, text: step } of steps(text)) {
       if (!/--online|--live\b|--checkpoint post-merge/u.test(step)) continue;
       const header = job.header.join('\n');
-      const mainOnly = /github\.event_name != 'pull_request'/u.test(step) || /github\.event_name == 'push'/u.test(header);
+      // The live delivery step explicitly requires a push to the main branch.
+      const mainOnly = /github\.event_name != 'pull_request'/u.test(step)
+        || /^ {8}if: \$\{\{ (?:[^|\r\n]+ && )?github\.event_name == 'push' && github\.ref == 'refs\/heads\/main' \}\}$/mu.test(step)
+        || /github\.event_name == 'push'/u.test(header);
       const nonBlocking = /continue-on-error: true/u.test(step) || /continue-on-error: true/u.test(header);
       assert.ok(mainOnly, `${name} ${job.id}: a post-merge step runs on pull requests:\n${step}`);
       assert.ok(nonBlocking, `${name} ${job.id}: a post-merge step can fail its workflow:\n${step}`);
@@ -181,7 +184,7 @@ test('pull request checks use no post-merge state, and post-merge reports never 
   }
   const acceptance = read('.github/workflows/ci.yml');
   assert.match(acceptance, /check-dependencies\.mjs --delivery --offline/u);
-  assert.match(acceptance, /\n {2}post-merge:\n {4}name: Post-merge Report\n {4}needs: \[js, self-translation-report-validation\]\n {4}if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}\n {4}continue-on-error: true\n/u);
+  assert.match(acceptance, /\n {2}post-merge:\n {4}name: Post-merge Report\n {4}needs: \[js, self-translation-report-validation\]\n {4}if: \$\{\{ github\.event_name == 'push' && github\.ref == 'refs\/heads\/main' && needs\.js\.result == 'success' \}\}\n {4}continue-on-error: true\n/u);
   observe('I195-ACCEPTANCE-PR-CHECKS-PASSABLE', ['pullRequestChecksUseNoPostMergeState', 'postMergeReportsAreNonBlocking'],
     'pull request checks use no post-merge state, and post-merge reports never block');
 });

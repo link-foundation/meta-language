@@ -102,8 +102,12 @@ test('current source views refuse changed frozen labels missing owners forged re
 test('current crate root retains complete certified predecessors actual export owners and original context profiles',()=>{
   const pair=readOutcomeCrateRootSourcePair(),original=restoreOutcomeCrateRootSource(outcomeCrateRootPath,pair.predecessor.source);
   assert.equal(original.changed,false);assert.equal(original.receipt,null);
-  const current=restoreOutcomeCrateRootSource(outcomeCrateRootPath,readFileSync(join(root,outcomeCrateRootPath),'utf8'));
-  assert.equal(current.changed,true);assert.equal(current.predecessor,pair.predecessor.source);assert.equal(current.current,pair.successor.source);
+  const source=readFileSync(join(root,outcomeCrateRootPath),'utf8');
+  const current=restoreOutcomeCrateRootSource(outcomeCrateRootPath,source);
+  assert.equal(current.changed,true);assert.equal(current.predecessor,pair.predecessor.source);assert.equal(current.current,source);
+  assert.deepEqual(current.receipt.dependencySuccessor.predecessor,{bytes:pair.successor.bytes,sha256:pair.successor.sha256});
+  const previous=restoreOutcomeCrateRootSource(outcomeCrateRootPath,pair.successor.source);
+  assert.equal(previous.current,pair.successor.source);assert.equal(previous.receipt.dependencySuccessor,undefined);
   assert.deepEqual(checkOutcomeCrateRootSourceReceipt(outcomeCrateRootPath,current.current,current.receipt),current.receipt);
   const inventory=readOutcomeInventory(root),view=inventory.sourceViews;
   assert.equal(view.schemaVersion,3);assert.equal(view.predecessorView.schemaVersion,2);
@@ -111,11 +115,12 @@ test('current crate root retains complete certified predecessors actual export o
   assert.equal(view.historicalPins.length,13);assert.equal(view.currentPins.length,13);assert.deepEqual(view.historicalPins,inventory.pins);
   const before=view.predecessorView.currentPins.find(row=>row.file===outcomeCrateRootPath),after=view.currentPins.find(row=>row.file===outcomeCrateRootPath);
   assert.deepEqual({bytes:before.bytes,sha256:before.sha256},{bytes:pair.predecessor.bytes,sha256:pair.predecessor.sha256});
-  assert.deepEqual({bytes:after.bytes,sha256:after.sha256},{bytes:pair.successor.bytes,sha256:pair.successor.sha256});
+  assert.deepEqual({bytes:after.bytes,sha256:after.sha256},current.receipt.current);
   const proof=view.crateRootSuccessor.currentSourceProof;
   assert.equal(proof.predecessor.rootReexport.source,proof.current.rootReexport.source);
   assert.deepEqual(proof.current.selectedOwners.map(({name,source})=>({name,source})),proof.predecessor.selectedOwners.map(({name,source})=>({name,source})));
   assert.ok(proof.current.reexports.some(row=>row.source.includes('encode_formal_function_declaration_value')));
+  assert.ok(proof.current.reexports.some(row=>row.source==='pub use links_notation;'));
   assert.equal(proof.predecessor.reexports.some(row=>row.source.includes('encode_formal_function_declaration_value')),false);
   assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),view);
   assert.deepEqual(checkOutcomeSourceViews({...inventory,sourceViews:view.predecessorView},diagnosticOrderDecorator),view.predecessorView);
@@ -150,6 +155,7 @@ test('crate-root source succession refuses arbitrary files edits forged whole pi
     value=>{value.sourceViews.crateRootSuccessor.currentSource+='\n';},
     value=>{value.sourceViews.crateRootSuccessor.predecessorSource+='\n';},
     value=>{value.sourceViews.crateRootSuccessor.receipt.recipe.sha256='0'.repeat(64);},
+    value=>{value.sourceViews.crateRootSuccessor.receipt.dependencySuccessor.predecessor.sha256='0'.repeat(64);},
     value=>{value.sourceViews.crateRootSuccessor.receipt.current.bytes++;},
     value=>{value.sourceViews.crateRootSuccessor.currentSourceProof.current.rootReexport.span.start++;},
     value=>{value.sourceViews.crateRootSuccessor.currentSourceProof.current.selectedOwners.pop();},

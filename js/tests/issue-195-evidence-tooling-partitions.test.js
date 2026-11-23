@@ -11,7 +11,8 @@ import {restoreToolingPartitionHistory} from './support/tooling-partition-histor
 
 const root=new URL('../../',import.meta.url);
 const history=readProjectData(new URL('parity/fixtures/tooling-partition-history.lino',root));
-const read=file=>restoreCiRepairSourceHistory(file,restoreSchedulingSourceHistory(file,readFileSync(new URL(file,root),'utf8')));
+const read=(file,revision)=>restoreCiRepairSourceHistory(file,restoreSchedulingSourceHistory(file,
+  restoreDependencyWorkflowSource(readFileSync(new URL(file,root),'utf8'),file,revision)));
 
 test('four required tooling cells retain every current file exactly once and every original command and deadline',()=>{
   generateToolingPartitionHistory({check:true});
@@ -66,7 +67,8 @@ test('tooling partition adapters reconstruct both complete preceding raw guards 
       "  const workflow = restoreRawContractPartitionHistory(await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));",
       "\nimport {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';\n"],
   ]){
-    const source=restoreDependencyWorkflowSource(read(file),file);assert.equal(source.split(after).length,2);assert.equal(source.split(insertion).length,2);
+    const source=read(file,dependencyWorkflowHistoricalPredecessors[file]);
+    assert.equal(source.split(after).length,2);assert.equal(source.split(insertion).length,2);
     assert.equal(source.replace(insertion,'').replace(after,before),previous(file));
   }
 });
@@ -74,4 +76,4 @@ test('tooling partition adapters reconstruct both complete preceding raw guards 
 import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';
 
 import {restoreSchedulingSourceHistory} from '../scripts/scheduling-source-history.mjs';
-import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
+import {dependencyWorkflowHistoricalPredecessors,restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';

@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {captureGitArtifactCertificate} from '../scripts/capture-git-artifact-certificate.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 const file=new URL('../../.github/workflows/rust.yml',import.meta.url);
 const coverageProfile="          CARGO_PROFILE_TEST_OPT_LEVEL: 3\n"
   +"          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'\n"
@@ -25,8 +26,13 @@ test('fresh merge restores the existing successful check cache before every unch
   assert.equal(source.split(block).length,2);
   const original=captureGitArtifactCertificate('90636f9fb52b1b9095defbac041c8089608b8576','.github/workflows/rust.yml');
   assert.equal(source.split(coverageProfile).length,2);
-  const predecessor=removePartitionUploadRetry(source.replace(block,'').replace(coverageProfile,''));
+  const historical=restoreDependencyWorkflowSource(source,'.github/workflows/rust.yml');
+  assert.equal(historical.split(block).length,2);
+  assert.equal(historical.split(coverageProfile).length,2);
+  const predecessor=removePartitionUploadRetry(historical.replace(block,'').replace(coverageProfile,''));
   assert.equal(predecessor,original.blob.toString('utf8'),'every original job, deadline, matrix cell, gate, command and artifact step remains exact');
+  const node = fresh.steps.find(row=>row.name==='Setup Node.js for shared JavaScript reports');
+  assert.match(node.text,/node-version: 26\.13\.1/u);
   assert.match(source,/fresh-merge:[\s\S]*?timeout-minutes: 20/u);
 });
 

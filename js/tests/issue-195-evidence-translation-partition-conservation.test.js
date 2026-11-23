@@ -10,6 +10,7 @@ import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mj
 import {restoreEvidenceTranslationSourceHistory} from '../scripts/evidence-translation-source-history.mjs';
 import {generateEvidenceTranslationHistory} from '../../experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs';
 import {restoreNativeCompatibilitySourceHistory} from '../scripts/native-compatibility-source-history.mjs';
+import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 
@@ -36,10 +37,11 @@ test('six actual evidence translation scopes preserve every original workflow by
     const unknown=current+'\n# unknown current source\n';assert.equal(restoreEvidenceTranslationSourceHistory(row.file,unknown),unknown);
   }
   const row=fixtures.sources[0],actual=readFileSync(new URL(row.file,root),'utf8');
+  const historical=restoreDependencyWorkflowSource(actual,row.file);
   const before='          - group: translation\n            shard: 1/1\n            partition: 1-of-1\n';
   const after=Array.from({length:6},(_,index)=>'          - group: translation\n            shard: '+(index+1)+'/6\n            partition: '+(index+1)+'-of-6\n').join('');
   assert.equal(actual.split(after).length,2);assert.equal(actual.includes(before),false);
-  assert.equal(actual.replace(after,before),row.sourceText,'all original jobs, steps, tools, native flags, gates and artifact paths stay exact');
+  assert.equal(historical.replace(after,before),row.sourceText,'all original jobs, steps, tools, native flags, gates and artifact paths stay exact');
   assert.equal(restoreEvidenceTranslationSourceHistory(row.file,actual),row.sourceText);
   assert.equal(restoreEvidenceTranslationSourceHistory(row.file,row.sourceText),row.sourceText);
   const changed=actual+'\n# changed input\n';assert.equal(restoreEvidenceTranslationSourceHistory(row.file,changed),changed);

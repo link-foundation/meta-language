@@ -18,7 +18,10 @@ const nativeFile = 'issue-195-results/artifacts/decimal-format-draft-native.lino
 function fixture(parts = [{ [compilerFile]: '(compiler feedback)\n' }, { [nativeFile]: '(native observation)\n' }, {}]) {
   const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'translation-feedback-')));
   mkdirSync(path.join(root, 'js/tests'), { recursive: true });
-  for (const name of ['a', 'b', 'c', 'd', 'e', 'f']) writeFileSync(path.join(root, `js/tests/translation-${name}.test.js`), '');
+  const partitions = parts.length;
+  for (const name of 'abcdefgh'.slice(0, Math.max(partitions, 6))) {
+    writeFileSync(path.join(root, `js/tests/translation-${name}.test.js`), '');
+  }
   const inputDirectory = path.join(root, '.issue-195-work/parts');
   const outputDirectory = path.join(root, '.issue-195-work/merged');
   const directories = parts.map((payloads, index) => {
@@ -27,8 +30,10 @@ function fixture(parts = [{ [compilerFile]: '(compiler feedback)\n' }, { [native
       mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
       writeFileSync(path.join(root, relative), bytes);
     }
-    const directory = path.join(inputDirectory, `translation-test-feedback-${commit}-${index + 1}-of-3`);
-    captureTranslationTestFeedbackPartition({ root, commit, shard: `${index + 1}/3`, outputDirectory: directory });
+    const directory = path.join(inputDirectory, `translation-test-feedback-${commit}-${index + 1}-of-${partitions}`);
+    captureTranslationTestFeedbackPartition({
+      root, commit, partitions, shard: `${index + 1}/${partitions}`, outputDirectory: directory,
+    });
     return directory;
   });
   return { root, commit, inputDirectory, outputDirectory, directories };
@@ -183,6 +188,30 @@ test('initial translation shards retain every file, native flag, original deadli
   const acceptance = new Map(parseWorkflow(restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'))).map(job => [job.id, job]));
   assert.match(acceptance.get('javascript-suite-independent').header, /group: translation\n\s+shard: 1\/1\n\s+partition: 1-of-1/u);
   assert.match(acceptance.get('javascript-suite-independent').header, /timeout-minutes: 60/u);
+});
+
+test('the current eight translation jobs retain every file, exact feedback partition and the original job deadline', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const jobs = new Map(parseWorkflow(workflow).map(job => [job.id, job]));
+  const tests = jobs.get('tests');
+  assert.match(tests.header, /timeout-minutes: 15\n/u);
+  const shards = [...tests.header.matchAll(/\{group: translation, partition: (\d+), shards: (\d+)\}/gu)]
+    .map(([, index, count]) => `${index}/${count}`);
+  assert.deepEqual(shards, Array.from({ length: 8 }, (_, index) => `${index + 1}/8`));
+  const files = partitionTests(testFiles()).groups.translation;
+  assert.deepEqual(shards.flatMap(shard => partitionGroupFiles(files, shard)).sort(), files);
+
+  const merge = jobs.get('translation-test-feedback');
+  assert.match(merge.steps.find(step => step.name === 'Download every translation feedback partition separately').text,
+    /pattern: translation-test-feedback-\$\{\{ github.sha \}\}-\*-of-8/u);
+  assert.match(merge.steps.find(step => /translation-test-feedback\.mjs merge/u.test(step.run)).run, /--partitions 8/u);
+  const value = fixture([{ [compilerFile]: '(compiler feedback)\n' }, ...Array.from({ length: 7 }, () => ({}))]);
+  try {
+    assert.deepEqual(mergeTranslationTestFeedbackPartitions({ ...value, partitions: 8 }),
+      { commit, partitions: 8, files: [compilerFile] });
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
+  }
 });
 
 test('omitted or duplicate initial shards, flattened feedback and a weakened final gate fail conservation', () => {

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData,serializeProjectData} from '../../../../js/scripts/project-data.mjs';
+import {dependencyWorkflowHistoryPath,restoreDependencyWorkflowSource} from '../../../../js/scripts/dependency-workflow-source-history.mjs';
 import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-certificate.mjs';
 import {readRustSourceItems} from '../../../../js/scripts/generate-private-output-test-model.mjs';
 import {tokenize} from '../../../../js/src/translation/lexer.js';
@@ -60,15 +61,17 @@ export function readOutcomeCrateRootSourcePair() {
   return structuredClone(sourcePair);
 }
 
-/** Admit only the complete original crate root or its independently registered exact successor. */
+/** Admit only the complete original crate root and its independently registered exact successors. */
 export function restoreOutcomeCrateRootSource(file,source) {
   assert.equal(file,outcomeCrateRootPath);assert.equal(typeof source,'string');assert.ok(Buffer.byteLength(source)<=131072);
   const pair=readOutcomeCrateRootSourcePair();
   if(source===pair.predecessor.source)return{file,predecessor:source,current:source,changed:false,receipt:null};
-  assert.equal(source,pair.successor.source,'unknown complete crate-root source edits refuse');
+  const previous=restoreDependencyWorkflowSource(source,file);
+  assert.equal(previous,pair.successor.source,'unknown complete crate-root source edits refuse');
   return{file,predecessor:pair.predecessor.source,current:source,changed:true,receipt:{
     schemaVersion:1,profile:'complete grammar transport crate root source successor 1',file,revision:pair.revision,
     recipe:{path:OUTCOME_CRATE_ROOT_SOURCE_PROFILE.recipe,sha256:recipeSha256},
+    ...(source===previous?{}:{dependencySuccessor:{path:dependencyWorkflowHistoryPath,predecessor:pin(previous)}}),
     predecessor:pin(pair.predecessor.source),current:pin(source),inverseVerified:true,
     boundary:'Exact source succession and original Git membership only; complete current reexport proofs are separate and native execution remains a CI obligation.'}};
 }

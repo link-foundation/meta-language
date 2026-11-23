@@ -192,19 +192,24 @@ test('source discovery includes every original and follow-up discussion endpoint
   } });
   assert.deepEqual(endpoints.sort(), [
     'issues/195', 'issues/195/comments?per_page=100',
+    'issues/197', 'issues/197/comments?per_page=100',
     'issues/199', 'issues/199/comments?per_page=100',
     'issues/224', 'issues/224/comments?per_page=100',
     'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
     'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
     'issues/226/comments?per_page=100', 'pulls/226/comments?per_page=100', 'pulls/226/reviews?per_page=100',
+    'issues/249/comments?per_page=100', 'pulls/249/comments?per_page=100', 'pulls/249/reviews?per_page=100',
   ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
   assert.equal(discussion.issue.number, 195);
-  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224]);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224, 197]);
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/197/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/226/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/249/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('pulls/249/comments')));
   const reviews = discussion.comments.filter(({ body }) => body === 'A reviewed requirement');
-  assert.equal(reviews.length, 3);
+  assert.equal(reviews.length, 4);
   assert.ok(reviews.every(({ created_at, updated_at }) => created_at === updated_at && updated_at === '2026-10-12T00:00:00Z'));
   assert.ok(discussion.comments.every(({ body }) => body !== ''));
 });

@@ -2,16 +2,22 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { captureGitArtifactCertificate } from './capture-git-artifact-certificate.mjs';
-import { dependencyWorkflowHistoryPath, dependencyWorkflowPredecessors } from './dependency-workflow-source-history.mjs';
+import { dependencyWorkflowHistoricalPredecessors, dependencyWorkflowHistoryPath, dependencyWorkflowPredecessors } from './dependency-workflow-source-history.mjs';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 
 const root = new URL('../../', import.meta.url);
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const check = process.argv.includes('--check');
 
-const sources = Object.entries(dependencyWorkflowPredecessors).map(([file, revision]) => {
+const predecessors = [...Object.entries(dependencyWorkflowPredecessors), ...Object.entries(dependencyWorkflowHistoricalPredecessors)];
+const commits = new Map();
+const trees = new Map();
+const sources = predecessors.map(([file, revision]) => {
   const current = readFileSync(new URL(file, root));
   const { certificate, blob } = captureGitArtifactCertificate(revision, file);
+  commits.set(revision, certificate.commitText);
+  for (const tree of certificate.trees) trees.set(tree.objectId, tree);
+  const ancestry = certificate.trees.map(({ objectId }) => objectId);
   let offset = 0;
   let beforeEnd = blob.length;
   let afterEnd = current.length;
@@ -27,11 +33,12 @@ const sources = Object.entries(dependencyWorkflowPredecessors).map(([file, revis
   }
   const predecessor = blob.subarray(offset, beforeEnd).toString('utf8');
   assert.deepEqual(Buffer.concat([current.subarray(0, offset), Buffer.from(predecessor), current.subarray(afterEnd)]), blob);
-  return { file, currentDigest: digest(current), currentBytes: current.length, certificate,
+  return { file, revision, currentDigest: digest(current), currentBytes: current.length,
+    certificate: { ancestry, blob: certificate.blob },
     edit: { offset, length: afterEnd - offset, predecessor } };
 });
 const output = new URL(dependencyWorkflowHistoryPath, root);
-const history = { schemaVersion: 1, sources };
+const history = { schemaVersion: 2, commits: [...commits], trees: [...trees.values()], sources };
 if (check) checkProjectData(output, history);
 else writeProjectData(output, history);
 

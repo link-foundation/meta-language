@@ -157,9 +157,9 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Balance the two measured cohorts at their current six-job width.
+  // Balance the measured grammar cohort and both recorded translation widths.
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
-  if(count===6&&files.includes('translation-native-library-receipt-history.test.js')){
+  if((count===6||count===8)&&files.includes('translation-native-library-receipt-history.test.js')){
     const costs=readProjectData(translationSchedulingFile);
     return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count,{costs})[index-1].map(file=>file.slice(9));
   }

@@ -51,7 +51,7 @@ test('both packages depend on the audited links-notation release', () => {
   const { npm } = matrix.releases;
   assert.equal(npm.package, 'links-notation');
   const manifest = readJson(npm.manifest);
-  assert.equal(manifest.dependencies?.[npm.package] ?? manifest.devDependencies?.[npm.package], npm.version);
+  assert.equal(manifest.dependencies?.[npm.package] ?? manifest.devDependencies?.[npm.package], `^${npm.version}`);
   assert.equal(readJson(npm.lockfile).packages[`node_modules/${npm.package}`].version, npm.version);
   const { cratesIo } = matrix.releases;
   const cargo = readFileSync(resolveProjectDataPath(repositoryFile(cratesIo.manifest)), 'utf8');
