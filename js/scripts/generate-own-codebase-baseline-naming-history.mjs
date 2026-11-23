@@ -58,6 +58,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/scripts/own-codebase-test-registration-history.mjs',
     'js/scripts/raw-consuming-snapshot-source-profile.mjs',
     'js/scripts/raw-oracle-contract-partition-history.mjs',
+    'js/scripts/required-field-native-host-succession.mjs',
     'js/scripts/test-groups.mjs',
     'js/scripts/tooling-frozen-source-history.mjs',
     'js/tests/issue-195-evidence-node-dependency.test.js',
@@ -69,6 +70,11 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/tests/support/translation-workflow-history.js',
     'js/tests/test-groups.test.js',
     'js/tests/translation-typescript-workflow.test.js',
+    'rust/src/self_translation/binding/owned_recursive_emission.rs',
+    'rust/src/translation/rust/expressions.rs',
+    'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
+    'rust/tests/unit/translation_javascript_record_parameters.rs',
+    'rust/tests/unit/translation_surface_reference_analysis.rs',
   ];
   const file='parity/naming/array-identity-historical-inventories.lino';
   const stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
