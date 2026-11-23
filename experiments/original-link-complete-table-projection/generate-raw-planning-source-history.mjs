@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
+import {restoreDependencyWorkflowSource} from '../../js/scripts/dependency-workflow-source-history.mjs';
 import {writeProjectData,checkProjectData} from '../../js/scripts/project-data.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
@@ -18,8 +19,9 @@ export function generateOriginalLinkRawPlanningHistory({check=false}={}) {
     const original=captureGitArtifactCertificate(revision,file);
     verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
     const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
+    const current=restoreDependencyWorkflowSource(readFileSync(new URL(file,root),'utf8'),file);
     return{file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,
-      current:pin(readFileSync(new URL(file,root)))};
+      current:pin(current)};
   });
   const value={schemaVersion:1,revision,sources,
     boundary:'Complete original planning source definitions retain independent Git membership and every byte. Current resource admission and immutable-data traversal have separate source-qualified identities. This source archive supplies no native execution, workload timing or semantic equivalence evidence.'};

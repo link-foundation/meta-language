@@ -11,6 +11,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   '.github/workflows/rust.yml': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   '.github/workflows/dependency-refresh.yml': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-context-source-metadata/generate.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/original-link-complete-table-projection/generate-raw-planning-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/original-link-complete-table-projection/raw-native-observations.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -92,7 +93,7 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = '85e9ff0a3190cf7addc8a16149170954eb87f8f7c9a5f1157f20f8f640912103';
+const archiveDigest = '33c32064eb8bae15b08258355e1cec57cda804298e04efe49022133af4866208';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 
