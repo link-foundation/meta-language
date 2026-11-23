@@ -87,6 +87,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'js/src/typed-program-links-validation.js',
       'js/tests/translation-required-field-native-host-succession.test.js',
       'rust/tests/unit/translation_javascript_record_parameters.rs',
+      'js/tests/issue-195-evidence-node-test-placement.test.js',
     ].map(path=>({path,revision:baseline})),
     ...[
       'js/scripts/current-ci-repair-source-history.mjs',
