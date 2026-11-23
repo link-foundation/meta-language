@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import test from 'node:test';
 import {generateNativeConstructorStorage,renderNativeConstructorStorage,buildNativeConstructorStorageControls} from '../../experiments/grammar-outcome-network/native-transport/inverse/generate-native-constructor-storage.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
-import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
+import {createSourceTextRustBlockReader,readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {tokenize} from '../src/translation/lexer.js';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {encodeStructuredDataLinks} from '../src/structured-data-links.js';
@@ -73,22 +73,23 @@ test('every native constructor conserves actual field bindings child order sourc
   const {inventory,outputs}=nativeConstructorContext(),byId=new Map(inventory.operations.map(row=>[row.sourceReference,row]));
   const texts=new Map(outputs.map(row=>[row.file.split('/').at(-1),readFileSync(new URL(row.file,root),'utf8')]));
   for(const text of texts.values()){const tree=parseNative('native-rust',text);assert.equal(tree.hasError,false);assert.equal(tree.start,0);assert.equal(tree.end,Buffer.byteLength(text));}
+  const readers=new Map([...texts].map(([file,text])=>[file,createSourceTextRustBlockReader(text)]));
   for(let index=0;index<inventory.operations.length;index++){
-    const operation=inventory.operations[index],text=texts.get('part_'+Math.floor(index/24)+'.rs');
-    const source=readSourceTextRustBlock(text,'fn','construct_'+index);
+    const operation=inventory.operations[index],readBlock=readers.get('part_'+Math.floor(index/24)+'.rs');
+    const source=readBlock('fn','construct_'+index);
     let references=operation.fields?.map(row=>row.typeReference)??(['named','type_item','reference'].includes(operation.form)?[operation.child]:operation.arguments??[]);
     if(operation.variants)references=[];
     checkNativeConstructorSourceBindings(source,operation.fields??[],references,byId);
     for(let variantIndex=0;variantIndex<(operation.variants?.length??0);variantIndex++){
       const variant=operation.variants[variantIndex],fields=variant.fields??variant.tuple;
       assert.ok(source.includes(JSON.stringify(variant.identity)));
-      const body=readSourceTextRustBlock(text,'fn','construct_variant_'+index+'_'+variantIndex);
+      const body=readBlock('fn','construct_variant_'+index+'_'+variantIndex);
       checkNativeConstructorSourceBindings(body,variant.fields??[],fields.map(row=>row.typeReference),byId);
       assert.ok(body.includes(operation.storage.rust+'::'+variant.name));
     }
   }
-  const operation=inventory.operations.find(row=>row.fields?.length>1),index=inventory.operations.indexOf(operation),text=texts.get('part_'+Math.floor(index/24)+'.rs');
-  const body=readSourceTextRustBlock(text,'fn','construct_'+index),field=operation.fields[0];
+  const operation=inventory.operations.find(row=>row.fields?.length>1),index=inventory.operations.indexOf(operation),readBlock=readers.get('part_'+Math.floor(index/24)+'.rs');
+  const body=readBlock('fn','construct_'+index),field=operation.fields[0];
   const changed=body.replace(field.name+': field_0',field.name+': field_1');assert.notEqual(changed,body);
   assert.throws(()=>checkNativeConstructorSourceBindings(changed,operation.fields,operation.fields.map(row=>row.typeReference),byId));
 });
