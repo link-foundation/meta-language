@@ -60,6 +60,20 @@ test('parallel source preparation admits only identical sources and waits for ev
   assert.equal(canOverlapOriginalLinkRawSourcePreparation({META_LANGUAGE_JOBS:'2'},4,5*1024**3),false);
 });
 
+test('one checked current producer supplies both complete archive emissions', () => {
+  const source = readFileSync(new URL('../../experiments/original-link-complete-table-projection/raw-native-observations.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export async function planOriginalLinkRawNative(');
+  const end = source.indexOf('\nfunction originalLinkRawRecordDigest(', start);
+  assert.ok(start >= 0 && end > start);
+  const plan = source.slice(start, end);
+  assert.doesNotMatch(plan, /\bgenerateOriginalLinkRawConsumingEmission\(/u, 'the standalone driver would prepare the whole current program again');
+  assert.equal([...plan.matchAll(/\bprepareCurrentOriginalLinkRawEmission\(/gu)].length, 1);
+  assert.match(plan, /const currentEmission = prepareCurrentOriginalLinkRawEmission\(/u);
+  assert.match(plan, /prepareOriginalLinkRawSource\(currentEmission, /u);
+  assert.match(plan, /prepareOriginalLinkRawConsumingEmission\(currentEmission\)/u);
+  assert.match(plan, /assert\.deepEqual\(readOriginalLinkRawConsumingProfile\(generated\.artifact\.predecessor\), generated\.profile\)/u);
+});
+
 test('provisional archive source reads retain the three complete inputs and reject a changed receipt', () => {
   const sources = readOriginalLinkRawArchiveSources();
   assert.deepEqual(sources.map(source => [Buffer.byteLength(source), createHash('sha256').update(source).digest('hex')]), [

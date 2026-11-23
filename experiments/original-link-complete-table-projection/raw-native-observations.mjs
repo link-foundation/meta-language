@@ -20,7 +20,7 @@ import {canOverlapOriginalLinkRawSourcePreparation,prepareOriginalLinkRawArchive
 import {freezeOriginalLinkRawData,readOriginalLinkRawFreezeWork} from './raw-data-freeze.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_EMISSION_BASELINE, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
-import {generateOriginalLinkRawConsumingEmission,ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
+import {generateOriginalLinkRawConsumingEmission,ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,prepareOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
 import {ORIGINAL_LINK_RAW_BORROWED_RECEIPT,prepareOriginalLinkRawBorrowedEmission,readOriginalLinkRawBorrowedProfile} from './raw-borrowed-emission.mjs';
 import {readPortableSourceParameterStyles} from '../../js/scripts/portable-source-library-style.mjs';
 import {readOriginalRawColumnLoanStyles} from './raw-column-loan-styles.mjs';
@@ -461,8 +461,7 @@ print!("{output}");}
 
 // Only immutable texts, their interface, and declaration identities escape this
 // scope. The checked surface/IR and duplicate artifact definitions are temporary.
-function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}, profile) {
-  const prepared = prepareCurrentOriginalLinkRawEmission({readProjectData, parseJavaScript, checkProgram, emitRust});
+function prepareOriginalLinkRawSource(prepared, {emitJavaScript, tokenize}, profile) {
   const {historicalArtifact: artifact, program, rust} = prepared;
   assert.equal(artifact.version, 1); assert.equal(artifact.model, frozenNative.model); assert.equal(rust.definitions.length, frozenNative.definitionCount);
   assert.equal(textBytes(artifact.completeRust).length, frozenNative.sourceBytes); assert.equal(sha256(artifact.completeRust), frozenNative.sourceSha256);
@@ -616,13 +615,16 @@ export async function planOriginalLinkRawNative(environment = process.env, {emis
       assert.equal(sha256(capturedSources[1]), consuming.sourceSha256);
       assert.equal(capturedSources[2], borrowed.source);
     }
-    const preparedSource=prepareOriginalLinkRawSource({readProjectData,parseJavaScript,checkProgram,emitRust,emitJavaScript,tokenize},emissionProfile);
-    const successorSources=emissionProfile==='current'?await(async()=>{
-      const generated=await generateOriginalLinkRawConsumingEmission(true);
-      const borrowed=prepareOriginalLinkRawBorrowedEmission(generated.profile);
-      return[{source:generated.rust.text,profile:generated.profile},{source:borrowed.source,profile:borrowed.profile}];
-    })():[];
-    return {preparedSource,successorSources,sources:[preparedSource.source,...successorSources.map(row=>row.source)]};
+    const currentEmission = prepareCurrentOriginalLinkRawEmission({readProjectData, parseJavaScript, checkProgram, emitRust});
+    const preparedSource = prepareOriginalLinkRawSource(currentEmission, {emitJavaScript, tokenize}, emissionProfile);
+    const successorSources = [];
+    if (emissionProfile === 'current') {
+      const generated = await prepareOriginalLinkRawConsumingEmission(currentEmission);
+      assert.deepEqual(readOriginalLinkRawConsumingProfile(generated.artifact.predecessor), generated.profile);
+      const borrowed = prepareOriginalLinkRawBorrowedEmission(generated.profile);
+      successorSources.push({source: generated.rust.text, profile: generated.profile}, {source: borrowed.source, profile: borrowed.profile});
+    }
+    return {preparedSource, successorSources, sources: [preparedSource.source, ...successorSources.map(row => row.source)]};
   },sources=>replayOriginalLinkRawSourceArchives(sources,environment),capturedSources);
   const replay=source=>{const index=sources.indexOf(source);assert.ok(index>=0);return receipts[index];};
   const sourceToken=emissionProfile==='current'

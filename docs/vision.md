@@ -3713,6 +3713,9 @@ three bounded archive workers and a spare CPU for emission, the workers can
 start on the complete stored sources while generation runs. The planner admits
 the receipts only after all three regenerated source texts match the replayed
 inputs byte for byte. On smaller runners, generation precedes source replay.
+The current and consuming emissions share one checked source program. The
+consuming emitter still checks every definition after both typed archive
+reloads and verifies the complete generated profile against the stored bytes.
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. Workloads with unchanged source bytes
 use advisory durations from their retained CI logs. Changed or unsampled files
