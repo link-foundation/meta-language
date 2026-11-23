@@ -708,6 +708,8 @@ jobs:
 
       - name: Run the link-assistant/formal-ai workloads on the exact artifacts
         shell: bash
+        env:
+          META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: >-
           node js/scripts/run-formal-ai-workloads.mjs
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
@@ -815,6 +817,8 @@ jobs:
       - name: Merge the independently validated Formal AI workloads
         if: ${{ !cancelled() }}
         shell: bash
+        env:
+          META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: >-
           node js/scripts/run-formal-ai-workloads.mjs
           --merge-partitions .issue-195-work/formal-ai-partitions/corpus-ratchet,.issue-195-work/formal-ai-partitions/remaining

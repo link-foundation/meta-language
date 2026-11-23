@@ -4,6 +4,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import {
   ASSERTION_PROFILES,
   buildIssue195Manifest,
@@ -386,12 +387,7 @@ test('unsupported or relabelled translations cannot satisfy positive translation
   });
 });
 
-test('a valid source envelope cannot certify semantic translation', async () => {
-  const translation = translateProgram('pub fn answer(x: u32) -> u32 { x }', 'Rust', 'JavaScript');
-  const targetModule = await import(`data:text/javascript,${encodeURIComponent(translation.code)}`);
-  assert.equal(typeof targetModule.answer, 'undefined');
-  assert.equal(translation.contract.support, 'portable-encoding');
-
+test('a valid source envelope cannot certify semantic translation', async (context) => {
   const { manifest, document } = syntheticCase(ASSERTION_PROFILES.translationPositive);
   document.results[0].executionRecords = document.results[0].executionRecords.filter(
     ({ assertionId }) => assertionId !== 'semanticPreservationChecked',
@@ -399,6 +395,13 @@ test('a valid source envelope cannot certify semantic translation', async () => 
   const report = evaluate(manifest, [document]);
   assert.equal(report.passed, false);
   assert.match(JSON.stringify(report), /semanticPreservationChecked/u);
+
+  await context.test('a real portable envelope has no executable target function', automatedTranslationTest, async () => {
+    const translation = translateProgram('pub fn answer(x: u32) -> u32 { x }', 'Rust', 'JavaScript');
+    const targetModule = await import(`data:text/javascript,${encodeURIComponent(translation.code)}`);
+    assert.equal(typeof targetModule.answer, 'undefined');
+    assert.equal(translation.contract.support, 'portable-encoding');
+  });
 });
 
 test('skips and capability declarations cannot replace exact test evidence', async (context) => {

@@ -6,7 +6,7 @@ import { readBootstrapStructuredDataLino } from '../../scripts/lib/structured-da
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = 'efd31af216b6551338a21e155fa26c1d92211685eec4c3de7b7eebc92daf9515';
+const archiveDigest = 'fd5fce31cbcdbdd389a72c78aae9fbafefdfdf2dcde5ab98ef8ee9ec8c8657ff';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 

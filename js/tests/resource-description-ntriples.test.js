@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -117,7 +118,7 @@ test('source and token resources are bounded without a full corpus', () => {
   assert.throws(() => importResourceDescriptionNTriples('\n '.repeat(5001), { sourceIdentifier: 's' }), error => error.kind === 'resourceLimit');
 });
 
-test('reviewed native transition tables translate back and retain all scalar equality decisions', () => {
+test('reviewed native transition tables translate back and retain all scalar equality decisions', automatedTranslationTest, () => {
   const source = readFileSync(new URL('../../rust/src/resource_description_ntriples_rules/part_0.rs', import.meta.url), 'utf8');
   const tree = parseProgrammingLanguage(source, 'Rust').tree;
   const values = [...Array.from({ length: 11 }, (_, index) => index), -0, -1, .5, NaN, Infinity, -Infinity];

@@ -8,6 +8,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import { fileURLToPath } from 'node:url';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { readFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
@@ -207,7 +208,7 @@ test('issue 195 weakening an oracle mapping fails the conformance oracle gate', 
   record('weakenedOracleMappingFails', 'issue 195 weakening an oracle mapping fails the conformance oracle gate');
 });
 
-test('issue 195 replacing proof obligations with bounded checks fails the proof obligation gate', () => {
+test('issue 195 replacing proof obligations with bounded checks fails the proof obligation gate', automatedTranslationTest, () => {
   const corpus = readJson('parity/fixtures/four-language-conformance.json').translationCorpus;
   const source = readFileSync(new URL(`${corpus.directory}/${corpus.sources.Lean.file}`, rootUrl), 'utf8');
   const relabelled = (translation, change) => ({

@@ -67,8 +67,14 @@ test('ordinary workflows pause automated translation and fail on independent che
   const release = { github: { event_name: 'release' } };
   assert.equal(when(ci.delivery.header, release), false);
   assert.equal(when(ci.delivery.header, { ...release, ...repositoryOptIn }), true);
-  assert.match(step(ci.consumers, 'Install and parse the exact artifacts in clean consumers').text,
-    /META_LANGUAGE_AUTOMATED_TRANSLATION: \$\{\{ inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' \}\}/u);
+  for (const [job, name] of [
+    [ci.consumers, 'Install and parse the exact artifacts in clean consumers'],
+    [ci['formal-ai-workload-parts'], 'Run the link-assistant/formal-ai workloads on the exact artifacts'],
+    [ci['formal-ai-workloads'], 'Merge the independently validated Formal AI workloads'],
+  ]) {
+    assert.match(step(job, name).text,
+      /META_LANGUAGE_AUTOMATED_TRANSLATION: \$\{\{ inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' \}\}/u);
+  }
   assert.equal(when(ci.rust.header), true);
   assert.equal(when(ci.rust.header, { ...optIn, needs: {
     changes: { result: 'success', outputs: { rust: 'true' } },

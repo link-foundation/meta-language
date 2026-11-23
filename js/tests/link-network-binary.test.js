@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { runInNewContext } from 'node:vm';
@@ -191,7 +192,7 @@ function compareBufferedBinaryControl(input, binary, recordLimit = 1000, byteLim
   return expected;
 }
 
-test('buffered framing replays every retained fixture mutation truncation and identity order through complete checked emission', () => {
+test('buffered framing replays every retained fixture mutation truncation and identity order through complete checked emission', automatedTranslationTest, () => {
   const context = readBufferedBinaryEmission();
   let cases = 0;
   for (const archive of [fixture.legacyVersion1Bytes, fixture.version2Bytes]) {
@@ -232,7 +233,7 @@ test('buffered framing replays every retained fixture mutation truncation and id
   assert.strictEqual(readBufferedBinaryEmission(), context, 'all cases share one complete checked emission');
 });
 
-test('buffered framing preserves safe integer identities cache membership limits and exact failure precedence', () => {
+test('buffered framing preserves safe integer identities cache membership limits and exact failure precedence', automatedTranslationTest, () => {
   const largest = Number.MAX_SAFE_INTEGER - 1;
   for (const version of [1, 2]) for (const identities of [[largest - 1, 1, largest], [largest, 1, largest - 1], [largest, 1, largest], [1, largest, 1]]) {
     const input = createBinaryIdentityControl(version, identities);

@@ -64,9 +64,18 @@ using the workflows' current conditions and shell commands.
 
 Normal PR, push and release runs leave `automated_translation` off. Clean
 consumers still exercise the installed or published packages against parsing
-and program fixtures. The complete release-delivery translation checks use the
-same repository opt-in. After the workflow is available on the default branch,
-a maintainer can run a diagnostic on a selected ref with this command.
+and program fixtures. The Formal AI consumer retains 147 JavaScript workloads,
+134 Rust workloads, and its cross-runtime probes. Its one JavaScript workload
+that runs Meta Language's translator in six directions and the matching probe
+operation require the opt-in. The rest still exercise Formal AI's own grammar
+projections. The paused report can validate this reduced execution scope for
+ordinary CI. Strict acceptance requires the original full workload.
+
+The Rust coverage floor of 84.30% is calibrated for the full suite, including
+its translation shard. The opt-in still runs that entire coverage gate and the
+complete release-delivery translation checks. After the workflow is available on
+the default branch, a maintainer can run a diagnostic on a selected ref with this
+command.
 
 ```sh
 gh workflow run ci.yml --repo link-foundation/meta-language --ref <ref> -f automated_translation=true
@@ -101,9 +110,9 @@ it can be verified. The captured branch inventory is a rollout input.
 The post-merge report records the newest eligible workflow run and its latest
 attempt for each current pull request head and base pair. It requires a
 successful pause step and aggregate. It also checks the run verified the head
-and base as parents of the tested checkout, so updated PR metadata alone is
-insufficient. Run the same observation from a clean checkout with GitHub CLI
-access.
+and base as parents of the tested checkout. It reads the current base branch ref
+directly because an unmergeable pull request can report an older base commit.
+Run the same observation from a clean checkout with GitHub CLI access.
 
 ```sh
 node js/scripts/check-automated-translation-rollout.mjs /tmp/automated-translation-rollout.lino
