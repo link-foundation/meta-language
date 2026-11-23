@@ -130,7 +130,15 @@ test('ordinary workflows pause automated translation and fail on independent che
     assert.equal(when(entry.text, { matrix: { group, generated_slice } }), true, name);
   }
 
-  const run = step(ci.acceptance, 'Require the active checks while automated translation is paused').run;
+  const pausedGate = step(ci.acceptance, 'Require the active checks while automated translation is paused');
+  const missingCandidates = { needs: { candidates: { result: 'skipped' } } };
+  const candidateGate = step(ci.acceptance, 'Require delivery candidates');
+  assert.equal(when(candidateGate.text, missingCandidates), true);
+  assert.equal(when(pausedGate.text, missingCandidates), false);
+  assert.equal(when(pausedGate.text), true);
+  assert.equal(when(pausedGate.text, optIn), false);
+  assert.equal(when(pausedGate.text, { cancelled: () => true }), false);
+  const { run } = pausedGate;
   const independent = ['CHANGES', 'JAVASCRIPT', 'GRAMMAR', 'CONSUMERS', 'RELATIVE_META_LOGIC', 'FORMAL_AI'];
   const good = Object.fromEntries(independent.map((check) => [`${check}_RESULT`, 'success']));
   const execute = (overrides) => spawnSync('bash', ['-e', '-c', run.replace(/^\|\n/u, '')], {

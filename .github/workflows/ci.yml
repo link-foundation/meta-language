@@ -2042,7 +2042,7 @@ jobs:
           node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
 
       - name: Require the active checks while automated translation is paused
-        if: ${{ !cancelled() && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        if: ${{ !cancelled() && needs.candidates.result == 'success' && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
           JAVASCRIPT_RESULT: ${{ needs.js.result }}

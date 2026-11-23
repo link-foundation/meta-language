@@ -87,6 +87,16 @@ placement test still exercises inventory discovery and rejection of altered
 owner expressions.
 [Tooling partition 2, log lines 1431 and 1489](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137442894199)
 
+All 15 package jobs passed, including the 11 raw schema and consumer
+assertions. The JavaScript package job reported the failed tooling shards at
+line 1239. The aggregate named the same upstream jobs at line 58 and also
+reported their skipped dependents. The pause gate now checks independent
+results after the delivery-candidates prerequisite succeeds. The earlier
+gate still reports the cause when the prerequisite is missing.
+[CI run](https://github.com/link-foundation/meta-language/actions/runs/45098269657),
+[JavaScript package job](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137485087833),
+[aggregate](https://github.com/link-foundation/meta-language/actions/runs/45098269657/job/137485771286)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
