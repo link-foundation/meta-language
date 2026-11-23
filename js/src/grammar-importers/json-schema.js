@@ -14,7 +14,14 @@ const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, option
 const space = ref('json_space');
 const value = ref('value');
 const referenceKeys = new Set(['$ref', '$defs', '$id', '$schema', '$comment', 'title', 'description', 'default', 'examples', 'deprecated', 'readOnly', 'writeOnly']);
-const jsonTypes = ['object', 'array', 'string', 'number', 'boolean', 'null'];
+const integerType = 1 << 3;
+const fractionalType = 1 << 4;
+const numberType = integerType | fractionalType;
+const jsonTypes = new Map([
+  ['object', 1], ['array', 1 << 1], ['string', 1 << 2], ['number', numberType],
+  ['integer', integerType], ['boolean', 1 << 5], ['null', 1 << 6],
+]);
+const allJsonTypes = (1 << 7) - 1;
 const characters = (value) => charClass(Array.from(value, character => ({ kind: 'char', value: character })));
 const importedSchemas = new WeakMap();
 const baseFile = new URL('../data/json-document/decoder.lino', import.meta.url);
@@ -236,24 +243,28 @@ function finiteSchemaCandidates(schema, resolve) {
   return collect(schema, 0);
 }
 
-function branchesUseDisjointTypes(branches) {
+function declaredTypeMembership(rules) {
+  if (rules?.type === undefined) return allJsonTypes;
+  const names = Array.isArray(rules.type) ? rules.type : [rules.type];
+  return names.reduce((membership, name) => membership | (jsonTypes.get(name) ?? 0), 0);
+}
+
+function valueTypeMembership(value) {
+  if (typeof value === 'number') return Number.isInteger(value) ? integerType : fractionalType;
+  const name = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+  return jsonTypes.get(name) ?? 0;
+}
+
+function branchesUseDisjointTypes(branches, allowedTypes) {
   if (branches.length < 2) return true;
-  const seen = new Set();
+  let seen = 0;
   for (const branch of branches) {
     if (branch === null || !['object', 'boolean'].includes(typeof branch) || Array.isArray(branch)) return false;
     const constants = finiteConstants(branch);
-    let types;
-    if (Array.isArray(constants)) {
-      types = constants.map(value => value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value);
-    } else {
-      if (branch.$ref !== undefined || branch.anyOf !== undefined || branch.oneOf !== undefined) return false;
-      types = Array.isArray(branch.type) ? branch.type : branch.type === undefined ? jsonTypes : [branch.type];
-    }
-    const families = new Set(types.map(type => type === 'integer' ? 'number' : type));
-    for (const family of families) {
-      if (!jsonTypes.includes(family) || seen.has(family)) return false;
-      seen.add(family);
-    }
+    const declared = allowedTypes & declaredTypeMembership(branch);
+    const membership = constants ? constants.reduce((types, value) => types | valueTypeMembership(value), 0) & declared : declared;
+    if (seen & membership) return false;
+    seen |= membership;
   }
   return true;
 }
@@ -273,10 +284,10 @@ function requiredStringTags(schema) {
   return tags;
 }
 
-function branchesUseDisjointRequiredTags(branches) {
+function branchesUseDisjointRequiredTags(branches, allowedTypes) {
   const tags = branches.map(requiredStringTags);
   return branches.every((branch, index) => branches.slice(0, index).every((previous, other) => (
-    branchesUseDisjointTypes([branch, previous]) || [...tags[index]].some(([key, values]) => (
+    branchesUseDisjointTypes([branch, previous], allowedTypes) || [...tags[index]].some(([key, values]) => (
       tags[other].has(key) && stringSetsAreDisjoint(values, tags[other].get(key))
     ))
   )));
@@ -309,13 +320,17 @@ export function importJsonSchema(schema) {
     }
     return patternRules.get(key);
   }
-  function named(rules, pointer) {
-    if (compiled.has(rules)) return ref(compiled.get(rules));
+  function named(rules, pointer, allowedTypes = allJsonTypes) {
+    const membership = allowedTypes & declaredTypeMembership(rules);
+    if (!membership) return null;
+    const variants = compiled.get(rules) ?? new Map();
+    if (variants.has(membership)) return ref(variants.get(membership));
     const name = `schema_${next++}`;
-    compiled.set(rules, name);
-    const expression = lower(rules, pointer);
+    compiled.set(rules, variants);
+    variants.set(membership, name);
+    const expression = lower(rules, pointer, membership);
     if (!expression) {
-      compiled.delete(rules);
+      variants.delete(membership);
       return null;
     }
     builder.rule(name, expression);
@@ -464,8 +479,8 @@ export function importJsonSchema(schema) {
     for (const keyword of keywords) report(pointer, keyword, 'This bound is checked during document validation.');
     return ref(type);
   }
-  function lower(rules, pointer) {
-    if (rules === true) return value;
+  function lower(rules, pointer, allowedTypes) {
+    if (rules === true && allowedTypes === allJsonTypes) return value;
     if (rules === false) return null;
     const alternatives = [rules.anyOf, rules.oneOf].find(Array.isArray);
     const referenceHasSiblings = rules.$ref !== undefined && Object.keys(rules).some(key => !referenceKeys.has(key));
@@ -476,21 +491,25 @@ export function importJsonSchema(schema) {
       : (referenceHasSiblings || alternatives) && finiteSchemaCandidates(rules, analysis.target);
     if (candidates) {
       const { values, keyword } = candidates;
-      const entries = values.filter(item => validateJsonDocument(readJsonDocument(JSON.stringify(item)), rules, analysis).errors.length === 0);
+      const entries = values.filter(item => (allowedTypes & valueTypeMembership(item))
+        && validateJsonDocument(readJsonDocument(JSON.stringify(item)), rules, analysis).errors.length === 0);
       return entries.length ? choice(...entries.map(item => constantExpression(item, pointer, keyword))) : null;
     }
     if (rules.$ref !== undefined) {
       const target = analysis.target(rules.$ref);
       if (typeof target === 'boolean' || (target && typeof target === 'object' && !Array.isArray(target))) {
-        if (referenceHasSiblings) report(pointer, '$ref', 'Sibling reference assertions are checked during document validation.');
-        return named(target, rules.$ref.slice(1));
+        if (Object.keys(rules).some(key => key !== 'type' && !referenceKeys.has(key))) {
+          report(pointer, '$ref', 'Sibling reference assertions are checked during document validation.');
+        }
+        return named(target, rules.$ref.slice(1), allowedTypes);
       }
     }
     if (alternatives) {
       const keyword = alternatives === rules.anyOf ? 'anyOf' : 'oneOf';
-      const hasSiblingAssertions = Object.keys(rules).some(key => key !== keyword && !referenceKeys.has(key));
+      const hasSiblingAssertions = Object.keys(rules).some(key => key !== 'type' && key !== keyword && !referenceKeys.has(key));
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
-      if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives) && !branchesUseDisjointRequiredTags(alternatives)) {
+      if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes)
+          && !branchesUseDisjointRequiredTags(alternatives, allowedTypes)) {
         const integer = exclusiveIntegerRange(alternatives, referenceKeys);
         if (integer !== undefined) {
           if (integer) report(pointer, 'oneOf', 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
@@ -498,18 +517,24 @@ export function importJsonSchema(schema) {
         }
         report(pointer, keyword, 'Exclusive branch selection is checked during document validation.');
       }
-      const entries = alternatives.map((child, index) => named(child, pointerChild(pointerChild(pointer, keyword), index))).filter(Boolean);
+      const entries = alternatives.map((child, index) => named(child, pointerChild(pointerChild(pointer, keyword), index), allowedTypes)).filter(Boolean);
       return entries.length > 0 ? choice(...entries) : null;
     }
-    const types = rules.type === undefined ? jsonTypes : Array.isArray(rules.type) ? rules.type : [rules.type];
-    const expressions = types.map(type => {
+    const expressions = [];
+    for (const [type, membership] of jsonTypes) {
+      if ((allowedTypes & membership) !== membership || (type === 'integer' && (allowedTypes & fractionalType))) continue;
+      const expression = lowerType(type);
+      if (expression) expressions.push(expression);
+    }
+    return expressions.length ? choice(...expressions) : null;
+
+    function lowerType(type) {
       if (type === 'object') return objectExpression(rules, pointer);
       if (type === 'array') return arrayExpression(rules, pointer);
       if (type === 'string') return stringExpression(rules, pointer);
       if (type === 'integer' || type === 'number') return numberExpression(type, rules, pointer);
       return ref(type);
-    }).filter(Boolean);
-    return expressions.length ? choice(...expressions) : null;
+    }
   }
   const start = named(schema, '');
   if (!start) throw new RangeError('The JSON Schema has no generatable document');

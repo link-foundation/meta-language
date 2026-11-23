@@ -4662,7 +4662,11 @@ surrogate pairs. The importer can collect finite candidates through local
 references and nested alternatives. It validates each candidate against the
 whole schema, including sibling assertions and exclusive branch counts,
 before emitting its production. The search has a work and depth bound and
-uses the regular importer path for a recursive or unbounded domain. Grammar
+uses the regular importer path for a recursive or unbounded domain. A sibling
+type assertion filters the possible types of a referenced schema or alternative
+at the current position, including the integer subset of numbers. References
+can share productions with the same type restriction. Member and item schemas
+determine the types of their own values. Grammar
 diagnostics identify assertions that require validation, including exponent
 spellings, other overlapping alternatives, unsupported patterns, and objects
 that exceed the decoder's field-order or key-spelling bounds. Decoder and

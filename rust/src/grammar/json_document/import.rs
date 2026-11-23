@@ -7,6 +7,7 @@ use super::super::{
     CharClassItem, ExprBuilder, Grammar, GrammarExpr, GrammarRule, parse_grammar_links,
 };
 use super::integer_policy::exclusive_integer_boundary;
+use super::number_spelling::NumberSpelling;
 use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_range};
 use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
@@ -17,6 +18,20 @@ use super::{JsonSchemaIssue, pointer_child};
 
 type Expression = GrammarExpr;
 const EXPRESSION: ExprBuilder = ExprBuilder;
+
+const INTEGER_TYPE: u8 = 1 << 3;
+const FRACTIONAL_TYPE: u8 = 1 << 4;
+const NUMBER_TYPE: u8 = INTEGER_TYPE | FRACTIONAL_TYPE;
+const JSON_TYPES: [(&str, u8); 7] = [
+    ("object", 1),
+    ("array", 1 << 1),
+    ("string", 1 << 2),
+    ("number", NUMBER_TYPE),
+    ("integer", INTEGER_TYPE),
+    ("boolean", 1 << 5),
+    ("null", 1 << 6),
+];
+const ALL_JSON_TYPES: u8 = (1 << 7) - 1;
 
 fn reference_expression(name: &str) -> Expression {
     EXPRESSION.nt(name)
@@ -229,7 +244,7 @@ fn append_member(item: &Expression, started: bool) -> Expression {
 struct Importer<'schema> {
     root: &'schema Value,
     grammar: Grammar,
-    compiled: HashMap<*const Value, String>,
+    compiled: HashMap<(*const Value, u8), String>,
     diagnostics: Vec<JsonSchemaIssue>,
     next: usize,
     pattern_rules: Vec<GrammarExpr>,
@@ -251,13 +266,26 @@ impl<'schema> Importer<'schema> {
     }
 
     fn named(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
-        let identity = std::ptr::from_ref(schema);
+        self.named_with_types(schema, pointer, ALL_JSON_TYPES)
+    }
+
+    fn named_with_types(
+        &mut self,
+        schema: &'schema Value,
+        pointer: &str,
+        allowed_types: u8,
+    ) -> Option<Expression> {
+        let membership = allowed_types & declared_type_membership(schema);
+        if membership == 0 {
+            return None;
+        }
+        let identity = (std::ptr::from_ref(schema), membership);
         if let Some(name) = self.compiled.get(&identity) {
             return Some(reference_expression(name));
         }
         let name = format!("schema_{}", self.next());
         self.compiled.insert(identity, name.clone());
-        let Some(expression) = self.lower(schema, pointer) else {
+        let Some(expression) = self.lower(schema, pointer, membership) else {
             self.compiled.remove(&identity);
             return None;
         };
@@ -265,10 +293,17 @@ impl<'schema> Importer<'schema> {
         Some(reference_expression(&name))
     }
 
-    fn lower(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
+    fn lower(
+        &mut self,
+        schema: &'schema Value,
+        pointer: &str,
+        allowed_types: u8,
+    ) -> Option<Expression> {
         match schema {
-            Value::Bool(true) => return Some(reference_expression("value")),
-            Value::Object(_) => {}
+            Value::Bool(true) if allowed_types == ALL_JSON_TYPES => {
+                return Some(reference_expression("value"));
+            }
+            Value::Bool(true) | Value::Object(_) => {}
             _ => return None,
         }
         let combination = schema["anyOf"]
@@ -305,7 +340,10 @@ impl<'schema> Importer<'schema> {
             let root = self.root;
             let entries: Vec<_> = constants
                 .into_iter()
-                .filter(|value| super::validation::accepts_constant(root, schema, value))
+                .filter(|value| {
+                    allowed_types & value_type_membership(value) != 0
+                        && super::validation::accepts_constant(root, schema, value)
+                })
                 .map(|value| self.constant(value, pointer, keyword))
                 .collect();
             return (!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries));
@@ -313,27 +351,31 @@ impl<'schema> Importer<'schema> {
         if let Some(name) = schema["$ref"].as_str()
             && let Some(target) = reference(self.root, name)
         {
-            if reference_has_siblings {
+            if schema
+                .as_object()?
+                .keys()
+                .any(|key| key != "type" && !reference_keyword(key))
+            {
                 self.report(
                     pointer,
                     "$ref",
                     "Sibling reference assertions are checked during document validation.",
                 );
             }
-            return self.named(target, name.strip_prefix('#')?);
+            return self.named_with_types(target, name.strip_prefix('#')?, allowed_types);
         }
         for keyword in ["anyOf", "oneOf"] {
             if let Some(branches) = schema[keyword].as_array() {
                 if schema
                     .as_object()?
                     .keys()
-                    .any(|key| key != keyword && !reference_keyword(key))
+                    .any(|key| key != "type" && key != keyword && !reference_keyword(key))
                 {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
                 }
                 if keyword == "oneOf"
-                    && !branches_use_disjoint_types(branches.iter())
-                    && !branches_use_disjoint_required_tags(branches)
+                    && !branches_use_disjoint_types(branches.iter(), allowed_types)
+                    && !branches_use_disjoint_required_tags(branches, allowed_types)
                 {
                     if let Some(integer) = exclusive_integer_range(branches) {
                         if integer.is_some() {
@@ -352,21 +394,23 @@ impl<'schema> Importer<'schema> {
                     .iter()
                     .enumerate()
                     .filter_map(|(index, child)| {
-                        self.named(child, &pointer_child(&location, &index.to_string()))
+                        self.named_with_types(
+                            child,
+                            &pointer_child(&location, &index.to_string()),
+                            allowed_types,
+                        )
                     })
                     .collect();
                 return (!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries));
             }
         }
-        let default_types = ["object", "array", "string", "number", "boolean", "null"];
-        let declared = schema.get("type").map(types);
-        let names = declared.map_or_else(
-            || default_types.to_vec(),
-            |types| types.iter().filter_map(Value::as_str).collect(),
-        );
-        let expressions: Vec<_> = names
+        let expressions: Vec<_> = JSON_TYPES
             .into_iter()
-            .filter_map(|name| match name {
+            .filter(|&(name, membership)| {
+                allowed_types & membership == membership
+                    && (name != "integer" || allowed_types & FRACTIONAL_TYPE == 0)
+            })
+            .filter_map(|(name, _)| match name {
                 "object" => self.object(schema, pointer),
                 "array" => self.array(schema, pointer),
                 "string" => self.string(schema, pointer),
@@ -878,51 +922,62 @@ fn finite_schema_candidates<'schema>(
     result
 }
 
-fn branches_use_disjoint_types<'a>(branches: impl ExactSizeIterator<Item = &'a Value>) -> bool {
-    const JSON_TYPES: [&str; 6] = ["object", "array", "string", "number", "boolean", "null"];
+fn declared_type_membership(schema: &Value) -> u8 {
+    schema.get("type").map_or(ALL_JSON_TYPES, |declared| {
+        types(declared)
+            .iter()
+            .filter_map(Value::as_str)
+            .fold(0, |membership, name| membership | type_membership(name))
+    })
+}
+
+fn type_membership(name: &str) -> u8 {
+    JSON_TYPES
+        .iter()
+        .find_map(|&(keyword, membership)| (keyword == name).then_some(membership))
+        .unwrap_or(0)
+}
+
+fn value_type_membership(value: &Value) -> u8 {
+    type_membership(match value {
+        Value::Array(_) => "array",
+        Value::Bool(_) => "boolean",
+        Value::Null => "null",
+        Value::Number(number) => {
+            return if NumberSpelling::new(&number.to_string()).is_integer() {
+                INTEGER_TYPE
+            } else {
+                FRACTIONAL_TYPE
+            };
+        }
+        Value::Object(_) => "object",
+        Value::String(_) => "string",
+    })
+}
+
+fn branches_use_disjoint_types<'schema>(
+    branches: impl ExactSizeIterator<Item = &'schema Value>,
+    allowed_types: u8,
+) -> bool {
     if branches.len() < 2 {
         return true;
     }
-    let mut seen = HashSet::new();
+    let mut seen = 0;
     for branch in branches {
         if !branch.is_object() && !branch.is_boolean() {
             return false;
         }
-        let families = if let Some(constants) = finite_constants(branch) {
-            constants
-                .iter()
-                .map(|value| match value {
-                    Value::Array(_) => "array",
-                    Value::Bool(_) => "boolean",
-                    Value::Null => "null",
-                    Value::Number(_) => "number",
-                    Value::Object(_) => "object",
-                    Value::String(_) => "string",
-                })
-                .collect::<HashSet<_>>()
-        } else if ["$ref", "anyOf", "oneOf"]
-            .iter()
-            .any(|key| branch.get(*key).is_some())
-        {
-            return false;
-        } else if let Some(declared) = branch.get("type") {
-            types(declared)
-                .iter()
-                .map(|value| match value.as_str() {
-                    Some("integer") => "number",
-                    Some(name) => name,
-                    None => "",
-                })
-                .collect()
-        } else {
-            JSON_TYPES.into_iter().collect()
-        };
-        if !families
-            .into_iter()
-            .all(|family| JSON_TYPES.contains(&family) && seen.insert(family))
-        {
+        let declared = allowed_types & declared_type_membership(branch);
+        let membership = finite_constants(branch).map_or(declared, |constants| {
+            declared
+                & constants
+                    .into_iter()
+                    .fold(0, |types, value| types | value_type_membership(value))
+        });
+        if seen & membership != 0 {
             return false;
         }
+        seen |= membership;
     }
     true
 }
@@ -951,14 +1006,14 @@ fn required_string_tags(schema: &Value) -> HashMap<&str, Vec<&str>> {
         .collect()
 }
 
-fn branches_use_disjoint_required_tags(branches: &[Value]) -> bool {
+fn branches_use_disjoint_required_tags(branches: &[Value], allowed_types: u8) -> bool {
     let tags: Vec<_> = branches.iter().map(required_string_tags).collect();
     branches.iter().enumerate().all(|(index, branch)| {
         branches[..index]
             .iter()
             .enumerate()
             .all(|(other, previous)| {
-                branches_use_disjoint_types([branch, previous].into_iter())
+                branches_use_disjoint_types([branch, previous].into_iter(), allowed_types)
                     || tags[index].iter().any(|(key, values)| {
                         tags[other].get(key).is_some_and(|other_values| {
                             string_sets_are_disjoint(values, other_values)
