@@ -441,7 +441,11 @@ impl<'schema> Importer<'schema> {
                     .any(|key| key != "type" && key != keyword && !reference_keyword(key));
                 let overlaps = keyword == "oneOf"
                     && !branches_use_disjoint_types(self.root, branches.iter(), allowed_types)
-                    && !branches_use_disjoint_required_tags(self.root, branches, allowed_types);
+                    && !branches_use_disjoint_collection_layouts(
+                        self.root,
+                        branches,
+                        allowed_types,
+                    );
                 if overlaps || has_sibling_assertions {
                     if let Some(expression) =
                         self.alternative_string_expression(schema, branches, allowed_types, keyword)
@@ -1418,6 +1422,26 @@ fn tail_item_schema(schema: &Value) -> &Value {
     schema.get("items").unwrap_or(&UNRESTRICTED_SCHEMA)
 }
 
+fn array_length_bounds(layers: &[&Value]) -> (u64, Option<u64>) {
+    let minimum = layers
+        .iter()
+        .filter_map(|layer| layer["minItems"].as_u64())
+        .max()
+        .unwrap_or(0);
+    let maximum = layers
+        .iter()
+        .filter_map(|layer| {
+            let bound = layer["maxItems"].as_u64();
+            if tail_item_schema(layer) == &PROHIBITED_SCHEMA {
+                let prefix = prefix_item_schemas(layer).len() as u64;
+                return Some(bound.map_or(prefix, |bound| bound.min(prefix)));
+            }
+            bound
+        })
+        .min();
+    (minimum, maximum)
+}
+
 fn compatible_child_schema<'schema>(
     schemas: impl Iterator<Item = &'schema Value>,
 ) -> Option<&'schema Value> {
@@ -1508,22 +1532,7 @@ fn collection_constraints<'schema>(
         if !collection_keywords_are_supported(layers, membership, "arrayAssertion", combination) {
             return None;
         }
-        let minimum = layers
-            .iter()
-            .filter_map(|layer| layer["minItems"].as_u64())
-            .max()
-            .unwrap_or(0);
-        let maximum = layers
-            .iter()
-            .filter_map(|layer| {
-                let bound = layer["maxItems"].as_u64();
-                if tail_item_schema(layer) == &PROHIBITED_SCHEMA {
-                    let prefix = prefix_item_schemas(layer).len() as u64;
-                    return Some(bound.map_or(prefix, |bound| bound.min(prefix)));
-                }
-                bound
-            })
-            .min();
+        let (minimum, maximum) = array_length_bounds(layers);
         let layouts: Vec<_> = layers
             .iter()
             .copied()
@@ -1818,18 +1827,33 @@ fn required_string_tags(schema: &Value) -> HashMap<&str, Vec<&str>> {
         .collect()
 }
 
-fn branches_use_disjoint_required_tags(
+fn branches_use_disjoint_collection_layouts(
     root: &Value,
     branches: &[Value],
     allowed_types: u8,
 ) -> bool {
-    let tags: Vec<_> = branches
+    let references: Vec<_> = branches
         .iter()
-        .map(|branch| {
-            reference_layers(root, branch)
+        .map(|branch| reference_layers(root, branch))
+        .collect();
+    let tags: Vec<_> = references
+        .iter()
+        .map(|layers| {
+            layers
+                .as_ref()
                 .and_then(|layers| layers.last().copied())
                 .map(required_string_tags)
                 .unwrap_or_default()
+        })
+        .collect();
+    let lengths: Vec<_> = references
+        .iter()
+        .map(|layers| {
+            let layers = layers.as_ref()?;
+            let membership = layers.iter().fold(allowed_types, |types, layer| {
+                possible_type_membership(layer, types)
+            });
+            (membership == type_membership("array")).then(|| array_length_bounds(layers))
         })
         .collect();
     branches.iter().enumerate().all(|(index, branch)| {
@@ -1838,6 +1862,15 @@ fn branches_use_disjoint_required_tags(
             .enumerate()
             .all(|(other, previous)| {
                 branches_use_disjoint_types(root, [branch, previous].into_iter(), allowed_types)
+                    || lengths[index]
+                        .zip(lengths[other])
+                        .is_some_and(|(left, right)| {
+                            let minimum = left.0.max(right.0);
+                            left.1
+                                .into_iter()
+                                .chain(right.1)
+                                .any(|maximum| maximum < minimum)
+                        })
                     || tags[index].iter().any(|(key, values)| {
                         tags[other].get(key).is_some_and(|other_values| {
                             string_sets_are_disjoint(values, other_values)

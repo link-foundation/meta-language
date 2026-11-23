@@ -298,6 +298,15 @@ function compatibleChildSchema(schemas) {
   return types === 0 ? false : undefined;
 }
 
+function arrayLengthBounds(layers) {
+  const minimum = layers.reduce((limit, layer) => Math.max(limit, layer.minItems ?? 0), 0);
+  const maximum = layers.reduce((limit, layer) => {
+    const itemLimit = layer.items === false ? layer.prefixItems?.length ?? 0 : Infinity;
+    return Math.min(limit, layer.maxItems ?? Infinity, itemLimit);
+  }, Infinity);
+  return [minimum, maximum];
+}
+
 function branchesUseDisjointTypes(branches, allowedTypes, referenceLayers) {
   if (branches.length < 2) return true;
   let seen = 0;
@@ -325,12 +334,18 @@ function requiredStringTags(schema) {
   return tags;
 }
 
-function branchesUseDisjointRequiredTags(branches, allowedTypes, referenceLayers) {
-  const tags = branches.map(branch => requiredStringTags(referenceLayers(branch)?.at(-1)));
+function branchesUseDisjointCollectionLayouts(branches, allowedTypes, referenceLayers) {
+  const references = branches.map(referenceLayers);
+  const tags = references.map(layers => requiredStringTags(layers?.at(-1)));
+  const lengths = references.map(layers => {
+    const membership = layers?.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+    if (membership === jsonTypes.get('array')) return arrayLengthBounds(layers);
+  });
   return branches.every((branch, index) => branches.slice(0, index).every((previous, other) => (
-    branchesUseDisjointTypes([branch, previous], allowedTypes, referenceLayers) || [...tags[index]].some(([key, values]) => (
-      tags[other].has(key) && stringSetsAreDisjoint(values, tags[other].get(key))
-    ))
+    branchesUseDisjointTypes([branch, previous], allowedTypes, referenceLayers)
+      || (lengths[index] && lengths[other]
+        && Math.min(lengths[index][1], lengths[other][1]) < Math.max(lengths[index][0], lengths[other][0]))
+      || [...tags[index]].some(([key, values]) => tags[other].has(key) && stringSetsAreDisjoint(values, tags[other].get(key)))
   )));
 }
 
@@ -621,11 +636,7 @@ export function importJsonSchema(schema) {
       } };
     }
     if (membership === jsonTypes.get('array')) {
-      const minimum = layers.reduce((limit, layer) => Math.max(limit, layer.minItems ?? 0), 0);
-      const maximum = layers.reduce((limit, layer) => {
-        const itemLimit = layer.items === false ? layer.prefixItems?.length ?? 0 : Infinity;
-        return Math.min(limit, layer.maxItems ?? Infinity, itemLimit);
-      }, Infinity);
+      const [minimum, maximum] = arrayLengthBounds(layers);
       const layouts = maximum === 0 || maximum < minimum ? [] : layers.filter(layer => (
         (layer.prefixItems?.length ?? 0) > 0 || (layer.items !== undefined && typeof layer.items !== 'boolean')
       ));
@@ -806,7 +817,7 @@ export function importJsonSchema(schema) {
       const keyword = alternatives === rules.anyOf ? 'anyOf' : 'oneOf';
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== 'type' && key !== keyword && !referenceKeys.has(key));
       const overlaps = keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes, referenceLayers)
-        && !branchesUseDisjointRequiredTags(alternatives, allowedTypes, referenceLayers);
+        && !branchesUseDisjointCollectionLayouts(alternatives, allowedTypes, referenceLayers);
       if (overlaps || hasSiblingAssertions) {
         const combined = alternativeStringExpression(rules, alternatives, allowedTypes, keyword);
         if (combined !== undefined) return combined;

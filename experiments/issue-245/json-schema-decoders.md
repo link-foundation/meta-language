@@ -80,3 +80,10 @@ intersect item types with length bounds in an object property. Before the change
 the decoder admitted `[{"active":true}]` despite a nested required `label`.
 The fixture also checks an impossible required array and diagnostic fallback
 when mutually recursive layouts reach the shared construction bound.
+
+The exclusive array cases distinguish a closed prefix of length one from a
+reference chain that requires at least two elements. Both branches apply the
+sibling Boolean item schema. The decoder previously admitted `["x"]` through
+the short branch. The fixture also checks an independent `null` branch and
+intervals that overlap at length two, where document validation still checks
+exclusivity and the sibling item schema.

@@ -364,6 +364,22 @@ const cases = [
     ['/$ref'],
     [['[]', true], ['[true,[false]]', true], ['[[true,false]]', false], ['[null]', false], ['true', false]],
   ],
+  [
+    { type: ['array', 'null'], items: { type: 'boolean' }, $defs: {
+      short: { type: 'array', prefixItems: [true], items: false },
+      long: { $ref: '#/$defs/minimum', maxItems: 3 },
+      minimum: { type: 'array', minItems: 2 },
+    }, oneOf: [{ $ref: '#/$defs/short' }, { $ref: '#/$defs/long' }, { type: 'null' }] },
+    [['[]', true], ['[true]', true], ['[true,false]', true], ['[true,false,true]', true],
+      ['[true,false,true,false]', false], ['["x"]', false], ['[false,null]', false], ['null', true], ['false', false]],
+    [],
+  ],
+  [
+    { type: 'array', items: { type: 'boolean' }, oneOf: [{ maxItems: 2 }, { minItems: 2, maxItems: 3 }] },
+    [['[]', true], ['[true,false]', true], ['[true,false,true]', true], ['[null]', true], ['[true,false,true,false]', false]],
+    ['/oneOf', '/oneOf'],
+    [['[]', true], ['[true,false]', false], ['[true,false,true]', true], ['[null]', false], ['[true,false,true,false]', false]],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
