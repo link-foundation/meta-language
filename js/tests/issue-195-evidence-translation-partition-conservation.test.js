@@ -64,6 +64,20 @@ test('six actual evidence translation scopes preserve every original workflow by
   assert.deepEqual(scopes.map(row=>row[2]),['1-of-6','2-of-6','3-of-6','4-of-6','5-of-6','6-of-6']);
 });
 
+test('failed delivery candidates still prepare Rust admission when Rust ran', () => {
+  const workflow = readFileSync(new URL('.github/workflows/ci.yml', root), 'utf8');
+  const acceptance = parseWorkflow(workflow).find(job => job.id === 'acceptance');
+  const [guard, checkout, setup, dependencies] = acceptance.steps;
+  const condition = step => /^ {8}if: \$\{\{ (.*) \}\}$/mu.exec(step.text)?.[1];
+  assert.equal(guard.name, 'Require delivery candidates');
+  assert.match(guard.run, /^\s+exit 1$/mu);
+  assert.equal(condition(checkout), "!cancelled() && (needs.candidates.result == 'success' || needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped')");
+  assert.equal(condition(setup), "!cancelled() && steps.acceptance-checkout.outcome == 'success'");
+  assert.equal(condition(dependencies), "!cancelled() && steps.acceptance-node.outcome == 'success'");
+  const admission = acceptance.steps.find(step => step.name === 'Identify admitted Rust physical profiles');
+  assert.equal(condition(admission), "!cancelled() && steps.acceptance-dependencies.outcome == 'success' && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped')");
+});
+
 test('Rust admission retries a failed job-list request with smaller complete pages', () => {
   const workflow = readFileSync(new URL('.github/workflows/ci.yml', root), 'utf8');
   const acceptance = parseWorkflow(workflow).find(job => job.id === 'acceptance');

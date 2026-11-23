@@ -14,9 +14,26 @@ let history;
 
 let integrationSources;
 
-/** Restore the complete workflow before the job-page retry for historical controls. */
+/** Restore the complete workflow before the Rust admission repairs. */
 export function restoreRustJobAdmissionSource(source) {
-  if (pin(source).sha256 !== '3b31f67ab3224accb94bbe2175594bdded76689f9c4bf2a2111f42bae13ee462') return source;
+  const prior = '3b31f67ab3224accb94bbe2175594bdded76689f9c4bf2a2111f42bae13ee462';
+  if (pin(source).sha256 === 'c3e84bbf746c8a1477a910750ff9165eb0443ed4ce7ed7660c75b6dc5dc69bc3') {
+    const rustRan = "needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped'";
+    const guards = [
+      ['acceptance-checkout', `!cancelled() && (needs.candidates.result == 'success' || ${rustRan})`],
+      ['acceptance-node', "!cancelled() && steps.acceptance-checkout.outcome == 'success'"],
+      ['acceptance-dependencies', "!cancelled() && steps.acceptance-node.outcome == 'success'"],
+    ];
+    for (const [step, condition] of guards) {
+      source = source.replace(`        id: ${step}\n        if: \${{ ${condition} }}\n`, '');
+    }
+    source = source.replace(
+      `        if: \${{ !cancelled() && steps.acceptance-dependencies.outcome == 'success' && (${rustRan}) }}\n`,
+      `        if: \${{ !cancelled() && (${rustRan}) }}\n`,
+    );
+    assert.equal(pin(source).sha256, prior);
+  }
+  if (pin(source).sha256 !== prior) return source;
   const restored = source.replace(
     /^ {10}if ! (gh api "[^\n]+\/jobs\?per_page=100" --paginate --slurp > "[^"\n]+"); then\n {12}gh api [^\n]+\n {10}fi$/mu,
     '          $1',

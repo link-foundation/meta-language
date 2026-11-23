@@ -1965,10 +1965,14 @@ jobs:
           exit 1
 
       - uses: actions/checkout@v7
+        id: acceptance-checkout
+        if: ${{ !cancelled() && (needs.candidates.result == 'success' || needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
+        id: acceptance-node
+        if: ${{ !cancelled() && steps.acceptance-checkout.outcome == 'success' }}
         uses: actions/setup-node@v7
         with:
           node-version: 24.22.0
@@ -1976,6 +1980,8 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Install JavaScript dependencies
+        id: acceptance-dependencies
+        if: ${{ !cancelled() && steps.acceptance-node.outcome == 'success' }}
         run: npm ci --ignore-scripts
         working-directory: js
 
@@ -1984,7 +1990,7 @@ jobs:
 
       - name: Identify admitted Rust physical profiles
         id: rust-physical-admission
-        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
+        if: ${{ !cancelled() && steps.acceptance-dependencies.outcome == 'success' && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
