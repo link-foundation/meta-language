@@ -91,8 +91,21 @@ test('main dependency refresh retains failed live findings and delivers their ou
     assert.equal(probe.status, 0, probe.stderr);
     const updates = readFileSync(path.join(directory, 'js/dependency-outdated.log'), 'utf8');
     assert.match(updates, /"latest":"2\.0\.0"/u);
+    assert.match(updates, /install cargo-outdated --locked/u);
+    assert.match(updates, /outdated --root-deps-only --exit-code 1 --manifest-path rust\/Cargo.toml/u);
+    assert.match(updates, /outdated --root-deps-only --exit-code 1 --manifest-path rust\/web\/Cargo.toml/u);
     assert.match(updates, /update --dry-run --manifest-path rust\/Cargo.toml/u);
     assert.match(updates, /update --dry-run --manifest-path rust\/web\/Cargo.toml/u);
+    const outdatedCargo = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', `
+      npm() { printf '{}\\n'; }
+      cargo() {
+        printf '%s\\n' "$*"
+        if [ "$1" = outdated ]; then return 1; fi
+        return 0
+      }
+    ` + script(outdated)], {cwd: directory, encoding: 'utf8'});
+    assert.equal(outdatedCargo.status, 1, outdatedCargo.stderr);
+    assert.match(outdatedCargo.stdout, /update --dry-run --manifest-path rust\/web\/Cargo.toml/u);
     const stub = `git() {
       if [ "$1" = diff ]; then return 1; fi
       printf '%s\\n' "$*" >> "$CALLS"

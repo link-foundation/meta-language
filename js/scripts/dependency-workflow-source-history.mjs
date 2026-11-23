@@ -16,7 +16,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'rust/Cargo.toml': '753e163487ccbb59e22844d402b9938464064c41',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = 'dfd1878093b7f885eeac0f467592e7a02d7813862c7f896bb1ab23ed971c76b0';
+const archiveDigest = 'd02cd1148a0d885e24fe7ef527c06a89ae16d80e433dc344689562b0b15476d5';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let rows;
 

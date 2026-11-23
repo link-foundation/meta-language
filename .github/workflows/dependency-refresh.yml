@@ -64,6 +64,13 @@ jobs:
           cat js/dependency-outdated.log
           node -e 'const report = JSON.parse(require("node:fs").readFileSync("js/dependency-outdated.log")); if (report.error) process.exitCode = 1;' || status=1
           test "${npm_status:-0}" -le 1 || status=1
+          if cargo install cargo-outdated --locked 2>&1 | tee -a js/dependency-outdated.log; then
+            for manifest in rust/Cargo.toml rust/web/Cargo.toml; do
+              cargo outdated --root-deps-only --exit-code 1 --manifest-path "$manifest" 2>&1 | tee -a js/dependency-outdated.log || status=1
+            done
+          else
+            status=1
+          fi
           for manifest in rust/Cargo.toml rust/web/Cargo.toml; do
             cargo update --dry-run --manifest-path "$manifest" 2>&1 | tee -a js/dependency-outdated.log || status=1
           done
