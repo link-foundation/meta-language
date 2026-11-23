@@ -551,16 +551,16 @@ pub fn ml_read_grammar_lexer_command_emission_loop30(
                         {
                             if (self::accept_grammar_lexer_identifier(&(mode))) {
                                 {
-                                    let argument = if mode
-                                        == (self::ml_string::Text::from_units(vec![
+                                    let default_mode = (mode
+                                        == self::ml_string::Text::from_units(vec![
                                             100, 101, 102, 97, 117, 108, 116,
-                                        ])) {
+                                        ]))
+                                    .then(|| {
                                         self::ml_string::Text::from_units(vec![
                                             68, 69, 70, 65, 85, 76, 84, 95, 77, 79, 68, 69,
                                         ])
-                                    } else {
-                                        mode
-                                    };
+                                    });
+                                    let argument = default_mode.as_ref().unwrap_or(&mode);
                                     {
                                         let pieces_3 = {
                                             let (ml_append_right, ml_append_left) = (
@@ -581,7 +581,7 @@ pub fn ml_read_grammar_lexer_command_emission_loop30(
                                                     .concat(&self::ml_string::Text::from_units(
                                                         vec![40],
                                                     )))
-                                                    .concat(&argument))
+                                                    .concat(argument))
                                                     .concat(&self::ml_string::Text::from_units(
                                                         vec![41],
                                                     )),

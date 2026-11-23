@@ -24,6 +24,12 @@ test('native source review refuses to replay a correction over revised source',(
   assert.equal(applyReviewedNativeSourceStyle('rust/src/other.rs',source),source);
 });
 
+test('reviewed lexer command emission borrows the mode before preserving it for replay', () => {
+  const source = readFileSync(new URL('../../rust/src/translation/grammar_lexer_rules/part_4.rs', import.meta.url), 'utf8');
+  const loop = readSourceTextRustBlock(source, 'fn', 'ml_read_grammar_lexer_command_emission_loop30');
+  assert.match(loop, /let argument = default_mode\.as_ref\(\)\.unwrap_or\(&mode\);[\s\S]*?\.concat\(argument\)[\s\S]*?vec!\[operation, mode\]/u);
+});
+
 test('global concept compiler check retains both entire generated modules and original flags',()=>{
   const {baseline}=controls;
   assert.equal(baseline.revision,'61a96299e459aee352c57fb2abe04d4a77dd6f93');
