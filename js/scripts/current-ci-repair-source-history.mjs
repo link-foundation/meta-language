@@ -11,11 +11,31 @@ const archiveSha256='5b50046591ff194808c3d151e3a41df7de1c677230995f3e7356e498a7f
 const revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;
+let integrationSources;
+
+/** Select certified predecessors for exact integrated source files. */
+export function restoreIntegrationSource(source, path) {
+  if (path !== 'rust/Cargo.toml' && path !== 'js/src/translation/types.js') return source;
+  if (!integrationSources) {
+    const bytes = readFileSync(new URL('parity/self-translation/integration-source-history.lino', root));
+    assert.equal(pin(bytes).sha256, '01f7a8e0aef7556c5f54d65377ea0e0a508917b74c2a88bbd829347ed6c53fba');
+    const archive = readBootstrapStructuredDataLino(bytes.toString('utf8'));
+    assert.equal(archive.schemaVersion, 1);
+    for (const row of archive.sources) {
+      verifyGitArtifactCertificate(row.certificate, Buffer.from(row.source), { revision: row.revision, path: row.path });
+    }
+    integrationSources = new Map(archive.sources.map(row => [row.path, row]));
+  }
+  const row = integrationSources.get(path);
+  assert.ok(row);
+  return pin(source).sha256 === row.current ? row.source : source;
+}
 
 /** Unknown bytes remain visible to the original historical validator. Only a
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreIntegrationSource(source,path);
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
   source=restoreRawPlanningWorkflowHistory(source,path);

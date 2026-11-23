@@ -43,9 +43,13 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b';
   const integration='ec9f4efb0e9ef936114e09823981352f6db13700';
   const integrationFiles=[
+    'js/scripts/current-ci-repair-source-history.mjs',
+    'js/scripts/generate-continuation-historical-inputs.mjs',
     'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
     'js/scripts/own-codebase-baseline-naming-history.mjs',
+    'js/scripts/scheduling-source-history.mjs',
     'js/scripts/tooling-frozen-source-history.mjs',
+    'js/src/translation/types.js',
     'js/tests/self-translation.test.js',
   ];
   const file='parity/naming/array-identity-historical-inventories.lino';
