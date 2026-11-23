@@ -185,10 +185,11 @@ test('the normal naming source profile retains every actual current name and bot
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {
-    const actual = readFileSync(new URL(`../../${view.file}`, import.meta.url));
-    assert.equal(actual.length, view.current.bytes);
-    assert.equal(createHash('sha256').update(actual).digest('hex'), view.current.sha256,
-      `${view.file} retains its complete independently pinned actual current source`);
+    const actual = readFileSync(new URL(`../../${view.file}`, import.meta.url), 'utf8');
+    const historicalSource = restoreDependencyWorkflowSource(actual, view.file);
+    assert.equal(Buffer.byteLength(historicalSource), view.current.bytes);
+    assert.equal(createHash('sha256').update(historicalSource).digest('hex'), view.current.sha256,
+      `${view.file} retains its complete independently pinned naming source`);
     const rows = historicalNames.filter((row) => row.inventory === view.inventory && row.file === view.file);
     assert.deepEqual(rows.map(({ name, record }) => ({ name, record })), view.names);
     for (const row of rows) {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { compareRustDefinitions, createModuleContext, measureReportModules, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { partitionGroupFiles, partitionMeasuredWorkloads, partitionTests, testFiles } from '../scripts/test-groups.mjs';
@@ -48,6 +48,37 @@ test('one CI measurement worker preserves full source coverage, hashes and both 
     assert.equal(repeated.sourceSha256, actual.sourceSha256);
     await assert.rejects(worker.measure('../outside.js', context), /inside js\/src/u);
   } finally { await worker.close(); }
+});
+
+test('two report measurements retain complete results and failures in source order', async () => {
+  const modules = ['first', 'second', 'third', 'fourth'].map(name => `js/src/${name}.js`);
+  const resolved = [];
+  const finished = [];
+  const { promise, resolve } = Promise.withResolvers();
+  const context = path => {
+    resolved.push(`js/src/${path}`);
+    return { path };
+  };
+  const firstWorker = async (module, { path }) => {
+    await promise;
+    finished.push(module);
+    return { path };
+  };
+  const secondWorker = async (module, { path }) => {
+    finished.push(module);
+    if (module === modules[1]) throw new Error('retained measurement failure');
+    if (module === modules[3]) resolve();
+    return { path };
+  };
+  const results = await measureReportModules(modules, context, [firstWorker, secondWorker]);
+  assert.deepEqual(resolved, modules);
+  assert.deepEqual(finished, [modules[1], modules[2], modules[3], modules[0]]);
+  assert.deepEqual(results, [
+    { module: modules[0], row: { path: 'first.js' } },
+    { module: modules[1], error: 'retained measurement failure' },
+    { module: modules[2], row: { path: 'third.js' } },
+    { module: modules[3], row: { path: 'fourth.js' } },
+  ]);
 });
 
 test('report import resolution checks callable candidates and avoids dependencies of carried classes', () => {

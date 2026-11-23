@@ -16,17 +16,24 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/grammar-outcome-network/native-transport/runner/README.md': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/grammar-outcome-network/native-transport/runner/plan.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/grammar-outcome-network/native-transport/runner/run.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/current-ci-repair-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/dependency-inventory.mjs': '81107a5945651f17c962e4bb81fb560f96c65ccd',
   'js/scripts/dependency-inventory-append-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/evidence-translation-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/scripts/generate-boolean-parameter-tuples.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/generate-dependency-inventory-append-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/generate-raw-oracle-contract-partitions.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/scripts/generate-self-translation-report.mjs': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
   'js/scripts/grammar-context-metadata-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/grammar-selection-capture-profile.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/own-codebase-baseline-naming-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/own-codebase-test-registration-history.mjs': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
   'js/scripts/scheduling-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/scripts/self-translation-report-worker-host.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/test-groups.mjs': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
   'js/src/translation/types.js': '93c65ca1ada6c5001a56acc4430500e55062027a',
   'js/tests/cache-fresh-merge-dependencies.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -36,6 +43,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/issue-195-evidence-conformance-history.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-dependency-appends.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-node-dependency.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/tests/issue-195-evidence-node-test-placement.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-producer.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-raw-oracle-partitions.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-raw-planning-deadline.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -43,6 +51,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/issue-195-evidence-translation-feedback.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-translation-partition-conservation.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-naming.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/tests/issue-195-self-translation-report.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-sources.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/lino-compatibility-matrix.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/own-codebase-baseline-naming-history.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -52,6 +61,7 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'js/tests/support/platform-test-deadline-history.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/support/windows-linker-lookup-history.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/test-groups.test.js': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
+  'js/tests/translation-boolean-parameter-tuples.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-frontend-rule-styles.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-grammar-context-metadata.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/translation-raw-source-archive-workers.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -87,13 +97,14 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'rust/tests/unit/grammar_outcome_number_kind_rules.rs': '41055e5cbe206b5f04ef1f1f1658773bcaa50ce1',
 });
 export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
+  'js/tests/ci-workflow-structure.test.js': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/tests/issue-195-evidence-translation-feedback.test.js': '3f72318d4d63e26323f86b50dcf389d5a531e4c4',
   'js/tests/support/platform-test-deadline-history.js': '3f72318d4d63e26323f86b50dcf389d5a531e4c4',
   'js/tests/test-groups.test.js': '8bc0ef9725388c7927acf1854870bf46f5e365be',
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = '33c32064eb8bae15b08258355e1cec57cda804298e04efe49022133af4866208';
+const archiveDigest = 'c261750dfef73c0d91c1d2052a6726dff0ceed515c50b44aa73c34263c460b68';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 

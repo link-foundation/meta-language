@@ -409,7 +409,17 @@ jobs:
       - name: Compile and execute the bounded frozen native candidate
         env:
           META_LANGUAGE_B95_NATIVE_OUTCOME: '1'
-        run: node --max-old-space-size=512 experiments/grammar-outcome-network/native-transport/runner/run.mjs --native
+        shell: bash
+        run: |
+          frozen_revision=$(node --input-type=module -e 'import {overlayPolicy} from "./experiments/grammar-outcome-network/native-transport/runner/policy.mjs"; process.stdout.write(overlayPolicy.baseCommit);')
+          dependencies=$(mktemp -d "$RUNNER_TEMP/meta-language-bulk95-dependencies-XXXXXX")
+          trap 'rm -rf -- "$dependencies"' EXIT
+          git archive "$frozen_revision" js/package.json js/package-lock.json rust | tar -x -C "$dependencies"
+          npm ci --prefix "$dependencies/js" --ignore-scripts
+          cargo fetch --locked --manifest-path "$dependencies/rust/Cargo.toml"
+          rm -rf -- "$dependencies/rust"
+          META_LANGUAGE_B95_FROZEN_JAVASCRIPT="$dependencies/js" \
+            node --max-old-space-size=512 experiments/grammar-outcome-network/native-transport/runner/run.mjs --native
 
       - name: Release only stopped experiment scratch and retain its ownership receipt
         if: ${{ !cancelled() }}

@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
-import {dependencyWorkflowHistoryPath, dependencyWorkflowPredecessors, restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
+import {dependencyWorkflowHistoricalPredecessors, dependencyWorkflowHistoryPath, dependencyWorkflowPredecessors, restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -169,7 +169,10 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     assert.equal(entries.length,1,'the same actual extractor owns the additional historical names');
     const actual=readFileSync(resolve(root,view.file),'utf8');
     const actualPin=pin(actual);
-    const boundPin=actualPin.sha256===source.current.sha256?actualPin:pin(restoreDependencyWorkflowSource(actual,view.file));
+    let boundPin=actualPin.sha256===source.current.sha256?actualPin:pin(restoreDependencyWorkflowSource(actual,view.file));
+    if(boundPin.sha256!==source.current.sha256&&Object.hasOwn(dependencyWorkflowHistoricalPredecessors,view.file)){
+      boundPin=pin(restoreDependencyWorkflowSource(actual,view.file,dependencyWorkflowHistoricalPredecessors[view.file]));
+    }
     assert.deepEqual(boundPin,source.current,`the selected root retains every complete actual source byte: ${view.file}`);
     const entry=entries[0],found=[...new Set(entry.extract(source.predecessor.source,view.file))]
       .map(name=>({name,record:entry.recordOf(name)}));

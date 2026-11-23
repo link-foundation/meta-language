@@ -3830,10 +3830,11 @@ Import and export candidate discovery uses the shared lexer, retaining opaque
 literals and nested scopes. Unsupported lexical identifiers or syntax use the
 original grammar scan. Every candidate signature still requires checked
 translation; this optimization cannot supply an unchecked signature.
-In CI one JavaScript worker measures a module while the coordinator resolves
-the following module's imports. Contexts and results travel as LiNo records;
-completed rows retain their original order. Local reports remain sequential,
-and CI keeps the same report deadlines and verification gates.
+In CI up to two JavaScript workers measure one module each while the coordinator
+resolves imports in source order. The worker count stays within the available
+parallelism. Contexts and results travel as LiNo records, and completed rows
+retain their original order. Local reports remain sequential, and CI keeps the
+same report deadlines and verification gates.
 
 The initial translation, native grammar and conformance test groups run in disjoint CI file
 partitions. Their union retains every original file exactly once, and each job

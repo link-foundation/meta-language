@@ -77,7 +77,24 @@ function environmentFor(work,original) {
     CARGO_INCREMENTAL:'0',NODE_OPTIONS:'',RUST_TEST_THREADS:'1'};
 }
 
-function copySnapshot(plan,overlay) {
+export function readFrozenRunnerModules(plan,temporary,dependencyDirectory) {
+  assert.ok(dependencyDirectory,'frozen JavaScript installation required');
+  const installation=realpathSync(dependencyDirectory);
+  assert.ok(within(temporary,installation),'frozen JavaScript installation is inside CI scratch');
+  for(const manifest of ['package.json','package-lock.json']) {
+    const path='js/'+manifest;
+    const file=plan.inventory.files.find(file=>file.path===path);
+    assert.ok(file,'frozen dependency input: '+path);
+    const bytes=bytesAt(installation,manifest);
+    assert.equal(bytes.length,file.bytes,'frozen dependency input size: '+path);
+    assert.equal(sha256(bytes),file.sha256,'frozen dependency input hash: '+path);
+  }
+  const modules=realpathSync(join(installation,'node_modules'));
+  assert.ok(within(installation,modules)&&lstatSync(modules).isDirectory(),'owned frozen JavaScript modules');
+  return modules;
+}
+
+function copySnapshot(plan,overlay,modules) {
   for(const file of plan.inventory.files) {
     const destination=join(overlay,file.path);
     const {bytes}=frozenSourceBytes(plan.repository,file);
@@ -85,11 +102,8 @@ function copySnapshot(plan,overlay) {
     chmodSync(destination,file.mode==='100755'?0o755:0o644);
     assert.equal(sha256(bytesAt(overlay,file.path)),file.sha256,'exact independent scratch file');
   }
-  // The Agda dev-oracle build invokes its existing JS queue helper. Its small
-  // SOURCE closure is copied above; only the already installed dependency
-  // directory is shared. No npm/install script is invoked.
-  const modules=realpathSync(join(plan.repository,'js/node_modules'));
-  assert.ok(lstatSync(modules).isDirectory(),'existing CI dependency installation');
+  // The Agda dev-oracle build invokes the copied JavaScript queue helper
+  // using the dependency installation provisioned for the same frozen lock.
   symlinkSync(modules,join(overlay,'js/node_modules'),'dir');
   writeFileSync(join(overlay,policy.parent),plan.parent);
   mkdirSync(dirname(join(overlay,policy.child)),{recursive:true});
@@ -105,6 +119,7 @@ function copySnapshot(plan,overlay) {
  */
 export async function runOverlay(plan,{environment=process.env,spawnProcess=spawn}={}) {
   const temporary=requireNativeCI(plan,environment);
+  const modules=readFrozenRunnerModules(plan,temporary,environment.META_LANGUAGE_B95_FROZEN_JAVASCRIPT);
   const artifactParent=join(plan.repository,'issue-195-artifacts','bulk95-outcome-overlay');
   mkdirSync(artifactParent,{recursive:true});assert.ok(!lstatSync(artifactParent).isSymbolicLink());
   assert.ok(within(plan.repository,realpathSync(artifactParent)),'artifact owner cannot escape through an ancestor symlink');
@@ -130,7 +145,7 @@ export async function runOverlay(plan,{environment=process.env,spawnProcess=spaw
     return process.stdout.toString('utf8');
   };
   try {
-    copySnapshot(plan,overlay);
+    copySnapshot(plan,overlay,modules);
     // Dev-dependency build scripts require their registered external oracle
     // source assets even when the selected probe never calls those oracles.
     // Acquire them only inside this owned overlay, never in production.

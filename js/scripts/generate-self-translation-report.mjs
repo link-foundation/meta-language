@@ -28,6 +28,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, posix, relative, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { availableParallelism } from 'node:os';
 import { isMainThread } from 'node:worker_threads';
 import { readProjectData, writeProjectData } from './project-data.mjs';
 
@@ -488,6 +489,30 @@ function verifyPublishedReports(directory, commit) {
 }
 
 
+/** Resolve contexts in catalog order and retain one complete result per module. */
+export async function measureReportModules(modules, context, measurements, progress = () => {}) {
+  assert.ok(measurements.length > 0);
+  const results = Array(modules.length);
+  let next = 0;
+  await Promise.all(measurements.map(async measure => {
+    for (let index = next++; index < modules.length; index = next++) {
+      const module = modules[index];
+      const started = performance.now();
+      try {
+        progress(`self-translation report: resolving ${module}`);
+        const moduleContext = context(posix.relative('js/src', module));
+        progress(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
+        const row = await measure(module, moduleContext);
+        results[index] = { module, row };
+        progress(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
+      } catch (error) {
+        results[index] = { module, error: String(error?.message ?? error) };
+      }
+    }
+  }));
+  return results;
+}
+
 async function main() {
   if (process.argv.includes('--verify-reports')) {
     try {
@@ -525,38 +550,22 @@ async function main() {
     const file = join(root, 'js/src', module);
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
-  const worker = process.env.CI === 'true' ? createReportMeasurementWorker(decoratorsText) : null;
-  let pending = null;
-  const finish = async () => {
-    if (!pending) return;
-    const { module, started, result } = pending;
-    pending = null;
-    const outcome = await result;
-    if (outcome.error) failures.push({ module, error: outcome.error });
-    else {
-      rows.push(outcome.row);
-      console.error(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
-    }
-  };
+  const workerCount = process.env.CI === 'true' ? Math.min(2, availableParallelism(), selected.length) : 0;
+  const workers = [];
   try {
-    for (const module of selected) {
-      const started = performance.now();
-      console.error(`self-translation report: resolving ${module}`);
-      try {
-        const moduleContext = context(posix.relative('js/src', module));
-        // Resolve this context while the preceding module is being measured.
-        // Complete results in their original source order before starting another.
-        await finish();
-        console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
-        pending = { module, started, result: worker
-          ? worker.measure(module, moduleContext).then(row => ({ row }), error => ({ error: String(error?.message ?? error) }))
-          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) }) };
-      } catch (error) {
-        failures.push({ module, error: String(error?.message ?? error) });
-      }
+    for (let index = 0; index < workerCount; index += 1) {
+      workers.push(createReportMeasurementWorker(decoratorsText));
     }
-    await finish();
-  } finally { await worker?.close(); }
+    const measurements = workers.length
+      ? workers.map(worker => worker.measure)
+      : [(module, moduleContext) => measureSelfTranslationModule(module, decorators, moduleContext)];
+    for (const result of await measureReportModules(selected, context, measurements, console.error)) {
+      if ('error' in result) failures.push(result);
+      else rows.push(result.row);
+    }
+  } finally {
+    await Promise.all(workers.map(worker => worker.close()));
+  }
   mkdirSync(outDir, { recursive: true });
   const data = {
     schemaVersion: 1,
