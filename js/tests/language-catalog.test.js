@@ -10,6 +10,7 @@ import {
   formatLanguageCatalog,
   nativeGrammarRustSource,
 } from '../scripts/build-language-catalog.mjs';
+import { nativeOracleBaseline } from '../scripts/native-oracle-baselines.mjs';
 import { GRAMMAR_LOCK } from '../src/programming-language-parser.js';
 import {
   LANGUAGE_CATALOG,
@@ -143,9 +144,13 @@ test('grammar provenance names the locked grammar versions and parser digests', 
       const text = await readFile(resolveProjectDataPath(new URL(`../../${declared.grammar}`, import.meta.url)));
       assert.equal(provenance[0].version, declared.version);
       assert.equal(provenance[0].parserSha256, createHash('sha256').update(text).digest('hex'));
+      const baseline = nativeOracleBaseline(provenance[0]);
       assert.deepEqual(
         languageEntry(language.name).oracleGrammars.map(({ id, version, parserSha256 }) => [id, version, parserSha256]),
-        language.grammars.map((id) => [id, GRAMMAR_LOCK.grammars[id].version, GRAMMAR_LOCK.grammars[id].parserSha256]),
+        language.grammars.map((id) => {
+          const { version, parserSha256 } = baseline?.grammar.id === id ? baseline.grammar : GRAMMAR_LOCK.grammars[id];
+          return [id, version, parserSha256];
+        }),
         language.name,
       );
       continue;

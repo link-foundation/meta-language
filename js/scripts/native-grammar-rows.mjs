@@ -35,6 +35,7 @@ import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
 import { grammarFile } from './grammar-files.mjs';
 import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { nativeOracleBaseline } from './native-oracle-baselines.mjs';
 import { readProjectData } from './project-data.mjs';
 
 const encoder = new TextEncoder();
@@ -60,14 +61,19 @@ function isolatedOracle(source, language) {
 
 
 /** The pinned tree-sitter grammar that is the oracle of `language`. */
-function oracleLanguage(language) {
+export function oracleLanguage(language) {
   const entry = languageEntry(language);
-  const id = (entry.oracleGrammars ?? entry.grammars)[0].id;
-  let grammar = ORACLES.get(id);
+  const { id, version, parserSha256 } = (entry.oracleGrammars ?? entry.grammars)[0];
+  const baseline = nativeOracleBaseline(entry.grammars[0]);
+  const locked = baseline?.grammar ?? LOCK.grammars[id];
+  if (locked.id !== id || locked.version !== version || locked.parserSha256 !== parserSha256) {
+    throw new Error(`unregistered oracle for ${language}: ${id} ${version}`);
+  }
+  const file = baseline?.wasmPath ?? grammarFile(locked, `${id}.wasm.gz`);
+  let grammar = ORACLES.get(file);
   if (!grammar) {
-    const file = grammarFile(LOCK.grammars[id], `${id}.wasm.gz`);
     grammar = loadGrammarLanguage(gunzipSync(readExternalGrammarAsset(file)));
-    ORACLES.set(id, grammar);
+    ORACLES.set(file, grammar);
   }
   return grammar;
 }

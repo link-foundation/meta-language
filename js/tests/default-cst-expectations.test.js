@@ -8,6 +8,8 @@ import { Parser } from 'web-tree-sitter';
 import { structuredDataRecordToLino } from '../src/structured-data-records.js';
 import { test } from 'node:test';
 import { readExternalGrammarAsset } from '../scripts/external-grammar-cache.mjs';
+import { oracleSnapshot } from '../scripts/native-grammar-rows.mjs';
+import { nativeOracleBaseline } from '../scripts/native-oracle-baselines.mjs';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import '../src/tree-sitter-runtime.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -151,15 +153,27 @@ test('a native default grammar builds the trees of its pinned tree-sitter oracle
   assert.ok(Object.keys(nativeExpected.languages).length > 0);
   for (const [name, want] of Object.entries(nativeExpected.languages)) {
     const oracle = oracleExpected.languages[name];
-    assert.deepEqual(want.positive, oracle.positive, name);
+    const provenance = grammarProvenance(name);
+    const baseline = nativeOracleBaseline(provenance[0]);
+    let oracleGrammars = oracle.grammars;
+    let positive = oracle.positive;
+    if (baseline) {
+      const language = inventory.languages.find((language) => language.name === name);
+      const snapshot = oracleSnapshot(language.source, name);
+      assert.equal(snapshot.recovers, false, name);
+      assert.equal(oracleSnapshot(language.recoverySource, name).recovers, true, name);
+      positive = snapshot.rows;
+      oracleGrammars = { ...oracleGrammars, [baseline.grammar.id]: baseline.grammar };
+    }
+    assert.deepEqual(want.positive, positive, name);
     assert.equal(want.sourceSha256, oracle.sourceSha256, name);
     assert.equal(want.recoverySourceSha256, oracle.recoverySourceSha256, name);
     assert.deepEqual(
       Object.entries(want.oracleGrammars).map(([id, { version, parserSha256 }]) => [id, version, parserSha256]),
-      Object.entries(oracle.grammars).map(([id, { version, parserSha256 }]) => [id, version, parserSha256]),
+      Object.entries(oracleGrammars).map(([id, { version, parserSha256 }]) => [id, version, parserSha256]),
       name,
     );
-    assert.deepEqual(Object.keys(want.grammars), grammarProvenance(name).map(({ id }) => id), name);
+    assert.deepEqual(Object.keys(want.grammars), provenance.map(({ id }) => id), name);
     assert.ok(want.recovery.some((row) => /[EM]/u.test(row[6])), `${name} recovery`);
   }
 });

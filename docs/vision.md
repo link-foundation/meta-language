@@ -2660,6 +2660,20 @@ its pinned size and checksum, runs the exact Tree-sitter CLI in a temporary
 directory, and verifies both WebAssembly representations before caching. The
 manifest preserves the superseded distribution receipts.
 
+Each native grammar is checked against the exact Tree-sitter release used to
+derive its rules and fixtures. When that upstream grammar changes independently,
+the native grammar version selects its oracle from
+`parity/grammars/native-oracle-baselines.lino`. JavaScript loads the authenticated
+historical WebAssembly. Rust test builds compile the same release's authenticated
+crate archive with distinct parser and scanner symbols. The current releases
+retain independent positive and recovery tree checks against their rebuilt
+WebAssembly, and the public default trees retain their native grammar checks.
+Dart 0.3.0 gives documentation comments a distinct kind, PowerShell 0.26.6
+changes the command-name span in the mixed-case switch fixture, Scheme 0.25.0
+accepts the empty bytevector rejection fixture, and SQL 0.3.13 changes the
+aggregate-query tree. The earlier release assertions still apply to the native
+port versions derived from those releases.
+
 CI provisions required inputs before checks and artifact construction. Temporary
 compiled fallback assets can still accompany an installed artifact while the
 existing production parser dependency remains, so clean offline consumers keep
