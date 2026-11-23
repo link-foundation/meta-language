@@ -146,6 +146,23 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
         };
         assert!(error.to_string().contains("no generatable document"));
     }
+    for row in fixture["numericValidation"].as_array().unwrap() {
+        let source = row[0].as_str().unwrap();
+        let expected = row[2].as_array().unwrap();
+        let report = validate_json(source, &row[1]);
+        assert!(report.schema_issues.is_empty());
+        assert_eq!(report.valid, expected.is_empty(), "{source}");
+        let actual: Vec<_> = report
+            .errors
+            .iter()
+            .map(|issue| {
+                assert!(report.network.link(issue.link_id).is_some());
+                let bytes = issue.span.byte_range();
+                json!([issue.keyword, issue.pointer, bytes.start(), bytes.end()])
+            })
+            .collect();
+        assert_eq!(&actual, expected, "{source}");
+    }
     record(&Observation {
         requirement_id: "I195-I240-JSON-SCHEMA",
         suffix: "behavior",
@@ -164,6 +181,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "decoderRequiredStringTagsDistinguishAlternatives",
             "decoderFormatsCombineWithRegularPatterns",
             "decoderChecksFiniteReferencedAlternatives",
+            "validationUsesExactNumericSpellings",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });

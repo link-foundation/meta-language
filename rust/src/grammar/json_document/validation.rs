@@ -1,8 +1,10 @@
+use std::cmp::Ordering;
 use std::collections::HashSet;
 
 use serde_json::{Value, json};
 
 use super::document::{Document, Node};
+use super::number_spelling::NumberSpelling;
 use super::schema::{Analysis, formats, keywords, reference, types};
 use super::{JsonDocumentIssue, JsonSchemaIssue, pointer_child};
 use crate::{LinkId, LinkNetwork};
@@ -60,19 +62,44 @@ pub(super) fn validate(
     (value, validator.errors, validator.analysis.issues)
 }
 
-fn same_value(left: &Value, right: &Value) -> bool {
-    match (left, right) {
-        (Value::Number(left), Value::Number(right)) => left.as_f64() == right.as_f64(),
-        (Value::Array(left), Value::Array(right)) => {
-            left.len() == right.len() && left.iter().zip(right).all(|(a, b)| same_value(a, b))
+fn object_pairs<'node, 'source>(
+    node: &'node Node<'source>,
+) -> indexmap::IndexMap<String, &'node Node<'source>> {
+    node.children
+        .iter()
+        .filter(|pair| pair.kind == "pair")
+        .filter_map(|pair| Some((pair.key()?, pair)))
+        .collect()
+}
+
+fn same_value(expected: &Value, node: &Node<'_>, number: Option<&NumberSpelling>) -> bool {
+    match expected {
+        Value::Number(expected) if node.kind == "number" => {
+            let expected = NumberSpelling::new(&expected.to_string());
+            number.map_or_else(
+                || NumberSpelling::new(node.text).compare(&expected),
+                |value| value.compare(&expected),
+            ) == Ordering::Equal
         }
-        (Value::Object(left), Value::Object(right)) => {
-            left.len() == right.len()
-                && left.iter().all(|(key, value)| {
-                    right.get(key).is_some_and(|other| same_value(value, other))
+        Value::Array(expected) if node.kind == "array" => {
+            let mut items = node.children.iter().filter(|child| child.is_value());
+            expected.iter().all(|value| {
+                items
+                    .next()
+                    .is_some_and(|item| same_value(value, item, None))
+            }) && items.next().is_none()
+        }
+        Value::Object(expected) if node.kind == "object" => {
+            let pairs = object_pairs(node);
+            pairs.len() == expected.len()
+                && expected.iter().all(|(key, value)| {
+                    pairs
+                        .get(key)
+                        .and_then(|pair| pair.field("value"))
+                        .is_some_and(|item| same_value(value, item, None))
                 })
         }
-        _ => left == right,
+        _ => node.read().as_ref() == Some(expected),
     }
 }
 
@@ -119,31 +146,26 @@ impl<'schema> Validator<'schema> {
         {
             self.visit(target, node);
         }
-        let number = (kind == "number")
-            .then(|| node.text.parse::<f64>().ok())
-            .flatten();
+        let number = (kind == "number").then(|| NumberSpelling::new(node.text));
         if let Some(declared) = rules.get("type")
             && !types(declared).iter().any(|expected| {
                 expected.as_str() == Some(kind)
                     || (expected.as_str() == Some("integer")
-                        && number.is_some_and(|value| value.fract() == 0.0))
+                        && number.as_ref().is_some_and(NumberSpelling::is_integer))
             })
         {
             self.report(node, "type", types(declared).to_vec());
         }
-        if complete
-            && (rules.contains_key("enum") || rules.contains_key("const"))
-            && let Some(value) = node.read()
-        {
+        if complete {
             if let Some(alternatives) = rules.get("enum").and_then(Value::as_array)
                 && !alternatives
                     .iter()
-                    .any(|expected| same_value(expected, &value))
+                    .any(|expected| same_value(expected, node, number.as_ref()))
             {
                 self.report(node, "enum", alternatives.clone());
             }
             if let Some(expected) = rules.get("const")
-                && !same_value(expected, &value)
+                && !same_value(expected, node, number.as_ref())
             {
                 self.report(node, "const", vec![expected.clone()]);
             }
@@ -155,12 +177,14 @@ impl<'schema> Validator<'schema> {
             "number" => {
                 if let Some(number) = number {
                     for keyword in keywords("limit") {
-                        if let Some(limit) = schema[keyword].as_f64() {
+                        if let Value::Number(limit) = &schema[keyword] {
+                            let comparison =
+                                number.compare(&NumberSpelling::new(&limit.to_string()));
                             let invalid = match keyword {
-                                "minimum" => number < limit,
-                                "maximum" => number > limit,
-                                "exclusiveMinimum" => number <= limit,
-                                "exclusiveMaximum" => number >= limit,
+                                "minimum" => comparison.is_lt(),
+                                "maximum" => comparison.is_gt(),
+                                "exclusiveMinimum" => !comparison.is_gt(),
+                                "exclusiveMaximum" => !comparison.is_lt(),
                                 _ => unreachable!("registered numeric bound"),
                             };
                             if invalid {
@@ -183,12 +207,7 @@ impl<'schema> Validator<'schema> {
     }
 
     fn object(&mut self, schema: &'schema Value, node: &Node<'_>, complete: bool) {
-        let pairs: indexmap::IndexMap<_, _> = node
-            .children
-            .iter()
-            .filter(|pair| pair.kind == "pair")
-            .filter_map(|pair| Some((pair.key()?, pair)))
-            .collect();
+        let pairs = object_pairs(node);
         if complete && let Some(required) = schema["required"].as_array() {
             for key in required.iter().filter_map(Value::as_str) {
                 if !pairs.contains_key(key) {

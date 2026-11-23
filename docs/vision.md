@@ -4624,6 +4624,11 @@ original UTF-8 coordinates. Validation resolves local draft 2020-12 schemas
 against the same concrete syntax, including intact members of incomplete
 documents. Instance errors carry a JSON Pointer, source span, expected values
 or tokens, and a link that can be inspected in the returned network.
+Numeric validation reads the original number tokens. It compares normalized
+decimal positions and significant digits for integer types and numeric bounds,
+and uses the same comparison for numeric members of constants and enumerations.
+This preserves assertions near rounding and underflow boundaries even when the
+returned host value uses a floating-point number.
 
 The schema importer builds the shared grammar representation for existing
 emitters. It defines a `start` production for Lark consumers, and retains only
@@ -4659,11 +4664,24 @@ whole schema, including sibling assertions and exclusive branch counts,
 before emitting its production. The search has a work and depth bound and
 uses the regular importer path for a recursive or unbounded domain. Grammar
 diagnostics identify assertions that require validation, including exponent
-spellings, other overlapping alternatives,
-unsupported patterns, and objects that exceed the decoder's field-order or
-key-spelling bounds. Decoder and validation rules share the JSON grammar and
+spellings, other overlapping alternatives, unsupported patterns, and objects
+that exceed the decoder's field-order or key-spelling bounds. Decoder and
+validation rules share the JSON grammar and
 keyword policy. The reverse API preserves an imported schema and can infer
 constants from bounded finite JSON productions.
+
+An unrestricted integer decoder over all JSON spellings exceeds the portable
+context-free grammar model. Restrict number spellings to `1.0*1e10*`, with
+`n` zeroes between the two `1` digits in the significand and `k` zeroes in
+the exponent.
+The represented value is integral precisely when `n + 1 <= 10^k`. A
+finite-state transduction turns the two zero runs into counts of distinct
+symbols. In a semilinear representation, every period that increases `n`
+must increase `k`, since each fixed `k` bounds `n`. Finitely many such periods
+would bound the growth of `n` linearly in `k`, but the actual bound grows
+exponentially. The decoder therefore emits
+the supported spelling family and reports the residual assertion for exact
+source-based validation. [Parikh's theorem](https://doi.org/10.1145/321356.321364)
 
 JSON recovery starts from the unmodified syntax and applies explicitly
 selected actions. Edits identify the original recovery link, byte range,

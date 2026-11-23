@@ -1,14 +1,15 @@
 import { jsonDocumentError, pointerChild, readJsonDocument, readJsonValue } from './json-document.js';
 
 import { jsonDocumentPolicy } from './json-document-policy.js';
+import { compareNumberSpellings, isIntegerSpelling, jsonNumberSpelling } from './json-number-spelling.js';
 
 const annotations = new Set(jsonDocumentPolicy.annotation);
 const schemaMaps = jsonDocumentPolicy.map;
 const schemaLists = jsonDocumentPolicy.list;
 const schemaValues = jsonDocumentPolicy.schema;
 const numericLimits = new Map([
-  ['minimum', (actual, limit) => actual < limit], ['maximum', (actual, limit) => actual > limit],
-  ['exclusiveMinimum', (actual, limit) => actual <= limit], ['exclusiveMaximum', (actual, limit) => actual >= limit],
+  ['minimum', order => order < 0], ['maximum', order => order > 0],
+  ['exclusiveMinimum', order => order <= 0], ['exclusiveMaximum', order => order >= 0],
 ]);
 const schemaTypes = new Set(jsonDocumentPolicy.type);
 const typeSet = value => Array.isArray(value) ? value : [value];
@@ -106,12 +107,18 @@ export function analyzeJsonSchema(root) {
   return { issues, patterns, target: ref => referenceTarget(root, ref) };
 }
 
-function jsonEqual(left, right) {
+function jsonEqual(left, right, pointer, numberAt) {
+  if (typeof left === 'number' && typeof right === 'number') {
+    const number = numberAt(pointer);
+    return number !== undefined && Number.isFinite(left)
+      && compareNumberSpellings(jsonNumberSpelling(String(left)), number) === 0;
+  }
   if (left === right) return true;
   if (typeof left !== 'object' || typeof right !== 'object' || left === null || right === null
     || Array.isArray(left) !== Array.isArray(right)) return false;
   const keys = Object.keys(left);
-  return keys.length === Object.keys(right).length && keys.every(key => Object.hasOwn(right, key) && jsonEqual(left[key], right[key]));
+  return keys.length === Object.keys(right).length && keys.every(key => Object.hasOwn(right, key)
+    && jsonEqual(left[key], right[key], pointerChild(pointer, key), numberAt));
 }
 
 function instanceType(value) {
@@ -136,6 +143,13 @@ export function validateJsonDocument(document, schema, analysis = analyzeJsonSch
   const syntax = jsonDocumentError(document);
   const value = readJsonValue(document.value);
   const { byPointer, keys } = objectLocations(document);
+  const numberSpellings = new Map();
+  function numberAt(pointer) {
+    const node = byPointer.get(pointer);
+    if (node?.kind !== 'number' || node.flags.hasError) return undefined;
+    if (!numberSpellings.has(pointer)) numberSpellings.set(pointer, jsonNumberSpelling(node.text));
+    return numberSpellings.get(pointer);
+  }
   const active = new Map();
   const errors = syntax ? [syntax] : [];
   function visit(rules, instance, pointer) {
@@ -162,12 +176,13 @@ export function validateJsonDocument(document, schema, analysis = analyzeJsonSch
       const target = analysis.target(rules.$ref);
       if (typeof target === 'boolean' || object(target)) visit(target, instance, pointer);
     }
+    const number = type === 'number' ? numberAt(pointer) : undefined;
     if (rules.type !== undefined && !typeSet(rules.type).some(expected => expected === type
-      || (expected === 'integer' && type === 'number' && Number.isInteger(instance)))) {
+      || (expected === 'integer' && number && isIntegerSpelling(number)))) {
       report('type', typeSet(rules.type));
     }
-    if (complete && rules.enum && !rules.enum.some(candidate => jsonEqual(candidate, instance))) report('enum', rules.enum);
-    if (complete && Object.hasOwn(rules, 'const') && !jsonEqual(rules.const, instance)) report('const', [rules.const]);
+    if (complete && rules.enum && !rules.enum.some(candidate => jsonEqual(candidate, instance, pointer, numberAt))) report('enum', rules.enum);
+    if (complete && Object.hasOwn(rules, 'const') && !jsonEqual(rules.const, instance, pointer, numberAt)) report('const', [rules.const]);
     if (type === 'object') {
       for (const key of rules.required ?? []) {
         if (complete && !Object.hasOwn(instance, key)) report('required', [key], pointerChild(pointer, key), node);
@@ -190,9 +205,10 @@ export function validateJsonDocument(document, schema, analysis = analyzeJsonSch
     } else if (type === 'string') {
       if (analysis.patterns.has(rules) && !analysis.patterns.get(rules).test(instance)) report('pattern', [rules.pattern]);
       if (formats.has(rules.format) && !formats.get(rules.format)(instance)) report('format', [rules.format]);
-    } else if (type === 'number') {
+    } else if (number) {
       for (const [keyword, rejects] of numericLimits) {
-        if (rules[keyword] !== undefined && rejects(instance, rules[keyword])) report(keyword, [rules[keyword]]);
+        const limit = rules[keyword];
+        if (limit !== undefined && rejects(compareNumberSpellings(number, jsonNumberSpelling(String(limit))))) report(keyword, [limit]);
       }
     }
     for (const combination of ['anyOf', 'oneOf']) {

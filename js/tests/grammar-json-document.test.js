@@ -241,10 +241,19 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   for (const schema of shared.ungeneratableSchemas) {
     assert.throws(() => importJsonSchema(schema), /no generatable document/u);
   }
+  for (const [source, schema, expected] of shared.numericValidation) {
+    const report = validateJson(source, schema);
+    assert.deepEqual(report.schemaIssues, []);
+    assert.equal(report.valid, expected.length === 0, source);
+    assert.deepEqual(report.errors.map(issue => {
+      assert.ok(report.network.link(issue.linkId));
+      return [issue.keyword, issue.pointer, ...range(issue.span)];
+    }), expected, source);
+  }
   recordIssue195Observations({
     requirementId: 'I195-I240-JSON-SCHEMA', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema', fixtureFile,
-    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap', 'decoderRequiredStringTagsDistinguishAlternatives', 'decoderFormatsCombineWithRegularPatterns', 'decoderChecksFiniteReferencedAlternatives'],
+    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap', 'decoderRequiredStringTagsDistinguishAlternatives', 'decoderFormatsCombineWithRegularPatterns', 'decoderChecksFiniteReferencedAlternatives', 'validationUsesExactNumericSpellings'],
     testName: context.name,
   });
 });

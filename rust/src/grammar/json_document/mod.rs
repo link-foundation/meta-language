@@ -4,6 +4,7 @@ mod document;
 mod emit;
 mod import;
 mod integer_policy;
+mod number_spelling;
 mod numeric_ranges;
 mod pattern_policy;
 mod patterns;
