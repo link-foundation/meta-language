@@ -13,30 +13,33 @@ export async function inspectAutomatedTranslationRollout(repository, query = git
   const api = `repos/${repository}`;
   const pages = (endpoint) => query(['api', `${api}/${endpoint}`, '--paginate', '--slurp']);
   const pulls = (await pages('pulls?state=open&per_page=100')).flat();
+  if (pulls.length === 0) return [];
   const baseCommits = new Map();
   for (const ref of new Set(pulls.map(pull => pull.base.ref))) {
     const branch = ref.split('/').map(encodeURIComponent).join('/');
     const reference = await query(['api', `${api}/git/ref/heads/${branch}`]);
     baseCommits.set(ref, reference.object.sha);
   }
+  // GitHub's head and event filters can omit runs that appear in the full list.
+  const runs = (await pages('actions/workflows/ci.yml/runs?per_page=100'))
+    .flatMap(page => page.workflow_runs)
+    .filter(run => run.event === 'pull_request')
+    .sort((left, right) => right.run_number - left.run_number);
   const observations = [];
   for (const pull of pulls) {
     const head = pull.head.sha;
     const base = baseCommits.get(pull.base.ref);
-    const runs = (await pages(`actions/workflows/ci.yml/runs?event=pull_request&head_sha=${head}&per_page=100`))
-      .flatMap(page => page.workflow_runs);
-    const run = runs.sort((left, right) => right.run_number - left.run_number)
-      .find(candidate => {
-        if (candidate.head_sha !== head || candidate.event !== 'pull_request') return false;
-        if (candidate.pull_requests?.length) {
-          return candidate.pull_requests.some(associated => associated.number === pull.number && associated.base.sha === base);
-        }
-        // GitHub can omit the association for a fork. The workflow's checkout
-        // step must still confirm the exact pull request, head and base below.
-        const source = pull.head.repo;
-        return source?.id !== undefined && source.id !== pull.base.repo?.id &&
-          candidate.head_repository?.id === source.id && candidate.head_branch === pull.head.ref;
-      });
+    const run = runs.find(candidate => {
+      if (candidate.head_sha !== head) return false;
+      if (candidate.pull_requests?.length) {
+        return candidate.pull_requests.some(associated => associated.number === pull.number && associated.base.sha === base);
+      }
+      // GitHub can omit the association for a fork. The workflow's checkout
+      // step must still confirm the exact pull request, head and base below.
+      const source = pull.head.repo;
+      return source?.id !== undefined && source.id !== pull.base.repo?.id &&
+        candidate.head_repository?.id === source.id && candidate.head_branch === pull.head.ref;
+    });
     const observation = { pull: pull.number, url: pull.html_url, head, base };
     if (!run) {
       observations.push({ ...observation, problem: 'No CI pull_request run matches the current head and base.' });

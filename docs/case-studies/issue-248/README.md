@@ -185,6 +185,12 @@ pull request can report an older base commit. Run the same observation from a
 clean checkout with GitHub CLI access.
 [Fork workflow run for PR #246](https://github.com/link-foundation/meta-language/actions/runs/45089575521)
 
+GitHub's head-filtered workflow list returned no runs for PR #249 at
+`f1d961d1`, while the unfiltered list included its queued run with the same
+head and base. The audit pages through the unfiltered workflow list and checks
+the event, head and base locally before choosing the latest run.
+[Queued workflow run for PR #249](https://github.com/link-foundation/meta-language/actions/runs/45112870920)
+
 ```sh
 node js/scripts/check-automated-translation-rollout.mjs /tmp/automated-translation-rollout.lino
 ```

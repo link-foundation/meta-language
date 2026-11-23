@@ -26,15 +26,17 @@ test('rollout inspection uses the current base and the latest eligible pull requ
     }
     assert.deepEqual([command, paginate, slurp], ['api', '--paginate', '--slurp']);
     if (resource.startsWith('pulls?')) return [[pull(1), pull(2)], [pull(3), pull(4), pull(5), pull(6)]];
-    if (resource.includes('head_sha=head1')) return [
-      { workflow_runs: [run(1, 8, 'current'), run(1, 12, 'previous')] },
-      { workflow_runs: [run(1, 9, 'current'), forkRun(1, 16, 1)] },
+    // PR #249 had a queued run missing from GitHub's filtered endpoints.
+    if (resource.includes('head_sha=')) assert.fail('The head filter can hide the latest run');
+    if (resource === 'actions/workflows/ci.yml/runs?per_page=100') return [
+      { workflow_runs: [
+        forkRun(5, 21, 3), forkRun(6, 19), forkRun(5, 18), run(4, 17, 'release'), forkRun(1, 16, 1),
+        { ...run(1, 20, 'current'), event: 'workflow_dispatch' },
+        { ...run(2, 22, 'current'), head_sha: 'stale' },
+        run(3, 15, 'current', 'queued'), run(2, 14, 'previous'), run(1, 12, 'previous'),
+      ] },
+      { workflow_runs: [run(3, 11, 'current'), run(1, 9, 'current'), run(1, 8, 'current')] },
     ];
-    if (resource.includes('head_sha=head2')) return [{ workflow_runs: [run(2, 14, 'previous')] }];
-    if (resource.includes('head_sha=head3')) return [{ workflow_runs: [run(3, 15, 'current', 'queued')] }];
-    if (resource.includes('head_sha=head4')) return [{ workflow_runs: [run(4, 17, 'release')] }];
-    if (resource.includes('head_sha=head5')) return [{ workflow_runs: [forkRun(5, 18), forkRun(5, 21, 3)] }];
-    if (resource.includes('head_sha=head6')) return [{ workflow_runs: [forkRun(6, 19)] }];
     if (resource === 'actions/runs/9/attempts/2/jobs?per_page=100') return [{ jobs: [{
       name: 'Full Requirements Aggregate', conclusion: 'success',
       steps: [
