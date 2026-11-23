@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { LinkNetwork, locate, wordNgramOverlap } from '../src/index.js';
+import { segmentGraphemes } from '../src/text-location-graphemes.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixtureFile = 'parity/fixtures/text-location.lino';
 const fixture = readProjectData(new URL('../../' + fixtureFile, import.meta.url));
 const caseFoldingFixtureFile = 'parity/fixtures/text-location-case-folding.lino';
 const caseFoldingFixture = readProjectData(new URL('../../' + caseFoldingFixtureFile, import.meta.url));
+const graphemeFixtureFile = 'parity/fixtures/text-location-grapheme-conformance.lino';
 
 function observe(context, requirementId, assertions, evidenceFile = fixtureFile) {
   recordIssue195Observations({
@@ -81,4 +84,40 @@ test('Unicode full case folding keeps original quote and n-gram spans', context 
   observe(context, 'I195-I243-UNICODE-CASE-FOLDING', [
     'fullCaseFoldingMatchesKeepSourceRanges', 'caseFoldingOverlapKeepsBothSourceRanges',
   ], caseFoldingFixtureFile);
+});
+
+test('Unicode 17 grapheme boundaries and edits retain original source ranges', context => {
+  const [header, ...cases] = readFileSync(new URL('../../' + graphemeFixtureFile, import.meta.url), 'utf8').trim().split('\n');
+  assert.match(header, /^\(unicode-grapheme-conformance 17\.0\.0 [0-9a-f]{64}\)$/u);
+  assert.equal(cases.length, 766);
+  const clusters = new Set();
+  for (const line of cases) {
+    assert.match(line, /^\(case(?: \([0-9A-F ]+\))+\)$/u);
+    const groups = [...line.matchAll(/\(([0-9A-F ]+)\)/gu)].map(([, codes]) =>
+      String.fromCodePoint(...codes.split(' ').map(code => Number.parseInt(code, 16))));
+    const source = groups.join('');
+    let index = 0;
+    const expected = groups.map(segment => {
+      const result = { segment, index };
+      index += segment.length;
+      clusters.add(segment);
+      return result;
+    });
+    assert.deepEqual([...segmentGraphemes(source)], expected, line);
+  }
+  for (const cluster of clusters) {
+    const prefix = '🚀\u0001';
+    const fragment = `${prefix}\u0003\u0002`;
+    const source = `${prefix}${cluster}\u0002`;
+    const found = locate(source, fragment, { maxEdits: 1 }).find(result => result.start === 0 && result.end === source.length);
+    assert.deepEqual(found?.edits, [{
+      kind: 'replace',
+      fragment: { text: '\u0003', start: prefix.length, end: prefix.length + 1 },
+      source: { text: cluster, start: prefix.length, end: prefix.length + cluster.length },
+    }], JSON.stringify(cluster));
+    assert.equal(found.distance, 1);
+  }
+  observe(context, 'I195-I243-UNICODE-GRAPHEME-BOUNDARIES', [
+    'unicode17GraphemeBoundaries', 'graphemeEditsKeepOriginalSourceRanges',
+  ], graphemeFixtureFile);
 });

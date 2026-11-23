@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { segmentGraphemes } from './text-location-graphemes.js';
 import { normalizeQuoteScalar, normalizeYoScalar, selectTextEdit } from './text-location-policy.js';
 
-const graphemes = new Intl.Segmenter('und', { granularity: 'grapheme' });
 const normalizationOrder = ['nfkc', 'quotes', 'dashes', 'yo', 'case', 'softHyphen', 'whitespace'];
 const wordCharacter = /[\p{L}\p{M}\p{N}_]/u;
 
@@ -39,7 +39,7 @@ function projection(source, names) {
       index += segment.length;
     }
   }
-  for (const { segment, index } of names.has('nfkc') ? graphemes.segment(source) : scalars()) {
+  for (const { segment, index } of names.has('nfkc') ? segmentGraphemes(source) : scalars()) {
     let text = segment;
     if (names.has('nfkc')) text = text.normalize('NFKC');
     if (names.has('quotes')) text = Array.from(text, value => String.fromCodePoint(normalizeQuoteScalar(value.codePointAt(0)))).join('');
@@ -75,7 +75,7 @@ function groupProjection(entries, unit) {
     return groups;
   }
   let index = 0;
-  for (const { segment } of graphemes.segment(text)) {
+  for (const { segment } of segmentGraphemes(text)) {
     const count = [...segment].length;
     groups.push({ text: segment, start: entries[index].start, end: entries[index + count - 1].end });
     index += count;

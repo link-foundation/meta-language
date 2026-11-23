@@ -2357,11 +2357,15 @@ The `case` transformation uses the Unicode 17.0 default full case folding
 table. Folded characters retain their original spans, and exact matches span
 whole expansions. Both packages carry the same generated case folding table
 and include the Unicode data license under `src/data/natural-language-values/`.
-With a positive edit budget, the search compares graphemes or word segments
-and returns the lowest-distance nonempty match at each start, preferring the
-shorter match on ties. Word n-gram overlap returns every pair of source ranges
-for each shared projected word sequence. JavaScript exposes UTF-16 offsets
-and Rust exposes UTF-8 offsets for these operations.
+Both runtimes use Unicode 17.0 default extended grapheme cluster boundaries
+for compatibility normalization and grapheme edit units. The JavaScript
+property tables and the shared boundary fixtures are generated from the pinned
+Unicode data by `js/scripts/build-text-location-graphemes.mjs`. A positive
+edit budget compares graphemes or word segments and returns the lowest-distance
+nonempty match at each start, preferring the shorter match on ties. Word n-gram
+overlap returns every pair of source ranges for each shared projected word
+sequence. JavaScript exposes UTF-16 offsets and Rust exposes UTF-8 offsets for
+these operations. [Unicode text segmentation](https://www.unicode.org/reports/tr29/tr29-47.html#Grapheme_Cluster_Boundaries)
 
 The JavaScript Yacc/Lex draft lowers declared token rules, left and right
 precedence, `%prec`, lexical modes, trivia and supported arithmetic or textual

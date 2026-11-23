@@ -816,6 +816,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
       },
     },
+    {
+      id: 'I195-I243-UNICODE-GRAPHEME-BOUNDARIES',
+      source: ISSUE_195_SOURCES.normalizedTextLocation,
+      language: 'Unicode text search',
+      version: 'Unicode 17.0.0 default extended grapheme clusters and unicode-segmentation 1.13.3',
+      construct: 'extended grapheme boundaries and approximate source ranges',
+      expectedBehavior: 'Both runtimes use Unicode 17.0.0 extended grapheme boundaries. Replacing one grapheme reports a single edit over the complete grapheme in each original input.',
+      fixture: 'parity/fixtures/text-location-grapheme-conformance.lino',
+      selector: 'all Unicode 17.0.0 grapheme break cases and bounded quote edits over every distinct cluster',
+      assertions: ['unicode17GraphemeBoundaries', 'graphemeEditsKeepOriginalSourceRanges'],
+      implementationEntryPoints: {
+        javascript: ['js/src/text-location.js', 'js/src/text-location-graphemes.js', 'js/tests/language-text-location.test.js'],
+        rust: ['rust/src/link_network/text_location.rs', 'rust/tests/unit/text_location.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I238-HTML-VISIBLE-TEXT',

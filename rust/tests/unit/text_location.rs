@@ -4,11 +4,14 @@ use meta_language::link_network::text_location::{
 };
 use meta_language::{LinkNetwork, ParseConfiguration, read_structured_data_lino};
 use serde_json::{Value, json};
+use std::collections::BTreeSet;
+use unicode_segmentation::UnicodeSegmentation;
 
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE: &str = "parity/fixtures/text-location.lino";
 const CASE_FOLDING_FIXTURE: &str = "parity/fixtures/text-location-case-folding.lino";
+const GRAPHEME_FIXTURE: &str = "parity/fixtures/text-location-grapheme-conformance.lino";
 
 fn fixture() -> Value {
     read_structured_data_lino(include_str!("../../../parity/fixtures/text-location.lino"))
@@ -216,5 +219,97 @@ fn unicode_full_case_folding_keeps_original_quote_and_ngram_spans() {
             "caseFoldingOverlapKeepsBothSourceRanges",
         ],
         test_name: "unicode_full_case_folding_keeps_original_quote_and_ngram_spans",
+    });
+}
+
+#[test]
+fn unicode_grapheme_boundaries_and_edits_keep_original_ranges() {
+    assert_eq!(
+        unicode_segmentation::UNICODE_VERSION,
+        (17, 0, 0),
+        "uncovered native Unicode grapheme version"
+    );
+    let mut cases =
+        include_str!("../../../parity/fixtures/text-location-grapheme-conformance.lino").lines();
+    assert!(
+        cases
+            .next()
+            .unwrap()
+            .starts_with("(unicode-grapheme-conformance 17.0.0 ")
+    );
+    assert_eq!(cases.clone().count(), 766);
+    let mut clusters = BTreeSet::new();
+    for line in cases {
+        let groups: Vec<String> = line
+            .strip_prefix("(case (")
+            .and_then(|case| case.strip_suffix("))"))
+            .expect("grapheme case")
+            .split(") (")
+            .map(|codes| {
+                codes
+                    .split(' ')
+                    .map(|code| char::from_u32(u32::from_str_radix(code, 16).unwrap()).unwrap())
+                    .collect()
+            })
+            .collect();
+        let source = groups.concat();
+        let mut offset = 0;
+        let expected: Vec<_> = groups
+            .iter()
+            .map(|cluster| {
+                let index = offset;
+                offset += cluster.len();
+                (index, cluster.as_str())
+            })
+            .collect();
+        assert_eq!(
+            source.grapheme_indices(true).collect::<Vec<_>>(),
+            expected,
+            "{line}"
+        );
+        clusters.extend(groups);
+    }
+    for cluster in clusters {
+        let prefix = "🚀\u{1}";
+        let fragment = format!("{prefix}\u{3}\u{2}");
+        let source = format!("{prefix}{cluster}\u{2}");
+        let found = locate(
+            &source,
+            &fragment,
+            TextLocationOptions {
+                max_edits: 1,
+                ..TextLocationOptions::default()
+            },
+        )
+        .into_iter()
+        .find(|result| result.range.start() == 0 && result.range.end() == source.len())
+        .unwrap_or_else(|| panic!("missing complete source span for {cluster:?}"));
+        assert_eq!(found.distance, 1);
+        let [
+            TextLocationEdit::Replace {
+                fragment: before,
+                source: after,
+            },
+        ] = found.edits.as_slice()
+        else {
+            panic!("expected one grapheme replacement for {cluster:?}");
+        };
+        assert_eq!(before.text, "\u{3}");
+        assert_eq!(before.range.start(), prefix.len());
+        assert_eq!(before.range.end(), prefix.len() + 1);
+        assert_eq!(after.text, cluster);
+        assert_eq!(after.range.start(), prefix.len());
+        assert_eq!(after.range.end(), prefix.len() + cluster.len());
+    }
+    record(&Observation {
+        requirement_id: "I195-I243-UNICODE-GRAPHEME-BOUNDARIES",
+        suffix: "behavior",
+        fixture_id: "i195-i243-unicode-grapheme-boundaries",
+        fixture_file: GRAPHEME_FIXTURE,
+        assertions: &[
+            "unicode17GraphemeBoundaries",
+            "graphemeEditsKeepOriginalSourceRanges",
+        ],
+        test_name: "unicode_grapheme_boundaries_and_edits_keep_original_ranges",
     });
 }
