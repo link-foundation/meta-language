@@ -4680,7 +4680,10 @@ all match the JSON spelling. A sibling string assertion restricts every branch.
 The decoder accepts exactly one matching branch and omits a production when
 the product has no accepting path.
 For a string-only local reference, the importer intersects supported sibling
-patterns and formats with the referenced schema's string language. For string
+patterns and formats along the local reference chain. Referenced alternatives
+participate in string branch selection and can supply a required string tag
+from their terminal object schema. The chain analysis stops at a repeated
+reference or the schema inspection depth limit. For string
 `anyOf`, it intersects each branch with the common assertions and emits their
 union. Each intersection has the shared automaton work and state limits. If a
 branch exceeds those limits, a diagnostic identifies the validation assertion.

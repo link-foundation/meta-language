@@ -358,9 +358,7 @@ impl<'schema> Importer<'schema> {
                 .keys()
                 .any(|key| key != "type" && !reference_keyword(key))
             {
-                if let Some(expression) =
-                    self.referenced_string_expression(schema, target, allowed_types)
-                {
+                if let Some(expression) = self.referenced_string_expression(schema, allowed_types) {
                     return expression;
                 }
                 self.report(
@@ -379,7 +377,7 @@ impl<'schema> Importer<'schema> {
                     .any(|key| key != "type" && key != keyword && !reference_keyword(key));
                 let overlaps = keyword == "oneOf"
                     && !branches_use_disjoint_types(branches.iter(), allowed_types)
-                    && !branches_use_disjoint_required_tags(branches, allowed_types);
+                    && !branches_use_disjoint_required_tags(self.root, branches, allowed_types);
                 if (overlaps || has_sibling_assertions)
                     && let Some(expression) =
                         self.alternative_string_expression(schema, branches, allowed_types, keyword)
@@ -812,54 +810,68 @@ impl<'schema> Importer<'schema> {
         }
     }
 
+    fn regular_string_chain(&mut self, layers: &[&Value]) -> Option<Option<Vec<Expression>>> {
+        let mut conjunction = Vec::new();
+        for layer in layers {
+            let Some(expressions) = self.regular_string_constraints(layer, Some("$ref"))? else {
+                return Some(None);
+            };
+            conjunction.extend(expressions);
+        }
+        Some(Some(conjunction))
+    }
+
     fn referenced_string_expression(
         &mut self,
-        schema: &Value,
-        target: &Value,
+        schema: &'schema Value,
         allowed_types: u8,
     ) -> Option<Option<Expression>> {
-        if possible_type_membership(target, allowed_types) != type_membership("string") {
+        let layers = reference_layers(self.root, schema)?;
+        let membership = layers.iter().fold(allowed_types, |types, layer| {
+            possible_type_membership(layer, types)
+        });
+        if membership == 0 {
+            return Some(None);
+        }
+        if membership != type_membership("string") {
             return None;
         }
-        let Some(guard) = self.regular_string_constraints(schema, Some("$ref"))? else {
+        let Some(conjunction) = self.regular_string_chain(&layers)? else {
             return Some(None);
         };
-        let Some(constraints) = self.regular_string_constraints(target, None)? else {
-            return Some(None);
-        };
-        let conjunction: Vec<_> = guard.iter().chain(&constraints).collect();
         if conjunction.is_empty() {
             return Some(Some(reference_expression("string")));
         }
-        self.string_branch_product(&[conjunction])
+        self.string_branch_product(&[conjunction.iter().collect()])
     }
 
     fn alternative_string_expression(
         &mut self,
         schema: &Value,
-        branches: &[Value],
+        branches: &'schema [Value],
         allowed_types: u8,
         keyword: &str,
     ) -> Option<Option<Expression>> {
         let string = type_membership("string");
-        let types: Vec<_> = branches
-            .iter()
-            .map(|branch| possible_type_membership(branch, allowed_types))
-            .collect();
-        if types
-            .iter()
-            .any(|&membership| membership != 0 && membership != string)
-        {
-            return None;
-        }
         let Some(guard) = self.regular_string_constraints(schema, Some(keyword))? else {
             return Some(None);
         };
         let mut choices = Vec::new();
-        for (branch, membership) in branches.iter().zip(types) {
-            if membership != 0
-                && let Some(constraints) = self.regular_string_constraints(branch, None)?
-            {
+        for branch in branches {
+            if possible_type_membership(branch, allowed_types) == 0 {
+                continue;
+            }
+            let layers = reference_layers(self.root, branch)?;
+            let membership = layers.iter().fold(allowed_types, |types, layer| {
+                possible_type_membership(layer, types)
+            });
+            if membership == 0 {
+                continue;
+            }
+            if membership != string {
+                return None;
+            }
+            if let Some(constraints) = self.regular_string_chain(&layers)? {
                 choices.push(constraints);
             }
         }
@@ -1116,6 +1128,26 @@ fn possible_type_membership(schema: &Value, allowed_types: u8) -> u8 {
     })
 }
 
+fn reference_layers<'schema>(
+    root: &'schema Value,
+    mut schema: &'schema Value,
+) -> Option<Vec<&'schema Value>> {
+    let mut layers = Vec::new();
+    let mut visited = HashSet::new();
+    while schema.is_boolean() || schema.is_object() {
+        layers.push(schema);
+        let Some(name) = schema.get("$ref") else {
+            return Some(layers);
+        };
+        let name = name.as_str()?;
+        if !visited.insert(name) || layers.len() > 128 {
+            return None;
+        }
+        schema = reference(root, name)?;
+    }
+    None
+}
+
 fn branches_use_disjoint_types<'schema>(
     branches: impl ExactSizeIterator<Item = &'schema Value>,
     allowed_types: u8,
@@ -1161,8 +1193,20 @@ fn required_string_tags(schema: &Value) -> HashMap<&str, Vec<&str>> {
         .collect()
 }
 
-fn branches_use_disjoint_required_tags(branches: &[Value], allowed_types: u8) -> bool {
-    let tags: Vec<_> = branches.iter().map(required_string_tags).collect();
+fn branches_use_disjoint_required_tags(
+    root: &Value,
+    branches: &[Value],
+    allowed_types: u8,
+) -> bool {
+    let tags: Vec<_> = branches
+        .iter()
+        .map(|branch| {
+            reference_layers(root, branch)
+                .and_then(|layers| layers.last().copied())
+                .map(required_string_tags)
+                .unwrap_or_default()
+        })
+        .collect();
     branches.iter().enumerate().all(|(index, branch)| {
         branches[..index]
             .iter()

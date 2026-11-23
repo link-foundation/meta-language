@@ -288,8 +288,8 @@ function requiredStringTags(schema) {
   return tags;
 }
 
-function branchesUseDisjointRequiredTags(branches, allowedTypes) {
-  const tags = branches.map(requiredStringTags);
+function branchesUseDisjointRequiredTags(branches, allowedTypes, referenceLayers) {
+  const tags = branches.map(branch => requiredStringTags(referenceLayers(branch)?.at(-1)));
   return branches.every((branch, index) => branches.slice(0, index).every((previous, other) => (
     branchesUseDisjointTypes([branch, previous], allowedTypes) || [...tags[index]].some(([key, values]) => (
       tags[other].has(key) && stringSetsAreDisjoint(values, tags[other].get(key))
@@ -495,25 +495,52 @@ export function importJsonSchema(schema) {
     for (const [name, expression] of product.rules) builder.rule(name, expression);
     return product.expression;
   }
-  function referencedStringExpression(rules, target, allowedTypes) {
-    if (possibleTypeMembership(target, allowedTypes) !== jsonTypes.get('string')) return undefined;
-    const guard = regularStringConstraints(rules, '$ref');
-    if (!guard) return guard;
-    const constraints = regularStringConstraints(target);
-    if (!constraints) return constraints;
-    const conjunction = [...guard, ...constraints];
+  function referenceLayers(schema) {
+    const layers = [];
+    const visited = new Set();
+    let rules = schema;
+    while (typeof rules === 'boolean' || (rules && typeof rules === 'object' && !Array.isArray(rules))) {
+      layers.push(rules);
+      const name = rules.$ref;
+      if (name === undefined) return layers;
+      if (typeof name !== 'string' || visited.has(name) || layers.length > 128) return undefined;
+      visited.add(name);
+      rules = analysis.target(name);
+    }
+    return undefined;
+  }
+  function regularStringChain(layers) {
+    const conjunction = [];
+    for (const layer of layers) {
+      const expressions = regularStringConstraints(layer, '$ref');
+      if (!expressions) return expressions;
+      conjunction.push(...expressions);
+    }
+    return conjunction;
+  }
+  function referencedStringExpression(rules, allowedTypes) {
+    const layers = referenceLayers(rules);
+    if (!layers) return undefined;
+    const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+    if (membership === 0) return null;
+    if (membership !== jsonTypes.get('string')) return undefined;
+    const conjunction = regularStringChain(layers);
+    if (!conjunction) return conjunction;
     return conjunction.length ? stringBranchProduct([conjunction]) : ref('string');
   }
   function alternativeStringExpression(rules, alternatives, allowedTypes, keyword) {
     const string = jsonTypes.get('string');
-    const types = alternatives.map(branch => possibleTypeMembership(branch, allowedTypes));
-    if (types.some(membership => membership !== 0 && membership !== string)) return undefined;
     const guard = regularStringConstraints(rules, keyword);
     if (!guard) return guard;
     const branches = [];
-    for (const [index, branch] of alternatives.entries()) {
-      if (types[index] === 0) continue;
-      const constraints = regularStringConstraints(branch);
+    for (const branch of alternatives) {
+      if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
+      const layers = referenceLayers(branch);
+      if (!layers) return undefined;
+      const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
+      if (membership === 0) continue;
+      if (membership !== string) return undefined;
+      const constraints = regularStringChain(layers);
       if (constraints === undefined) return undefined;
       if (constraints) {
         const conjunction = [...guard, ...constraints];
@@ -568,7 +595,7 @@ export function importJsonSchema(schema) {
       const target = analysis.target(rules.$ref);
       if (typeof target === 'boolean' || (target && typeof target === 'object' && !Array.isArray(target))) {
         if (Object.keys(rules).some(key => key !== 'type' && !referenceKeys.has(key))) {
-          const conjunction = referencedStringExpression(rules, target, allowedTypes);
+          const conjunction = referencedStringExpression(rules, allowedTypes);
           if (conjunction !== undefined) return conjunction;
           report(pointer, '$ref', 'Sibling reference assertions are checked during document validation.');
         }
@@ -579,7 +606,7 @@ export function importJsonSchema(schema) {
       const keyword = alternatives === rules.anyOf ? 'anyOf' : 'oneOf';
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== 'type' && key !== keyword && !referenceKeys.has(key));
       const overlaps = keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes)
-        && !branchesUseDisjointRequiredTags(alternatives, allowedTypes);
+        && !branchesUseDisjointRequiredTags(alternatives, allowedTypes, referenceLayers);
       if (overlaps || hasSiblingAssertions) {
         const combined = alternativeStringExpression(rules, alternatives, allowedTypes, keyword);
         if (combined !== undefined) return combined;
