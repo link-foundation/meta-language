@@ -213,7 +213,7 @@ impl<'grammar> Automaton<'grammar> {
     }
 }
 
-type ProductState = (Vec<usize>, Vec<usize>);
+type ProductState = Vec<Vec<usize>>;
 
 struct ProductRow {
     states: ProductState,
@@ -230,7 +230,12 @@ struct Product {
 }
 
 impl Product {
-    fn state(&mut self, states: ProductState) -> Option<usize> {
+    fn state(
+        &mut self,
+        states: ProductState,
+        groups: &[Vec<usize>],
+        work: &mut WorkLimit,
+    ) -> Option<usize> {
         if let Some(&index) = self.indices.get(&states) {
             return Some(index);
         }
@@ -238,11 +243,20 @@ impl Product {
         if index == self.state_limit {
             return None;
         }
-        let accepts = states.0.contains(&1) && states.1.contains(&1);
+        let mut accepting_branches = 0;
+        for group in groups {
+            work.charge(group.len())?;
+            if group.iter().all(|&machine| states[machine].contains(&1)) {
+                accepting_branches += 1;
+                if accepting_branches > 1 {
+                    break;
+                }
+            }
+        }
         self.indices.insert(states.clone(), index);
         self.rows.push(ProductRow {
             states,
-            accepts,
+            accepts: accepting_branches == 1,
             edges: Vec::new(),
             incoming: Vec::new(),
         });
@@ -349,65 +363,111 @@ pub(super) enum StringIntersection {
     Impossible,
 }
 
-/// Build a deterministic product over JSON source characters. None means the work bound was reached.
 pub(super) fn intersect_json_string_expressions(
     grammar: &Grammar,
     left_expression: &GrammarExpr,
     right_expression: &GrammarExpr,
     rule_prefix: &str,
 ) -> Option<StringIntersection> {
+    select_exclusive_json_string_expressions(
+        grammar,
+        &[vec![left_expression, right_expression]],
+        rule_prefix,
+    )
+}
+
+/// Each branch is a conjunction. The decoder accepts when exactly one branch matches.
+pub(super) fn select_exclusive_json_string_expressions(
+    grammar: &Grammar,
+    branches: &[Vec<&GrammarExpr>],
+    rule_prefix: &str,
+) -> Option<StringIntersection> {
+    if branches.is_empty() {
+        return Some(StringIntersection::Impossible);
+    }
     let (maximum_source_states, maximum_product_states, maximum_work) =
         string_intersection_limits();
     let mut work = WorkLimit(maximum_work as usize);
-    let left = Automaton::new(
-        grammar,
-        left_expression,
-        maximum_source_states as usize,
-        &mut work,
-    )?;
-    let right = Automaton::new(
-        grammar,
-        right_expression,
-        maximum_source_states as usize,
-        &mut work,
-    )?;
+    let mut machines = Vec::new();
+    let mut machine_indices = HashMap::new();
+    let mut groups = Vec::with_capacity(branches.len());
+    for branch in branches {
+        let mut group = Vec::with_capacity(branch.len());
+        for &expression in branch {
+            work.charge(1)?;
+            let identity = std::ptr::from_ref(expression);
+            let index = match machine_indices.get(&identity) {
+                Some(&index) => index,
+                None => {
+                    let index = machines.len();
+                    machines.push(Automaton::new(
+                        grammar,
+                        expression,
+                        maximum_source_states as usize,
+                        &mut work,
+                    )?);
+                    machine_indices.insert(identity, index);
+                    index
+                }
+            };
+            group.push(index);
+        }
+        groups.push(group);
+    }
     let mut product = Product {
         state_limit: maximum_product_states as usize,
         ..Product::default()
     };
-    product.state((
-        left.closure([0], &mut work)?,
-        right.closure([0], &mut work)?,
-    ))?;
+    let start = machines
+        .iter()
+        .map(|machine| machine.closure([0], &mut work))
+        .collect::<Option<Vec<_>>>()?;
+    product.state(start, &groups, &mut work)?;
     let mut accepting = Vec::new();
     let mut index = 0;
     while let Some(row) = product.rows.get(index) {
         if row.accepts {
             accepting.push(index);
         }
-        let left_edges = left.edges(&row.states.0);
-        let right_edges = right.edges(&row.states.1);
-        let bounds: BTreeSet<_> = left_edges
+        let machine_edges: Vec<_> = machines
             .iter()
-            .chain(&right_edges)
+            .zip(&row.states)
+            .map(|(machine, states)| machine.edges(states))
+            .collect();
+        let edge_count: usize = machine_edges.iter().map(Vec::len).sum();
+        let bounds: BTreeSet<_> = machine_edges
+            .iter()
+            .flatten()
             .flat_map(|edge| [edge.first, edge.last + 1])
             .collect();
         let bounds: Vec<_> = bounds.into_iter().collect();
         for bounds in bounds.windows(2) {
-            work.charge(1 + left_edges.len() + right_edges.len())?;
+            work.charge(1 + edge_count + machine_edges.len())?;
             let first = bounds[0];
-            let left_targets = targets(&left_edges, first);
-            if left_targets.is_empty() {
+            let transitions: Vec<_> = machine_edges
+                .iter()
+                .map(|edges| targets(edges, first))
+                .collect();
+            let mut viable = false;
+            for group in &groups {
+                work.charge(group.len())?;
+                if group
+                    .iter()
+                    .all(|&machine| !transitions[machine].is_empty())
+                {
+                    viable = true;
+                    break;
+                }
+            }
+            if !viable {
                 continue;
             }
-            let right_targets = targets(&right_edges, first);
-            if right_targets.is_empty() {
-                continue;
-            }
-            let target = product.state((
-                left.closure(left_targets, &mut work)?,
-                right.closure(right_targets, &mut work)?,
-            ))?;
+            let states = machines
+                .iter()
+                .zip(transitions)
+                .map(|(machine, set)| machine.closure(set, &mut work))
+                .collect::<Option<Vec<_>>>()?;
+            let target = product.state(states, &groups, &mut work)?;
             product.transition(index, first, bounds[1] - 1, target);
         }
         index += 1;

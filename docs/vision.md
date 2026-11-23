@@ -4674,6 +4674,12 @@ validation rules share the JSON grammar and
 keyword policy. The reverse API preserves an imported schema and can infer
 constants from bounded finite JSON productions.
 
+A bounded automaton product handles overlapping `oneOf` branches over strings.
+It counts branches whose supported patterns, formats and finite value assertions
+all match the JSON spelling. A sibling string assertion restricts every branch.
+The decoder accepts exactly one matching branch and omits a production when
+the product has no accepting path.
+
 An unrestricted integer decoder over all JSON spellings exceeds the portable
 context-free grammar model. Restrict number spellings to `1.0*1e10*`, with
 `n` zeroes between the two `1` digits in the significand and `k` zeroes in

@@ -12,7 +12,9 @@ use super::numeric_ranges::{DecimalRange, signed_decimal_range, signed_integer_r
 use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
-use super::string_intersection::{StringIntersection, intersect_json_string_expressions};
+use super::string_intersection::{
+    StringIntersection, intersect_json_string_expressions, select_exclusive_json_string_expressions,
+};
 use super::tag_policy::string_sets_are_disjoint;
 use super::{JsonSchemaIssue, pointer_child};
 
@@ -366,17 +368,32 @@ impl<'schema> Importer<'schema> {
         }
         for keyword in ["anyOf", "oneOf"] {
             if let Some(branches) = schema[keyword].as_array() {
-                if schema
+                let has_sibling_assertions = schema
                     .as_object()?
                     .keys()
-                    .any(|key| key != "type" && key != keyword && !reference_keyword(key))
+                    .any(|key| key != "type" && key != keyword && !reference_keyword(key));
+                let overlaps = keyword == "oneOf"
+                    && !branches_use_disjoint_types(branches.iter(), allowed_types)
+                    && !branches_use_disjoint_required_tags(branches, allowed_types);
+                if keyword == "oneOf"
+                    && (overlaps || has_sibling_assertions)
+                    && let Some(product) =
+                        self.exclusive_string_expression(schema, branches, allowed_types)
                 {
+                    return match product {
+                        StringIntersection::Match(expression, rules) => {
+                            for rule in rules {
+                                self.grammar.add_rule(rule);
+                            }
+                            Some(expression)
+                        }
+                        StringIntersection::Impossible => None,
+                    };
+                }
+                if has_sibling_assertions {
                     self.report(pointer, keyword, "Sibling assertions on alternatives are checked during document validation.");
                 }
-                if keyword == "oneOf"
-                    && !branches_use_disjoint_types(branches.iter(), allowed_types)
-                    && !branches_use_disjoint_required_tags(branches, allowed_types)
-                {
+                if overlaps {
                     if let Some(integer) = exclusive_integer_range(branches) {
                         if integer.is_some() {
                             self.report(pointer, keyword, "The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.");
@@ -736,6 +753,97 @@ impl<'schema> Importer<'schema> {
         Some(format.unwrap_or_else(|| reference_expression("string")))
     }
 
+    fn regular_string_constraints(
+        &mut self,
+        schema: &Value,
+        combination: Option<&str>,
+    ) -> Option<Option<Vec<Expression>>> {
+        if schema.get("$ref").is_some()
+            || schema.as_object().is_some_and(|rules| {
+                rules.keys().any(|key| {
+                    Some(key.as_str()) != combination
+                        && !reference_keyword(key)
+                        && !matches!(
+                            key.as_str(),
+                            "type" | "const" | "enum" | "pattern" | "format"
+                        )
+                })
+            })
+        {
+            return None;
+        }
+        let mut expressions = Vec::new();
+        if let Some(format) = schema["format"].as_str() {
+            formats(format)?;
+            expressions.push(EXPRESSION.nt(format!("json_format_{}", format.replace('-', "_"))));
+        }
+        if let Some(pattern) = schema["pattern"].as_str() {
+            match lower_json_string_pattern(pattern, |expression| self.pattern_rule(expression))? {
+                PatternLowering::Match(expression) => expressions.push(EXPRESSION.seq([
+                    EXPRESSION.term("\""),
+                    expression,
+                    EXPRESSION.term("\""),
+                ])),
+                PatternLowering::Impossible => return Some(None),
+            }
+        }
+        if let Some(constants) = finite_constants(schema) {
+            let strings: Vec<_> = constants
+                .into_iter()
+                .filter_map(Value::as_str)
+                .map(quoted)
+                .collect();
+            if strings.is_empty() {
+                return Some(None);
+            }
+            expressions.push(EXPRESSION.choice_unordered(strings));
+        }
+        Some(Some(expressions))
+    }
+
+    fn exclusive_string_expression(
+        &mut self,
+        schema: &Value,
+        branches: &[Value],
+        allowed_types: u8,
+    ) -> Option<StringIntersection> {
+        let string = type_membership("string");
+        let types: Vec<_> = branches
+            .iter()
+            .map(|branch| possible_type_membership(branch, allowed_types))
+            .collect();
+        if types
+            .iter()
+            .any(|&membership| membership != 0 && membership != string)
+        {
+            return None;
+        }
+        let Some(guard) = self.regular_string_constraints(schema, Some("oneOf"))? else {
+            return Some(StringIntersection::Impossible);
+        };
+        let mut choices = Vec::new();
+        for (branch, membership) in branches.iter().zip(types) {
+            if membership != 0
+                && let Some(constraints) = self.regular_string_constraints(branch, None)?
+            {
+                choices.push(constraints);
+            }
+        }
+        let any_string = reference_expression("string");
+        let choices: Vec<_> = choices
+            .iter()
+            .map(|constraints| {
+                if guard.is_empty() && constraints.is_empty() {
+                    vec![&any_string]
+                } else {
+                    guard.iter().chain(constraints).collect()
+                }
+            })
+            .collect();
+        let rule_prefix = format!("json_string_exclusive_{}", self.next());
+        select_exclusive_json_string_expressions(&self.grammar, &choices, &rule_prefix)
+    }
+
     fn number(&mut self, name: &str, schema: &Value, pointer: &str) -> Option<Expression> {
         let limits: Vec<_> = keywords("limit")
             .filter(|keyword| schema.get(keyword).is_some())
@@ -955,6 +1063,16 @@ fn value_type_membership(value: &Value) -> u8 {
     })
 }
 
+fn possible_type_membership(schema: &Value, allowed_types: u8) -> u8 {
+    let declared = allowed_types & declared_type_membership(schema);
+    finite_constants(schema).map_or(declared, |constants| {
+        declared
+            & constants
+                .into_iter()
+                .fold(0, |types, value| types | value_type_membership(value))
+    })
+}
+
 fn branches_use_disjoint_types<'schema>(
     branches: impl ExactSizeIterator<Item = &'schema Value>,
     allowed_types: u8,
@@ -967,13 +1085,7 @@ fn branches_use_disjoint_types<'schema>(
         if !branch.is_object() && !branch.is_boolean() {
             return false;
         }
-        let declared = allowed_types & declared_type_membership(branch);
-        let membership = finite_constants(branch).map_or(declared, |constants| {
-            declared
-                & constants
-                    .into_iter()
-                    .fold(0, |types, value| types | value_type_membership(value))
-        });
+        let membership = possible_type_membership(branch, allowed_types);
         if seen & membership != 0 {
             return false;
         }

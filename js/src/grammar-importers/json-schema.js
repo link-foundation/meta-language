@@ -6,7 +6,7 @@ import { jsonDocumentGrammar, pointerChild, readJsonDocument } from '../json-doc
 import { analyzeJsonSchema, validateJsonDocument } from '../json-schema-validation.js';
 import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-patterns.js';
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
-import { intersectJsonStringExpressions } from './json-schema-string-intersection.js';
+import { intersectJsonStringExpressions, selectExclusiveJsonStringExpressions } from './json-schema-string-intersection.js';
 import { stringSetsAreDisjoint } from './json-schema-tag-policy.js';
 import { exclusiveIntegerRange, integerBounds, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
@@ -255,14 +255,18 @@ function valueTypeMembership(value) {
   return jsonTypes.get(name) ?? 0;
 }
 
+function possibleTypeMembership(rules, allowedTypes) {
+  const declared = allowedTypes & declaredTypeMembership(rules);
+  const constants = finiteConstants(rules);
+  return constants ? constants.reduce((types, value) => types | valueTypeMembership(value), 0) & declared : declared;
+}
+
 function branchesUseDisjointTypes(branches, allowedTypes) {
   if (branches.length < 2) return true;
   let seen = 0;
   for (const branch of branches) {
     if (branch === null || !['object', 'boolean'].includes(typeof branch) || Array.isArray(branch)) return false;
-    const constants = finiteConstants(branch);
-    const declared = allowedTypes & declaredTypeMembership(branch);
-    const membership = constants ? constants.reduce((types, value) => types | valueTypeMembership(value), 0) & declared : declared;
+    const membership = possibleTypeMembership(branch, allowedTypes);
     if (seen & membership) return false;
     seen |= membership;
   }
@@ -461,6 +465,51 @@ export function importJsonSchema(schema) {
     }
     return format ?? ref('string');
   }
+  function regularStringConstraints(rules, combination) {
+    if (rules.$ref !== undefined || Object.keys(rules).some(key => key !== combination && !referenceKeys.has(key)
+      && !['type', 'const', 'enum', 'pattern', 'format'].includes(key))) return undefined;
+    const expressions = [];
+    if (rules.format !== undefined) {
+      if (!formatExpressions.has(rules.format)) return undefined;
+      expressions.push(ref(formatRule(rules.format)));
+    }
+    if (rules.pattern !== undefined) {
+      const result = lowerJsonStringPattern(rules.pattern, patternRule);
+      if (!result) return undefined;
+      if (!result.expression) return null;
+      expressions.push(seq(literal('"'), result.expression, literal('"')));
+    }
+    const constants = finiteConstants(rules);
+    if (constants) {
+      const strings = constants.filter(item => typeof item === 'string');
+      if (!strings.length) return null;
+      if (strings.some(item => !item.isWellFormed())) return undefined;
+      expressions.push(choice(...strings.map(quoted)));
+    }
+    return expressions;
+  }
+  function exclusiveStringExpression(rules, alternatives, allowedTypes) {
+    const string = jsonTypes.get('string');
+    const types = alternatives.map(branch => possibleTypeMembership(branch, allowedTypes));
+    if (types.some(membership => membership !== 0 && membership !== string)) return undefined;
+    const guard = regularStringConstraints(rules, 'oneOf');
+    if (!guard) return guard;
+    const branches = [];
+    for (const [index, branch] of alternatives.entries()) {
+      if (types[index] === 0) continue;
+      const constraints = regularStringConstraints(branch);
+      if (constraints === undefined) return undefined;
+      if (constraints) {
+        const conjunction = [...guard, ...constraints];
+        branches.push(conjunction.length ? conjunction : [ref('string')]);
+      }
+    }
+    const product = selectExclusiveJsonStringExpressions(branches, name => builder.rules.get(name)?.expression,
+      `json_string_exclusive_${next++}`);
+    if (!product) return product;
+    for (const [name, expression] of product.rules) builder.rule(name, expression);
+    return product.expression;
+  }
   function numberExpression(type, rules, pointer) {
     const keywords = numericLimitKeywords.filter(key => rules[key] !== undefined);
     if (type === 'integer') report(pointer, 'type', 'The decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');
@@ -507,9 +556,14 @@ export function importJsonSchema(schema) {
     if (alternatives) {
       const keyword = alternatives === rules.anyOf ? 'anyOf' : 'oneOf';
       const hasSiblingAssertions = Object.keys(rules).some(key => key !== 'type' && key !== keyword && !referenceKeys.has(key));
+      const overlaps = keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes)
+        && !branchesUseDisjointRequiredTags(alternatives, allowedTypes);
+      if (keyword === 'oneOf' && (overlaps || hasSiblingAssertions)) {
+        const exclusive = exclusiveStringExpression(rules, alternatives, allowedTypes);
+        if (exclusive !== undefined) return exclusive;
+      }
       if (hasSiblingAssertions) report(pointer, keyword, 'Sibling assertions on alternatives are checked during document validation.');
-      if (keyword === 'oneOf' && !branchesUseDisjointTypes(alternatives, allowedTypes)
-          && !branchesUseDisjointRequiredTags(alternatives, allowedTypes)) {
+      if (overlaps) {
         const integer = exclusiveIntegerRange(alternatives, referenceKeys);
         if (integer !== undefined) {
           if (integer) report(pointer, 'oneOf', 'The exclusive integer decoder uses integer spelling. Validation also accepts equivalent decimal or exponent spellings.');

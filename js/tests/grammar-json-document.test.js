@@ -253,7 +253,7 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
   recordIssue195Observations({
     requirementId: 'I195-I240-JSON-SCHEMA', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema', fixtureFile,
-    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap', 'decoderRequiredStringTagsDistinguishAlternatives', 'decoderFormatsCombineWithRegularPatterns', 'decoderChecksFiniteReferencedAlternatives', 'validationUsesExactNumericSpellings', 'decoderAppliesSiblingTypeAssertions'],
+    assertions: ['decoderGrammarsConstrainSchema', 'schemaDiagnosticsRetainSyntaxLinks', 'grammarAndSchemaRoundTrip', 'decoderDisjointExclusiveBranchesHaveNoResidual', 'decoderPatternsRespectDecodedStrings', 'decoderFormatsRespectDecodedStrings', 'decoderPatternsCombineEscapedSurrogatePairs', 'decoderObjectConstantsAcceptMemberPermutations', 'decoderExclusiveIntegerAlternativesRejectOverlap', 'decoderRequiredStringTagsDistinguishAlternatives', 'decoderFormatsCombineWithRegularPatterns', 'decoderChecksFiniteReferencedAlternatives', 'validationUsesExactNumericSpellings', 'decoderAppliesSiblingTypeAssertions', 'decoderSelectsExclusiveRegularStrings'],
     testName: context.name,
   });
 });

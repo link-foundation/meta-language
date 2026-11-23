@@ -100,16 +100,29 @@ function automaton(expression, resolve, charge) {
   return states;
 }
 
-/** Build a deterministic product over JSON source characters. Undefined means the work bound was reached. */
 export function intersectJsonStringExpressions(leftExpression, rightExpression, resolve, rulePrefix) {
+  return selectExclusiveJsonStringExpressions([[leftExpression, rightExpression]], resolve, rulePrefix);
+}
+
+/** Each branch is a conjunction. The decoder accepts when exactly one branch matches. */
+export function selectExclusiveJsonStringExpressions(branches, resolve, rulePrefix) {
+  if (branches.length === 0) return null;
   try {
     let work = maximumWork;
     function charge(cost) {
       work -= cost;
       if (work < 0) throw exhausted;
     }
-    const left = automaton(leftExpression, resolve, charge);
-    const right = automaton(rightExpression, resolve, charge);
+    const machines = [];
+    const machineIndices = new Map();
+    const groups = branches.map(expressions => expressions.map(expression => {
+      charge(1);
+      if (!machineIndices.has(expression)) {
+        machineIndices.set(expression, machines.length);
+        machines.push(automaton(expression, resolve, charge));
+      }
+      return machineIndices.get(expression);
+    }));
     function closure(machine, starts) {
       const pending = [...new Set(starts)];
       const visited = new Set(pending);
@@ -125,34 +138,40 @@ export function intersectJsonStringExpressions(leftExpression, rightExpression, 
     }
     const rows = [];
     const indices = new Map();
-    function product(first, second) {
-      const key = `${first}/${second}`;
+    function product(states) {
+      const key = states.map(group => group.join(',')).join('/');
       if (indices.has(key)) return indices.get(key);
       if (rows.length === maximumProductStates) throw exhausted;
       const index = rows.length;
       indices.set(key, index);
-      rows.push({ first, second, accepts: first.includes(1) && second.includes(1), edges: [], incoming: [] });
+      let acceptingBranches = 0;
+      for (const group of groups) {
+        charge(group.length);
+        if (group.every(machine => states[machine].includes(1))) acceptingBranches += 1;
+        if (acceptingBranches > 1) break;
+      }
+      rows.push({ states, accepts: acceptingBranches === 1, edges: [], incoming: [] });
       return index;
     }
-    product(closure(left, [0]), closure(right, [0]));
+    product(machines.map(machine => closure(machine, [0])));
     const accepting = [];
     for (let index = 0; index < rows.length; index += 1) {
       const row = rows[index];
       if (row.accepts) accepting.push(index);
-      const leftEdges = row.first.flatMap(state => left[state].edges);
-      const rightEdges = row.second.flatMap(state => right[state].edges);
-      const bounds = [...new Set([...leftEdges, ...rightEdges].flatMap(edge => [edge.first, edge.last + 1]))]
+      const machineEdges = machines.map((machine, offset) => row.states[offset].flatMap(state => machine[state].edges));
+      const edgeCount = machineEdges.reduce((count, edges) => count + edges.length, 0);
+      const bounds = [...new Set(machineEdges.flatMap(edges => edges.flatMap(edge => [edge.first, edge.last + 1])))]
         .sort((first, last) => first - last);
       for (let part = 1; part < bounds.length; part += 1) {
-        charge(1 + leftEdges.length + rightEdges.length);
+        charge(1 + edgeCount + machineEdges.length);
         const first = bounds[part - 1];
         const last = bounds[part] - 1;
-        const advance = edges => edges.filter(edge => edge.first <= first && first <= edge.last).map(edge => edge.end);
-        const leftTargets = advance(leftEdges);
-        if (!leftTargets.length) continue;
-        const rightTargets = advance(rightEdges);
-        if (!rightTargets.length) continue;
-        const target = product(closure(left, leftTargets), closure(right, rightTargets));
+        const targets = machineEdges.map(edges => edges.filter(edge => edge.first <= first && first <= edge.last).map(edge => edge.end));
+        if (!groups.some(group => {
+          charge(group.length);
+          return group.every(machine => targets[machine].length);
+        })) continue;
+        const target = product(machines.map((machine, offset) => closure(machine, targets[offset])));
         const previous = row.edges.at(-1);
         if (previous?.target === target && previous.last + 1 === first) previous.last = last;
         else {
