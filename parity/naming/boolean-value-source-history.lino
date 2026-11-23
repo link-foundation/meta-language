@@ -10108,7 +10108,7 @@
 (10108: 10110 10112 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (10109: (meta: (t: semantic) (n: 1) (term: number%20value) (def: 4500) (lang: meta-language%20structured%20data)))
 (10110: 16 10109 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(10111: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 2667a331432dff246b217aaf847ce8934d531aa09f052f63a0c0500bdbbc4ad5) (lang: meta-language%20structured%20data)))
+(10111: (meta: (t: semantic) (n: 1) (term: string%20value) (def: a47652a95c249f51ff507032d268c65be38b696325481a461c42a9f43e5d09c5) (lang: meta-language%20structured%20data)))
 (10112: 19 10111 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (10113: 1060 10108 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (10114: 10116 10117 10119 10121 10123 11933 11939 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
