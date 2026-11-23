@@ -377,6 +377,9 @@ export function importJsonSchema(schema) {
     builder.rule(name, expression);
     return ref(name);
   }
+  function childExpression(schema, pointer) {
+    return typeof schema === 'function' ? schema() : named(schema, pointer);
+  }
   function constantExpression(instance, pointer, keyword) {
     if (typeof instance === 'string') return quoted(instance);
     if (Array.isArray(instance)) return collection('[', ']', seq(...instance.map((item, index) => {
@@ -400,12 +403,14 @@ export function importJsonSchema(schema) {
     if (keys.length === 0) {
       if (rules.additionalProperties === false) return collection('{', '}', empty());
       if (!rules.additionalProperties || rules.additionalProperties === true) return ref('object');
-      const other = named(rules.additionalProperties, pointerChild(pointer, 'additionalProperties'));
+      const other = childExpression(rules.additionalProperties, pointerChild(pointer, 'additionalProperties'));
       return other ? collection('{', '}', unboundedList(seq(ref('string'), space, literal(':'), space, other))) : collection('{', '}', empty());
     }
     let additional;
+    let additionalValue;
     if (rules.additionalProperties !== false) {
-      const child = named(rules.additionalProperties ?? true, pointerChild(pointer, 'additionalProperties'));
+      const child = childExpression(rules.additionalProperties ?? true, pointerChild(pointer, 'additionalProperties'));
+      additionalValue = child;
       const keyUnits = keys.reduce((size, key) => size + key.length, 0);
       if (child && (keyUnits > 1024 || keys.some(key => key.length > 128 || !key.isWellFormed()))) {
         report(pointer, 'additionalProperties', 'The decoder bounds declared key spellings for additional properties. Validation checks all permitted names.');
@@ -417,8 +422,8 @@ export function importJsonSchema(schema) {
     }
     const members = [];
     for (const key of keys) {
-      const child = Object.hasOwn(fields, key) ? fields[key] : rules.additionalProperties ?? true;
-      const expression = named(child, pointerChild(pointerChild(pointer, 'properties'), key));
+      const expression = Object.hasOwn(fields, key)
+        ? childExpression(fields[key], pointerChild(pointerChild(pointer, 'properties'), key)) : additionalValue;
       if (expression) members.push({ required: required.has(key), expression: property(key, expression) });
       else if (required.has(key)) return null;
     }
@@ -469,8 +474,8 @@ export function importJsonSchema(schema) {
     const max = rules.maxItems ?? null;
     if (max !== null && max < min) return null;
     if (max === 0) return collection('[', ']', empty());
-    const prefix = (rules.prefixItems ?? []).map((item, index) => named(item, pointerChild(pointerChild(pointer, 'prefixItems'), index)));
-    const tail = named(rules.items ?? true, pointerChild(pointer, 'items'));
+    const prefix = (rules.prefixItems ?? []).map((item, index) => childExpression(item, pointerChild(pointerChild(pointer, 'prefixItems'), index)));
+    const tail = childExpression(rules.items ?? true, pointerChild(pointer, 'items'));
     const alternatives = [];
     const members = [];
     for (let length = 0; length <= prefix.length && (max === null || length <= max); length += 1) {
@@ -556,7 +561,27 @@ export function importJsonSchema(schema) {
     }
     return conjunction;
   }
-  function collectionConstraints(layers, membership, combination) {
+  function combineChildSchemas(schemas, pointer) {
+    const compatible = compatibleChildSchema(schemas);
+    if (compatible !== undefined) return compatible;
+    const layers = [];
+    for (const schema of schemas) {
+      if (schema === true) continue;
+      const reference = referenceLayers(schema);
+      if (!reference || layers.length + reference.length > 128) return undefined;
+      layers.push(...reference);
+    }
+    const membership = layers.reduce((types, layer) => possibleTypeMembership(layer, types), allJsonTypes);
+    const collections = membership & (jsonTypes.get('object') | jsonTypes.get('array'));
+    // Scalar intersections reuse conjunction lowering without descending into child collections.
+    if (collections && layers.some(layer => Object.keys(layer).some(keyword => (assertionTypes.get(keyword) ?? 0) & collections))) {
+      return undefined;
+    }
+    const entries = conjunctionEntries(layers, membership, pointer);
+    if (!entries) return undefined;
+    return entries.length ? () => lowerConjunction(entries) : false;
+  }
+  function collectionConstraints(layers, membership, combination, pointer) {
     const keywords = membership === jsonTypes.get('object') ? jsonDocumentPolicy.objectAssertion : jsonDocumentPolicy.arrayAssertion;
     if (layers.some((layer, index) => Object.keys(layer).some(key => (
       activeConjunctionKeyword(key, index, combination, membership) && !keywords.includes(key)
@@ -564,15 +589,15 @@ export function importJsonSchema(schema) {
     if (membership === jsonTypes.get('object')) {
       const fields = layers.map(layer => layer.properties ?? {});
       const defaults = layers.map(layer => layer.additionalProperties ?? true);
-      const additionalProperties = compatibleChildSchema(defaults);
+      const additionalProperties = combineChildSchemas(defaults, pointerChild(pointer, 'additionalProperties'));
       if (additionalProperties === undefined) return undefined;
       const keys = new Set(fields.flatMap(Object.keys));
       const entries = [];
       for (const name of keys) {
         // Defaults apply only in the layers that leave this property undeclared.
-        const rule = compatibleChildSchema(fields.map((properties, index) => (
+        const rule = combineChildSchemas(fields.map((properties, index) => (
           Object.hasOwn(properties, name) ? properties[name] : defaults[index]
-        )));
+        )), pointerChild(pointerChild(pointer, 'properties'), name));
         if (rule === undefined) return undefined;
         entries.push([name, rule]);
       }
@@ -599,13 +624,14 @@ export function importJsonSchema(schema) {
       const prefixLength = layouts.reduce((length, layer) => Math.max(length, layer.prefixItems?.length ?? 0), 0);
       const prefixItems = [];
       for (let index = 0; index < Math.min(prefixLength, maximum); index += 1) {
-        const item = compatibleChildSchema(layouts.map(layer => layer.prefixItems?.[index] ?? layer.items ?? true));
+        const item = combineChildSchemas(layouts.map(layer => layer.prefixItems?.[index] ?? layer.items ?? true),
+          pointerChild(pointerChild(pointer, 'prefixItems'), index));
         if (item === undefined) return undefined;
         // An array cannot reach any position after a forbidden item.
         if (item === false) return { lower: arrayExpression, rules: { prefixItems, ...bounds, maxItems: index } };
         prefixItems.push(item);
       }
-      const items = maximum <= prefixLength ? true : compatibleChildSchema(layouts.map(layer => layer.items ?? true));
+      const items = maximum <= prefixLength ? true : combineChildSchemas(layouts.map(layer => layer.items ?? true), pointerChild(pointer, 'items'));
       if (items === undefined) return undefined;
       return { lower: arrayExpression, rules: { prefixItems, items, ...bounds } };
     }
@@ -645,7 +671,7 @@ export function importJsonSchema(schema) {
         return constraints && (() => numberExpression(type, constraints.limits, pointer));
       }
       if (type === 'object' || type === 'array') {
-        const collection = collectionConstraints(layers, mask, combination);
+        const collection = collectionConstraints(layers, mask, combination, pointer);
         return collection && (() => collection.lower(collection.rules, pointer));
       }
       const residual = layers.some((layer, index) => Object.keys(layer).some(key => (

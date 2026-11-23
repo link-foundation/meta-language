@@ -193,6 +193,7 @@ fn shared_json_schema_fixtures_validate_decoders_and_locate_errors() {
             "decoderAppliesLinkedAssertionsWithinInstanceTypes",
             "decoderCombinesCompatibleObjectPropertyLayouts",
             "decoderCombinesCompatibleArrayItemLayouts",
+            "decoderIntersectsScalarPropertyAndItemAssertions",
         ],
         test_name: "shared_json_schema_fixtures_validate_decoders_and_locate_errors",
     });

@@ -32,6 +32,15 @@ const layeredArrayReference = {
   type: 'array', $ref: '#/$defs/row', prefixItems: [true, { type: 'string' }], items: { type: 'null' }, minItems: 2,
   $defs: { row: { prefixItems: [{ type: 'boolean' }, { type: 'string' }], maxItems: 3 } },
 };
+const layeredPatternProperty = {
+  type: 'object', $ref: '#/$defs/record', properties: { value: { pattern: 'z$' } }, $defs: { record: {
+    properties: { value: { type: 'string', pattern: '^a' } }, required: ['value'],
+  } },
+};
+const layeredPatternItem = {
+  type: 'array', $ref: '#/$defs/row', prefixItems: [{ type: 'string', pattern: 'z$' }],
+  $defs: { row: { prefixItems: [{ type: 'string', pattern: '^a' }] } },
+};
 const cases = [
   [
     { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^ab' },
@@ -210,11 +219,9 @@ const cases = [
     [],
   ],
   [
-    { type: 'object', $ref: '#/$defs/record', properties: { value: { pattern: 'z$' } }, $defs: { record: {
-      properties: { value: { type: 'string', pattern: '^a' } }, required: ['value'],
-    } } },
-    [['{"value":"az"}', true], ['{"value":"ax"}', true], ['{"value":"xz"}', false]],
-    ['/$ref'],
+    layeredPatternProperty,
+    [['{"value":"az"}', true], ['{"value":"ax"}', false], ['{"value":"xz"}', false]],
+    [],
     [['{"value":"az"}', true], ['{"value":"ax"}', false], ['{"value":"xz"}', false]],
   ],
   [
@@ -251,8 +258,13 @@ const cases = [
     [],
   ],
   [
-    { type: 'array', $ref: '#/$defs/row', prefixItems: [{ type: 'string', pattern: 'z$' }],
-      $defs: { row: { prefixItems: [{ type: 'string', pattern: '^a' }] } } },
+    layeredPatternItem,
+    [['[]', true], ['["az"]', true], ['["ax"]', false], ['["xz"]', false]],
+    [],
+    [['[]', true], ['["az"]', true], ['["ax"]', false], ['["xz"]', false]],
+  ],
+  [
+    { ...layeredPatternItem, prefixItems: [{ anyOf: [{ type: 'string', pattern: 'z$' }, { type: 'number' }] }] },
     [['[]', true], ['["az"]', true], ['["ax"]', true], ['["xz"]', false]],
     ['/$ref'],
     [['[]', true], ['["az"]', true], ['["ax"]', false], ['["xz"]', false]],
@@ -264,6 +276,44 @@ const cases = [
       ['{"v\\u0061lue":true}', false]],
     [],
   ],
+  [
+    { type: 'array', $ref: '#/$defs/row', items: { maximum: 4 },
+      $defs: { row: { prefixItems: [{ type: 'boolean' }], items: { type: 'integer', minimum: 2 } } } },
+    [['[]', true], ['[false]', true], ['[false,2,4]', true], ['[true,1]', false], ['[true,5]', false],
+      ['[true,3.5]', false], ['[true,3.0]', false], ['[2,false]', false]],
+    ['/items/type'],
+    [['[]', true], ['[false]', true], ['[false,2,4]', true], ['[true,1]', false], ['[true,5]', false],
+      ['[true,3.5]', false], ['[true,3.0]', true], ['[2,false]', false]],
+  ],
+  [
+    { type: 'object', $ref: '#/$defs/record', additionalProperties: { pattern: 'z$' },
+      $defs: { record: { properties: { id: { type: 'string', pattern: '^a' } }, required: ['id'],
+        additionalProperties: { type: 'string', pattern: '^b' } } } },
+    [['{"id":"az"}', true], ['{"other":"bz","i\\u0064":"az"}', true], ['{"id":"ax"}', false],
+      ['{"id":"az","other":"bx"}', false], ['{"id":"az","other":"az"}', false],
+      ['{"id":"az","other":true}', false]],
+    [],
+    [['{"id":"az"}', true], ['{"other":"bz","i\\u0064":"az"}', true], ['{"id":"ax"}', false],
+      ['{"id":"az","other":"bx"}', false], ['{"id":"az","other":"az"}', false],
+      ['{"id":"az","other":true}', false]],
+  ],
+  [
+    { type: 'object', $ref: '#/$defs/record', properties: { code: { $ref: '#/$defs/suffix' } }, $defs: {
+      record: { properties: { code: { $ref: '#/$defs/prefix' } }, required: ['code'] },
+      prefix: { type: 'string', pattern: '^a' }, suffix: { pattern: 'z$' },
+    } },
+    [['{"code":"az"}', true], ['{"co\\u0064e":"a\\u007a"}', true], ['{"code":"ax"}', false],
+      ['{"code":"xz"}', false], ['{"code":false}', false], ['{}', false]],
+    [],
+    [['{"code":"az"}', true], ['{"co\\u0064e":"a\\u007a"}', true], ['{"code":"ax"}', false],
+      ['{"code":"xz"}', false], ['{"code":false}', false], ['{}', false]],
+  ],
+  [
+    { type: 'array', $ref: '#/$defs/row', items: { pattern: 'z$' }, $defs: { row: { items: { pattern: '^a' } } } },
+    [['[]', true], ['["az",null,true,2,{},[]]', true], ['["ax"]', false], ['["xz"]', false], ['[true,"ax"]', false]],
+    [],
+    [['[]', true], ['["az",null,true,2,{},[]]', true], ['["ax"]', false], ['["xz"]', false], ['[true,"ax"]', false]],
+  ],
 ];
 const impossible = [
   { $defs: stringDefinitions, $ref: '#/$defs/address', pattern: '^b' },
@@ -274,6 +324,7 @@ const impossible = [
   { type: 'array', minItems: 2, anyOf: [{ maxItems: 1 }, { maxItems: 0 }] },
   { ...closedArrayReference, minItems: 1 },
   { ...conflictingArrayReference, minItems: 1 },
+  { ...layeredPatternProperty, properties: { value: { pattern: '^x' } } },
   { $ref: '#/$defs/record', properties: { active: { type: 'boolean' } }, additionalProperties: false,
     $defs: { record: { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] } } },
 ];
@@ -283,7 +334,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const file = new URL('../../parity/fixtures/json-schema-and-recovery.lino', import.meta.url);
     const data = readProjectData(file);
     let changed = false;
-    for (const corrected of [closedArrayReference, conflictingArrayReference]) {
+    for (const corrected of [closedArrayReference, conflictingArrayReference, layeredPatternProperty, layeredPatternItem]) {
       const existing = data.grammars.findIndex(([schema]) => JSON.stringify(schema) === JSON.stringify(corrected));
       const replacement = cases.find(([schema]) => schema === corrected);
       if (existing >= 0 && JSON.stringify(data.grammars[existing]) !== JSON.stringify(replacement)) {

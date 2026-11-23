@@ -4712,17 +4712,21 @@ the declared property names. For each name, the decoder uses each layer's
 explicit property schema or that layer's additional-property policy when it
 leaves the name undeclared. An unrestricted policy contributes no constraint.
 A prohibition in any layer or disjoint declared types exclude the property.
-Identical constraints across layers share a production. Other combinations require
-document validation. The same rules apply to names absent from all declarations
-and to object branches combined with assertions from the parent schema.
+Identical constraints across layers share a production. The same rules apply
+to names absent from all declarations and to object branches combined with
+assertions from the parent schema.
 An array chain uses the strongest minimum and maximum lengths. A layer with
 `items: false` bounds the length by that layer's own prefix length. At each
 reachable position, the layer contributes its prefix schema when it declares
 one and its tail schema otherwise. Identical constraints across layers share
 a production, and unrestricted layers contribute no constraint. A forbidden
 position or disjoint set of declared types ends the array before that position.
-Incompatible lengths or required names forbidden by the property layout leave
-no generatable collection. Other intersections of property or item schemas
+Supported string patterns, formats, and numeric bounds also intersect within
+an item or property, including additional properties and local references to
+their scalar schemas. The importer uses the existing reference inspection and
+grammar construction bounds. Assertions still apply only to their own instance
+types. Incompatible lengths or required names forbidden by the property layout
+leave no generatable collection. Other intersections of property or item schemas
 carry a diagnostic for document validation.
 The shared keyword policy scopes collection, string, and numeric assertions
 to their respective instance types. Local reference chains build a production

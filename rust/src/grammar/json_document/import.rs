@@ -252,16 +252,21 @@ struct ObjectMembers<'members> {
 
 enum CollectionConstraints<'schema> {
     Object {
-        properties: Vec<(&'schema str, &'schema Value)>,
-        additional: &'schema Value,
+        properties: Vec<(&'schema str, CollectionChild<'schema>)>,
+        additional: CollectionChild<'schema>,
         required: Vec<&'schema str>,
     },
     Array {
-        prefix: Vec<&'schema Value>,
-        items: &'schema Value,
+        prefix: Vec<CollectionChild<'schema>>,
+        items: CollectionChild<'schema>,
         minimum: u64,
         maximum: Option<u64>,
     },
+}
+
+enum CollectionChild<'schema> {
+    Schema(&'schema Value),
+    Conjunction(Vec<ConjunctionEntry<'schema>>),
 }
 
 enum ConjunctionEntry<'schema> {
@@ -304,6 +309,17 @@ impl<'schema> Importer<'schema> {
 
     fn named(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
         self.named_with_types(schema, pointer, ALL_JSON_TYPES)
+    }
+
+    fn lower_child(
+        &mut self,
+        child: CollectionChild<'schema>,
+        pointer: &str,
+    ) -> Option<Expression> {
+        match child {
+            CollectionChild::Schema(schema) => self.named(schema, pointer),
+            CollectionChild::Conjunction(entries) => self.lower_conjunction(entries, pointer),
+        }
     }
 
     fn named_with_types(
@@ -511,8 +527,10 @@ impl<'schema> Importer<'schema> {
 
     fn object(&mut self, schema: &'schema Value, pointer: &str) -> Option<Expression> {
         self.object_with_properties(
-            property_schemas(schema).collect(),
-            additional_property_schema(schema),
+            property_schemas(schema)
+                .map(|(name, schema)| (name, CollectionChild::Schema(schema)))
+                .collect(),
+            CollectionChild::Schema(additional_property_schema(schema)),
             required_property_names(schema),
             pointer,
         )
@@ -520,13 +538,13 @@ impl<'schema> Importer<'schema> {
 
     fn object_with_properties(
         &mut self,
-        fields: Vec<(&'schema str, &'schema Value)>,
-        additional: &'schema Value,
+        fields: Vec<(&'schema str, CollectionChild<'schema>)>,
+        additional: CollectionChild<'schema>,
         required: impl Iterator<Item = &'schema str>,
         pointer: &str,
     ) -> Option<Expression> {
-        let mut keys: Vec<_> = fields.iter().map(|&(name, _)| name).collect();
-        let fields: HashMap<_, _> = fields.into_iter().collect();
+        let mut keys: Vec<_> = fields.iter().map(|(name, _)| *name).collect();
+        let mut fields: HashMap<_, _> = fields.into_iter().collect();
         let mut required_names = HashSet::new();
         for key in required {
             if required_names.insert(key) && !fields.contains_key(key) {
@@ -535,10 +553,12 @@ impl<'schema> Importer<'schema> {
         }
         if keys.is_empty() {
             let body = match additional {
-                Value::Bool(false) => EXPRESSION.empty(),
-                Value::Bool(true) => return Some(reference_expression("object")),
-                _ => self
-                    .named(additional, &pointer_child(pointer, "additionalProperties"))
+                CollectionChild::Schema(Value::Bool(false)) => EXPRESSION.empty(),
+                CollectionChild::Schema(Value::Bool(true)) => {
+                    return Some(reference_expression("object"));
+                }
+                child => self
+                    .lower_child(child, &pointer_child(pointer, "additionalProperties"))
                     .map_or_else(
                         || EXPRESSION.empty(),
                         |item| {
@@ -553,8 +573,9 @@ impl<'schema> Importer<'schema> {
             };
             return Some(collection("{", "}", body));
         }
-        let additional_member = self
-            .named(additional, &pointer_child(pointer, "additionalProperties"))
+        let additional =
+            self.lower_child(additional, &pointer_child(pointer, "additionalProperties"));
+        let additional_member = additional.clone()
             .and_then(|child| {
                 let lengths: Vec<_> = keys.iter().map(|key| key.encode_utf16().count()).collect();
                 if lengths.iter().sum::<usize>() > 1024
@@ -570,12 +591,15 @@ impl<'schema> Importer<'schema> {
             });
         let mut members = Vec::new();
         for key in keys {
-            let child = fields.get(key).copied().unwrap_or(additional);
+            let item = match fields.remove(key) {
+                Some(child) => self.lower_child(
+                    child,
+                    &pointer_child(&pointer_child(pointer, "properties"), key),
+                ),
+                None => additional.clone(),
+            };
             let is_required = required_names.contains(key);
-            if let Some(item) = self.named(
-                child,
-                &pointer_child(&pointer_child(pointer, "properties"), key),
-            ) {
+            if let Some(item) = item {
                 members.push(Member {
                     required: is_required,
                     expression: property(key, item),
@@ -701,8 +725,10 @@ impl<'schema> Importer<'schema> {
             .as_u64()
             .and_then(|value| usize::try_from(value).ok());
         self.array_with_length(
-            prefix_item_schemas(schema),
-            tail_item_schema(schema),
+            prefix_item_schemas(schema)
+                .iter()
+                .map(CollectionChild::Schema),
+            CollectionChild::Schema(tail_item_schema(schema)),
             min,
             max,
             pointer,
@@ -711,8 +737,8 @@ impl<'schema> Importer<'schema> {
 
     fn array_with_length(
         &mut self,
-        prefix: impl IntoIterator<Item = &'schema Value>,
-        items: &'schema Value,
+        prefix: impl IntoIterator<Item = CollectionChild<'schema>>,
+        items: CollectionChild<'schema>,
         min: usize,
         max: Option<usize>,
         pointer: &str,
@@ -727,9 +753,11 @@ impl<'schema> Importer<'schema> {
         let prefix: Vec<_> = prefix
             .into_iter()
             .enumerate()
-            .map(|(index, item)| self.named(item, &pointer_child(&location, &index.to_string())))
+            .map(|(index, item)| {
+                self.lower_child(item, &pointer_child(&location, &index.to_string()))
+            })
             .collect();
-        let tail = self.named(items, &pointer_child(pointer, "items"));
+        let tail = self.lower_child(items, &pointer_child(pointer, "items"));
         let mut alternatives = Vec::new();
         let mut members = Vec::new();
         for length in 0..=max.unwrap_or(prefix.len()).min(prefix.len()) {
@@ -896,6 +924,50 @@ impl<'schema> Importer<'schema> {
         Some(Some(conjunction))
     }
 
+    fn combine_child_schemas(
+        &mut self,
+        schemas: Vec<&'schema Value>,
+        pointer: &str,
+    ) -> Option<CollectionChild<'schema>> {
+        if let Some(schema) = compatible_child_schema(schemas.iter().copied()) {
+            return Some(CollectionChild::Schema(schema));
+        }
+        let mut layers = Vec::new();
+        for schema in schemas {
+            if schema == &UNRESTRICTED_SCHEMA {
+                continue;
+            }
+            let reference = reference_layers(self.root, schema)?;
+            if layers.len() + reference.len() > 128 {
+                return None;
+            }
+            layers.extend(reference);
+        }
+        let membership = layers.iter().fold(ALL_JSON_TYPES, |types, layer| {
+            possible_type_membership(layer, types)
+        });
+        let collections = membership & (type_membership("object") | type_membership("array"));
+        // Scalar intersections reuse conjunction lowering without descending into child collections.
+        if collections != 0
+            && layers.iter().any(|layer| {
+                layer.as_object().is_some_and(|fields| {
+                    fields.keys().any(|key| {
+                        ASSERTION_TYPES
+                            .get(key.as_str())
+                            .is_some_and(|mask| mask & collections != 0)
+                    })
+                })
+            })
+        {
+            return None;
+        }
+        let entries = self.conjunction_entries(&layers, membership, None, pointer)?;
+        if entries.is_empty() {
+            return Some(CollectionChild::Schema(&PROHIBITED_SCHEMA));
+        }
+        Some(CollectionChild::Conjunction(entries))
+    }
+
     fn collection_expression(
         &mut self,
         constraints: CollectionConstraints<'schema>,
@@ -929,7 +1001,7 @@ impl<'schema> Importer<'schema> {
         pointer: &str,
     ) -> Option<Option<Expression>> {
         let layers = reference_layers(self.root, schema)?;
-        let entries = self.conjunction_entries(&layers, allowed_types, None)?;
+        let entries = self.conjunction_entries(&layers, allowed_types, None, pointer)?;
         Some(self.lower_conjunction(entries, pointer))
     }
 
@@ -956,6 +1028,7 @@ impl<'schema> Importer<'schema> {
         layers: &[&'schema Value],
         allowed_types: u8,
         combination: Option<&str>,
+        pointer: &str,
     ) -> Option<Vec<ConjunctionEntry<'schema>>> {
         let membership = layers.iter().fold(allowed_types, |types, layer| {
             possible_type_membership(layer, types)
@@ -970,9 +1043,13 @@ impl<'schema> Importer<'schema> {
                 continue;
             }
             let entry = match name {
-                "object" | "array" => {
-                    ConjunctionEntry::Collection(collection_constraints(layers, mask, combination)?)
-                }
+                "object" | "array" => ConjunctionEntry::Collection(collection_constraints(
+                    layers,
+                    mask,
+                    combination,
+                    pointer,
+                    |schemas, location| self.combine_child_schemas(schemas, location),
+                )?),
                 "number" | "integer" => {
                     let (name, limits) = combine_numeric_constraints(layers, mask, combination)?;
                     ConjunctionEntry::Number(name, limits)
@@ -1123,21 +1200,21 @@ impl<'schema> Importer<'schema> {
         pointer: &str,
     ) -> Option<Option<Expression>> {
         let mut alternatives = Vec::new();
+        let location = pointer_child(pointer, keyword);
         for (index, branch) in branches.iter().enumerate() {
             if possible_type_membership(branch, allowed_types) == 0 {
                 continue;
             }
             let mut layers = reference_layers(self.root, branch)?;
             layers.insert(0, schema);
-            let entries = self.conjunction_entries(&layers, allowed_types, Some(keyword))?;
-            alternatives.push((index, entries));
+            let location = pointer_child(&location, &index.to_string());
+            let entries =
+                self.conjunction_entries(&layers, allowed_types, Some(keyword), &location)?;
+            alternatives.push((location, entries));
         }
-        let location = pointer_child(pointer, keyword);
         let entries: Vec<_> = alternatives
             .into_iter()
-            .filter_map(|(index, entries)| {
-                self.lower_conjunction(entries, &pointer_child(&location, &index.to_string()))
-            })
+            .filter_map(|(location, entries)| self.lower_conjunction(entries, &location))
             .collect();
         Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
     }
@@ -1339,26 +1416,39 @@ fn collection_constraints<'schema>(
     layers: &[&'schema Value],
     membership: u8,
     combination: Option<&str>,
+    pointer: &str,
+    mut combine: impl FnMut(Vec<&'schema Value>, &str) -> Option<CollectionChild<'schema>>,
 ) -> Option<CollectionConstraints<'schema>> {
     if membership == type_membership("object") {
         if !collection_keywords_are_supported(layers, membership, "objectAssertion", combination) {
             return None;
         }
-        let additional =
-            compatible_child_schema(layers.iter().copied().map(additional_property_schema))?;
+        let additional = combine(
+            layers
+                .iter()
+                .copied()
+                .map(additional_property_schema)
+                .collect(),
+            &pointer_child(pointer, "additionalProperties"),
+        )?;
         let mut seen = HashSet::new();
         let keys = layers
             .iter()
             .flat_map(|&layer| property_schemas(layer).map(|(name, _)| name))
             .filter(|&name| seen.insert(name));
         let mut properties = Vec::new();
+        let location = pointer_child(pointer, "properties");
         for name in keys {
             // Defaults apply only in the layers that leave this property undeclared.
-            let rule = compatible_child_schema(layers.iter().map(|&layer| {
-                layer["properties"]
-                    .get(name)
-                    .unwrap_or_else(|| additional_property_schema(layer))
-            }))?;
+            let schemas = layers
+                .iter()
+                .map(|&layer| {
+                    layer["properties"]
+                        .get(name)
+                        .unwrap_or_else(|| additional_property_schema(layer))
+                })
+                .collect();
+            let rule = combine(schemas, &pointer_child(&location, name))?;
             properties.push((name, rule));
         }
         let required = layers
@@ -1403,32 +1493,40 @@ fn collection_constraints<'schema>(
         if layouts.len() < 2 {
             let layout = layouts.first().copied().unwrap_or(&UNRESTRICTED_SCHEMA);
             return Some(CollectionConstraints::Array {
-                prefix: prefix_item_schemas(layout).iter().collect(),
-                items: tail_item_schema(layout),
+                prefix: prefix_item_schemas(layout)
+                    .iter()
+                    .map(CollectionChild::Schema)
+                    .collect(),
+                items: CollectionChild::Schema(tail_item_schema(layout)),
                 minimum,
                 maximum,
             });
         }
         let prefix_length = layouts
             .iter()
-            .map(|layer| prefix_item_schemas(layer).len())
+            .map(|&layer| prefix_item_schemas(layer).len())
             .max()
             .unwrap_or(0);
         let prefix_end = maximum
             .and_then(|limit| usize::try_from(limit).ok())
             .map_or(prefix_length, |limit| prefix_length.min(limit));
         let mut prefix = Vec::new();
+        let location = pointer_child(pointer, "prefixItems");
         for index in 0..prefix_end {
-            let item = compatible_child_schema(layouts.iter().map(|layer| {
-                prefix_item_schemas(layer)
-                    .get(index)
-                    .unwrap_or_else(|| tail_item_schema(layer))
-            }))?;
+            let schemas = layouts
+                .iter()
+                .map(|&layer| {
+                    prefix_item_schemas(layer)
+                        .get(index)
+                        .unwrap_or_else(|| tail_item_schema(layer))
+                })
+                .collect();
+            let item = combine(schemas, &pointer_child(&location, &index.to_string()))?;
             // An array cannot reach any position after a forbidden item.
-            if item == &PROHIBITED_SCHEMA {
+            if matches!(item, CollectionChild::Schema(Value::Bool(false))) {
                 return Some(CollectionConstraints::Array {
                     prefix,
-                    items: &UNRESTRICTED_SCHEMA,
+                    items: CollectionChild::Schema(&UNRESTRICTED_SCHEMA),
                     minimum,
                     maximum: Some(index as u64),
                 });
@@ -1436,9 +1534,12 @@ fn collection_constraints<'schema>(
             prefix.push(item);
         }
         let items = if maximum.is_some_and(|limit| limit <= prefix_length as u64) {
-            &UNRESTRICTED_SCHEMA
+            CollectionChild::Schema(&UNRESTRICTED_SCHEMA)
         } else {
-            compatible_child_schema(layouts.iter().copied().map(tail_item_schema))?
+            combine(
+                layouts.iter().copied().map(tail_item_schema).collect(),
+                &pointer_child(pointer, "items"),
+            )?
         };
         return Some(CollectionConstraints::Array {
             prefix,
