@@ -221,6 +221,18 @@ existing namespace contents across subsequent declarations.
 [Rust lint](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137903731323),
 [review data](../../../parity/self-translation/native-source-style-review-137903731323.lino)
 
+The Native Grammar Outcome Transport Experiment ran its probe successfully
+with stable Rust 1.100.0. The compiler-profile collector then rejected Cargo
+1.100.0 at log line 964 because the frozen profile covers Rust and Cargo
+`>=1.90.0 <1.100.0`. The experiment now uses 1.99.0, which Delivery Candidates
+also used successfully on the same revision. The experiment still runs its
+native command and checks the selected compiler artifact against the original
+profile bounds. The workflow regression test reproduces the former floating
+toolchain selection.
+[experiment job](https://github.com/link-foundation/meta-language/actions/runs/45197093192/job/137915962477),
+[compiler profile](../../../experiments/grammar-outcome-network/native-transport/runner/compiler-profile.mjs),
+[workflow regression](../../../js/tests/issue-195-evidence-automated-translation-pause.test.js)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |

@@ -25,6 +25,13 @@ const step = (job, name) => {
   return value;
 };
 
+test('the frozen native grammar experiment uses a toolchain covered by its compiler profile', () => {
+  const experiment = rust['native-grammar-outcome-experiment'];
+  assert.match(step(experiment, 'Setup Rust').text, /^\s*uses: dtolnay\/rust-toolchain@1\.99\.0$/mu);
+  assert.match(step(experiment, 'Compile and execute the bounded frozen native candidate').run,
+    /native-transport\/runner\/run\.mjs --native$/mu);
+});
+
 test('the two new tooling tests preserve all established shard assignments', () => {
   const files = partitionTests(testFiles()).groups.tooling;
   const pauseTests = [

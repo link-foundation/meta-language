@@ -388,8 +388,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The frozen compiler profile covers stable Rust and Cargo >=1.90.0 <1.100.0.
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
