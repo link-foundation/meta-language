@@ -314,17 +314,26 @@ fn target_deps_dir() -> Result<PathBuf, String> {
         .parent()
         .ok_or_else(|| format!("{} has no parent directory", exe.display()))?;
 
+    Ok(dependency_directory(parent)
+        .unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/deps")))
+}
+
+fn dependency_directory(parent: &Path) -> Option<PathBuf> {
     if parent.file_name() == Some(OsStr::new("deps")) {
-        return Ok(parent.to_path_buf());
+        return Some(parent.to_path_buf());
     }
     if parent.file_name() == Some(OsStr::new("examples")) {
-        let debug_dir = parent
-            .parent()
-            .ok_or_else(|| format!("{} has no debug parent", parent.display()))?;
-        return Ok(debug_dir.join("deps"));
+        return parent.parent().map(|profile| profile.join("deps"));
     }
-
-    Ok(Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/deps"))
+    if parent.file_name() == Some(OsStr::new("out")) {
+        // Cargo can run test executables from the profile's build output tree.
+        return parent
+            .ancestors()
+            .find(|directory| directory.file_name() == Some(OsStr::new("build")))
+            .and_then(Path::parent)
+            .map(|profile| profile.join("deps"));
+    }
+    None
 }
 
 #[allow(clippy::missing_const_for_fn)]
@@ -393,9 +402,27 @@ fn ensure_success(label: &str, output: &std::process::Output) -> Result<(), Stri
 #[cfg(test)]
 mod tests {
     use std::fs::{self, File};
+    use std::path::Path;
     use std::time::{Duration, SystemTime};
 
-    use super::{find_dependency_artifact, unique_temp_path};
+    use super::{dependency_directory, find_dependency_artifact, unique_temp_path};
+
+    #[test]
+    fn dependency_directory_follows_the_executable_profile() {
+        let profile = Path::new("target/llvm-cov-target/debug");
+        for directory in [
+            "deps",
+            "examples",
+            "build/meta-language-c69b2df0ac456958/out",
+            "build/meta-language/c69b2df0ac456958/out",
+        ] {
+            assert_eq!(
+                dependency_directory(&profile.join(directory)),
+                Some(profile.join("deps"))
+            );
+        }
+        assert_eq!(dependency_directory(Path::new("target/debug")), None);
+    }
 
     #[test]
     fn dependency_lookup_prefers_the_most_recently_built_artifact() {
