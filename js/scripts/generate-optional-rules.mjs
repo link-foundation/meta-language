@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../src/decorators.js';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
-import { partitionPortableRustLibrary, readPortableSourceLintStyles, readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
+import { readPortableSourceLintStyles, readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
+import { partitionReviewedRustLibrary } from './reviewed-rust-source-styles.mjs';
 
 const hashOptionalSource = source => createHash('sha256').update(source).digest('hex');
 const requiredImport = "import { readRequiredNumberFact, readRequiredTextFact } from './fact-column-rules.js';\n";
@@ -54,7 +55,7 @@ export async function generateOptionalRules({ check = false, native = true } = {
       else writeFileSync(styleFile, styles.toLino());
       const decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
       const notice = '// Generated from the complete checked optional kernel and its recorded source dependencies.\n// Do not edit by hand.\n';
-      const generated = partitionPortableRustLibrary(formatProductRuleSource(decorated), { notice, directory: source.name, reviewedStyles: true });
+      const generated = partitionReviewedRustLibrary(formatProductRuleSource(decorated), { notice, directory: source.name });
       const directory = new URL('../../rust/src/translation/' + source.name + '/', import.meta.url);
       const expectedParts = generated.filter(part => part.path !== null).map(part => part.path.split('/').at(-1)).sort();
       const actualParts = existsSync(directory) ? readdirSync(directory).filter(name => /^part_[1-9][0-9]*\.rs$/u.test(name)).sort() : [];

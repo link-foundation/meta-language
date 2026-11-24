@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { DecoratorSet } from '../src/decorators.js';
 import { readProjectData } from './project-data.mjs';
+import { partitionPortableRustLibrary } from './portable-source-library-style.mjs';
+import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 
 const reviewFile = new URL('../../parity/self-translation/rust-clippy-style-review.lino', import.meta.url);
 const digest = source => createHash('sha256').update(source).digest('hex');
@@ -43,6 +45,16 @@ function readReviewedRustSourceStyles() {
   assert.equal(styleLines.length, 19);
   assert.equal(new Set([...cloneLines, ...styleLines]).size, 169);
   return modules;
+}
+
+/** Apply reviewed source corrections after partitioning a generated library. */
+export function partitionReviewedRustLibrary(source, options) {
+  return partitionPortableRustLibrary(source, options).map(part => {
+    if (part.path === null) return part;
+    const correctedSource = applyReviewedRustSourceStyles(`rust/src/translation/${part.path}`, part.source, formatProductRuleSource);
+    assert.ok(correctedSource.split('\n').length < 1000, 'reviewed corrections retain a bounded child module');
+    return { ...part, source: correctedSource };
+  });
 }
 
 /** Replay corrections tied to rendered diagnostics on the exact emitted module. */
