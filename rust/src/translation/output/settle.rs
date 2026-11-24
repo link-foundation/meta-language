@@ -85,13 +85,20 @@ pub(super) fn aborts(e: &Expr) -> bool {
         } => integer_literal(arg).is_none_or(|value| value == fixed_min(&e.ty)),
         Node::Binary {
             op,
+            left,
             right,
             semantics,
             by_zero,
             ..
         } => {
             if !division(*op) {
-                return *semantics == Some(Semantics::Checked);
+                return *semantics == Some(Semantics::Checked)
+                    && !(*op == BinaryOp::Sub
+                        && matches!(e.ty, Type::Fixed { signed: false, .. })
+                        && matches!(right.ty, Type::Fixed { signed: false, .. } | Type::Nat)
+                        && matches!(&right.node, Node::Binary { op: BinaryOp::Rem, right: divisor, .. }
+                            if integer_literal(left).is_some_and(|width|
+                                width > 0 && Some(width) == integer_literal(divisor))));
             }
             if *by_zero != Some(ByZero::Abort) {
                 return false;
@@ -110,7 +117,7 @@ pub(super) fn aborts(e: &Expr) -> bool {
 /// computed on its representation. The result keeps its source type, whose
 /// Lean and Rocq representation is the same.
 pub(super) fn total(e: Expr) -> Expr {
-    let Expr { node, ty, span, source_position, source_state_transition, source_loop_fold, source_record_place } = e;
+    let Expr { node, ty, span, source_position, source_state_transition, source_loop_fold, source_record_place, source_place_transform } = e;
     let (node, ty) = match node {
         Node::Cast {
             arg,
@@ -171,7 +178,7 @@ pub(super) fn total(e: Expr) -> Expr {
         }
         other => (other, ty),
     };
-    Expr { node, ty, span, source_position, source_state_transition, source_loop_fold, source_record_place }
+    Expr { node, ty, span, source_position, source_state_transition, source_loop_fold, source_record_place, source_place_transform }
 }
 
 /// True when the node is an operation `total` rewrites.

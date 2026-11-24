@@ -35,6 +35,16 @@ function integerLiteral(node) {
   return BigInt(node.value);
 }
 
+/** The inverse rotation count is a width minus an unsigned remainder of that width. */
+function isBoundedUnsignedDifference(node) {
+  if (node.op !== 'sub' || node.type.kind !== 'fixed' || node.type.signed
+    || node.right.k !== 'binary' || node.right.op !== 'rem'
+    || node.right.type.kind !== 'fixed' && node.right.type.kind !== 'nat'
+    || node.right.type.signed) return false;
+  const width = integerLiteral(node.left);
+  return width !== null && width > 0n && width === integerLiteral(node.right.right);
+}
+
 /** True when the node itself, apart from its operands, may abort. */
 export function aborts(node) {
   switch (node.k) {
@@ -54,7 +64,7 @@ export function aborts(node) {
     }
     case 'binary': {
       const division = node.op === 'div' || node.op === 'rem';
-      if (!division) return node.semantics === 'checked';
+      if (!division) return node.semantics === 'checked' && !isBoundedUnsignedDifference(node);
       if (node.byZero !== 'abort') return false;
       // A literal divisor aborts only when it is zero, or -1 of a signed machine integer (MIN / -1 overflows).
       const divisor = integerLiteral(node.right);

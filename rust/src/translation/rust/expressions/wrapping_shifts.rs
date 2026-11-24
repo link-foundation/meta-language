@@ -5,7 +5,7 @@ use super::{
     type_error, unsupported,
 };
 use crate::translation::{
-    rust_primitive_selection_rules as arguments, rust_wrapping_shift_rules as rules,
+    rust_primitive_selection_rules as arguments, rust_shift_rules, rust_wrapping_shift_rules as rules,
 };
 fn count(value: usize) -> f64 {
     u32::try_from(value).map_or(f64::INFINITY, f64::from)
@@ -183,14 +183,25 @@ impl RustParser {
                     }
                     let right = pop(&mut stack, range)?;
                     let left = pop(&mut stack, range)?;
-                    stack.push(SExpr::new(
+                    let checked_shift = rust_shift_rules::read_rust_shift_checked_operation(&operation);
+                    let is_shift = !checked_shift.is_empty();
+                    let call = SExpr::new(
                         SNode::Math {
-                            op: operation,
+                            op: if is_shift { checked_shift } else { operation },
                             name: "Rust primitive wrapping shift".to_owned(),
                             args: vec![SArrayItem::new(left, false), SArrayItem::new(right, false)],
                         },
                         range,
-                    ));
+                    );
+                    stack.push(if is_shift {
+                        // The shared plan reduces the count modulo the actual width.
+                        SExpr::new(SNode::Coalesce {
+                            left: Box::new(call),
+                            right: Box::new(SExpr::new(SNode::Num {
+                                value: "0".to_owned(), ty: None, negative: false, unit: false,
+                            }, range)),
+                        }, range)
+                    } else { call });
                 }
             }
         }

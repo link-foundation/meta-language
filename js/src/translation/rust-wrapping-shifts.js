@@ -5,6 +5,7 @@ import {acceptRustWrappingShiftMethod,acceptRustWrappingShiftReceiver,readRustWr
 import {acceptRustPrimitiveInherentCopy} from './rust-primitive-inherent-copy-rules.js';
 import {acceptRustPrimitiveSelectionReceiver,acceptRustPrimitiveSelectionArgument} from './rust-primitive-selection-rules.js';
 import {readRustPrimitiveConversionFacts} from './rust-primitive-try-from.js';
+import {readRustShiftCheckedOperation} from './rust-shift-rules.js';
 export function readRustWrappingShifts(parser,receiver,method,args,range,path){
  if(!parser.ordinaryCompletionContext()||!acceptRustWrappingShiftMethod(method.value))return null;
  if(args.length!==1)throw new TranslationError('type',method.value+' needs one actual u32 count argument',range);
@@ -22,7 +23,14 @@ export function readRustWrappingShifts(parser,receiver,method,args,range,path){
   else if(term==='count')stack.push(local(1));
   else if(term==='width')stack.push({k:'num',value:String(source.type.bits),type:countType,span:range});
   else if(term==='rem'||term==='sub'){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
-  else if(readRustWrappingShiftOperation(term)){const right=pop(),left=pop();stack.push({k:'math',op:readRustWrappingShiftOperation(term),name:'Rust primitive wrapping shift',args:[{value:left,spread:false},{value:right,spread:false}],span:range});}
+  else if(readRustWrappingShiftOperation(term)){
+   const right=pop(),left=pop(),operation=readRustWrappingShiftOperation(term);
+   const checkedShift=readRustShiftCheckedOperation(operation);
+   const call={k:'math',op:checkedShift||operation,name:'Rust primitive wrapping shift',args:[{value:left,spread:false},{value:right,spread:false}],span:range};
+   // The plan reduces every count modulo the receiver width before shifting.
+   // The typed zero lets the total method reuse the checked optional operation.
+   stack.push(checkedShift?{k:'coalesce',left:call,right:{k:'num',value:'0',span:range},span:range}:call);
+  }
   else if(term==='source cast')stack.push({k:'cast',arg:pop(),to:source.type,flavor:'wrapping',span:range});
   else throw new TypeError('unknown wrapping shift source term');
  }

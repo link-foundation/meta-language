@@ -19,12 +19,11 @@ pub(crate) fn emit_rust_checked_shift(
     let Type::Fixed { bits, signed } = element.as_ref() else {
         unreachable!("the actual shifted integer owner")
     };
-    let Type::Fixed {
-        signed: count_signed,
-        ..
-    } = args[1].ty
-    else {
-        unreachable!("the actual count owner")
+    let count_signed = match args[1].ty {
+        Type::Fixed { signed, .. } => signed,
+        Type::Nat if matches!(target, "Lean" | "Rocq") => false,
+        Type::Int if matches!(target, "Lean" | "Rocq") => true,
+        _ => unreachable!("the actual count owner"),
     };
     let arguments = values
         .iter()

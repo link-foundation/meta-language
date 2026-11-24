@@ -6,7 +6,7 @@ import {acceptRustConstructedStringInterfaceModel,acceptRustConstructedStringBin
 import {acceptRustStringPredicateInterfaceModel,acceptRustStringPredicateExpression,acceptRustStringPredicateExpressionField,acceptRustStringPredicateOperands} from './rust-string-predicate-interface-rules.js';
 import {acceptRustTextualSourceInterfaceModel,readRustTextualSourceType,acceptRustTextualSourceOperation,acceptRustTextualSourceBinary,renderRustTextualSourceInput,renderRustTextualSourceSliceArgument} from './rust-textual-source-interface-rules.js';
 import {acceptRustScalarMathematicalInterfaceModel,acceptRustScalarMathematicalExpression,acceptRustScalarMathematicalExpressionField,acceptRustScalarMathematicalOperation} from './rust-scalar-mathematical-interface-rules.js';
-import {typeKey} from './types.js';
+import {rustFixedType,typeKey} from './types.js';
 import {checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
@@ -15,6 +15,7 @@ import {renderRustSourceHeaderParameter,renderRustSourceHeaderLifetime,renderRus
 import {renderRustBorrowedCallHeaderReference,renderRustBorrowedCallReference,renderRustBorrowedCallInvocation,renderRustBorrowedCallBlock} from './rust-borrowed-call-interface-rules.js';
 import {acceptRustScalarSourceInterfaceModel,readRustScalarValueType,readRustScalarSourceType,acceptRustScalarSourceContext,acceptRustScalarSourceDeclaration,acceptRustScalarSourceDeclarationField,acceptRustScalarSourcePosition,acceptRustScalarSourceExpression,acceptRustScalarSourceExpressionField,acceptRustScalarImplicitBooleanDomain,acceptRustScalarSourceCall,acceptRustScalarSourceBudget,renderRustScalarSourceConversion} from './rust-scalar-source-interface-rules.js';
 import {acceptRustSourceHeaderLifetimeCharacter} from './rust-source-header-emission-rules.js';
+import {acceptLinkedRustCheckedShift} from './rust-shift-rules.js';
 const fail=detail=>{throw unsupported('Rust scalar source interface',detail);};
 function valueType(type,strings=false){
  const fields=type?.kind==='fixed'?['kind','bits','signed']:['kind'];
@@ -31,7 +32,8 @@ export function readRustScalarSourceInterface(program,model){
  const forbidden=Boolean(program.imports?.length||program.externals?.length||program.main?.effects?.length||program.main?.sequentialAsync||program.main?.sourceRuntimeWorker||program.referenceSemantics||program.utf16Strings||program.outputThreaded||program.abortsThreaded||program.sourceRuntimeShell||program.sourcePureUnitCalls);
  if(!acceptRustScalarSourceContext(program.sourceLanguage,forbidden))fail('only closed synchronous Rust scalar modules without imports or runtime effects are admitted');
  const headers=new Map(),policy=RUST_SOURCE_HEADER_EMISSION_POLICY,pending=[];
- const enqueue=children=>{if(!acceptRustScalarSourceBudget(pending.length+children.length))fail('the closed scalar call graph exceeds its expression budget');for(const child of children)pending.push(child);};
+ let checkedShiftNodes=0;
+ const enqueue=children=>{if(!acceptRustScalarSourceBudget(pending.length+children.length+checkedShiftNodes))fail('the closed scalar call graph exceeds its expression budget');for(const child of children)pending.push(child);};
  for(const [key,declaration] of program.declarations){
   if(!acceptRustScalarSourceDeclaration(declaration.k,declaration.generated===true,key===declaration.fullName))fail('every interface needs its actual original owned function declaration');
   if(Object.keys(declaration).some(field=>!acceptRustScalarSourceDeclarationField(field,policy.declarationFields.includes(field))))fail('the declaration contains unrepresented source interface qualifiers');
@@ -48,6 +50,20 @@ export function readRustScalarSourceInterface(program,model){
   if(visited.has(node))continue;visited.add(node);visits+=1;
   if(!acceptRustScalarSourceBudget(visits))fail('the closed scalar call graph exceeds its expression budget');
   valueType(node.type,strings);
+  if(mathematical&&node.k==='coalesce'&&node.type.kind==='fixed'
+    &&Object.keys(node).every(field=>['k','type','span','left','right'].includes(field))){
+   const {left,right}=node;
+   if(left?.k==='math'&&acceptLinkedRustCheckedShift(left.k,left.op)
+     &&Object.keys(left).every(field=>['k','type','span','op','args'].includes(field))
+     &&left.type?.kind==='option'&&left.type.absence==='undefined'&&left.type.element?.kind==='fixed'
+     &&typeKey(left.type.element)===typeKey(node.type)
+     &&Array.isArray(left.args)&&left.args.length===2&&typeKey(left.args[0].type)===typeKey(node.type)
+     &&typeKey(left.args[1].type)===typeKey(rustFixedType('u32'))&&right?.k==='lit'&&right.value==='0'&&typeKey(right.type)===typeKey(node.type)){
+    checkedShiftNodes+=1;
+    enqueue([...left.args,right]);
+    continue;
+   }
+  }
   if(!(displayed?acceptRustDisplayedStringExpression(node.k):predicates?acceptRustStringPredicateExpression(node.k):mathematical?acceptRustScalarMathematicalExpression(node.k):acceptRustScalarSourceExpression(node.k))||Object.keys(node).some(field=>!(displayed?acceptRustDisplayedStringExpressionField(node.k,field):predicates?acceptRustStringPredicateExpressionField(node.k,field):mathematical?acceptRustScalarMathematicalExpressionField(node.k,field):acceptRustScalarSourceExpressionField(node.k,field))))fail('the expression requires an additional source interface interpretation');
   if(node.k==='toString'){
    const console=Object.hasOwn(node,'console')&&node.console!==false;

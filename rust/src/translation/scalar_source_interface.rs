@@ -1,7 +1,7 @@
 //! Native projection of owned IR into the automatically translated interface.
 use super::diagnostics::{Result, unsupported};
 use super::emit_rust::indent;
-use super::ir::{Decl, Node, Param, Program};
+use super::ir::{Decl, LitValue, Node, Param, Program};
 use super::rust_constructed_string_interface_rules::{
     accept_rust_constructed_string_binary, accept_rust_constructed_string_concatenation,
     accept_rust_constructed_string_interface_model,
@@ -220,6 +220,7 @@ pub fn read_rust_scalar_source_interface(
     }
     let mut visited = BTreeSet::new();
     let mut at = 0;
+    let mut checked_shift_nodes = 0usize;
     while at < pending.len() {
         let node = pending[at];
         at += 1;
@@ -232,6 +233,25 @@ pub fn read_rust_scalar_source_interface(
             ));
         }
         value_type(&node.ty, strings)?;
+        if mathematical
+            && matches!(node.ty, Type::Fixed { .. })
+            && let Node::Coalesce { left, right } = &node.node
+            && let Node::Math { op, args } = &left.node
+            && super::rust_shift_rules::accept_linked_rust_checked_shift("math", op)
+            && left.ty == super::types::option(node.ty.clone(), "undefined".to_owned())
+            && let [value, shift_count] = &args[..]
+            && value.ty == node.ty
+            && shift_count.ty == (Type::Fixed { bits: 32, signed: false })
+            && right.ty == node.ty
+            && matches!(&right.node, Node::Lit { value: LitValue::Text(value) } if value == "0")
+        {
+            checked_shift_nodes += 1;
+            if !accept_rust_scalar_source_budget(count(pending.len().saturating_add(3).saturating_add(checked_shift_nodes))) {
+                return Err(fail("the closed scalar call graph exceeds its expression budget"));
+            }
+            pending.extend([value, shift_count, right.as_ref()]);
+            continue;
+        }
         // Native variants exhaustively represent these fields. Linked decoding
         // checks raw field inventories before constructing this IR.
         if !(if displayed {
@@ -361,7 +381,7 @@ pub fn read_rust_scalar_source_interface(
             _ => {}
         }
         let children = node.children();
-        if !accept_rust_scalar_source_budget(count(pending.len().saturating_add(children.len()))) {
+        if !accept_rust_scalar_source_budget(count(pending.len().saturating_add(children.len()).saturating_add(checked_shift_nodes))) {
             return Err(fail(
                 "the closed scalar call graph exceeds its expression budget",
             ));

@@ -1943,7 +1943,9 @@ bit patterns and restore the original signed/pointer owner after combining the
 two disjoint shifted parts. Both normalized counts are below the actual width,
 including zero. Existing complete shift, bitwise and wrapping-cast definitions
 supply target behavior; hosts only project those terms and capture each actual
-operand once in original order. Signed wrapping right shifts preserve arithmetic
+operand once in original order. The checked shift result uses a typed zero fallback
+for the unreachable out-of-range case. Formal effect analysis can establish that
+subtracting an unsigned remainder from its modulus cannot underflow. Signed wrapping right shifts preserve arithmetic
 sign extension. No handwritten native replacement algorithm is introduced.
 
 2,139 complete original programs author independent integer formulas for all
