@@ -64,24 +64,39 @@ const deterministic = JSON.stringify(learned.candidates) === JSON.stringify(repe
   && grammar === (repeated.grammar ? renderGrammarLinks(repeated.grammar) : null);
 const syntaxParser = compileGrammar(initial, parserOptions);
 const attributedParser = grammar && compileGrammar(parseGrammarLinks(grammar), parserOptions);
-function inspectLeaves(tree, input) {
+function* leaves(tree) {
   const pending = [tree];
-  const pieces = [];
-  let position = 0;
-  let trivia = 0;
-  let spans = tree.start === 0 && tree.end === Buffer.byteLength(input);
   while (pending.length) {
     const node = pending.pop();
     if (node.children) {
       for (let index = node.children.length - 1; index >= 0; index -= 1) pending.push(node.children[index]);
     } else if (node.type === 'token') {
-      spans &&= node.start === position && Buffer.byteLength(node.text) === node.end - node.start;
-      position = node.end;
-      pieces.push(node.text);
-      if (node.trivia) trivia += 1;
+      yield node;
     }
   }
+}
+
+function inspectLeaves(tree, input) {
+  const pieces = [];
+  let position = 0;
+  let trivia = 0;
+  let spans = tree.start === 0 && tree.end === Buffer.byteLength(input);
+  for (const node of leaves(tree)) {
+    spans &&= node.start === position && Buffer.byteLength(node.text) === node.end - node.start;
+    position = node.end;
+    pieces.push(node.text);
+    if (node.trivia) trivia += 1;
+  }
   return { reconstructs: pieces.join('') === input, spans, trivia };
+}
+
+function readQuantityField(capture) {
+  const tokens = Array.from(leaves(capture)).filter(token => !token.trivia);
+  // A labeled capture includes leading trivia. Its digit rule contributes one token.
+  const [digits] = tokens;
+  if (tokens.length !== 1 || !/^[0-9]+$/u.test(digits.text) ||
+      digits.start < capture.start || digits.end !== capture.end) return null;
+  return { start: digits.start, end: digits.end, quantity: capture.attributes?.quantity };
 }
 
 const corpus = new Set(['[]', '[,1]', '[1,]', '[2 3]', '[+4]', '[-2]', '[1,π]', '[0]\n', 'x[2]', '[2,,3]']);
@@ -102,9 +117,9 @@ for (const input of corpus) {
   const regularOracle = /^\[[ \t]*[0-9]+(?:[ \t]*,[ \t]*[0-9]+)*[ \t]*\](?![\s\S])/u.test(input);
   const syntax = syntaxParser.parseTree(input);
   const attributed = attributedParser?.parseTree(input);
-  const fields = attributed?.ok ? attributed.tree.children.filter(child => child.field === 'items').map(child => ({
-    start: child.start, end: child.end, quantity: child.attributes?.quantity,
-  })) : null;
+  const fields = attributed?.ok
+    ? attributed.tree.children.filter(child => child.field === 'items').map(readQuantityField)
+    : null;
   rows.push({ input, independent, regularOracle, syntax: syntax.ok, syntaxDiagnostic: syntax.rejection,
     syntaxAmbiguities: syntax.ambiguities, attributedDiagnostic: attributed?.rejection ?? null,
     attributedAmbiguities: attributed?.ambiguities ?? null,
