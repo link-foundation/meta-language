@@ -3716,6 +3716,13 @@ inputs byte for byte. On smaller runners, generation precedes source replay.
 The current and consuming emissions share one checked source program. The
 consuming emitter still checks every definition after both typed archive
 reloads and verifies the complete generated profile against the stored bytes.
+In [run 45276612669](https://github.com/link-foundation/meta-language/actions/runs/45276612669/job/138109543491),
+the planner passed all seven contracts before the ten-minute job expired during
+teardown. Checkout used nearly two minutes. This cell now fetches full commit
+and tree history with Git's `blob:none` filter. Checkout loads every current
+file and Git fetches historical blobs on demand during fresh merge checks or
+source authentication. The complete planner, cleanup and ten-minute deadline
+still apply.
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. Workloads with unchanged source bytes
 use advisory durations from their retained CI logs. Changed or unsampled files

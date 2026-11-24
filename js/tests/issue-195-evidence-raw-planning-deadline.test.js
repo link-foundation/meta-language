@@ -52,17 +52,22 @@ test('historical workflow views authenticate the entire new schedule and refuse 
   }
 });
 
-test('complete raw planning alone avoids external grammar setup and keeps the actual required check',()=>{
+test('complete raw planning uses blobless history and retains the required ten-minute contract',()=>{
   const path='.github/workflows/js.yml',source=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
   const revision='f082c35a62a857020a271946f244edfc9a5afa38';
   const original=captureGitArtifactCertificate(revision,path);
   verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path});
   const job=parseWorkflow(source).find(row=>row.id==='package-checks');
+  const checkout=job.steps.find(row=>row.name==='- uses: actions/checkout@v7');
+  assert.match(checkout.text,/^          fetch-depth: 0$/mu);
+  assert.match(checkout.text,/^          filter: \$\{\{ matrix\.group == 'source-model-raw' && 'blob:none' \|\| '' \}\}$/mu);
   const setup=job.steps.find(row=>row.name==='Provision the pinned external grammar check inputs');
   assert.match(setup.text,/^        if: \$\{\{ matrix\.group != 'source-model-raw' \}\}$/mu);
   assert.equal(setup.run.trim(),'node js/scripts/external-grammar-cache.mjs --all --materialize');
   const plan=job.steps.find(row=>row.name==='Run complete original link raw native oracle contracts');
   const previous=parseWorkflow(original.blob.toString('utf8')).find(row=>row.id===job.id);
+  const freshMerge='Simulate fresh merge with base branch';
+  assert.equal(job.steps.find(row=>row.name===freshMerge).text,previous.steps.find(row=>row.name===freshMerge).text);
   assert.equal(plan.text,previous.steps.find(row=>row.name===plan.name).text);
   assert.match(job.header,/^    timeout-minutes: 10$/mu);
 });
