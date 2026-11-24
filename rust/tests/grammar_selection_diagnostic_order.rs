@@ -30,6 +30,14 @@ fn grammar_selection_diagnostics_retain_javascript_member_order() {
     let source = fs::read_to_string(path).expect("generated original JavaScript fixture");
     let fixture = read_structured_data_lino(&source).expect("normal Links fixture");
     let profile = &fixture["dependencyProfile"];
+    let current_manifest = read_structured_data_lino(include_str!(
+        "../../parity/fixtures/grammar-selection-diagnostic-dependency-profile.lino"
+    ))
+    .expect("generated current Cargo manifest profile");
+    assert_eq!(
+        current_manifest["selected"]["source"], profile["manifest"]["selected"]["source"],
+        "the added package asset preserves the complete dependency declaration block"
+    );
     assert_eq!(profile["name"].as_str(), Some("serde_json"));
     let version = profile["version"].as_str().expect("exact locked version");
     assert_eq!(
@@ -59,14 +67,20 @@ fn grammar_selection_diagnostics_retain_javascript_member_order() {
     for (field, filename) in [("lock", "Cargo.lock"), ("manifest", "Cargo.toml")] {
         let path = format!("{}/{filename}", env!("CARGO_MANIFEST_DIR"));
         let actual = fs::read(path).expect("actual current dependency source");
+        let actual_hash = digest(&actual);
+        let owner = if field == "manifest"
+            && current_manifest["sha256"].as_str() == Some(actual_hash.as_str())
+        {
+            &current_manifest
+        } else {
+            &profile[field]
+        };
         assert_eq!(
-            digest(&actual),
-            profile[field]["sha256"]
-                .as_str()
-                .expect("recorded source hash"),
+            actual_hash,
+            owner["sha256"].as_str().expect("recorded source hash"),
             "uncovered dependency version, lock or manifest profile; revalidate the explicit range before applying order assertions"
         );
-        let selected = profile[field]["selected"]["source"]
+        let selected = owner["selected"]["source"]
             .as_str()
             .expect("complete source-owner block");
         let actual = String::from_utf8(actual).expect("UTF-8 dependency owner");
