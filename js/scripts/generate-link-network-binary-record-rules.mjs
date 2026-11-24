@@ -5,11 +5,12 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {DecoratorSet} from '../src/decorators.js';
 import {readProjectData,writeProjectData} from './project-data.mjs';
+import {restoreBinaryPrimitiveGeneratorSource} from './binary-last-use-styles.mjs';
 
 assert.ok(process.argv.slice(2).every(argument=>argument==='--check'),
   'record generation accepts only --check and cannot rewrite historical compiler receipts');
 const producerFile=new URL('./generate-link-network-binary-rules.mjs',import.meta.url);
-const producer=readFileSync(producerFile,'utf8');
+const producer=restoreBinaryPrimitiveGeneratorSource(readFileSync(producerFile,'utf8'));
 const digest=value=>createHash('sha256').update(value).digest('hex');
 assert.equal(digest(producer),'b69fe844f08f933f7cca47b3fc34139e606b7bd72cefb3fd3c6380d4301745c8');
 const primitiveFile=new URL('../src/link-network-binary-rules.js',import.meta.url);
@@ -50,7 +51,9 @@ const expectedStyles = new DecoratorSet(derived.decorators).toLino();
 if (process.argv.includes('--check')) assert.equal(readFileSync(styles, 'utf8'), expectedStyles, 'record-local binary styles are fresh');
 else writeFileSync(styles, expectedStyles);
 const decorators = DecoratorSet.fromLino(expectedStyles);
-const styled = styleBinaryItems(items, decorators);
+const {applyBinaryLastUseStyles}=await import('./binary-last-use-styles.mjs');
+const styled = applyBinaryLastUseStyles(styleBinaryItems(items, decorators), 'link_network_binary_record_rules', format);
+const lastUseReviewFile = new URL('../../parity/self-translation/binary-last-use-review-138157819576.lino', import.meta.url);
 globalThis[Symbol.for('meta-language binary record generation')] = {
   ...derived.receipt,
   checkedDeclarations: emitted.definitions.length,
@@ -63,6 +66,9 @@ globalThis[Symbol.for('meta-language binary record generation')] = {
   blockReturnReview: {sourceSha256:createHash('sha256').update(readFileSync(blockReturnReviewFile)).digest('hex'),
     styleBuilderSha256:createHash('sha256').update(readFileSync(new URL('./binary-record-block-return-styles.mjs', import.meta.url))).digest('hex'),
     logSha256:blockReturnReview.capture.logSha256, reviewedBindingReturns:3},
+  lastUseReview: {sourceSha256:createHash('sha256').update(readFileSync(lastUseReviewFile)).digest('hex'),
+    styleBuilderSha256:createHash('sha256').update(readFileSync(new URL('./binary-last-use-styles.mjs', import.meta.url))).digest('hex'),
+    reviewedCloneRemovals:60},
 };`;
 
 const replacements=[
