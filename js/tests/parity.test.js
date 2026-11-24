@@ -54,8 +54,16 @@ test('issue-163 parity manifest keeps Rust and JavaScript feature rows in sync',
   const nativeModules = readFileSync(new URL('../../rust/tests/unit/mod.rs', import.meta.url), 'utf8');
   const nativeStorageRegistered = nativeOwner.includes('#[path = "../../../' + nativeAdapter + '"]\nmod storage;')
     && nativeModules.split('\n').includes('mod grammar_outcome_static_borrows;');
+  const collectionExamples = new Set([
+    'examples/rust-standard-collections.rs',
+    'examples/rust-consuming-ordered-collections.rs',
+  ]);
+  const nativeCollections = readFileSync(new URL('../../rust/tests/unit/translation_rust_standard_collection_library.rs', import.meta.url), 'utf8');
   const rustEvidence = (feature, file) => file.startsWith('rust/') || file.startsWith('docs/') || file.startsWith('parity/')
     || file === nativeAdapter && nativeStorageRegistered
+    || feature.id === 'ordinary-rust-closed-standard-collection-values' && collectionExamples.has(file)
+      && nativeModules.split('\n').includes('mod translation_rust_standard_collection_library;')
+      && nativeCollections.includes('include_str!("../../../' + file + '")')
     || file.startsWith('experiments/') && file.endsWith('.lino')
       && file.split('/').every(part => part !== '' && part !== '.' && part !== '..')
       && feature.javascript.evidence.includes(file);
