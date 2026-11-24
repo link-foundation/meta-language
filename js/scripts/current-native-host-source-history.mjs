@@ -58,6 +58,14 @@ export function readCurrentNativeHostSourceHistory(){
 export function restoreCurrentNativeHostSource(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
   source=restoreCheckedExternalBindingSource(source,file);
+  if (file === 'rust/src/translation/ir.rs'
+    && pinCurrentNativeHostSource(source).sha256 === 'e2bcdac4be92d67015211f97b26f6b69f90f2bf4796a8ccdde3d28cc1a5149dd') {
+    const previous = source.replace('            | Node::CollectionSize { object: arg }\n', '').replace(
+      '            Node::CollectionSize { object } => Node::CollectionSize {\n                object: Box::new(visit(object)),\n            },\n', '',
+    );
+    assert.equal(pinCurrentNativeHostSource(previous).sha256, '29ef362f4b1d0129791687bd6bd52f5a68655136f4018d6981292c087961bbd7');
+    return previous;
+  }
   if(!CURRENT_NATIVE_HOST_FILES.includes(file))return source;
   const row=readCurrentNativeHostSourceHistory().sources.find(row=>row.file===file);
   return source===row.current.source?row.previous.source:source;

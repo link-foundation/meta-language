@@ -104,6 +104,16 @@ fn observe(source: &str, expected: &str, native: bool) {
     assert_eq!(result.stdout, expected);
 }
 
+fn observe_rust_pattern_with_primitive_parameter(source: &str, expected: &str) {
+    // Rust 1.99 reports E0282 for the unannotated Pattern callback these
+    // translation fixtures recognize. Keep its exact spelling for translation
+    // and give the independent Rust driver the primitive, even in a shadowing scope.
+    let callback = ".starts_with(|c|";
+    assert_eq!(source.matches(callback).count(), 1);
+    let driver = source.replace(callback, ".starts_with(|c: ::core::primitive::char|");
+    observe(&driver, expected, true);
+}
+
 fn inputs() -> Vec<String> {
     let mut values = [
         "", "_", "a", "Z", "a0_", "0a", "-a", "a-b", "a\n", "a\r\n", "π", "aπ", "é", "K", "İ",
@@ -331,7 +341,7 @@ fn main(){".to_owned();
         "println!(\"{}\",selected(\"00\",true));println!(\"{}\",selected(\"00\",false));}",
     );
     let expected = "false\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\nfalse\nfalse\nfalse\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\ntrue\nfalse\ntrue\nfalse\n";
-    observe(&source, expected, true);
+    observe_rust_pattern_with_primitive_parameter(&source, expected);
     let packet = create_typed_program_links(&source, "Rust").unwrap();
     for network in archives(&packet.network) {
         let javascript = emit_typed_program_links(&network, packet.root, "JavaScript")
@@ -415,7 +425,7 @@ fn actual_wrong_owners_aliases_annotations_effects_and_existing_const_boundaries
         let source = format!(
             "{prefix}fn selected(value:&str)->bool{{value.starts_with(|c|c.is_ascii_digit())}}fn main(){{println!(\"{{}}\",selected(\"0\"));println!(\"{{}}\",selected(\"π\"));}}"
         );
-        observe(&source, "true\nfalse\n", true);
+        observe_rust_pattern_with_primitive_parameter(&source, "true\nfalse\n");
         let packet = create_typed_program_links(&source, "Rust").unwrap();
         observe(
             &emit_typed_program_links(&packet.network, packet.root, "JavaScript")
@@ -469,7 +479,12 @@ fn actual_javascript_string_spreads_retain_code_points_and_lone_surrogates_with_
     ];
     let mut harness = "\nfn ml_ascii_point_observations(){".to_owned();
     for (units, expected) in cases {
-        write!(harness, "let actual=points(crate::ml_string::Text::from_units(vec!{units:?})).into_iter().map(|point|point.0).collect::<Vec<_>>();let expected:Vec<Vec<u16>>=vec!{expected:?};assert_eq!(actual,expected);").unwrap();
+        let expected = expected
+            .iter()
+            .map(|point| format!("vec!{point:?}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        write!(harness, "let actual=points(crate::ml_string::Text::from_units(vec!{units:?})).into_iter().map(|point|point.0).collect::<Vec<_>>();let expected:Vec<Vec<u16>>=vec![{expected}];assert_eq!(actual,expected);").unwrap();
     }
     harness.push_str("println!(\"true\");}\n");
     for network in archives(&packet.network) {

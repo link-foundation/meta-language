@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
+import {restoreRegisteredNativeTestSource} from './registered-native-test-source-history.mjs';
 import {restoreScopedIterationNativeHostSource} from './scoped-iteration-native-host-source-history.mjs';
 import {replayAsciiHostEdits,verifyAsciiTextPredicateHosts} from './ascii-text-predicate-host-history.mjs';
 const root=new URL('../../',import.meta.url);
@@ -111,6 +112,9 @@ export function readRequiredFieldNativeHostSuccession(){
  * paths and bytes remain visible to their strict checks. */
 export function restoreRequiredFieldNativeHostSource(source,file,reader){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof reader,'string');
+  if (reader === 'ASCII character host' && file === 'rust/tests/unit/translation_ascii_text_predicates.rs') {
+    return restoreRegisteredNativeTestSource(source, file);
+  }
   if (reader === 'ASCII character host' && file === 'rust/src/translation/rust/expressions.rs') {
     return restoreRustCastParserPlacement(source);
   }

@@ -37,7 +37,8 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     return { path: specification.path, source, certificate, current: asciiHostPin(replay.source), edits: replay.edits };
   });
   const additions = ASCII_HOST_ADDITIONS.map(path => {
-    const source = readFileSync(new URL(path, root), 'utf8');
+    const source = restoreRequiredFieldNativeHostSource(
+      readFileSync(new URL(path, root), 'utf8'), path, 'ASCII character host');
     return { path, source, pin: asciiHostPin(source) };
   });
   const artifactPath = 'parity/self-translation/ascii-text-predicate-rules-native.lino';

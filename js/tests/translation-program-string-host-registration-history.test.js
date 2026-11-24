@@ -5,6 +5,7 @@ import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {generateProgramStringHostRegistrationHistory} from '../scripts/generate-program-string-host-registration-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from '../scripts/required-field-native-host-succession.mjs';
+import {restoreRegisteredNativeTestSource} from '../scripts/registered-native-test-source-history.mjs';
 import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {PROGRAM_STRING_REGISTRATION_REVISION,PROGRAM_STRING_HOST_REVISION,PROGRAM_STRING_HOST_ARCHIVE,
@@ -125,4 +126,23 @@ test('the native emitter source view preserves both historical inputs and refuse
     assert.ok(source!==owner.sourceText&&source!==owner.proposed.source,'the original producer must still refuse this input');
   }
   for(const other of['rust/src/translation/unregistered_emitter.rs','unregistered.rs'])assert.equal(restoreProgramStringHostRegistrationSource(actual,other),actual);
+});
+
+test('both reviewed native test successors retain their exact certified registrations', () => {
+  const packet = policy();
+  const registeredTests = packet.registrations.filter(row => row.path.startsWith('rust/tests/'));
+  assert.equal(registeredTests.length, 2);
+  for (const row of registeredTests) {
+    const actual = readFileSync(new URL(row.path, root), 'utf8');
+    const predecessor = restoreRegisteredNativeTestSource(actual, row.path);
+    assert.notEqual(predecessor, actual);
+    assert.deepEqual(programStringHostRegistrationPin(predecessor), { bytes: row.bytes, sha256: row.sha256 });
+    verifyGitArtifactCertificate(row.certificate, Buffer.from(predecessor), {
+      revision: PROGRAM_STRING_REGISTRATION_REVISION, path: row.path,
+    });
+    assert.equal(restoreRegisteredNativeTestSource(predecessor, row.path), predecessor);
+    assert.equal(restoreRegisteredNativeTestSource(actual, 'unregistered.rs'), actual);
+    const changed = actual + '\n';
+    assert.equal(restoreRegisteredNativeTestSource(changed, row.path), changed);
+  }
 });

@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreRegisteredNativeTestSource} from './registered-native-test-source-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
 import {restoreReferenceIdentityHistoricalSource} from './reference-identity-source-history.mjs';
@@ -119,7 +120,8 @@ export function verifyProgramStringHostRegistrationHistory(packet){
     exactFields(row,['owner','declaration','path','bytes','sha256','certificate']);
     assert.deepEqual({owner:row.owner,declaration:row.declaration,path:row.path},PROGRAM_STRING_REGISTRATIONS[index]);
     assert.equal(result.get(row.owner).current.split(row.declaration+'\n').length,2,'one actual owned module registration');
-    const bytes=readFileSync(new URL(row.path,root));
+    const actual=readFileSync(new URL(row.path,root),'utf8');
+    const bytes=Buffer.from(restoreRegisteredNativeTestSource(actual,row.path));
     assert.deepEqual(programStringHostRegistrationPin(bytes),{bytes:row.bytes,sha256:row.sha256});
     verifyGitArtifactCertificate(row.certificate,bytes,{revision:PROGRAM_STRING_REGISTRATION_REVISION,path:row.path});
   }
@@ -129,7 +131,7 @@ export function verifyProgramStringHostRegistrationHistory(packet){
 /** Unknown successors remain visible to the old strict host assertion. */
 export function restoreProgramStringHostRegistrationSource(source,path){
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
-  if(['rust/src/translation/emit_rust.rs','rust/src/typed_program_links/checked.rs'].includes(path)){
+  if(['rust/src/translation/emit_rust.rs','rust/src/translation/ir.rs','rust/src/typed_program_links/checked.rs'].includes(path)){
     // Reuse the existing complete current-source certificate/inverse, then
     // replay the immutable host proposal. Actual runtime source stays current.
     const previous=restoreCurrentCiRepairSource(source,path);
