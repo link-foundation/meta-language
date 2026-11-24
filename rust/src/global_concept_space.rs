@@ -3,6 +3,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
+use std::sync::OnceLock;
 
 use serde_json::{Map, Value, json};
 use sha2::{Digest, Sha256};
@@ -374,6 +375,59 @@ pub fn translate_global_construct(
     json!({"relation":relation,"concept":id,"origins":origins,"proofs":concept["proofs"]})
 }
 
+#[derive(Default)]
+struct ConceptRecordIndex {
+    identities: Vec<String>,
+    records_by_alias: BTreeMap<(String, String), Vec<usize>>,
+    records_by_id: BTreeMap<String, usize>,
+    formal_definitions: BTreeMap<usize, Value>,
+}
+
+fn index_concept_records(records: &[Value]) -> Result<ConceptRecordIndex, String> {
+    let mut index = ConceptRecordIndex {
+        identities: Vec::with_capacity(records.len()),
+        ..ConceptRecordIndex::default()
+    };
+    for (position, record) in records.iter().enumerate() {
+        let identity = string(&record["id"])?;
+        index.identities.push(identity.to_owned());
+        index
+            .records_by_id
+            .entry(identity.to_owned())
+            .or_insert(position);
+        for alias in array(&record["sourceAliases"])? {
+            index
+                .records_by_alias
+                .entry((
+                    string(&alias["source"])?.to_owned(),
+                    string(&alias["name"])?.to_owned(),
+                ))
+                .or_default()
+                .push(position);
+        }
+        if let Some(definition) = record.get("formalDefinition") {
+            index
+                .formal_definitions
+                .insert(position, definition.clone());
+        }
+    }
+    Ok(index)
+}
+
+fn shipped_concept_record_index() -> Result<&'static ConceptRecordIndex, String> {
+    static INDEX: OnceLock<Result<ConceptRecordIndex, String>> = OnceLock::new();
+    INDEX
+        .get_or_init(|| {
+            // Keep the lookup index and release the decoded register after indexing.
+            let records = crate::structured_data_links::read_structured_data_lino(include_str!(
+                "data/concept-records.lino"
+            ))?;
+            index_concept_records(array(&records["concepts"])?)
+        })
+        .as_ref()
+        .map_err(Clone::clone)
+}
+
 // JSON/grammar adaptation is host glue. The generated verifier is the sole
 // authority that accepts a correspondence and permits shared identities.
 fn create_global_concept_space_in(
@@ -383,34 +437,16 @@ fn create_global_concept_space_in(
     for source in sources {
         check_grammar_selection_included_range_data(&source["grammar"])?;
     }
-    let default_records;
-    let records = array(if let Some(records) = options.records.as_ref() {
-        records
+    let custom_index;
+    let records = if let Some(records) = options.records.as_ref() {
+        custom_index = index_concept_records(array(records)?)?;
+        &custom_index
     } else {
-        default_records = crate::structured_data_links::read_structured_data_lino(include_str!(
-            "data/concept-records.lino"
-        ))?;
-        &default_records["concepts"]
-    })?;
+        shipped_concept_record_index()?
+    };
     let catalog: Value = crate::structured_data_links::read_structured_data_lino(include_str!(
         "data/language-catalog.lino"
     ))?;
-    let mut records_by_alias: BTreeMap<(String, String), Vec<usize>> = BTreeMap::new();
-    let mut records_by_id = BTreeMap::new();
-    for (index, record) in records.iter().enumerate() {
-        records_by_id
-            .entry(string(&record["id"])?.to_owned())
-            .or_insert(index);
-        for alias in array(&record["sourceAliases"])? {
-            records_by_alias
-                .entry((
-                    string(&alias["source"])?.to_owned(),
-                    string(&alias["name"])?.to_owned(),
-                ))
-                .or_default()
-                .push(index);
-        }
-    }
     let mut ordered = sources.to_vec();
     ordered.sort_by(|first, second| {
         first["id"]
@@ -494,13 +530,13 @@ fn create_global_concept_space_in(
                     string(&spelling["source"])?.to_owned(),
                     string(&spelling["name"])?.to_owned(),
                 );
-                if let Some(indices) = records_by_alias.get(&key) {
+                if let Some(indices) = records.records_by_alias.get(&key) {
                     matching_records.extend(indices.iter().copied());
                 }
             }
             let mut meanings: Vec<_> = matching_records
                 .iter()
-                .map(|index| records[*index]["id"].clone())
+                .map(|index| Value::String(records.identities[*index].clone()))
                 .collect();
             if let Some(concept) = rule.get("concept")
                 && !meanings.contains(concept)
@@ -517,9 +553,7 @@ fn create_global_concept_space_in(
                 ambiguities.push(json!({"alias":alias,"meanings":meanings}));
             }
             let record = if meanings.len() == 1 {
-                records_by_id
-                    .get(string(&meanings[0])?)
-                    .map(|index| &records[*index])
+                records.records_by_id.get(string(&meanings[0])?)
             } else {
                 None
             };
@@ -531,15 +565,15 @@ fn create_global_concept_space_in(
                 .and_then(|definitions| definitions.get(&alias))
                 .filter(|definition| !definition.is_null())
                 .or_else(|| {
-                    record.and_then(|record| {
+                    record.and_then(|position| {
                         options
                             .formal_definitions
                             .as_ref()
                             .and_then(|definitions| {
-                                record["id"].as_str().and_then(|id| definitions.get(id))
+                                definitions.get(records.identities[*position].as_str())
                             })
                             .filter(|definition| !definition.is_null())
-                            .or_else(|| record.get("formalDefinition"))
+                            .or_else(|| records.formal_definitions.get(position))
                     })
                 });
             let mut meaning = format!("unproved:{}", canonical(&origin));
@@ -772,4 +806,17 @@ fn create_global_concept_space_in(
         graph,
         aliases,
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::shipped_concept_record_index;
+
+    #[test]
+    fn shipped_concept_record_index_is_reused() {
+        let first = shipped_concept_record_index().expect("shipped concept records");
+        let second = shipped_concept_record_index().expect("shipped concept records");
+        assert!(!first.identities.is_empty());
+        assert!(std::ptr::eq(first, second));
+    }
 }

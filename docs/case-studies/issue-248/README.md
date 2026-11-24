@@ -349,6 +349,23 @@ assertion and the workflow and detects the stale key before the repair.
 [Fresh Merge Simulation (4)](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282883797),
 [cache-key regression](../../../js/tests/issue-195-evidence-automated-translation-pause.test.js)
 
+macOS grammar shard 5 reached its 30-minute job deadline. Compilation took
+15 minutes 2 seconds at log line 1490. The determinism test was still running
+at cancellation at lines 1552 and 1603. The matching Linux fresh-merge test
+passed after approximately 6 minutes 32 seconds, based on its 60-second
+warning and eventual result at lines 2186 and 2201. Each native global concept
+space build decoded the same 52,440,636-byte shipped concept register and
+indexed it again. The default index now initializes once per process. Rust
+releases the decoded register after indexing, and caller-supplied records
+still receive a fresh index on each call. A bounded JavaScript regression
+observed two index builds before the change and one afterward, with the same
+default results and updated results after a caller record mutation. The
+macOS deadline and all grammar tests remain in force. The next native run
+will measure the effect on the cancelled shard.
+[macOS grammar shard 5](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282887277) ·
+[Linux fresh merge](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282883844) ·
+[Index regression](../../../js/tests/global-concept-space.test.js)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |
