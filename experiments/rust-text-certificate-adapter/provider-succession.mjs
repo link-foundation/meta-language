@@ -29,7 +29,11 @@ export const OVERLAY_PROVIDER_APPEND_REVIEW=Object.freeze({
  review:'Reviewed the complete Rust emitter successor against8ef026a395ebbbc415f948777f7f6f7e082a572e: optional nonserialized definition-ownership capture records actual complete emitted blocks/source spans/mapping intervals/targets, and a thin external-target reader uses the actual normal emitter naming path. Default output, complete original function bodies, source mappings and exact decorator actions retain their existing independent tests. Only this complete79595-byte source is admitted by this review; its full source inverse restores every predecessor byte. This is source succession and review, not semantic equivalence, native compilation or execution evidence.',
 });
 export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-reference-provider-review.lino',import.meta.url)));
-const packetSha256='5657e1cc9cda5c71717c245fe43a562dda8bc7a3811d352603acee5d26be7913';
+export const OVERLAY_PROVIDER_EXTERNAL_BINDING_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-external-binding-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_REVIEWS=Object.freeze([
+  OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_EXTERNAL_BINDING_REVIEW,
+]);
+const packetSha256='c2812c8fef3af20a70c50d3f50e6cfe825562172a7e7dac953116af04838ca36';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
@@ -188,7 +192,8 @@ export function deriveReviewedOverlayProviderPolicy(packet){
 
 function verifyReviewedOverlayProviderEpoch(packet,index){
   const profile=packet.profiles[index],epoch=profile.epoch;
-  const review=profile.previousSourceCommit===OVERLAY_PROVIDER_APPEND_REVIEW.previous?OVERLAY_PROVIDER_APPEND_REVIEW:OVERLAY_PROVIDER_REFERENCE_REVIEW;
+  const review=OVERLAY_PROVIDER_REVIEWS.find(row=>row.previous===profile.previousSourceCommit);
+  assert.ok(review,'an epoch requires a review of its exact preceding source');
   const reviewed=review.modules??[review];
   exactKeys(epoch,['reviewKind','predecessorPacket','predecessorOutputs']);
   assert.equal(epoch.reviewKind,review.kind);assert.equal(profile.previousSourceCommit,review.previous);
