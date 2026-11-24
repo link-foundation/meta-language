@@ -86,7 +86,7 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
   assert.equal(new Set(additional.sources.map(row=>row.file+'@'+row.predecessor.revision)).size,additional.sources.length);
   for(const row of additional.sources){
     exactKeys(row,['file','predecessor','current']);exactKeys(row.predecessor,['revision','source','bytes','sha256','certificate']);
-    assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs)$/u);assert.equal(row.file.includes('..'),false);
+    assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests)|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs)$/u);assert.equal(row.file.includes('..'),false);
     assert.ok(['6ffff3b2dc530a5f24c128dadf877f3fa106932b','8bc0ef9725388c7927acf1854870bf46f5e365be',
       'ec9f4efb0e9ef936114e09823981352f6db13700'].includes(row.predecessor.revision));
     exactKeys(row.current,['bytes','sha256']);assert.equal(typeof row.predecessor.source,'string');
