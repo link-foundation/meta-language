@@ -30,7 +30,7 @@ test('one-source Node reconciliation retains every unrelated audit fact and exac
   }
   const collector=history.sources.find(row=>row.file==='js/scripts/dependency-inventory.mjs');
   const checkout=readFileSync(new URL('../../'+collector.file,import.meta.url),'utf8');
-  const actual=restoreAutomatedTranslationPauseSource(checkout,collector.file,nativePlatformPausePredecessor);
+  const actual=restoreAutomatedTranslationPauseSource(checkout,collector.file);
   assert.equal(actual,collector.sourceText.replace(history.before,history.after)+history.insertion);
   assert.equal(actual.replace(history.insertion,'').replace(history.after,history.before),collector.sourceText);
   const original=history.sources.find(row=>row.file==='parity/dependency-inventory.lino');
@@ -94,7 +94,7 @@ import {readNodeDependencyGeneratorRegistrationHistory,restoreNodeDependencyGene
 import {checkInventory} from '../scripts/dependency-inventory.mjs';
 import {readNodeDependencyInventoryOriginalView} from '../scripts/dependency-inventory-append-history.mjs';
 import {readOwnCodebaseTestRegistrationHistory,restoreOwnCodebaseTestRegistrationClassifier} from '../scripts/own-codebase-test-registration-history.mjs';
-import {nativePlatformPausePredecessor,restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
 
 test('the new source placement generator is independently inventoried with every preceding entry intact',()=>{
   const history=readNodeDependencyGeneratorRegistrationHistory();

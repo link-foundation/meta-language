@@ -396,12 +396,21 @@ libtest names. Reusing them keeps each opted-in command and its scope available.
 contexts and YAML structure. Repository tests cover mode and artifact behavior
 using the workflows' current conditions and shell commands.
 
+The Jobs API for the earlier PR run listed all 82 native test jobs and three
+clean consumer jobs. Their names and multiplicities matched the full matrix
+reconstructed from the retained policy. The Linux-only validator rejected
+that run because it scheduled Windows and macOS work.
+[Earlier PR run](https://github.com/link-foundation/meta-language/actions/runs/45307026026)
+
 The offline dependency audit initially reported that both paused runners had
 been removed. Its collector only recognized runner labels written in the
 workflow YAML. It now follows the native and clean-consumer matrix commands to
 the shared shard policy, which retains all three platforms. The regression test
 compares the collected runner entries with the existing audit, including their
-workflow ownership and release comparison.
+workflow ownership and release comparison. The naming check derives its
+original collector name from the complete Git-certified predecessor. The
+naming replay still verifies the original 68 source names and now checks the
+17 names contributed by the three archived native lint inputs.
 
 ## Operating the pause
 

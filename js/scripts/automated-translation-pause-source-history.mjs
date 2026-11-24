@@ -59,6 +59,7 @@ export const nativeRepairNamingSources = Object.freeze([
   'js/scripts/dependency-inventory-append-history.mjs',
   'js/scripts/generate-dependency-inventory-order-history.mjs',
   'js/tests/issue-195-evidence-dependency-appends.test.js',
+  'js/scripts/dependency-inventory.mjs',
 ]);
 
 // Historical host generators must preserve the exact files captured before lint-only edits.
@@ -71,14 +72,14 @@ export const nativeLintCaptureSources = Object.freeze([
 export const nativePlatformPausePredecessor = '7853a7351adf37d1ccc8f73479abf3d1960623bc';
 
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = '1067b5797abb13b34edeeb4e3a550b581ed73bf34cdcbe2badda5d3d996e8f68';
+const archiveDigest = '4d91f65b8f8a6d77c6f5e2797d3b9501cd4ad825b6550fb7a15a62dd67d614d7';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
 export function restoreAutomatedTranslationPauseSource(source, file, revision) {
   const workflow = file.startsWith('.github/workflows/');
   if (!workflow && !nativeRepairNamingSources.includes(file) && !nativeLintCaptureSources.includes(file) &&
-    !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/dependency-inventory.mjs', 'js/scripts/rust-test-shards.mjs',
+    !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs',
     'js/scripts/grammar-test-partition-history.mjs', 'js/scripts/generate-link-network-binary-rules.mjs', 'js/tests/cache-fresh-merge-dependencies.test.js',
     'js/scripts/own-codebase-baseline-naming-history.mjs', 'js/scripts/own-codebase-test-registration-history.mjs',
     'js/scripts/run-issue-195-consumer.mjs', 'js/scripts/test-groups.mjs',

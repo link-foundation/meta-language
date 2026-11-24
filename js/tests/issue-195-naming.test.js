@@ -22,7 +22,7 @@ import {
   NAMING_FIXTURES,
   nameProblems,
 } from '../scripts/issue-195-naming.mjs';
-import { nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
+import { nativeLintCaptureSources, nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { extractOwnCodebaseHistoricalNames, readOwnCodebaseHistoricalNamingPolicy } from '../scripts/own-codebase-baseline-naming-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -189,13 +189,17 @@ test('the normal naming source profile retains every actual current name and bot
   const precedingCount = 2 + policy.additionalSourceViews.views.reduce((count, view) => count + view.names.length, 0);
   const precedingNames = historicalNames.slice(0, precedingCount);
   const remainingNames = historicalNames.slice(precedingCount);
-  const pauseNames = remainingNames.filter(({ file }) => !nativeRepairNamingSources.includes(file));
+  const pauseNames = remainingNames.filter(({ file }) =>
+    !nativeRepairNamingSources.includes(file) && !nativeLintCaptureSources.includes(file));
   const repairedNames = remainingNames.filter(({ file }) => nativeRepairNamingSources.includes(file));
+  const lintCaptureNames = remainingNames.filter(({ file }) => nativeLintCaptureSources.includes(file));
   assert.equal(precedingNames.length, precedingCount);
   assert.equal(pauseNames.length, 68, 'every pre-pause source owner remains present');
   assert.ok(repairedNames.length >= 327, 'all replaced naming witnesses have a certified source view');
   assert.deepEqual([...new Set(repairedNames.map(({ file }) => file))].sort(), [...nativeRepairNamingSources].sort());
-  assert.deepEqual(remainingNames, [...pauseNames, ...repairedNames], 'native repair source views are appended');
+  assert.equal(lintCaptureNames.length, 17, 'every naming witness from the three lint captures remains present');
+  assert.deepEqual([...new Set(lintCaptureNames.map(({ file }) => file))].sort(), [...nativeLintCaptureSources].sort());
+  assert.deepEqual(remainingNames, [...pauseNames, ...repairedNames, ...lintCaptureNames], 'native repair and lint capture source views are appended');
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {

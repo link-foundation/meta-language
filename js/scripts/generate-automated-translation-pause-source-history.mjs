@@ -51,7 +51,7 @@ files.push({ file: 'js/scripts/scheduling-source-history.mjs', revision: '15745f
 files.push({ file: 'js/scripts/tooling-frozen-source-history.mjs', revision: '269c48e497280025271ade3765f808b2f372d1b6' });
 files.push({ file: 'parity/fixtures/grammar-selection-diagnostic-order.lino', revision });
 for (const file of ['.github/workflows/ci.yml', '.github/workflows/rust.yml',
-  'js/scripts/dependency-inventory.mjs', 'js/scripts/rust-test-shards.mjs',
+  'js/scripts/rust-test-shards.mjs',
   'js/tests/issue-195-evidence-node-dependency.test.js', 'rust/tests/unit/ci-cd/workflow_release.rs']) {
   files.push({ file, revision: nativePlatformPausePredecessor });
 }
