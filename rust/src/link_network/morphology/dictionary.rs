@@ -1,8 +1,9 @@
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use sha2::{Digest, Sha256};
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
+
+use super::sha256;
 
 const SOURCE: &str = include_str!("../../data/morphology/open-corpora.lino");
 
@@ -23,7 +24,7 @@ fn read_file(directory: &Path, name: &str) -> io::Result<Vec<u8>> {
     std::fs::File::open(directory.join(name))?
         .take(u64::try_from(size).expect("registered file size") + 1)
         .read_to_end(&mut bytes)?;
-    if bytes.len() != size || format!("{:x}", Sha256::digest(&bytes)) != digest {
+    if bytes.len() != size || sha256(&bytes) != digest {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             format!("invalid OpenCorpora file {name}"),

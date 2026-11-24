@@ -1,5 +1,5 @@
 //! Unexecuted private draft. Native compilation and observation run only in CI.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, ParseConfiguration, SelfTranslationOptions,
     create_typed_program_links, decode_link_network_binary, decode_typed_program_links,
@@ -7,7 +7,6 @@ use meta_language::{
     read_structured_data_lino, self_translate, self_translate_with, self_translation_signatures,
 };
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path, process::Command, sync::OnceLock};
 
 fn root() -> &'static Path {
@@ -26,10 +25,7 @@ fn owned_auxiliary_fixture() -> Value {
             u64::try_from(bytes.len()).unwrap(),
             input["bytes"].as_u64().unwrap()
         );
-        assert_eq!(
-            format!("{:x}", Sha256::digest(&bytes)),
-            input["sourceSha256"].as_str().unwrap()
-        );
+        assert_eq!(sha256(&bytes), input["sourceSha256"].as_str().unwrap());
         assert_eq!(
             String::from_utf8(bytes).unwrap(),
             input["source"].as_str().unwrap()
@@ -1026,10 +1022,7 @@ fn the_complete_original_shared_algorithm_and_every_three_node_graph_execute_thr
             u64::try_from(source.len()).unwrap(),
             input["bytes"].as_u64().unwrap()
         );
-        assert_eq!(
-            format!("{:x}", Sha256::digest(&source)),
-            input["sourceSha256"].as_str().unwrap()
-        );
+        assert_eq!(sha256(&source), input["sourceSha256"].as_str().unwrap());
     }
     let mut source = closure["source"].as_str().unwrap().to_owned();
     let mut expected = String::new();

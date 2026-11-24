@@ -8,7 +8,9 @@ use self::agreement_policy::russian_number_agreement_kind;
 use self::dictionary::RussianDictionary;
 use self::english::english_morphology;
 use regex::Regex;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::sync::{Arc, LazyLock, Mutex};
 use unicode_normalization::UnicodeNormalization;
@@ -54,6 +56,15 @@ struct MorphologyProfile {
 
 fn fields(line: &'static str) -> impl Iterator<Item = &'static str> {
     line[1..line.len() - 1].split_ascii_whitespace()
+}
+
+fn sha256(bytes: &[u8]) -> String {
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut hex, byte| {
+            let _ = write!(hex, "{byte:02x}");
+            hex
+        })
 }
 
 fn locale(language: &str) -> &'static str {

@@ -1,10 +1,8 @@
 use std::sync::LazyLock;
 
+use super::{WeightedReading, fields, sha256};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
-use sha2::{Digest, Sha256};
-
-use super::{WeightedReading, fields};
 
 const DATA: &str = include_str!("../../data/morphology/english.lino");
 
@@ -49,7 +47,7 @@ impl EnglishDictionary {
         let bytes = decompress_to_vec_zlib_with_limit(&compressed, size)
             .expect("compressed English morphology data");
         assert_eq!(bytes.len(), size, "English morphology data size");
-        assert_eq!(format!("{:x}", Sha256::digest(&bytes)), *digest);
+        assert_eq!(sha256(&bytes), *digest);
         let (text, offsets) = bytes.split_at(text_size);
         let table = String::from_utf8(text.to_vec()).expect("English morphology rows");
         let mut forms = Vec::with_capacity(row_count);

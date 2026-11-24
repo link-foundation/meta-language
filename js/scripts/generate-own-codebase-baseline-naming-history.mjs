@@ -87,6 +87,8 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
       'js/src/typed-program-links-validation.js',
       'js/tests/translation-required-field-native-host-succession.test.js',
       'rust/tests/unit/translation_javascript_record_parameters.rs',
+      'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
+      'rust/tests/unit/translation_surface_reference_analysis.rs',
       'js/tests/issue-195-evidence-node-test-placement.test.js',
     ].map(path=>({path,revision:baseline})),
     ...[

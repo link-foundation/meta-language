@@ -49,11 +49,10 @@ fn actual_source_selection_recursively_marks_nested_structural_types() {
 
 #[test]
 fn late_structural_equality_selection_marks_actual_types_and_preserves_reference_identity() {
-    use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+    use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
     use meta_language::{
         BinaryLinksOptions, decode_link_network_binary, encode_link_network_binary,
     };
-    use sha2::{Digest, Sha256};
     use std::{fs, process::Command};
 
     // This unreleased implementation epoch keeps the exact predecessor input.
@@ -88,7 +87,7 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
         usize::try_from(profile["sourceClosure"]["bytes"].as_u64().unwrap()).unwrap()
     );
     assert_eq!(
-        format!("{:x}", Sha256::digest(definition.as_bytes())),
+        sha256(definition.as_bytes()),
         profile["sourceClosure"]["sourceSha256"].as_str().unwrap()
     );
     for (tool, rust) in [("node", false), ("rustc", true)] {
@@ -112,6 +111,12 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
             "uncovered {tool} version {version}"
         );
     }
+    let observe = |source: &str| {
+        Command::new("node")
+            .args(["--input-type=module", "-e", source])
+            .output()
+            .expect("Node.js observes the complete actual module")
+    };
     let source = "function same(left,right){return left===right;} console.log(same([1],[1]));";
     let original = observe(source);
     assert!(original.status.success());
