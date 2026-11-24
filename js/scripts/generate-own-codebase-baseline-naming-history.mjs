@@ -58,6 +58,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/scripts/generate-boolean-declaration-value-hosts.mjs',
     'js/scripts/generate-continuation-historical-inputs.mjs',
     'js/scripts/generate-current-ci-repair-source-history.mjs',
+    'js/scripts/generate-dependency-inventory-order-history.mjs',
     'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
     'js/scripts/generate-raw-oracle-contract-partitions.mjs',
     'js/scripts/generate-scoped-iteration-native-host-source-history.mjs',
