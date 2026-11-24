@@ -44,7 +44,9 @@ test('six bounded translation partitions retain every previous file once and pre
 
 test('nine translation jobs retain complete historical cohorts and merge their exact artifact set',()=>{
   const workflow=read(javascriptWorkflowSource);
-  const [previous,scheduled,current]=readIssue245SourcePair(javascriptWorkflowSource).versions;
+  const versions=readIssue245SourcePair(javascriptWorkflowSource).versions;
+  const [previous,scheduled]=versions;
+  const current=versions.at(-1);
   assert.equal(workflow,current);
   const [six,nine]=[6,9].map(count=>Array.from({length:count},(_,index)=>
     '          - {group: translation, partition: '+(index+1)+', shards: '+count+'}\n').join(''));

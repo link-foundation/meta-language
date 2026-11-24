@@ -83,13 +83,24 @@ test('two required raw contract cells preserve complete commands limits and the 
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
   const live=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
   const checkoutFilter="          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n";
-  const [,scheduled,currentWorkflow]=readIssue245SourcePair(javascriptWorkflowSource).versions;
+  const [,scheduled,blobless,currentWorkflow]=readIssue245SourcePair(javascriptWorkflowSource).versions;
   assert.equal(currentSource,currentWorkflow);
-  assert.equal(currentSource.split(checkoutFilter).length,2);
-  assert.equal(currentSource.replace(checkoutFilter,''),scheduled);
+  assert.equal(blobless.split(checkoutFilter).length,2);
+  assert.equal(blobless.replace(checkoutFilter,''),scheduled);
   assert.match(live.steps[0].text,/fetch-depth: 0/u);
-  assert.ok(live.steps[0].text.includes(checkoutFilter.trimEnd()));
-  assert.deepEqual(parseWorkflow(currentSource.replace(checkoutFilter,'')).find(row=>row.id==='package-checks'),after);
+  assert.deepEqual(parseWorkflow(scheduled).find(row=>row.id==='package-checks'),after);
+  const fullCheckout = "        if: ${{ matrix.group != 'source-model-raw' }}\n";
+  assert.equal(live.steps[0].text.replace(fullCheckout,''),after.steps[0].text);
+  const sparseCheckout = live.steps[1];
+  assert.equal(sparseCheckout.name,'Check out raw plan inputs');
+  assert.ok(sparseCheckout.text.includes("        if: ${{ matrix.group == 'source-model-raw' }}\n"));
+  assert.match(sparseCheckout.text,/uses: actions\/checkout@v7\n        with:\n          fetch-depth: 0\n/u);
+  assert.ok(sparseCheckout.text.includes('          sparse-checkout-cone-mode: false\n'));
+  assert.ok(sparseCheckout.text.trimEnd().endsWith('          sparse-checkout: |\n            /*\n            !/dev/log/\n            !/parity/naming/canonical-concepts.lino'));
+  assert.deepEqual(live.header,after.header);
+  assert.deepEqual(live.steps.slice(2),after.steps.slice(1));
+  assert.deepEqual(parseWorkflow(currentSource).filter(job=>job.id!=='package-checks'),
+    parseWorkflow(scheduled).filter(job=>job.id!=='package-checks'));
   assert.equal(plan.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'",''),old.text);
   assert.equal(schema.text.replace("\n          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'",'')
     .replace('Run complete original link raw schema and consumer contracts',old.name)

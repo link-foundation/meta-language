@@ -24,7 +24,7 @@ const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
 /** Largest observed workload first; source changes use a byte-size estimate.
  * Timing samples only choose owners. They never establish test completion. */
-export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
+export function partitionMeasuredWorkloads(files,count,{readSource,costs,usePreviousFileRates=false}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
  const measured=costs??readProjectData(schedulingFile);
@@ -43,7 +43,8 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
  const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
   const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
-  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
+  const estimatedRate=usePreviousFileRates&&row?Math.max(rate,row.milliseconds/row.bytes):rate;
+  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*estimatedRate))};});
  workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
  const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
  for(const row of workloads){const owner=loads.indexOf(Math.min(...loads));loads[owner]+=row.milliseconds;shards[owner].push(row.file);}
@@ -158,7 +159,7 @@ export function partitionGroupFiles(files, shard = '1/1') {
     assert.equal(measured.run, 45296878458);
     assert.equal(measured.revision, 'c96947107d97819e90af6406279a8f76212f3bc8');
     const costs = { ...baseline, entries: measured.entries };
-    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { costs })[index - 1]
+    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { costs, usePreviousFileRates: true })[index - 1]
       .map(file => file.slice('js/tests/'.length));
   }
   if (count === 6 && files.includes('issue-195-interchange-api-cli.test.js')) {

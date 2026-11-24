@@ -369,9 +369,20 @@ jobs:
             generated_slice: first
     steps:
       - uses: actions/checkout@v7
+        if: ${{ matrix.group != 'source-model-raw' }}
         with:
           fetch-depth: 0
-          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}
+
+      - name: Check out raw plan inputs
+        if: ${{ matrix.group == 'source-model-raw' }}
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/dev/log/
+            !/parity/naming/canonical-concepts.lino
 
       - name: Simulate fresh merge with base branch
         if: github.event_name == 'pull_request'

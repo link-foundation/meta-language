@@ -3818,20 +3818,30 @@ missing or duplicate registrations and native admission in a JavaScript-only
 profile refuse. This follows CI 39489000471, which completed all three source
 archives and constructed its observation plan before the unchanged deadline.
 CI 45104457483 spent nearly two minutes fetching and checking out the whole
-repository before the raw plan job. That job requests a blobless checkout with
-full commit history. Git materializes the checked-out tree and fetches older
-blobs on demand. The fresh merge check, exact source checks, all seven plan
-contracts and ten-minute deadline still apply.
+repository before the raw plan job. The first repair used a blobless checkout
+with full commit history and materialized the entire current tree.
+CI 45296878458 spent two minutes and nine seconds in
+checkout before the complete plan reached the ten-minute limit. The raw plan
+checkout materializes the current inputs with sparse checkout. It omits
+historical development logs and the canonical naming authoring registry checked
+by the tooling job. Its dependency and provenance archives remain present.
+Full commit and tree history, the fresh merge check, exact source checks, all
+seven plan contracts and the ten-minute deadline still apply.
 Each raw execution boundary rereads both emission archives, the raw source and
 all producer inputs. An execution can reuse a successful emission profile proof
 only when every input buffer exactly matches the verified bytes. The transport,
 process, observation and profile-specific checks still run on every execution.
 Successful timing and full native execution still require corrected-commit CI.
 The complete tooling test group likewise has four required physical cells after
-its measured fifteen-minute cancellation. The existing modulo file partitioner
-assigns every current test file exactly once; all commands, assertions, flags,
-deadlines and aggregate prerequisites remain intact. Historical workflow checks
-recover their exact original inputs through a separate checked matrix inverse.
+its measured fifteen-minute cancellation. The schedule assigns every current
+test file exactly once and preserves commands, assertions, flags, deadlines and
+aggregate prerequisites. Historical workflow checks recover their exact
+original inputs through a separate checked matrix inverse.
+Tooling assignments use measured durations for identical source bytes. When a
+previously measured tooling file changes, its size estimate uses the larger of
+its previous milliseconds per byte and the catalog-wide median rate. This
+keeps expensive files represented after small source edits. Newly added files
+use the catalog-wide rate. Estimates only choose owners.
 An exact native checked-program mismatch keeps its original rejection and adds
 a bounded first differing field path. Declaration-list archive failures retain
 their actual original input in the failure message. Neither diagnostic accepts,
