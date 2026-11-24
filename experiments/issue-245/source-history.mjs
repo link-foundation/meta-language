@@ -28,6 +28,7 @@ const schedulingRevision = '0deae514483822ffd2a42a4fa0f4c88744d0745d';
 const precedingCheckRevision = '591e98639e99c569f063214c3ae8a756185f4add';
 const translationTimingRevision = 'b9c1be99f8b5bbac85cf29014c5d14ff6d7bea2d';
 const grammarTimingRevision = '4ecca483361d5f47ad38698fe0d24653f6ef641f';
+const toolingTimingRevision = '8561a770850ea0b9cfa218c23ccc6958dae2a16a';
 const profiles = [
   [runtimeSourceFiles[0], { revision: mainRevision,
     predecessor: '7b0c3936262249a43ce687a315737a59af51fed7c79ed616faddd35cd1aab221',
@@ -88,7 +89,11 @@ const profiles = [
     current: '7db56777697ee79ad3ee7d303ce65434297a82decd77388e8a950cea00e9a4c5' }],
   [javascriptTestGroupsSource, { revision: grammarTimingRevision,
     predecessor: '40805d77e1a4aa59749ab2df63640c9fe7062ee5246e6bdfe13e45a4a88680dd',
-    current: '21b9f6b4ccd7c35468b0e63e1bffd770be5fa1e2f7e1b7998bea9fa40449e38d' }],
+    current: '21b9f6b4ccd7c35468b0e63e1bffd770be5fa1e2f7e1b7998bea9fa40449e38d',
+    successorRevision: toolingTimingRevision }],
+  [javascriptTestGroupsSource, { revision: toolingTimingRevision,
+    predecessor: '21b9f6b4ccd7c35468b0e63e1bffd770be5fa1e2f7e1b7998bea9fa40449e38d',
+    current: 'c0fb616bde11397df01a4a2b3d0324eaa565fca3c5af1aa8fc6b045ec2622c53' }],
 ];
 const reviewedFiles = new Set(profiles.map(([file]) => file));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');

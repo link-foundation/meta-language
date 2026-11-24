@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readProjectData, writeProjectData } from '../../js/scripts/project-data.mjs';
 import { partitionMeasuredWorkloads, partitionTests } from '../../js/scripts/test-groups.mjs';
+import { measureSequentialTestFiles } from './javascript-test-wall-costs.mjs';
 
 const [directory, option, ...extra] = process.argv.slice(2);
 assert.ok(directory && extra.length === 0 && (option === undefined || option === '--write'));
@@ -25,43 +26,6 @@ function git(...args) {
 
 function hash(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
-}
-
-function measure(log, assigned, sources) {
-  const owners = new Map();
-  for (const file of assigned) {
-    owners.set(file.slice(3), file);
-    for (const match of sources.get(file).toString().matchAll(/\btest\(\s*(['"])([^\n]*?)\1\s*,/gu)) {
-      const title = match[2];
-      owners.set(title, owners.has(title) && owners.get(title) !== file ? null : file);
-    }
-  }
-  const samples = new Map();
-  let beginning, start, end, currentFile, title, lastResult;
-  for (const line of log.split('\n')) {
-    const time = Date.parse(line.slice(0, 28));
-    if (line.endsWith('TAP version 13')) start = beginning = time;
-    if (start === undefined) continue;
-    const subtest = /# Subtest: (.*)$/u.exec(line);
-    if (subtest) title = subtest[1];
-    if (/Z (?:not )?ok \d+ - /u.test(line)) {
-      const file = owners.get(title);
-      if (file && currentFile !== file) {
-        if (currentFile) {
-          assert.ok(assigned.indexOf(currentFile) < assigned.indexOf(file));
-          samples.set(currentFile, Math.max(1, lastResult - beginning));
-          beginning = lastResult;
-        }
-        currentFile = file;
-      }
-      lastResult = time;
-      title = undefined;
-    }
-    if (/Z # duration_ms [0-9.]+$/u.test(line)) end = time;
-  }
-  assert.ok(start < end && currentFile, 'the complete TAP stream has an identifiable last file');
-  samples.set(currentFile, Math.max(1, end - beginning));
-  return { samples, testMilliseconds: end - start };
 }
 
 const entries = new Map();
@@ -89,7 +53,7 @@ for (const { run, head, revision, jobs, jobIds } of snapshots) {
     assert.ok(bytes.length < 2_000_000 && log.includes(revision) && log.includes('Cleaning up orphan processes'));
     assert.ok(log.includes(`TEST_GROUP_SHARD: ${number}/6`));
     assert.match(log, /Z # fail 0\r?\n/u);
-    const { samples, testMilliseconds } = measure(log, shards[number - 1], sources);
+    const { samples, testMilliseconds } = measureSequentialTestFiles(log, shards[number - 1], sources);
     const setupMilliseconds = Date.parse(job.steps.find(step => step.name === 'Run the test group').started_at)
       - Date.parse(job.started_at);
     assert.ok(setupMilliseconds > 0 && testMilliseconds > 0);

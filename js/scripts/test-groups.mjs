@@ -151,8 +151,16 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
-  // historical modulo cohorts retain their independent exact partition rules.
+  if (count === 4 && files.includes('issue-195-evidence-tooling-partitions.test.js')) {
+    const baseline = readProjectData(schedulingFile);
+    const measured = readProjectData(new URL('../../parity/fixtures/ci-45296878458-tooling-test-wall-costs.lino', import.meta.url));
+    assert.equal(measured.schemaVersion, 1);
+    assert.equal(measured.run, 45296878458);
+    assert.equal(measured.revision, 'c96947107d97819e90af6406279a8f76212f3bc8');
+    const costs = { ...baseline, entries: measured.entries };
+    return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { costs })[index - 1]
+      .map(file => file.slice('js/tests/'.length));
+  }
   if (count === 6 && files.includes('issue-195-interchange-api-cli.test.js')) {
     const baseline = readProjectData(schedulingFile);
     const measured = readProjectData(new URL('../../parity/fixtures/ci-45250356617-grammar-test-wall-costs.lino', import.meta.url));
