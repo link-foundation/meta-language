@@ -39,7 +39,8 @@ export function readHistoricalBinaryRustEmission() {
 }
 
 function checkGeneration(mode) {
-  const sharedPaths = [binarySource, binaryGenerator, binaryStyles];
+  const sharedPaths = [binarySource, binaryGenerator, binaryStyles,
+    'rust/src/data/link-network-binary-schema.lino'];
   const recordPaths = [recordGenerator, candidateStyleBuilder, 'js/src/link-network-binary-record-rules.js',
     'js/scripts/binary-record-block-return-styles.mjs', 'js/scripts/binary-record-compiler-styles.mjs',
     'parity/self-translation/binary-record-ci-block-return-review-116894548503.lino',
