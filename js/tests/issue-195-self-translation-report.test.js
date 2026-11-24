@@ -16,6 +16,21 @@ import { createReportMeasurementWorker } from '../scripts/self-translation-repor
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
 
+function readCompletedReportTree(report, git) {
+  const revision = 'c96947107d97819e90af6406279a8f76212f3bc8';
+  assert.equal(report.revision, revision);
+  assert.equal(git(['hash-object', '-t', 'commit', '--stdin'], { input: report.mergeCommit }).toString().trim(),
+    revision, 'archived merge commit must have its original Git identity');
+  const header = /^tree ([a-f0-9]{40})\nparent ([a-f0-9]{40})\nparent ([a-f0-9]{40})\n/u.exec(report.mergeCommit);
+  assert.ok(header, 'archived commit retains the merge tree and both parents');
+  const [, tree, base, head] = header;
+  assert.equal(base, 'ec9f4efb0e9ef936114e09823981352f6db13700');
+  assert.equal(head, report.head);
+  assert.equal(git(['rev-parse', '--verify', `${head}^{tree}`]).toString().trim(), tree,
+    'the reachable head retains the exact observed merge tree');
+  return tree;
+}
+
 test('report checkout preserves the complete workload and removes unrelated archives', () => {
   const repository = fileURLToPath(new URL('../../', import.meta.url));
   const workflow = '.github/workflows/ci.yml';
@@ -152,13 +167,19 @@ test('recent report timings balance all complete module workloads across the sam
   assert.ok(longest(updated) <= 17 * 60 * 1000, 'updated costs distribute the expensive modules across the sixteen owners');
 
   const complete = readProjectData(new URL('../../parity/fixtures/ci-45296878458-report-workload-costs.lino', import.meta.url));
-  assert.equal(git(['rev-parse', `${complete.revision}^2`]).toString().trim(), complete.head);
+  const completeTree = readCompletedReportTree(complete, git);
+  assert.throws(() => readCompletedReportTree({
+    ...complete, mergeCommit: complete.mergeCommit.replace(`parent ${complete.head}`, 'parent ' + '1'.repeat(40)),
+  }, git), /original Git identity/u);
+  assert.throws(() => readCompletedReportTree({
+    ...complete, mergeCommit: complete.mergeCommit.replace(`tree ${completeTree}`, 'tree ' + '1'.repeat(40)),
+  }, git), /original Git identity/u);
   assert.deepEqual(complete.logs.map(row => row.number), record.logs.map(row => row.number));
   for (const row of complete.logs) {
     assert.equal(row.conclusion, 'success');
     assert.deepEqual(row.unfinished, []);
   }
-  const { files: completeSources, bytes: completeBytes } = readSources(complete.revision);
+  const { files: completeSources, bytes: completeBytes } = readSources(completeTree);
   assert.equal(completeSources.length, 382);
   assert.deepEqual(complete.entries.map(row => row.file).sort(), completeSources);
   for (const row of complete.entries) {

@@ -27,16 +27,15 @@ test('four tooling shards redistribute the completed file workload that reached 
   assert.ok(Math.max(...measuredLoads) < expired.testMilliseconds * 0.8, measuredLoads.join(', '));
 });
 
-test('versioned Rust behavior runs on the evidence toolchain and compiler gates use stable', () => {
+test('Rust compiler gates and versioned behavior use the same evidence toolchain', () => {
   const readJobs = file => parseWorkflow(readFileSync(new URL('../../.github/workflows/' + file, import.meta.url), 'utf8'));
   const rust = new Map(readJobs('rust.yml').map(job => [job.id, job]));
   const compiler = job => job.steps.flatMap(step => [...step.text.matchAll(/uses: dtolnay\/rust-toolchain@([^\s]+)/gu)].map(match => match[1]));
   const evidenceVersions = readJobs('ci.yml').flatMap(compiler);
   assert.deepEqual([...new Set(evidenceVersions)], ['1.99.0']);
-  for (const job of ['test', 'coverage', 'fresh-merge', 'original-link-raw-observations']) {
+  // Floating stable reached Clippy 1.100, outside the current evidence profile.
+  // https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138269579668
+  for (const job of ['check', 'lint', 'test', 'coverage', 'fresh-merge', 'original-link-raw-observations']) {
     assert.deepEqual(compiler(rust.get(job)), ['1.99.0'], job);
-  }
-  for (const job of ['check', 'lint']) {
-    assert.deepEqual(compiler(rust.get(job)), ['stable'], job);
   }
 });

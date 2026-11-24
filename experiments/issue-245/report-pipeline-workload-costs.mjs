@@ -89,7 +89,9 @@ const logs = reportJobs.map(({ number, job }) => {
 assert.deepEqual([...started].sort(), sources);
 assert.equal(entries.length, sources.length - expectedUnfinished.length);
 entries.sort((left, right) => left.file.localeCompare(right.file));
+// The completed workload must remain replayable when GitHub retires its merge ref.
+const commit = cancelledShard === null ? { mergeCommit: git('cat-file', 'commit', revision).toString('utf8') } : {};
 writeProjectData(new URL(`parity/fixtures/ci-${run}-report-workload-costs.lino`, root), {
-  schemaVersion: 1, run, attempt, head, revision, logs, entries,
+  schemaVersion: 1, run, attempt, head, revision, ...commit, logs, entries,
   boundary: 'Advisory module elapsed durations with shared import and measurement overlap divided evenly. Unfinished modules supply no timing sample or requirement observation.',
 });
