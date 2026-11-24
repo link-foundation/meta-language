@@ -8,6 +8,7 @@ import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectFileBytes } from './project-data.mjs';
+import { applyReviewedPortableCloneStyles } from './portable-compiler-clone-styles.mjs';
 import { reviewResourceDescriptionStyles, reuseResourceArrayPrelude } from './resource-description-reviewed-styles.mjs';
 
 const sourceFile = new URL('../src/resource-description-rules.js', import.meta.url);
@@ -111,7 +112,8 @@ if (process.argv.includes('--update-styles')) {
   writeFileSync(stylesFile, styles.toLino());
 }
 const initialItems = formatItems(items.map(item => styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source));
-const styledItems = formatItems(initialItems.map(initial => styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source));
+const previousStyles = formatItems(initialItems.map(initial => styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source));
+const styledItems = applyReviewedPortableCloneStyles(previousStyles, 'resource_description_rules', format);
 const groups = [];
 let group = [];
 let size = 0;

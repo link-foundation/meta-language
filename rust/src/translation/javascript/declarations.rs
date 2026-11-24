@@ -277,12 +277,12 @@ impl JavaScriptParser {
                 name_token,
                 doc,
                 &[],
-                Body::RecordParameters(Box::new(records)),
+                &Body::RecordParameters(Box::new(records)),
                 is_async,
             );
         }
         let tokens = self.parameters(&name_token.value)?;
-        self.function_body(doc_token, name_token, doc, &tokens, Body::Block, is_async)
+        self.function_body(doc_token, name_token, doc, &tokens, &Body::Block, is_async)
     }
 
     /// `const name = (…) => …` or `const name = function (…) { … }` before any
@@ -323,7 +323,7 @@ impl JavaScriptParser {
             }
             self.cursor.expect("(", Some(&name_token.value))?;
             let tokens = self.parameters(&name_token.value)?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Block, is_async)?
+            self.function_body(start, &name_token, doc, &tokens, &Body::Block, is_async)?
         } else {
             let tokens = if self.cursor.eat("(").is_some() {
                 self.parameters(&name_token.value)?
@@ -331,7 +331,7 @@ impl JavaScriptParser {
                 vec![(self.cursor.identifier(Some("parameter"))?, None)]
             };
             self.cursor.expect("=>", Some(&name_token.value))?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Arrow, is_async)?
+            self.function_body(start, &name_token, doc, &tokens, &Body::Arrow, is_async)?
         };
         self.cursor.eat(";");
         Ok(function)
@@ -499,7 +499,7 @@ impl JavaScriptParser {
         name_token: &Token,
         doc: Option<JsDoc>,
         tokens: &[(Token, Option<SExpr>)],
-        body: Body,
+        body: &Body,
         is_async: bool,
     ) -> Result<SFn> {
         let name = name_token.value.clone();
@@ -507,7 +507,7 @@ impl JavaScriptParser {
             self.sequential_async = true;
         }
         // A type JSDoc does not declare is inferred once the whole program is read.
-        let records = match &body {
+        let records = match body {
             Body::RecordParameters(records) => Some(records.as_ref()),
             _ => None,
         };
@@ -630,7 +630,7 @@ impl JavaScriptParser {
                     super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
                 );
             }
-            match &body {
+            match body {
                 Body::Arrow if !parser.cursor.is("{") => {
                     let token = parser.peek();
                     let expr = if is_async {

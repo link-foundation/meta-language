@@ -294,7 +294,7 @@ pub fn ml_plan_java_script_record_parameters_loop13(
                                                     let name = self::read_required_text_fact(values, binding_3);
                                                     if (self::accept_java_script_record_parameter_binding(&(self::read_required_text_fact(kinds, binding_3)), &(name), &(names), reserved)) {
                                                         {
-                                                            let names_2 = { let (ml_append_right, ml_append_left) = (vec![name.clone()], names); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                            let names_2 = { let (ml_append_right, ml_append_left) = (vec![name], names); self::ml_array::append(ml_append_left, ml_append_right) };
                                                             {
                                                                 let pairs_2 = { let (ml_append_right, ml_append_left) = (vec![property, binding_3], pairs); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                 if at_5 >= (kinds.len() as f64) {
@@ -430,8 +430,7 @@ pub fn ml_plan_java_script_record_parameters_loop11(
                             )) {
                                 {
                                     let names_3 = {
-                                        let (ml_append_right, ml_append_left) =
-                                            (vec![name.clone()], names);
+                                        let (ml_append_right, ml_append_left) = (vec![name], names);
                                         self::ml_array::append(ml_append_left, ml_append_right)
                                     };
                                     {

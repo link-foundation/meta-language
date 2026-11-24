@@ -158,13 +158,14 @@ fn target_id(targets: &mut Vec<String>, value: &str) -> Option<f64> {
     if value.is_empty() {
         return None;
     }
-    let index = match targets.iter().position(|target| target == value) {
-        Some(index) => index,
-        None => {
+    let index = targets
+        .iter()
+        .position(|target| target == value)
+        .unwrap_or_else(|| {
+            let index = targets.len();
             targets.push(value.to_owned());
-            targets.len() - 1
-        }
-    };
+            index
+        });
     source_number(index)
 }
 

@@ -4,15 +4,15 @@ use super::{dependency_rules, recursive_groups::source_number};
 use crate::native_grammar_parser::{NativeNode, parse_native};
 
 #[derive(Default)]
-struct Facts<'a> {
+pub(super) struct Facts<'a> {
     nodes: Vec<&'a NativeNode>,
-    terms: Vec<&'a str>,
-    fields: Vec<&'a str>,
-    parents: Vec<f64>,
-    starts: Vec<f64>,
-    ends: Vec<f64>,
-    texts: Vec<&'a str>,
-    errors: Vec<f64>,
+    pub(super) terms: Vec<&'a str>,
+    pub(super) fields: Vec<&'a str>,
+    pub(super) parents: Vec<f64>,
+    pub(super) starts: Vec<f64>,
+    pub(super) ends: Vec<f64>,
+    pub(super) texts: Vec<&'a str>,
+    pub(super) errors: Vec<f64>,
 }
 
 impl<'a> Facts<'a> {
@@ -52,25 +52,14 @@ pub(super) fn read_binding(source: &str) -> Option<(u8, String)> {
     let root = parse_native("native-javascript", source);
     let mut facts = Facts::default();
     facts.visit(&root, "", -1.0, source)?;
-    let selected = dependency_rules::read_deferred_binding(
-        &facts.terms,
-        &facts.fields,
-        &facts.parents,
-        &facts.starts,
-        &facts.ends,
-        &facts.texts,
-        &facts.errors,
-        source_number(source.len())?,
-    );
+    let selected = dependency_rules::read_deferred_binding(&facts, source_number(source.len())?);
     let [kind, at] = selected.as_slice() else {
         return None;
     };
-    let kind = if *kind == 1.0 {
-        1
-    } else if *kind == 2.0 {
-        2
-    } else {
-        return None;
+    let kind = match *kind {
+        1.0 => 1,
+        2.0 => 2,
+        _ => return None,
     };
     let at = crate::translation::frontend_rules::ml_array::number_index(*at)?;
     let node = facts.nodes.get(at)?;

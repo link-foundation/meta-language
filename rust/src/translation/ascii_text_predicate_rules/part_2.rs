@@ -540,10 +540,7 @@ pub fn ml_plan_rust_ascii_character_callback_loop3(
                                                                     let (
                                                                         ml_append_right,
                                                                         ml_append_left,
-                                                                    ) = (
-                                                                        vec![method.clone()],
-                                                                        methods,
-                                                                    );
+                                                                    ) = (vec![method], methods);
                                                                     self::ml_array::append(
                                                                         ml_append_left,
                                                                         ml_append_right,

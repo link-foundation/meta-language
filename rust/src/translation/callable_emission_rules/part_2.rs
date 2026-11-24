@@ -542,7 +542,7 @@ pub fn ml_read_callable_effectful_declarations_loop10(
                                     {
                                         let names_2 = {
                                             let (ml_append_right, ml_append_left) =
-                                                (vec![name.clone()], names);
+                                                (vec![name], names);
                                             self::ml_array::append(ml_append_left, ml_append_right)
                                         };
                                         {

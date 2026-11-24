@@ -9,7 +9,7 @@ import {readCurrentNativeHostSourceHistory,restoreCurrentNativeHostSource} from 
 import {generateBooleanParameterTuples} from '../scripts/generate-boolean-parameter-tuples.mjs';
 import {generateRequiredFieldNativeHostSuccession} from '../scripts/generate-required-field-native-host-succession.mjs';
 import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_LOOP_SOURCE,pinScopedIterationNativeSource,readScopedIterationNativeHostSourceHistory,
-  verifyScopedIterationNativeHostSourceHistory,restoreScopedIterationNativeHostSource} from '../scripts/scoped-iteration-native-host-source-history.mjs';
+  verifyScopedIterationNativeHostSourceHistory,restoreScopedIterationNativeHostSource,restoreScopedIterationDeclarationSource} from '../scripts/scoped-iteration-native-host-source-history.mjs';
 import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
 import {generateJavaScriptMutableArrayBindings} from '../scripts/generate-javascript-mutable-array-bindings.mjs';
 import {generateScopedIterationNativeHostSourceHistory} from '../scripts/generate-scoped-iteration-native-host-source-history.mjs';
@@ -19,7 +19,10 @@ test('source epoch controls select a covered Node runtime and keep the complete 
   const[major,minor]=process.versions.node.split('.').map(Number);
   assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 || >=24 <25 required');
   const packet=readScopedIterationNativeHostSourceHistory(),specification=SCOPED_ITERATION_NATIVE_SOURCE;
-  assert.equal(packet.current.source,read(specification.file).toString('utf8'));
+  const actual=read(specification.file).toString('utf8');
+  assert.match(actual,/body: &Body,/u);
+  assert.equal(packet.current.source,restoreScopedIterationDeclarationSource(actual));
+  assert.equal(restoreScopedIterationDeclarationSource(actual+'\n'),actual+'\n');
   assert.equal(packet.current.bytes-packet.previous.bytes,57);
   assert.equal(restoreScopedIterationNativeHostSource(packet.current.source,specification.file,'required field native host'),packet.previous.source);
   const old=readRequiredFieldNativeHostSuccession().sources.find(row=>row.file===specification.file);assert.ok(old);

@@ -62,25 +62,27 @@ export function deriveDeclarationDependencyNativeInterface(files,libraryInterfac
     ['acceptRecursiveDeclarationAuxiliaryCorrespondence','accept_auxiliary_correspondence',[['whole','numbers'],['member','numbers']],'bool'],
     ['acceptRecursiveDeclarationOwnedEmission','accept_owned_emission',[['roles','numbers'],['constructor_counts','numbers'],['blocks','numbers'],['mappings','numbers'],['forbidden_targets','numbers']],'bool'],
     ['acceptRecursiveDeclarationOwnedPublication','accept_owned_publication',[['members','number'],['declarations','number'],['signatures','number'],['completed','number'],['proofs','numbers']],'bool'],
-    ['readDeclarationDeferredBinding','read_deferred_binding',[['terms','texts'],['fields','texts'],['parents','numbers'],['starts','numbers'],['ends','numbers'],['texts','texts'],['errors','numbers'],['source_bytes','number']],'Vec<f64>'],
+    ['readDeclarationDeferredBinding','read_deferred_binding',[['terms','texts'],['fields','texts'],['parents','numbers'],['starts','numbers'],['ends','numbers'],['texts','texts'],['errors','numbers'],['source_bytes','number']],'Vec<f64>',"facts: &super::deferred_scope::Facts<'_>"],
     ['acceptDeclarationDeferredModuleScope','accept_deferred_module_scope',[['forms','texts']],'bool'],
   ];
   const definitions=[];
-  for(const[source,name,parameters,result]of specifications){
+  for(const[source,name,parameters,result,record]of specifications){
     const row=libraryInterface.find(row=>row.source===source),actual=readActualDecisionHeader(row,files);
     assert.equal(actual.parameters.length,parameters.length);assert.equal(actual.result,result,'unknown result ABI refuses');
-    const declarations=[],arguments_=[];let conversion='';
+    const declarations=record?[record]:[],arguments_=[];let conversion='';
     parameters.forEach(([parameter,kind],index)=>{
       const type=actual.parameters[index];
+      const member=record?'facts.'+parameter:parameter;
       if(kind==='numbers'){
-        declarations.push(parameter+': &[f64]');assert.ok(['&[f64]','Vec<f64>'].includes(type),'unknown actual Number array loan refuses');
-        arguments_.push(parameter+(type==='Vec<f64>'?'.to_vec()':''));
+        if(!record)declarations.push(parameter+': &[f64]');
+        assert.ok(['&[f64]','Vec<f64>'].includes(type),'unknown actual Number array loan refuses');
+        arguments_.push(type==='Vec<f64>'?member+'.to_vec()':(record?'&':'')+member);
       }else if(kind==='texts'){
-        declarations.push(parameter+': &[&str]');
+        if(!record)declarations.push(parameter+': &[&str]');
         assert.ok(['&[String]','Vec<String>','&[self::ml_string::Text]','Vec<self::ml_string::Text>'].includes(type),'unknown actual string array owner/loan refuses');
         conversion+=type.includes('ml_string::Text')
-          ?'    let '+parameter+' = '+parameter+'.iter().map(|value| rules::ml_string::Text::from_text(value)).collect::<Vec<_>>();\n'
-          :'    let '+parameter+' = '+parameter+'.iter().map(|value| (*value).to_owned()).collect::<Vec<_>>();\n';
+          ?'    let '+parameter+' = '+member+'.iter().map(|value| rules::ml_string::Text::from_text(value)).collect::<Vec<_>>();\n'
+          :'    let '+parameter+' = '+member+'.iter().map(|value| (*value).to_owned()).collect::<Vec<_>>();\n';
         arguments_.push(type.startsWith('&')?'&'+parameter:parameter);
       }else{
         const primitive=kind==='number'?'f64':'bool';assert.equal(type,primitive,'unknown primitive ABI refuses');declarations.push(parameter+': '+primitive);arguments_.push(parameter);

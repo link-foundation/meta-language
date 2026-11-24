@@ -4283,6 +4283,12 @@ scheduling change.
   hosted run. Each generation path applies its own reviewed replacements to
   those formatted functions. The frozen metadata buffer candidate continues to
   verify its complete recorded producer and original output.
+  The resource description, ASCII predicate, callable emission, declaration
+  dependency, grammar lexer and record parameter generators use the same
+  source-bound review. They replay the compiler's 31 additional redundant clone
+  diagnostics through decorators after formatting complete translated functions.
+  The Boolean value host generator replays its exact reviewed visibility and
+  method reference corrections after authenticating the original host archive.
   Rendered review never acquires invented machine applicability or substitutes
   for native compilation and execution in CI.
 - Full acceptance and native evidence stages execute in CI. Local validation

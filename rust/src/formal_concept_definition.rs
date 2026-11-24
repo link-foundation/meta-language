@@ -199,7 +199,7 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
                 if relation.label == "source span"
                     || (parent == body && relation.label == "provenance")
                 {
-                    exclusions.insert((parent, relation.label.clone()));
+                    exclusions.insert((parent, relation.label));
                 }
             }
         }
@@ -335,9 +335,8 @@ pub fn encode_formal_concept_definition(
     Ok(result)
 }
 
-// Private graph constructor for the additive declaration-value entry API.
-// The public options type and original wrapper constructor remain unchanged.
-pub(crate) fn encode_formal_function_declaration_context(
+/// Build the declaration-value graph for the crate's entry API.
+pub fn encode_formal_function_declaration_context(
     network: &LinkNetwork,
     typed_root: LinkId,
     entry_declaration: LinkId,

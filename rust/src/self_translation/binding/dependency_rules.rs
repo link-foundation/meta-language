@@ -102,35 +102,32 @@ pub(super) fn accept_owned_publication(
 }
 
 pub(super) fn read_deferred_binding(
-    terms: &[&str],
-    fields: &[&str],
-    parents: &[f64],
-    starts: &[f64],
-    ends: &[f64],
-    texts: &[&str],
-    errors: &[f64],
+    facts: &super::deferred_scope::Facts<'_>,
     source_bytes: f64,
 ) -> Vec<f64> {
-    let terms = terms
+    let terms = facts
+        .terms
         .iter()
         .map(|value| (*value).to_owned())
         .collect::<Vec<_>>();
-    let fields = fields
+    let fields = facts
+        .fields
         .iter()
         .map(|value| (*value).to_owned())
         .collect::<Vec<_>>();
-    let texts = texts
+    let texts = facts
+        .texts
         .iter()
         .map(|value| (*value).to_owned())
         .collect::<Vec<_>>();
     rules::read_declaration_deferred_binding(
         &terms,
         &fields,
-        parents,
-        starts,
-        ends,
+        &facts.parents,
+        &facts.starts,
+        &facts.ends,
         &texts,
-        errors,
+        &facts.errors,
         source_bytes,
     )
 }
