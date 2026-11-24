@@ -8,16 +8,38 @@ import { verifyGitArtifactCertificate } from '../../js/scripts/git-object-certif
 
 const root = new URL('../../', import.meta.url);
 const archive = new URL('./verification-pause-history.lino', import.meta.url);
-const revision = 'eb11fcf94d1a4332ba336e4b2281f084a1a4e3a9';
-const archiveDigest = '3fa6491ba1f035b793ae8bf611c542e2c6c999a1a915e9d781aeec8099eca491';
+export const verificationPauseSourceRevision = 'eb11fcf94d1a4332ba336e4b2281f084a1a4e3a9';
+const archiveDigest = '91cbfab6333e7fd24369c6f19b38abc3bf121962ee2aa27647165ce59a5c4b30';
 const paths = [
   '.github/workflows/ci.yml',
   '.github/workflows/js.yml',
   '.github/workflows/rust.yml',
+  'js/scripts/contributor-instruction-coverage.mjs',
+  'js/scripts/current-ci-repair-source-history.mjs',
   'js/scripts/dependency-inventory-append-history.mjs',
   'js/scripts/dependency-inventory.mjs',
+  'js/scripts/formal-ai-partition-bundles.mjs',
+  'js/scripts/formal-ai-workload-partitions.mjs',
+  'js/scripts/generate-contributor-instruction-coverage.mjs',
+  'js/scripts/generate-own-codebase-baseline-naming-history.mjs',
   'js/scripts/issue-195-formal-ai-workloads.mjs',
+  'js/scripts/issue-195-requirements.mjs',
+  'js/scripts/issue-195-sources.mjs',
+  'js/scripts/own-codebase-baseline-naming-history.mjs',
+  'js/scripts/own-codebase-test-registration-history.mjs',
+  'js/scripts/raw-oracle-contract-partition-history.mjs',
+  'js/scripts/rust-test-shards.mjs',
+  'js/scripts/scheduling-source-history.mjs',
+  'js/tests/cache-fresh-merge-dependencies.test.js',
+  'js/tests/grammar-embedded-region-rules.test.js',
+  'js/tests/issue-195-evidence-contributor-instructions.test.js',
+  'js/tests/issue-195-evidence-formal-ai-partitions.test.js',
   'js/tests/issue-195-evidence-node-dependency.test.js',
+  'js/tests/issue-195-formal-ai-partitions.test.js',
+  'js/tests/link-network-binary.test.js',
+  'js/tests/own-codebase-baseline-naming-history.test.js',
+  'js/tests/support/platform-test-deadline-history.js',
+  'js/tests/support/verification-concurrency-history.js',
   'js/tests/test-groups.test.js',
   'rust/tests/unit/ci-cd/workflow_release.rs',
 ];
@@ -40,7 +62,7 @@ export function restoreVerificationPauseSource(file, source) {
     ...entry.certificate,
     commitText: history.commit,
     trees: entry.certificate.trees.map(id => history.trees[id]),
-  }, original, { revision, path: entry.file, limits: { maxBlobBytes: 262144 } });
+  }, original, { revision: verificationPauseSourceRevision, path: entry.file, limits: { maxBlobBytes: 262144 } });
   return entry.original;
 }
 
@@ -53,7 +75,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const trees = {};
   let commit;
   const sources = paths.map(file => {
-    const { blob, certificate } = captureGitArtifactCertificate(revision, file);
+    const { blob, certificate } = captureGitArtifactCertificate(verificationPauseSourceRevision, file);
     const current = digest(readFileSync(new URL(file, root)));
     assert.notEqual(current, certificate.blob.sha256, file);
     const { commitText, trees: proof, ...owner } = certificate;

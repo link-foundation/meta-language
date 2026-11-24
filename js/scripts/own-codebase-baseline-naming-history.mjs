@@ -5,7 +5,34 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {restoreVerificationPauseSource,verificationPauseSourceRevision} from '../../experiments/issue-245/verification-pause-history.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+
+export const verificationPauseNamingInventories = Object.freeze({
+  'B60 recursive default region source names': Object.freeze([
+    'js/tests/grammar-embedded-region-rules.test.js',
+  ]),
+  'B63 actual source names': Object.freeze([
+    'js/scripts/formal-ai-partition-bundles.mjs',
+    'js/scripts/formal-ai-workload-partitions.mjs',
+    'js/scripts/issue-195-formal-ai-workloads.mjs',
+    'js/tests/issue-195-evidence-formal-ai-partitions.test.js',
+    'js/tests/issue-195-formal-ai-partitions.test.js',
+  ]),
+  'B70 physical field source view names': Object.freeze([
+    'js/scripts/contributor-instruction-coverage.mjs',
+    'js/scripts/dependency-inventory.mjs',
+    'js/scripts/generate-contributor-instruction-coverage.mjs',
+    'js/scripts/rust-test-shards.mjs',
+    'js/tests/issue-195-evidence-contributor-instructions.test.js',
+    'js/tests/issue-195-evidence-formal-ai-partitions.test.js',
+    'js/tests/link-network-binary.test.js',
+    'js/tests/support/platform-test-deadline-history.js',
+    'js/tests/support/verification-concurrency-history.js',
+    'rust/tests/unit/ci-cd/workflow_release.rs',
+  ]),
+});
+
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -144,7 +171,7 @@ export function readOwnCodebaseHistoricalNamingSources(){
   return structuredClone(originalSnapshot.value);
 }
 
-/** Supplement only two original inventories after authenticating current modules. */
+/** Retain previous inventory names after authenticating their current modules. */
 export function extractOwnCodebaseHistoricalNames(root,inventories,history=readOwnCodebaseHistoricalNamingSources()){
   verifyOwnCodebaseHistoricalNamingSources(history);
   assert.deepEqual(pin(readFileSync(resolve(root,policy.driver.file))),policy.driver.current,'the entire naming driver has its reviewed additive source view');
@@ -167,10 +194,12 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     const entries=inventories.filter(entry=>entry.inventory===view.inventory&&entry.files.includes(view.file));
     if(entries.length===0)continue;
     assert.equal(entries.length,1,'the same actual extractor owns the additional historical names');
-    assert.deepEqual(pin(readFileSync(resolve(root,view.file))),source.current,'the selected root retains every complete actual source byte');
+    const checkout=readFileSync(resolve(root,view.file));
+    const retained=pin(checkout).sha256===source.current.sha256?checkout:restoreVerificationPauseSource(view.file,checkout);
+    assert.deepEqual(pin(retained),source.current,`the selected root retains every complete actual source byte for ${view.file}`);
     const entry=entries[0],found=[...new Set(entry.extract(source.predecessor.source,view.file))]
       .map(name=>({name,record:entry.recordOf(name)}));
-    const current=new Set(entry.extract(readFileSync(resolve(root,view.file),'utf8'),view.file));
+    const current=new Set(entry.extract(checkout.toString('utf8'),view.file));
     for(const row of view.names){
       assert.ok(found.some(candidate=>candidate.name===row.name&&candidate.record===row.record),'an unchanged extractor must derive each original name and identity');
       assert.equal(current.has(row.name),false,'actual current names stay in the separate current inventory');
@@ -178,6 +207,25 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
         kind:'complete certified historical source',revision:view.revision,path:view.file,
         bytes:source.predecessor.bytes,sha256:source.predecessor.sha256,
         archive:'parity/naming/array-identity-historical-inventories.lino',boundary:additional.boundary}});
+    }
+  }
+  for (const [description, files] of Object.entries(verificationPauseNamingInventories)) {
+    for (const file of files) {
+      const inventory = description + ' for ' + file;
+      const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));
+      if (!entry) continue;
+      const current = readFileSync(resolve(root, file), 'utf8');
+      const previous = restoreVerificationPauseSource(file, current);
+      assert.notEqual(previous, current, `historical verification names require the complete reviewed source transition for ${file}`);
+      const currentNames = new Set(entry.extract(current, file));
+      for (const name of new Set(entry.extract(previous, file))) {
+        if (currentNames.has(name)) continue;
+        names.push({ inventory, file, name, record: entry.recordOf(name), sourceView: {
+          kind: 'complete certified historical source', revision: verificationPauseSourceRevision, path: file,
+          ...pin(previous), archive: 'experiments/issue-245/verification-pause-history.lino',
+          boundary: 'Historical definitions keep their original identities. The current inventory is checked separately.',
+        } });
+      }
     }
   }
   return names;

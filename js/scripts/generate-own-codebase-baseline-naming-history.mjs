@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy,verifyOwnCodebaseHistoricalNamingSources} from './own-codebase-baseline-naming-history.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
@@ -150,7 +151,8 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   for(const source of sources){
     globalThis.gc?.();
     const current=readFileSync(new URL(source.file,root),'utf8');
-    assert.deepEqual(pin(current),source.current,'normal freshness checks retain every complete current source pin');
+    const retained=pin(current).sha256===source.current.sha256?current:restoreVerificationPauseSource(source.file,current);
+    assert.deepEqual(pin(retained),source.current,'normal freshness checks retain every complete current source pin');
     for(const entry of NAME_INVENTORIES.filter(entry=>!entry.words&&entry.files.includes(source.file))){
       const actual=new Set(entry.extract(current,source.file));
       const names=[...new Set(entry.extract(source.predecessor.source,source.file))].filter(name=>!actual.has(name))

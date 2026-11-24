@@ -28,10 +28,9 @@ const step = (job, name) => {
 
 test('native CI uses the covered toolchain for test harnesses, grammar artifacts and frozen compiler profiles', () => {
   const experiment = rust['native-grammar-outcome-experiment'];
-  for (const job of [rust.check, rust['fresh-merge'], rust.test, rust.coverage, rust['original-link-raw-observations'], experiment, ci['rust-suite']]) {
+  for (const job of [rust.lint, rust.check, rust['fresh-merge'], rust.test, rust.coverage, rust['original-link-raw-observations'], experiment, ci['rust-suite']]) {
     assert.match(step(job, 'Setup Rust').text, /^\s*uses: dtolnay\/rust-toolchain@1\.99\.0$/mu, job.id);
   }
-  assert.match(step(rust.lint, 'Setup Rust').text, /^\s*uses: dtolnay\/rust-toolchain@stable$/mu);
   assert.match(step(experiment, 'Compile and execute the bounded frozen native candidate').run,
     /native-transport\/runner\/run\.mjs --native$/mu);
 });
