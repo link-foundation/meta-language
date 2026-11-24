@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {captureGitArtifactCertificate} from '../scripts/capture-git-artifact-certificate.mjs';
+import {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';
 const file=new URL('../../.github/workflows/rust.yml',import.meta.url);
 const coverageProfile="          CARGO_PROFILE_TEST_OPT_LEVEL: 3\n"
   +"          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'\n"
@@ -25,7 +26,16 @@ test('fresh merge restores the existing successful check cache before every unch
   assert.equal(source.split(block).length,2);
   const original=captureGitArtifactCertificate('90636f9fb52b1b9095defbac041c8089608b8576','.github/workflows/rust.yml');
   assert.equal(source.split(coverageProfile).length,2);
-  const predecessor=removePartitionUploadRetry(source.replace(block,'').replace(coverageProfile,''));
+  const scoped=jobs.find(row=>row.id==='native-grammar-outcome-experiment');assert.ok(scoped);
+  const setup=scoped.steps.find(step=>step.name==='Setup Rust');assert.ok(setup);
+  const scopedCompiler="        # The experiment's receipt accepts Cargo and rustc >=1.90.0 <1.100.0.\n"
+    +"        uses: dtolnay/rust-toolchain@1.99.0";
+  assert.ok(setup.text.includes(scopedCompiler));
+  assert.equal(source.split(setup.text).length,2);
+  const beforeScopedCompiler=restoreIntegrationSource(source,'.github/workflows/rust.yml');
+  assert.equal(beforeScopedCompiler,source.replace(setup.text,
+    setup.text.replace(scopedCompiler,'        uses: dtolnay/rust-toolchain@stable')));
+  const predecessor=removePartitionUploadRetry(beforeScopedCompiler.replace(block,'').replace(coverageProfile,''));
   assert.equal(predecessor,original.blob.toString('utf8'),'every original job, deadline, matrix cell, gate, command and artifact step remains exact');
   assert.match(source,/fresh-merge:[\s\S]*?timeout-minutes: 20/u);
 });
