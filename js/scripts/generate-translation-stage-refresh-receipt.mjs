@@ -19,6 +19,7 @@ const receiptPath = 'parity/fixtures/translation-stage-refresh-receipt.lino';
 const historyPath = 'parity/fixtures/translation-stage-refresh-history.lino';
 const destination = new URL('../../parity/fixtures/translation-stage-refresh-receipt.lino', import.meta.url);
 const historyDestination = new URL('../../parity/fixtures/translation-stage-refresh-history.lino', import.meta.url);
+const verifiedStageReceipts = new Set();
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const blob = (revision, path) => execFileSync('git', ['show', `${revision}:${path}`], {
   cwd: root, maxBuffer: 16 * 1024 * 1024, timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
@@ -49,8 +50,12 @@ export function validateTranslationStageRefreshHistory(history, loadBlob = optio
     }
     identities.add(entry.sourceCommit);
     const receiptBytes = loadBlob(entry.sourceCommit, entry.sourcePath);
-    if (!receiptBytes || hash(receiptBytes) !== entry.sourceSha256
-        || !isDeepStrictEqual(readStructuredDataLino(receiptBytes.toString('utf8')), entry.receipt)) {
+    const receiptHash = receiptBytes && hash(receiptBytes);
+    if (receiptHash !== entry.sourceSha256) {
+      throw new Error('stage refresh history receipt differs from its immutable Git bytes');
+    }
+    const receipt = readStructuredDataLino(receiptBytes.toString('utf8'));
+    if (!isDeepStrictEqual(receipt, entry.receipt)) {
       throw new Error('stage refresh history receipt differs from its immutable Git bytes');
     }
     const previousBytes = loadBlob(entry.sourceCommit, historyPath);
@@ -58,7 +63,6 @@ export function validateTranslationStageRefreshHistory(history, loadBlob = optio
     if (previousBytes ? !isDeepStrictEqual(readStructuredDataLino(previousBytes.toString('utf8')), previous) : index !== 0) {
       throw new Error('stage refresh history does not preserve its complete preceding archive');
     }
-    const receipt = entry.receipt;
     if (!receipt || receipt.schemaVersion !== 1 || receipt.originalRevision !== originalRevision || receipt.originalPath !== originalPath
         || typeof receipt.refreshRevision !== 'string' || !/^[0-9a-f]{40}$/u.test(receipt.refreshRevision) || receipt.refreshPath !== refreshPath) {
       throw new Error('stage refresh history changed the original source or snapshot identity');
@@ -69,9 +73,15 @@ export function validateTranslationStageRefreshHistory(history, loadBlob = optio
         || !snapshotBytes || hash(snapshotBytes) !== receipt.refreshSha256) {
       throw new Error('stage refresh history snapshot differs from its immutable Git bytes');
     }
-    const historical = JSON.parse(originalBytes.toString('utf8'));
-    normalizeMigrationTranslationStages(historical, readStructuredDataLino(snapshotBytes.toString('utf8')), receipt.refreshes);
-    receipts.push(receipt);
+    // Re-read and authenticate every blob above even when this exact receipt's
+    // snapshots and stage selections already passed the structural comparison.
+    if (!verifiedStageReceipts.has(receiptHash)) {
+      const historical = JSON.parse(originalBytes.toString('utf8'));
+      normalizeMigrationTranslationStages(historical, readStructuredDataLino(snapshotBytes.toString('utf8')), receipt.refreshes);
+      if (verifiedStageReceipts.size >= 32) verifiedStageReceipts.clear();
+      verifiedStageReceipts.add(receiptHash);
+    }
+    receipts.push(entry.receipt);
   }
   if (snapshotRevision !== undefined) {
     if (typeof snapshotRevision !== 'string' || !/^[0-9a-f]{40}$/u.test(snapshotRevision)) {
