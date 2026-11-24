@@ -47,6 +47,12 @@ export function checkJavaScriptClassOwners(program, reportGraphSize=false){
   }).sort((left,right)=>right[1]-left[1]).slice(0,15);
   console.error('class ownership fact counts', JSON.stringify({forms:Object.fromEntries(sizes),edges:facts.labels.length,largest}));
  }
- const keys=facts.values.map(value=>value&&typeof value==='object'&&typeof value.kind==='string'?typeKey(value):'');
+ const keys = facts.values.map(value => {
+  if (!value || typeof value !== 'object' || typeof value.kind !== 'string') return '';
+  // Rust signature owners describe the source type path and its arguments.
+  // Their tags can also occur on checked types, which have value-type fields.
+  if (Array.isArray(value.path) && Array.isArray(value.arguments)) return '';
+  return typeKey(value);
+ });
  const error=readJavaScriptClassOwnerError(facts.forms,facts.texts,facts.starts,facts.counts,facts.labels,facts.targets,keys,facts.root);if(error)fail(error);
 }
