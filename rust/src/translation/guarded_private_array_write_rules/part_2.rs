@@ -1,5 +1,6 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
+use super::MlTemporaryAcceptGuardedWriteColumnsLoop3Result;
 use super::ml_array;
 use super::ml_math;
 use super::read_guarded_write_count;
@@ -9,19 +10,13 @@ use super::read_guarded_write_kind;
 use super::read_guarded_write_name;
 use super::read_guarded_write_text_field;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteColumnsLoop3Result {
-    MlAcceptGuardedWriteColumnsLoop3Done,
-    MlAcceptGuardedWriteColumnsLoop3Return(bool),
-}
-
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_columns_loop3(
+pub fn source_ml_temporary_accept_guarded_write_columns_loop3(
     rows: &[f64],
     mut size: f64,
     mut edge: f64,
-) -> self::MlAcceptGuardedWriteColumnsLoop3Result {
+) -> self::MlTemporaryAcceptGuardedWriteColumnsLoop3Result {
     loop {
         return if edge < (rows.len() as f64) {
             {
@@ -31,7 +26,7 @@ pub fn ml_accept_guarded_write_columns_loop3(
                 if (!(self::ml_math::is_safe_integer(target)) || (target < 0f64))
                     || (target >= size)
                 {
-                    self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Return(false)
+                    self::MlTemporaryAcceptGuardedWriteColumnsLoop3Result::MlTemporaryAcceptGuardedWriteColumnsLoop3Return(false)
                 } else {
                     {
                         let edge_2 = edge + 1f64;
@@ -43,24 +38,24 @@ pub fn ml_accept_guarded_write_columns_loop3(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Done
+            self::MlTemporaryAcceptGuardedWriteColumnsLoop3Result::MlTemporaryAcceptGuardedWriteColumnsLoop3Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteColumnsLoop2Result {
-    MlAcceptGuardedWriteColumnsLoop2Done,
-    MlAcceptGuardedWriteColumnsLoop2Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteColumnsLoop2Result {
+    MlTemporaryAcceptGuardedWriteColumnsLoop2Done,
+    MlTemporaryAcceptGuardedWriteColumnsLoop2Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_columns_loop2(
+pub fn source_ml_temporary_accept_guarded_write_columns_loop2(
     rows: &[f64],
     mut size: f64,
     mut node: f64,
-) -> self::MlAcceptGuardedWriteColumnsLoop2Result {
+) -> self::MlTemporaryAcceptGuardedWriteColumnsLoop2Result {
     loop {
         return if node < size {
             {
@@ -77,7 +72,7 @@ pub fn ml_accept_guarded_write_columns_loop2(
                         || (count < 0f64))
                         || ((start + count) > ((rows.len() as f64) - (2f64 * size)))
                     {
-                        self::MlAcceptGuardedWriteColumnsLoop2Result::MlAcceptGuardedWriteColumnsLoop2Return(false)
+                        self::MlTemporaryAcceptGuardedWriteColumnsLoop2Result::MlTemporaryAcceptGuardedWriteColumnsLoop2Return(false)
                     } else {
                         {
                             let node_2 = node + 1f64;
@@ -90,27 +85,27 @@ pub fn ml_accept_guarded_write_columns_loop2(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteColumnsLoop2Result::MlAcceptGuardedWriteColumnsLoop2Done
+            self::MlTemporaryAcceptGuardedWriteColumnsLoop2Result::MlTemporaryAcceptGuardedWriteColumnsLoop2Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteLiteralLoop4Result {
-    MlAcceptGuardedWriteLiteralLoop4Done,
-    MlAcceptGuardedWriteLiteralLoop4Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteLiteralLoop4Result {
+    MlTemporaryAcceptGuardedWriteLiteralLoop4Done,
+    MlTemporaryAcceptGuardedWriteLiteralLoop4Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_literal_loop4(
+pub fn source_ml_temporary_accept_guarded_write_literal_loop4(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
     mut items: f64,
     mut count: f64,
     mut index: f64,
-) -> self::MlAcceptGuardedWriteLiteralLoop4Result {
+) -> self::MlTemporaryAcceptGuardedWriteLiteralLoop4Result {
     loop {
         return if index < count {
             {
@@ -118,7 +113,7 @@ pub fn ml_accept_guarded_write_literal_loop4(
                 if (self::read_guarded_write_text_field(columns, rows, size, item, "spread"))
                     == "true"
                 {
-                    self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Return(false)
+                    self::MlTemporaryAcceptGuardedWriteLiteralLoop4Result::MlTemporaryAcceptGuardedWriteLiteralLoop4Return(false)
                 } else {
                     {
                         let kind = self::read_guarded_write_kind(
@@ -128,7 +123,7 @@ pub fn ml_accept_guarded_write_literal_loop4(
                             self::read_guarded_write_field(columns, rows, size, item, "value"),
                         );
                         if ((kind != "num") && (kind != "bool")) && (kind != "str") {
-                            self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Return(false)
+                            self::MlTemporaryAcceptGuardedWriteLiteralLoop4Result::MlTemporaryAcceptGuardedWriteLiteralLoop4Return(false)
                         } else {
                             {
                                 let index_2 = index + 1f64;
@@ -142,26 +137,26 @@ pub fn ml_accept_guarded_write_literal_loop4(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Done
+            self::MlTemporaryAcceptGuardedWriteLiteralLoop4Result::MlTemporaryAcceptGuardedWriteLiteralLoop4Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteScalarLoop5Result {
-    MlAcceptGuardedWriteScalarLoop5Done,
-    MlAcceptGuardedWriteScalarLoop5Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteScalarLoop5Result {
+    MlTemporaryAcceptGuardedWriteScalarLoop5Done,
+    MlTemporaryAcceptGuardedWriteScalarLoop5Return(bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptGuardedWriteScalarLoop6Result {
-    MlAcceptGuardedWriteScalarLoop6Done(Vec<f64>),
-    MlAcceptGuardedWriteScalarLoop6Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteScalarLoop6Result {
+    MlTemporaryAcceptGuardedWriteScalarLoop6Done(Vec<f64>),
+    MlTemporaryAcceptGuardedWriteScalarLoop6Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_scalar_loop6(
+pub fn source_ml_temporary_accept_guarded_write_scalar_loop6(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -169,7 +164,7 @@ pub fn ml_accept_guarded_write_scalar_loop6(
     mut args: f64,
     mut count: f64,
     mut index: f64,
-) -> self::MlAcceptGuardedWriteScalarLoop6Result {
+) -> self::MlTemporaryAcceptGuardedWriteScalarLoop6Result {
     loop {
         return if index < count {
             {
@@ -177,7 +172,7 @@ pub fn ml_accept_guarded_write_scalar_loop6(
                 if (self::read_guarded_write_text_field(columns, rows, size, arg, "spread"))
                     == "true"
                 {
-                    self::MlAcceptGuardedWriteScalarLoop6Result::MlAcceptGuardedWriteScalarLoop6Return(false)
+                    self::MlTemporaryAcceptGuardedWriteScalarLoop6Result::MlTemporaryAcceptGuardedWriteScalarLoop6Return(false)
                 } else {
                     {
                         let pending_2 = {
@@ -200,28 +195,24 @@ pub fn ml_accept_guarded_write_scalar_loop6(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteScalarLoop6Result::MlAcceptGuardedWriteScalarLoop6Done(
-                pending,
-            )
+            self::MlTemporaryAcceptGuardedWriteScalarLoop6Result::MlTemporaryAcceptGuardedWriteScalarLoop6Done(pending)
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_scalar_loop5(
+pub fn source_ml_temporary_accept_guarded_write_scalar_loop5(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
     mut pending: Vec<f64>,
     mut cursor: f64,
-) -> self::MlAcceptGuardedWriteScalarLoop5Result {
+) -> self::MlTemporaryAcceptGuardedWriteScalarLoop5Result {
     loop {
         return if cursor < (pending.len() as f64) {
             if cursor > size {
-                self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Return(
-                    false,
-                )
+                self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Return(false)
             } else {
                 {
                     let node = (self::ml_array::optional_at(
@@ -237,7 +228,7 @@ pub fn ml_accept_guarded_write_scalar_loop5(
                                 if (self::read_guarded_write_name(columns, rows, size, node))
                                     .is_empty()
                                 {
-                                    self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Return(false)
+                                    self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Return(false)
                                 } else {
                                     {
                                         cursor = cursor_2;
@@ -303,7 +294,7 @@ pub fn ml_accept_guarded_write_scalar_loop5(
                                                 ))
                                                 .is_empty())
                                             {
-                                                self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Return(false)
+                                                self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Return(false)
                                             } else {
                                                 {
                                                     cursor = cursor_2;
@@ -321,7 +312,7 @@ pub fn ml_accept_guarded_write_scalar_loop5(
                                             ))
                                             .is_empty()
                                             {
-                                                self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Return(false)
+                                                self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Return(false)
                                             } else {
                                                 {
                                                     let pending_4 = {
@@ -352,21 +343,21 @@ pub fn ml_accept_guarded_write_scalar_loop5(
                                                         columns, rows, size, args,
                                                     );
                                                     if count < 0f64 {
-                                                        self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Return(false)
+                                                        self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Return(false)
                                                     } else {
                                                         {
                                                             let index = 0f64;
                                                             {
-                                                                let ml_s12 = self::ml_accept_guarded_write_scalar_loop6(columns, rows, size, pending, args, count, index);
-                                                                match ml_s12 {
-                                                                            self::MlAcceptGuardedWriteScalarLoop6Result::MlAcceptGuardedWriteScalarLoop6Done(pending_5) => {
+                                                                let source_ml_source1_s12 = self::source_ml_temporary_accept_guarded_write_scalar_loop6(columns, rows, size, pending, args, count, index);
+                                                                match source_ml_source1_s12 {
+                                                                            self::MlTemporaryAcceptGuardedWriteScalarLoop6Result::MlTemporaryAcceptGuardedWriteScalarLoop6Done(pending_5) => {
                                                                                 {
                                                                                     (pending, cursor) = (pending_5, cursor_2);
                                                                                     continue;
                                                                                 }
                                                                             }
-                                                                            self::MlAcceptGuardedWriteScalarLoop6Result::MlAcceptGuardedWriteScalarLoop6Return(ml_result6) => {
-                                                                                self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Return(ml_result6)
+                                                                            self::MlTemporaryAcceptGuardedWriteScalarLoop6Result::MlTemporaryAcceptGuardedWriteScalarLoop6Return(source_ml_temporary_result6) => {
+                                                                                self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Return(source_ml_temporary_result6)
                                                                             }
                                                                         }
                                                             }
@@ -379,7 +370,7 @@ pub fn ml_accept_guarded_write_scalar_loop5(
                                             && (kind != "none"))
                                             && (kind != "unit")
                                         {
-                                            self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Return(false)
+                                            self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Return(false)
                                         } else {
                                             {
                                                 cursor = cursor_2;
@@ -394,15 +385,15 @@ pub fn ml_accept_guarded_write_scalar_loop5(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteScalarLoop5Result::MlAcceptGuardedWriteScalarLoop5Done
+            self::MlTemporaryAcceptGuardedWriteScalarLoop5Result::MlTemporaryAcceptGuardedWriteScalarLoop5Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteBoundsLoop7Result {
-    MlAcceptGuardedWriteBoundsLoop7Done(bool, bool, bool),
-    MlAcceptGuardedWriteBoundsLoop7Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteBoundsLoop7Result {
+    MlTemporaryAcceptGuardedWriteBoundsLoop7Done(bool, bool, bool),
+    MlTemporaryAcceptGuardedWriteBoundsLoop7Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
@@ -412,7 +403,7 @@ pub enum MlAcceptGuardedWriteBoundsLoop7Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_accept_guarded_write_bounds_loop7(
+pub fn source_ml_temporary_accept_guarded_write_bounds_loop7(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -423,13 +414,11 @@ pub fn ml_accept_guarded_write_bounds_loop7(
     mut integer: bool,
     mut lower: bool,
     mut upper: bool,
-) -> self::MlAcceptGuardedWriteBoundsLoop7Result {
+) -> self::MlTemporaryAcceptGuardedWriteBoundsLoop7Result {
     loop {
         return if cursor < (pending.len() as f64) {
             if cursor > size {
-                self::MlAcceptGuardedWriteBoundsLoop7Result::MlAcceptGuardedWriteBoundsLoop7Return(
-                    false,
-                )
+                self::MlTemporaryAcceptGuardedWriteBoundsLoop7Result::MlTemporaryAcceptGuardedWriteBoundsLoop7Return(false)
             } else {
                 {
                     let node = (self::ml_array::optional_at(
@@ -597,29 +586,27 @@ pub fn ml_accept_guarded_write_bounds_loop7(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteBoundsLoop7Result::MlAcceptGuardedWriteBoundsLoop7Done(
-                integer, lower, upper,
-            )
+            self::MlTemporaryAcceptGuardedWriteBoundsLoop7Result::MlTemporaryAcceptGuardedWriteBoundsLoop7Done(integer, lower, upper)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteUsesLoop9Result {
-    MlAcceptGuardedWriteUsesLoop9Done,
-    MlAcceptGuardedWriteUsesLoop9Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteUsesLoop9Result {
+    MlTemporaryAcceptGuardedWriteUsesLoop9Done,
+    MlTemporaryAcceptGuardedWriteUsesLoop9Return(bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptGuardedWriteUsesLoop10Result {
-    MlAcceptGuardedWriteUsesLoop10Done(f64),
-    MlAcceptGuardedWriteUsesLoop10Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteUsesLoop10Result {
+    MlTemporaryAcceptGuardedWriteUsesLoop10Done(f64),
+    MlTemporaryAcceptGuardedWriteUsesLoop10Return(bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptGuardedWriteUsesLoop11Result {
-    MlAcceptGuardedWriteUsesLoop11Done(f64),
-    MlAcceptGuardedWriteUsesLoop11Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteUsesLoop11Result {
+    MlTemporaryAcceptGuardedWriteUsesLoop11Done(f64),
+    MlTemporaryAcceptGuardedWriteUsesLoop11Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
@@ -629,7 +616,7 @@ pub enum MlAcceptGuardedWriteUsesLoop11Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_accept_guarded_write_uses_loop11(
+pub fn source_ml_temporary_accept_guarded_write_uses_loop11(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -640,7 +627,7 @@ pub fn ml_accept_guarded_write_uses_loop11(
     mut start: f64,
     mut count: f64,
     mut offset: f64,
-) -> self::MlAcceptGuardedWriteUsesLoop11Result {
+) -> self::MlTemporaryAcceptGuardedWriteUsesLoop11Result {
     loop {
         return if offset < count {
             {
@@ -700,7 +687,7 @@ pub fn ml_accept_guarded_write_uses_loop11(
                                                 let transfer =
                                                     (label == "expr") && (statement == "return");
                                                 if (!read && !write) && !transfer {
-                                                    self::MlAcceptGuardedWriteUsesLoop11Result::MlAcceptGuardedWriteUsesLoop11Return(false)
+                                                    self::MlTemporaryAcceptGuardedWriteUsesLoop11Result::MlTemporaryAcceptGuardedWriteUsesLoop11Return(false)
                                                 } else {
                                                     {
                                                         let offset_3 = offset + 1f64;
@@ -720,14 +707,14 @@ pub fn ml_accept_guarded_write_uses_loop11(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteUsesLoop11Result::MlAcceptGuardedWriteUsesLoop11Done(uses)
+            self::MlTemporaryAcceptGuardedWriteUsesLoop11Result::MlTemporaryAcceptGuardedWriteUsesLoop11Done(uses)
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_uses_loop10(
+pub fn source_ml_temporary_accept_guarded_write_uses_loop10(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -735,7 +722,7 @@ pub fn ml_accept_guarded_write_uses_loop10(
     mut node: f64,
     mut uses: f64,
     mut parent: f64,
-) -> self::MlAcceptGuardedWriteUsesLoop10Result {
+) -> self::MlTemporaryAcceptGuardedWriteUsesLoop10Result {
     loop {
         return if parent < size {
             {
@@ -751,12 +738,13 @@ pub fn ml_accept_guarded_write_uses_loop10(
                     {
                         let offset = 0f64;
                         {
-                            let ml_s13 = self::ml_accept_guarded_write_uses_loop11(
-                                columns, rows, size, candidates, node, uses, parent, start, count,
-                                offset,
-                            );
-                            match ml_s13 {
-                                self::MlAcceptGuardedWriteUsesLoop11Result::MlAcceptGuardedWriteUsesLoop11Done(uses_2) => {
+                            let source_ml_source1_s13 =
+                                self::source_ml_temporary_accept_guarded_write_uses_loop11(
+                                    columns, rows, size, candidates, node, uses, parent, start,
+                                    count, offset,
+                                );
+                            match source_ml_source1_s13 {
+                                self::MlTemporaryAcceptGuardedWriteUsesLoop11Result::MlTemporaryAcceptGuardedWriteUsesLoop11Done(uses_2) => {
                                     {
                                         let parent_2 = parent + 1f64;
                                         {
@@ -765,8 +753,8 @@ pub fn ml_accept_guarded_write_uses_loop10(
                                         }
                                     }
                                 }
-                                self::MlAcceptGuardedWriteUsesLoop11Result::MlAcceptGuardedWriteUsesLoop11Return(ml_result11) => {
-                                    self::MlAcceptGuardedWriteUsesLoop10Result::MlAcceptGuardedWriteUsesLoop10Return(ml_result11)
+                                self::MlTemporaryAcceptGuardedWriteUsesLoop11Result::MlTemporaryAcceptGuardedWriteUsesLoop11Return(source_ml_temporary_result11) => {
+                                    self::MlTemporaryAcceptGuardedWriteUsesLoop10Result::MlTemporaryAcceptGuardedWriteUsesLoop10Return(source_ml_temporary_result11)
                                 }
                             }
                         }
@@ -774,21 +762,21 @@ pub fn ml_accept_guarded_write_uses_loop10(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteUsesLoop10Result::MlAcceptGuardedWriteUsesLoop10Done(uses)
+            self::MlTemporaryAcceptGuardedWriteUsesLoop10Result::MlTemporaryAcceptGuardedWriteUsesLoop10Done(uses)
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_uses_loop9(
+pub fn source_ml_temporary_accept_guarded_write_uses_loop9(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
     owner: &str,
     candidates: &[f64],
     mut node: f64,
-) -> self::MlAcceptGuardedWriteUsesLoop9Result {
+) -> self::MlTemporaryAcceptGuardedWriteUsesLoop9Result {
     loop {
         return if node < size {
             if (self::read_guarded_write_name(columns, rows, size, node)) != owner {
@@ -806,13 +794,14 @@ pub fn ml_accept_guarded_write_uses_loop9(
                     {
                         let parent = 0f64;
                         {
-                            let ml_s14 = self::ml_accept_guarded_write_uses_loop10(
-                                columns, rows, size, candidates, node, uses, parent,
-                            );
-                            match ml_s14 {
-                                self::MlAcceptGuardedWriteUsesLoop10Result::MlAcceptGuardedWriteUsesLoop10Done(uses_2) => {
+                            let source_ml_source1_s14 =
+                                self::source_ml_temporary_accept_guarded_write_uses_loop10(
+                                    columns, rows, size, candidates, node, uses, parent,
+                                );
+                            match source_ml_source1_s14 {
+                                self::MlTemporaryAcceptGuardedWriteUsesLoop10Result::MlTemporaryAcceptGuardedWriteUsesLoop10Done(uses_2) => {
                                     if uses_2 == 0f64 {
-                                        self::MlAcceptGuardedWriteUsesLoop9Result::MlAcceptGuardedWriteUsesLoop9Return(false)
+                                        self::MlTemporaryAcceptGuardedWriteUsesLoop9Result::MlTemporaryAcceptGuardedWriteUsesLoop9Return(false)
                                     } else {
                                         {
                                             let node_3 = node + 1f64;
@@ -823,8 +812,8 @@ pub fn ml_accept_guarded_write_uses_loop9(
                                         }
                                     }
                                 }
-                                self::MlAcceptGuardedWriteUsesLoop10Result::MlAcceptGuardedWriteUsesLoop10Return(ml_result10) => {
-                                    self::MlAcceptGuardedWriteUsesLoop9Result::MlAcceptGuardedWriteUsesLoop9Return(ml_result10)
+                                self::MlTemporaryAcceptGuardedWriteUsesLoop10Result::MlTemporaryAcceptGuardedWriteUsesLoop10Return(source_ml_temporary_result10) => {
+                                    self::MlTemporaryAcceptGuardedWriteUsesLoop9Result::MlTemporaryAcceptGuardedWriteUsesLoop9Return(source_ml_temporary_result10)
                                 }
                             }
                         }
@@ -832,27 +821,27 @@ pub fn ml_accept_guarded_write_uses_loop9(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteUsesLoop9Result::MlAcceptGuardedWriteUsesLoop9Done
+            self::MlTemporaryAcceptGuardedWriteUsesLoop9Result::MlTemporaryAcceptGuardedWriteUsesLoop9Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteUsesLoop8Result {
-    MlAcceptGuardedWriteUsesLoop8Done,
-    MlAcceptGuardedWriteUsesLoop8Return(bool),
+pub enum MlTemporaryAcceptGuardedWriteUsesLoop8Result {
+    MlTemporaryAcceptGuardedWriteUsesLoop8Done,
+    MlTemporaryAcceptGuardedWriteUsesLoop8Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_guarded_write_uses_loop8(
+pub fn source_ml_temporary_accept_guarded_write_uses_loop8(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
     owner: &str,
     mut allocation: f64,
     mut node: f64,
-) -> self::MlAcceptGuardedWriteUsesLoop8Result {
+) -> self::MlTemporaryAcceptGuardedWriteUsesLoop8Result {
     loop {
         return if node < size {
             {
@@ -872,7 +861,7 @@ pub fn ml_accept_guarded_write_uses_loop8(
                                 columns, rows, size, node, "name",
                             )) == owner))
                     {
-                        self::MlAcceptGuardedWriteUsesLoop8Result::MlAcceptGuardedWriteUsesLoop8Return(false)
+                        self::MlTemporaryAcceptGuardedWriteUsesLoop8Result::MlTemporaryAcceptGuardedWriteUsesLoop8Return(false)
                     } else {
                         {
                             let node_2 = node + 1f64;
@@ -885,7 +874,7 @@ pub fn ml_accept_guarded_write_uses_loop8(
                 }
             }
         } else {
-            self::MlAcceptGuardedWriteUsesLoop8Result::MlAcceptGuardedWriteUsesLoop8Done
+            self::MlTemporaryAcceptGuardedWriteUsesLoop8Result::MlTemporaryAcceptGuardedWriteUsesLoop8Done
         };
     }
 }

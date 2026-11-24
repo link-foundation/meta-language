@@ -1,6 +1,6 @@
-// Generated from complete js/src/translation/array-binding-rules.js. Do not edit by hand.
+// Generated from the complete checked JavaScript source and recorded dependencies.
+// Do not edit by hand.
 use super::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Result;
-use super::read_array_binding_fact_field;
 use super::source_ml_source1_temporary_accept_java_script_array_binding_name_loop1;
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
@@ -646,26 +646,47 @@ pub fn accept_java_script_array_binding_name(
     duplicate: bool,
     reserved: &[self::ml_string::Text],
 ) -> bool {
-    if ((((*kind)
+    if (((*kind)
         != (self::ml_string::Text::from_units(vec![
             105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
         ])))
         || ((*name) == (self::ml_string::Text::from_units(vec![]))))
-        || duplicate)
-        || (((name.length()) >= 3f64)
-            && ((name.slice(0f64, 3f64))
-                == (self::ml_string::Text::from_units(vec![109, 108, 95]))))
+        || duplicate
+    {
+        false
+    } else if ((name.length()) >= 3f64)
+        && (({
+            let source_ml_source2_string_range_operand6 = name.clone();
+            {
+                let source_ml_source2_string_range_operand7 = 0f64;
+                {
+                    let source_ml_source2_string_range_operand8 = 3f64;
+                    {
+                        let source_ml_source2_string_range_position9 =
+                            source_ml_source2_string_range_operand7;
+                        {
+                            let source_ml_source2_string_range_position10 =
+                                source_ml_source2_string_range_operand8;
+                            source_ml_source2_string_range_operand6.slice(
+                                source_ml_source2_string_range_position9,
+                                source_ml_source2_string_range_position10,
+                            )
+                        }
+                    }
+                }
+            }
+        }) == (self::ml_string::Text::from_units(vec![109, 108, 95])))
     {
         false
     } else {
         {
             let index = 0f64;
             {
-                let source_ml_source2_s1 =
+                let source_ml_source2_s11 =
                     self::source_ml_source1_temporary_accept_java_script_array_binding_name_loop1(
                         name, reserved, index,
                     );
-                match source_ml_source2_s1 {
+                match source_ml_source2_s11 {
                         self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Result::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop1Done => {
                             true
                         }
@@ -811,88 +832,6 @@ pub fn read_java_script_array_default_operation(
             self::ml_string::Text::from_units(vec![
                 114, 101, 102, 117, 115, 101, 45, 102, 97, 108, 108, 98, 97, 99, 107,
             ])
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn plan_java_script_array_default_inference(
-    texts: &[self::ml_string::Text],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    resolved: f64,
-    fallback: f64,
-    result: f64,
-) -> Vec<f64> {
-    {
-        let kind = self::read_array_binding_fact_field(
-            starts,
-            counts,
-            labels,
-            targets,
-            resolved,
-            &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
-        );
-        if kind < 0f64 {
-            vec![-1f64]
-        } else {
-            {
-                let value = self::read_required_text_fact(texts, kind);
-                if value == (self::ml_string::Text::from_units(vec![118, 97, 114])) {
-                    Vec::<f64>::new()
-                } else {
-                    {
-                        let absence = self::read_array_binding_fact_field(
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            resolved,
-                            &(self::ml_string::Text::from_units(vec![
-                                97, 98, 115, 101, 110, 99, 101,
-                            ])),
-                        );
-                        if ((value
-                            != (self::ml_string::Text::from_units(vec![
-                                111, 112, 116, 105, 111, 110,
-                            ])))
-                            || (absence < 0f64))
-                            || ((self::read_required_text_fact(texts, absence))
-                                != (self::ml_string::Text::from_units(vec![
-                                    117, 110, 100, 101, 102, 105, 110, 101, 100,
-                                ])))
-                        {
-                            vec![-1f64]
-                        } else {
-                            {
-                                let element = self::read_array_binding_fact_field(
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    resolved,
-                                    &(self::ml_string::Text::from_units(vec![
-                                        101, 108, 101, 109, 101, 110, 116,
-                                    ])),
-                                );
-                                if element < 0f64 {
-                                    vec![-1f64]
-                                } else {
-                                    vec![element, fallback, result, element]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

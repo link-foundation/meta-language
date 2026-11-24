@@ -1,9 +1,94 @@
-// Generated from complete js/src/translation/array-binding-rules.js. Do not edit by hand.
+// Generated from the complete checked JavaScript source and recorded dependencies.
+// Do not edit by hand.
+use super::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop9Result;
 use super::ml_array;
 use super::ml_string;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+use super::source_ml_source1_temporary_plan_java_script_array_binding_names_loop5;
 use super::source_ml_source1_temporary_read_java_script_binding_default_term_loop9;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn plan_java_script_array_default_inference(
+    texts: &[self::ml_string::Text],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    resolved: f64,
+    fallback: f64,
+    result: f64,
+) -> Vec<f64> {
+    {
+        let kind = self::read_array_binding_fact_field(
+            starts,
+            counts,
+            labels,
+            targets,
+            resolved,
+            &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
+        );
+        if kind < 0f64 {
+            vec![-1f64]
+        } else {
+            {
+                let value = self::read_required_text_fact(texts, kind);
+                if value == (self::ml_string::Text::from_units(vec![118, 97, 114])) {
+                    Vec::<f64>::new()
+                } else {
+                    {
+                        let absence = self::read_array_binding_fact_field(
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            resolved,
+                            &(self::ml_string::Text::from_units(vec![
+                                97, 98, 115, 101, 110, 99, 101,
+                            ])),
+                        );
+                        if ((value
+                            != (self::ml_string::Text::from_units(vec![
+                                111, 112, 116, 105, 111, 110,
+                            ])))
+                            || (absence < 0f64))
+                            || ((self::read_required_text_fact(texts, absence))
+                                != (self::ml_string::Text::from_units(vec![
+                                    117, 110, 100, 101, 102, 105, 110, 101, 100,
+                                ])))
+                        {
+                            vec![-1f64]
+                        } else {
+                            {
+                                let element = self::read_array_binding_fact_field(
+                                    starts,
+                                    counts,
+                                    labels,
+                                    targets,
+                                    resolved,
+                                    &(self::ml_string::Text::from_units(vec![
+                                        101, 108, 101, 109, 101, 110, 116,
+                                    ])),
+                                );
+                                if element < 0f64 {
+                                    vec![-1f64]
+                                } else {
+                                    vec![element, fallback, result, element]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -23,11 +108,11 @@ pub fn read_array_binding_fact_field(
             {
                 let end = at + self::read_required_number_fact(counts, node);
                 {
-                    let source_ml_source2_s2 =
+                    let source_ml_source2_s12 =
                         self::source_ml_source1_temporary_read_array_binding_fact_field_loop2(
                             labels, targets, field, at, end,
                         );
-                    match source_ml_source2_s2 {
+                    match source_ml_source2_s12 {
                         self::MlSource1TemporaryReadArrayBindingFactFieldLoop2Result::MlSource1TemporaryReadArrayBindingFactFieldLoop2Done => {
                             -1f64
                         }
@@ -53,11 +138,11 @@ pub fn read_array_binding_initializer_end(
         {
             let closes = Vec::<self::ml_string::Text>::new();
             {
-                let source_ml_source2_s3 =
+                let source_ml_source2_s13 =
                     self::source_ml_source1_temporary_read_array_binding_initializer_end_loop3(
                         kinds, values, start, index, closes,
                     );
-                match source_ml_source2_s3 {
+                match source_ml_source2_s13 {
                     self::MlSource1TemporaryReadArrayBindingInitializerEndLoop3Result::MlSource1TemporaryReadArrayBindingInitializerEndLoop3Done => {
                         -1f64
                     }
@@ -91,8 +176,8 @@ pub fn plan_java_script_array_binding_names(
             {
                 let positions = Vec::<f64>::new();
                 {
-                    let source_ml_source2_s4 = self::source_ml_source1_temporary_plan_java_script_array_binding_names_loop5(kinds, values, index, positions);
-                    match source_ml_source2_s4 {
+                    let source_ml_source2_s14 = self::source_ml_source1_temporary_plan_java_script_array_binding_names_loop5(kinds, values, index, positions);
+                    match source_ml_source2_s14 {
                             self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Done => {
                                 vec![-1f64]
                             }
@@ -356,8 +441,8 @@ pub fn read_java_script_binding_default_term(
                     &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
                 );
                 {
-                    let source_ml_source2_s5 = self::source_ml_source1_temporary_read_java_script_binding_default_term_loop9(texts, starts, counts, labels, targets, node, absence, kind);
-                    match source_ml_source2_s5 {
+                    let source_ml_source2_s15 = self::source_ml_source1_temporary_read_java_script_binding_default_term_loop9(texts, starts, counts, labels, targets, node, absence, kind);
+                    match source_ml_source2_s15 {
                         self::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop9Result::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop9Done(node_2, absence_2, kind_2) => {
                             if kind_2 < 0f64 {
                                 vec![-1f64, 0f64]
@@ -528,7 +613,7 @@ pub fn source_ml_source1_temporary_read_array_binding_initializer_end_loop3(
                         self::MlSource1TemporaryReadArrayBindingInitializerEndLoop3Result::MlSource1TemporaryReadArrayBindingInitializerEndLoop3Return(-1f64)
                     } else {
                         {
-                            let source_ml_source2_s8 = if kind
+                            let source_ml_source2_s18 = if kind
                                 == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))
                             {
                                 if ((closes.len() as f64) == 0f64)
@@ -546,9 +631,9 @@ pub fn source_ml_source1_temporary_read_array_binding_initializer_end_loop3(
                                 {
                                     {
                                         let closes_2 = {
-                                            let source_ml_source2_concat_value9 = closes;
+                                            let source_ml_source2_concat_value19 = closes;
                                             {
-                                                let source_ml_source2_concat_value10 =
+                                                let source_ml_source2_concat_value20 =
                                                     vec![if value
                                                         == (self::ml_string::Text::from_units(
                                                             vec![40],
@@ -566,9 +651,9 @@ pub fn source_ml_source1_temporary_read_array_binding_initializer_end_loop3(
                                                 self::ml_array::append(
                                                     self::ml_array::append(
                                                         Vec::<self::ml_string::Text>::new(),
-                                                        source_ml_source2_concat_value9,
+                                                        source_ml_source2_concat_value19,
                                                     ),
-                                                    source_ml_source2_concat_value10,
+                                                    source_ml_source2_concat_value20,
                                                 )
                                             }
                                         };
@@ -601,7 +686,7 @@ pub fn source_ml_source1_temporary_read_array_binding_initializer_end_loop3(
                             } else {
                                 self::MlSource1TemporaryReadArrayBindingInitializerEndJoin4::MlSource1TemporaryReadArrayBindingInitializerEndJoin4Next(closes)
                             };
-                            match source_ml_source2_s8 {
+                            match source_ml_source2_s18 {
                                 self::MlSource1TemporaryReadArrayBindingInitializerEndJoin4::MlSource1TemporaryReadArrayBindingInitializerEndJoin4Next(closes_4) => {
                                     {
                                         let index_2 = index + 1f64;
@@ -646,211 +731,4 @@ pub enum MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7 {
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6 {
     MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6Next(f64, bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_plan_java_script_array_binding_names_loop5(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    mut index: f64,
-    mut positions: Vec<f64>,
-) -> self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result {
-    loop {
-        return if (index < (values.len() as f64)) && (index < (kinds.len() as f64)) {
-            {
-                let kind = self::read_required_text_fact(kinds, index);
-                {
-                    let value = self::read_required_text_fact(values, index);
-                    if (kind == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
-                        && (value == (self::ml_string::Text::from_units(vec![93])))
-                    {
-                        self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return({
-                            let source_ml_source2_concat_value11 = vec![index];
-                            {
-                                let source_ml_source2_concat_value12 = positions;
-                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value11), source_ml_source2_concat_value12)
-                            }
-                        })
-                    } else {
-                        if (kind
-                            == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
-                            && (value == (self::ml_string::Text::from_units(vec![44])))
-                        {
-                            {
-                                let index_2 = index + 1f64;
-                                {
-                                    index = index_2;
-                                    continue;
-                                }
-                            }
-                        }
-                        {
-                            {
-                                let rest = false;
-                                {
-                                    let source_ml_source2_s13 = if (kind
-                                        == (self::ml_string::Text::from_units(vec![
-                                            112, 117, 110, 99, 116,
-                                        ])))
-                                        && (value
-                                            == (self::ml_string::Text::from_units(vec![
-                                                46, 46, 46,
-                                            ]))) {
-                                        {
-                                            let rest_2 = true;
-                                            {
-                                                let index_3 = index + 1f64;
-                                                self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6Next(index_3, rest_2)
-                                            }
-                                        }
-                                    } else {
-                                        self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6Next(index, rest)
-                                    };
-                                    match source_ml_source2_s13 {
-                                        self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin6Next(index_4, rest_3) => {
-                                            if (index_4 >= (values.len() as f64)) || (index_4 >= (kinds.len() as f64)) {
-                                                self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
-                                            } else {
-                                                {
-                                                    let source_ml_source2_s18 = if ((self::read_required_text_fact(kinds, index_4)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_4)) == (self::ml_string::Text::from_units(vec![91]))) {
-                                                        if rest_3 {
-                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7Return(vec![-1f64])
-                                                        } else {
-                                                            {
-                                                                let nested = self::plan_java_script_array_binding_names(kinds, values, index_4);
-                                                                if (self::read_required_number_fact(&(nested), 0f64)) < 0f64 {
-                                                                    self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7Return(vec![-1f64])
-                                                                } else {
-                                                                    {
-                                                                        let positions_2 = {
-                                                                            let source_ml_source2_concat_value19 = positions;
-                                                                            {
-                                                                                let source_ml_source2_concat_value20 = self::ml_array::slice(&nested, 1f64, f64::INFINITY);
-                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value19), source_ml_source2_concat_value20)
-                                                                            }
-                                                                        };
-                                                                        {
-                                                                            let index_5 = self::read_required_number_fact(&(nested), 0f64) + 1f64;
-                                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7Next(index_5, positions_2)
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    } else {
-let ml_library_inequality_3 = (self::read_required_text_fact(kinds, index_4)) != (self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 102, 105, 101, 114])) ;
-if ml_library_inequality_3 {
-                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7Return(vec![-1f64])
-                                                        } else {
-                                                            {
-                                                                let positions_3 = {
-                                                                    let source_ml_source2_concat_value21 = positions;
-                                                                    {
-                                                                        let source_ml_source2_concat_value22 = vec![index_4];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value21), source_ml_source2_concat_value22)
-                                                                    }
-                                                                };
-                                                                {
-                                                                    let index_6 = index_4 + 1f64;
-                                                                    self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7Next(index_6, positions_3)
-                                                                }
-                                                            }
-                                                        }
-};
-                                                    match source_ml_source2_s18 {
-                                                        self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7Next(index_7, positions_4) => {
-                                                            if (index_7 >= (values.len() as f64)) || (index_7 >= (kinds.len() as f64)) {
-                                                                self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
-                                                            } else if rest_3 {
-                                                                    self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return(if ((self::read_required_text_fact(kinds, index_7)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_7)) == (self::ml_string::Text::from_units(vec![93]))) {
-                                                                        {
-                                                                            let source_ml_source2_concat_value23 = vec![index_7];
-                                                                            {
-                                                                                let source_ml_source2_concat_value24 = positions_4;
-                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value23), source_ml_source2_concat_value24)
-                                                                            }
-                                                                        }
-                                                                    } else {
-                                                                        vec![-1f64]
-                                                                    })
-                                                                } else {
-                                                                    {
-                                                                        let source_ml_source2_s25 = if ((self::read_required_text_fact(kinds, index_7)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_7)) == (self::ml_string::Text::from_units(vec![61]))) {
-                                                                            {
-                                                                                let index_8 = self::read_array_binding_initializer_end(kinds, values, (index_7 + 1f64));
-                                                                                if index_8 < 0f64 {
-                                                                                    self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8Return(vec![-1f64])
-                                                                                } else {
-                                                                                    self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8Next(index_8)
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8Next(index_7)
-                                                                        };
-                                                                        match source_ml_source2_s25 {
-                                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8Next(index_9) => {
-                                                                                {
-let ml_library_inequality_2 = (self::read_required_text_fact(kinds, index_9)) != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) ;
-if ml_library_inequality_2 {
-                                                                                    self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
-                                                                                } else {
-                                                                                    {
-                                                                                        let next = self::read_required_text_fact(values, index_9);
-                                                                                        if next == (self::ml_string::Text::from_units(vec![93])) {
-                                                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return({
-                                                                                                let source_ml_source2_concat_value26 = vec![index_9];
-                                                                                                {
-                                                                                                    let source_ml_source2_concat_value27 = positions_4;
-                                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value26), source_ml_source2_concat_value27)
-                                                                                                }
-                                                                                            })
-                                                                                        } else {
-let ml_library_inequality_1 = next != (self::ml_string::Text::from_units(vec![44])) ;
-if ml_library_inequality_1 {
-                                                                                                self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
-                                                                                            } else {
-                                                                                                {
-                                                                                                    let index_10 = index_9 + 1f64;
-                                                                                                    {
-                                                                                                        (index, positions) = (index_10, positions_4);
-                                                                                                        continue;
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-}
-                                                                                    }
-                                                                                }
-}
-                                                                            }
-                                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin8Return(source_ml_source1_temporary_result8) => {
-                                                                                self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return(source_ml_source1_temporary_result8)
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                        }
-                                                        self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin7Return(source_ml_source1_temporary_result8_2) => {
-                                                            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Return(source_ml_source1_temporary_result8_2)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop5Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop9Result {
-    MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop9Done(f64, self::ml_string::Text, f64),
 }

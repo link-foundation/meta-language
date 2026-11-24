@@ -13,7 +13,7 @@ use super::read_guarded_write_text_field;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_guarded_private_array_writes_loop14(
+pub fn source_ml_temporary_plan_guarded_private_array_writes_loop14(
     mut result: Vec<f64>,
     mut allocation: f64,
     candidates: &[f64],
@@ -53,8 +53,8 @@ pub fn ml_plan_guarded_private_array_writes_loop14(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanGuardedPrivateArrayWritesLoop13Result {
-    MlPlanGuardedPrivateArrayWritesLoop13Done(Vec<f64>, Vec<f64>),
+pub enum MlTemporaryPlanGuardedPrivateArrayWritesLoop13Result {
+    MlTemporaryPlanGuardedPrivateArrayWritesLoop13Done(Vec<f64>, Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
@@ -64,7 +64,7 @@ pub enum MlPlanGuardedPrivateArrayWritesLoop13Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_plan_guarded_private_array_writes_loop13(
+pub fn source_ml_temporary_plan_guarded_private_array_writes_loop13(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -74,7 +74,7 @@ pub fn ml_plan_guarded_private_array_writes_loop13(
     mut candidates: Vec<f64>,
     mut owners: Vec<f64>,
     mut later: f64,
-) -> self::MlPlanGuardedPrivateArrayWritesLoop13Result {
+) -> self::MlTemporaryPlanGuardedPrivateArrayWritesLoop13Result {
     loop {
         if later < count {
             {
@@ -119,14 +119,14 @@ pub fn ml_plan_guarded_private_array_writes_loop13(
             }
         }
         return {
-            self::MlPlanGuardedPrivateArrayWritesLoop13Result::MlPlanGuardedPrivateArrayWritesLoop13Done(candidates, owners)
+            self::MlTemporaryPlanGuardedPrivateArrayWritesLoop13Result::MlTemporaryPlanGuardedPrivateArrayWritesLoop13Done(candidates, owners)
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_guarded_private_array_writes_loop12(
+pub fn source_ml_temporary_plan_guarded_private_array_writes_loop12(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -183,9 +183,9 @@ pub fn ml_plan_guarded_private_array_writes_loop12(
                                         {
                                             let later = index + 1f64;
                                             {
-                                                let ml_s15 = self::ml_plan_guarded_private_array_writes_loop13(columns, rows, size, statements, count, &(owner), candidates, owners, later);
-                                                match ml_s15 {
-                                                    self::MlPlanGuardedPrivateArrayWritesLoop13Result::MlPlanGuardedPrivateArrayWritesLoop13Done(candidates_2, owners_2) => {
+                                                let source_ml_source1_s15 = self::source_ml_temporary_plan_guarded_private_array_writes_loop13(columns, rows, size, statements, count, &(owner), candidates, owners, later);
+                                                match source_ml_source1_s15 {
+                                                    self::MlTemporaryPlanGuardedPrivateArrayWritesLoop13Result::MlTemporaryPlanGuardedPrivateArrayWritesLoop13Done(candidates_2, owners_2) => {
                                                         if ((candidates_2.len() as f64) == 0f64) || !(self::accept_guarded_write_uses(columns, rows, size, &(owner), allocation, &(candidates_2))) {
                                                             {
                                                                 let index_4 = index + 1f64;
@@ -199,7 +199,7 @@ pub fn ml_plan_guarded_private_array_writes_loop12(
                                                             {
                                                                 let at = 0f64;
                                                                 {
-                                                                    let result_2 = self::ml_plan_guarded_private_array_writes_loop14(result, allocation, &(candidates_2), &(owners_2), at);
+                                                                    let result_2 = self::source_ml_temporary_plan_guarded_private_array_writes_loop14(result, allocation, &(candidates_2), &(owners_2), at);
                                                                     {
                                                                         let index_5 = index + 1f64;
                                                                         {
@@ -228,21 +228,21 @@ pub fn ml_plan_guarded_private_array_writes_loop12(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadConstructedGuardedArrayAppendLoop15Result {
-    MlReadConstructedGuardedArrayAppendLoop15Done,
-    MlReadConstructedGuardedArrayAppendLoop15Return(f64),
+pub enum MlTemporaryReadConstructedGuardedArrayAppendLoop15Result {
+    MlTemporaryReadConstructedGuardedArrayAppendLoop15Done,
+    MlTemporaryReadConstructedGuardedArrayAppendLoop15Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_constructed_guarded_array_append_loop15(
+pub fn source_ml_temporary_read_constructed_guarded_array_append_loop15(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
     mut args: f64,
     mut count: f64,
     mut index: f64,
-) -> self::MlReadConstructedGuardedArrayAppendLoop15Result {
+) -> self::MlTemporaryReadConstructedGuardedArrayAppendLoop15Result {
     loop {
         return if index < count {
             {
@@ -253,7 +253,7 @@ pub fn ml_read_constructed_guarded_array_append_loop15(
                     self::read_guarded_write_element(columns, rows, size, args, index),
                 );
                 if ((kind != "num") && (kind != "bool")) && (kind != "str") {
-                    self::MlReadConstructedGuardedArrayAppendLoop15Result::MlReadConstructedGuardedArrayAppendLoop15Return(-1f64)
+                    self::MlTemporaryReadConstructedGuardedArrayAppendLoop15Result::MlTemporaryReadConstructedGuardedArrayAppendLoop15Return(-1f64)
                 } else {
                     {
                         let index_2 = index + 1f64;
@@ -265,27 +265,27 @@ pub fn ml_read_constructed_guarded_array_append_loop15(
                 }
             }
         } else {
-            self::MlReadConstructedGuardedArrayAppendLoop15Result::MlReadConstructedGuardedArrayAppendLoop15Done
+            self::MlTemporaryReadConstructedGuardedArrayAppendLoop15Result::MlTemporaryReadConstructedGuardedArrayAppendLoop15Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptConstructedGuardedArrayUsesLoop17Result {
-    MlAcceptConstructedGuardedArrayUsesLoop17Done,
-    MlAcceptConstructedGuardedArrayUsesLoop17Return(bool),
+pub enum MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Result {
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Done,
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Return(bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptConstructedGuardedArrayUsesLoop18Result {
-    MlAcceptConstructedGuardedArrayUsesLoop18Done(f64),
-    MlAcceptConstructedGuardedArrayUsesLoop18Return(bool),
+pub enum MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Result {
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Done(f64),
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Return(bool),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptConstructedGuardedArrayUsesLoop19Result {
-    MlAcceptConstructedGuardedArrayUsesLoop19Done(f64),
-    MlAcceptConstructedGuardedArrayUsesLoop19Return(bool),
+pub enum MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Result {
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Done(f64),
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
@@ -295,7 +295,7 @@ pub enum MlAcceptConstructedGuardedArrayUsesLoop19Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_accept_constructed_guarded_array_uses_loop19(
+pub fn source_ml_temporary_accept_constructed_guarded_array_uses_loop19(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -307,7 +307,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop19(
     mut start: f64,
     mut count: f64,
     mut offset: f64,
-) -> self::MlAcceptConstructedGuardedArrayUsesLoop19Result {
+) -> self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Result {
     loop {
         return if offset < count {
             {
@@ -382,7 +382,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop19(
                                                     let transfer = (label == "expr")
                                                         && (statement == "return");
                                                     if ((!read && !write) && !append) && !transfer {
-                                                        self::MlAcceptConstructedGuardedArrayUsesLoop19Result::MlAcceptConstructedGuardedArrayUsesLoop19Return(false)
+                                                        self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Return(false)
                                                     } else {
                                                         {
                                                             let offset_3 = offset + 1f64;
@@ -403,7 +403,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop19(
                 }
             }
         } else {
-            self::MlAcceptConstructedGuardedArrayUsesLoop19Result::MlAcceptConstructedGuardedArrayUsesLoop19Done(uses)
+            self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Done(uses)
         };
     }
 }
@@ -415,7 +415,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop19(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_accept_constructed_guarded_array_uses_loop18(
+pub fn source_ml_temporary_accept_constructed_guarded_array_uses_loop18(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -424,7 +424,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop18(
     mut node: f64,
     mut uses: f64,
     mut parent: f64,
-) -> self::MlAcceptConstructedGuardedArrayUsesLoop18Result {
+) -> self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Result {
     loop {
         return if parent < size {
             {
@@ -440,12 +440,9 @@ pub fn ml_accept_constructed_guarded_array_uses_loop18(
                     {
                         let offset = 0f64;
                         {
-                            let ml_s16 = self::ml_accept_constructed_guarded_array_uses_loop19(
-                                columns, rows, size, writes, appends, node, uses, parent, start,
-                                count, offset,
-                            );
-                            match ml_s16 {
-                                self::MlAcceptConstructedGuardedArrayUsesLoop19Result::MlAcceptConstructedGuardedArrayUsesLoop19Done(uses_2) => {
+                            let source_ml_source1_s16 = self::source_ml_temporary_accept_constructed_guarded_array_uses_loop19(columns, rows, size, writes, appends, node, uses, parent, start, count, offset);
+                            match source_ml_source1_s16 {
+                                self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Done(uses_2) => {
                                     {
                                         let parent_2 = parent + 1f64;
                                         {
@@ -454,8 +451,8 @@ pub fn ml_accept_constructed_guarded_array_uses_loop18(
                                         }
                                     }
                                 }
-                                self::MlAcceptConstructedGuardedArrayUsesLoop19Result::MlAcceptConstructedGuardedArrayUsesLoop19Return(ml_result19) => {
-                                    self::MlAcceptConstructedGuardedArrayUsesLoop18Result::MlAcceptConstructedGuardedArrayUsesLoop18Return(ml_result19)
+                                self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop19Return(source_ml_temporary_result19) => {
+                                    self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Return(source_ml_temporary_result19)
                                 }
                             }
                         }
@@ -463,14 +460,14 @@ pub fn ml_accept_constructed_guarded_array_uses_loop18(
                 }
             }
         } else {
-            self::MlAcceptConstructedGuardedArrayUsesLoop18Result::MlAcceptConstructedGuardedArrayUsesLoop18Done(uses)
+            self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Done(uses)
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_constructed_guarded_array_uses_loop17(
+pub fn source_ml_temporary_accept_constructed_guarded_array_uses_loop17(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -478,7 +475,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop17(
     writes: &[f64],
     appends: &[f64],
     mut node: f64,
-) -> self::MlAcceptConstructedGuardedArrayUsesLoop17Result {
+) -> self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Result {
     loop {
         return if node < size {
             if (self::read_guarded_write_name(columns, rows, size, node)) != owner {
@@ -496,13 +493,11 @@ pub fn ml_accept_constructed_guarded_array_uses_loop17(
                     {
                         let parent = 0f64;
                         {
-                            let ml_s17 = self::ml_accept_constructed_guarded_array_uses_loop18(
-                                columns, rows, size, writes, appends, node, uses, parent,
-                            );
-                            match ml_s17 {
-                                self::MlAcceptConstructedGuardedArrayUsesLoop18Result::MlAcceptConstructedGuardedArrayUsesLoop18Done(uses_2) => {
+                            let source_ml_source1_s17 = self::source_ml_temporary_accept_constructed_guarded_array_uses_loop18(columns, rows, size, writes, appends, node, uses, parent);
+                            match source_ml_source1_s17 {
+                                self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Done(uses_2) => {
                                     if uses_2 == 0f64 {
-                                        self::MlAcceptConstructedGuardedArrayUsesLoop17Result::MlAcceptConstructedGuardedArrayUsesLoop17Return(false)
+                                        self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Return(false)
                                     } else {
                                         {
                                             let node_3 = node + 1f64;
@@ -513,8 +508,8 @@ pub fn ml_accept_constructed_guarded_array_uses_loop17(
                                         }
                                     }
                                 }
-                                self::MlAcceptConstructedGuardedArrayUsesLoop18Result::MlAcceptConstructedGuardedArrayUsesLoop18Return(ml_result18) => {
-                                    self::MlAcceptConstructedGuardedArrayUsesLoop17Result::MlAcceptConstructedGuardedArrayUsesLoop17Return(ml_result18)
+                                self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop18Return(source_ml_temporary_result18) => {
+                                    self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Return(source_ml_temporary_result18)
                                 }
                             }
                         }
@@ -522,27 +517,27 @@ pub fn ml_accept_constructed_guarded_array_uses_loop17(
                 }
             }
         } else {
-            self::MlAcceptConstructedGuardedArrayUsesLoop17Result::MlAcceptConstructedGuardedArrayUsesLoop17Done
+            self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop17Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptConstructedGuardedArrayUsesLoop16Result {
-    MlAcceptConstructedGuardedArrayUsesLoop16Done,
-    MlAcceptConstructedGuardedArrayUsesLoop16Return(bool),
+pub enum MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Result {
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Done,
+    MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_constructed_guarded_array_uses_loop16(
+pub fn source_ml_temporary_accept_constructed_guarded_array_uses_loop16(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
     owner: &str,
     mut allocation: f64,
     mut node: f64,
-) -> self::MlAcceptConstructedGuardedArrayUsesLoop16Result {
+) -> self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Result {
     loop {
         return if node < size {
             {
@@ -558,7 +553,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop16(
                                 columns, rows, size, node, "name",
                             )) == owner))
                     {
-                        self::MlAcceptConstructedGuardedArrayUsesLoop16Result::MlAcceptConstructedGuardedArrayUsesLoop16Return(false)
+                        self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Return(false)
                     } else {
                         {
                             let node_2 = node + 1f64;
@@ -571,14 +566,14 @@ pub fn ml_accept_constructed_guarded_array_uses_loop16(
                 }
             }
         } else {
-            self::MlAcceptConstructedGuardedArrayUsesLoop16Result::MlAcceptConstructedGuardedArrayUsesLoop16Done
+            self::MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Result::MlTemporaryAcceptConstructedGuardedArrayUsesLoop16Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_constructed_guarded_array_writes_loop23(
+pub fn source_ml_temporary_plan_constructed_guarded_array_writes_loop23(
     mut result: Vec<f64>,
     mut allocation: f64,
     writes: &[f64],
@@ -620,7 +615,7 @@ pub fn ml_plan_constructed_guarded_array_writes_loop23(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_constructed_guarded_array_writes_loop24(
+pub fn source_ml_temporary_plan_constructed_guarded_array_writes_loop24(
     mut result: Vec<f64>,
     mut allocation: f64,
     appends: &[f64],
@@ -664,13 +659,13 @@ pub fn ml_plan_constructed_guarded_array_writes_loop24(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanConstructedGuardedArrayWritesLoop22Result {
-    MlPlanConstructedGuardedArrayWritesLoop22Done(Vec<f64>, Vec<f64>),
+pub enum MlTemporaryPlanConstructedGuardedArrayWritesLoop22Result {
+    MlTemporaryPlanConstructedGuardedArrayWritesLoop22Done(Vec<f64>, Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_constructed_guarded_array_writes_loop22(
+pub fn source_ml_temporary_plan_constructed_guarded_array_writes_loop22(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -678,7 +673,7 @@ pub fn ml_plan_constructed_guarded_array_writes_loop22(
     mut appends: Vec<f64>,
     mut append_statements: Vec<f64>,
     mut candidate: f64,
-) -> self::MlPlanConstructedGuardedArrayWritesLoop22Result {
+) -> self::MlTemporaryPlanConstructedGuardedArrayWritesLoop22Result {
     loop {
         if candidate < size {
             {
@@ -720,14 +715,14 @@ pub fn ml_plan_constructed_guarded_array_writes_loop22(
             }
         }
         return {
-            self::MlPlanConstructedGuardedArrayWritesLoop22Result::MlPlanConstructedGuardedArrayWritesLoop22Done(appends, append_statements)
+            self::MlTemporaryPlanConstructedGuardedArrayWritesLoop22Result::MlTemporaryPlanConstructedGuardedArrayWritesLoop22Done(appends, append_statements)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanConstructedGuardedArrayWritesLoop21Result {
-    MlPlanConstructedGuardedArrayWritesLoop21Done(Vec<f64>, Vec<f64>),
+pub enum MlTemporaryPlanConstructedGuardedArrayWritesLoop21Result {
+    MlTemporaryPlanConstructedGuardedArrayWritesLoop21Done(Vec<f64>, Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
@@ -737,7 +732,7 @@ pub enum MlPlanConstructedGuardedArrayWritesLoop21Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_plan_constructed_guarded_array_writes_loop21(
+pub fn source_ml_temporary_plan_constructed_guarded_array_writes_loop21(
     columns: &[String],
     rows: &[f64],
     mut size: f64,
@@ -747,7 +742,7 @@ pub fn ml_plan_constructed_guarded_array_writes_loop21(
     mut writes: Vec<f64>,
     mut conditionals: Vec<f64>,
     mut later: f64,
-) -> self::MlPlanConstructedGuardedArrayWritesLoop21Result {
+) -> self::MlTemporaryPlanConstructedGuardedArrayWritesLoop21Result {
     loop {
         if later < count {
             {
@@ -792,7 +787,7 @@ pub fn ml_plan_constructed_guarded_array_writes_loop21(
             }
         }
         return {
-            self::MlPlanConstructedGuardedArrayWritesLoop21Result::MlPlanConstructedGuardedArrayWritesLoop21Done(writes, conditionals)
+            self::MlTemporaryPlanConstructedGuardedArrayWritesLoop21Result::MlTemporaryPlanConstructedGuardedArrayWritesLoop21Done(writes, conditionals)
         };
     }
 }
