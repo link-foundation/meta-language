@@ -13,5 +13,11 @@ export function selectRustPrimitiveExpressionOrigin(node,operands){
   return {origin,owner,path,known,signed:type?.signed===true};
  });
  const left=facts[0],right=facts[1],selected=selectRustPrimitiveArithmeticOrigin(node.op??'',left?.known===true,right?.known===true,left?.path??'',right?.path??'',left?.signed===true,right?.signed===true,literal(node.arg??node.left),literal(node.right));
- const result=facts[selected];return result?{...result.origin,sourceOwner:result.owner}:null;
+ const result=facts[selected];
+ if(!result)return null;
+ // A numeral can retain its portable result owner without settling Rust's
+ // receiver inference. Only a concrete operand proves the arithmetic receiver.
+ const floatSourceModel=result.path==='f64'&&facts.some(fact=>fact.known&&fact.origin.floatSourceModel==='binary64 scalar')
+  ?'binary64 scalar':null;
+ return {...result.origin,sourceOwner:result.owner,floatSourceModel};
 }

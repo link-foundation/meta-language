@@ -1889,7 +1889,11 @@ class RustParser {
         if (!type) throw unsupported(`literal suffix ${token.suffix}`, 'portable numeric literals are integers and IEEE-754 binary64 values', span(token, token));
         node.type = type;
       } else if (token.floating) node.type = FLOAT;
-      if (token.suffix === 'f64'||token.floating&&!token.suffix) this.origins.mark(node, { ...this.origins.origin(node, path), floatSourceModel: 'binary64 scalar',sourceOwner:{kind:'primitive',path:['f64'],arguments:[]} });
+      if (node.type === FLOAT) this.origins.mark(node, {
+        ...this.origins.origin(node, path),
+        floatSourceModel: token.suffix === 'f64' ? 'binary64 scalar' : null,
+        sourceOwner: { kind: 'primitive', path: ['f64'], arguments: [] },
+      });
       if(token.suffix&&node.type?.kind==='fixed')this.origins.mark(node,{...this.origins.origin(node,path),sourceOwner:{kind:'primitive',path:[token.suffix],arguments:[]}});
       return node;
     }

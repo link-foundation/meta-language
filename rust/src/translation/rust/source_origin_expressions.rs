@@ -227,8 +227,7 @@ impl SourceOrigins {
                     ty,
                     float_source_model: primitive
                         .as_ref()
-                        .filter(|origin| origin.ty == Some(Type::Float))
-                        .map(|_| "binary64 scalar"),
+                        .and_then(|origin| origin.float_source_model),
                     source_owner: if boolean {
                         Some(crate::translation::source_signatures::SourceOwner {
                             kind: "primitive".to_owned(),

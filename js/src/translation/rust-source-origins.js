@@ -307,7 +307,7 @@ export class RustSourceOrigins {
       const boolean=acceptRustPrimitiveBooleanResult(form,node.op??'',operands.length===1&&operands[0].type?.kind==='bool'&&operands[0].proven&&operands[0].wrappers.length===0);
       const result=value(copyEvidence,node.to??(boolean?{kind:'bool'}:node.op==='concat'?{kind:'string'}:primitive?.type??(owner?operands.find((_,index)=>owners[index]===owner)?.type??null:null)));
       if(boolean)return {...result,sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}};
-      if(primitive)return {...result,sourceOwner:primitive.sourceOwner,floatSourceModel:primitive.type.kind==='float'?'binary64 scalar':null};
+      if(primitive)return {...result,sourceOwner:primitive.sourceOwner,floatSourceModel:primitive.floatSourceModel};
       return owner?{...result,sourceOwner:{kind:'primitive',path:[owner],arguments:[]}}:result;
     }
     return unknown();

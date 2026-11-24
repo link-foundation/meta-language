@@ -97,11 +97,19 @@ pub(super) fn select_primitive_expression_origin(
         literal(nodes.first().copied()),
         literal(nodes.get(1).copied()),
     );
-    if selected == 0.0 {
+    let mut result = if selected == 0.0 {
         left.map(|value| value.0)
     } else if selected == 1.0 {
         right.map(|value| value.0)
     } else {
         None
+    }?;
+    // The portable result owner of a numeral does not prove receiver inference.
+    if result.ty == Some(Type::Float) {
+        result.float_source_model = operands
+            .iter()
+            .any(|operand| operand.float_source_model == Some("binary64 scalar"))
+            .then_some("binary64 scalar");
     }
+    Some(result)
 }

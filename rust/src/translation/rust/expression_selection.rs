@@ -784,8 +784,11 @@ impl RustParser {
                 span(&token, &token),
             );
             if token.suffix == "f64" || (token.suffix.is_empty() && token.floating) {
-                self.origins
-                    .mark(&result, primitive_try_from::origin(FLOAT, "f64", path));
+                let mut origin = primitive_try_from::origin(FLOAT, "f64", path);
+                if token.suffix.is_empty() {
+                    origin.float_source_model = None;
+                }
+                self.origins.mark(&result, origin);
             }
             if !token.suffix.is_empty() && rust_fixed_type(&token.suffix).is_some() {
                 let mut origin = self.origins.origin(&result, path);
