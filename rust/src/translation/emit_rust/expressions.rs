@@ -8,6 +8,15 @@ use super::{
 use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
 
 impl RustEmitter<'_> {
+    pub(super) fn render_reference_payload(&mut self, reference: &Expr) -> Result<String> {
+        self.temporaries += 1;
+        let temporary = format!("ml_reference_value{}", self.temporaries);
+        let value = self.receiver(reference)?;
+        Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
+            "Rust", "referenceRead", value, &temporary,
+        ))
+    }
+
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&expr.node, Node::Ctor { frozen: true, .. })
@@ -160,14 +169,7 @@ impl RustEmitter<'_> {
                     "Rust", "referenceAllocate", value, "",
                 ))
             }
-            Node::ReferenceRead { reference } => {
-                self.temporaries += 1;
-                let temporary = format!("ml_reference_value{}", self.temporaries);
-                let value = self.receiver(reference)?;
-                Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
-                    "Rust", "referenceRead", value, &temporary,
-                ))
-            }
+            Node::ReferenceRead { reference } => self.render_reference_payload(reference),
             Node::Print { text, body } => {
                 let text = self.expr(text)?;
                 let body = self.expr(body)?;

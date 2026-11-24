@@ -37,7 +37,14 @@ impl RustEmitter<'_> {
                     super::Type::Map { key, .. } => ("map", key.as_ref()),
                     _ => unreachable!("a collection constructor has its checked collection type"),
                 };
-                let values = self.expr(items)?;
+                // Constructors consume an owned payload from the input array.
+                let values = if crate::translation::surface_reference_analysis_rules::select_surface_reference_read(
+                    items.ty.is_reference(),
+                ) {
+                    self.render_reference_payload(items)?
+                } else {
+                    self.expr(items)?
+                };
                 Ok(crate::translation::collection_construction_rules::render_collection_construction(
                     "Rust", kind, key.kind(), &values, "", "", "",
                 ))
