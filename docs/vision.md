@@ -2245,6 +2245,13 @@ const and other missing qualifiers, full inference and generic/trait resolution
 still require their own implementations. Retained type facts are not evidence
 of those capabilities or of successful execution.
 
+Pure target output threading builds a separate working declaration for each
+effectful function. Its added output parameter and paired result belong to the
+target. The ordinary retained Rust signature remains available on the original
+checked source declaration, including after Links reload. The target working
+declaration omits those source positions. Explicit older and borrowed header
+profiles require their own transformation proof.
+
 The same opt-in source-owner mode retains `Rust data type field signatures 1`
 on each actual datatype declaration. It records the fully qualified datatype,
 every constructor in order, and every original field type, recursive owner,

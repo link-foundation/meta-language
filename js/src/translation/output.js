@@ -19,6 +19,7 @@ import {readJavaScriptNumberConversionFailure} from './string-number-rules.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 import {collectSourceIdentifierTexts,readSourceIdentifierSupply} from './source-identifiers.js';
 import {renderSourceGeneratedIdentifier} from './source-identifier-rules.js';
+import {acceptRustRetainedSourceSignatureModel} from './rust-source-owner-retention-rules.js';
 import { BOOL, INT, NAT, OUTPUT, STRING, data, fixedBounds, typeKey } from './types.js';
 import { readProgramExpressionEntryOperandField } from '../typed-program-link-rules.js';
 
@@ -119,7 +120,10 @@ export function threadOutput(source, target = 'Lean') {
     if (node.k === 'print' || (node.k === 'call' && effectful.has(node.fn)) || aborts(node)) return true;
     return Object.entries(node).some(([key, value]) => !SKIP.has(key) && effects(value));
   };
-  if (functions.some(entry => entry.sourceSignature !== undefined && effectful.has(entry.fullName))) throw unsupported('owned Rust source signature transformation', 'effect threading changes the captured source header and requires a distinct signature transformation proof');
+  if (functions.some(entry => effectful.has(entry.fullName) && entry.sourceSignature !== undefined
+    && !acceptRustRetainedSourceSignatureModel(entry.sourceSignature.model))) {
+    throw unsupported('owned Rust source signature transformation', 'effect threading changes the captured source header and requires a distinct signature transformation proof');
+  }
   const refusal = readCallableOutputTargetRefusal(target, obligations.length);
   if (refusal) throw unsupported('effectful function value', refusal, obligations[0].span);
   // A step of main is a `print` effect itself; what threads is a value that prints or may abort.
@@ -188,12 +192,16 @@ class Threader {
     for (const [name, entry] of this.source.declarations) {
       if (entry.k === 'fn' && this.effectful.has(name)) {
         const out = this.privatePrefix+'out';
-        declarations.set(name, {
+        const lowered = {
           ...entry,
           params: [...entry.params, { name: out, type: OUTPUT, guard: null }],
           ret: this.pairType(entry.ret),
           body: this.io(entry.body, variable(out, OUTPUT)),
-        });
+        };
+        // This target declaration has its own effect ABI. Its retained Rust
+        // source positions still describe the original checked declaration.
+        delete lowered.sourceSignature;
+        declarations.set(name, lowered);
       } else if (entry.k === 'theorem' && this.effects(entry.prop)) {
         declarations.set(name, { ...entry, prop: this.pureProp(entry.prop) });
       } else declarations.set(name, entry);

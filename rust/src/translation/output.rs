@@ -27,6 +27,7 @@ use super::ir::{
     Case, Comparison, Ctor, DataDecl, Decl, Effect, Expr, Field, FnDecl, LitValue, Main, Node,
     Param, Pattern, Program, Prop, TheoremDecl,
 };
+use super::rust_source_owner_retention_rules::accept_rust_retained_source_signature_model;
 use super::surface::BinaryOp;
 use super::types::{BOOL, INT, NAT, STRING, Type, data};
 use settle::{aborts, division, fixed_max, fixed_min, representation, settle_program, total};
@@ -61,10 +62,17 @@ pub fn thread_output_for_target<'a>(source: &'a Program, target: &str) -> Result
         count,
         span,
     } = callables::analyze(&program);
-    if program.declarations.iter().any(|entry| matches!(entry,
-        Decl::Fn(function) if function.source_signature.is_some() && effectful.contains(&function.full_name))) {
-        return Err(unsupported("owned Rust source signature transformation",
-            "effect threading changes the captured source header and requires a distinct signature transformation proof", None));
+    if program.declarations.iter().any(|entry| {
+        matches!(entry,
+        Decl::Fn(function) if effectful.contains(&function.full_name)
+            && function.source_signature.as_ref().is_some_and(|signature|
+                !accept_rust_retained_source_signature_model(&signature.model)))
+    }) {
+        return Err(unsupported(
+            "owned Rust source signature transformation",
+            "effect threading changes the captured source header and requires a distinct signature transformation proof",
+            None,
+        ));
     }
     let refusal =
         super::callable_emission_rules::read_callable_output_target_refusal(target, count);
@@ -230,6 +238,7 @@ impl Threader<'_> {
                         params,
                         ret,
                         body,
+                        source_signature: None,
                         ..function.clone()
                     })
                 }
@@ -634,7 +643,15 @@ impl Threader<'_> {
                 ty,
             )
         };
-        let Expr { node, ty, span, source_position, source_state_transition, source_loop_fold, source_record_place } = e;
+        let Expr {
+            node,
+            ty,
+            span,
+            source_position,
+            source_state_transition,
+            source_loop_fold,
+            source_record_place,
+        } = e;
         let result = match node {
             Node::Cast {
                 arg,
