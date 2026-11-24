@@ -17,7 +17,8 @@ use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_st
 use super::property_names::additional_property_name;
 use super::schema::{Analysis, formats, keywords, reference, types};
 use super::string_intersection::{
-    StringIntersection, intersect_json_string_expressions, select_exclusive_json_string_expressions,
+    StringIntersection, StringProductWork, intersect_json_string_expressions,
+    partition_json_string_expressions, select_exclusive_json_string_expressions,
 };
 use super::tag_policy::string_sets_are_disjoint;
 use super::{JsonSchemaIssue, pointer_child};
@@ -222,6 +223,7 @@ pub fn import_json_schema(schema: &Value) -> Result<JsonSchemaGrammar, JsonSchem
         numeric_constant_diagnostics: HashSet::new(),
         next: 1,
         remaining_nested_collections: NESTED_COLLECTION_LIMITS[1],
+        collection_string_work: StringProductWork::new(),
         pattern_rules: Vec::new(),
     };
     importer.grammar.add_rule(GrammarRule::new(
@@ -397,6 +399,7 @@ struct Importer<'schema> {
     numeric_constant_diagnostics: HashSet<String>,
     next: usize,
     remaining_nested_collections: usize,
+    collection_string_work: StringProductWork,
     pattern_rules: Vec<GrammarExpr>,
 }
 

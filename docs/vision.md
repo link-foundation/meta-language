@@ -4883,6 +4883,14 @@ intersects declarations across reference layers and with sibling constraints.
 The unrestricted number production applies when integral and fractional numbers
 have the same membership. Each exclusive group for one differing property
 contributes to that property's generated language.
+When item or property schemas constrain strings with regular patterns, formats,
+or constants, the decoder constructs one product of the supported string
+grammars. It groups reachable accepting states by the branches that match and
+emits a production for each distinct branch set. Reference siblings and the
+parent member schema contribute constraints to the same product. Other
+unrestricted instance types contribute their type memberships. The shared
+string product work limit applies across these member products during one
+import, and the collection budget also counts the resulting productions.
 Closing the array requires exactly one surviving branch that accepts its length.
 Beyond the final prefix and length boundaries, the current item schema and
 the effect of length stay the same. The decoder can represent the remaining

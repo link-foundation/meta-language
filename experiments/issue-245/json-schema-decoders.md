@@ -94,10 +94,9 @@ decoder previously admitted a three-item array even though both branches
 accept it. The array with a common Boolean item schema retains all five
 original inputs and their validator expectations. Its decoder now rejects
 `[true,false]`, which matches both length intervals, and `[null]`, which fails
-the common item schema. A separate control with different item patterns
-retains both original diagnostic pointers. Further cases cover three-way
-overlap, linked closed prefixes, unbounded intervals, and duplicate
-alternatives with no generatable document.
+the common item schema. Further cases cover three-way overlap, linked closed
+prefixes, unbounded intervals, and duplicate alternatives with no generatable
+document.
 
 The same experiment checks `oneOf` branches for string arrays and number
 arrays. The decoder previously admitted `[]` because either item rule permits
@@ -113,6 +112,16 @@ both branches matched. The regression checks branch membership across items,
 the empty array, an arbitrarily repeatable tail, limits on prefix and tail
 positions, local references, parent item assertions, JSON escapes, and
 equivalent finite languages whose exclusive alternative accepts no array.
+
+Run `node experiments/issue-245/json-schema-exclusive-member-patterns.mjs`
+to check regular patterns on array items and object properties. The previous
+decoder accepted `["aba","a"]` for the shared array with branches using `^a`
+and `a$` and overlapping length bounds. Document validation already rejected
+that input because both branches match. The decoder now rejects it and agrees
+with the validator on all four original inputs. It generates the pattern
+partition without residual diagnostics. Other cases cover escaped spellings,
+formats, constants, sibling assertions, local references, and collections
+whose exclusive language is empty.
 
 Run `node experiments/issue-245/json-schema-exclusive-object-property.mjs`
 to check overlapping property enumerations in objects with an unrestricted

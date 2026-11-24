@@ -1,3 +1,5 @@
+type CollectionVariantGroups = Vec<(Vec<usize>, Vec<Expression>)>;
+
 impl<'schema> Importer<'schema> {
     fn alternative_string_expression(
         &mut self,
@@ -684,7 +686,13 @@ impl<'schema> Importer<'schema> {
             domains.push(types);
         }
         *remaining_work -= work;
-        let mut groups = Vec::<(Vec<usize>, Vec<ConjunctionEntry<'schema>>)>::new();
+        Some(Self::collection_variant_schemas(
+            Self::collection_type_variant_groups(&domains, guard),
+        ))
+    }
+
+    fn collection_type_variant_groups(domains: &[u8], guard: u8) -> CollectionVariantGroups {
+        let mut groups = CollectionVariantGroups::new();
         for (name, mask) in JSON_TYPES {
             if name == "integer" || guard & mask == 0 {
                 continue;
@@ -697,26 +705,133 @@ impl<'schema> Importer<'schema> {
             if branches.is_empty() {
                 continue;
             }
-            let entry = ConjunctionEntry::Expression(reference_expression(name));
-            if let Some((_, entries)) = groups.iter_mut().find(|(current, _)| *current == branches)
+            Self::add_collection_variant(&mut groups, branches, reference_expression(name));
+        }
+        groups
+    }
+
+    fn add_collection_variant(
+        groups: &mut CollectionVariantGroups,
+        branches: Vec<usize>,
+        expression: Expression,
+    ) {
+        if let Some((_, entries)) = groups.iter_mut().find(|(current, _)| *current == branches) {
+            entries.push(expression);
+        } else {
+            groups.push((branches, vec![expression]));
+        }
+    }
+
+    fn collection_variant_schemas(
+        groups: CollectionVariantGroups,
+    ) -> Vec<CollectionValueVariant<'schema>> {
+        groups
+            .into_iter()
+            .map(|(branches, expressions)| CollectionValueVariant {
+                branches,
+                use_common_schema: false,
+                child: Some(CollectionChild::Conjunction(
+                    expressions
+                        .into_iter()
+                        .map(ConjunctionEntry::Expression)
+                        .collect(),
+                )),
+                values: Vec::new(),
+                expression: None,
+            })
+            .collect()
+    }
+
+    fn exclusive_collection_pattern_variants(
+        &mut self,
+        schemas: &[&'schema Value],
+        sibling: &'schema Value,
+        remaining_work: &mut usize,
+    ) -> Option<Vec<CollectionValueVariant<'schema>>> {
+        let string = type_membership("string");
+        let guard_layers = reference_layers(self.root, sibling)?;
+        let guard = guard_layers.iter().fold(ALL_JSON_TYPES, |types, layer| {
+            possible_type_membership(layer, types)
+        });
+        if guard & string == 0 {
+            return None;
+        }
+        let guard_constraints = self.regular_string_chain(&guard_layers, None)?;
+        let mut domains = Vec::new();
+        let mut branches = Vec::new();
+        let mut work = guard_layers.len().checked_add(
+            JSON_TYPES
+                .len()
+                .checked_mul(schemas.len().checked_add(1)?)?,
+        )?;
+        for (index, &schema) in schemas.iter().enumerate() {
+            let layers = reference_layers(self.root, schema)?;
+            work = work.checked_add(layers.len())?;
+            if work > *remaining_work {
+                return None;
+            }
+            let domain = layers
+                .iter()
+                .fold(guard, |types, layer| possible_type_membership(layer, types));
+            let other_types = domain & !string;
+            if (other_types & NUMBER_TYPE) == INTEGER_TYPE
+                || (other_types != 0
+                    && guard_layers.iter().chain(&layers).any(|layer| {
+                        layer.as_object().is_some_and(|fields| {
+                            fields
+                                .keys()
+                                .any(|key| active_conjunction_keyword(key, 0, None, other_types))
+                        })
+                    }))
             {
-                entries.push(entry);
-            } else {
-                groups.push((branches, vec![entry]));
+                return None;
+            }
+            domains.push(other_types);
+            if (domain & string) != 0
+                && guard_constraints.is_some()
+                && let Some(constraints) = self.regular_string_chain(&layers, None)?
+            {
+                branches.push((index, constraints));
             }
         }
-        Some(
-            groups
+        *remaining_work -= work;
+        let mut groups = Self::collection_type_variant_groups(&domains, guard & !string);
+        if branches.is_empty() {
+            return Some(Self::collection_variant_schemas(groups));
+        }
+        let guard_constraints = guard_constraints?;
+        let any_string = reference_expression("string");
+        let conjunctions: Vec<_> = branches
+            .iter()
+            .map(|(_, constraints)| {
+                if guard_constraints.is_empty() && constraints.is_empty() {
+                    vec![&any_string]
+                } else {
+                    guard_constraints.iter().chain(constraints).collect()
+                }
+            })
+            .collect();
+        let rule_prefix = format!("json_string_membership_{}", self.next());
+        let product = partition_json_string_expressions(
+            &self.grammar,
+            &conjunctions,
+            &rule_prefix,
+            &mut self.collection_string_work,
+        )?;
+        let product_work: usize = product.iter().map(|variant| 1 + variant.rules.len()).sum();
+        *remaining_work = remaining_work.checked_sub(product_work)?;
+        for variant in product {
+            for rule in variant.rules {
+                self.grammar.add_rule(rule);
+            }
+            let membership = variant
+                .branches
                 .into_iter()
-                .map(|(branches, entries)| CollectionValueVariant {
-                    branches,
-                    use_common_schema: false,
-                    child: Some(CollectionChild::Conjunction(entries)),
-                    values: Vec::new(),
-                    expression: None,
-                })
-                .collect(),
-        )
+                .map(|index| branches[index].0)
+                .collect();
+            Self::add_collection_variant(&mut groups, membership, variant.expression);
+        }
+        Some(Self::collection_variant_schemas(groups))
     }
 
     fn select_exclusive_collection_value_variants(
@@ -758,6 +873,18 @@ impl<'schema> Importer<'schema> {
         if let Some(typed) = self.exclusive_collection_type_variants(schemas, sibling, work) {
             return Some(typed);
         }
+        self.finite_collection_value_variants(schemas, &allowed, sibling, work, allow_shared_schema)
+            .or_else(|| self.exclusive_collection_pattern_variants(schemas, sibling, work))
+    }
+
+    fn finite_collection_value_variants(
+        &self,
+        schemas: &[&'schema Value],
+        allowed: &[(usize, &'schema Value)],
+        sibling: &'schema Value,
+        work: &mut usize,
+        allow_shared_schema: bool,
+    ) -> Option<Vec<CollectionValueVariant<'schema>>> {
         let checks = schemas.len() + usize::from(sibling != &UNRESTRICTED_SCHEMA);
         let mut seen = HashSet::new();
         let mut candidates = Vec::new();
@@ -776,7 +903,7 @@ impl<'schema> Importer<'schema> {
         let sources = if shared.is_some() {
             vec![sibling]
         } else {
-            allowed.into_iter().map(|(_, child)| child).collect()
+            allowed.iter().map(|&(_, child)| child).collect()
         };
         for child in sources {
             let (values, _) = shared.take().or_else(|| {

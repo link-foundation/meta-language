@@ -115,107 +115,144 @@ export function intersectJsonStringExpressions(leftExpression, rightExpression, 
 export function selectExclusiveJsonStringExpressions(branches, resolve, rulePrefix) {
   if (branches.length === 0) return null;
   if (branches.length === 1 && branches[0].length === 1) return { expression: branches[0][0], rules: [] };
-  try {
-    let work = maximumWork;
-    function charge(cost) {
-      work -= cost;
-      if (work < 0) throw exhausted;
-    }
-    const machines = [];
-    const machineIndices = new Map();
-    const groups = branches.map(expressions => expressions.map(expression => {
-      charge(1);
-      if (!machineIndices.has(expression)) {
-        machineIndices.set(expression, machines.length);
-        machines.push(automaton(expression, resolve, charge));
-      }
-      return machineIndices.get(expression);
-    }));
-    function closure(machine, starts) {
-      const pending = [...new Set(starts)];
-      const visited = new Set(pending);
-      for (const state of pending) {
-        charge(1 + machine[state].empty.length);
-        for (const target of machine[state].empty) {
-          if (visited.has(target)) continue;
-          visited.add(target);
-          pending.push(target);
-        }
-      }
-      return pending.sort((first, last) => first - last);
-    }
-    const rows = [];
-    const indices = new Map();
-    function product(states) {
-      const key = states.map(group => group.join(',')).join('/');
-      if (indices.has(key)) return indices.get(key);
-      if (rows.length === maximumProductStates) throw exhausted;
-      const index = rows.length;
-      indices.set(key, index);
-      let acceptingBranches = 0;
-      for (const group of groups) {
-        charge(group.length);
-        if (group.every(machine => states[machine].includes(1))) acceptingBranches += 1;
-        if (acceptingBranches > 1) break;
-      }
-      rows.push({ states, accepts: acceptingBranches === 1, edges: [], incoming: [] });
-      return index;
-    }
-    product(machines.map(machine => closure(machine, [0])));
-    const accepting = [];
-    for (let index = 0; index < rows.length; index += 1) {
-      const row = rows[index];
-      if (row.accepts) accepting.push(index);
-      const machineEdges = machines.map((machine, offset) => row.states[offset].flatMap(state => machine[state].edges));
-      const edgeCount = machineEdges.reduce((count, edges) => count + edges.length, 0);
-      const bounds = [...new Set(machineEdges.flatMap(edges => edges.flatMap(edge => [edge.first, edge.last + 1])))]
-        .sort((first, last) => first - last);
-      for (let part = 1; part < bounds.length; part += 1) {
-        charge(1 + edgeCount + machineEdges.length);
-        const first = bounds[part - 1];
-        const last = bounds[part] - 1;
-        const targets = machineEdges.map(edges => edges.filter(edge => edge.first <= first && first <= edge.last).map(edge => edge.end));
-        if (!groups.some(group => {
-          charge(group.length);
-          return group.every(machine => targets[machine].length);
-        })) continue;
-        const target = product(machines.map((machine, offset) => closure(machine, targets[offset])));
-        const previous = row.edges.at(-1);
-        if (previous?.target === target && previous.last + 1 === first) previous.last = last;
-        else {
-          row.edges.push({ first, last, target });
-          rows[target].incoming.push(index);
-        }
-      }
-    }
-    const productive = new Set(accepting);
-    for (const index of accepting) {
-      for (const previous of rows[index].incoming) {
-        if (productive.has(previous)) continue;
-        productive.add(previous);
-        accepting.push(previous);
-      }
-    }
-    if (!productive.has(0)) return null;
-    const name = index => `${rulePrefix}_${index}`;
-    const rules = [];
+  return withProductBudget(charge => {
+    const rows = buildProduct(branches, resolve, charge, 2);
+    const accepting = rows.flatMap((row, index) => row.matches.length === 1 ? [index] : []);
+    return compileProduct(rows, accepting, rulePrefix);
+  });
+}
+
+/** Each returned expression accepts strings with exactly its listed branch memberships. */
+export function partitionJsonStringExpressions(branches, resolve, rulePrefix, budget) {
+  return withProductBudget(charge => {
+    const rows = buildProduct(branches, resolve, charge, branches.length);
+    const groups = new Map();
+    let compilationWork = 0;
     for (const [index, row] of rows.entries()) {
-      if (!productive.has(index)) continue;
-      const alternatives = row.accepts ? [empty()] : [];
-      const transitions = new Map();
-      for (const { first, last, target } of row.edges) {
-        if (!productive.has(target)) continue;
-        if (!transitions.has(target)) transitions.set(target, []);
-        transitions.get(target).push(first === last
-          ? { kind: 'char', value: String.fromCodePoint(first) }
-          : { kind: 'range', start: String.fromCodePoint(first), end: String.fromCodePoint(last) });
-      }
-      for (const [target, characters] of transitions) alternatives.push(seq(charClass(characters), ref(name(target))));
-      rules.push([name(index), choice(...alternatives)]);
+      compilationWork += 1 + 2 * row.edges.length;
+      if (!row.matches.length) continue;
+      const key = row.matches.join(',');
+      if (!groups.has(key)) groups.set(key, { matches: row.matches, accepted: [] });
+      groups.get(key).accepted.push(index);
     }
-    return { expression: ref(name(0)), rules };
+    charge(compilationWork * groups.size);
+    return [...groups.values()].map(({ matches, accepted }, index) => ({
+      matches,
+      ...compileProduct(rows, accepted, `${rulePrefix}_${index}`),
+    }));
+  }, budget);
+}
+
+function withProductBudget(build, budget = { remaining: maximumWork }) {
+  try {
+    return build(cost => {
+      budget.remaining -= cost;
+      if (budget.remaining < 0) throw exhausted;
+    });
   } catch (error) {
     if (error !== exhausted) throw error;
     return undefined;
   }
+}
+
+function buildProduct(branches, resolve, charge, maximumMatches) {
+  const machines = [];
+  const machineIndices = new Map();
+  const groups = branches.map(expressions => expressions.map(expression => {
+    charge(1);
+    if (!machineIndices.has(expression)) {
+      machineIndices.set(expression, machines.length);
+      machines.push(automaton(expression, resolve, charge));
+    }
+    return machineIndices.get(expression);
+  }));
+  function closure(machine, starts) {
+    const pending = [...new Set(starts)];
+    const visited = new Set(pending);
+    for (const state of pending) {
+      charge(1 + machine[state].empty.length);
+      for (const target of machine[state].empty) {
+        if (visited.has(target)) continue;
+        visited.add(target);
+        pending.push(target);
+      }
+    }
+    return pending.sort((first, last) => first - last);
+  }
+  const rows = [];
+  const indices = new Map();
+  function product(states) {
+    const key = states.map(group => group.join(',')).join('/');
+    if (indices.has(key)) return indices.get(key);
+    if (rows.length === maximumProductStates) throw exhausted;
+    const index = rows.length;
+    indices.set(key, index);
+    const matches = [];
+    for (const [index, group] of groups.entries()) {
+      charge(group.length);
+      if (group.every(machine => states[machine].includes(1))) {
+        matches.push(index);
+        if (matches.length === maximumMatches) break;
+      }
+    }
+    rows.push({ states, matches, edges: [], incoming: [] });
+    return index;
+  }
+  product(machines.map(machine => closure(machine, [0])));
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
+    const machineEdges = machines.map((machine, offset) => row.states[offset].flatMap(state => machine[state].edges));
+    const edgeCount = machineEdges.reduce((count, edges) => count + edges.length, 0);
+    const bounds = [...new Set(machineEdges.flatMap(edges => edges.flatMap(edge => [edge.first, edge.last + 1])))]
+      .sort((first, last) => first - last);
+    for (let part = 1; part < bounds.length; part += 1) {
+      charge(1 + edgeCount + machineEdges.length);
+      const first = bounds[part - 1];
+      const last = bounds[part] - 1;
+      const targets = machineEdges.map(edges => edges.filter(edge => edge.first <= first && first <= edge.last).map(edge => edge.end));
+      if (!groups.some(group => {
+        charge(group.length);
+        return group.every(machine => targets[machine].length);
+      })) continue;
+      const target = product(machines.map((machine, offset) => closure(machine, targets[offset])));
+      const previous = row.edges.at(-1);
+      if (previous?.target === target && previous.last + 1 === first) previous.last = last;
+      else {
+        row.edges.push({ first, last, target });
+        rows[target].incoming.push(index);
+      }
+    }
+  }
+  return rows;
+}
+
+function compileProduct(rows, accepted, rulePrefix) {
+  const accepting = new Set(accepted);
+  const productive = new Set(accepted);
+  const pending = [...accepted];
+  for (const index of pending) {
+    for (const previous of rows[index].incoming) {
+      if (productive.has(previous)) continue;
+      productive.add(previous);
+      pending.push(previous);
+    }
+  }
+  if (!productive.has(0)) return null;
+  const name = index => `${rulePrefix}_${index}`;
+  const rules = [];
+  for (const [index, row] of rows.entries()) {
+    if (!productive.has(index)) continue;
+    const alternatives = accepting.has(index) ? [empty()] : [];
+    const transitions = new Map();
+    for (const { first, last, target } of row.edges) {
+      if (!productive.has(target)) continue;
+      if (!transitions.has(target)) transitions.set(target, []);
+      transitions.get(target).push(first === last
+        ? { kind: 'char', value: String.fromCodePoint(first) }
+        : { kind: 'range', start: String.fromCodePoint(first), end: String.fromCodePoint(last) });
+    }
+    for (const [target, characters] of transitions) alternatives.push(seq(charClass(characters), ref(name(target))));
+    rules.push([name(index), choice(...alternatives)]);
+  }
+  return { expression: ref(name(0)), rules };
 }

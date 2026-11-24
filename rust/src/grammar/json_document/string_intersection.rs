@@ -6,12 +6,17 @@ use super::patterns::complement_scalar_ranges;
 
 const EXPRESSION: ExprBuilder = ExprBuilder;
 
-struct WorkLimit(usize);
+pub(super) struct StringProductWork(usize);
 
-impl WorkLimit {
+impl StringProductWork {
+    pub(super) fn new() -> Self {
+        Self(string_intersection_limits().2 as usize)
+    }
+
     fn charge(&mut self, cost: usize) -> Option<()> {
-        self.0 = self.0.checked_sub(cost)?;
-        Some(())
+        let remaining = self.0.checked_sub(cost);
+        self.0 = remaining.unwrap_or_default();
+        remaining.map(|_| ())
     }
 }
 
@@ -39,7 +44,7 @@ impl<'grammar> Automaton<'grammar> {
         grammar: &'grammar Grammar,
         expression: &GrammarExpr,
         state_limit: usize,
-        work: &mut WorkLimit,
+        work: &mut StringProductWork,
     ) -> Option<Self> {
         let mut automaton = Self {
             grammar,
@@ -69,7 +74,7 @@ impl<'grammar> Automaton<'grammar> {
         last: char,
         start: usize,
         end: usize,
-        work: &mut WorkLimit,
+        work: &mut StringProductWork,
     ) -> Option<()> {
         work.charge(1)?;
         self.states[start].edges.push(Edge {
@@ -86,7 +91,7 @@ impl<'grammar> Automaton<'grammar> {
         mut start: usize,
         end: usize,
         depth: usize,
-        work: &mut WorkLimit,
+        work: &mut StringProductWork,
     ) -> Option<()> {
         if depth > 128 {
             return None;
@@ -200,7 +205,7 @@ impl<'grammar> Automaton<'grammar> {
     fn closure(
         &self,
         starts: impl IntoIterator<Item = usize>,
-        work: &mut WorkLimit,
+        work: &mut StringProductWork,
     ) -> Option<Vec<usize>> {
         let mut visited: BTreeSet<_> = starts.into_iter().collect();
         let mut pending: Vec<_> = visited.iter().copied().collect();
@@ -231,7 +236,7 @@ type ProductState = Vec<Vec<usize>>;
 
 struct ProductRow {
     states: ProductState,
-    accepts: bool,
+    matches: Vec<usize>,
     edges: Vec<Edge>,
     incoming: Vec<usize>,
 }
@@ -248,7 +253,8 @@ impl Product {
         &mut self,
         states: ProductState,
         groups: &[Vec<usize>],
-        work: &mut WorkLimit,
+        work: &mut StringProductWork,
+        maximum_matches: usize,
     ) -> Option<usize> {
         if let Some(&index) = self.indices.get(&states) {
             return Some(index);
@@ -257,12 +263,12 @@ impl Product {
         if index == self.state_limit {
             return None;
         }
-        let mut accepting_branches = 0;
-        for group in groups {
+        let mut matches = Vec::new();
+        for (branch, group) in groups.iter().enumerate() {
             work.charge(group.len())?;
             if group.iter().all(|&machine| states[machine].contains(&1)) {
-                accepting_branches += 1;
-                if accepting_branches > 1 {
+                matches.push(branch);
+                if matches.len() == maximum_matches {
                     break;
                 }
             }
@@ -270,7 +276,7 @@ impl Product {
         self.indices.insert(states.clone(), index);
         self.rows.push(ProductRow {
             states,
-            accepts: accepting_branches == 1,
+            matches,
             edges: Vec::new(),
             incoming: Vec::new(),
         });
@@ -295,15 +301,17 @@ impl Product {
     }
 
     fn compile(
-        self,
+        &self,
         rule_prefix: &str,
-        mut accepting: Vec<usize>,
+        accepted: Vec<usize>,
     ) -> Option<(GrammarExpr, Vec<GrammarRule>)> {
-        let mut productive: BTreeSet<_> = accepting.iter().copied().collect();
+        let accepting: BTreeSet<_> = accepted.iter().copied().collect();
+        let mut productive = accepting.clone();
+        let mut pending = accepted;
         let mut index = 0;
-        while let Some(&state) = accepting.get(index) {
+        while let Some(&state) = pending.get(index) {
             index += 1;
-            accepting.extend(
+            pending.extend(
                 self.rows[state]
                     .incoming
                     .iter()
@@ -316,22 +324,22 @@ impl Product {
         }
         let name = |index| format!("{rule_prefix}_{index}");
         let mut rules = Vec::new();
-        for (index, row) in self.rows.into_iter().enumerate() {
+        for (index, row) in self.rows.iter().enumerate() {
             if !productive.contains(&index) {
                 continue;
             }
-            let mut alternatives = if row.accepts {
+            let mut alternatives = if accepting.contains(&index) {
                 vec![EXPRESSION.empty()]
             } else {
                 Vec::new()
             };
             let mut transitions: Vec<(usize, Vec<CharClassItem>)> = Vec::new();
             let mut indices = HashMap::new();
-            for Edge {
+            for &Edge {
                 first,
                 last,
                 target,
-            } in row.edges
+            } in &row.edges
             {
                 if !productive.contains(&target) {
                     continue;
@@ -407,9 +415,71 @@ pub(super) fn select_exclusive_json_string_expressions(
             Vec::new(),
         ));
     }
-    let (maximum_source_states, maximum_product_states, maximum_work) =
-        string_intersection_limits();
-    let mut work = WorkLimit(maximum_work as usize);
+    let product = build_product(grammar, branches, 2, &mut StringProductWork::new())?;
+    let accepting = product
+        .rows
+        .iter()
+        .enumerate()
+        .filter_map(|(index, row)| (row.matches.len() == 1).then_some(index))
+        .collect();
+    Some(match product.compile(rule_prefix, accepting) {
+        Some((expression, rules)) => StringIntersection::Match(expression, rules),
+        None => StringIntersection::Impossible,
+    })
+}
+
+pub(super) struct StringMembership {
+    pub branches: Vec<usize>,
+    pub expression: GrammarExpr,
+    pub rules: Vec<GrammarRule>,
+}
+
+/// Each returned expression accepts strings with exactly its listed branch memberships.
+pub(super) fn partition_json_string_expressions(
+    grammar: &Grammar,
+    branches: &[Vec<&GrammarExpr>],
+    rule_prefix: &str,
+    work: &mut StringProductWork,
+) -> Option<Vec<StringMembership>> {
+    let product = build_product(grammar, branches, branches.len(), work)?;
+    let mut groups = Vec::<(Vec<usize>, Vec<usize>)>::new();
+    let mut indices = HashMap::new();
+    let mut compilation_work = 0usize;
+    for (index, row) in product.rows.iter().enumerate() {
+        compilation_work += 1 + 2 * row.edges.len();
+        if row.matches.is_empty() {
+            continue;
+        }
+        let group = *indices.entry(&row.matches).or_insert_with(|| {
+            let group = groups.len();
+            groups.push((row.matches.clone(), Vec::new()));
+            group
+        });
+        groups[group].1.push(index);
+    }
+    work.charge(compilation_work.checked_mul(groups.len())?)?;
+    groups
+        .into_iter()
+        .enumerate()
+        .map(|(index, (branches, accepted))| {
+            let (expression, rules) =
+                product.compile(&format!("{rule_prefix}_{index}"), accepted)?;
+            Some(StringMembership {
+                branches,
+                expression,
+                rules,
+            })
+        })
+        .collect()
+}
+
+fn build_product(
+    grammar: &Grammar,
+    branches: &[Vec<&GrammarExpr>],
+    maximum_matches: usize,
+    work: &mut StringProductWork,
+) -> Option<Product> {
+    let (maximum_source_states, maximum_product_states, _) = string_intersection_limits();
     let mut machines = Vec::new();
     let mut machine_indices = HashMap::new();
     let mut groups = Vec::with_capacity(branches.len());
@@ -426,7 +496,7 @@ pub(super) fn select_exclusive_json_string_expressions(
                         grammar,
                         expression,
                         maximum_source_states as usize,
-                        &mut work,
+                        work,
                     )?);
                     machine_indices.insert(identity, index);
                     index
@@ -442,15 +512,11 @@ pub(super) fn select_exclusive_json_string_expressions(
     };
     let start = machines
         .iter()
-        .map(|machine| machine.closure([0], &mut work))
+        .map(|machine| machine.closure([0], work))
         .collect::<Option<Vec<_>>>()?;
-    product.state(start, &groups, &mut work)?;
-    let mut accepting = Vec::new();
+    product.state(start, &groups, work, maximum_matches)?;
     let mut index = 0;
     while let Some(row) = product.rows.get(index) {
-        if row.accepts {
-            accepting.push(index);
-        }
         let machine_edges: Vec<_> = machines
             .iter()
             .zip(&row.states)
@@ -487,15 +553,12 @@ pub(super) fn select_exclusive_json_string_expressions(
             let states = machines
                 .iter()
                 .zip(transitions)
-                .map(|(machine, set)| machine.closure(set, &mut work))
+                .map(|(machine, set)| machine.closure(set, work))
                 .collect::<Option<Vec<_>>>()?;
-            let target = product.state(states, &groups, &mut work)?;
+            let target = product.state(states, &groups, work, maximum_matches)?;
             product.transition(index, first, bounds[1] - 1, target);
         }
         index += 1;
     }
-    Some(match product.compile(rule_prefix, accepting) {
-        Some((expression, rules)) => StringIntersection::Match(expression, rules),
-        None => StringIntersection::Impossible,
-    })
+    Some(product)
 }

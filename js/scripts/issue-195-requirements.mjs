@@ -769,6 +769,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-PATTERNS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive collection alternatives with overlapping regular member constraints',
+      expectedBehavior: 'Within the shared construction budgets, partition string item and property languages by their matching branches. Apply sibling and local reference constraints and combine their membership with unrestricted alternative instance types. Generate a collection only when exactly one branch accepts its members, presence and length. Equivalent regular member languages and collection boundaries have no generatable exclusive document.',
+      fixture: 'parity/fixtures/json-schema-exclusive-member-patterns.lino',
+      selector: 'overlapping patterns, supported string formats, string constants, sibling and local reference constraints, optional and required properties, mixed and undeclared instance types, escaped strings, variable lengths and equivalent regular languages',
+      assertions: ['decoderCountsExclusiveCollectionMemberPatterns', 'equivalentMemberPatternsHaveNoGeneratableDocument'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/grammar-importers/json-schema-string-intersection.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/src/grammar/json_document/import/exclusive_alternatives.rs', 'rust/src/grammar/json_document/string_intersection.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',
