@@ -454,8 +454,7 @@ pub fn accept_java_script_external_binding(name: &self::ml_string::Text) -> bool
                         f64::NAN
                     } else {
                         ((text.slice(index, (index + 1f64))).code_point_at(0f64))
-                            .clone()
-                            .unwrap_or_else(|| f64::NAN)
+                            .unwrap_or(f64::NAN)
                     }
                 }
             },
@@ -530,8 +529,7 @@ pub fn ml_accept_java_script_external_binding_loop1(
                                 f64::NAN
                             } else {
                                 ((text.slice(index, (index + 1f64))).code_point_at(0f64))
-                                    .clone()
-                                    .unwrap_or_else(|| f64::NAN)
+                                    .unwrap_or(f64::NAN)
                             }
                         }
                     }))(name.clone(), at);

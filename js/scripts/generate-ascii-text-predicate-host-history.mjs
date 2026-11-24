@@ -8,6 +8,7 @@ import { checkProjectData, writeProjectData, readProjectData } from './project-d
 import { ASCII_HOST_REVISION, ASCII_HOST_ADDITIONS, ASCII_HOST_REGISTRATIONS,
   ASCII_HOST_EDITS, ASCII_ASSERTION_EDITS, asciiHostPin, replayAsciiHostEdits, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import { restoreNativeCompilerSource } from './native-compiler-source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 
@@ -41,7 +42,7 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     return { path, source, pin: asciiHostPin(source) };
   });
   const artifactPath = 'parity/self-translation/ascii-text-predicate-rules-native.lino';
-  const artifactBytes = readFileSync(new URL(artifactPath, root));
+  const artifactBytes = restoreNativeCompilerSource(readFileSync(new URL(artifactPath, root), 'utf8'), artifactPath);
   const artifact = readProjectData(new URL(artifactPath, root));
   const archive = { schemaVersion: 1, model: 'Rust ASCII character query host replay 1',
     revision: ASCII_HOST_REVISION, coordinateUnit: 'UTF-16 code units', hosts, additions,

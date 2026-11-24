@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {generateBooleanDeclarationValueHosts,verifyBooleanDeclarationValueHosts} from '../scripts/generate-boolean-declaration-value-hosts.mjs';
+import { restoreNativeCompilerSource } from '../scripts/native-compiler-source-history.mjs';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 
 test('direct Boolean native host replay retains every certified predecessor and reviewed successor byte',()=>{
@@ -16,6 +18,16 @@ test('direct Boolean native host replay retains every certified predecessor and 
     assert.equal(typeof file.predecessor,'string');
     assert.notEqual(file.source,file.predecessor);
   }
+  const paths=files.map(file=>new URL('../../'+file.path,import.meta.url));
+  const actual=paths.map(path=>readFileSync(path,'utf8'));
+  const revised=files.filter((file,index)=>actual[index]!==file.source);
+  assert.deepEqual(revised.map(file=>file.path),[files[0].path,files[2].path]);
+  for(const [index,file]of files.entries()){
+    assert.equal(restoreNativeCompilerSource(actual[index],file.path),file.source);
+    assert.equal(restoreNativeCompilerSource(actual[index]+'\n',file.path),actual[index]+'\n');
+  }
+  generateBooleanDeclarationValueHosts();
+  assert.deepEqual(paths.map(path=>readFileSync(path,'utf8')),actual);
 });
 
 test('host source certificates coordinate units owner paths and coherent edit forgeries refuse',()=>{

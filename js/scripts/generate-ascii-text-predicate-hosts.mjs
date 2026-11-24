@@ -6,13 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
 import { ASCII_HOST_REGISTRATIONS, asciiHostPin, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import { restoreNativeCompilerSource } from './native-compiler-source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 
 export function generateAsciiTextPredicateHosts({ check = false } = {}) {
   const archive = readProjectData(new URL('parity/self-translation/ascii-text-predicate-hosts.lino', root));
   const files = verifyAsciiTextPredicateHosts(archive);
-  const artifact = readFileSync(new URL(archive.sourceArtifact.path, root));
+  const currentArtifact = readFileSync(new URL(archive.sourceArtifact.path, root), 'utf8');
+  const artifact = restoreNativeCompilerSource(currentArtifact, archive.sourceArtifact.path);
   assert.deepEqual(asciiHostPin(artifact), archive.sourceArtifact.pin, 'the exact separately generated source artifact supplies this ABI');
   assert.deepEqual(readProjectData(new URL(archive.sourceArtifact.path, root)).libraryInterface, archive.sourceArtifact.libraryInterface);
   assert.equal(readFileSync(new URL(archive.assertionCorrection.path, root), 'utf8'), archive.assertionCorrection.current.source,

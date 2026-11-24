@@ -101,6 +101,10 @@ pub(super) fn accept_owned_publication(
     )
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "the complete ordered CST columns are the shared checked interface"
+)]
 pub(super) fn read_deferred_binding(
     terms: &[&str],
     fields: &[&str],
