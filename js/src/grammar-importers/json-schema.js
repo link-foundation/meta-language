@@ -11,7 +11,7 @@ import { anyJsonPatternCharacter, lowerJsonStringPattern } from './json-schema-p
 import { additionalPropertyName, jsonStringCharacter } from './json-schema-property-names.js';
 import { intersectJsonStringExpressions, partitionJsonStringExpressions, selectExclusiveJsonStringExpressions } from './json-schema-string-intersection.js';
 import { stringSetsAreDisjoint } from './json-schema-tag-policy.js';
-import { exclusiveDecimalRange, exclusiveIntegerRange, integerBounds, numericConstant, numericLimitKeywords, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
+import { exclusiveDecimalRange, exclusiveIntegerRange, integerBounds, numericConstant, numericLimitKeywords, partitionNumericRanges, signedDecimalRange, signedIntegerRange } from './json-schema-numeric-ranges.js';
 
 const { charClass, charRange, seq, choice, literal, ref, repeat, repeat0, optional, empty } = Expression;
 const space = ref('json_space');
@@ -489,6 +489,7 @@ export function importJsonSchema(schema) {
   const compiled = new Map();
   const diagnostics = [...analysis.issues];
   const numericConstantDiagnostics = new Set();
+  const collectionNumericDiagnostics = new Set();
   const report = (pointer, keyword, message) => diagnostics.push({
     keyword, pointer: pointerChild(pointer, keyword), message,
   });
@@ -1202,14 +1203,55 @@ export function importJsonSchema(schema) {
       if (name === 'integer' || !(guard & mask)) continue;
       const matches = domains.flatMap((types, index) => (types & mask) === mask ? [index] : []);
       if (!matches.length) continue;
-      const key = matches.join(',');
-      if (!variants.has(key)) variants.set(key, { matches, expressions: [] });
-      variants.get(key).expressions.push(ref(name));
+      addCollectionVariant(variants, matches, ref(name));
     }
     return variants;
   }
+  function addCollectionVariant(variants, matches, expression) {
+    const key = matches.join(',');
+    if (!variants.has(key)) variants.set(key, { matches, expressions: [] });
+    variants.get(key).expressions.push(expression);
+  }
   function collectionVariantSchemas(variants) {
     return [...variants.values()].map(({ matches, expressions }) => ({ matches, schema: () => choice(...expressions) }));
+  }
+  function exclusiveCollectionNumericVariants(schemas, sibling, pointer, budget) {
+    const guardLayers = referenceLayers(sibling);
+    if (!guardLayers) return undefined;
+    const guard = guardLayers.reduce((types, layer) => possibleTypeMembership(layer, types), allJsonTypes);
+    if (!(guard & numberType)) return undefined;
+    const domains = [];
+    const branches = [];
+    let work = guardLayers.length + jsonTypes.size * (schemas.length + 1);
+    for (const [index, schema] of schemas.entries()) {
+      const layers = referenceLayers(schema);
+      if (!layers) return undefined;
+      work += layers.length;
+      if (work > budget.remaining) return undefined;
+      const domain = layers.reduce((types, layer) => possibleTypeMembership(layer, types), guard);
+      const otherTypes = domain & ~numberType;
+      const assertions = [...guardLayers, ...layers];
+      if (otherTypes && assertions.some(layer => Object.keys(layer).some(key => (
+        activeConjunctionKeyword(key, 0, undefined, otherTypes)
+      )))) return undefined;
+      domains.push(otherTypes);
+      const numericTypes = domain & numberType;
+      if (!numericTypes) continue;
+      const constraints = combineNumericConstraints(assertions, numericTypes);
+      if (!constraints) return undefined;
+      branches.push({ index, ...constraints });
+    }
+    if (!branches.some(({ type, limits }) => type === 'integer' || Object.keys(limits).length > 0)) return undefined;
+    budget.remaining -= work;
+    const numeric = partitionNumericRanges(branches, budget);
+    if (!numeric) return undefined;
+    const variants = collectionTypeVariantGroups(domains, guard & ~numberType);
+    for (const { matches, expression } of numeric) addCollectionVariant(variants, matches, expression);
+    if (!collectionNumericDiagnostics.has(pointer) && numeric.some(({ expression }) => expression.kind !== 'ref')) {
+      collectionNumericDiagnostics.add(pointer);
+      report(pointer, 'type', 'The exclusive numeric member decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.');
+    }
+    return collectionVariantSchemas(variants);
   }
   function exclusiveCollectionPatternVariants(schemas, sibling, budget) {
     const string = jsonTypes.get('string');
@@ -1251,10 +1293,7 @@ export function importJsonSchema(schema) {
     if (budget.remaining < 0) return undefined;
     for (const { matches, expression, rules } of product) {
       for (const [name, body] of rules) builder.rule(name, body);
-      const membership = matches.map(index => branches[index].index);
-      const key = membership.join(',');
-      if (!variants.has(key)) variants.set(key, { matches: membership, expressions: [] });
-      variants.get(key).expressions.push(expression);
+      addCollectionVariant(variants, matches.map(index => branches[index].index), expression);
     }
     return collectionVariantSchemas(variants);
   }
@@ -1262,6 +1301,8 @@ export function importJsonSchema(schema) {
     if (sibling === false) return [];
     const allowed = schemas.filter(schema => schema !== false);
     if (!allowed.length) return [];
+    const numeric = exclusiveCollectionNumericVariants(schemas, sibling, pointer, budget);
+    if (numeric) return numeric;
     // A shared schema gives every permitted present value the same branch membership.
     if ((allowSharedSchema || allowed.length < schemas.length) && allowed.every(schema => isDeepStrictEqual(schema, allowed[0]))) {
       const schema = combineChildSchemas([allowed[0], sibling], pointer, 0);

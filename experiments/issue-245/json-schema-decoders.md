@@ -123,6 +123,16 @@ partition without residual diagnostics. Other cases cover escaped spellings,
 formats, constants, sibling assertions, local references, and collections
 whose exclusive language is empty.
 
+Run `node experiments/issue-245/json-schema-exclusive-member-bounds.mjs`
+to check numeric bounds on array items and object properties. Before the
+change, arrays with ranges `[-1, 2)` and `[1, 3]` admitted `[]` and `[1.5]`
+even though both branches match. The regression checks those documents,
+exact endpoints, signed zero, repeated items, and mixed number and integer
+declarations. The object fixtures check required and optional properties,
+sibling and local reference bounds, and three-way overlaps. Separate
+validation cases check exponent spellings and the corresponding diagnostic
+locates the decoder restriction on the collection member.
+
 Run `node experiments/issue-245/json-schema-exclusive-object-property.mjs`
 to check overlapping property enumerations in objects with an unrestricted
 text field. The previous grammar accepted the shared choice. It now rejects

@@ -17,6 +17,7 @@ const exclusiveTypedArrayPrefixesFixture = 'parity/fixtures/json-schema-exclusiv
 const exclusiveArrayItemsFixture = 'parity/fixtures/json-schema-exclusive-array-items.lino';
 const exclusiveMemberTypesFixture = 'parity/fixtures/json-schema-exclusive-member-types.lino';
 const exclusiveMemberPatternsFixture = 'parity/fixtures/json-schema-exclusive-member-patterns.lino';
+const exclusiveMemberBoundsFixture = 'parity/fixtures/json-schema-exclusive-member-bounds.lino';
 const exclusiveObjectPropertyFixture = 'parity/fixtures/json-schema-exclusive-object-property.lino';
 const exclusiveObjectSiblingsFixture = 'parity/fixtures/json-schema-exclusive-object-siblings.lino';
 const exclusiveObjectFieldsFixture = 'parity/fixtures/json-schema-exclusive-object-fields.lino';
@@ -284,9 +285,9 @@ test('shared JSON Schema fixtures validate decoders and locate document errors',
 
 function checkExclusiveAlternatives(file) {
   const { grammars, ungeneratable } = readProjectData(new URL(`../../${file}`, import.meta.url));
-  for (const [schema, cases] of grammars) {
-    assert.deepEqual(importJsonSchema(schema).schemaDiagnostics, []);
-    for (const [source, accepted] of cases) assert.equal(validateJson(source, schema).valid, accepted, source);
+  for (const [schema, cases, diagnosticPointers = [], validationOnly = []] of grammars) {
+    assert.deepEqual(importJsonSchema(schema).schemaDiagnostics.map(issue => issue.pointer), diagnosticPointers);
+    for (const [source, accepted] of [...cases, ...validationOnly]) assert.equal(validateJson(source, schema).valid, accepted, source);
     for (const parser of schemaParsers(schema)) {
       for (const [source, accepted] of cases) assert.equal(parser.parseTree(source).ok, accepted, source);
     }
@@ -357,6 +358,16 @@ test('exclusive collection alternatives count matching branches across member pa
     requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-PATTERNS', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-exclusive-member-patterns', fixtureFile: exclusiveMemberPatternsFixture,
     assertions: ['decoderCountsExclusiveCollectionMemberPatterns', 'equivalentMemberPatternsHaveNoGeneratableDocument'],
+    testName: context.name,
+  });
+});
+
+test('exclusive collection alternatives count matching branches across member bounds', context => {
+  checkExclusiveAlternatives(exclusiveMemberBoundsFixture);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-BOUNDS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-member-bounds', fixtureFile: exclusiveMemberBoundsFixture,
+    assertions: ['decoderCountsExclusiveCollectionMemberBounds', 'validationChecksAdditionalNumericSpellings', 'equivalentMemberBoundsHaveNoGeneratableDocument'],
     testName: context.name,
   });
 });

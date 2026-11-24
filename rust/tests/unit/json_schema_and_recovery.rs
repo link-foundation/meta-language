@@ -249,12 +249,22 @@ fn check_exclusive_alternatives(fixtures: &str) {
     for row in fixture["grammars"].as_array().unwrap() {
         let imported = import_json_schema(&row[0]).unwrap();
         let cases = row[1].as_array().unwrap();
-        assert!(
-            imported.diagnostics.is_empty(),
-            "{:?}",
-            imported.diagnostics
-        );
+        let expected: Vec<_> = row[2]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|pointer| pointer.as_str().expect("diagnostic pointer"))
+            .collect();
+        let actual: Vec<_> = imported
+            .diagnostics
+            .iter()
+            .map(|issue| issue.pointer.as_str())
+            .collect();
+        assert_eq!(actual, expected, "{:?}", imported.diagnostics);
         assert_validation_cases(&row[0], cases);
+        if let Some(validation_only) = row[3].as_array() {
+            assert_validation_cases(&row[0], validation_only);
+        }
         assert_decoder_cases(&imported.grammar, cases);
     }
     assert_ungeneratable_alternatives(fixture["ungeneratable"].as_array().unwrap());
@@ -374,6 +384,26 @@ fn exclusive_collection_alternatives_count_matching_branches_across_member_patte
             "equivalentMemberPatternsHaveNoGeneratableDocument",
         ],
         test_name: "exclusive_collection_alternatives_count_matching_branches_across_member_patterns",
+    });
+}
+
+#[test]
+fn exclusive_collection_alternatives_count_matching_branches_across_member_bounds() {
+    const FIXTURE: &str = "parity/fixtures/json-schema-exclusive-member-bounds.lino";
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-member-bounds.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-BOUNDS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-member-bounds",
+        fixture_file: FIXTURE,
+        assertions: &[
+            "decoderCountsExclusiveCollectionMemberBounds",
+            "validationChecksAdditionalNumericSpellings",
+            "equivalentMemberBoundsHaveNoGeneratableDocument",
+        ],
+        test_name: "exclusive_collection_alternatives_count_matching_branches_across_member_bounds",
     });
 }
 

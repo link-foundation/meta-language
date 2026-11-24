@@ -4891,6 +4891,14 @@ parent member schema contribute constraints to the same product. Other
 unrestricted instance types contribute their type memberships. The shared
 string product work limit applies across these member products during one
 import, and the collection budget also counts the resulting productions.
+Numeric item and property schemas partition their supported bounds into
+open intervals and individual endpoints. Sibling and reference constraints
+restrict each branch before that partition. When an integral value and a
+non-integral value have different membership, the decoder retains separate
+productions for their branch sets. Decimal spellings with a zero-only
+fraction count as integral. The collection work bound covers membership
+checks and construction. A located diagnostic records the additional exponent
+spellings supported by validation.
 Closing the array requires exactly one surviving branch that accepts its length.
 Beyond the final prefix and length boundaries, the current item schema and
 the effect of length stay the same. The decoder can represent the remaining

@@ -784,6 +784,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-BOUNDS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive collection alternatives with overlapping numeric member bounds',
+      expectedBehavior: 'Within the shared construction budgets, partition decimal number and integer spellings by exact member acceptance. Apply sibling and local reference bounds, preserve unrelated instance types, and close a collection only when one branch accepts its members, presence and length. Validate exponent spellings against the same schema and report the decimal decoder restriction at the constrained member. Equivalent numeric member languages and collection boundaries have no generatable exclusive document.',
+      fixture: 'parity/fixtures/json-schema-exclusive-member-bounds.lino',
+      selector: 'open and closed endpoints, signed zero, mixed integer and number alternatives, optional and required fields, local references, sibling bounds, repeated items, overlapping lengths, exponent spellings and equivalent numeric languages',
+      assertions: ['decoderCountsExclusiveCollectionMemberBounds', 'validationChecksAdditionalNumericSpellings', 'equivalentMemberBoundsHaveNoGeneratableDocument'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/grammar-importers/json-schema-numeric-ranges.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import.rs', 'rust/src/grammar/json_document/import/exclusive_alternatives.rs', 'rust/src/grammar/json_document/import/numeric_alternatives.rs', 'rust/src/grammar/json_document/numeric_ranges.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',

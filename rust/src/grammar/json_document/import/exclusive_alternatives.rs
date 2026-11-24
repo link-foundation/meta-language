@@ -854,6 +854,11 @@ impl<'schema> Importer<'schema> {
         let Some((&(_, first), rest)) = allowed.split_first() else {
             return Some(Vec::new());
         };
+        if let Some(numeric) =
+            self.exclusive_collection_numeric_variants(schemas, sibling, pointer, work)
+        {
+            return Some(numeric);
+        }
         // A shared schema gives every permitted present value the same branch membership.
         if (allow_shared_schema || allowed.len() < schemas.len())
             && rest.iter().all(|&(_, rule)| rule == first)

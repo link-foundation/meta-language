@@ -1,4 +1,77 @@
 impl<'schema> Importer<'schema> {
+    fn exclusive_collection_numeric_variants(
+        &mut self,
+        schemas: &[&'schema Value],
+        sibling: &'schema Value,
+        pointer: &str,
+        remaining_work: &mut usize,
+    ) -> Option<Vec<CollectionValueVariant<'schema>>> {
+        let guard_layers = reference_layers(self.root, sibling)?;
+        let guard = guard_layers.iter().fold(ALL_JSON_TYPES, |types, layer| {
+            possible_type_membership(layer, types)
+        });
+        if guard & NUMBER_TYPE == 0 {
+            return None;
+        }
+        let mut domains = Vec::new();
+        let mut branches = Vec::new();
+        let mut work = guard_layers.len().checked_add(
+            JSON_TYPES
+                .len()
+                .checked_mul(schemas.len().checked_add(1)?)?,
+        )?;
+        for (index, &schema) in schemas.iter().enumerate() {
+            let layers = reference_layers(self.root, schema)?;
+            work = work.checked_add(layers.len())?;
+            if work > *remaining_work {
+                return None;
+            }
+            let domain = layers
+                .iter()
+                .fold(guard, |types, layer| possible_type_membership(layer, types));
+            let other_types = domain & !NUMBER_TYPE;
+            if other_types != 0
+                && guard_layers.iter().chain(&layers).any(|layer| {
+                    layer.as_object().is_some_and(|fields| {
+                        fields
+                            .keys()
+                            .any(|key| active_conjunction_keyword(key, 0, None, other_types))
+                    })
+                })
+            {
+                return None;
+            }
+            domains.push(other_types);
+            let numeric_types = domain & NUMBER_TYPE;
+            if numeric_types != 0 {
+                let assertions: Vec<_> = guard_layers.iter().copied().chain(layers).collect();
+                let (name, limits) = combine_numeric_constraints(&assertions, numeric_types, None)?;
+                branches.push((index, name, limits));
+            }
+        }
+        if !branches.iter().any(|(_, name, limits)| {
+            *name == "integer" || limits.as_object().is_some_and(|bounds| !bounds.is_empty())
+        }) {
+            return None;
+        }
+        *remaining_work -= work;
+        let numeric = partition_numeric_ranges(&branches, remaining_work)?;
+        let mut groups = Self::collection_type_variant_groups(&domains, guard & !NUMBER_TYPE);
+        if numeric
+            .iter()
+            .any(|(_, expression)| !matches!(expression, Expression::NonTerminal(_)))
+            && self
+                .collection_numeric_diagnostics
+                .insert(pointer.to_owned())
+        {
+            self.report(pointer, "type", "The exclusive numeric member decoder uses decimal spelling. Validation also accepts equivalent exponent spellings.");
+        }
+        for (membership, expression) in numeric {
+            Self::add_collection_variant(&mut groups, membership, expression);
+        }
+        Some(Self::collection_variant_schemas(groups))
+    }
+
     fn alternative_numeric_expression(
         &mut self,
         schema: &'schema Value,

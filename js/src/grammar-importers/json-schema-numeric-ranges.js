@@ -42,6 +42,7 @@ export function numericConstant(value) {
 }
 
 function fixedWidth(low, high) {
+  if (/^0+$/u.test(low) && /^9+$/u.test(high)) return repeat(digit, low.length, low.length);
   const first = Number(low[0]);
   const last = Number(high[0]);
   const width = low.length - 1;
@@ -209,6 +210,61 @@ function decimalRange(first, last, excludeIntegers = false) {
 /** Return undefined for decimal bounds outside the finite provider grammar budget. */
 export function signedDecimalRange(rules) {
   return decimalRange(...decimalLimits(rules));
+}
+
+export function partitionNumericRanges(branches, budget) {
+  const ranges = branches.map(({ limits, ...branch }) => {
+    const [first, last] = decimalLimits(limits);
+    return { ...branch, first, last };
+  }).filter(({ first, last }) => !emptyDecimalInterval(first, last));
+  const endpoints = [...new Set(ranges.flatMap(({ first, last }) => (
+    [first, last].filter(Boolean).map(bound => bound.value)
+  )))].sort((left, right) => left - right);
+  let work = (2 * endpoints.length + 1) * (ranges.length + 32);
+  for (const value of endpoints) {
+    if (Math.abs(value) >= Number.MAX_SAFE_INTEGER) return undefined;
+    const fractionLength = decimalParts({ value: Math.abs(value) }).fraction.length;
+    if (fractionLength > 128) return undefined;
+    work += 4 * fractionLength;
+  }
+  if (work > budget.remaining) return undefined;
+  budget.remaining -= work;
+
+  const variants = [];
+  for (const [index, value] of endpoints.entries()) {
+    const previous = index === 0 ? null : { value: endpoints[index - 1], inclusive: false };
+    const point = { value, inclusive: true };
+    addCell(previous, { value, inclusive: false });
+    addCell(point, point);
+  }
+  addCell(endpoints.length ? { value: endpoints.at(-1), inclusive: false } : null, null);
+  return variants;
+
+  function addCell(first, last) {
+    const matched = ranges.filter(range => includesLimit(range.first, first, true) && includesLimit(range.last, last, false));
+    const number = matched.filter(branch => branch.type === 'number');
+    const integralOnly = number.length !== matched.length;
+    if (number.length) {
+      const expression = !integralOnly && !first && !last
+        ? Expression.ref('number') : decimalRange(first, last, integralOnly);
+      if (expression) variants.push({ matches: number.map(branch => branch.index), expression });
+    }
+    if (integralOnly) {
+      const minimum = first && (first.inclusive ? Math.ceil(first.value) : Math.floor(first.value) + 1);
+      const maximum = last && (last.inclusive ? Math.floor(last.value) : Math.ceil(last.value) - 1);
+      if (minimum === null || maximum === null || minimum <= maximum) {
+        const expression = seq(signedIntegerRange(minimum, maximum), optional(seq(literal('.'), repeat(literal('0'), 1))));
+        variants.push({ matches: matched.map(branch => branch.index), expression });
+      }
+    }
+  }
+}
+
+function includesLimit(outer, inner, lower) {
+  if (!outer) return true;
+  if (!inner) return false;
+  if (outer.value === inner.value) return outer.inclusive || !inner.inclusive;
+  return lower ? outer.value < inner.value : outer.value > inner.value;
 }
 
 export function exclusiveDecimalRange(branchLimits, excludeIntegers) {

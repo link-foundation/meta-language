@@ -18,6 +18,9 @@ fn digit_range(first: u8, last: u8) -> Expression {
 }
 
 fn fixed_width(low: &[u8], high: &[u8]) -> Expression {
+    if low.iter().all(|&digit| digit == b'0') && high.iter().all(|&digit| digit == b'9') {
+        return EXPRESSION.repeat(digit_range(b'0', b'9'), low.len(), Some(low.len()));
+    }
     let (first, remaining_low) = low.split_first().expect("nonempty number spelling");
     let (last, remaining_high) = high.split_first().expect("nonempty number spelling");
     let width = remaining_low.len();
@@ -334,6 +337,166 @@ fn decimal_range(
 pub(super) fn signed_decimal_range(schema: &Value) -> DecimalRange {
     let (first, last) = decimal_limits(schema);
     decimal_range(first, last, false)
+}
+
+#[derive(Clone, Copy)]
+struct NumericInterval {
+    first: Option<Limit>,
+    last: Option<Limit>,
+}
+
+impl NumericInterval {
+    fn contains(self, other: Self) -> bool {
+        let includes = |outer: Option<Limit>, inner: Option<Limit>, lower| {
+            outer.is_none_or(|outer| {
+                inner.is_some_and(|inner| {
+                    let position = outer.value.partial_cmp(&inner.value);
+                    match position {
+                        Some(std::cmp::Ordering::Equal) => outer.inclusive || !inner.inclusive,
+                        Some(std::cmp::Ordering::Less) => lower,
+                        Some(std::cmp::Ordering::Greater) => !lower,
+                        None => false,
+                    }
+                })
+            })
+        };
+        includes(self.first, other.first, true) && includes(self.last, other.last, false)
+    }
+
+    fn integer_expression(self) -> Option<Expression> {
+        let spelling = |value| format!("{value:.0}").parse::<i64>().expect("safe endpoint");
+        let first = self.first.map(|limit| {
+            spelling(if limit.inclusive {
+                limit.value.ceil()
+            } else {
+                limit.value.floor() + 1.0
+            })
+        });
+        let last = self.last.map(|limit| {
+            spelling(if limit.inclusive {
+                limit.value.floor()
+            } else {
+                limit.value.ceil() - 1.0
+            })
+        });
+        if matches!((first, last), (Some(first), Some(last)) if first > last) {
+            return None;
+        }
+        Some(EXPRESSION.seq([
+            signed_integer_range(first, last),
+            EXPRESSION.opt(EXPRESSION.seq([
+                EXPRESSION.term("."),
+                EXPRESSION.repeat(EXPRESSION.term("0"), 1, None),
+            ])),
+        ]))
+    }
+}
+
+pub(super) type NumericMembership = (Vec<usize>, Expression);
+
+pub(super) fn partition_numeric_ranges(
+    branches: &[(usize, &str, Value)],
+    remaining_work: &mut usize,
+) -> Option<Vec<NumericMembership>> {
+    let mut ranges = Vec::new();
+    let mut endpoints = Vec::new();
+    for (index, name, limits) in branches {
+        let (first, last) = decimal_limits(limits);
+        if !empty_decimal_interval(first, last) {
+            ranges.push((*index, *name, NumericInterval { first, last }));
+            endpoints.extend([first, last].into_iter().flatten().map(|bound| bound.value));
+        }
+    }
+    endpoints.sort_by(f64::total_cmp);
+    endpoints.dedup_by(|left, right| {
+        f64::partial_cmp(left, right).is_some_and(std::cmp::Ordering::is_eq)
+    });
+    let cells = endpoints.len().checked_mul(2)?.checked_add(1)?;
+    let mut work = cells.checked_mul(ranges.len().checked_add(32)?)?;
+    for &value in &endpoints {
+        if value.abs() >= 9_007_199_254_740_991.0 {
+            return None;
+        }
+        let digits = Limit {
+            value,
+            inclusive: false,
+        }
+        .parts()
+        .fraction
+        .len();
+        if digits > 128 {
+            return None;
+        }
+        work = work.checked_add(4 * digits)?;
+    }
+    *remaining_work = remaining_work.checked_sub(work)?;
+
+    let mut variants = Vec::new();
+    let mut first = None;
+    for value in endpoints {
+        let open = Some(Limit {
+            value,
+            inclusive: false,
+        });
+        let closed = Some(Limit {
+            value,
+            inclusive: true,
+        });
+        numeric_cell_membership(
+            &ranges,
+            NumericInterval { first, last: open },
+            &mut variants,
+        )?;
+        numeric_cell_membership(
+            &ranges,
+            NumericInterval {
+                first: closed,
+                last: closed,
+            },
+            &mut variants,
+        )?;
+        first = open;
+    }
+    numeric_cell_membership(
+        &ranges,
+        NumericInterval { first, last: None },
+        &mut variants,
+    )?;
+    Some(variants)
+}
+
+fn numeric_cell_membership(
+    ranges: &[(usize, &str, NumericInterval)],
+    cell: NumericInterval,
+    variants: &mut Vec<NumericMembership>,
+) -> Option<()> {
+    let mut integral = Vec::new();
+    let mut number = Vec::new();
+    for &(index, name, range) in ranges {
+        if range.contains(cell) {
+            integral.push(index);
+            if name == "number" {
+                number.push(index);
+            }
+        }
+    }
+    let integral_only = integral.len() != number.len();
+    if !number.is_empty() {
+        let expression = if !integral_only && cell.first.is_none() && cell.last.is_none() {
+            DecimalRange::Allowed(EXPRESSION.nt("number"))
+        } else {
+            decimal_range(cell.first, cell.last, integral_only)
+        };
+        match expression {
+            DecimalRange::Unsupported => return None,
+            DecimalRange::Empty => {}
+            DecimalRange::Allowed(expression) => variants.push((number, expression)),
+        }
+    }
+    if integral_only && let Some(expression) = cell.integer_expression() {
+        variants.push((integral, expression));
+    }
+    Some(())
 }
 
 struct DecimalEndpoint {

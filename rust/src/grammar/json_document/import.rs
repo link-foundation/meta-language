@@ -11,7 +11,8 @@ use super::super::{
 use super::integer_policy::exclusive_integer_boundary;
 use super::number_spelling::NumberSpelling;
 use super::numeric_ranges::{
-    DecimalRange, exclusive_decimal_range, signed_decimal_range, signed_integer_range,
+    DecimalRange, exclusive_decimal_range, partition_numeric_ranges, signed_decimal_range,
+    signed_integer_range,
 };
 use super::patterns::{PatternLowering, any_json_pattern_character, lower_json_string_pattern};
 use super::property_names::additional_property_name;
@@ -221,6 +222,7 @@ pub fn import_json_schema(schema: &Value) -> Result<JsonSchemaGrammar, JsonSchem
         compiled: HashMap::new(),
         diagnostics: Analysis::new(schema).issues,
         numeric_constant_diagnostics: HashSet::new(),
+        collection_numeric_diagnostics: HashSet::new(),
         next: 1,
         remaining_nested_collections: NESTED_COLLECTION_LIMITS[1],
         collection_string_work: StringProductWork::new(),
@@ -397,6 +399,7 @@ struct Importer<'schema> {
     compiled: HashMap<(*const Value, u8), String>,
     diagnostics: Vec<JsonSchemaIssue>,
     numeric_constant_diagnostics: HashSet<String>,
+    collection_numeric_diagnostics: HashSet<String>,
     next: usize,
     remaining_nested_collections: usize,
     collection_string_work: StringProductWork,
