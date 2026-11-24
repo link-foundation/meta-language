@@ -17,15 +17,15 @@ function objects(root){const result=[],pending=[root],seen=new Set();while(pendi
 export function readClosedClassOwnerArchiveEdit(name){
  assert.ok(closedClassOwnerArchiveEdits.includes(name));
  const source=closedClassOwnerOriginals.at(-1).source,program=structuredClone(checkProgram(parseJavaScript(source)));
- const witness=program.sourceClassOwners,owner=witness.owners.find(owner=>owner.constructor==='Box');assert.ok(owner);
- const nodes=objects(program),types=nodes.filter(node=>node.kind==='record'&&node.sourceClassOwner===owner.constructor);
+ const witness=program.sourceClassOwners,owner=witness.owners.find(owner=>owner.constructorName==='Box');assert.ok(owner);
+ const nodes=objects(program),types=nodes.filter(node=>node.kind==='record'&&node.sourceClassOwner===owner.constructorName);
  const call=nodes.find(node=>node.k==='call'&&node.fn==='Box'&&node.args.length===1&&node.args[0].k==='lit');assert.ok(call);assert.ok(types.length);
  if(name==='dropped witness')delete program.sourceClassOwners;
  else if(name==='null witness')program.sourceClassOwners=null;
  else if(name==='empty witness')witness.owners=[];
  else if(name==='wrong model')witness.model='unregistered model';
  else if(name==='wrong version')witness.schemaVersion=2;
- else if(name==='wrong constructor reference')owner.constructor='plain';
+ else if(name==='wrong constructor reference')owner.constructorName='plain';
  else if(name==='wrong helper reference')owner.methods[0].helper='plain';
  else if(name==='wrong brand')owner.brand='not the actual brand';
  else if(name==='empty owner')types[0].sourceClassOwner='';

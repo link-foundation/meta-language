@@ -1,22 +1,15 @@
 // Generated from complete js/src/translation/javascript-class-owner-rules.js. Do not edit by hand.
 use super::MlSource1TemporaryContainsJavaScriptClosedClassBrandLoop2Result;
-use super::MlSource1TemporaryExactLoop13Result;
-use super::MlSource1TemporaryReadJavaScriptClassRecordOwnerLoop11Result;
-use super::MlSource1TemporaryReadRecordFieldWriteOperatorLoop9Result;
-use super::MlSource1TemporaryStringsLoop14Result;
-use super::dependency_function1;
-use super::dependency_function2;
-use super::dependency_function3;
+use super::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Result;
+use super::MlSource1TemporaryReadRecordFieldWriteOperatorLoop13Result;
 use super::ml;
 use super::ml_array;
 use super::ml_string;
 use super::source_ml_source1_temporary_contains_java_script_closed_class_brand_loop2;
-use super::source_ml_source1_temporary_exact_loop13;
-use super::source_ml_source1_temporary_names_loop15;
-use super::source_ml_source1_temporary_read_java_script_class_record_owner_loop11;
-use super::source_ml_source1_temporary_read_record_field_write_operator_loop9;
-use super::source_ml_source1_temporary_read_record_field_write_suffix_loop10;
-use super::source_ml_source1_temporary_strings_loop14;
+use super::source_ml_source1_temporary_has_java_script_closed_class_exported_brand_loop9;
+use super::source_ml_source1_temporary_read_optional_record_field_order_followers_loop15;
+use super::source_ml_source1_temporary_read_record_field_write_operator_loop13;
+use super::source_ml_source1_temporary_read_record_field_write_suffix_loop14;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -131,6 +124,48 @@ pub fn contains_java_script_closed_class_brand(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn has_java_script_closed_class_exported_brand(
+    texts: &[self::ml_string::Text],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    declarations: f64,
+    exports: &[self::ml_string::Text],
+    brands: &[self::ml_string::Text],
+) -> bool {
+    if (exports.len() as f64) == 0f64 {
+        false
+    } else if declarations < 0f64 {
+        true
+    } else {
+        {
+            let source_ml_source1_temporary_values8 = exports.to_vec();
+            {
+                let source_ml_source1_temporary_index8 = self::ml::Big::from_i128(0);
+                {
+                    let source_ml_source2_s3 = self::source_ml_source1_temporary_has_java_script_closed_class_exported_brand_loop9(texts, starts, counts, labels, targets, declarations, brands, &(source_ml_source1_temporary_values8), source_ml_source1_temporary_index8);
+                    match source_ml_source2_s3 {
+                            self::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Result::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Done => {
+                                false
+                            }
+                            self::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Result::MlSource1TemporaryHasJavaScriptClosedClassExportedBrandLoop9Return(source_ml_source1_temporary_result9) => {
+                                source_ml_source1_temporary_result9
+                            }
+                        }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_record_field_assignment_operator(operator: &self::ml_string::Text) -> bool {
     (((((((((*operator) == (self::ml_string::Text::from_units(vec![61])))
         || ((*operator) == (self::ml_string::Text::from_units(vec![43, 61]))))
@@ -179,22 +214,22 @@ pub fn read_record_field_write_operator(
             self::ml_string::Text::from_units(vec![45, 45]),
         ];
         {
-            let source_ml_source1_temporary_values8 = operators;
+            let source_ml_source1_temporary_values12 = operators;
             {
-                let source_ml_source1_temporary_index8 = self::ml::Big::from_i128(0);
+                let source_ml_source1_temporary_index12 = self::ml::Big::from_i128(0);
                 {
-                    let source_ml_source2_s3 =
-                        self::source_ml_source1_temporary_read_record_field_write_operator_loop9(
+                    let source_ml_source2_s4 =
+                        self::source_ml_source1_temporary_read_record_field_write_operator_loop13(
                             operation,
-                            &(source_ml_source1_temporary_values8),
-                            source_ml_source1_temporary_index8,
+                            &(source_ml_source1_temporary_values12),
+                            source_ml_source1_temporary_index12,
                         );
-                    match source_ml_source2_s3 {
-                        self::MlSource1TemporaryReadRecordFieldWriteOperatorLoop9Result::MlSource1TemporaryReadRecordFieldWriteOperatorLoop9Done => {
+                    match source_ml_source2_s4 {
+                        self::MlSource1TemporaryReadRecordFieldWriteOperatorLoop13Result::MlSource1TemporaryReadRecordFieldWriteOperatorLoop13Done => {
                             self::ml_string::Text::from_units(vec![])
                         }
-                        self::MlSource1TemporaryReadRecordFieldWriteOperatorLoop9Result::MlSource1TemporaryReadRecordFieldWriteOperatorLoop9Return(source_ml_source1_temporary_result9) => {
-                            source_ml_source1_temporary_result9
+                        self::MlSource1TemporaryReadRecordFieldWriteOperatorLoop13Result::MlSource1TemporaryReadRecordFieldWriteOperatorLoop13Return(source_ml_source1_temporary_result13) => {
+                            source_ml_source1_temporary_result13
                         }
                     }
                 }
@@ -212,17 +247,17 @@ pub fn read_record_field_write_name(operation: &self::ml_string::Text) -> self::
             self::ml_string::Text::from_units(vec![])
         } else {
             {
-                let source_ml_source2_string_range_operand4 = operation.clone();
+                let source_ml_source2_string_range_operand5 = operation.clone();
                 {
-                    let source_ml_source2_string_range_operand5 = 17f64 + operator.length();
+                    let source_ml_source2_string_range_operand6 = 17f64 + operator.length();
                     {
-                        let source_ml_source2_string_range_position6 =
-                            source_ml_source2_string_range_operand5;
+                        let source_ml_source2_string_range_position7 =
+                            source_ml_source2_string_range_operand6;
                         {
-                            let source_ml_source2_string_range_position7 = f64::INFINITY;
-                            source_ml_source2_string_range_operand4.slice(
-                                source_ml_source2_string_range_position6,
+                            let source_ml_source2_string_range_position8 = f64::INFINITY;
+                            source_ml_source2_string_range_operand5.slice(
                                 source_ml_source2_string_range_position7,
+                                source_ml_source2_string_range_position8,
                             )
                         }
                     }
@@ -258,7 +293,7 @@ pub fn read_record_field_write_suffix(
         {
             let suffix = initial;
             {
-                self::source_ml_source1_temporary_read_record_field_write_suffix_loop10(
+                self::source_ml_source1_temporary_read_record_field_write_suffix_loop14(
                     &(text),
                     suffix,
                 )
@@ -280,6 +315,29 @@ pub fn accept_linked_record_field_write(
         && reference)
         && ((self::read_record_field_write_operator(operation))
             != (self::ml_string::Text::from_units(vec![])))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_linked_ordered_record_snapshot_operation(
+    expression: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    ordered: bool,
+) -> self::ml_string::Text {
+    if (((*expression)
+        == (self::ml_string::Text::from_units(vec![
+            114, 101, 102, 101, 114, 101, 110, 99, 101, 82, 101, 97, 100,
+        ])))
+        && ((*kind) == (self::ml_string::Text::from_units(vec![114, 101, 99, 111, 114, 100]))))
+        && ordered
+    {
+        self::ml_string::Text::from_units(vec![
+            114, 101, 97, 100, 79, 114, 100, 101, 114, 101, 100, 82, 101, 99, 111, 114, 100, 83,
+            110, 97, 112, 115, 104, 111, 116,
+        ])
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
 }
 
 /// Execute the checked shared source algorithm.
@@ -356,7 +414,17 @@ pub fn read_record_compound_binary_operation(
         } else {
             self::ml_string::Text::from_units(vec![])
         }
-    } else if ((*operator) == (self::ml_string::Text::from_units(vec![43, 61])))
+    } else {
+        self::read_record_numeric_compound_binary_operation(operator)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_record_numeric_compound_binary_operation(
+    operator: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*operator) == (self::ml_string::Text::from_units(vec![43, 61])))
         || ((*operator) == (self::ml_string::Text::from_units(vec![43, 43])))
     {
         self::ml_string::Text::from_units(vec![112, 108, 117, 115])
@@ -374,6 +442,32 @@ pub fn read_record_compound_binary_operation(
         self::ml_string::Text::from_units(vec![
             101, 120, 112, 111, 110, 101, 110, 116, 105, 97, 116, 105, 111, 110,
         ])
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_optional_record_compound_binary_operation(
+    language: &self::ml_string::Text,
+    operator: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    absence: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*language)
+        != (self::ml_string::Text::from_units(vec![74, 97, 118, 97, 83, 99, 114, 105, 112, 116])))
+        || (((*absence)
+            != (self::ml_string::Text::from_units(vec![
+                117, 110, 100, 101, 102, 105, 110, 101, 100,
+            ])))
+            && ((*absence) != (self::ml_string::Text::from_units(vec![98, 111, 116, 104]))))
+    {
+        self::ml_string::Text::from_units(vec![])
+    } else if (*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116])) {
+        self::read_record_numeric_compound_binary_operation(operator)
+    } else if (*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])) {
+        self::read_record_compound_binary_operation(language, operator, kind)
     } else {
         self::ml_string::Text::from_units(vec![])
     }
@@ -581,16 +675,16 @@ pub fn render_record_field_write(
                                                 ((((((((((((((self::ml_string::Text::from_units(vec![105, 102, 32])).concat(&value)).concat(&self::ml_string::Text::from_units(vec![32, 61, 61, 32, 48, 46, 48, 32, 123, 32, 49, 46, 48, 32, 125, 32, 101, 108, 115, 101, 32, 105, 102, 32]))).concat(&previous)).concat(&self::ml_string::Text::from_units(vec![46, 105, 115, 95, 110, 97, 110, 40, 41, 32, 124, 124, 32]))).concat(&value)).concat(&self::ml_string::Text::from_units(vec![46, 105, 115, 95, 110, 97, 110, 40, 41, 32, 124, 124, 32, 40]))).concat(&previous)).concat(&self::ml_string::Text::from_units(vec![46, 97, 98, 115, 40, 41, 32, 61, 61, 32, 49, 46, 48, 32, 38, 38, 32]))).concat(&value)).concat(&self::ml_string::Text::from_units(vec![46, 105, 115, 95, 105, 110, 102, 105, 110, 105, 116, 101, 40, 41, 41, 32, 123, 32, 102, 54, 52, 58, 58, 78, 65, 78, 32, 125, 32, 101, 108, 115, 101, 32, 123, 32]))).concat(&previous)).concat(&self::ml_string::Text::from_units(vec![46, 112, 111, 119, 102, 40]))).concat(&value)).concat(&self::ml_string::Text::from_units(vec![41, 32, 125]))
                                             } else {
                                                 (((previous.concat(&self::ml_string::Text::from_units(vec![32]))).concat(&{
-                                                                let source_ml_source2_string_range_operand8 = operator.clone();
+                                                                let source_ml_source2_string_range_operand9 = operator.clone();
                                                                 {
-                                                                    let source_ml_source2_string_range_operand9 = 0f64;
+                                                                    let source_ml_source2_string_range_operand10 = 0f64;
                                                                     {
-                                                                        let source_ml_source2_string_range_operand10 = 1f64;
+                                                                        let source_ml_source2_string_range_operand11 = 1f64;
                                                                         {
-                                                                            let source_ml_source2_string_range_position11 = source_ml_source2_string_range_operand9;
+                                                                            let source_ml_source2_string_range_position12 = source_ml_source2_string_range_operand10;
                                                                             {
-                                                                                let source_ml_source2_string_range_position12 = source_ml_source2_string_range_operand10;
-                                                                                source_ml_source2_string_range_operand8.slice(source_ml_source2_string_range_position11, source_ml_source2_string_range_position12)
+                                                                                let source_ml_source2_string_range_position13 = source_ml_source2_string_range_operand11;
+                                                                                source_ml_source2_string_range_operand9.slice(source_ml_source2_string_range_position12, source_ml_source2_string_range_position13)
                                                                             }
                                                                         }
                                                                     }
@@ -625,247 +719,171 @@ pub fn render_record_field_write(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_record_field_write_statement() -> self::ml_string::Text {
-    self::ml_string::Text::from_units(vec![
-        65, 110, 32, 111, 119, 110, 32, 102, 105, 101, 108, 100, 32, 119, 114, 105, 116, 101, 32,
-        101, 118, 97, 108, 117, 97, 116, 101, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97,
-        108, 32, 115, 104, 97, 114, 101, 100, 32, 114, 101, 99, 101, 105, 118, 101, 114, 32, 111,
-        110, 99, 101, 44, 32, 114, 101, 97, 100, 115, 32, 97, 32, 99, 111, 109, 112, 111, 117, 110,
-        100, 32, 111, 112, 101, 114, 97, 110, 100, 32, 98, 101, 102, 111, 114, 101, 32, 116, 104,
-        101, 32, 114, 105, 103, 104, 116, 45, 104, 97, 110, 100, 32, 101, 120, 112, 114, 101, 115,
-        115, 105, 111, 110, 44, 32, 101, 118, 97, 108, 117, 97, 116, 101, 115, 32, 116, 104, 97,
-        116, 32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110, 32, 111, 110, 99, 101, 44, 32,
-        116, 104, 101, 110, 32, 119, 114, 105, 116, 101, 115, 32, 116, 104, 101, 32, 115, 97, 109,
-        101, 32, 102, 105, 101, 108, 100, 32, 97, 108, 108, 111, 99, 97, 116, 105, 111, 110, 32,
-        97, 102, 116, 101, 114, 32, 114, 101, 108, 101, 97, 115, 105, 110, 103, 32, 101, 118, 101,
-        114, 121, 32, 101, 97, 114, 108, 105, 101, 114, 32, 115, 116, 111, 114, 97, 103, 101, 32,
-        98, 111, 114, 114, 111, 119, 59, 32, 105, 116, 115, 32, 115, 116, 97, 116, 101, 109, 101,
-        110, 116, 32, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 85, 110, 105, 116, 46,
-    ])
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_class_owner_model() -> self::ml_string::Text {
-    self::ml_string::Text::from_units(vec![
-        99, 108, 111, 115, 101, 100, 32, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 32, 99, 108,
-        97, 115, 115, 32, 100, 97, 116, 97, 32, 111, 119, 110, 101, 114, 115, 32, 49,
-    ])
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_class_owner_inference(
-    left: &self::ml_string::Text,
-    right: &self::ml_string::Text,
-    left_open: bool,
-    right_open: bool,
-) -> self::ml_string::Text {
-    if (*left) == (*right) {
-        self::ml_string::Text::from_units(vec![115, 97, 109, 101])
-    } else if (((*left) != (self::ml_string::Text::from_units(vec![])))
-        && ((*right) == (self::ml_string::Text::from_units(vec![]))))
-        && right_open
+pub fn read_optional_record_field_order_followers(numeric_keys: &[f64], field: f64) -> Vec<f64> {
     {
-        self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116])
-    } else if (((*right) != (self::ml_string::Text::from_units(vec![])))
-        && ((*left) == (self::ml_string::Text::from_units(vec![]))))
-        && left_open
-    {
-        self::ml_string::Text::from_units(vec![108, 101, 102, 116])
-    } else {
-        self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_class_record_owner(
-    constructors: &[self::ml_string::Text],
-    brands: &[self::ml_string::Text],
-    fields: &[self::ml_string::Text],
-) -> self::ml_string::Text {
-    {
-        let owner = self::ml_string::Text::from_units(vec![]);
+        let selected =
+            (self::ml_array::optional_at(numeric_keys, self::ml_array::number_index(field)))
+                .unwrap_or_else(|| -1f64);
         {
-            let at = 0f64;
-            {
-                let source_ml_source2_s13 =
-                    self::source_ml_source1_temporary_read_java_script_class_record_owner_loop11(
-                        constructors,
-                        brands,
-                        fields,
-                        owner,
-                        at,
-                    );
-                match source_ml_source2_s13 {
-                    self::MlSource1TemporaryReadJavaScriptClassRecordOwnerLoop11Result::MlSource1TemporaryReadJavaScriptClassRecordOwnerLoop11Done(owner_2) => {
-                        owner_2
-                    }
-                    self::MlSource1TemporaryReadJavaScriptClassRecordOwnerLoop11Result::MlSource1TemporaryReadJavaScriptClassRecordOwnerLoop11Return(source_ml_source1_temporary_result11) => {
-                        source_ml_source1_temporary_result11
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_java_script_class_owner_observation(
-    representation: &self::ml_string::Text,
-    operation: &self::ml_string::Text,
-) -> bool {
-    ((*representation)
-        == (self::ml_string::Text::from_units(vec![
-            99, 108, 111, 115, 117, 114, 101, 32, 115, 108, 111, 116, 115,
-        ])))
-        && ((*operation)
-            == (self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 116, 121])))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn word(
-    forms: &[self::ml_string::Text],
-    texts: &[self::ml_string::Text],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    node: f64,
-    name: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    {
-        let value = self::dependency_function3(starts, counts, labels, targets, node, name);
-        if (value >= 0f64)
-            && ((self::dependency_function2(forms, value))
-                == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])))
-        {
-            self::dependency_function2(texts, value)
-        } else {
-            self::ml_string::Text::from_units(vec![])
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn exact(
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    node: f64,
-    names_2: &[self::ml_string::Text],
-) -> bool {
-    if (node < 0f64) || ((self::dependency_function1(counts, node)) != (names_2.len() as f64)) {
-        false
-    } else {
-        {
-            let source_ml_source1_temporary_values12 = names_2.to_vec();
-            {
-                let source_ml_source1_temporary_index12 = self::ml::Big::from_i128(0);
-                {
-                    let source_ml_source2_s14 = self::source_ml_source1_temporary_exact_loop13(
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        node,
-                        &(source_ml_source1_temporary_values12),
-                        source_ml_source1_temporary_index12,
-                    );
-                    match source_ml_source2_s14 {
-                        self::MlSource1TemporaryExactLoop13Result::MlSource1TemporaryExactLoop13Done => {
-                            true
-                        }
-                        self::MlSource1TemporaryExactLoop13Result::MlSource1TemporaryExactLoop13Return(source_ml_source1_temporary_result13) => {
-                            source_ml_source1_temporary_result13
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn strings(
-    forms: &[self::ml_string::Text],
-    texts: &[self::ml_string::Text],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    node: f64,
-) -> Vec<self::ml_string::Text> {
-    {
-        let result = Vec::<self::ml_string::Text>::new();
-        if (node < 0f64)
-            || ((self::dependency_function2(forms, node))
-                != (self::ml_string::Text::from_units(vec![97, 114, 114, 97, 121])))
-        {
-            vec![self::ml_string::Text::from_units(vec![])]
-        } else {
-            {
-                let at = 0f64;
-                {
-                    let source_ml_source2_s15 = self::source_ml_source1_temporary_strings_loop14(
-                        forms, texts, starts, counts, targets, node, result, at,
-                    );
-                    match source_ml_source2_s15 {
-                        self::MlSource1TemporaryStringsLoop14Result::MlSource1TemporaryStringsLoop14Done(result_2) => {
-                            result_2
-                        }
-                        self::MlSource1TemporaryStringsLoop14Result::MlSource1TemporaryStringsLoop14Return(source_ml_source1_temporary_result14) => {
-                            source_ml_source1_temporary_result14
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn names(
-    forms: &[self::ml_string::Text],
-    texts: &[self::ml_string::Text],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    node: f64,
-) -> Vec<self::ml_string::Text> {
-    {
-        let result = Vec::<self::ml_string::Text>::new();
-        {
-            let fields = self::dependency_function3(
-                starts,
-                counts,
-                labels,
-                targets,
-                node,
-                &(self::ml_string::Text::from_units(vec![102, 105, 101, 108, 100, 115])),
-            );
-            if fields < 0f64 {
-                vec![self::ml_string::Text::from_units(vec![])]
+            let followers = Vec::<f64>::new();
+            if selected < 0f64 {
+                followers
             } else {
                 {
-                    let at = 0f64;
+                    let index = 0f64;
                     {
-                        self::source_ml_source1_temporary_names_loop15(
-                            forms, texts, starts, counts, labels, targets, result, fields, at,
-                        )
+                        self::source_ml_source1_temporary_read_optional_record_field_order_followers_loop15(numeric_keys, selected, followers, index)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_optional_rust_record_field_write(
+    receiver: &self::ml_string::Text,
+    index: &self::ml_string::Text,
+    argument: &self::ml_string::Text,
+    suffix: &self::ml_string::Text,
+    ordered: bool,
+    followers: &[self::ml_string::Text],
+) -> self::ml_string::Text {
+    {
+        let owner = (self::ml_string::Text::from_units(vec![
+            109, 108, 95, 102, 105, 101, 108, 100, 95, 111, 119, 110, 101, 114,
+        ]))
+        .concat(suffix);
+        {
+            let value = (self::ml_string::Text::from_units(vec![
+                109, 108, 95, 102, 105, 101, 108, 100, 95, 118, 97, 108, 117, 101,
+            ]))
+            .concat(suffix);
+            {
+                let capture = ((((((((self::ml_string::Text::from_units(vec![
+                    123, 32, 108, 101, 116, 32,
+                ]))
+                .concat(&owner))
+                .concat(&self::ml_string::Text::from_units(vec![32, 61, 32])))
+                .concat(receiver))
+                .concat(&self::ml_string::Text::from_units(vec![
+                    59, 32, 108, 101, 116, 32,
+                ])))
+                .concat(&value))
+                .concat(&self::ml_string::Text::from_units(vec![32, 61, 32])))
+                .concat(argument))
+                .concat(&self::ml_string::Text::from_units(vec![59, 32]));
+                {
+                    let storage = ((((self::ml_string::Text::from_units(vec![
+                        108, 101, 116, 32, 109, 117, 116, 32,
+                    ]))
+                    .concat(&owner))
+                    .concat(&self::ml_string::Text::from_units(vec![32, 61, 32])))
+                    .concat(&owner))
+                    .concat(&self::ml_string::Text::from_units(vec![
+                        46, 98, 111, 114, 114, 111, 119, 95, 109, 117, 116, 40, 41, 59, 32,
+                    ]));
+                    if ordered {
+                        {
+                            let field = (owner
+                                .concat(&self::ml_string::Text::from_units(vec![46, 48, 46])))
+                            .concat(index);
+                            {
+                                let order =
+                                    owner.concat(&self::ml_string::Text::from_units(vec![46, 49]));
+                                {
+                                    let position =
+                                        if (followers.len() as f64) == 0f64 {
+                                            order.concat(&self::ml_string::Text::from_units(vec![
+                                                46, 108, 101, 110, 40, 41,
+                                            ]))
+                                        } else {
+                                            ((((order.concat(
+                                                &self::ml_string::Text::from_units(vec![
+                                                    46, 105, 116, 101, 114, 40, 41, 46, 112, 111,
+                                                    115, 105, 116, 105, 111, 110, 40, 124, 109,
+                                                    108, 95, 111, 114, 100, 101, 114, 101, 100, 95,
+                                                    102, 105, 101, 108, 100, 124, 32, 91,
+                                                ]),
+                                            ))
+                                            .concat(&self::ml_string::join(
+                                                followers,
+                                                &self::ml_string::Text::from_units(vec![44, 32]),
+                                            )))
+                                            .concat(&self::ml_string::Text::from_units(vec![
+                                                93, 46, 99, 111, 110, 116, 97, 105, 110, 115, 40,
+                                                109, 108, 95, 111, 114, 100, 101, 114, 101, 100,
+                                                95, 102, 105, 101, 108, 100, 41, 41, 46, 117, 110,
+                                                119, 114, 97, 112, 95, 111, 114, 40,
+                                            ])))
+                                            .concat(&order))
+                                            .concat(&self::ml_string::Text::from_units(vec![
+                                                46, 108, 101, 110, 40, 41, 41,
+                                            ]))
+                                        };
+                                    {
+                                        let next = (self::ml_string::Text::from_units(vec![
+                                            109, 108, 95, 102, 105, 101, 108, 100, 95, 112, 114,
+                                            101, 118, 105, 111, 117, 115,
+                                        ]))
+                                        .concat(suffix);
+                                        (((((((((((((((((capture.concat(&storage))
+                                            .concat(
+                                                &self::ml_string::Text::from_units(vec![
+                                                    105, 102, 32,
+                                                ]),
+                                            ))
+                                        .concat(&field))
+                                        .concat(&self::ml_string::Text::from_units(
+                                            vec![
+                                                46, 105, 115, 95, 110, 111, 110, 101, 40, 41, 32,
+                                                123, 32, 108, 101, 116, 32,
+                                            ],
+                                        )))
+                                        .concat(&next))
+                                        .concat(&self::ml_string::Text::from_units(
+                                            vec![32, 61, 32],
+                                        )))
+                                        .concat(&position))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            59, 32,
+                                        ])))
+                                        .concat(&order))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            46, 105, 110, 115, 101, 114, 116, 40,
+                                        ])))
+                                        .concat(&next))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            44, 32,
+                                        ])))
+                                        .concat(index))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            46, 48, 41, 59, 32, 125, 32,
+                                        ])))
+                                        .concat(&field))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            32, 61, 32, 83, 111, 109, 101, 40, 40,
+                                        ])))
+                                        .concat(&value))
+                                        .concat(&self::ml_string::Text::from_units(vec![
+                                            44, 41, 41, 59, 32, 40, 41, 32, 125,
+                                        ]))
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        ((((((capture.concat(&storage)).concat(&owner))
+                            .concat(&self::ml_string::Text::from_units(vec![46])))
+                        .concat(index))
+                        .concat(&self::ml_string::Text::from_units(vec![
+                            32, 61, 32, 83, 111, 109, 101, 40, 40,
+                        ])))
+                        .concat(&value))
+                        .concat(&self::ml_string::Text::from_units(vec![
+                            44, 41, 41, 59, 32, 40, 41, 32, 125,
+                        ]))
                     }
                 }
             }

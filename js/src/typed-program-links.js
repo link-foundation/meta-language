@@ -25,7 +25,7 @@ export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(readRuntimeProjectData(n
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
 const sharingProfile=Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-value-sharing.lino',import.meta.url)));
 const idOf = (id) => id.asU64();
-const labelOf = (name) => schema.fields[name] ?? name.replace(/[A-Z]/gu, (letter) => ` ${letter.toLowerCase()}`);
+const labelOf = (name) => Object.hasOwn(schema.fields, name) ? schema.fields[name] : name.replace(/[A-Z]/gu, (letter) => ` ${letter.toLowerCase()}`);
 const fieldOf = (label) => Object.entries(schema.fields).find(([, value]) => value === label)?.[0]
   ?? label.replace(/ ([a-z])/gu, (_, letter) => letter.toUpperCase());
 const metadata = (term, definition) => LinkMetadata.new().withLinkType(LinkType.Semantic)

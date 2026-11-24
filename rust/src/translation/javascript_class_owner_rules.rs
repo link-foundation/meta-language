@@ -40,3 +40,6 @@ pub use part_8::*;
 #[path = "javascript_class_owner_rules/part_9.rs"]
 mod part_9;
 pub use part_9::*;
+#[path = "javascript_class_owner_rules/part_10.rs"]
+mod part_10;
+pub use part_10::*;

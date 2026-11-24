@@ -21,14 +21,14 @@ export function projectSourceLibraryEntryPoints(program,closure,path){
    if(value.k==='ctor')retain(value.data);
    if(value.kind==='data')retain(value.name);
    if(value.kind==='record'&&typeof value.sourceClassOwner==='string'){
-    const owner=program.sourceClassOwners?.owners.find(owner=>owner.constructor===value.sourceClassOwner);if(!owner)throw new TypeError('a source class entry point lost its actual constructor witness');retain(owner.constructor);for(const method of owner.methods)retain(method.helper);
+    const owner=program.sourceClassOwners?.owners.find(owner=>owner.constructorName===value.sourceClassOwner);if(!owner)throw new TypeError('a source class entry point lost its actual constructor witness');retain(owner.constructorName);for(const method of owner.methods)retain(method.helper);
    }
    for(const child of Array.isArray(value)?value:Object.values(value))references.push(child);
   }
  }
  function items(values){return values.flatMap(item=>item.k==='module'?[{...item,items:items(item.items)}]:program.declarations.get(item.fullName)===item?(retained.has(item.fullName)?[item]:[]):(()=>{throw new TypeError('source export projection needs actual checked declaration/module items');})());}
  const selected={...program,declarations:new Map([...program.declarations].filter(([name])=>retained.has(name))),items:items(program.items)};
- if(program.sourceClassOwners){const owners=program.sourceClassOwners.owners.filter(owner=>retained.has(owner.constructor));if(owners.length)selected.sourceClassOwners={...program.sourceClassOwners,owners};else delete selected.sourceClassOwners;}
+ if(program.sourceClassOwners){const owners=program.sourceClassOwners.owners.filter(owner=>retained.has(owner.constructorName));if(owners.length)selected.sourceClassOwners={...program.sourceClassOwners,owners};else delete selected.sourceClassOwners;}
  return {program:selected,
   projection:{model:'actual source module exports and transitive declarations 1',entryPoints:roots,retained:[...program.declarations.keys()].filter(name=>retained.has(name)),omitted:[...program.declarations.keys()].filter(name=>!retained.has(name))}};
 }

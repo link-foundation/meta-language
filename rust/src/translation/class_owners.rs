@@ -26,13 +26,13 @@ pub(crate) fn owners_from_rows(rows:&[Vec<Text>])->Result<Value>{
   let shape=plan[1..].iter().map(|value|position(*value)).collect::<Option<Vec<_>>>().ok_or_else(||fail("the source-owned class row has invalid coordinates"))?;
   let fields=row.get(shape[0]..shape[0]+shape[1]).ok_or_else(||fail("the actual class fields are missing"))?.iter().map(ToString::to_string).collect::<Vec<_>>();
   let mut methods=Vec::new();for at in 0..shape[3]{let index=shape[2]+2*at;methods.push(json!({"name":row.get(index).ok_or_else(||fail("the actual method is missing"))?.to_string(),"helper":row.get(index+1).ok_or_else(||fail("the actual method helper is missing"))?.to_string()}));}
-  owners.push(json!({"constructor":row[0].to_string(),"brand":row[1].to_string(),"representation":row[2].to_string(),"fields":fields,"methods":methods}));
+  owners.push(json!({"constructorName":row[0].to_string(),"brand":row[1].to_string(),"representation":row[2].to_string(),"fields":fields,"methods":methods}));
  }Ok(json!({"schemaVersion":1,"language":"JavaScript","model":decode_policy_text(&rules::read_java_script_class_owner_model())?,"owners":owners}))
 }
 pub(crate) fn source_record_owner(witness:Option<&Value>,fields:&[String])->Result<Option<String>>{
  let Some(witness)=witness else{return Ok(None)};
  let owners=witness.get("owners").and_then(Value::as_array).ok_or_else(||fail("complete actual class owner records are required"))?;
- let constructors=owners.iter().map(|owner|owner.get("constructor").and_then(Value::as_str).map(str::to_owned).ok_or_else(||fail("actual constructor names are required"))).collect::<Result<Vec<_>>>()?;
+ let constructors=owners.iter().map(|owner|owner.get("constructorName").and_then(Value::as_str).map(str::to_owned).ok_or_else(||fail("actual constructor names are required"))).collect::<Result<Vec<_>>>()?;
  let brands=owners.iter().map(|owner|owner.get("brand").and_then(Value::as_str).map(str::to_owned).ok_or_else(||fail("actual class brand identities are required"))).collect::<Result<Vec<_>>>()?;
  let owner=decode_policy_text(&rules::read_java_script_class_record_owner(
   &policy_text(&constructors),&policy_text(&brands),&policy_text(fields),
@@ -53,7 +53,7 @@ pub(crate) fn accept_type_observation(ty:&Type,witness:Option<&Value>,operation:
  let Type::Record{source_class_owner:Some(owner),reference:true,..}=ty else{return false};
  let Some(owners)=witness.and_then(|value|value.get("owners")).and_then(Value::as_array)else{return false};
  let operation=PolicyText::from_text(if operation=="comparison"{"identity"}else{operation});
- owners.iter().any(|value|value.get("constructor").and_then(Value::as_str)==Some(owner.as_str())&&rules::accept_java_script_class_owner_observation(
+ owners.iter().any(|value|value.get("constructorName").and_then(Value::as_str)==Some(owner.as_str())&&rules::accept_java_script_class_owner_observation(
   &PolicyText::from_text(value.get("representation").and_then(Value::as_str).unwrap_or("")),&operation,
  ))
 }

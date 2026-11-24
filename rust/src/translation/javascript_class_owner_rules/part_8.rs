@@ -1,5 +1,6 @@
 // Generated from complete js/src/translation/javascript-class-owner-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result;
+use super::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop31Result;
+use super::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop32Result;
 use super::dependency_function1;
 use super::dependency_function2;
 use super::dependency_function3;
@@ -7,21 +8,171 @@ use super::dependency_function4;
 use super::ml;
 use super::ml_array;
 use super::ml_string;
-use super::names;
-use super::source_ml_source1_temporary_read_java_script_class_owner_error_loop37;
-use super::strings;
+use super::ml_utf16_text;
+use super::read_java_script_closed_class_observation_operation_operands;
+use super::read_record_field_write_name;
+use super::source_ml_source1_temporary_read_java_script_class_owner_error_loop32;
 use super::word;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Result {
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Done,
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Return(self::ml_string::Text),
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop31(
+    forms: &[self::ml_string::Text],
+    texts: &[self::ml_string::Text],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    mut declarations: f64,
+    constructors: &[self::ml_string::Text],
+    brands: &[self::ml_string::Text],
+    representations: &[self::ml_string::Text],
+    mut node: f64,
+) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop31Result {
+    loop {
+        return if node < (starts.len() as f64) {
+            {
+                let kind = self::word(
+                    forms,
+                    texts,
+                    starts,
+                    counts,
+                    labels,
+                    targets,
+                    node,
+                    &(self::ml_string::Text::from_units(vec![107])),
+                );
+                {
+                    let proof = self::word(
+                        forms,
+                        texts,
+                        starts,
+                        counts,
+                        labels,
+                        targets,
+                        node,
+                        &(self::ml_string::Text::from_units(vec![112])),
+                    );
+                    {
+                        let operation = self::word(
+                            forms,
+                            texts,
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            node,
+                            &(self::ml_string::Text::from_units(vec![111, 112])),
+                        );
+                        {
+                            let reference = self::dependency_function3(
+                                starts,
+                                counts,
+                                labels,
+                                targets,
+                                node,
+                                &(self::ml_string::Text::from_units(vec![
+                                    114, 101, 102, 101, 114, 101, 110, 99, 101,
+                                ])),
+                            );
+                            {
+                                let identity = ((kind
+                                    == (self::ml_string::Text::from_units(vec![
+                                        115, 116, 114, 105, 99, 116, 69, 113, 117, 97, 108,
+                                    ])))
+                                    || ((kind
+                                        == (self::ml_string::Text::from_units(vec![
+                                            98, 105, 110, 97, 114, 121,
+                                        ])))
+                                        && self::ml_array::includes(
+                                            &vec![
+                                                self::ml_string::Text::from_units(vec![101, 113]),
+                                                self::ml_string::Text::from_units(vec![110, 101]),
+                                            ],
+                                            &operation.clone(),
+                                            0f64,
+                                            false,
+                                            |a, b| a == b,
+                                        )))
+                                    || ((self::ml_array::includes(
+                                        &vec![
+                                            self::ml_string::Text::from_units(vec![101, 113]),
+                                            self::ml_string::Text::from_units(vec![110, 101]),
+                                        ],
+                                        &proof.clone(),
+                                        0f64,
+                                        false,
+                                        |a, b| a == b,
+                                    ) && (reference >= 0f64))
+                                        && ((self::dependency_function2(texts, reference))
+                                            == (self::ml_string::Text::from_units(vec![
+                                                116, 114, 117, 101,
+                                            ]))));
+                                {
+                                    let source_ml_source1_temporary_values25 = {
+                                        let source_ml_source2_string_unit_operand63 = self::read_java_script_closed_class_observation_operation_operands(&(kind), &(proof), &(operation));
+                                        {
+                                            let source_ml_source2_string_unit_operand64 =
+                                                self::ml_string::Text::from_units(vec![32]);
+                                            {
+                                                let source_ml_source2_string_split_limit65 =
+                                                    4_294_967_295f64;
+                                                {
+                                                    let source_ml_source2_string_split_separator66 =
+                                                        source_ml_source2_string_unit_operand64;
+                                                    (|ml_text:&self::ml_string::Text,ml_separator:Option<&self::ml_string::Text>,ml_limit:f64|{self::ml_utf16_text::split_utf16_text(&(ml_text.0.iter().map(|ml_unit|f64::from(*ml_unit)).collect::<Vec<f64>>()), &(ml_separator.map(|ml_value|ml_value.0.iter().map(|ml_unit|f64::from(*ml_unit)).collect::<Vec<f64>>()).unwrap_or_default()), ml_limit, ml_separator.is_none()).into_iter().map(|ml_units|self::ml_string::Text::from_units(ml_units.into_iter().map(|ml_unit|ml_unit as u16).collect())).collect::<Vec<_>>()})(&(source_ml_source2_string_unit_operand63), Some(&source_ml_source2_string_split_separator66), source_ml_source2_string_split_limit65)
+                                                }
+                                            }
+                                        }
+                                    };
+                                    {
+                                        let source_ml_source1_temporary_index25 =
+                                            self::ml::Big::from_i128(0);
+                                        {
+                                            let source_ml_source2_s67 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop32(forms, texts, starts, counts, labels, targets, declarations, constructors, brands, representations, node, identity, &(source_ml_source1_temporary_values25), source_ml_source1_temporary_index25);
+                                            match source_ml_source2_s67 {
+                                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop32Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop32Done => {
+                                                    {
+                                                        let node_2 = node + 1f64;
+                                                        {
+                                                            node = node_2;
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop32Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop32Return(source_ml_source1_temporary_result32) => {
+                                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop31Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop31Return(source_ml_source1_temporary_result32.clone())
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop31Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop31Done
+        };
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Result {
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Done,
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Return(self::ml_string::Text),
+pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Result {
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Done,
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Return(self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result {
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Done,
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(self::ml_string::Text),
 }
 
 /// Execute the checked shared source algorithm.
@@ -32,70 +183,93 @@ pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Result {
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
 pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop40(
-    forms: &[self::ml_string::Text],
-    texts: &[self::ml_string::Text],
     starts: &[f64],
     counts: &[f64],
     labels: &[self::ml_string::Text],
     targets: &[f64],
-    type_keys: &[self::ml_string::Text],
-    mut expected_fields: f64,
-    mut actual: f64,
-    name: &self::ml_string::Text,
-    mut other: f64,
-) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Result {
+    mut pending: Vec<f64>,
+    mut node: f64,
+    kind: &self::ml_string::Text,
+    mut at: f64,
+) -> Vec<f64> {
     loop {
-        return if other < (self::dependency_function1(counts, expected_fields)) {
-            {
-                let expected =
-                    self::dependency_function4(starts, counts, targets, expected_fields, other);
-                if ((self::word(
-                    forms,
-                    texts,
-                    starts,
-                    counts,
-                    labels,
-                    targets,
-                    expected,
-                    &(self::ml_string::Text::from_units(vec![110, 97, 109, 101])),
-                )) == (*name))
-                    && ((self::dependency_function2(
-                        type_keys,
-                        self::dependency_function3(
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            actual,
-                            &(self::ml_string::Text::from_units(vec![116, 121, 112, 101])),
-                        ),
-                    )) != (self::dependency_function2(
-                        type_keys,
-                        self::dependency_function3(
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            expected,
-                            &(self::ml_string::Text::from_units(vec![116, 121, 112, 101])),
-                        ),
-                    )))
+        if at
+            < (self::dependency_function1(starts, node) + self::dependency_function1(counts, node))
+        {
+            if !(self::ml_array::includes(
+                &vec![
+                    self::ml_string::Text::from_units(vec![116, 121, 112, 101]),
+                    self::ml_string::Text::from_units(vec![100, 111, 109, 97, 105, 110]),
+                    self::ml_string::Text::from_units(vec![115, 112, 97, 110]),
+                    self::ml_string::Text::from_units(vec![
+                        109, 111, 100, 117, 108, 101, 80, 97, 116, 104,
+                    ]),
+                ],
+                &self::dependency_function2(labels, at),
+                0f64,
+                false,
+                |a, b| a == b,
+            )) {
                 {
-                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Return(self::ml_string::Text::from_units(vec![97, 110, 32, 111, 119, 110, 101, 100, 32, 99, 108, 97, 115, 115, 32, 102, 105, 101, 108, 100, 32, 99, 104, 97, 110, 103, 101, 100, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114, 32, 116, 121, 112, 101]))
-                } else {
-                    {
-                        let other_2 = other + 1f64;
+                    let pending_2 = {
+                        let source_ml_source2_concat_value68 = pending;
                         {
-                            other = other_2;
+                            let source_ml_source2_concat_value69 = vec![
+                                self::dependency_function1(targets, at),
+                                if ((*kind)
+                                    == (self::ml_string::Text::from_units(vec![
+                                        97, 112, 112, 108, 121,
+                                    ])))
+                                    && ((self::dependency_function2(labels, at))
+                                        == (self::ml_string::Text::from_units(vec![102, 110])))
+                                {
+                                    1f64
+                                } else {
+                                    0f64
+                                },
+                            ];
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    Vec::<f64>::new(),
+                                    source_ml_source2_concat_value68,
+                                ),
+                                source_ml_source2_concat_value69,
+                            )
+                        }
+                    };
+                    {
+                        let at_2 = at + 1f64;
+                        {
+                            (pending, at) = (pending_2, at_2);
                             continue;
                         }
                     }
                 }
             }
-        } else {
-            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Done
-        };
+            {
+                {
+                    let at_3 = at + 1f64;
+                    {
+                        at = at_3;
+                        continue;
+                    }
+                }
+            }
+        }
+        return { pending };
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39 {
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Next,
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Return(self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result {
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Done,
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Return(self::ml_string::Text),
 }
 
 /// Execute the checked shared source algorithm.
@@ -105,65 +279,226 @@ pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop40(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop39(
+pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop41(
     forms: &[self::ml_string::Text],
     texts: &[self::ml_string::Text],
     starts: &[f64],
     counts: &[f64],
     labels: &[self::ml_string::Text],
     targets: &[f64],
-    type_keys: &[self::ml_string::Text],
-    mut actual_fields: f64,
-    mut expected_fields: f64,
+    constructors: &[self::ml_string::Text],
+    representations: &[self::ml_string::Text],
+    owner: &self::ml_string::Text,
+    mut direct: f64,
+    mut node: f64,
+    kind: &self::ml_string::Text,
+    mut object: f64,
+    mut instance: f64,
+    name: &self::ml_string::Text,
+    mut methods: f64,
     mut at: f64,
-) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Result {
+) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result {
     loop {
-        return if at < (self::dependency_function1(counts, actual_fields)) {
+        return if at < (self::dependency_function1(counts, methods)) {
             {
-                let actual = self::dependency_function4(starts, counts, targets, actual_fields, at);
+                let method = self::dependency_function4(starts, counts, targets, methods, at);
+                if (self::word(
+                    forms,
+                    texts,
+                    starts,
+                    counts,
+                    labels,
+                    targets,
+                    method,
+                    &(self::ml_string::Text::from_units(vec![110, 97, 109, 101])),
+                )) != (*name)
                 {
-                    let name = self::word(
-                        forms,
-                        texts,
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        actual,
-                        &(self::ml_string::Text::from_units(vec![110, 97, 109, 101])),
-                    );
                     {
-                        let other = 0f64;
+                        let at_2 = at + 1f64;
                         {
-                            let source_ml_source2_s79 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop40(forms, texts, starts, counts, labels, targets, type_keys, expected_fields, actual, &(name), other);
-                            match source_ml_source2_s79 {
-                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Done => {
+                            at = at_2;
+                            continue;
+                        }
+                    }
+                }
+                {
+                    if ((*kind)
+                        == (self::ml_string::Text::from_units(vec![
+                            114, 101, 99, 111, 114, 100, 70, 105, 101, 108, 100,
+                        ])))
+                        && (((self::dependency_function2(representations, instance))
+                            != (self::ml_string::Text::from_units(vec![
+                                99, 108, 111, 115, 117, 114, 101, 32, 115, 108, 111, 116, 115,
+                            ])))
+                            || (direct != 1f64))
+                    {
+                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Return(self::ml_string::Text::from_units(vec![99, 108, 97, 115, 115, 32, 109, 101, 116, 104, 111, 100, 115, 32, 114, 101, 113, 117, 105, 114, 101, 32, 114, 101, 99, 101, 105, 118, 101, 114, 45, 114, 101, 116, 97, 105, 110, 105, 110, 103, 32, 99, 97, 108, 108, 115, 32, 114, 97, 116, 104, 101, 114, 32, 116, 104, 97, 110, 32, 100, 101, 116, 97, 99, 104, 101, 100, 32, 115, 108, 111, 116, 32, 111, 98, 115, 101, 114, 118, 97, 116, 105, 111, 110, 115]))
+                    } else if (*kind)
+                        == (self::ml_string::Text::from_units(vec![109, 101, 116, 104, 111, 100]))
+                    {
+                        {
+                            let args = self::dependency_function3(
+                                starts,
+                                counts,
+                                labels,
+                                targets,
+                                node,
+                                &(self::ml_string::Text::from_units(vec![97, 114, 103, 115])),
+                            );
+                            {
+                                let value = if args < 0f64 {
+                                    -1f64
+                                } else {
+                                    self::dependency_function4(starts, counts, targets, args, 0f64)
+                                };
+                                {
+                                    let helper = self::word(
+                                        forms,
+                                        texts,
+                                        starts,
+                                        counts,
+                                        labels,
+                                        targets,
+                                        method,
+                                        &(self::ml_string::Text::from_units(vec![
+                                            104, 101, 108, 112, 101, 114,
+                                        ])),
+                                    );
                                     {
-                                        let at_2 = at + 1f64;
+                                        let call_args = self::dependency_function3(
+                                            starts,
+                                            counts,
+                                            labels,
+                                            targets,
+                                            value,
+                                            &(self::ml_string::Text::from_units(vec![
+                                                97, 114, 103, 115,
+                                            ])),
+                                        );
                                         {
-                                            at = at_2;
-                                            continue;
+                                            let receiver = if call_args < 0f64 {
+                                                -1f64
+                                            } else {
+                                                self::dependency_function4(
+                                                    starts, counts, targets, call_args, 0f64,
+                                                )
+                                            };
+                                            if (((((((*owner)
+                                                != (self::dependency_function2(
+                                                    constructors,
+                                                    instance,
+                                                )))
+                                                || ((self::dependency_function2(
+                                                    representations,
+                                                    instance,
+                                                )) != (self::ml_string::Text::from_units(
+                                                    vec![
+                                                        99, 108, 111, 115, 117, 114, 101, 32, 115,
+                                                        108, 111, 116, 115,
+                                                    ],
+                                                ))))
+                                                || ((self::word(
+                                                    forms,
+                                                    texts,
+                                                    starts,
+                                                    counts,
+                                                    labels,
+                                                    targets,
+                                                    value,
+                                                    &(self::ml_string::Text::from_units(vec![107])),
+                                                )) != (self::ml_string::Text::from_units(
+                                                    vec![99, 97, 108, 108],
+                                                ))))
+                                                || ((self::word(
+                                                    forms,
+                                                    texts,
+                                                    starts,
+                                                    counts,
+                                                    labels,
+                                                    targets,
+                                                    value,
+                                                    &(self::ml_string::Text::from_units(vec![
+                                                        102, 110,
+                                                    ])),
+                                                )) != helper))
+                                                || ((self::word(
+                                                    forms,
+                                                    texts,
+                                                    starts,
+                                                    counts,
+                                                    labels,
+                                                    targets,
+                                                    object,
+                                                    &(self::ml_string::Text::from_units(vec![107])),
+                                                )) != (self::ml_string::Text::from_units(
+                                                    vec![118, 97, 114],
+                                                ))))
+                                                || ((self::word(
+                                                    forms,
+                                                    texts,
+                                                    starts,
+                                                    counts,
+                                                    labels,
+                                                    targets,
+                                                    receiver,
+                                                    &(self::ml_string::Text::from_units(vec![107])),
+                                                )) != (self::ml_string::Text::from_units(
+                                                    vec![118, 97, 114],
+                                                ))))
+                                                || ((self::word(
+                                                    forms,
+                                                    texts,
+                                                    starts,
+                                                    counts,
+                                                    labels,
+                                                    targets,
+                                                    object,
+                                                    &(self::ml_string::Text::from_units(vec![
+                                                        110, 97, 109, 101,
+                                                    ])),
+                                                )) != (self::word(
+                                                    forms,
+                                                    texts,
+                                                    starts,
+                                                    counts,
+                                                    labels,
+                                                    targets,
+                                                    receiver,
+                                                    &(self::ml_string::Text::from_units(vec![
+                                                        110, 97, 109, 101,
+                                                    ])),
+                                                )))
+                                            {
+                                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Return(self::ml_string::Text::from_units(vec![99, 108, 97, 115, 115, 32, 109, 101, 116, 104, 111, 100, 32, 115, 108, 111, 116, 115, 32, 97, 114, 101, 32, 105, 110, 115, 116, 97, 108, 108, 101, 100, 32, 111, 110, 108, 121, 32, 98, 121, 32, 116, 104, 101, 105, 114, 32, 97, 99, 116, 117, 97, 108, 32, 114, 101, 99, 101, 105, 118, 101, 114, 32, 102, 97, 99, 116, 111, 114, 121, 32, 105, 110, 115, 105, 100, 101, 32, 116, 104, 101, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114]))
+                                            } else {
+                                                {
+                                                    let at_3 = at + 1f64;
+                                                    {
+                                                        at = at_3;
+                                                        continue;
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop40Return(source_ml_source1_temporary_result40) => {
-                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Return(source_ml_source1_temporary_result40)
-                                }
+                            }
+                        }
+                    } else {
+                        {
+                            let at_4 = at + 1f64;
+                            {
+                                at = at_4;
+                                continue;
                             }
                         }
                     }
                 }
             }
         } else {
-            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Done
+            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Done
         };
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result {
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Done,
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(self::ml_string::Text),
 }
 
 /// Execute the checked shared source algorithm.
@@ -180,284 +515,175 @@ pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop38(
     counts: &[f64],
     labels: &[self::ml_string::Text],
     targets: &[f64],
-    brands: &[self::ml_string::Text],
-    mut position: f64,
-    mut branded_fields: f64,
-    mut at: f64,
-) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result {
-    loop {
-        return if at < (self::dependency_function1(counts, branded_fields)) {
-            {
-                let row = self::dependency_function4(starts, counts, targets, branded_fields, at);
-                if ((self::word(
-                    forms,
-                    texts,
-                    starts,
-                    counts,
-                    labels,
-                    targets,
-                    row,
-                    &(self::ml_string::Text::from_units(vec![110, 97, 109, 101])),
-                )) == (self::dependency_function2(brands, position)))
-                    && ((self::word(
-                        forms,
-                        texts,
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        self::dependency_function3(
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            row,
-                            &(self::ml_string::Text::from_units(vec![116, 121, 112, 101])),
-                        ),
-                        &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
-                    )) != (self::ml_string::Text::from_units(vec![117, 110, 105, 116])))
-                {
-                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(self::ml_string::Text::from_units(vec![97, 110, 32, 97, 99, 116, 117, 97, 108, 32, 99, 108, 97, 115, 115, 32, 98, 114, 97, 110, 100, 32, 109, 117, 115, 116, 32, 114, 101, 116, 97, 105, 110, 32, 105, 116, 115, 32, 85, 110, 105, 116, 32, 102, 105, 101, 108, 100]))
-                } else {
-                    {
-                        let at_2 = at + 1f64;
-                        {
-                            at = at_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop23(
-    forms: &[self::ml_string::Text],
-    texts: &[self::ml_string::Text],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    type_keys: &[self::ml_string::Text],
     constructors: &[self::ml_string::Text],
     brands: &[self::ml_string::Text],
     representations: &[self::ml_string::Text],
     owner_nodes: &[f64],
-    constructor_nodes: &[f64],
-    mut node: f64,
-) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result {
+    owner: &self::ml_string::Text,
+    mut pending: Vec<f64>,
+    mut seen: Vec<f64>,
+) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result {
     loop {
-        return if node < (starts.len() as f64) {
-            if (self::word(
-                forms,
-                texts,
-                starts,
-                counts,
-                labels,
-                targets,
-                node,
-                &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
-            )) == (self::ml_string::Text::from_units(vec![114, 101, 99, 111, 114, 100]))
-            {
+        return {
+            let ml_library_condition_1 = {
+                let ml_value = pending.len() as f64;
+                ml_value != 0f64 && !ml_value.is_nan()
+            };
+            if ml_library_condition_1 {
                 {
-                    let owner = self::word(
-                        forms,
-                        texts,
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        node,
-                        &(self::ml_string::Text::from_units(vec![
-                            115, 111, 117, 114, 99, 101, 67, 108, 97, 115, 115, 79, 119, 110, 101,
-                            114,
-                        ])),
-                    );
+                    let direct =
+                        self::dependency_function1(&(pending), ((pending.len() as f64) - 1f64));
                     {
-                        let fields =
-                            self::names(forms, texts, starts, counts, labels, targets, node);
+                        let node =
+                            self::dependency_function1(&(pending), ((pending.len() as f64) - 2f64));
                         {
-                            let position = self::ml_array::index_of(
-                                constructors,
-                                &owner.clone(),
-                                0f64,
-                                false,
-                                |a, b| a == b,
-                            );
+                            let pending_2 = self::ml_array::slice(&pending, 0f64, -2f64);
+                            if (node < 0f64)
+                                || self::ml_array::includes(
+                                    &seen,
+                                    &((node * 2f64) + direct),
+                                    0f64,
+                                    false,
+                                    |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
+                                )
                             {
-                                let present = {
-                                    let ml_values1 = brands.to_vec();
-                                    let ml_callback1 = {
-                                        let fields = fields.clone();
-                                        std::rc::Rc::new(
-                                            move |brand: self::ml_string::Text| -> bool {
-                                                self::ml_array::includes(
-                                                    &fields,
-                                                    &brand.clone(),
-                                                    0f64,
-                                                    false,
-                                                    |a, b| a == b,
-                                                )
-                                            },
-                                        )
-                                    };
-                                    ml_values1
-                                        .iter()
-                                        .cloned()
-                                        .enumerate()
-                                        .any(|(ml_index1, ml_value1)| ml_callback1(ml_value1))
-                                };
-                                if ((self::dependency_function3(
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    node,
-                                    &(self::ml_string::Text::from_units(vec![
-                                        115, 111, 117, 114, 99, 101, 67, 108, 97, 115, 115, 79,
-                                        119, 110, 101, 114,
-                                    ])),
-                                )) >= 0f64)
-                                    && (owner == (self::ml_string::Text::from_units(vec![])))
                                 {
-                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Return(self::ml_string::Text::from_units(vec![97, 110, 32, 97, 99, 116, 117, 97, 108, 32, 99, 108, 97, 115, 115, 32, 116, 121, 112, 101, 32, 111, 119, 110, 101, 114, 32, 109, 117, 115, 116, 32, 98, 101, 32, 97, 32, 110, 111, 110, 101, 109, 112, 116, 121, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114, 32, 114, 101, 102, 101, 114, 101, 110, 99, 101]))
+                                    pending = pending_2;
+                                    continue;
+                                }
+                            }
+                            {
+                                if (seen.len() as f64) > 100_000f64 {
+                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(self::ml_string::Text::from_units(vec![111, 119, 110, 101, 100, 32, 99, 108, 97, 115, 115, 32, 98, 111, 100, 121, 32, 116, 114, 97, 118, 101, 114, 115, 97, 108, 32, 101, 120, 99, 101, 101, 100, 115, 32, 105, 116, 115, 32, 98, 117, 100, 103, 101, 116]))
                                 } else {
-                                    if (owner == (self::ml_string::Text::from_units(vec![])))
-                                        && !present
                                     {
-                                        {
-                                            let node_2 = node + 1f64;
+                                        let seen_2 = {
+                                            let source_ml_source2_concat_value70 = seen;
                                             {
-                                                node = node_2;
-                                                continue;
+                                                let source_ml_source2_concat_value71 =
+                                                    vec![((node * 2f64) + direct)];
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<f64>::new(),
+                                                        source_ml_source2_concat_value70,
+                                                    ),
+                                                    source_ml_source2_concat_value71,
+                                                )
                                             }
-                                        }
-                                    }
-                                    {
-                                        if position < 0f64 {
-                                            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Return(self::ml_string::Text::from_units(vec![97, 110, 32, 111, 119, 110, 101, 100, 32, 99, 108, 97, 115, 115, 32, 116, 121, 112, 101, 32, 99, 97, 110, 110, 111, 116, 32, 100, 114, 111, 112, 32, 105, 116, 115, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114, 32, 119, 105, 116, 110, 101, 115, 115]))
-                                        } else {
+                                        };
+                                        {
+                                            let kind = self::word(
+                                                forms,
+                                                texts,
+                                                starts,
+                                                counts,
+                                                labels,
+                                                targets,
+                                                node,
+                                                &(self::ml_string::Text::from_units(vec![107])),
+                                            );
                                             {
-                                                let definition = self::dependency_function1(
-                                                    owner_nodes,
-                                                    position,
+                                                let type_ = self::dependency_function3(
+                                                    starts,
+                                                    counts,
+                                                    labels,
+                                                    targets,
+                                                    node,
+                                                    &(self::ml_string::Text::from_units(vec![
+                                                        116, 121, 112, 101,
+                                                    ])),
                                                 );
                                                 {
-                                                    let expected = {
-                                                        let source_ml_source2_concat_value80 = self::strings(forms, texts, starts, counts, labels, targets, self::dependency_function3(starts, counts, labels, targets, definition, &(self::ml_string::Text::from_units(vec![102, 105, 101, 108, 100, 115]))));
-                                                        {
-                                                            let source_ml_source2_concat_value81 =
-                                                                vec![self::dependency_function2(
-                                                                    brands, position,
-                                                                )];
-                                                            self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value80), source_ml_source2_concat_value81)
-                                                        }
-                                                    };
+                                                    let class_owner = self::word(
+                                                        forms,
+                                                        texts,
+                                                        starts,
+                                                        counts,
+                                                        labels,
+                                                        targets,
+                                                        type_,
+                                                        &(self::ml_string::Text::from_units(vec![
+                                                            115, 111, 117, 114, 99, 101, 67, 108,
+                                                            97, 115, 115, 79, 119, 110, 101, 114,
+                                                        ])),
+                                                    );
+                                                    if ((kind
+                                                        == (self::ml_string::Text::from_units(
+                                                            vec![114, 101, 99, 111, 114, 100],
+                                                        )))
+                                                        && (class_owner
+                                                            != (self::ml_string::Text::from_units(
+                                                                vec![],
+                                                            ))))
+                                                        && (class_owner != (*owner))
                                                     {
-                                                        let methods = self::dependency_function3(
-                                                            starts,
-                                                            counts,
-                                                            labels,
-                                                            targets,
-                                                            definition,
-                                                            &(self::ml_string::Text::from_units(
-                                                                vec![
-                                                                    109, 101, 116, 104, 111, 100,
-                                                                    115,
-                                                                ],
-                                                            )),
-                                                        );
+                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(self::ml_string::Text::from_units(vec![99, 108, 97, 115, 115, 32, 100, 97, 116, 97, 32, 97, 108, 108, 111, 99, 97, 116, 105, 111, 110, 115, 32, 98, 101, 108, 111, 110, 103, 32, 111, 110, 108, 121, 32, 116, 111, 32, 116, 104, 101, 105, 114, 32, 97, 99, 116, 117, 97, 108, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114]))
+                                                    } else {
                                                         {
-                                                            let complete = expected;
+                                                            let object = self::dependency_function3(starts, counts, labels, targets, node, &(self::ml_string::Text::from_units(vec![111, 98, 106, 101, 99, 116])));
                                                             {
-                                                                let complete_3 = if (self::dependency_function2(representations, position)) == (self::ml_string::Text::from_units(vec![99, 108, 111, 115, 117, 114, 101, 32, 115, 108, 111, 116, 115])) {
-                                                                    {
-                                                                        let at = 0f64;
-                                                                        {
-                                                                            self::source_ml_source1_temporary_read_java_script_class_owner_error_loop37(forms, texts, starts, counts, labels, targets, methods, complete, at)
-                                                                        }
-                                                                    }
-                                                                } else {
-                                                                    complete
-                                                                };
-                                                                if ((fields.len() as f64)
-                                                                    != (complete_3.len() as f64))
-                                                                    || {
-                                                                        let ml_values2 = complete_3;
-                                                                        let ml_callback2 = {
-                                                                            let fields =
-                                                                                fields.clone();
-                                                                            std::rc::Rc::new(move |name: self::ml_string::Text| -> bool { !(self::ml_array::includes(&fields, &name.clone(), 0f64, false, |a, b| a == b)) })
-                                                                        };
-                                                                        ml_values2.iter().cloned().enumerate().any(|(ml_index2, ml_value2)| ml_callback2(ml_value2))
-                                                                    }
+                                                                let object_type = self::dependency_function3(starts, counts, labels, targets, object, &(self::ml_string::Text::from_units(vec![116, 121, 112, 101])));
                                                                 {
-                                                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Return(self::ml_string::Text::from_units(vec![97, 110, 32, 111, 119, 110, 101, 100, 32, 99, 108, 97, 115, 115, 32, 114, 101, 99, 111, 114, 100, 32, 99, 111, 110, 116, 114, 97, 100, 105, 99, 116, 115, 32, 105, 116, 115, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 97, 99, 116, 117, 97, 108, 32, 100, 97, 116, 97, 32, 102, 105, 101, 108, 100, 115]))
-                                                                } else {
+                                                                    let instance = self::ml_array::index_of(constructors, &self::word(forms, texts, starts, counts, labels, targets, object_type, &(self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 67, 108, 97, 115, 115, 79, 119, 110, 101, 114]))), 0f64, false, |a, b| a == b);
                                                                     {
-                                                                        let branded_fields = self::dependency_function3(starts, counts, labels, targets, node, &(self::ml_string::Text::from_units(vec![102, 105, 101, 108, 100, 115])));
-                                                                        {
-                                                                            let at_2 = 0f64;
-                                                                            {
-                                                                                let source_ml_source2_s82 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop38(forms, texts, starts, counts, labels, targets, brands, position, branded_fields, at_2);
-                                                                                match source_ml_source2_s82 {
-                                                                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Done => {
+                                                                        let source_ml_source2_s73 =
+                                                                            if instance >= 0f64 {
+                                                                                {
+                                                                                    let definition = self::dependency_function1(owner_nodes, instance);
+                                                                                    {
+                                                                                        let brand = self::dependency_function2(brands, instance);
                                                                                         {
-                                                                                            let reference = self::dependency_function3(starts, counts, labels, targets, self::dependency_function1(constructor_nodes, position), &(self::ml_string::Text::from_units(vec![114, 101, 116])));
-                                                                                            if (self::word(forms, texts, starts, counts, labels, targets, reference, &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])))) == (self::ml_string::Text::from_units(vec![114, 101, 99, 111, 114, 100])) {
+                                                                                            let name = if kind == (self::ml_string::Text::from_units(vec![114, 101, 99, 111, 114, 100, 70, 105, 101, 108, 100])) {
+                                                                                        self::word(forms, texts, starts, counts, labels, targets, node, &(self::ml_string::Text::from_units(vec![102, 105, 101, 108, 100])))
+                                                                                    } else if kind == (self::ml_string::Text::from_units(vec![109, 101, 116, 104, 111, 100])) {
+                                                                                            self::read_record_field_write_name(&(self::word(forms, texts, starts, counts, labels, targets, node, &(self::ml_string::Text::from_units(vec![111, 112])))))
+                                                                                        } else {
+                                                                                            self::ml_string::Text::from_units(vec![])
+                                                                                        };
+                                                                                            if name == brand {
+                                                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Return(self::ml_string::Text::from_units(vec![97, 32, 115, 121, 110, 116, 104, 101, 116, 105, 99, 32, 99, 108, 97, 115, 115, 32, 98, 114, 97, 110, 100, 32, 105, 115, 32, 110, 111, 116, 32, 97, 110, 32, 111, 98, 115, 101, 114, 118, 97, 98, 108, 101, 32, 112, 117, 98, 108, 105, 99, 32, 100, 97, 116, 97, 32, 102, 105, 101, 108, 100]))
+                                                                                    } else {
+                                                                                        {
+                                                                                            let methods = self::dependency_function3(starts, counts, labels, targets, definition, &(self::ml_string::Text::from_units(vec![109, 101, 116, 104, 111, 100, 115])));
+                                                                                            {
+                                                                                                let at = 0f64;
                                                                                                 {
-                                                                                                    let actual_fields = self::dependency_function3(starts, counts, labels, targets, node, &(self::ml_string::Text::from_units(vec![102, 105, 101, 108, 100, 115])));
-                                                                                                    {
-                                                                                                        let expected_fields = self::dependency_function3(starts, counts, labels, targets, reference, &(self::ml_string::Text::from_units(vec![102, 105, 101, 108, 100, 115])));
-                                                                                                        {
-                                                                                                            let at_3 = 0f64;
-                                                                                                            {
-                                                                                                                let source_ml_source2_s83 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop39(forms, texts, starts, counts, labels, targets, type_keys, actual_fields, expected_fields, at_3);
-                                                                                                                match source_ml_source2_s83 {
-                                                                                                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Done => {
-                                                                                                                        {
-                                                                                                                            let node_3 = node + 1f64;
-                                                                                                                            {
-                                                                                                                                node = node_3;
-                                                                                                                                continue;
-                                                                                                                            }
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop39Return(source_ml_source1_temporary_result39) => {
-                                                                                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Return(source_ml_source1_temporary_result39.clone())
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            }
+                                                                                                    let source_ml_source2_s74 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop41(forms, texts, starts, counts, labels, targets, constructors, representations, owner, direct, node, &(kind), object, instance, &(name), methods, at);
+                                                                                                    match source_ml_source2_s74 {
+                                                                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Done => {
+                                                                                                            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Next
                                                                                                         }
-                                                                                                    }
-                                                                                                }
-                                                                                            } else {
-                                                                                                {
-                                                                                                    let node_4 = node + 1f64;
-                                                                                                    {
-                                                                                                        node = node_4;
-                                                                                                        continue;
+                                                                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Return(source_ml_source1_temporary_result41) => {
+                                                                                                            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Return(source_ml_source1_temporary_result41.clone())
+                                                                                                        }
                                                                                                     }
                                                                                                 }
                                                                                             }
                                                                                         }
                                                                                     }
-                                                                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(source_ml_source1_temporary_result40) => {
-                                                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Return(source_ml_source1_temporary_result40.clone())
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            } else {
+                                                                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Next
+                                                                            };
+                                                                        match source_ml_source2_s73 {
+                                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Next => {
+                                                                            {
+                                                                                let at_2 = self::dependency_function1(starts, node);
+                                                                                {
+                                                                                    let pending_3 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop40(starts, counts, labels, targets, pending_2, node, &(kind), at_2);
+                                                                                    {
+                                                                                        (pending, seen) = (pending_3, seen_2);
+                                                                                        continue;
                                                                                     }
                                                                                 }
                                                                             }
                                                                         }
+                                                                        self::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39::MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin39Return(source_ml_source1_temporary_result40) => {
+                                                                            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(source_ml_source1_temporary_result40.clone())
+                                                                        }
+                                                                    }
                                                                     }
                                                                 }
                                                             }
@@ -473,42 +699,71 @@ pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop23(
                     }
                 }
             } else {
+                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Done
+            }
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop30(
+    forms: &[self::ml_string::Text],
+    texts: &[self::ml_string::Text],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    constructors: &[self::ml_string::Text],
+    brands: &[self::ml_string::Text],
+    representations: &[self::ml_string::Text],
+    owner_nodes: &[f64],
+    roots: &[f64],
+    scopes: &[self::ml_string::Text],
+    mut scope: f64,
+) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Result {
+    loop {
+        return if scope < (roots.len() as f64) {
+            {
+                let owner = self::dependency_function2(scopes, scope);
                 {
-                    let node_5 = node + 1f64;
+                    let pending = vec![self::dependency_function1(roots, scope), 0f64];
                     {
-                        node = node_5;
-                        continue;
+                        let seen = Vec::<f64>::new();
+                        {
+                            let source_ml_source2_s75 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop38(forms, texts, starts, counts, labels, targets, constructors, brands, representations, owner_nodes, &(owner), pending, seen);
+                            match source_ml_source2_s75 {
+                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Done => {
+                                    {
+                                        let scope_2 = scope + 1f64;
+                                        {
+                                            scope = scope_2;
+                                            continue;
+                                        }
+                                    }
+                                }
+                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop38Return(source_ml_source1_temporary_result38) => {
+                                    self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Return(source_ml_source1_temporary_result38)
+                                }
+                            }
+                        }
                     }
                 }
             }
         } else {
-            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop23Done
+            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop30Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin22 {
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin22Next(
-        Vec<self::ml_string::Text>,
-        Vec<self::ml_string::Text>,
-        Vec<self::ml_string::Text>,
-        Vec<f64>,
-        Vec<f64>,
-    ),
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorJoin22Return(self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result {
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Done(
-        Vec<self::ml_string::Text>,
-        Vec<self::ml_string::Text>,
-        Vec<self::ml_string::Text>,
-        Vec<f64>,
-        Vec<f64>,
-    ),
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Return(self::ml_string::Text),
+pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop29Result {
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop29Done(Vec<f64>, Vec<self::ml_string::Text>),
 }
 
 /// Execute the checked shared source algorithm.
@@ -518,7 +773,7 @@ pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop41Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop43(
+pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop29(
     forms: &[self::ml_string::Text],
     texts: &[self::ml_string::Text],
     starts: &[f64],
@@ -526,193 +781,77 @@ pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop43(
     labels: &[self::ml_string::Text],
     targets: &[f64],
     mut declarations: f64,
-    constructor: &self::ml_string::Text,
-    mut actual: f64,
+    mut roots: Vec<f64>,
+    mut scopes: Vec<self::ml_string::Text>,
     mut declaration: f64,
-) -> f64 {
+) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop29Result {
     loop {
-        if declaration < (self::dependency_function1(counts, declarations)) {
+        if (declarations >= 0f64)
+            && (declaration < (self::dependency_function1(counts, declarations)))
+        {
             {
                 let row =
                     self::dependency_function4(starts, counts, targets, declarations, declaration);
-                if ((self::word(
-                    forms,
-                    texts,
-                    starts,
-                    counts,
-                    labels,
-                    targets,
-                    row,
-                    &(self::ml_string::Text::from_units(vec![
-                        102, 117, 108, 108, 78, 97, 109, 101,
-                    ])),
-                )) == (*constructor))
-                    && ((self::word(
-                        forms,
-                        texts,
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        row,
-                        &(self::ml_string::Text::from_units(vec![107])),
-                    )) == (self::ml_string::Text::from_units(vec![102, 110])))
                 {
-                    {
-                        let actual_2 = row;
+                    let roots_2 = {
+                        let source_ml_source2_concat_value76 = roots;
                         {
-                            let declaration_2 = declaration + 1f64;
+                            let source_ml_source2_concat_value77 = vec![row];
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    Vec::<f64>::new(),
+                                    source_ml_source2_concat_value76,
+                                ),
+                                source_ml_source2_concat_value77,
+                            )
+                        }
+                    };
+                    {
+                        let scopes_2 = {
+                            let source_ml_source2_concat_value78 = scopes;
                             {
-                                (actual, declaration) = (actual_2, declaration_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-                {
-                    {
-                        let declaration_3 = declaration + 1f64;
-                        {
-                            declaration = declaration_3;
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return { actual };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Result {
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Done,
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Return(self::ml_string::Text),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop45(
-    forms: &[self::ml_string::Text],
-    texts: &[self::ml_string::Text],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    mut declarations: f64,
-    constructor: &self::ml_string::Text,
-    helper: &self::ml_string::Text,
-    mut found: bool,
-    mut declaration: f64,
-) -> bool {
-    loop {
-        if declaration < (self::dependency_function1(counts, declarations)) {
-            {
-                let row =
-                    self::dependency_function4(starts, counts, targets, declarations, declaration);
-                if ((self::word(
-                    forms,
-                    texts,
-                    starts,
-                    counts,
-                    labels,
-                    targets,
-                    row,
-                    &(self::ml_string::Text::from_units(vec![
-                        102, 117, 108, 108, 78, 97, 109, 101,
-                    ])),
-                )) != (*helper))
-                    || ((self::word(
-                        forms,
-                        texts,
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        row,
-                        &(self::ml_string::Text::from_units(vec![107])),
-                    )) != (self::ml_string::Text::from_units(vec![102, 110])))
-                {
-                    {
-                        let declaration_2 = declaration + 1f64;
-                        {
-                            declaration = declaration_2;
-                            continue;
-                        }
-                    }
-                }
-                {
-                    {
-                        let params = self::dependency_function3(
-                            starts,
-                            counts,
-                            labels,
-                            targets,
-                            row,
-                            &(self::ml_string::Text::from_units(vec![112, 97, 114, 97, 109, 115])),
-                        );
-                        {
-                            let parameter = if params < 0f64 {
-                                -1f64
-                            } else {
-                                self::dependency_function4(starts, counts, targets, params, 0f64)
-                            };
-                            {
-                                let type_ = self::dependency_function3(
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    parameter,
-                                    &(self::ml_string::Text::from_units(vec![116, 121, 112, 101])),
-                                );
-                                if (self::word(
+                                let source_ml_source2_concat_value79 = vec![self::word(
                                     forms,
                                     texts,
                                     starts,
                                     counts,
                                     labels,
                                     targets,
-                                    type_,
+                                    row,
                                     &(self::ml_string::Text::from_units(vec![
-                                        115, 111, 117, 114, 99, 101, 67, 108, 97, 115, 115, 79,
-                                        119, 110, 101, 114,
+                                        102, 117, 108, 108, 78, 97, 109, 101,
                                     ])),
-                                )) == (*constructor)
-                                {
-                                    {
-                                        let found_2 = true;
-                                        {
-                                            let declaration_3 = declaration + 1f64;
-                                            {
-                                                (found, declaration) = (found_2, declaration_3);
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                                {
-                                    {
-                                        let declaration_4 = declaration + 1f64;
-                                        {
-                                            declaration = declaration_4;
-                                            continue;
-                                        }
-                                    }
-                                }
+                                )];
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        Vec::<self::ml_string::Text>::new(),
+                                        source_ml_source2_concat_value78,
+                                    ),
+                                    source_ml_source2_concat_value79,
+                                )
+                            }
+                        };
+                        {
+                            let declaration_2 = declaration + 1f64;
+                            {
+                                (roots, scopes, declaration) = (roots_2, scopes_2, declaration_2);
+                                continue;
                             }
                         }
                     }
                 }
             }
         }
-        return { found };
+        return {
+            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop29Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop29Done(roots, scopes)
+        };
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop28Result {
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop28Done,
+    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop28Return(self::ml_string::Text),
 }
 
 /// Execute the checked shared source algorithm.
@@ -722,60 +861,51 @@ pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop45(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop44(
+pub fn source_ml_source1_temporary_read_java_script_class_owner_error_loop42(
     forms: &[self::ml_string::Text],
     texts: &[self::ml_string::Text],
     starts: &[f64],
     counts: &[f64],
     labels: &[self::ml_string::Text],
     targets: &[f64],
-    mut declarations: f64,
-    constructor: &self::ml_string::Text,
-    source_ml_source1_temporary_values19: &[self::ml_string::Text],
-    mut source_ml_source1_temporary_index19: self::ml::Big,
-) -> self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Result {
+    mut methods: f64,
+    mut complete: Vec<self::ml_string::Text>,
+    mut at: f64,
+) -> Vec<self::ml_string::Text> {
     loop {
-        return if source_ml_source1_temporary_index19
-            < (self::ml::Big::from_u128(source_ml_source1_temporary_values19.len() as u128))
-        {
+        if at < (self::dependency_function1(counts, methods)) {
             {
-                let helper = self::ml_array::at(
-                    source_ml_source1_temporary_values19,
-                    source_ml_source1_temporary_index19.to_index(),
-                );
-                {
-                    let found = false;
+                let complete_2 = {
+                    let source_ml_source2_concat_value80 = complete;
                     {
-                        let declaration = 0f64;
-                        {
-                            let found_2 = self::source_ml_source1_temporary_read_java_script_class_owner_error_loop45(forms, texts, starts, counts, labels, targets, declarations, constructor, &(helper), found, declaration);
-                            if found_2 {
-                                {
-                                    let source_ml_source1_temporary_index19_2 =
-                                        source_ml_source1_temporary_index19
-                                            .add(&self::ml::Big::from_i128(1));
-                                    {
-                                        source_ml_source1_temporary_index19 =
-                                            source_ml_source1_temporary_index19_2;
-                                        continue;
-                                    }
-                                }
-                            }
-                            {
-                                self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Return(self::ml_string::Text::from_units(vec![97, 32, 99, 108, 97, 115, 115, 32, 109, 101, 116, 104, 111, 100, 32, 104, 101, 108, 112, 101, 114, 32, 109, 117, 115, 116, 32, 114, 101, 116, 97, 105, 110, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 101, 100, 32, 114, 101, 99, 101, 105, 118, 101, 114, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101]))
-                            }
-                        }
+                        let source_ml_source2_concat_value81 = vec![self::word(
+                            forms,
+                            texts,
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            self::dependency_function4(starts, counts, targets, methods, at),
+                            &(self::ml_string::Text::from_units(vec![110, 97, 109, 101])),
+                        )];
+                        self::ml_array::append(
+                            self::ml_array::append(
+                                Vec::<self::ml_string::Text>::new(),
+                                source_ml_source2_concat_value80,
+                            ),
+                            source_ml_source2_concat_value81,
+                        )
+                    }
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (complete, at) = (complete_2, at_2);
+                        continue;
                     }
                 }
             }
-        } else {
-            self::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Result::MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop44Done
-        };
+        }
+        return { complete };
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop42Result {
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop42Done(Vec<self::ml_string::Text>),
-    MlSource1TemporaryReadJavaScriptClassOwnerErrorLoop42Return(self::ml_string::Text),
 }
