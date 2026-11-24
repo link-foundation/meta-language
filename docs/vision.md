@@ -2987,6 +2987,17 @@ in the frozen native artifact; all recorded native definitions and replays remai
 exact. Current gates check current descriptors and historical views check their
 own complete predecessors. Native execution remains a CI requirement.
 
+A closed JavaScript script with a relative array call and top-level effects can
+be translated as a whole checked program. The self-translation adapters use a
+shared generated rule for the call syntax and the regular portable checker for
+the complete program. When the checker refuses the program, ordinary item
+translation reports the remaining obligations. Scoped imports, declarations
+with module bindings, explicit reference options, and signature-only requests
+keep their existing paths. The existing source envelope binds the original
+bytes to the entire emitted payload so an exact reverse translation can recover
+the script. The paired original scripts require zero carried items, exact
+source recovery, and native output matching their independent observations.
+
 Known array iterables preserve their original inferred element owner before
 normalization. A common Number or BigInt element owner joined with null and
 undefined retains its optional type regardless of order or an intervening spread. The

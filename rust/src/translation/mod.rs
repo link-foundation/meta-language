@@ -88,6 +88,7 @@ pub(crate) mod scalar_loop_rules;
 pub(crate) mod scoped_binding_emission;
 pub(crate) mod scoped_binding_emission_rules;
 pub(crate) mod self_translation_layout_rules;
+pub(crate) mod self_translation_relative_array_rules;
 pub(crate) mod source_const_functions;
 pub(crate) mod source_diagnostic_attributes;
 pub(crate) mod source_empty_options;

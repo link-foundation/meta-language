@@ -138,6 +138,7 @@ fn relative_arrays_preserve_complete_original_programs_through_native_execution_
                 .count(),
             0
         );
+        assert_eq!(array_relative_native(&translated.code, index), expected);
         assert_eq!(
             meta_language::self_translate(&translated.code, "Rust", "JavaScript")
                 .unwrap()

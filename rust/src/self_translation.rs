@@ -26,6 +26,12 @@ use sha2::{Digest, Sha256};
 
 use crate::decorators::DecoratorSet;
 use crate::grammar::decorate_emitted;
+use crate::translation::Language;
+use crate::translation::check::check_program;
+use crate::translation::emit_rust::emit_rust_with_representation;
+use crate::translation::javascript::parse_javascript;
+use crate::translation::lexer::{TokenKind, tokenize};
+use crate::translation::self_translation_relative_array_rules::accept_self_translation_relative_array_call;
 use crate::translation::surface::External;
 use crate::{LinkNetwork, ParseConfiguration};
 
@@ -244,7 +250,7 @@ pub fn self_translate_with(
     target_language: &str,
     options: &SelfTranslationOptions,
 ) -> Result<SelfTranslation, SelfTranslationError> {
-    translate_module(source, source_language, target_language, options)
+    translate_module(source, source_language, target_language, options, false)
         .map(|(translation, _)| translation)
 }
 
@@ -268,7 +274,7 @@ pub fn self_translation_signatures(
             ),
         });
     }
-    translate_module(source, language, "Rust", options).map(|(_, signatures)| signatures)
+    translate_module(source, language, "Rust", options, true).map(|(_, signatures)| signatures)
 }
 
 fn translate_module(
@@ -276,6 +282,7 @@ fn translate_module(
     source_language: &str,
     target_language: &str,
     options: &SelfTranslationOptions,
+    signatures_only: bool,
 ) -> Result<(SelfTranslation, Vec<SelfTranslationSignature>), SelfTranslationError> {
     let decorators = &options.decorators;
     let from = required(source_language)?;
@@ -309,6 +316,45 @@ fn translate_module(
             items,
         };
         return Ok((translation, Vec::new()));
+    }
+    if !signatures_only
+        && from == "JavaScript"
+        && to == "Rust"
+        && decorators.is_empty()
+        && options.module_directory.is_empty()
+        && options.imports.is_empty()
+        && let Some(native) = translate_relative_array_program(source, &items, utf16_strings)
+    {
+        let tail = format!("\n\n{native}");
+        let header = format!(
+            "{HEADER}source={from} target={to} sha256={} bytes={}{}",
+            sha256(source),
+            source.len(),
+            source_envelope(source, &tail),
+        );
+        let items = items
+            .iter()
+            .map(|item| SelfTranslationItem {
+                term: item.term.clone(),
+                start: item.start,
+                end: item.end,
+                status: if item.comment {
+                    "comment"
+                } else {
+                    "translated"
+                },
+                reason: None,
+            })
+            .collect();
+        return Ok((
+            SelfTranslation {
+                source_language: from,
+                target_language: to,
+                code: header + &tail,
+                items,
+            },
+            Vec::new(),
+        ));
     }
     let mut blocks: Vec<String> = Vec::new();
     let mut preludes: Vec<String> = Vec::new();
@@ -532,16 +578,7 @@ fn translate_module(
     }
     if layout_envelope {
         let tail = format!("\n{}\n{body}", lines[1..].join("\n"));
-        let original = serde_json::to_string(source)
-            .expect("source text serializes")
-            .replace('\u{2028}', "\\u2028")
-            .replace('\u{2029}', "\\u2029");
-        write!(
-            lines[0],
-            " envelope-sha256={} original={original}",
-            sha256(&tail)
-        )
-        .expect("writing a string succeeds");
+        lines[0].push_str(&source_envelope(source, &tail));
     }
     let translation = SelfTranslation {
         source_language: from,
@@ -550,6 +587,53 @@ fn translate_module(
         items: recorded,
     };
     Ok((translation, signatures))
+}
+
+fn source_envelope(source: &str, tail: &str) -> String {
+    let original = serde_json::to_string(source)
+        .expect("source text serializes")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029");
+    format!(" envelope-sha256={} original={original}", sha256(tail))
+}
+
+// The whole checker owns JSDoc types and ordered top-level effects.
+fn translate_relative_array_program(
+    source: &str,
+    items: &[Item<'_>],
+    utf16_strings: bool,
+) -> Option<String> {
+    if !items.iter().any(|item| item.term == "expression_statement")
+        || items.iter().any(|item| {
+            matches!(item.term.as_str(), "import_statement" | "export_statement") || is_marker(item)
+        })
+    {
+        return None;
+    }
+    let tokens = tokenize(source, Language::JavaScript).ok()?.tokens;
+    let has_relative_call = tokens.windows(3).any(|window| {
+        let [receiver_operator, member, call_operator] = window else {
+            return false;
+        };
+        receiver_operator.kind == TokenKind::Punct
+            && member.kind == TokenKind::Identifier
+            && call_operator.kind == TokenKind::Punct
+            && accept_self_translation_relative_array_call(
+                &receiver_operator.value,
+                &member.value,
+                &call_operator.value,
+            )
+    });
+    if !has_relative_call {
+        return None;
+    }
+    let program = check_program(&parse_javascript(source).ok()?).ok()?;
+    program.main.as_ref()?;
+    Some(
+        emit_rust_with_representation(&program, utf16_strings)
+            .ok()?
+            .text,
+    )
 }
 
 // The layout between two emitted blocks: its line breaks, at least one.
