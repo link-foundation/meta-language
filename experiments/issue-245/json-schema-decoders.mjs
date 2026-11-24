@@ -10,6 +10,7 @@ const fixtures = [
   'json-schema-exclusive-member-types.lino',
   'json-schema-exclusive-member-patterns.lino',
   'json-schema-exclusive-member-bounds.lino',
+  'json-schema-exclusive-mixed-members.lino',
   'json-schema-exclusive-object-property.lino',
   'json-schema-exclusive-object-siblings.lino',
   'json-schema-exclusive-object-fields.lino',

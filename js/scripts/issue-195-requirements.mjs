@@ -799,6 +799,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MIXED-MEMBERS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive collection alternatives with both numeric bounds and regular string constraints on the same members',
+      expectedBehavior: 'Within the shared construction budgets, combine number and string productions that have the same branch membership. Include unrestricted types according to their declarations. Apply sibling and local reference constraints to each partition. Admit a collection only when one branch accepts all its members, presence and length. Locate the decimal decoder restriction and validate equivalent exponent spellings. Emit no document for alternatives with equivalent mixed member languages and collection boundaries.',
+      fixture: 'parity/fixtures/json-schema-exclusive-mixed-members.lino',
+      selector: 'overlapping decimal intervals and regular patterns, distinct integer and number memberships, supported date format, escaped spellings, independent Boolean and null domains, sibling assertions, local references, repeated items, equivalent exponents and equivalent alternatives',
+      assertions: ['decoderCombinesExclusiveCollectionScalarMembership', 'validationChecksMixedMemberExponentSpellings', 'equivalentMixedMemberLanguagesHaveNoGeneratableDocument'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/grammar-importers/json-schema-numeric-ranges.js', 'js/src/grammar-importers/json-schema-string-intersection.js', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import/exclusive_alternatives.rs', 'rust/src/grammar/json_document/import/numeric_alternatives.rs', 'rust/src/grammar/json_document/numeric_ranges.rs', 'rust/src/grammar/json_document/string_intersection.rs', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',

@@ -18,6 +18,7 @@ const exclusiveArrayItemsFixture = 'parity/fixtures/json-schema-exclusive-array-
 const exclusiveMemberTypesFixture = 'parity/fixtures/json-schema-exclusive-member-types.lino';
 const exclusiveMemberPatternsFixture = 'parity/fixtures/json-schema-exclusive-member-patterns.lino';
 const exclusiveMemberBoundsFixture = 'parity/fixtures/json-schema-exclusive-member-bounds.lino';
+const exclusiveMixedMembersFixture = 'parity/fixtures/json-schema-exclusive-mixed-members.lino';
 const exclusiveObjectPropertyFixture = 'parity/fixtures/json-schema-exclusive-object-property.lino';
 const exclusiveObjectSiblingsFixture = 'parity/fixtures/json-schema-exclusive-object-siblings.lino';
 const exclusiveObjectFieldsFixture = 'parity/fixtures/json-schema-exclusive-object-fields.lino';
@@ -368,6 +369,16 @@ test('exclusive collection alternatives count matching branches across member bo
     requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MEMBER-BOUNDS', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-exclusive-member-bounds', fixtureFile: exclusiveMemberBoundsFixture,
     assertions: ['decoderCountsExclusiveCollectionMemberBounds', 'validationChecksAdditionalNumericSpellings', 'equivalentMemberBoundsHaveNoGeneratableDocument'],
+    testName: context.name,
+  });
+});
+
+test('exclusive collection alternatives combine numeric and regular string member constraints', context => {
+  checkExclusiveAlternatives(exclusiveMixedMembersFixture);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-MIXED-MEMBERS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-mixed-members', fixtureFile: exclusiveMixedMembersFixture,
+    assertions: ['decoderCombinesExclusiveCollectionScalarMembership', 'validationChecksMixedMemberExponentSpellings', 'equivalentMixedMemberLanguagesHaveNoGeneratableDocument'],
     testName: context.name,
   });
 });

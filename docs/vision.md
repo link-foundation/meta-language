@@ -4899,6 +4899,11 @@ productions for their branch sets. Decimal spellings with a zero-only
 fraction count as integral. The collection work bound covers membership
 checks and construction. A located diagnostic records the additional exponent
 spellings supported by validation.
+When alternatives constrain both numbers and strings at the same item or
+property, the decoder combines both partitions by matching branch set.
+Unrestricted instance types retain their own memberships. Consecutive array
+items can narrow the same branch set across different types. Both partitions
+apply member constraints from reference layers and the parent collection.
 Closing the array requires exactly one surviving branch that accepts its length.
 Beyond the final prefix and length boundaries, the current item schema and
 the effect of length stay the same. The decoder can represent the remaining

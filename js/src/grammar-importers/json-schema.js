@@ -1220,8 +1220,10 @@ export function importJsonSchema(schema) {
     if (!guardLayers) return undefined;
     const guard = guardLayers.reduce((types, layer) => possibleTypeMembership(layer, types), allJsonTypes);
     if (!(guard & numberType)) return undefined;
+    const string = jsonTypes.get('string');
     const domains = [];
     const branches = [];
+    let constrainedStrings = false;
     let work = guardLayers.length + jsonTypes.size * (schemas.length + 1);
     for (const [index, schema] of schemas.entries()) {
       const layers = referenceLayers(schema);
@@ -1229,12 +1231,15 @@ export function importJsonSchema(schema) {
       work += layers.length;
       if (work > budget.remaining) return undefined;
       const domain = layers.reduce((types, layer) => possibleTypeMembership(layer, types), guard);
-      const otherTypes = domain & ~numberType;
+      const otherTypes = domain & ~(numberType | string);
       const assertions = [...guardLayers, ...layers];
       if (otherTypes && assertions.some(layer => Object.keys(layer).some(key => (
         activeConjunctionKeyword(key, 0, undefined, otherTypes)
       )))) return undefined;
-      domains.push(otherTypes);
+      constrainedStrings ||= Boolean(domain & string) && assertions.some(layer => Object.keys(layer).some(key => (
+        activeConjunctionKeyword(key, 0, undefined, string)
+      )));
+      domains.push(domain & ~numberType);
       const numericTypes = domain & numberType;
       if (!numericTypes) continue;
       const constraints = combineNumericConstraints(assertions, numericTypes);
@@ -1245,7 +1250,10 @@ export function importJsonSchema(schema) {
     budget.remaining -= work;
     const numeric = partitionNumericRanges(branches, budget);
     if (!numeric) return undefined;
-    const variants = collectionTypeVariantGroups(domains, guard & ~numberType);
+    const variants = constrainedStrings
+      ? exclusiveCollectionPatternVariantGroups(schemas, sibling, budget, allJsonTypes & ~numberType)
+      : collectionTypeVariantGroups(domains, guard & ~numberType);
+    if (!variants) return undefined;
     for (const { matches, expression } of numeric) addCollectionVariant(variants, matches, expression);
     if (!collectionNumericDiagnostics.has(pointer) && numeric.some(({ expression }) => expression.kind !== 'ref')) {
       collectionNumericDiagnostics.add(pointer);
@@ -1253,11 +1261,11 @@ export function importJsonSchema(schema) {
     }
     return collectionVariantSchemas(variants);
   }
-  function exclusiveCollectionPatternVariants(schemas, sibling, budget) {
+  function exclusiveCollectionPatternVariantGroups(schemas, sibling, budget, allowedTypes = allJsonTypes) {
     const string = jsonTypes.get('string');
     const guardLayers = referenceLayers(sibling);
     if (!guardLayers) return undefined;
-    const guard = guardLayers.reduce((types, layer) => possibleTypeMembership(layer, types), allJsonTypes);
+    const guard = guardLayers.reduce((types, layer) => possibleTypeMembership(layer, types), allowedTypes);
     if (!(guard & string)) return undefined;
     const guardConstraints = regularStringChain(guardLayers);
     if (guardConstraints === undefined) return undefined;
@@ -1285,7 +1293,7 @@ export function importJsonSchema(schema) {
     }
     budget.remaining -= work;
     const variants = collectionTypeVariantGroups(domains, guard & ~string);
-    if (!branches.length) return collectionVariantSchemas(variants);
+    if (!branches.length) return variants;
     const product = partitionJsonStringExpressions(branches.map(branch => branch.conjunction),
       name => builder.rules.get(name)?.expression, `json_string_membership_${next++}`, collectionStringWork);
     if (!product) return undefined;
@@ -1295,7 +1303,7 @@ export function importJsonSchema(schema) {
       for (const [name, body] of rules) builder.rule(name, body);
       addCollectionVariant(variants, matches.map(index => branches[index].index), expression);
     }
-    return collectionVariantSchemas(variants);
+    return variants;
   }
   function selectExclusiveCollectionValueVariants(schemas, sibling, pointer, budget, allowSharedSchema = false) {
     if (sibling === false) return [];
@@ -1312,8 +1320,10 @@ export function importJsonSchema(schema) {
     }
     const typed = exclusiveCollectionTypeVariants(schemas, sibling, budget);
     if (typed) return typed;
-    return finiteCollectionValueVariants(schemas, allowed, sibling, budget, allowSharedSchema)
-      ?? exclusiveCollectionPatternVariants(schemas, sibling, budget);
+    const finite = finiteCollectionValueVariants(schemas, allowed, sibling, budget, allowSharedSchema);
+    if (finite) return finite;
+    const patterns = exclusiveCollectionPatternVariantGroups(schemas, sibling, budget);
+    return patterns && collectionVariantSchemas(patterns);
   }
   function finiteCollectionValueVariants(schemas, allowed, sibling, budget, allowSharedSchema) {
     const checks = schemas.length + Number(sibling !== true);

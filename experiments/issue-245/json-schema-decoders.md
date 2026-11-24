@@ -133,6 +133,14 @@ sibling and local reference bounds, and three-way overlaps. Separate
 validation cases check exponent spellings and the corresponding diagnostic
 locates the decoder restriction on the collection member.
 
+Run `node experiments/issue-245/json-schema-exclusive-mixed-members.mjs`
+to check number bounds and regular string assertions at the same collection
+position. Before the change, `[]`, `[5]` and `["az"]` each decoded through
+two branches. The 49 fixture cases check those overlaps, arrays whose items
+switch types, a required object property with sibling and reference constraints,
+the date format, integer and number boundaries, Boolean and null branches,
+escaped strings, exponent validation and an empty exclusive language.
+
 Run `node experiments/issue-245/json-schema-exclusive-object-property.mjs`
 to check overlapping property enumerations in objects with an unrestricted
 text field. The previous grammar accepted the shared choice. It now rejects

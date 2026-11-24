@@ -742,15 +742,16 @@ impl<'schema> Importer<'schema> {
             .collect()
     }
 
-    fn exclusive_collection_pattern_variants(
+    fn exclusive_collection_pattern_variant_groups(
         &mut self,
         schemas: &[&'schema Value],
         sibling: &'schema Value,
         remaining_work: &mut usize,
-    ) -> Option<Vec<CollectionValueVariant<'schema>>> {
+        allowed_types: u8,
+    ) -> Option<CollectionVariantGroups> {
         let string = type_membership("string");
         let guard_layers = reference_layers(self.root, sibling)?;
-        let guard = guard_layers.iter().fold(ALL_JSON_TYPES, |types, layer| {
+        let guard = guard_layers.iter().fold(allowed_types, |types, layer| {
             possible_type_membership(layer, types)
         });
         if guard & string == 0 {
@@ -797,7 +798,7 @@ impl<'schema> Importer<'schema> {
         *remaining_work -= work;
         let mut groups = Self::collection_type_variant_groups(&domains, guard & !string);
         if branches.is_empty() {
-            return Some(Self::collection_variant_schemas(groups));
+            return Some(groups);
         }
         let guard_constraints = guard_constraints?;
         let any_string = reference_expression("string");
@@ -831,7 +832,7 @@ impl<'schema> Importer<'schema> {
                 .collect();
             Self::add_collection_variant(&mut groups, membership, variant.expression);
         }
-        Some(Self::collection_variant_schemas(groups))
+        Some(groups)
     }
 
     fn select_exclusive_collection_value_variants(
@@ -879,7 +880,15 @@ impl<'schema> Importer<'schema> {
             return Some(typed);
         }
         self.finite_collection_value_variants(schemas, &allowed, sibling, work, allow_shared_schema)
-            .or_else(|| self.exclusive_collection_pattern_variants(schemas, sibling, work))
+            .or_else(|| {
+                self.exclusive_collection_pattern_variant_groups(
+                    schemas,
+                    sibling,
+                    work,
+                    ALL_JSON_TYPES,
+                )
+                .map(Self::collection_variant_schemas)
+            })
     }
 
     fn finite_collection_value_variants(

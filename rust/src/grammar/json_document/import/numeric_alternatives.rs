@@ -13,8 +13,10 @@ impl<'schema> Importer<'schema> {
         if guard & NUMBER_TYPE == 0 {
             return None;
         }
+        let string = type_membership("string");
         let mut domains = Vec::new();
         let mut branches = Vec::new();
+        let mut constrained_strings = false;
         let mut work = guard_layers.len().checked_add(
             JSON_TYPES
                 .len()
@@ -29,9 +31,10 @@ impl<'schema> Importer<'schema> {
             let domain = layers
                 .iter()
                 .fold(guard, |types, layer| possible_type_membership(layer, types));
-            let other_types = domain & !NUMBER_TYPE;
+            let other_types = domain & !(NUMBER_TYPE | string);
+            let assertions: Vec<_> = guard_layers.iter().copied().chain(layers).collect();
             if other_types != 0
-                && guard_layers.iter().chain(&layers).any(|layer| {
+                && assertions.iter().any(|layer| {
                     layer.as_object().is_some_and(|fields| {
                         fields
                             .keys()
@@ -41,10 +44,17 @@ impl<'schema> Importer<'schema> {
             {
                 return None;
             }
-            domains.push(other_types);
+            constrained_strings |= (domain & string) != 0
+                && assertions.iter().any(|layer| {
+                    layer.as_object().is_some_and(|fields| {
+                        fields
+                            .keys()
+                            .any(|key| active_conjunction_keyword(key, 0, None, string))
+                    })
+                });
+            domains.push(domain & !NUMBER_TYPE);
             let numeric_types = domain & NUMBER_TYPE;
             if numeric_types != 0 {
-                let assertions: Vec<_> = guard_layers.iter().copied().chain(layers).collect();
                 let (name, limits) = combine_numeric_constraints(&assertions, numeric_types, None)?;
                 branches.push((index, name, limits));
             }
@@ -56,7 +66,16 @@ impl<'schema> Importer<'schema> {
         }
         *remaining_work -= work;
         let numeric = partition_numeric_ranges(&branches, remaining_work)?;
-        let mut groups = Self::collection_type_variant_groups(&domains, guard & !NUMBER_TYPE);
+        let mut groups = if constrained_strings {
+            self.exclusive_collection_pattern_variant_groups(
+                schemas,
+                sibling,
+                remaining_work,
+                ALL_JSON_TYPES & !NUMBER_TYPE,
+            )?
+        } else {
+            Self::collection_type_variant_groups(&domains, guard & !NUMBER_TYPE)
+        };
         if numeric
             .iter()
             .any(|(_, expression)| !matches!(expression, Expression::NonTerminal(_)))
