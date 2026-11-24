@@ -84,7 +84,7 @@ test('five original programs and actual emitted canonical copies keep their comp
  }
 });
 
-test('actual automatic emitter definitions replay every boundary decision while native const syntax retains its parser gap',()=>{
+test('actual automatic and styled definitions replay every boundary decision',()=>{
  const source=readFileSync(new URL('../rust/src/translation/rust/owned_local_state_rules.rs',import.meta.url),'utf8');
  const emitted=emitRust(checkProgram(parseJavaScript(rustOwnedLocalStatePortableRules())));
  for(const [name,alias,rows,args]of[
@@ -96,11 +96,8 @@ test('actual automatic emitter definitions replay every boundary decision while 
   const definition=emitted.definitions.find(value=>value.startsWith('pub fn '+alias+'('));assert.ok(definition,alias+' actual complete definition');
   const program=checkProgram(parseRust(definition+'\nfn main(){}')),runtime={};vm.runInNewContext(emitJavaScript(program).text,runtime,{timeout:1000});
   for(const row of rows)assert.equal(runtime[alias](...args.map(key=>row[key])),row.expected,name+' '+JSON.stringify(row));
-  if(match[0].startsWith('pub const fn'))assert.throws(()=>parseRust(match[0]+'\nfn main(){}'),/expected : in const/u);
-  else{
-   const styled={};vm.runInNewContext(emitJavaScript(checkProgram(parseRust(match[0]+'\nfn main(){}'))).text,styled,{timeout:1000});
-   for(const row of rows)assert.equal(styled[alias](...args.map(key=>row[key])),row.expected);
-  }
+  const styled={};vm.runInNewContext(emitJavaScript(checkProgram(parseRust(match[0]+'\nfn main(){}'))).text,styled,{timeout:1000});
+  for(const row of rows)assert.equal(styled[alias](...args.map(key=>row[key])),row.expected);
  }
 });
 

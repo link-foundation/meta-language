@@ -336,7 +336,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit, depthLimit =
     return value;
   }
   let sourceClosure;
-  const archiveFields = (fields.get(idOf(root)) ?? []).filter(relation => relation.label === ordinarySourceArchiveField);
+  const archiveFields = (fields.get(idOf(rootLink.id())) ?? []).filter(relation => relation.label === ordinarySourceArchiveField);
   if (archiveFields.length) {
     if (archiveFields.length !== 1 || !recordShapes || network.len() > ordinarySourceArchiveNodeLimit) {
       throw new TypeError('the ordinary source archive needs one bounded source module directory');
