@@ -88,6 +88,12 @@ impl RustEmitter<'_> {
                     ),
                 )
             }
+            Node::CollectionSize { object } => Ok(
+                crate::translation::array_value_rules::render_collection_size(
+                    "Rust",
+                    &self.receiver(object)?,
+                ),
+            ),
             Node::CollectionItems { object, op } => {
                 let map = matches!(object.ty, super::Type::Map { .. });
                 let value = if op == "entries" && map || !map && op != "entries" {

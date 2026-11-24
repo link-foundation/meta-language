@@ -531,7 +531,7 @@ pub(super) fn decode_with_binding_identities(
         mapping,
     )?;
     let mut traversal = scopes::Traversal::new(limits.node_limit);
-    let ownership = decoder.ownership(&declarations, &mut traversal.remaining)?;
+    let ownership = decoder.ownership(body, &declarations, &mut traversal.remaining)?;
     decoder.validate_references(&ownership)?;
     for entry in declarations.values() {
         let mut environment = BTreeMap::new();

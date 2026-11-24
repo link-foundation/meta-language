@@ -195,7 +195,12 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     std::iter::once(Value::String("crate".to_owned()))
                         .chain(actual.into_iter().map(Value::String))
                         .collect()
-                } else if owns_type_namespace(program) {
+                } else if owns_type_namespace(program)
+                    && child
+                        .as_str()
+                        .and_then(|name| program.external(name))
+                        .is_none()
+                {
                     project_declaration_path(child.as_str().unwrap_or_default(), program)?
                         .into_iter()
                         .map(Value::String)

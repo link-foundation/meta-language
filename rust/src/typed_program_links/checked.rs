@@ -253,11 +253,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
     if program.schema_version != 1 {
         return Err(error("the linked value is not a checked typed program"));
     }
-    if !program.imports.is_empty()
-        || !program.externals.is_empty()
-        || program.output_threaded
-        || program.aborts_threaded
-    {
+    if !program.imports.is_empty() || program.output_threaded || program.aborts_threaded {
         return Err(error(
             "the Rust typed links adapter does not yet recheck imported or threaded programs",
         ));
@@ -362,7 +358,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         items,
         main,
         imports: Vec::new(),
-        externals: Vec::new(),
+        externals: program.externals.clone(),
         source_pure_unit_calls: program.source_pure_unit_calls.clone(),
         source_runtime_shell: program.source_runtime_shell.clone(),
     };

@@ -18,6 +18,7 @@ pub(super) struct Ownership {
     declarations: BTreeMap<String, LinkId>,
     datatypes: BTreeMap<String, LinkId>,
     declaration_ids: BTreeSet<LinkId>,
+    external_ids: BTreeSet<LinkId>,
     datatype_ids: BTreeSet<LinkId>,
     constructors: HashMap<LinkId, LinkId>,
     models: Vec<Decl>,
@@ -78,6 +79,7 @@ impl Decoder<'_> {
     }
     pub(super) fn ownership(
         &self,
+        body: LinkId,
         declarations: &BTreeMap<String, LinkId>,
         remaining: &mut usize,
     ) -> Result<Ownership> {
@@ -85,12 +87,28 @@ impl Decoder<'_> {
             declarations: declarations.clone(),
             datatypes: BTreeMap::new(),
             declaration_ids: declarations.values().copied().collect(),
+            external_ids: BTreeSet::new(),
             datatype_ids: BTreeSet::new(),
             constructors: HashMap::new(),
             models: Vec::new(),
             model_nodes: 0,
             model_bytes: 0,
         };
+        if let Some(externals) = self.field(body, "externals") {
+            for external in self.array(externals)? {
+                visit(remaining)?;
+                let name = self.name(*external)?;
+                if name.is_empty()
+                    || !matches!(self.kind(*external), "fn" | "const")
+                    || ownership.declarations.insert(name, *external).is_some()
+                {
+                    return Err(error(
+                        "a linked external has an invalid or duplicate declaration",
+                    ));
+                }
+                ownership.external_ids.insert(*external);
+            }
+        }
         let mut bytes = 64 * 1024 * 1024;
         for (name, id) in declarations {
             if self.kind(*id) != "data" {
@@ -214,7 +232,12 @@ impl Decoder<'_> {
                 }
                 let role = read_program_reference_role(label);
                 if role == "declaration" {
-                    if self.kind(*target) != "fn" || !ownership.declaration_ids.contains(target) {
+                    let target_kind = self.kind(*target);
+                    let local_function =
+                        target_kind == "fn" && ownership.declaration_ids.contains(target);
+                    let external = ownership.external_ids.contains(target)
+                        && (target_kind == "fn" || kind == "call" && target_kind == "const");
+                    if !local_function && !external {
                         return Err(error(
                             "a linked declaration reference is unresolved or has an invalid target",
                         ));

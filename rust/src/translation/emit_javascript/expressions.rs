@@ -300,6 +300,7 @@ impl JavaScriptEmitter<'_> {
             | Node::Length { .. }
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
+            | Node::CollectionSize { .. }
             | Node::CollectionItems { .. } => self.array_expr(e),
             Node::Math { .. } => self.math(e),
         }

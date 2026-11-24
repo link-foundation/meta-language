@@ -12,13 +12,47 @@ import { readPortableSourceLintStyles } from './portable-source-lint-style.mjs';
 
 const input = new URL('../src/translation/array-value-rules.js', import.meta.url);
 const source = readFileSync(input, 'utf8');
+const sourceDecision = (file, pattern) => {
+  const text = readFileSync(new URL(`../src/translation/${file}`, import.meta.url), 'utf8');
+  const matches = [...text.matchAll(pattern)];
+  assert.equal(matches.length, 1, `one collection size decision in ${file}`);
+  return matches[0];
+};
+const [fieldDecision, field, firstKind, secondKind] = sourceDecision('check.js',
+  /^ +if \(node\.field === '([^']+)' && \['([^']+)', '([^']+)'\]\.includes\(value\.type\.kind\)\) return \{ k: 'collectionSize', object: value, type: FLOAT \};$/gmu);
+const collectionSizeTargets = ['JavaScript', 'Rust', 'Lean', 'Rocq'].map(target => {
+  const file = `emit-${target.toLowerCase()}.js`;
+  const [decision, before, after] = sourceDecision(file,
+    /^ +case 'collectionSize':\n(?: +this\.floats\(\);\n)? +return `([^`\n]*)\$\{this\.(?:expr|receiver)\(e\.object(?:, depth)?\)\}([^`\n]*)`;$/gmu);
+  return { target, file, decision, before, after };
+});
+const collectionSizeSource = `
+/** @param {string} field @param {string} kind @returns {boolean} */
+export function acceptCollectionSizeField(field, kind) {
+  return field === ${JSON.stringify(field)} && (kind === ${JSON.stringify(firstKind)} || kind === ${JSON.stringify(secondKind)});
+}
+
+/** @param {string} target @param {string} value @returns {string} */
+export function renderCollectionSize(target, value) {
+${collectionSizeTargets.map(({ target, before, after }, index) => {
+  const expression = `${JSON.stringify(before)} + value + ${JSON.stringify(after)}`;
+  return index === collectionSizeTargets.length - 1
+    ? `  return ${expression};`
+    : `  if (target === ${JSON.stringify(target)}) return ${expression};`;
+}).join('\n')}
+}
+`;
 const policy = {
   schemaVersion: 1,
   source: 'js/src/translation/array-value-rules.js',
   sourceSha256: createHash('sha256').update(source).digest('hex'),
-  decisions: ['selectOptionalArrayRead', 'selectOptionalArrayIndexNumber', 'readArrayIterableForm', 'readReferenceMutationDiagnostic', 'renderOptionalArrayRead', 'renderStringPointIteration', 'renderCollectionIteration'],
+  decisions: ['selectOptionalArrayRead', 'selectOptionalArrayIndexNumber', 'readArrayIterableForm', 'readReferenceMutationDiagnostic', 'renderOptionalArrayRead', 'renderStringPointIteration', 'renderCollectionIteration', 'acceptCollectionSizeField', 'renderCollectionSize'],
   observableAbsence: 'Unproved JavaScript array reads produce an undefined optional value; actual compiler-generated iterable reads retain their bounds proof.',
   targets: ['JavaScript', 'Rust', 'Lean', 'Rocq'],
+  collectionSizeDecisions: [
+    { source: 'js/src/translation/check.js', decision: fieldDecision },
+    ...collectionSizeTargets.map(({ file, decision }) => ({ source: `js/src/translation/${file}`, decision })),
+  ],
 };
 const policyFile = new URL('../src/translation/data/array-values.lino', import.meta.url);
 const policyCopy = new URL('../../rust/src/data/array-values.lino', import.meta.url);
@@ -34,7 +68,7 @@ if (!process.argv.includes('--javascript-only')) {
   const { parseJavaScript } = await import('../src/translation/javascript.js');
   const { checkProgram } = await import('../src/translation/check.js');
   const { emitRust } = await import('../src/translation/emit-rust.js');
-  const translated = emitRust(checkProgram(parseJavaScript(source)), { arrayConsumption: true });
+  const translated = emitRust(checkProgram(parseJavaScript(source + collectionSizeSource)), { arrayConsumption: true });
   assert.equal(translated.definitions.length, policy.decisions.length, 'all complete array definitions are emitted');
   const raw = translated.definitions.join('\n\n');
   const actions = [];

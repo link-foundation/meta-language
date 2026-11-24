@@ -264,7 +264,9 @@ types, bindings or string operations. Native execution remains a CI obligation.
 Owned function calls project through the actual declaration's rooted path,
 including root functions, while rechecking its name, qualified identity and
 module path. Caller-local bindings cannot capture a callee's default initializer
-through a shortened projected name.
+through a shortened projected name. External calls and constant reads retain
+their owned signature records through both codecs and recheck through the same
+surface binding resolver used for source programs.
 These source-free semantic graphs emit canonical target syntax; byte-identical
 unchanged-source preservation remains the separate lossless CST contract.
 Integral metadata uses the value of its linked Number. The fixed type bit-width
@@ -327,7 +329,9 @@ replacement, NaN equality and positive-zero key normalization. The two projectio
 plans append to the existing schema without changing its model, prior plans or
 historical source receipts. Complete JavaScript source and text and binary
 program replays drive automatic native generation; native behavior remains a CI
-verification obligation.
+verification obligation. Map and Set `size` preserve the checked receiver and
+Number result through both program codecs. Native checking and target rendering
+use rules generated from the corresponding JavaScript decisions.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative
