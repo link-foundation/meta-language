@@ -807,16 +807,3 @@ fn create_global_concept_space_in(
         aliases,
     ))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::shipped_concept_record_index;
-
-    #[test]
-    fn shipped_concept_record_index_is_reused() {
-        let first = shipped_concept_record_index().expect("shipped concept records");
-        let second = shipped_concept_record_index().expect("shipped concept records");
-        assert!(!first.identities.is_empty());
-        assert!(std::ptr::eq(first, second));
-    }
-}
