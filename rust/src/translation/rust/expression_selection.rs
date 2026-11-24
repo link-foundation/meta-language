@@ -817,6 +817,12 @@ impl RustParser {
             return Ok(result);
         }
         if token.kind == TokenKind::Macro {
+            if crate::translation::rust_unit_value_rules::read_rust_function_macro_disposition(
+                &token.value,
+            ) == "print"
+            {
+                return self.function_print_value(path);
+            }
             self.cursor.advance();
             return self.expression_macro(&token, path);
         }

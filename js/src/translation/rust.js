@@ -1898,6 +1898,7 @@ class RustParser {
       return this.origins.mark({ k: 'str', value: token.value, span: span(token, token) }, { type: STRING, textSourceModel: 'string slice', sourceOwner: { kind: 'primitive', path: ['str'], arguments: [] }, path: [...path], wrappers: ['reference'] });
     }
     if (token.kind === 'macro') {
+      if (readRustFunctionMacroDisposition(token.value) === 'print') return this.functionPrintValue(path);
       c.next();
       return this.expressionMacro(token, path);
     }
