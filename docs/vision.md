@@ -1602,6 +1602,11 @@ ISO 4217 codes, and validates calendar dates. Both runtimes derive numeric and
 calendar fields from one pinned Unicode 17.0 decimal digit table. The shared
 grammar recognizes Arabic decimal and grouping separators, and value actions
 normalize digit spellings after search preserves their original source spans.
+One comma or period between a nonzero one- to three-digit group and exactly
+three following digits allows both a grouping and a decimal reading. The locale's
+preferred reading stays first. Additional grouping, an Arabic decimal separator,
+or two different marks can determine a single reading. Amounts, ranges and
+durations preserve distinct readings from the captured numbers.
 Shared Links data records CLDR 49 root currency spellings with a Unicode
 17.0 currency symbol and their active ISO 4217 codes. The rules also keep
 established sign aliases. A money match emits one link per compatible code,

@@ -9,10 +9,11 @@ const unicodeFixtureFile = 'parity/fixtures/natural-language-unicode-decimal-val
 const writtenMultiplierFixtureFile = 'parity/fixtures/natural-language-written-multipliers.lino';
 const namedCalendarDateFixtureFile = 'parity/fixtures/natural-language-named-calendar-dates.lino';
 const currencyAmbiguityFixtureFile = 'parity/fixtures/natural-language-currency-ambiguity.lino';
+const separatorAmbiguityFixtureFile = 'parity/fixtures/natural-language-separator-ambiguity.lino';
 
 function checkValueFixtures(file) {
   const { fixtures } = readProjectData(new URL(`../../${file}`, import.meta.url));
-  for (const { source, language, expected = [], absent = [], exactMoney = [] } of fixtures) {
+  for (const { source, language, expected = [], absent = [], exactMoney = [], exactValues = [] } of fixtures) {
     const network = LinkNetwork.parse(source, language);
     const bytes = Buffer.from(source);
     const entries = network.links().map(link => link.metadata())
@@ -35,6 +36,16 @@ function checkValueFixtures(file) {
         span.byteRange.start === start && span.byteRange.end === end && term.startsWith('value:money '));
       assert.deepEqual(interpretations.map(({ term }) => JSON.parse(term.slice('value:money '.length))),
         currencies.map(currency => ({ ...fields, currency })), spelling);
+    }
+    for (const [spelling, kind, expectedReadings] of exactValues) {
+      const start = bytes.indexOf(spelling);
+      assert.ok(start >= 0, spelling);
+      const end = start + Buffer.byteLength(spelling);
+      const prefix = `value:${kind} `;
+      const readings = entries.filter(({ span, term }) =>
+        span.byteRange.start === start && span.byteRange.end === end && term.startsWith(prefix))
+        .map(({ term }) => term.slice(prefix.length));
+      assert.deepEqual(kind === 'number' ? readings : readings.map(JSON.parse), expectedReadings, spelling);
     }
   }
 }
@@ -85,6 +96,16 @@ test('currency symbols retain every compatible currency at their original spans'
     requirementId: 'I195-I242-CURRENCY-SYMBOL-ALTERNATIVES', suffix: 'behavior',
     fixtureId: 'i195-i242-currency-symbol-alternatives', fixtureFile: currencyAmbiguityFixtureFile,
     assertions: ['currencySymbolsKeepCompatibleCodes', 'currencyMarkersIntersectAtOriginalSpans', 'qualifiedCurrencySymbolsKeepTheirFullSpans'],
+    testName: context.name,
+  });
+});
+
+test('ambiguous number separators retain exact alternatives in compound values', (context) => {
+  checkValueFixtures(separatorAmbiguityFixtureFile);
+  recordIssue195Observations({
+    requirementId: 'I195-I242-NUMERIC-SEPARATOR-ALTERNATIVES', suffix: 'behavior',
+    fixtureId: 'i195-i242-numeric-separator-alternatives', fixtureFile: separatorAmbiguityFixtureFile,
+    assertions: ['ambiguousSeparatorsPreserveLocaleOrder', 'compoundValuesKeepDistinctReadings', 'unambiguousSeparatorsKeepOneReading', 'separatorReadingsKeepOriginalSpans'],
     testName: context.name,
   });
 });

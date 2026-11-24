@@ -214,37 +214,44 @@ fn normalize_decimal_digits(text: &str) -> String {
         .collect()
 }
 
-fn normalize_numeral(text: &str, locale: &str) -> String {
-    let signed = normalize_decimal_digits(text)
-        .replace([' ', '\u{a0}', '\u{202f}', '٬'], "")
-        .replace('−', "-");
+fn normalize_numerals(text: &str, locale: &str) -> Vec<String> {
+    let normalized = normalize_decimal_digits(text).replace('−', "-");
+    let signed = normalized.replace([' ', '\u{a0}', '\u{202f}', '٬'], "");
     if signed.contains('٫') {
-        return signed.replace('٫', ".");
+        return vec![signed.replace('٫', ".")];
     }
     let comma = signed.rfind(',');
     let period = signed.rfind('.');
     if let (Some(comma), Some(period)) = (comma, period) {
-        return if comma > period {
+        return vec![if comma > period {
             signed.replace('.', "").replace(',', ".")
         } else {
             signed.replace(',', "")
-        };
+        }];
     }
     let delimiter = if comma.is_some() { ',' } else { '.' };
     let sections: Vec<_> = signed.split(delimiter).collect();
     if sections.len() == 1 {
-        return signed;
+        return vec![signed];
     }
+    if sections.len() > 2 {
+        return vec![sections.concat()];
+    }
+    let decimal = sections.join(".");
     let unsigned = sections[0].trim_start_matches(['+', '-']);
-    if sections.len() > 2
-        || (preferred_grouping_delimiter(locale, delimiter)
-            && matches!(unsigned.as_bytes(), [b'1'..=b'9', ..])
-            && unsigned.len() <= 3
-            && sections[1].len() == 3)
+    if normalized != signed
+        || sections[1].len() != 3
+        || unsigned.len() > 3
+        || !matches!(unsigned.as_bytes(), [b'1'..=b'9', ..])
     {
-        return sections.concat();
+        return vec![decimal];
     }
-    sections.join(".")
+    let grouped = sections.concat();
+    if preferred_grouping_delimiter(locale, delimiter) {
+        vec![grouped, decimal]
+    } else {
+        vec![decimal, grouped]
+    }
 }
 
 fn within<'capture>(
@@ -273,17 +280,18 @@ fn read_scale(
         })
 }
 
-fn read_amount(
+fn read_amounts(
     matched: &GrammarSearchMatch,
     range: &GrammarSearchSpan,
     profile: &ValueProfile,
-) -> Option<ExactDecimal> {
+) -> Option<Vec<ExactDecimal>> {
     if let Some(numeral) = within(matched, range, "numeral").next() {
         let scale =
             read_scale(matched, range, profile).map_or(Some(1), |value| value.parse().ok())?;
-        return Some(
-            ExactDecimal::parse(&normalize_numeral(&numeral.text, profile.locale))?.scale(scale),
-        );
+        return normalize_numerals(&numeral.text, profile.locale)
+            .iter()
+            .map(|spelling| ExactDecimal::parse(spelling).map(|amount| amount.scale(scale)))
+            .collect();
     }
     let mut words = NUMBER_WORD_RULES
         .iter()
@@ -308,7 +316,7 @@ fn read_amount(
             chunk = Some(chunk.unwrap_or_default().add(ExactDecimal::parse(word)?));
         }
     }
-    Some(chunk.map_or(total, |chunk| total.add(chunk)))
+    Some(vec![chunk.map_or(total, |chunk| total.add(chunk))])
 }
 
 fn read_currency_codes(
@@ -387,14 +395,21 @@ fn read_date(
     Some(format!("{}-{month:02}", year?))
 }
 
-fn read_duration(matched: &GrammarSearchMatch, profile: &ValueProfile) -> Option<String> {
-    let mut months = ExactDecimal::default();
+fn read_durations(matched: &GrammarSearchMatch, profile: &ValueProfile) -> Option<Vec<String>> {
+    let mut readings = vec![ExactDecimal::default()];
     for (amount, unit) in matched.captures["duration_amount"]
         .iter()
         .zip(&matched.captures["duration_unit"])
     {
         let factor = profile.word("unit", &unit.text)?.parse().ok()?;
-        months = months.add(read_amount(matched, amount, profile)?.scale(factor));
+        let additions: Vec<_> = read_amounts(matched, amount, profile)?
+            .into_iter()
+            .map(|value| value.scale(factor))
+            .collect();
+        readings = readings
+            .into_iter()
+            .flat_map(|months| additions.iter().map(move |&addition| months.add(addition)))
+            .collect();
     }
     let comparison = matched.captures["duration_comparison"]
         .first()
@@ -410,14 +425,19 @@ fn read_duration(matched: &GrammarSearchMatch, profile: &ValueProfile) -> Option
         }
         Some(_) => "moreThanMonths",
     };
-    Some(format!(r#"value:duration {{"{property}":{months}}}"#))
+    Some(
+        readings
+            .into_iter()
+            .map(|months| format!(r#"value:duration {{"{property}":{months}}}"#))
+            .collect(),
+    )
 }
 
-fn read_range(
+fn read_ranges(
     matched: &GrammarSearchMatch,
     profile: &ValueProfile,
     money: bool,
-) -> Option<(ExactDecimal, ExactDecimal)> {
+) -> Option<Vec<(ExactDecimal, ExactDecimal)>> {
     let (first_kind, last_kind) = if money {
         ("first_money", "last_money")
     } else {
@@ -425,19 +445,31 @@ fn read_range(
     };
     let first = matched.captures[first_kind].first()?;
     let last = matched.captures[last_kind].first()?;
-    let mut left = read_amount(matched, first, profile)?;
-    let right = read_amount(matched, last, profile)?;
+    let mut first_amounts = read_amounts(matched, first, profile)?;
+    let last_amounts = read_amounts(matched, last, profile)?;
     if let Some(scale) = read_scale(matched, last, profile)
         && within(matched, first, "numeral").next().is_some()
         && read_scale(matched, first, profile).is_none()
     {
-        left = left.scale(scale.parse().ok()?);
+        let scale = scale.parse().ok()?;
+        for amount in &mut first_amounts {
+            *amount = amount.scale(scale);
+        }
     }
-    Some(if left.add(right.scale(-1)).coefficient <= 0 {
-        (left, right)
-    } else {
-        (right, left)
-    })
+    Some(
+        first_amounts
+            .into_iter()
+            .flat_map(|left| {
+                last_amounts.iter().map(move |&right| {
+                    if left.add(right.scale(-1)).coefficient <= 0 {
+                        (left, right)
+                    } else {
+                        (right, left)
+                    }
+                })
+            })
+            .collect(),
+    )
 }
 
 fn terms_for(
@@ -446,40 +478,50 @@ fn terms_for(
     profile: &ValueProfile,
 ) -> Option<Vec<String>> {
     let span = &matched.span;
-    let term = match rule {
-        "amount" => format!("value:number {}", read_amount(matched, span, profile)?),
-        "number_range" => {
-            let (minimum, maximum) = read_range(matched, profile, false)?;
-            format!(r#"value:number-range {{"min":{minimum},"max":{maximum}}}"#)
-        }
+    let terms = match rule {
+        "amount" => read_amounts(matched, span, profile)?
+            .into_iter()
+            .map(|amount| format!("value:number {amount}"))
+            .collect(),
+        "number_range" => read_ranges(matched, profile, false)?
+            .into_iter()
+            .map(|(minimum, maximum)| {
+                format!(r#"value:number-range {{"min":{minimum},"max":{maximum}}}"#)
+            })
+            .collect(),
         "money_range" => {
             let currencies = read_currency_codes(matched, profile)?;
-            let (minimum, maximum) = read_range(matched, profile, true)?;
-            return Some(currencies.into_iter().map(|currency| {
-                format!(r#"value:money {{"min":{minimum},"max":{maximum},"currency":"{currency}"}}"#)
-            }).collect());
+            read_ranges(matched, profile, true)?
+                .into_iter()
+                .flat_map(|(minimum, maximum)| {
+                    currencies.iter().map(move |currency| {
+                        format!(r#"value:money {{"min":{minimum},"max":{maximum},"currency":"{currency}"}}"#)
+                    })
+                })
+                .collect()
         }
         "money_amount" => {
             let currencies = read_currency_codes(matched, profile)?;
-            let amount = read_amount(matched, span, profile)?;
-            return Some(
-                currencies
-                    .into_iter()
-                    .map(|currency| {
+            read_amounts(matched, span, profile)?
+                .into_iter()
+                .flat_map(|amount| {
+                    currencies.iter().map(move |currency| {
                         format!(r#"value:money {{"amount":{amount},"currency":"{currency}"}}"#)
                     })
-                    .collect(),
-            );
+                })
+                .collect()
         }
-        "duration" => read_duration(matched, profile)?,
+        "duration" => read_durations(matched, profile)?,
         "date_range" => {
             let from = read_date(matched, matched.captures["first_date"].first()?, profile)?;
             let to = read_date(matched, matched.captures["last_date"].first()?, profile)?;
-            format!(r#"value:date-range {{"from":"{from}","to":"{to}"}}"#)
+            vec![format!(
+                r#"value:date-range {{"from":"{from}","to":"{to}"}}"#
+            )]
         }
-        _ => format!("value:date {}", read_date(matched, span, profile)?),
+        _ => vec![format!("value:date {}", read_date(matched, span, profile)?)],
     };
-    Some(vec![term])
+    Some(terms)
 }
 
 /// One normalized value and its original UTF-8 extent.
@@ -508,6 +550,7 @@ pub fn natural_language_values(text: &str, language: &str) -> Vec<NaturalLanguag
         return Vec::new();
     }
     let mut results = Vec::new();
+    let mut seen = HashSet::new();
     let mut compounds = HashSet::new();
     let mut options = GrammarSearchOptions {
         word_boundaries: true,
@@ -551,15 +594,16 @@ pub fn natural_language_values(text: &str, language: &str) -> Vec<NaturalLanguag
                 continue;
             }
             for term in terms_for(rule, &matched, profile).into_iter().flatten() {
-                results.push(NaturalLanguageValue {
-                    start: *start,
-                    end: *end,
-                    term,
-                });
+                if seen.insert((*start, *end, term.clone())) {
+                    results.push(NaturalLanguageValue {
+                        start: *start,
+                        end: *end,
+                        term,
+                    });
+                }
             }
         }
     }
     results.sort_by_key(|value| (value.start, Reverse(value.end)));
-    results.dedup();
     results
 }

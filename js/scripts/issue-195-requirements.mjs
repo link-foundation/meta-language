@@ -918,6 +918,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['js/scripts/build-natural-language-values.mjs', 'rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
       },
     },
+    {
+      id: 'I195-I242-NUMERIC-SEPARATOR-ALTERNATIVES',
+      source: ISSUE_195_SOURCES.naturalLanguageValues,
+      language: 'English, Russian and shared digit-based value syntax',
+      version: 'Unicode 17.0.0 Decimal_Number and exact decimal arithmetic',
+      construct: 'ambiguous decimal and grouping separators in typed values',
+      expectedBehavior: 'Return both valid readings of an ambiguous comma or period at the original UTF-8 span and keep the locale preference first. Preserve distinct combinations in range endpoints, money amounts, and durations. Emit a single reading when explicit grouping, Arabic decimal punctuation, a wider leading field, or a leading zero establishes the separator meaning.',
+      fixture: 'parity/fixtures/natural-language-separator-ambiguity.lino',
+      selector: 'English, Russian and Spanish, signed Unicode digits, explicit and ambiguous grouping, ordered number and money readings, implicit range scales, repeated range readings, two-part durations, and original UTF-8 spans',
+      assertions: ['ambiguousSeparatorsPreserveLocaleOrder', 'compoundValuesKeepDistinctReadings', 'unambiguousSeparatorsKeepOneReading', 'separatorReadingsKeepOriginalSpans'],
+      implementationEntryPoints: {
+        javascript: ['js/src/natural-language-values.js', 'js/tests/natural-language-values.test.js'],
+        rust: ['rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I243-NORMALIZED-TEXT-LOCATION',

@@ -12,6 +12,8 @@ const WRITTEN_MULTIPLIER_FIXTURE: &str =
 const NAMED_CALENDAR_DATE_FIXTURE: &str =
     "parity/fixtures/natural-language-named-calendar-dates.lino";
 const CURRENCY_AMBIGUITY_FIXTURE: &str = "parity/fixtures/natural-language-currency-ambiguity.lino";
+const SEPARATOR_AMBIGUITY_FIXTURE: &str =
+    "parity/fixtures/natural-language-separator-ambiguity.lino";
 
 fn check_value_fixtures(fixtures: &str) {
     let data: Value = read_project_data(fixtures).expect("value fixtures");
@@ -69,6 +71,30 @@ fn check_value_fixtures(fixtures: &str) {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(interpretations, expected, "{spelling}");
+        }
+        for item in fixture["exactValues"].as_array().into_iter().flatten() {
+            let spelling = item[0].as_str().expect("exact value spelling");
+            let kind = item[1].as_str().expect("value kind");
+            let start = source.find(spelling).expect("original value spelling");
+            let end = start + spelling.len();
+            let prefix = format!("value:{kind} ");
+            let readings: Vec<_> = standalone
+                .iter()
+                .filter(|value| value.start == start && value.end == end)
+                .filter_map(|value| value.term.strip_prefix(prefix.as_str()))
+                .map(|term| {
+                    if kind == "number" {
+                        Value::String(term.to_owned())
+                    } else {
+                        serde_json::from_str(term).expect("typed value fields")
+                    }
+                })
+                .collect();
+            assert_eq!(
+                readings,
+                *item[2].as_array().expect("exact readings"),
+                "{spelling}"
+            );
         }
     }
 }
@@ -167,5 +193,25 @@ fn currency_symbols_keep_compatible_codes_at_original_spans() {
             "qualifiedCurrencySymbolsKeepTheirFullSpans",
         ],
         test_name: "currency_symbols_keep_compatible_codes_at_original_spans",
+    });
+}
+
+#[test]
+fn ambiguous_number_separators_keep_exact_alternatives_in_compound_values() {
+    check_value_fixtures(include_str!(
+        "../../../parity/fixtures/natural-language-separator-ambiguity.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I242-NUMERIC-SEPARATOR-ALTERNATIVES",
+        suffix: "behavior",
+        fixture_id: "i195-i242-numeric-separator-alternatives",
+        fixture_file: SEPARATOR_AMBIGUITY_FIXTURE,
+        assertions: &[
+            "ambiguousSeparatorsPreserveLocaleOrder",
+            "compoundValuesKeepDistinctReadings",
+            "unambiguousSeparatorsKeepOneReading",
+            "separatorReadingsKeepOriginalSpans",
+        ],
+        test_name: "ambiguous_number_separators_keep_exact_alternatives_in_compound_values",
     });
 }

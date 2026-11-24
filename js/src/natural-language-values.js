@@ -81,21 +81,23 @@ function normalizeDecimalDigits(text) {
   return normalized;
 }
 
-function numericSpelling(text, locale) {
-  const signed = normalizeDecimalDigits(text).replaceAll(/[ \u00a0\u202f٬]/gu, '').replace('−', '-');
-  if (signed.includes('٫')) return signed.replace('٫', '.');
+function numericSpellings(text, locale) {
+  const normalized = normalizeDecimalDigits(text).replace('−', '-');
+  const signed = normalized.replaceAll(/[ \u00a0\u202f٬]/gu, '');
+  if (signed.includes('٫')) return [signed.replace('٫', '.')];
   const comma = signed.lastIndexOf(',');
   const period = signed.lastIndexOf('.');
   if (comma >= 0 && period >= 0) {
-    return comma > period ? signed.replaceAll('.', '').replace(',', '.') : signed.replaceAll(',', '');
+    return [comma > period ? signed.replaceAll('.', '').replace(',', '.') : signed.replaceAll(',', '')];
   }
   const delimiter = comma >= 0 ? ',' : '.';
   const sections = signed.split(delimiter);
-  if (sections.length === 1) return signed;
-  if (sections.length > 2 || (preferredGroupingDelimiter(locale, delimiter) && /^[+-]?[1-9][0-9]{0,2}$/u.test(sections[0]) && sections[1].length === 3)) {
-    return sections.join('');
-  }
-  return sections.join('.');
+  if (sections.length === 1) return [signed];
+  if (sections.length > 2) return [sections.join('')];
+  const decimal = sections.join('.');
+  if (normalized !== signed || sections[1].length !== 3 || !/^[+-]?[1-9][0-9]{0,2}$/u.test(sections[0])) return [decimal];
+  const grouped = sections.join('');
+  return preferredGroupingDelimiter(locale, delimiter) ? [grouped, decimal] : [decimal, grouped];
 }
 
 const numberWordRules = ['small_number_word', 'ones_number_word', 'tens_number_word', 'hundreds_number_word',
@@ -115,10 +117,11 @@ function readScale(match, range, profile) {
   return wordValue(profile, 'scale', abbreviated?.text) ?? wordValue(profile, 'number', written?.text);
 }
 
-function readAmount(match, range, profile) {
+function readAmounts(match, range, profile) {
   const numeral = capturesInside(match, range, 'numeral')[0];
   if (numeral) {
-    return scaleDecimal(exactDecimal(numericSpelling(numeral.text, profile.locale)), readScale(match, range, profile) ?? 1);
+    const scale = readScale(match, range, profile) ?? 1;
+    return numericSpellings(numeral.text, profile.locale).map(spelling => scaleDecimal(exactDecimal(spelling), scale));
   }
   const words = numberWordRules.flatMap(rule => capturesInside(match, range, rule)).sort((left, right) => left.start - right.start);
   let total = exactDecimal('0');
@@ -133,7 +136,7 @@ function readAmount(match, range, profile) {
       chunk = scaleDecimal(chunk ?? exactDecimal('1'), number);
     } else chunk = addDecimals(chunk ?? exactDecimal('0'), exactDecimal(number));
   }
-  return chunk === undefined ? total : addDecimals(total, chunk);
+  return [chunk === undefined ? total : addDecimals(total, chunk)];
 }
 
 function readCurrencyCodes(match, profile) {
@@ -170,48 +173,51 @@ function readDate(match, range, profile) {
   return `${year ?? '-'}-${paddedMonth}-${day.padStart(2, '0')}`;
 }
 
-function readDuration(match, profile) {
-  let months = exactDecimal('0');
+function readDurations(match, profile) {
+  let readings = [exactDecimal('0')];
   for (const [index, amount] of match.captures.duration_amount.entries()) {
     const unit = wordValue(profile, 'unit', match.captures.duration_unit[index].text);
-    months = addDecimals(months, scaleDecimal(readAmount(match, amount, profile), unit));
+    const additions = readAmounts(match, amount, profile).map(value => scaleDecimal(value, unit));
+    readings = readings.flatMap(months => additions.map(addition => addDecimals(months, addition)));
   }
   const comparison = match.captures.duration_comparison[0]?.text.toLowerCase();
   const property = !comparison ? 'months' : /^(less|under|меньше|менее)/u.test(comparison) ? 'lessThanMonths' : 'moreThanMonths';
-  return `value:duration {"${property}":${decimalText(months)}}`;
+  return readings.map(months => `value:duration {"${property}":${decimalText(months)}}`);
 }
 
 function rangeLimits(match, profile, money) {
   const first = match.captures[money ? 'first_money' : 'first_amount'][0];
   const last = match.captures[money ? 'last_money' : 'last_amount'][0];
-  let left = readAmount(match, first, profile);
-  const right = readAmount(match, last, profile);
+  let firstAmounts = readAmounts(match, first, profile);
+  const lastAmounts = readAmounts(match, last, profile);
   const trailingScale = readScale(match, last, profile);
   if (trailingScale && capturesInside(match, first, 'numeral').length && readScale(match, first, profile) === undefined) {
-    left = scaleDecimal(left, trailingScale);
+    firstAmounts = firstAmounts.map(amount => scaleDecimal(amount, trailingScale));
   }
-  const comparison = addDecimals(left, scaleDecimal(right, -1)).coefficient;
-  const [minimum, maximum] = comparison <= 0n ? [left, right] : [right, left];
-  return `"min":${decimalText(minimum)},"max":${decimalText(maximum)}`;
+  return firstAmounts.flatMap(left => lastAmounts.map(right => {
+    const comparison = addDecimals(left, scaleDecimal(right, -1)).coefficient;
+    const [minimum, maximum] = comparison <= 0n ? [left, right] : [right, left];
+    return `"min":${decimalText(minimum)},"max":${decimalText(maximum)}`;
+  }));
 }
 
 function termsFor(rule, match, profile) {
   switch (rule) {
-    case 'amount': return [`value:number ${decimalText(readAmount(match, match, profile))}`];
-    case 'number_range': return [`value:number-range {${rangeLimits(match, profile, false)}}`];
+    case 'amount': return readAmounts(match, match, profile).map(amount => `value:number ${decimalText(amount)}`);
+    case 'number_range': return rangeLimits(match, profile, false).map(limits => `value:number-range {${limits}}`);
     case 'money_range': {
       const currencies = readCurrencyCodes(match, profile);
       if (currencies.length === 0) return [];
-      const limits = rangeLimits(match, profile, true);
-      return currencies.map(currency => `value:money {${limits},"currency":"${currency}"}`);
+      return rangeLimits(match, profile, true).flatMap(limits =>
+        currencies.map(currency => `value:money {${limits},"currency":"${currency}"}`));
     }
     case 'money_amount': {
       const currencies = readCurrencyCodes(match, profile);
       if (currencies.length === 0) return [];
-      const amount = decimalText(readAmount(match, match, profile));
-      return currencies.map(currency => `value:money {"amount":${amount},"currency":"${currency}"}`);
+      return readAmounts(match, match, profile).flatMap(amount =>
+        currencies.map(currency => `value:money {"amount":${decimalText(amount)},"currency":"${currency}"}`));
     }
-    case 'duration': return [readDuration(match, profile)];
+    case 'duration': return readDurations(match, profile);
     case 'date_range': {
       const from = readDate(match, match.captures.first_date[0], profile);
       const to = readDate(match, match.captures.last_date[0], profile);
