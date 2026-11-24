@@ -6,6 +6,7 @@ import {readProjectData} from './project-data.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreRawDecisionSource} from './raw-emission-decision-source-history.mjs';
+import {readCurrentOwnCodebaseRawDescriptorPacket,readCurrentOwnCodebaseRawDescriptorPolicy} from './current-own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url);
 export const RAW_CONSUMING_SNAPSHOT_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const RAW_CONSUMING_SNAPSHOT_OUTPUT='parity/self-translation/raw-consuming-snapshot-source-profile.lino';
@@ -18,7 +19,7 @@ export const RAW_CONSUMING_SNAPSHOT_FILES=Object.freeze([
   Object.freeze({file:'js/src/translation/owned-array-append-rules.js',bytes:4830,sha256:'eb349133f29d2e5944ace3b96975d508a92d265231518ac2b99a604129c7b48a'}),
 ]);
 export const RAW_CONSUMING_SNAPSHOT_BOUNDARY='Five complete source identities serve only the frozen raw consuming artifact and its historical consumers. Three original source certificates are projected automatically from existing archives; only the missing consuming host and checker are captured once. Complete stored source certificates make later freshness independent of those archives. The current producer retains its physical source metadata separately and must reproduce every complete original semantic artifact field and both codecs before snapshot comparison. Source conservation is not general semantic equivalence or native execution evidence.';
-const packetSha256='e6db691adeacbb68e642437ac9427b4a13d412b450f7ec1de9b8dd8db3ac4f72';
+const packetSha256='45b485ac811eed32e32d08ee4690edee3c62183127cdf48104089c824eb3e2ae';
 export const pinRawConsumingSnapshotSource=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const keys=(value,names)=>assert.deepEqual(Object.keys(value).sort(),[...names].sort());
 let cached;
@@ -121,10 +122,18 @@ export function restoreRawConsumingSnapshotSource(bytes,file,currentOnly=false){
   assert.deepEqual(pinRawConsumingSnapshotSource(bytes),{bytes:row.bytes,sha256:row.sha256});
   return Buffer.from(packet.previous[index].source);
 }
-export function rawConsumingSnapshotSourceReader(read){
+export function rawConsumingSnapshotSourceReader(read,{historicalArchive=false}={}){
   const selected=new Map(RAW_CONSUMING_SNAPSHOT_FILES.map(row=>[String(new URL(row.file,root)),row.file]));
+  const currentOwners=new Set(readCurrentOwnCodebaseRawDescriptorPolicy().sourcePaths);
+  let currentSources;
   return file=>{
     const bytes=read(file),path=selected.get(String(file));
-    return path?restoreRawConsumingSnapshotSource(bytes,path):restoreRawDecisionSource(bytes,String(file).slice(String(root).length));
+    if(path)return restoreRawConsumingSnapshotSource(bytes,path);
+    const relativePath=String(file).slice(String(root).length);
+    const historical=restoreRawDecisionSource(bytes,relativePath);
+    if(historicalArchive||!currentOwners.has(relativePath))return historical;
+    currentSources??=new Map(readCurrentOwnCodebaseRawDescriptorPacket().sources.map(row=>[row.file,Buffer.from(row.current.sourceText)]));
+    assert.ok(bytes.equals(currentSources.get(relativePath)),'actual final-use decision sources changed: '+relativePath);
+    return bytes;
   };
 }

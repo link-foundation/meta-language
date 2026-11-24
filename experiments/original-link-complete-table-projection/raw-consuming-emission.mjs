@@ -9,7 +9,7 @@ import {readStructuredDataLino,structuredDataToLino} from '../../js/src/structur
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {readRustLibraryItems} from '../../js/scripts/rust-library-packaging.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
-import {restoreRawArchiveReceiptText} from '../../js/scripts/raw-archive-receipt-history.mjs';
+import {readRawArchiveReceiptHistory,restoreRawArchiveReceiptText} from '../../js/scripts/raw-archive-receipt-history.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH} from './raw-emission-producer-applicability.mjs';
 import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
@@ -86,6 +86,22 @@ function consumingOwners(emitted,inventory) {
 const totals = owners => ({cloneCalls:owners.reduce((sum,owner)=>sum+owner.cloneSites.length,0),
   appendCalls:owners.reduce((sum,owner)=>sum+owner.appendSites.length,0),
   consumingAppendBindings:owners.reduce((sum,owner)=>sum+owner.consumingAppendBindingSites.length,0)});
+
+export function projectOriginalLinkRawConsumingSnapshot(currentArtifact) {
+  const snapshot={...currentArtifact,decisionSources:decisionSources(rawConsumingSnapshotSourceReader(readFileSync))};
+  const historical=structuredClone(snapshot);
+  historical.decisionSources=decisionSources(rawConsumingSnapshotSourceReader(readFileSync,{historicalArchive:true}));
+  const proof=historical.predecessor.proof.producerApplicability;
+  const inference=proof.sourceHistory.current;
+  assert.equal(proof.sources.find(row=>row.file===inference.file),inference,'the inference descriptor remains shared');
+  const historicalInference=historical.decisionSources.find(row=>row.file===inference.file);
+  Object.assign(inference,historicalInference);
+  const [receipt]=readRawArchiveReceiptHistory().rows;
+  const previous=restoreRawArchiveReceiptText(structuredDataToLino(historical),receipt.file);
+  assert.deepEqual({bytes:Buffer.byteLength(previous),sha256:sha256(previous)},receipt.previous,
+    'the entire historical consuming archive receipt must match the reviewed predecessor');
+  return {...snapshot,archive:readStructuredDataLino(previous).archive};
+}
 
 /** Restore only the recorded provenance changes and authenticate the entire original artifact. */
 export function verifyOriginalLinkRawConsumingConservation(artifact,read=readFileSync) {
@@ -253,11 +269,9 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
   const currentArtifact=artifact;
   const currentDecisionSources=decisionSources(readFileSync);
   assert.deepEqual(currentArtifact.decisionSources,currentDecisionSources,'actual current producer decision sources changed');
-  const snapshotCandidate={...currentArtifact,decisionSources:decisionSources(rawConsumingSnapshotSourceReader(readFileSync))};
   // Both actual complete codec replays above precede this exact historical
   // snapshot view. The returned currentArtifact retains real archive metadata.
-  const snapshotArtifact=readStructuredDataLino(restoreRawArchiveReceiptText(
-    structuredDataToLino(snapshotCandidate),'experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino'));
+  const snapshotArtifact=projectOriginalLinkRawConsumingSnapshot(currentArtifact);
   verifyOriginalLinkRawConsumingConservation(snapshotArtifact);
   if(check)checkProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,snapshotArtifact);
   return {artifact:snapshotArtifact,currentArtifact,currentDecisionSources,rust:emitted,profile:{profile:'consuming',sourceBytes:artifact.sourceBytes,sourceSha256:artifact.sourceSha256,

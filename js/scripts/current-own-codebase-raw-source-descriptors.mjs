@@ -9,7 +9,7 @@ import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readCurrentRawPredecessorHistory,readCurrentRawPredecessorPacket} from './current-own-codebase-raw-source-history.mjs';
 import {restoreTypedSourceDescriptorHostSource} from './typed-source-descriptor-host-history.mjs';
 const root=new URL('../../',import.meta.url);
-const policySha256='26646438286157ed8250c4a8e631521ceb39281d95c8766700235d6cc62b6553';
+const policySha256='c5a908a07f99d7b0cb92a107b40f313d03d20b09d6eda358f693ff1459d8fcb5';
 const revision='a8a789afb0ed569340d9079279f534f0bf7c4e72';
 const property='currentOwnCodebaseRawSourceDescriptorSuccessors';
 const output='parity/self-translation/current-own-codebase-raw-source-descriptors.lino';

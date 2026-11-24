@@ -6,12 +6,11 @@ import test from 'node:test';
 import {structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
-import {readRawArchiveReceiptHistory,restoreRawArchiveReceiptText} from '../../js/scripts/raw-archive-receipt-history.mjs';
-import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
+import {readRawArchiveReceiptHistory} from '../../js/scripts/raw-archive-receipt-history.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,ORIGINAL_LINK_RAW_CURRENT_ARTIFACT,ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT,
   ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR,generateOriginalLinkRawConsumingEmission,
-  readOriginalLinkRawConsumingOwnerSites,readOriginalLinkRawConsumingProfile,
+  projectOriginalLinkRawConsumingSnapshot,readOriginalLinkRawConsumingOwnerSites,readOriginalLinkRawConsumingProfile,
   verifyOriginalLinkRawConsumingConservation} from './raw-consuming-emission.mjs';
 
 const sha256=value=>createHash('sha256').update(value).digest('hex');
@@ -41,8 +40,10 @@ test('raw consuming emission keeps all106owners and both complete typed archives
   const archiveHistory=readRawArchiveReceiptHistory(),row=archiveHistory.rows[0];
   // CI39830836214 identifies exactly three archive metadata differences. Keep
   // every actual field and independently recover the whole certified snapshot.
-  const snapshotCandidate={...currentArtifact,decisionSources:artifact.decisionSources};
-  const historicalView=readStructuredDataLino(restoreRawArchiveReceiptText(structuredDataToLino(snapshotCandidate),row.file));
+  const forged=structuredClone(currentArtifact);
+  forged.owners[0].consuming.sha256='0'.repeat(64);
+  assert.throws(()=>projectOriginalLinkRawConsumingSnapshot(forged),/entire historical consuming archive receipt/u);
+  const historicalView=projectOriginalLinkRawConsumingSnapshot(currentArtifact);
   for(const change of row.changes){assert.deepEqual(currentArtifact[change.path[0]][change.path[1]],change.after);assert.deepEqual(artifact[change.path[0]][change.path[1]],change.before);}
   const {decisionSources:historicalSources,...actualSemanticFields}=historicalView;
   const {decisionSources:snapshotSources,...snapshotSemanticFields}=artifact;

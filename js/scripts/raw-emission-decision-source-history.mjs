@@ -17,7 +17,7 @@ export const rawDecisionSourceFiles = Object.freeze([
   'js/src/translation/lexer.js',
 ]);
 export const rawDecisionSourceIdentity = bytes => ({ bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
-const packetSha256 = '3aa1419999cc3f54b2395701f27f407c3ff0d2cdb8db7f1f53c1ab6286e808fe';
+const packetSha256 = '18e44fc4690ec37300842f64a74dcf6c193330c3eca13c9bc861f9de151aa22a';
 const root = new URL('../../', import.meta.url);
 let sources;
 
