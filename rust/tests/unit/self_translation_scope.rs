@@ -19,9 +19,9 @@ fn actual_external_bindings_emit_calls_and_reads_through_both_semantic_codecs() 
         surface::External,
     };
     use meta_language::{
-        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
-        emit_typed_program_links, encode_link_network_binary, encode_typed_program_links,
-        read_structured_data_lino,
+        BinaryLinksOptions, LinkId, LinkNetwork, decode_link_network_binary,
+        decode_typed_program_links, emit_typed_program_links, encode_link_network_binary,
+        encode_typed_program_links, read_structured_data_lino,
     };
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let version = run(Command::new("node").arg("--version"));
@@ -40,21 +40,36 @@ fn actual_external_bindings_emit_calls_and_reads_through_both_semantic_codecs() 
         version.stdout
     );
     let script = r#"
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {selfTranslationSignatures} from './js/src/self-translation.js';
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
-const [name,provider,source]=process.argv.slice(1);
+import {LinkNetwork} from './js/src/network.js';
+import {LinkId} from './js/src/primitives.js';
+import {encodeTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from './js/src/typed-program-links.js';
+const [name,provider,source,nativeRoot,nativeArchive]=process.argv.slice(1);
 const externals=selfTranslationSignatures(provider,'JavaScript').map(row=>({...row,name}));
 const scope=provider.replace('export ','')+(name==='increment'||name==='limit'?'':'\nconst '+name+'=increment;');
 const program=checkProgram(parseJavaScript(source,{externals,moduleBindingNames:[name]}));
 const javascript=emitJavaScript(program).text;
 const original=runInNewContext(scope+'\n'+source+'\nselected();');
 const actual=runInNewContext(scope+'\n'+javascript+'\nselected();');
-process.stdout.write(structuredDataToLino({javascript,original,actual}));
+const network=LinkNetwork.fromLino(readFileSync(nativeArchive,'utf8'));
+const root=LinkId.from(Number(nativeRoot));
+const nativeProgram=decodeTypedProgramLinks(network,root);
+assert.deepEqual(nativeProgram.externals,program.externals);
+assert.equal(emitTypedProgramLinks(network,root,'JavaScript').code,javascript);
+const packet=encodeTypedProgramLinks(program);
+process.stdout.write(structuredDataToLino({
+  javascript,original,actual,root:packet.root.asU64(),links:packet.network.toLino(),
+}));
 "#;
+    let directory = TemporaryDirectory::new("external-link-archives");
+    let native_archive = directory.0.join("external-program.lino");
     for name in ["increment", "String", "_value", "$increment", "limit"] {
         let provider = if name == "limit" {
             "export const limit=7;"
@@ -83,22 +98,37 @@ process.stdout.write(structuredDataToLino({javascript,original,actual}));
         };
         let program = check_program(&parse_javascript_in(&source, &context).unwrap()).unwrap();
         let emitted = emit_javascript(&program).unwrap();
-        let observation = run(Command::new("node").current_dir(root).args([
-            "--input-type=module",
-            "-e",
-            script,
-            name,
-            provider,
-            &source,
-        ]));
+        let packet = encode_typed_program_links(&program).unwrap();
+        let native_root = packet.root.to_string();
+        let native_links = packet.network.to_lino();
+        fs::write(&native_archive, &native_links).unwrap();
+        let observation = run(Command::new("node")
+            .current_dir(root)
+            .args([
+                "--input-type=module",
+                "-e",
+                script,
+                name,
+                provider,
+                &source,
+                &native_root,
+            ])
+            .arg(&native_archive));
         assert!(observation.ok, "{name}: {}", observation.stderr);
         let observation = read_structured_data_lino(&observation.stdout).unwrap();
         assert_eq!(observation["original"], 8, "{name}");
         assert_eq!(observation["actual"], 8, "{name}");
         assert_eq!(observation["javascript"], emitted.text, "{name}");
-        let packet = encode_typed_program_links(&program).unwrap();
+        let javascript_links =
+            LinkNetwork::from_lino(observation["links"].as_str().unwrap()).unwrap();
+        let javascript_root = LinkId::from_u64(observation["root"].as_u64().unwrap());
+        assert_eq!(
+            decode_typed_program_links(&javascript_links, javascript_root).unwrap(),
+            program,
+            "{name}"
+        );
         for network in [
-            LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+            LinkNetwork::from_lino(&native_links).unwrap(),
             decode_link_network_binary(
                 &encode_link_network_binary(&packet.network, BinaryLinksOptions::default())
                     .unwrap(),

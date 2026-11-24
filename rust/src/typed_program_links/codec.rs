@@ -530,8 +530,13 @@ pub(super) fn decode_with_binding_identities(
         body,
         mapping,
     )?;
+    let externals = decoder
+        .field(body, "externals")
+        .map(|records| decoder.array(records))
+        .transpose()?
+        .unwrap_or_default();
     let mut traversal = scopes::Traversal::new(limits.node_limit);
-    let ownership = decoder.ownership(&declarations, &mut traversal.remaining)?;
+    let ownership = decoder.ownership(&declarations, externals, &mut traversal.remaining)?;
     decoder.validate_references(&ownership)?;
     for entry in declarations.values() {
         let mut environment = BTreeMap::new();

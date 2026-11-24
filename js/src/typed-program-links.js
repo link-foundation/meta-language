@@ -28,7 +28,9 @@ function bindingTargets(program) {
   const patternOverrides = new WeakMap();
   const declarations = new Map(program.declarations);
   let referenceVisits = 0;
-  for (const external of program.externals ?? []) declarations.set(external.name, external);
+  for (const external of program.externals ?? []) {
+    if (!program.declarations.has(external.name)) declarations.set(external.name, external);
+  }
   function reference(node, field, label, target) {
     const references = targets.get(node) ?? [];
     if (references.some(value => value.field === field && value.label === label && value.target === target)) return;

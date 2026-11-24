@@ -9,7 +9,7 @@ const root=new URL('../../',import.meta.url);
 export const CURRENT_NATIVE_HOST_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const CURRENT_NATIVE_HOST_OUTPUT='parity/self-translation/ci-39539903548-native-host-source-history.lino';
 export const CURRENT_NATIVE_HOST_FILES=Object.freeze(['rust/src/self_translation.rs','rust/src/translation/mod.rs','rust/tests/unit/mod.rs','rust/src/translation/javascript/expressions/values.rs']);
-const packetSha256='c6b6f5db65721cdef6138af14c66a7895bc99fe3165f6248fd3047e7134d8a06';
+const packetSha256='0348234009c98e5a2b4645bd47eb50f2a8a6bb9e79cd6b8bb79899299fbdbe36';
 let cached;
 export const pinCurrentNativeHostSource=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),[...keys].sort());};
@@ -57,7 +57,31 @@ export function readCurrentNativeHostSourceHistory(){
  * No unknown source is assigned a historical identity; runtime files stay current. */
 export function restoreCurrentNativeHostSource(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  source=restoreCheckedExternalBindingSource(source,file);
   if(!CURRENT_NATIVE_HOST_FILES.includes(file))return source;
   const row=readCurrentNativeHostSourceHistory().sources.find(row=>row.file===file);
   return source===row.current.source?row.previous.source:source;
+}
+
+/** Preserve the exact checked codec sources used by the older proof readers. */
+export function restoreCheckedExternalBindingSource(source, file) {
+  if (file === 'js/src/typed-program-links-validation.js'
+    && pinCurrentNativeHostSource(source).sha256 === 'b1f87907f68cc24dfc6d84676d2b0f939318c48b79d92aaf9becc29d1bdd35e2') {
+    const previous = source.replace(
+      '  for (const external of program.externals ?? []) {\n    if (!program.declarations.has(external.name)) declarations.set(external.name, external);\n  }',
+      '  for (const external of program.externals ?? []) declarations.set(external.name, external);',
+    );
+    assert.equal(pinCurrentNativeHostSource(previous).sha256, '6c2ea9bcb6266ef98af1b86708561dd8fd991e002f46c22dbfa047d90de39051');
+    return previous;
+  }
+  if (file === 'rust/src/typed_program_links/checked.rs'
+    && pinCurrentNativeHostSource(source).sha256 === '653747d3c71c1237fbd659574c834c47286262b66e742959e940c4296a483acc') {
+    const previous = source.replace(
+      '    if !program.imports.is_empty() || program.output_threaded || program.aborts_threaded {',
+      '    if !program.imports.is_empty()\n        || !program.externals.is_empty()\n        || program.output_threaded\n        || program.aborts_threaded\n    {',
+    ).replace('        externals: program.externals.clone(),', '        externals: Vec::new(),');
+    assert.equal(pinCurrentNativeHostSource(previous).sha256, 'ea6b9054929ad83be10af922b26238f5b2f19066c26b435773f99218306dcd10');
+    return previous;
+  }
+  return source;
 }

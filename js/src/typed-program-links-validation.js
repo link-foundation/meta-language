@@ -111,7 +111,9 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (previous && (previous.owner !== owner || previous.slot !== slot)) throw new TypeError('a linked binding record has multiple lexical owners');
     binderOwners.set(binder, { owner, slot });
   }
-  for (const external of program.externals ?? []) declarations.set(external.name, external);
+  for (const external of program.externals ?? []) {
+    if (!program.declarations.has(external.name)) declarations.set(external.name, external);
+  }
   for (const [name, entry] of program.declarations) {
     if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
     if (entry.k === 'const') type(entry.type);

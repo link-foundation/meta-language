@@ -641,6 +641,11 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
             }
         }
     }
+    for (index, external) in program.externals.iter().enumerate() {
+        names
+            .entry(external.name().to_owned())
+            .or_insert_with(|| child_path("/externals", index));
+    }
     let mut targets = HashMap::new();
     let mut reference_remaining = 100_000;
     semantic_targets(

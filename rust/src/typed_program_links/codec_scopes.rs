@@ -18,6 +18,7 @@ pub(super) struct Ownership {
     declarations: BTreeMap<String, LinkId>,
     datatypes: BTreeMap<String, LinkId>,
     declaration_ids: BTreeSet<LinkId>,
+    external_ids: BTreeSet<LinkId>,
     datatype_ids: BTreeSet<LinkId>,
     constructors: HashMap<LinkId, LinkId>,
     models: Vec<Decl>,
@@ -79,12 +80,14 @@ impl Decoder<'_> {
     pub(super) fn ownership(
         &self,
         declarations: &BTreeMap<String, LinkId>,
+        externals: &[LinkId],
         remaining: &mut usize,
     ) -> Result<Ownership> {
         let mut ownership = Ownership {
             declarations: declarations.clone(),
             datatypes: BTreeMap::new(),
             declaration_ids: declarations.values().copied().collect(),
+            external_ids: BTreeSet::new(),
             datatype_ids: BTreeSet::new(),
             constructors: HashMap::new(),
             models: Vec::new(),
@@ -166,6 +169,15 @@ impl Decoder<'_> {
             )?;
             ownership.models.push(model);
         }
+        for external in externals {
+            visit(remaining)?;
+            if let std::collections::btree_map::Entry::Vacant(entry) =
+                ownership.declarations.entry(self.name(*external)?)
+            {
+                entry.insert(*external);
+                ownership.external_ids.insert(*external);
+            }
+        }
         Ok(ownership)
     }
     pub(super) fn validate_references(&self, ownership: &Ownership) -> Result<()> {
@@ -214,7 +226,13 @@ impl Decoder<'_> {
                 }
                 let role = read_program_reference_role(label);
                 if role == "declaration" {
-                    if self.kind(*target) != "fn" || !ownership.declaration_ids.contains(target) {
+                    let external = ownership.external_ids.contains(target);
+                    let owns_target = match self.kind(*target) {
+                        "fn" => external || ownership.declaration_ids.contains(target),
+                        "const" if kind == "call" => external,
+                        _ => false,
+                    };
+                    if !owns_target {
                         return Err(error(
                             "a linked declaration reference is unresolved or has an invalid target",
                         ));

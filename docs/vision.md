@@ -2468,9 +2468,12 @@ read-only iteration. Direct live iteration over a construction remains an alias
 and refuses the immutable value lowering. Ordered bound effects and every
 retained refusal remain independently checked. External JavaScript function and
 constant bindings keep the actual provider's target name; target allocation
-reserves that name, calls remain calls and constant reads remain reads. The
-initial external-name profile admits strict ASCII binding identifiers; other
-names require an explicit supported alias. These decisions are drafted in
+reserves that name, calls remain calls and constant reads remain reads. Both
+Links codecs preserve references to the external signature records. The
+ordinary source checker rechecks those signatures and gives local declarations
+precedence when a name is shared. The initial external-name profile admits
+strict ASCII binding identifiers. Other names require an explicit supported
+alias. These decisions are drafted in
 JavaScript, automatically translated to Rust and exercised through both Links
 codecs; Rust compilation and execution remain CI-only.
 
