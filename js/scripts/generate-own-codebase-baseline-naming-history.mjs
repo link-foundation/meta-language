@@ -78,6 +78,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/tests/translation-rust-literal-matches.test.js',
     'js/tests/translation-typescript-workflow.test.js',
     'rust/src/self_translation/binding/owned_recursive_emission.rs',
+    'rust/src/translation/javascript/record_parameters.rs',
     'rust/src/translation/rust/expressions.rs',
     'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
     'rust/tests/unit/translation_arrays.rs',
