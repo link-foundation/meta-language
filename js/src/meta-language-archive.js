@@ -2,7 +2,7 @@
 // to reconstruction; identities, cycles and disconnected links are retained.
 import { LinkNetwork } from './network.js';
 import { LinkFlags, LinkId, LinkMetadata, LinkType } from './primitives.js';
-import { encodeStructuredDataLinks, decodeStructuredDataLinks } from './structured-data-links.js';
+import { StructuredDataNetwork, encodeStructuredDataLinks, decodeStructuredDataLinks } from './structured-data-links.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
 import { StreamParser } from 'links-notation';
 import { decodeCanonicalStatements } from './lino-serialization.js';
@@ -50,8 +50,9 @@ function bounds(options) {
   return result;
 }
 
-function inspect(network, limits) {
-  if (!(network instanceof LinkNetwork)) fail('expected a LinkNetwork');
+function inspect(network, limits, allowStructuredData = false) {
+  const structuredData = network instanceof StructuredDataNetwork;
+  if (!(network instanceof LinkNetwork) && !(allowStructuredData && structuredData)) fail('expected a LinkNetwork');
   const links = network.links();
   if (links.length > limits.nodeLimit) fail('node resource limit exceeded');
   const identities = new Set(links.map(link => identity(link.id())));
@@ -82,12 +83,12 @@ function inspect(network, limits) {
   }
   const maximum = links.reduce((value, link) => Math.max(value, identity(link.id())), 0);
   if (!acceptMetaLanguageArchiveNextIdentity(network._nextId, maximum)) fail('invalid allocator state');
-  const terms = [...network._terms].map(([term, id]) => {
+  const terms = (structuredData ? [] : [...network._terms]).map(([term, id]) => {
     if (typeof term !== 'string' || !term.isWellFormed() || !identities.has(identity(id))) fail('invalid term registration');
     bytes += encoder.encode(term).length;
     return { term, identity: identity(id) };
   }).sort((first, second) => compareTextBytes(first.term, second.term));
-  const syntax = [...network._conceptSyntax].map(([key, value]) => {
+  const syntax = (structuredData ? [] : [...network._conceptSyntax]).map(([key, value]) => {
     if (typeof key !== 'string' || typeof value !== 'string'
       || !key.isWellFormed() || !value.isWellFormed()) fail('invalid selected syntax');
     const at = key.indexOf('\0');
@@ -109,7 +110,7 @@ function copyLinks(target, links, limits) {
 }
 
 function copy(target, source, limits) {
-  const { links, state } = inspect(source, limits);
+  const { links, state } = inspect(source, limits, true);
   const mapping = copyLinks(target, links, limits);
   return { mapping, state };
 }
@@ -130,7 +131,9 @@ export function createMetaLanguageArchive(entries, options = {}) {
   if (!Array.isArray(entries) || entries.length === 0 || entries.length > limits.nodeLimit) fail('expected bounded nonempty entries');
   const network = new LinkNetwork(), groups = [], groupRoots = [], names = new Set(), shared = new Map();
   const records = entries.map(entry => {
-    if (!entry || !(entry.network instanceof LinkNetwork)) fail('invalid entry network');
+    if (!entry || !(entry.network instanceof LinkNetwork || entry.network instanceof StructuredDataNetwork)) {
+      fail('invalid entry network');
+    }
     let group = shared.get(entry.network);
     if (group === undefined) {
       group = groups.length;

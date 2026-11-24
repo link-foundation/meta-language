@@ -2274,6 +2274,9 @@ export interface MetaLanguageArchiveEntry {
   network: LinkNetwork;
   root: LinkIdValue;
 }
+export interface MetaLanguageArchiveInputEntry extends Omit<MetaLanguageArchiveEntry, 'network'> {
+  network: LinkNetwork | StructuredDataNetwork;
+}
 export interface MetaLanguageArchiveLimits {
   nodeLimit?: number;
   referenceLimit?: number;
@@ -2285,7 +2288,7 @@ export interface ReconstructedMetaLanguageArchive {
   networks: LinkNetwork[];
 }
 export interface LoadedMetaLanguageArchive extends MetaLanguageArchive, ReconstructedMetaLanguageArchive {}
-export function createMetaLanguageArchive(entries: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits): MetaLanguageArchive;
+export function createMetaLanguageArchive(entries: MetaLanguageArchiveInputEntry[], options?: MetaLanguageArchiveLimits): MetaLanguageArchive;
 export function readMetaLanguageArchive(network: LinkNetwork, root: LinkIdValue, options?: MetaLanguageArchiveLimits): ReconstructedMetaLanguageArchive;
 export function metaLanguageArchiveToText(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): string;
 export function readMetaLanguageArchiveNetworkText(text: string, options?: MetaLanguageArchiveLimits): LinkNetwork;
@@ -2294,7 +2297,7 @@ export function metaLanguageArchiveToBinary(archive: MetaLanguageArchive, option
 export function readMetaLanguageArchiveBinary(bytes: Uint8Array | readonly number[], options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
 export function metaLanguageArchiveToLinkCliStore(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): Uint8Array;
 export function readMetaLanguageArchiveLinkCliStore(bytes: Uint8Array, options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
-export function extendMetaLanguageArchive(archive: MetaLanguageArchive, additions: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits & { replace?: boolean; remove?: string[] }): MetaLanguageArchive;
+export function extendMetaLanguageArchive(archive: MetaLanguageArchive, additions: MetaLanguageArchiveInputEntry[], options?: MetaLanguageArchiveLimits & { replace?: boolean; remove?: string[] }): MetaLanguageArchive;
 
 export interface DynamicMetaLanguageOptions extends MetaLanguageArchiveLimits {
   depthLimit?: number;
@@ -2695,12 +2698,19 @@ export function grammarEmitter(format: string): ((grammar: Grammar) => GrammarEm
 export function renderNativeGrammar(grammar: Grammar): string;
 export type StructuredDataValue = null | boolean | number | string | StructuredDataValue[] | { [key: string]: StructuredDataValue };
 export interface StructuredDataLinksLimits { nodeLimit?: number; depthLimit?: number; byteLimit?: number; }
+interface StructuredDataLinkReader { link(id: LinkId): Link | undefined; links(): Link[]; toLino(): string; }
+declare class StructuredDataNetwork implements StructuredDataLinkReader {
+  private _links;
+  link(id: LinkId): Link | undefined;
+  links(): Link[];
+  toLino(): string;
+}
 export interface StructuredDataLinksArchive {
-  network: { link(id: LinkId): Link | undefined; links(): Link[]; toLino(): string };
+  network: StructuredDataNetwork;
   root: LinkId;
 }
 export function encodeStructuredDataLinks(value: StructuredDataValue, limits?: StructuredDataLinksLimits): StructuredDataLinksArchive;
-export function decodeStructuredDataLinks(network: StructuredDataLinksArchive['network'], root: LinkId, limits?: StructuredDataLinksLimits): StructuredDataValue;
+export function decodeStructuredDataLinks(network: StructuredDataLinkReader, root: LinkId, limits?: StructuredDataLinksLimits): StructuredDataValue;
 export function structuredDataToLino(value: StructuredDataValue, limits?: StructuredDataLinksLimits): string;
 export function readStructuredDataLino(source: string, limits?: StructuredDataLinksLimits): StructuredDataValue;
 export function structuredDataRecordToLino(value: StructuredDataValue, namespace?: string, limits?: StructuredDataLinksLimits): string;

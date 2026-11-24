@@ -9,7 +9,7 @@ import {readRefinedRegularGrammarInferenceLinks} from '../src/grammar-inference-
 import {readStructuralGrammarInferenceLinks} from '../src/grammar-structural-inference.js';
 import {createMetaLanguageArchive,metaLanguageArchiveToBinary,metaLanguageArchiveToLinkCliStore,
  readMetaLanguageArchiveText,readMetaLanguageArchiveBinary,readMetaLanguageArchiveLinkCliStore} from '../src/meta-language-archive.js';
-import {decodeStructuredDataLinks,readStructuredDataLino} from '../src/structured-data-links.js';
+import {decodeStructuredDataLinks,encodeStructuredDataLinks,readStructuredDataLino} from '../src/structured-data-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {recordIssue195Observations} from './support/issue-195-observations.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/dynamic-language-command.lino',import.meta.url));
@@ -27,6 +27,20 @@ function concreteData(entry){
   const link=entry.network.link(id);network.insertLinkWithOptionalId(id,link.references(),link.metadata().clone());pending.push(...link.references());}
  return decodeStructuredDataLinks(network,entry.root);
 }
+test('archive creation preserves the real structured-data network used by grammar discovery',()=>{
+ const premise = { positives: [['word']], negatives: [[]] };
+ const graph = encodeStructuredDataLinks(premise);
+ const archive = createMetaLanguageArchive([
+  { identifier: 'premise', kind: 'grammar inference', ...graph },
+  { identifier: 'same graph', kind: 'language configuration', ...graph },
+ ]);
+ const [first, second] = readMetaLanguageArchiveText(archive.network.toLino()).entries;
+ assert.ok(first.network instanceof LinkNetwork);
+ assert.strictEqual(first.network, second.network);
+ assert.equal(first.root.asU64(), graph.root.asU64());
+ assert.equal(first.network.toLino(), graph.network.toLino());
+ assert.deepEqual(decodeStructuredDataLinks(first.network, first.root), premise);
+});
 test('one shared command sequence retains concrete trees, recursive definitions and old contexts',context=>{
  const files=new Map(fixture.files.map(file=>[file.path,encoder.encode(file.text)]));
  const host={readFile:path=>decoder.decode(files.get(path)??assert.fail('missing fixture file '+path)),readBytes:path=>files.get(path)??assert.fail('missing fixture file '+path)};
