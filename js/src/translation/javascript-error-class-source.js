@@ -490,9 +490,10 @@ function lowerJavaScriptSourceIterationContinuation(statement,rest,depth){
  case 'sourceWhileStatement':{
   const updateExpression=statement.update,target=statement.target;
   const condition=lowerJavaScriptErrorExpression(statement.condition,rest.context,depth+1),body=lowerJavaScriptSourceStatements(statement.body,0,condition.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1),update=updateExpression===undefined?body:lowerJavaScriptErrorExpression(updateExpression,body.context,depth+1);
-  let current=update.context,iteration=constructJavaScriptErrorConstant({$:'undefined'});const identities=statement.iterationBindings??[];
-  if(identities.length>4096||identities.some((identity,index)=>!(current.sharedBindings??[]).includes(identity)||identities.indexOf(identity)!==index)||identities.length>0&&statement.postTest===true)return refuseJavaScriptErrorSource(current,'iteration cloning retains actual distinct shared for-head bindings');
-  for(let at=identities.length-1;at>=0;at--){const temporary=current.next;current={...current,next:temporary+1};iteration=constructJavaScriptErrorLocalBinding(current,temporary,{$:'sourceCloneBindingCell',identity:identities[at]??-1,realm:current.realm.realm,...((current.lexicalBindings??[]).some(row=>row.identity===identities[at])?{lexical:true}:{})},iteration,false);}
+  let current=update.context,iteration=constructJavaScriptErrorConstant({$:'undefined'});
+  const identities=statement.iterationBindings??[],sharedBindings=update.context.sharedBindings??[],lexicalBindings=update.context.lexicalBindings??[];
+  if(identities.length>4096||identities.some((identity,index)=>!sharedBindings.includes(identity)||identities.indexOf(identity)!==index)||identities.length>0&&statement.postTest===true)return refuseJavaScriptErrorSource(current,'iteration cloning retains actual distinct shared for-head bindings');
+  for(let at=identities.length-1;at>=0;at--){const temporary=current.next,identity=identities[at]??-1;current={...current,next:temporary+1};iteration=constructJavaScriptErrorLocalBinding(current,temporary,{$:'sourceCloneBindingCell',identity,realm:current.realm.realm,...(lexicalBindings.some(row=>row.identity===identity)?{lexical:true}:{})},iteration,false);}
   return {$:'errorSourceExpression',source:{$:'sourceWhile',condition:condition.source,body:body.source,after:rest.source,...(target!==undefined?{target}:{}),...(updateExpression!==undefined?{update:update.source}:{}),...(statement.postTest===true?{postTest:true}:{}),...(identities.length?{iteration}:{})},context:current};
  }
   default:return refuseJavaScriptErrorSource(rest.context,'statement lowering requires its actual source kind');
