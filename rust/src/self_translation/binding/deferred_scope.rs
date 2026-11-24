@@ -65,13 +65,13 @@ pub(super) fn read_binding(source: &str) -> Option<(u8, String)> {
     let [kind, at] = selected.as_slice() else {
         return None;
     };
-    let kind = if *kind == 1.0 {
-        1
-    } else if *kind == 2.0 {
-        2
-    } else {
+    let kind = u8::try_from(crate::translation::frontend_rules::ml_array::number_index(
+        *kind,
+    )?)
+    .ok()?;
+    if !matches!(kind, 1 | 2) {
         return None;
-    };
+    }
     let at = crate::translation::frontend_rules::ml_array::number_index(*at)?;
     let node = facts.nodes.get(at)?;
     if node.term != "identifier" || !node.children.is_empty() || node.end <= node.start {
