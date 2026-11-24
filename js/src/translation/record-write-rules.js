@@ -57,9 +57,9 @@ export function readRecordFieldWriteRefusal(operator, kind, reference, open, fie
  * The original refusal remains the contract of the direct Number write renderer.
  * @param {string} language @param {string} operator @param {string} kind @returns {string} */
 export function readRecordCompoundBinaryOperation(language, operator, kind) {
-  if (language !== 'JavaScript' || (kind !== 'int' && kind !== 'string')) return '';
+  if (language !== 'JavaScript') return '';
   if (kind === 'string') return operator === '+=' ? 'plus' : '';
-  return readRecordNumericCompoundBinaryOperation(operator);
+  return kind === 'int' || kind === 'float' ? readRecordNumericCompoundBinaryOperation(operator) : '';
 }
 /** @param {string} operator @returns {string} */
 function readRecordNumericCompoundBinaryOperation(operator) {

@@ -31,6 +31,6 @@ writeProjectData(new URL('../../parity/fixtures/record-writes.lino', import.meta
   ],
   refusals: [
     { name: 'dynamic field creation keeps descriptor obligation', source: source('const item={value:1};item.extra=2;return item.value;'), reason: 'field' },
-    { name: 'array index writes keep live slot obligation', source: source('const item=[1,2];const alias=item;alias[0]=7;return item[0]??0;'), reason: 'live slots' },
+    { name: 'array index writes keep live slot obligation', source: source('const item=[1,2];const alias=item;alias[0]=7;return item[0]??0;'), reason: 'reference mutation: this mutation requires its shared reference and slot operations to be represented' },
   ],
 });

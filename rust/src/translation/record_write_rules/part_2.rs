@@ -242,20 +242,27 @@ pub fn read_record_compound_binary_operation(
     operator: &self::ml_string::Text,
     kind: &self::ml_string::Text,
 ) -> self::ml_string::Text {
-    if ((*language)
-        != (self::ml_string::Text::from_units(vec![74, 97, 118, 97, 83, 99, 114, 105, 112, 116])))
-        || (((*kind) != (self::ml_string::Text::from_units(vec![105, 110, 116])))
-            && ((*kind) != (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))))
     {
-        self::ml_string::Text::from_units(vec![])
-    } else if (*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])) {
-        if (*operator) == (self::ml_string::Text::from_units(vec![43, 61])) {
-            self::ml_string::Text::from_units(vec![112, 108, 117, 115])
+        let ml_library_inequality_1 = (*language)
+            != (self::ml_string::Text::from_units(vec![
+                74, 97, 118, 97, 83, 99, 114, 105, 112, 116,
+            ]));
+        if ml_library_inequality_1 {
+            self::ml_string::Text::from_units(vec![])
+        } else if (*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))
+        {
+            if (*operator) == (self::ml_string::Text::from_units(vec![43, 61])) {
+                self::ml_string::Text::from_units(vec![112, 108, 117, 115])
+            } else {
+                self::ml_string::Text::from_units(vec![])
+            }
+        } else if ((*kind) == (self::ml_string::Text::from_units(vec![105, 110, 116])))
+            || ((*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116])))
+        {
+            self::read_record_numeric_compound_binary_operation(operator)
         } else {
             self::ml_string::Text::from_units(vec![])
         }
-    } else {
-        self::read_record_numeric_compound_binary_operation(operator)
     }
 }
 

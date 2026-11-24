@@ -932,7 +932,10 @@ class Inference {
         // Unary updates have no right-hand expression. Infer the selected
         // numeric slot without inventing a value or reading a missing node.
         const updating = node.op === '++' || node.op === '--';
-        const value = updating ? this.fresh() : this.expr(node.value, env);
+        const operand = updating ? undefined : this.expr(node.value, env);
+        const ownField = !node.index || node.index.k === 'str' && this.resolve(object).kind === 'record';
+        const concatenation = ownField && node.op === '+=';
+        const value = updating || concatenation ? this.fresh() : operand;
         if (node.index) {
           this.expr(node.index, env);
           if (node.index.k === 'str' && this.resolve(object).kind === 'record') {
@@ -940,6 +943,7 @@ class Inference {
           } else this.unify(object, { kind: 'array', element: value }, node.span);
         } else this.fields.push({ object, field: node.field, result: value, where: node.span });
         if (updating) this.arithmetic.push({ left: value, result: value, where: node.span });
+        if (concatenation) this.plus.push({ left: value, right: operand, result: value, where: node.span });
         return value;
       }
       case 'name': {
