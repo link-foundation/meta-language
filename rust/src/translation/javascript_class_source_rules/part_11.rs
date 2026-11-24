@@ -1,17 +1,17 @@
 // Generated from complete js/src/translation/javascript-class-source-rules.js. Do not edit by hand.
-use super::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop68Result;
+use super::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop71Result;
 use super::ml_array;
 use super::ml_math;
 use super::ml_string;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_accept_java_script_closed_class_own_field_loop68(
+pub fn source_ml_temporary_accept_java_script_closed_class_own_field_loop71(
     receiver_fields: &[self::ml_string::Text],
     public_fields: &[self::ml_string::Text],
     field: &self::ml_string::Text,
     mut at: f64,
-) -> self::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop68Result {
+) -> self::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop71Result {
     loop {
         return if at < (public_fields.len() as f64) {
             if self::ml_array::includes(
@@ -28,7 +28,7 @@ pub fn source_ml_temporary_accept_java_script_closed_class_own_field_loop68(
             .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
                 == (*field))
             {
-                self::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop68Result::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop68Return(true)
+                self::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop71Result::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop71Return(true)
             } else {
                 {
                     let at_2 = at + 2f64;
@@ -39,26 +39,26 @@ pub fn source_ml_temporary_accept_java_script_closed_class_own_field_loop68(
                 }
             }
         } else {
-            self::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop68Result::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop68Done
+            self::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop71Result::MlTemporaryAcceptJavaScriptClosedClassOwnFieldLoop71Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryProjectJavaScriptClassSourceIntervalLoop69Result {
-    MlTemporaryProjectJavaScriptClassSourceIntervalLoop69Done(f64, f64),
+pub enum MlTemporaryProjectJavaScriptClassSourceIntervalLoop72Result {
+    MlTemporaryProjectJavaScriptClassSourceIntervalLoop72Done(f64, f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_project_java_script_class_source_interval_loop69(
+pub fn source_ml_temporary_project_java_script_class_source_interval_loop72(
     intervals: &[f64],
     mut first: f64,
     mut last: f64,
     mut low: f64,
     mut high: f64,
     mut at: f64,
-) -> self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop69Result {
+) -> self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop72Result {
     loop {
         if at < (intervals.len() as f64) {
             {
@@ -117,7 +117,7 @@ pub fn source_ml_temporary_project_java_script_class_source_interval_loop69(
             }
         }
         return {
-            self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop69Result::MlTemporaryProjectJavaScriptClassSourceIntervalLoop69Done(low, high)
+            self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop72Result::MlTemporaryProjectJavaScriptClassSourceIntervalLoop72Done(low, high)
         };
     }
 }

@@ -340,6 +340,24 @@ export function readJavaScriptClosedClassFunctionExports(values,kinds) {
   return result;
 }
 
+/** A collection's data property is distinct from a same-named class method.
+ * @param {string[]} values @param {number[][]} directory @param {number} at
+ * @returns {boolean} */
+function acceptJavaScriptClosedClassCollectionSize(values, directory, at) {
+  if ((values[at] ?? '') !== 'size' || (values[at - 1] ?? '') !== '.'
+    || (values[at - 3] ?? '') !== '.' || (values[at - 4] ?? '') !== 'this') return false;
+  for (const row of directory) {
+    if (at <= (row[0] ?? 0) || at >= (row[1] ?? 0)) continue;
+    const position = readJavaScriptClosedClassAssignedFieldPosition(values, row, values[at - 2] ?? '');
+    if (position < 0) return false;
+    const start = row[position + 1] ?? 0;
+    const end = row[position + 2] ?? 0;
+    return (values[start] ?? '') === 'new' && ['Set', 'Map'].includes(values[start + 1] ?? '')
+      && (values[start + 2] ?? '') === '(' && findJavaScriptClassGroupEnd(values, start + 2) === end - 1;
+  }
+  return false;
+}
+
 /** The profile is deliberately closed: its synthetic method slots cannot be
  * observed as own enumerable fields or as bound detached function objects.
  * Calls and shared state retain ordinary source receiver/argument order.
@@ -371,7 +389,8 @@ export function readJavaScriptClosedClassObservationError(values, kinds, directo
     if (kind === 'identifier' && names.includes(value) && previous !== 'class'
       && (previous !== 'new' || next !== '(') && readJavaScriptClosedClassStaticTarget(values, names, staticCalls, at) === '') return at;
     if (value === 'this' && previous !== '.' && previous !== '?.' && next !== '.' && next !== '[') return at;
-    if ((previous === '.' || previous === '?.') && (methods.includes(value) && next !== '(' || value === 'constructor')) return at;
+    if ((previous === '.' || previous === '?.') && (value === 'constructor'
+      || methods.includes(value) && next !== '(' && !acceptJavaScriptClosedClassCollectionSize(values, directory, at))) return at;
     if (previous === '[' && kind === 'string' && methods.includes(value.slice(1))) return at;
   }
   return -1;
@@ -450,14 +469,15 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
     + assignments + remainder + '\nreturn ' + receiver + ';\n}\n';
 }
 
-/** Methods which construct closed class instances need finite data-only
- * records rather than recursively embedding bound method Function fields.
- * Earlier closed field/closure lowering remains a separate exact profile.
+/** Methods that construct class instances need finite data-only records.
+ * Methods with defaults need a named function that applies them at each call.
  * @param {string[]} values @param {number[][]} directory @returns {boolean} */
 export function requireJavaScriptClosedClassPrototypeMethods(values,directory){
  let names=[];for(const row of directory)names=names.concat([values[(row[0]??0)+1]??'']);
- for(const row of directory)for(let method=9+3*(row[7]??0);method<row.length;method+=5)if((row[method]??-1)>=0)
+ for(const row of directory)for(let method=9+3*(row[7]??0);method<row.length;method+=5)if((row[method]??-1)>=0){
+  for(let at=(row[method+1]??0)+1;at<(row[method+2]??0);at+=1)if((values[at]??'')==='=')return true;
   for(let at=(row[method+3]??0)+1;at<(row[method+4]??0);at+=1)if((values[at]??'')==='new'&&names.includes(values[at+1]??'')&&(values[at+2]??'')==='(')return true;
+ }
  return false;
 }
 /** @param {string[]} methods @param {string[]} receiverFields

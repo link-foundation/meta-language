@@ -1,13 +1,14 @@
 // Generated from complete js/src/translation/javascript-class-source-rules.js. Do not edit by hand.
+use super::MlTemporaryAcceptJavaScriptClosedClassCollectionSizeLoop36Result;
 use super::MlTemporaryReadJavaScriptClosedClassCollectionDefaultClassOwnerErrorLoop30Result;
-use super::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result;
-use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Result;
-use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Result;
+use super::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result;
+use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop39Result;
+use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop40Result;
 use super::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop26Result;
-use super::MlTemporaryRenderJavaScriptClosedClassLoop43Result;
-use super::MlTemporaryRenderJavaScriptClosedClassLoop44Result;
+use super::MlTemporaryRenderJavaScriptClosedClassLoop45Result;
+use super::MlTemporaryRenderJavaScriptClosedClassLoop46Result;
 use super::MlTemporaryRenderJavaScriptClosedClassRangeLoop21Result;
-use super::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result;
+use super::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
@@ -15,20 +16,21 @@ use super::ml_number;
 use super::ml_string;
 use super::ml_string_number;
 use super::read_java_script_closed_class_prefix_end;
+use super::source_ml_temporary_accept_java_script_closed_class_collection_size_loop36;
 use super::source_ml_temporary_read_java_script_closed_class_collection_default_class_owner_error_loop29;
 use super::source_ml_temporary_read_java_script_closed_class_collection_default_class_owner_error_loop30;
 use super::source_ml_temporary_read_java_script_closed_class_function_exports_loop34;
-use super::source_ml_temporary_read_java_script_closed_class_method_target_loop53;
+use super::source_ml_temporary_read_java_script_closed_class_method_target_loop56;
 use super::source_ml_temporary_read_java_script_closed_class_methods_loop22;
-use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop37;
-use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop38;
+use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop39;
+use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop40;
 use super::source_ml_temporary_read_java_script_closed_class_static_calls_loop24;
 use super::source_ml_temporary_read_java_script_closed_class_static_target_loop26;
-use super::source_ml_temporary_render_java_script_closed_class_loop43;
-use super::source_ml_temporary_render_java_script_closed_class_loop44;
+use super::source_ml_temporary_render_java_script_closed_class_loop45;
+use super::source_ml_temporary_render_java_script_closed_class_loop46;
 use super::source_ml_temporary_render_java_script_closed_class_range_loop21;
-use super::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop49;
-use super::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop50;
+use super::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop51;
+use super::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop52;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -309,6 +311,48 @@ pub fn read_java_script_closed_class_function_exports(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_java_script_closed_class_collection_size(
+    values: &[self::ml_string::Text],
+    directory: &[Vec<f64>],
+    at: f64,
+) -> bool {
+    if (((((self::ml_array::optional_at(values, self::ml_array::number_index(at)))
+        .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+        != (self::ml_string::Text::from_units(vec![115, 105, 122, 101])))
+        || (((self::ml_array::optional_at(values, self::ml_array::number_index(at - 1f64)))
+            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+            != (self::ml_string::Text::from_units(vec![46]))))
+        || (((self::ml_array::optional_at(values, self::ml_array::number_index(at - 3f64)))
+            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+            != (self::ml_string::Text::from_units(vec![46]))))
+        || (((self::ml_array::optional_at(values, self::ml_array::number_index(at - 4f64)))
+            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+            != (self::ml_string::Text::from_units(vec![116, 104, 105, 115])))
+    {
+        false
+    } else {
+        {
+            let source_ml_temporary_values35 = directory.to_vec();
+            {
+                let source_ml_temporary_index35 = self::ml::Big::from_i128(0);
+                {
+                    let source_ml_source1_s28 = self::source_ml_temporary_accept_java_script_closed_class_collection_size_loop36(values, at, &(source_ml_temporary_values35), source_ml_temporary_index35);
+                    match source_ml_source1_s28 {
+                        self::MlTemporaryAcceptJavaScriptClosedClassCollectionSizeLoop36Result::MlTemporaryAcceptJavaScriptClosedClassCollectionSizeLoop36Done => {
+                            false
+                        }
+                        self::MlTemporaryAcceptJavaScriptClosedClassCollectionSizeLoop36Result::MlTemporaryAcceptJavaScriptClosedClassCollectionSizeLoop36Return(source_ml_temporary_result36) => {
+                            source_ml_temporary_result36
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_closed_class_observation_error(
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
@@ -320,30 +364,30 @@ pub fn read_java_script_closed_class_observation_error(
         {
             let methods = Vec::<self::ml_string::Text>::new();
             {
-                let source_ml_temporary_values35 = directory.to_vec();
+                let source_ml_temporary_values37 = directory.to_vec();
                 {
-                    let source_ml_temporary_index35 = self::ml::Big::from_i128(0);
+                    let source_ml_temporary_index37 = self::ml::Big::from_i128(0);
                     {
-                        let source_ml_source1_s28 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop37(values, names, methods, &(source_ml_temporary_values35), source_ml_temporary_index35);
-                        match source_ml_source1_s28 {
-                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Done(names_2, methods_2) => {
+                        let source_ml_source1_s29 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop39(values, names, methods, &(source_ml_temporary_values37), source_ml_temporary_index37);
+                        match source_ml_source1_s29 {
+                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop39Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop39Done(names_2, methods_2) => {
                                 {
                                     let at = 0f64;
                                     {
-                                        let source_ml_source1_s29 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop38(values, kinds, directory, static_calls, &(names_2), &(methods_2), at);
-                                        match source_ml_source1_s29 {
-                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Done => {
+                                        let source_ml_source1_s30 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop40(values, kinds, directory, static_calls, &(names_2), &(methods_2), at);
+                                        match source_ml_source1_s30 {
+                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop40Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop40Done => {
                                                 -1f64
                                             }
-                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop38Return(source_ml_temporary_result38) => {
-                                                source_ml_temporary_result38
+                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop40Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop40Return(source_ml_temporary_result40) => {
+                                                source_ml_temporary_result40
                                             }
                                         }
                                     }
                                 }
                             }
-                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop37Return(source_ml_temporary_result40) => {
-                                source_ml_temporary_result40
+                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop39Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop39Return(source_ml_temporary_result42) => {
+                                source_ml_temporary_result42
                             }
                         }
                     }
@@ -387,9 +431,9 @@ pub fn render_java_script_closed_class(
                 99, 108, 97, 115, 115, 95, 114, 101, 99, 101, 105, 118, 101, 114, 95,
             ])))
             .concat(&{
-                let source_ml_source1_string_argument30 = ordinal;
+                let source_ml_source1_string_argument31 = ordinal;
                 self::ml_string::Text::from_text(&self::ml_number::js_number(
-                    source_ml_source1_string_argument30,
+                    source_ml_source1_string_argument31,
                 ))
             });
             {
@@ -397,9 +441,9 @@ pub fn render_java_script_closed_class(
                     99, 108, 97, 115, 115, 95, 105, 100, 101, 110, 116, 105, 116, 121, 95,
                 ])))
                 .concat(&{
-                    let source_ml_source1_string_argument31 = ordinal;
+                    let source_ml_source1_string_argument32 = ordinal;
                     self::ml_string::Text::from_text(&self::ml_number::js_number(
-                        source_ml_source1_string_argument31,
+                        source_ml_source1_string_argument32,
                     ))
                 });
                 {
@@ -408,9 +452,9 @@ pub fn render_java_script_closed_class(
                         101, 95,
                     ])))
                     .concat(&{
-                        let source_ml_source1_string_argument32 = ordinal;
+                        let source_ml_source1_string_argument33 = ordinal;
                         self::ml_string::Text::from_text(&self::ml_number::js_number(
-                            source_ml_source1_string_argument32,
+                            source_ml_source1_string_argument33,
                         ))
                     });
                     {
@@ -482,17 +526,17 @@ pub fn render_java_script_closed_class(
                                                             {
                                                                 let at = 9f64;
                                                                 {
-                                                                    let source_ml_source1_s33 = self::source_ml_temporary_render_java_script_closed_class_loop43(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, methods, stubs, initializations, constructor_fields, field_names, fields, at);
-                                                                    match source_ml_source1_s33 {
-                                                                        self::MlTemporaryRenderJavaScriptClosedClassLoop43Result::MlTemporaryRenderJavaScriptClosedClassLoop43Done(stubs_2, initializations_2, constructor_fields_2, fields_2) => {
+                                                                    let source_ml_source1_s34 = self::source_ml_temporary_render_java_script_closed_class_loop45(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, methods, stubs, initializations, constructor_fields, field_names, fields, at);
+                                                                    match source_ml_source1_s34 {
+                                                                        self::MlTemporaryRenderJavaScriptClosedClassLoop45Result::MlTemporaryRenderJavaScriptClosedClassLoop45Done(stubs_2, initializations_2, constructor_fields_2, fields_2) => {
                                                                             {
                                                                                 let assignments = self::ml_string::Text::from_units(vec![]);
                                                                                 {
                                                                                     let at_2 = methods;
                                                                                     {
-                                                                                        let source_ml_source1_s34 = self::source_ml_temporary_render_java_script_closed_class_loop44(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, prototype, &(receiver), stubs_2.clone(), fields_2.clone(), assignments, at_2);
-                                                                                        match source_ml_source1_s34 {
-                                                                                            self::MlTemporaryRenderJavaScriptClosedClassLoop44Result::MlTemporaryRenderJavaScriptClosedClassLoop44Done(stubs_3, fields_3, assignments_2) => {
+                                                                                        let source_ml_source1_s35 = self::source_ml_temporary_render_java_script_closed_class_loop46(source, values, starts, ends, row, prefix, ordinal, class_names, static_calls, prototype, &(receiver), stubs_2.clone(), fields_2.clone(), assignments, at_2);
+                                                                                        match source_ml_source1_s35 {
+                                                                                            self::MlTemporaryRenderJavaScriptClosedClassLoop46Result::MlTemporaryRenderJavaScriptClosedClassLoop46Done(stubs_3, fields_3, assignments_2) => {
                                                                                                 {
                                                                                                     let constructor_body = (self::ml_array::optional_at(row, self::ml_array::number_index(5f64))).unwrap_or_else(|| -1f64);
                                                                                                     {
@@ -518,16 +562,16 @@ pub fn render_java_script_closed_class(
                                                                                                                                 self::ml_string::Text::from_units(vec![])
                                                                                                                             } else {
                                                                                                                                 {
-                                                                                                                                    let source_ml_source1_string_range_operand35 = source.clone();
+                                                                                                                                    let source_ml_source1_string_range_operand36 = source.clone();
                                                                                                                                     {
-                                                                                                                                        let source_ml_source1_string_range_operand36 = (self::ml_array::optional_at(ends, self::ml_array::number_index(constructor_name - 1f64))).unwrap_or_else(|| 0f64);
+                                                                                                                                        let source_ml_source1_string_range_operand37 = (self::ml_array::optional_at(ends, self::ml_array::number_index(constructor_name - 1f64))).unwrap_or_else(|| 0f64);
                                                                                                                                         {
-                                                                                                                                            let source_ml_source1_string_range_operand37 = (self::ml_array::optional_at(starts, self::ml_array::number_index(constructor_name))).unwrap_or_else(|| 0f64);
+                                                                                                                                            let source_ml_source1_string_range_operand38 = (self::ml_array::optional_at(starts, self::ml_array::number_index(constructor_name))).unwrap_or_else(|| 0f64);
                                                                                                                                             {
-                                                                                                                                                let source_ml_source1_string_range_position38 = source_ml_source1_string_range_operand36;
+                                                                                                                                                let source_ml_source1_string_range_position39 = source_ml_source1_string_range_operand37;
                                                                                                                                                 {
-                                                                                                                                                    let source_ml_source1_string_range_position39 = source_ml_source1_string_range_operand37;
-                                                                                                                                                    source_ml_source1_string_range_operand35.slice(source_ml_source1_string_range_position38, source_ml_source1_string_range_position39)
+                                                                                                                                                    let source_ml_source1_string_range_position40 = source_ml_source1_string_range_operand38;
+                                                                                                                                                    source_ml_source1_string_range_operand36.slice(source_ml_source1_string_range_position39, source_ml_source1_string_range_position40)
                                                                                                                                                 }
                                                                                                                                             }
                                                                                                                                         }
@@ -576,23 +620,23 @@ pub fn require_java_script_closed_class_prototype_methods(
     {
         let names = Vec::<self::ml_string::Text>::new();
         {
-            let source_ml_temporary_values47 = directory.to_vec();
+            let source_ml_temporary_values49 = directory.to_vec();
             {
-                let source_ml_temporary_index47 = self::ml::Big::from_i128(0);
+                let source_ml_temporary_index49 = self::ml::Big::from_i128(0);
                 {
-                    let names_2 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop49(values, names, &(source_ml_temporary_values47), source_ml_temporary_index47);
+                    let names_2 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop51(values, names, &(source_ml_temporary_values49), source_ml_temporary_index49);
                     {
-                        let source_ml_temporary_values48 = directory.to_vec();
+                        let source_ml_temporary_values50 = directory.to_vec();
                         {
-                            let source_ml_temporary_index48 = self::ml::Big::from_i128(0);
+                            let source_ml_temporary_index50 = self::ml::Big::from_i128(0);
                             {
-                                let source_ml_source1_s40 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop50(values, &(names_2), &(source_ml_temporary_values48), source_ml_temporary_index48);
-                                match source_ml_source1_s40 {
-                                    self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Done => {
+                                let source_ml_source1_s41 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop52(values, &(names_2), &(source_ml_temporary_values50), source_ml_temporary_index50);
+                                match source_ml_source1_s41 {
+                                    self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Done => {
                                         false
                                     }
-                                    self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Return(source_ml_temporary_result50) => {
-                                        source_ml_temporary_result50
+                                    self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Return(source_ml_temporary_result52) => {
+                                        source_ml_temporary_result52
                                     }
                                 }
                             }
@@ -621,13 +665,13 @@ pub fn read_java_script_closed_class_method_target(
                 {
                     let at = 0f64;
                     {
-                        let source_ml_source1_s41 = self::source_ml_temporary_read_java_script_closed_class_method_target_loop53(methods, receiver_fields, method, target, at);
-                        match source_ml_source1_s41 {
-                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Done(target_2) => {
+                        let source_ml_source1_s42 = self::source_ml_temporary_read_java_script_closed_class_method_target_loop56(methods, receiver_fields, method, target, at);
+                        match source_ml_source1_s42 {
+                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Done(target_2) => {
                             target_2
                         }
-                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Return(source_ml_temporary_result53) => {
-                            source_ml_temporary_result53
+                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Return(source_ml_temporary_result56) => {
+                            source_ml_temporary_result56
                         }
                     }
                     }
@@ -649,20 +693,20 @@ pub fn accept_java_script_closed_class_method_definition(
 ) -> bool {
     {
         let marker = {
-            let source_ml_source1_string_search_operand42 = brand.clone();
+            let source_ml_source1_string_search_operand43 = brand.clone();
             {
-                let source_ml_source1_string_search_operand43 =
+                let source_ml_source1_string_search_operand44 =
                     self::ml_string::Text::from_units(vec![
                         99, 108, 97, 115, 115, 95, 105, 100, 101, 110, 116, 105, 116, 121, 95,
                     ]);
                 {
-                    let source_ml_source1_string_search_text44 =
-                        source_ml_source1_string_search_operand43;
+                    let source_ml_source1_string_search_text45 =
+                        source_ml_source1_string_search_operand44;
                     {
-                        let source_ml_source1_string_search_position45 = f64::NAN;
-                        source_ml_source1_string_search_operand42.last_index_of(
-                            &source_ml_source1_string_search_text44,
-                            source_ml_source1_string_search_position45,
+                        let source_ml_source1_string_search_position46 = f64::NAN;
+                        source_ml_source1_string_search_operand43.last_index_of(
+                            &source_ml_source1_string_search_text45,
+                            source_ml_source1_string_search_position46,
                         )
                     }
                 }
@@ -673,20 +717,20 @@ pub fn accept_java_script_closed_class_method_definition(
         } else {
             {
                 let prefix = {
-                    let source_ml_source1_string_range_operand46 = brand.clone();
+                    let source_ml_source1_string_range_operand47 = brand.clone();
                     {
-                        let source_ml_source1_string_range_operand47 = 0f64;
+                        let source_ml_source1_string_range_operand48 = 0f64;
                         {
-                            let source_ml_source1_string_range_operand48 = marker;
+                            let source_ml_source1_string_range_operand49 = marker;
                             {
-                                let source_ml_source1_string_range_position49 =
-                                    source_ml_source1_string_range_operand47;
+                                let source_ml_source1_string_range_position50 =
+                                    source_ml_source1_string_range_operand48;
                                 {
-                                    let source_ml_source1_string_range_position50 =
-                                        source_ml_source1_string_range_operand48;
-                                    source_ml_source1_string_range_operand46.slice(
-                                        source_ml_source1_string_range_position49,
+                                    let source_ml_source1_string_range_position51 =
+                                        source_ml_source1_string_range_operand49;
+                                    source_ml_source1_string_range_operand47.slice(
                                         source_ml_source1_string_range_position50,
+                                        source_ml_source1_string_range_position51,
                                     )
                                 }
                             }
@@ -695,17 +739,17 @@ pub fn accept_java_script_closed_class_method_definition(
                 };
                 {
                     let ordinal = {
-                        let source_ml_source1_string_range_operand51 = brand.clone();
+                        let source_ml_source1_string_range_operand52 = brand.clone();
                         {
-                            let source_ml_source1_string_range_operand52 = marker + 15f64;
+                            let source_ml_source1_string_range_operand53 = marker + 15f64;
                             {
-                                let source_ml_source1_string_range_position53 =
-                                    source_ml_source1_string_range_operand52;
+                                let source_ml_source1_string_range_position54 =
+                                    source_ml_source1_string_range_operand53;
                                 {
-                                    let source_ml_source1_string_range_position54 = f64::INFINITY;
-                                    source_ml_source1_string_range_operand51.slice(
-                                        source_ml_source1_string_range_position53,
+                                    let source_ml_source1_string_range_position55 = f64::INFINITY;
+                                    source_ml_source1_string_range_operand52.slice(
                                         source_ml_source1_string_range_position54,
+                                        source_ml_source1_string_range_position55,
                                     )
                                 }
                             }
@@ -769,9 +813,9 @@ pub fn read_java_script_closed_class_owner_row(row: &[self::ml_string::Text]) ->
                 if (((((((!(self::ml_math::is_safe_integer(fields)) || (fields < 0f64))
                     || (fields > 8192f64))
                     || (({
-                        let source_ml_source1_string_argument56 = fields;
+                        let source_ml_source1_string_argument57 = fields;
                         self::ml_string::Text::from_text(&self::ml_number::js_number(
-                            source_ml_source1_string_argument56,
+                            source_ml_source1_string_argument57,
                         ))
                     }) != ((self::ml_array::optional_at(
                         row,
@@ -782,9 +826,9 @@ pub fn read_java_script_closed_class_owner_row(row: &[self::ml_string::Text]) ->
                     || (methods < 0f64))
                     || (methods > 8192f64))
                     || (({
-                        let source_ml_source1_string_argument58 = methods;
+                        let source_ml_source1_string_argument59 = methods;
                         self::ml_string::Text::from_text(&self::ml_number::js_number(
-                            source_ml_source1_string_argument58,
+                            source_ml_source1_string_argument59,
                         ))
                     }) != ((self::ml_array::optional_at(
                         row,

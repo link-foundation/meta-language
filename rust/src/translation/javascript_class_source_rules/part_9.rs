@@ -1,7 +1,7 @@
 // Generated from complete js/src/translation/javascript-class-source-rules.js. Do not edit by hand.
-use super::MlTemporaryRenderJavaScriptClosedClassJoin45;
-use super::MlTemporaryRenderJavaScriptClosedClassJoin46;
-use super::MlTemporaryRenderJavaScriptClosedClassLoop43Result;
+use super::MlTemporaryRenderJavaScriptClosedClassJoin47;
+use super::MlTemporaryRenderJavaScriptClosedClassJoin48;
+use super::MlTemporaryRenderJavaScriptClosedClassLoop45Result;
 use super::ml;
 use super::ml_array;
 use super::ml_number;
@@ -17,7 +17,7 @@ use super::render_java_script_closed_class_range;
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn source_ml_temporary_render_java_script_closed_class_loop43(
+pub fn source_ml_temporary_render_java_script_closed_class_loop45(
     source: &self::ml_string::Text,
     values: &[self::ml_string::Text],
     starts: &[f64],
@@ -34,7 +34,7 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
     mut field_names: Vec<self::ml_string::Text>,
     mut fields: self::ml_string::Text,
     mut at: f64,
-) -> self::MlTemporaryRenderJavaScriptClosedClassLoop43Result {
+) -> self::MlTemporaryRenderJavaScriptClosedClassLoop45Result {
     loop {
         return if at < methods {
             {
@@ -87,7 +87,7 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
                             )
                         };
                         {
-                            let source_ml_source1_s248 = if position < 0f64 {
+                            let source_ml_source1_s249 = if position < 0f64 {
                                 {
                                     let initializer = (((prefix.concat(
                                         &self::ml_string::Text::from_units(vec![
@@ -96,19 +96,19 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
                                         ]),
                                     ))
                                     .concat(&{
-                                        let source_ml_source1_string_argument249 = ordinal;
+                                        let source_ml_source1_string_argument250 = ordinal;
                                         self::ml_string::Text::from_text(
                                             &self::ml_number::js_number(
-                                                source_ml_source1_string_argument249,
+                                                source_ml_source1_string_argument250,
                                             ),
                                         )
                                     }))
                                     .concat(&self::ml_string::Text::from_units(vec![95])))
                                     .concat(&{
-                                        let source_ml_source1_string_argument250 = at;
+                                        let source_ml_source1_string_argument251 = at;
                                         self::ml_string::Text::from_text(
                                             &self::ml_number::js_number(
-                                                source_ml_source1_string_argument250,
+                                                source_ml_source1_string_argument251,
                                             ),
                                         )
                                     });
@@ -120,34 +120,34 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
                                             ]),
                                         ))
                                         .concat(&{
-                                            let source_ml_source1_string_argument251 = ordinal;
-                                            self::ml_string::Text::from_text(
-                                                &self::ml_number::js_number(
-                                                    source_ml_source1_string_argument251,
-                                                ),
-                                            )
-                                        }))
-                                        .concat(&self::ml_string::Text::from_units(vec![95])))
-                                        .concat(&{
-                                            let source_ml_source1_string_argument252 = at;
+                                            let source_ml_source1_string_argument252 = ordinal;
                                             self::ml_string::Text::from_text(
                                                 &self::ml_number::js_number(
                                                     source_ml_source1_string_argument252,
                                                 ),
                                             )
+                                        }))
+                                        .concat(&self::ml_string::Text::from_units(vec![95])))
+                                        .concat(&{
+                                            let source_ml_source1_string_argument253 = at;
+                                            self::ml_string::Text::from_text(
+                                                &self::ml_number::js_number(
+                                                    source_ml_source1_string_argument253,
+                                                ),
+                                            )
                                         });
                                         {
                                             let documentation = self::render_java_script_closed_class_field_documentation(&({
-                                                let source_ml_source1_string_range_operand253 = source.clone();
+                                                let source_ml_source1_string_range_operand254 = source.clone();
                                                 {
-                                                    let source_ml_source1_string_range_operand254 = (self::ml_array::optional_at(ends, self::ml_array::number_index((-position) - 2f64))).unwrap_or_else(|| 0f64);
+                                                    let source_ml_source1_string_range_operand255 = (self::ml_array::optional_at(ends, self::ml_array::number_index((-position) - 2f64))).unwrap_or_else(|| 0f64);
                                                     {
-                                                        let source_ml_source1_string_range_operand255 = (self::ml_array::optional_at(starts, self::ml_array::number_index((-position) - 1f64))).unwrap_or_else(|| 0f64);
+                                                        let source_ml_source1_string_range_operand256 = (self::ml_array::optional_at(starts, self::ml_array::number_index((-position) - 1f64))).unwrap_or_else(|| 0f64);
                                                         {
-                                                            let source_ml_source1_string_range_position256 = source_ml_source1_string_range_operand254;
+                                                            let source_ml_source1_string_range_position257 = source_ml_source1_string_range_operand255;
                                                             {
-                                                                let source_ml_source1_string_range_position257 = source_ml_source1_string_range_operand255;
-                                                                source_ml_source1_string_range_operand253.slice(source_ml_source1_string_range_position256, source_ml_source1_string_range_position257)
+                                                                let source_ml_source1_string_range_position258 = source_ml_source1_string_range_operand256;
+                                                                source_ml_source1_string_range_operand254.slice(source_ml_source1_string_range_position257, source_ml_source1_string_range_position258)
                                                             }
                                                         }
                                                     }
@@ -202,16 +202,16 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
                                                             if assigned >= 0f64 {
                                                                 {
                                                                     let value_3 = (((prefix.concat(&self::ml_string::Text::from_units(vec![99, 108, 97, 115, 115, 95, 97, 115, 115, 105, 103, 110, 101, 100, 95, 102, 105, 101, 108, 100, 95, 118, 97, 108, 117, 101, 95]))).concat(&{
-                                                                        let source_ml_source1_string_argument258 = ordinal;
-                                                                        self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument258))
-                                                                    })).concat(&self::ml_string::Text::from_units(vec![95]))).concat(&{
-                                                                        let source_ml_source1_string_argument259 = assigned;
+                                                                        let source_ml_source1_string_argument259 = ordinal;
                                                                         self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument259))
+                                                                    })).concat(&self::ml_string::Text::from_units(vec![95]))).concat(&{
+                                                                        let source_ml_source1_string_argument260 = assigned;
+                                                                        self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument260))
                                                                     });
-                                                                    self::MlTemporaryRenderJavaScriptClosedClassJoin45::MlTemporaryRenderJavaScriptClosedClassJoin45Next(stubs_2.clone(), initializations_2.clone(), value_3)
+                                                                    self::MlTemporaryRenderJavaScriptClosedClassJoin47::MlTemporaryRenderJavaScriptClosedClassJoin47Next(stubs_2.clone(), initializations_2.clone(), value_3)
                                                                 }
                                                             } else {
-                                                                self::MlTemporaryRenderJavaScriptClosedClassJoin45::MlTemporaryRenderJavaScriptClosedClassJoin45Next(stubs_2.clone(), initializations_2.clone(), value_2)
+                                                                self::MlTemporaryRenderJavaScriptClosedClassJoin47::MlTemporaryRenderJavaScriptClosedClassJoin47Next(stubs_2.clone(), initializations_2.clone(), value_2)
                                                             }
                                                         }
                                                     }
@@ -221,33 +221,33 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
                                     }
                                 }
                             } else {
-                                self::MlTemporaryRenderJavaScriptClosedClassJoin45::MlTemporaryRenderJavaScriptClosedClassJoin45Next(stubs.clone(), initializations.clone(), value.clone())
+                                self::MlTemporaryRenderJavaScriptClosedClassJoin47::MlTemporaryRenderJavaScriptClosedClassJoin47Next(stubs.clone(), initializations.clone(), value.clone())
                             };
-                            match source_ml_source1_s248 {
-                                self::MlTemporaryRenderJavaScriptClosedClassJoin45::MlTemporaryRenderJavaScriptClosedClassJoin45Next(stubs_3, initializations_3, value_4) => {
+                            match source_ml_source1_s249 {
+                                self::MlTemporaryRenderJavaScriptClosedClassJoin47::MlTemporaryRenderJavaScriptClosedClassJoin47Next(stubs_3, initializations_3, value_4) => {
                                     {
-                                        let source_ml_source1_s262 = if position >= 0f64 {
+                                        let source_ml_source1_s263 = if position >= 0f64 {
                                             {
                                                 let capture_2 = (((prefix.concat(&self::ml_string::Text::from_units(vec![99, 108, 97, 115, 115, 95, 97, 115, 115, 105, 103, 110, 101, 100, 95, 102, 105, 101, 108, 100, 95, 118, 97, 108, 117, 101, 95]))).concat(&{
-                                                    let source_ml_source1_string_argument263 = ordinal;
-                                                    self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument263))
-                                                })).concat(&self::ml_string::Text::from_units(vec![95]))).concat(&{
-                                                    let source_ml_source1_string_argument264 = at;
+                                                    let source_ml_source1_string_argument264 = ordinal;
                                                     self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument264))
+                                                })).concat(&self::ml_string::Text::from_units(vec![95]))).concat(&{
+                                                    let source_ml_source1_string_argument265 = at;
+                                                    self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument265))
                                                 });
                                                 {
                                                     let constructor_fields_2 = constructor_fields.concat(&((((self::ml_string::Text::from_units(vec![99, 111, 110, 115, 116, 32])).concat(&capture_2)).concat(&self::ml_string::Text::from_units(vec![32, 61, 32, 40]))).concat(&value_4)).concat(&self::ml_string::Text::from_units(vec![41, 59, 10])));
                                                     {
                                                         let value_5 = capture_2.clone();
-                                                        self::MlTemporaryRenderJavaScriptClosedClassJoin46::MlTemporaryRenderJavaScriptClosedClassJoin46Next(constructor_fields_2, value_5)
+                                                        self::MlTemporaryRenderJavaScriptClosedClassJoin48::MlTemporaryRenderJavaScriptClosedClassJoin48Next(constructor_fields_2, value_5)
                                                     }
                                                 }
                                             }
                                         } else {
-                                            self::MlTemporaryRenderJavaScriptClosedClassJoin46::MlTemporaryRenderJavaScriptClosedClassJoin46Next(constructor_fields.clone(), value_4.clone())
+                                            self::MlTemporaryRenderJavaScriptClosedClassJoin48::MlTemporaryRenderJavaScriptClosedClassJoin48Next(constructor_fields.clone(), value_4.clone())
                                         };
-                                        match source_ml_source1_s262 {
-                                            self::MlTemporaryRenderJavaScriptClosedClassJoin46::MlTemporaryRenderJavaScriptClosedClassJoin46Next(constructor_fields_3, value_6) => {
+                                        match source_ml_source1_s263 {
+                                            self::MlTemporaryRenderJavaScriptClosedClassJoin48::MlTemporaryRenderJavaScriptClosedClassJoin48Next(constructor_fields_3, value_6) => {
                                                 if self::ml_array::includes(&field_names, &field.clone(), 0f64, false, |a, b| a == b) {
                                                     {
                                                         let at_2 = at + 3f64;
@@ -260,10 +260,10 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
 {
                                                     {
                                                         let field_names_2 = {
-                                                            let source_ml_source1_concat_value265 = field_names;
+                                                            let source_ml_source1_concat_value266 = field_names;
                                                             {
-                                                                let source_ml_source1_concat_value266 = vec![field.clone()];
-                                                                self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value265), source_ml_source1_concat_value266)
+                                                                let source_ml_source1_concat_value267 = vec![field.clone()];
+                                                                self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value266), source_ml_source1_concat_value267)
                                                             }
                                                         };
                                                         {
@@ -288,33 +288,33 @@ pub fn source_ml_temporary_render_java_script_closed_class_loop43(
                 }
             }
         } else {
-            self::MlTemporaryRenderJavaScriptClosedClassLoop43Result::MlTemporaryRenderJavaScriptClosedClassLoop43Done(stubs.clone(), initializations.clone(), constructor_fields.clone(), fields.clone())
+            self::MlTemporaryRenderJavaScriptClosedClassLoop45Result::MlTemporaryRenderJavaScriptClosedClassLoop45Done(stubs.clone(), initializations.clone(), constructor_fields.clone(), fields.clone())
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop49(
+pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop51(
     values: &[self::ml_string::Text],
     mut names: Vec<self::ml_string::Text>,
-    source_ml_temporary_values47: &[Vec<f64>],
-    mut source_ml_temporary_index47: self::ml::Big,
+    source_ml_temporary_values49: &[Vec<f64>],
+    mut source_ml_temporary_index49: self::ml::Big,
 ) -> Vec<self::ml_string::Text> {
     loop {
-        if source_ml_temporary_index47
-            < (self::ml::Big::from_u128(source_ml_temporary_values47.len() as u128))
+        if source_ml_temporary_index49
+            < (self::ml::Big::from_u128(source_ml_temporary_values49.len() as u128))
         {
             {
                 let row = self::ml_array::at(
-                    source_ml_temporary_values47,
-                    source_ml_temporary_index47.to_index(),
+                    source_ml_temporary_values49,
+                    source_ml_temporary_index49.to_index(),
                 );
                 {
                     let names_2 = {
-                        let source_ml_source1_concat_value267 = names;
+                        let source_ml_source1_concat_value268 = names;
                         {
-                            let source_ml_source1_concat_value268 = vec![
+                            let source_ml_source1_concat_value269 = vec![
                                 (self::ml_array::optional_at(
                                     values,
                                     self::ml_array::number_index(
@@ -331,18 +331,18 @@ pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_lo
                             self::ml_array::append(
                                 self::ml_array::append(
                                     Vec::<self::ml_string::Text>::new(),
-                                    source_ml_source1_concat_value267,
+                                    source_ml_source1_concat_value268,
                                 ),
-                                source_ml_source1_concat_value268,
+                                source_ml_source1_concat_value269,
                             )
                         }
                     };
                     {
-                        let source_ml_temporary_index47_2 =
-                            source_ml_temporary_index47.add(&self::ml::Big::from_i128(1));
+                        let source_ml_temporary_index49_2 =
+                            source_ml_temporary_index49.add(&self::ml::Big::from_i128(1));
                         {
-                            (names, source_ml_temporary_index47) =
-                                (names_2, source_ml_temporary_index47_2);
+                            (names, source_ml_temporary_index49) =
+                                (names_2, source_ml_temporary_index49_2);
                             continue;
                         }
                     }
@@ -354,32 +354,32 @@ pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_lo
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result {
-    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Done,
-    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Return(bool),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Result {
-    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Done,
-    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Return(bool),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result {
     MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Done,
     MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Return(bool),
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Result {
+    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Done,
+    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Return(bool),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Result {
+    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Done,
+    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Return(bool),
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop52(
+pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop55(
     values: &[self::ml_string::Text],
     names: &[self::ml_string::Text],
     row: &[f64],
     mut method: f64,
     mut at: f64,
-) -> self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result {
+) -> self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Result {
     loop {
         return if at
             < ((self::ml_array::optional_at(row, self::ml_array::number_index(method + 4f64)))
@@ -403,7 +403,7 @@ pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_lo
                 .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
                     == (self::ml_string::Text::from_units(vec![40])))
             {
-                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Return(true)
+                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Return(true)
             } else {
                 {
                     let at_2 = at + 1f64;
@@ -414,19 +414,58 @@ pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_lo
                 }
             }
         } else {
-            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Done
+            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Result {
+    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Done,
+    MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop54(
+    values: &[self::ml_string::Text],
+    row: &[f64],
+    mut method: f64,
+    mut at: f64,
+) -> self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Result {
+    loop {
+        return if at
+            < ((self::ml_array::optional_at(row, self::ml_array::number_index(method + 2f64)))
+                .unwrap_or_else(|| 0f64))
+        {
+            if ((self::ml_array::optional_at(values, self::ml_array::number_index(at)))
+                .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
+                == (self::ml_string::Text::from_units(vec![61]))
+            {
+                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Return(true)
+            } else {
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop51(
+pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop53(
     values: &[self::ml_string::Text],
     names: &[self::ml_string::Text],
     row: &[f64],
     mut method: f64,
-) -> self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Result {
+) -> self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Result {
     loop {
         return if method < (row.len() as f64) {
             if ((self::ml_array::optional_at(row, self::ml_array::number_index(method)))
@@ -436,24 +475,37 @@ pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_lo
                 {
                     let at = (self::ml_array::optional_at(
                         row,
-                        self::ml_array::number_index(method + 3f64),
+                        self::ml_array::number_index(method + 1f64),
                     ))
                     .unwrap_or_else(|| 0f64)
                         + 1f64;
                     {
-                        let source_ml_source1_s269 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop52(values, names, row, method, at);
-                        match source_ml_source1_s269 {
-                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Done => {
+                        let source_ml_source1_s270 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop54(values, row, method, at);
+                        match source_ml_source1_s270 {
+                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Done => {
                                 {
-                                    let method_2 = method + 5f64;
+                                    let at_2 = (self::ml_array::optional_at(row, self::ml_array::number_index(method + 3f64))).unwrap_or_else(|| 0f64) + 1f64;
                                     {
-                                        method = method_2;
-                                        continue;
+                                        let source_ml_source1_s271 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop55(values, names, row, method, at_2);
+                                        match source_ml_source1_s271 {
+                                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Done => {
+                                                {
+                                                    let method_2 = method + 5f64;
+                                                    {
+                                                        method = method_2;
+                                                        continue;
+                                                    }
+                                                }
+                                            }
+                                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop55Return(source_ml_temporary_result55) => {
+                                                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Return(source_ml_temporary_result55)
+                                            }
+                                        }
                                     }
                                 }
                             }
-                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Return(source_ml_temporary_result52) => {
-                                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Return(source_ml_temporary_result52)
+                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop54Return(source_ml_temporary_result55_2) => {
+                                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Return(source_ml_temporary_result55_2)
                             }
                         }
                     }
@@ -468,27 +520,27 @@ pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_lo
                 }
             }
         } else {
-            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Done
+            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop50(
+pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_loop52(
     values: &[self::ml_string::Text],
     names: &[self::ml_string::Text],
-    source_ml_temporary_values48: &[Vec<f64>],
-    mut source_ml_temporary_index48: self::ml::Big,
-) -> self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result {
+    source_ml_temporary_values50: &[Vec<f64>],
+    mut source_ml_temporary_index50: self::ml::Big,
+) -> self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result {
     loop {
-        return if source_ml_temporary_index48
-            < (self::ml::Big::from_u128(source_ml_temporary_values48.len() as u128))
+        return if source_ml_temporary_index50
+            < (self::ml::Big::from_u128(source_ml_temporary_values50.len() as u128))
         {
             {
                 let row = self::ml_array::at(
-                    source_ml_temporary_values48,
-                    source_ml_temporary_index48.to_index(),
+                    source_ml_temporary_values50,
+                    source_ml_temporary_index50.to_index(),
                 );
                 {
                     let method = 9f64
@@ -499,45 +551,45 @@ pub fn source_ml_temporary_require_java_script_closed_class_prototype_methods_lo
                             ))
                             .unwrap_or_else(|| 0f64));
                     {
-                        let source_ml_source1_s270 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop51(values, names, &(row), method);
-                        match source_ml_source1_s270 {
-                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Done => {
+                        let source_ml_source1_s272 = self::source_ml_temporary_require_java_script_closed_class_prototype_methods_loop53(values, names, &(row), method);
+                        match source_ml_source1_s272 {
+                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Done => {
                                 {
-                                    let source_ml_temporary_index48_2 = source_ml_temporary_index48.add(&self::ml::Big::from_i128(1));
+                                    let source_ml_temporary_index50_2 = source_ml_temporary_index50.add(&self::ml::Big::from_i128(1));
                                     {
-                                        source_ml_temporary_index48 = source_ml_temporary_index48_2;
+                                        source_ml_temporary_index50 = source_ml_temporary_index50_2;
                                         continue;
                                     }
                                 }
                             }
-                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop51Return(source_ml_temporary_result51) => {
-                                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Return(source_ml_temporary_result51)
+                            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop53Return(source_ml_temporary_result53) => {
+                                self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Return(source_ml_temporary_result53)
                             }
                         }
                     }
                 }
             }
         } else {
-            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop50Done
+            self::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Result::MlTemporaryRequireJavaScriptClosedClassPrototypeMethodsLoop52Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result {
-    MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Done(self::ml_string::Text),
-    MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Return(self::ml_string::Text),
+pub enum MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result {
+    MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Done(self::ml_string::Text),
+    MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Return(self::ml_string::Text),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_closed_class_method_target_loop53(
+pub fn source_ml_temporary_read_java_script_closed_class_method_target_loop56(
     methods: &[self::ml_string::Text],
     receiver_fields: &[self::ml_string::Text],
     method: &self::ml_string::Text,
     mut target: self::ml_string::Text,
     mut at: f64,
-) -> self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result {
+) -> self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result {
     loop {
         return if at < (methods.len() as f64) {
             if self::ml_array::includes(
@@ -558,7 +610,7 @@ pub fn source_ml_temporary_read_java_script_closed_class_method_target_loop53(
                     let ml_library_inequality_1 =
                         target != (self::ml_string::Text::from_units(vec![]));
                     if ml_library_inequality_1 {
-                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Return(self::ml_string::Text::from_units(vec![]))
+                        self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Return(self::ml_string::Text::from_units(vec![]))
                     } else {
                         {
                             let target_2 = (self::ml_array::optional_at(
@@ -586,14 +638,14 @@ pub fn source_ml_temporary_read_java_script_closed_class_method_target_loop53(
                 }
             }
         } else {
-            self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop53Done(target.clone())
+            self::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Result::MlTemporaryReadJavaScriptClosedClassMethodTargetLoop56Done(target.clone())
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_lower_java_script_closed_class_source_loop55(
+pub fn source_ml_temporary_lower_java_script_closed_class_source_loop58(
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
     mut syntax: Vec<self::ml_string::Text>,
@@ -603,9 +655,9 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop55(
         if at < (values.len() as f64) {
             {
                 let syntax_2 = {
-                    let source_ml_source1_concat_value271 = syntax;
+                    let source_ml_source1_concat_value273 = syntax;
                     {
-                        let source_ml_source1_concat_value272 =
+                        let source_ml_source1_concat_value274 =
                             vec![if (((self::ml_array::optional_at(
                                 kinds,
                                 self::ml_array::number_index(at),
@@ -640,9 +692,9 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop55(
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<self::ml_string::Text>::new(),
-                                source_ml_source1_concat_value271,
+                                source_ml_source1_concat_value273,
                             ),
-                            source_ml_source1_concat_value272,
+                            source_ml_source1_concat_value274,
                         )
                     }
                 };
@@ -661,7 +713,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop55(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_lower_java_script_closed_class_source_loop61(
+pub fn source_ml_temporary_lower_java_script_closed_class_source_loop64(
     values: &[self::ml_string::Text],
     starts: &[f64],
     mut previous: f64,
@@ -686,8 +738,8 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop61(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryLowerJavaScriptClosedClassSourceLoop60Result {
-    MlTemporaryLowerJavaScriptClosedClassSourceLoop60Done(
+pub enum MlTemporaryLowerJavaScriptClosedClassSourceLoop63Result {
+    MlTemporaryLowerJavaScriptClosedClassSourceLoop63Done(
         self::ml_string::Text,
         Vec<f64>,
         f64,
@@ -700,7 +752,7 @@ pub enum MlTemporaryLowerJavaScriptClosedClassSourceLoop60Result {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_lower_java_script_closed_class_source_loop62(
+pub fn source_ml_temporary_lower_java_script_closed_class_source_loop65(
     values: &[self::ml_string::Text],
     prefix: &self::ml_string::Text,
     mut ordinal: f64,
@@ -717,9 +769,9 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop62(
             {
                 {
                     let prototype_methods_2 = {
-                        let source_ml_source1_concat_value275 = prototype_methods;
+                        let source_ml_source1_concat_value277 = prototype_methods;
                         {
-                            let source_ml_source1_concat_value276 = vec![
+                            let source_ml_source1_concat_value278 = vec![
                                 brand.clone(),
                                 (self::ml_array::optional_at(
                                     values,
@@ -736,25 +788,25 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop62(
                                     99, 108, 97, 115, 115, 95, 109, 101, 116, 104, 111, 100, 95,
                                 ])))
                                 .concat(&{
-                                    let source_ml_source1_string_argument273 = ordinal;
+                                    let source_ml_source1_string_argument275 = ordinal;
                                     self::ml_string::Text::from_text(&self::ml_number::js_number(
-                                        source_ml_source1_string_argument273,
+                                        source_ml_source1_string_argument275,
                                     ))
                                 }))
                                 .concat(&self::ml_string::Text::from_units(vec![95])))
                                 .concat(&{
-                                    let source_ml_source1_string_argument274 = method;
+                                    let source_ml_source1_string_argument276 = method;
                                     self::ml_string::Text::from_text(&self::ml_number::js_number(
-                                        source_ml_source1_string_argument274,
+                                        source_ml_source1_string_argument276,
                                     ))
                                 }),
                             ];
                             self::ml_array::append(
                                 self::ml_array::append(
                                     Vec::<self::ml_string::Text>::new(),
-                                    source_ml_source1_concat_value275,
+                                    source_ml_source1_concat_value277,
                                 ),
-                                source_ml_source1_concat_value276,
+                                source_ml_source1_concat_value278,
                             )
                         }
                     };
@@ -783,7 +835,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop62(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_lower_java_script_closed_class_source_loop63(
+pub fn source_ml_temporary_lower_java_script_closed_class_source_loop66(
     values: &[self::ml_string::Text],
     mut public_fields: Vec<self::ml_string::Text>,
     row: &[f64],
@@ -803,9 +855,9 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop63(
                         .unwrap_or_else(|| 0f64);
                 {
                     let public_fields_2 = {
-                        let source_ml_source1_concat_value277 = public_fields;
+                        let source_ml_source1_concat_value279 = public_fields;
                         {
-                            let source_ml_source1_concat_value278 = vec![
+                            let source_ml_source1_concat_value280 = vec![
                                 brand.clone(),
                                 (self::ml_array::optional_at(
                                     values,
@@ -820,9 +872,9 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop63(
                             self::ml_array::append(
                                 self::ml_array::append(
                                     Vec::<self::ml_string::Text>::new(),
-                                    source_ml_source1_concat_value277,
+                                    source_ml_source1_concat_value279,
                                 ),
-                                source_ml_source1_concat_value278,
+                                source_ml_source1_concat_value280,
                             )
                         }
                     };
