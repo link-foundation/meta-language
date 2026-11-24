@@ -9,6 +9,7 @@ import {emitRust} from '../js/src/translation/emit-rust.js';
 import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
 import {encodeTypedProgramLinks} from '../js/src/typed-program-links.js';
 const policy=readProjectData(new URL('../js/src/translation/data/rust-const-functions.lino',import.meta.url));
+const refusalHistory=readProjectData(new URL('./rust-const-function-refusal-history.lino',import.meta.url));
 const sha=text=>createHash('sha256').update(text).digest('hex');
 const sources=[
  {commit:'c1e88c8b',revision:'c1e88c8be7d3f8e63cebc49a46bb4d48823ba329',file:'rust/src/translation/rust/owned_local_state_rules.rs',fileSha256:'b36f7104270c568db448ae3b488349228f3ef162c2bcf0620901557691b892ba',names:['accept_rust_owned_local_record_value','accept_rust_owned_local_source_span']},
@@ -69,14 +70,20 @@ const invalidBodies=[
  ['main effect','const fn bad(value:bool)->bool{value}fn main(){println!("x");}'],
 ];
 export function rustConstFunctionFixture(){
- const cases=pinnedRustConstPredicateDefinitions().map(entry=>{
-  const source=entry.definition+'\nfn main(){}',options={constFunctionModel:policy.model};let originalRefusal;
-  try{checkProgram(parseRust(source));}catch(error){originalRefusal={kind:error.kind,reason:error.reason,span:error.span??null};}
-  if(!originalRefusal)throw new Error('the original const qualification refusal changed');
+ const definitions=pinnedRustConstPredicateDefinitions();
+ if(refusalHistory.schemaVersion!==1||refusalHistory.cases.length!==definitions.length)throw new Error('the predecessor const fixture must retain each original refusal');
+ const cases=definitions.map(entry=>{
+  const source=entry.definition+'\nfn main(){}',options={constFunctionModel:policy.model};
+  const history=refusalHistory.cases.find(row=>row.name===entry.name);
+  if(history?.sourceSha256!==sha(source))throw new Error('the original const refusal must retain its complete source '+entry.name);
+  const {originalRefusal}=history;
+  const ordinary=checkProgram(parseRust(source));
+  const ordinaryRustDefinition=emitRust(ordinary).definitions[0];
+  if(ordinary.items[0].sourceConstFunction||!ordinaryRustDefinition.startsWith('pub fn '))throw new Error('the ordinary runtime projection must be independent of the selected const proof');
   const program=checkProgram(parseRust(source,options)),archive=encodeTypedProgramLinks(program),rust=emitRust(program),replaySource=rust.definitions.join('\n\n')+'\nfn main(){}';
   const replay=checkProgram(parseRust(replaySource,options)),again=emitRust(replay);
   if(!rust.definitions.every(definition=>definition.startsWith('pub const fn ')))throw new Error('actual Rust output erased const');
-  return{...entry,source,originalRefusal,proof:program.items[0].sourceConstFunction,signature:program.items[0].sourceSignature,links:archive.network.toLino(),root:Number(archive.root.value),rustDefinition:rust.definitions[0],replaySource,javascript:emitJavaScript(program).text,replayJavaScript:emitJavaScript(replay).text,secondRustDefinition:again.definitions[0]};
+  return{...entry,source,originalRefusal,ordinaryRustDefinition,ordinaryJavaScript:emitJavaScript(ordinary).text,proof:program.items[0].sourceConstFunction,signature:program.items[0].sourceSignature,links:archive.network.toLino(),root:Number(archive.root.value),rustDefinition:rust.definitions[0],replaySource,javascript:emitJavaScript(program).text,replayJavaScript:emitJavaScript(replay).text,secondRustDefinition:again.definitions[0]};
  });
  const invalid=invalidBodies.map(([name,body])=>{
   const source=body.endsWith('fn main(){println!("x");}')?body:body+'fn main(){}';

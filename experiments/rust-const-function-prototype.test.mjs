@@ -22,24 +22,43 @@ import {acceptRustConstFunctionOffset,acceptRustConstFunctionNameCharacter} from
 const fixture=readProjectData(new URL('./rust-const-function-fixture.lino',import.meta.url));
 const loaded=entry=>decodeTypedProgramLinks(LinkNetwork.fromLino(entry.links),entry.root);
 const archive=program=>{const packet=encodeTypedProgramLinks(program);return{network:LinkNetwork.fromLino(packet.network.toLino()),root:packet.root};};
-function observe(code,entry,edited=false){
+function observe(code,entry,edited=false,requireProofGuards=true){
  const context={};vm.runInNewContext(code,context,{timeout:1000});const fn=context[entry.name];assert.equal(typeof fn,'function');
  if(entry.name==='accept_rust_owned_local_record_value')for(const first of[false,true])for(const second of[false,true])assert.equal(fn(first,second),edited?!first&&second:!first||second);
  else if(entry.name==='accept_rust_owned_local_source_span')for(const present of[false,true])for(const record of[false,true])for(const offset of[false,true])assert.equal(fn(present,record,offset),!present||record&&offset);
  else for(const start of[-Infinity,-1,-0,0,1,Infinity,NaN])for(const end of[-Infinity,-1,-0,0,1,Infinity,NaN])assert.equal(fn(start,end),start<=end);
+ if(!requireProofGuards)return;
  const defaults=entry.name==='accept_rust_owned_local_source_span'?[true,true,true]:entry.name==='accept_source_span_interval'?[0,1]:[true,true];
  for(const bad of[undefined,null,{},new Boolean(false),'false',0n]){const args=[...defaults];args[0]=bad;assert.throws(()=>fn(...args),/requires boolean|requires number/u);}
 }
 
-test('three actual styled complete const definitions retain immutable receipts and exact default refusals',()=>{
+test('three actual styled complete const definitions retain immutable receipts and exact predecessor refusals',()=>{
  assert.deepEqual(rustConstFunctionFixture(),fixture);assert.equal(fixture.cases.length,3);
  const actual=pinnedRustConstPredicateDefinitions();
+ const history=readProjectData(new URL('./rust-const-function-refusal-history.lino',import.meta.url));
  for(const[at,entry]of fixture.cases.entries()){
   assert.equal(entry.definition,actual[at].definition);assert.match(entry.definition,/pub const fn /u);assert.equal(createHash('sha256').update(entry.definition).digest('hex'),entry.receipt.sha256);assert.equal(Buffer.byteLength(entry.definition),entry.receipt.bytes);
-  assert.throws(()=>checkProgram(parseRust(entry.source)),error=>{assert.equal(error.kind,entry.originalRefusal.kind);assert.equal(error.reason,entry.originalRefusal.reason);assert.deepEqual(error.span,entry.originalRefusal.span);return true;});
+  const recorded=history.cases[at];assert.equal(recorded.name,entry.name);assert.equal(recorded.sourceSha256,createHash('sha256').update(entry.source).digest('hex'));
+  assert.deepEqual(recorded.originalRefusal,entry.originalRefusal);
+  assert.equal(entry.source.slice(entry.originalRefusal.span.start,entry.originalRefusal.span.end),entry.name);
   const program=loaded(entry),fn=program.items[0];assert.deepEqual(fn.sourceConstFunction,entry.proof);assert.deepEqual(fn.sourceSignature,entry.signature);
   const proof=fn.sourceConstFunction;assert.equal(entry.source.slice(proof.keywordSpan.start,proof.keywordSpan.end),'const');assert.equal(entry.source.slice(proof.functionKeywordSpan.start,proof.functionKeywordSpan.end),'fn');assert.equal(entry.source[proof.bodySpan.start],'{');assert.equal(entry.source[proof.bodySpan.end-1],'}');
   assert.ok(program.items.every(item=>item.sourceConstFunction));
+ }
+});
+
+test('ordinary complete const sources use runtime projection through the public archive',()=>{
+ for(const entry of fixture.cases){
+  const ordinary=checkProgram(parseRust(entry.source));
+  assert.equal(Object.hasOwn(ordinary.items[0],'sourceConstFunction'),false);
+  assert.equal(emitRust(ordinary).definitions[0],entry.ordinaryRustDefinition);
+  assert.equal(emitJavaScript(ordinary).text,entry.ordinaryJavaScript);
+  const packet=createTypedProgramLinks(entry.source,'Rust'),network=LinkNetwork.fromLino(packet.network.toLino());
+  assert.equal(Object.hasOwn(decodeTypedProgramLinks(network,packet.root).items[0],'sourceConstFunction'),false);
+  assert.ok(emitTypedProgramLinks(network,packet.root,'Rust').code.includes(entry.ordinaryRustDefinition));
+  const javascript=emitTypedProgramLinks(network,packet.root,'JavaScript').code;
+  assert.equal(javascript,entry.ordinaryJavaScript);
+  observe(javascript,entry,false,false);
  }
 });
 
@@ -93,7 +112,6 @@ test('the public factory owns its selected model and user provenance across sour
    assert.ok(relations.some(row=>row.parent.equals(profile.child)&&row.label==='rust source signature model'&&reloaded.link(row.child).metadata().definition===signature));
    assert.deepEqual(decodeTypedProgramLinks(reloaded,selected.root).items[0].sourceConstFunction,entry.proof);observe(emitTypedProgramLinks(reloaded,selected.root,'JavaScript').code,entry);
   }
-  assert.throws(()=>createTypedProgramLinks(entry.source,'Rust'),error=>{assert.equal(error.kind,entry.originalRefusal.kind);assert.equal(error.reason,entry.originalRefusal.reason);assert.deepEqual(error.span,entry.originalRefusal.span);return true;});
  }
  assert.throws(()=>createTypedProgramLinks('function simple(){return true;}','JavaScript',{rustConstFunctionModel:fixture.model}),/requires Rust source/u);
  assert.throws(()=>createTypedProgramLinks(fixture.cases[0].source,'Rust',{rustConstFunctionModel:'unknown'}),/const function model/u);
