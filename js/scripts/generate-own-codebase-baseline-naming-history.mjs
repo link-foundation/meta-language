@@ -73,11 +73,13 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'js/tests/support/translation-workflow-history.js',
     'js/tests/test-groups.test.js',
     'js/tests/translation-native-number-retention.test.js',
+    'js/tests/translation-rust-literal-matches.test.js',
     'js/tests/translation-typescript-workflow.test.js',
     'rust/src/self_translation/binding/owned_recursive_emission.rs',
     'rust/src/translation/rust/expressions.rs',
     'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
     'rust/tests/unit/translation_javascript_record_parameters.rs',
+    'rust/tests/unit/translation_rust_literal_matches.rs',
     'rust/tests/unit/translation_surface_reference_analysis.rs',
   ];
   const file='parity/naming/array-identity-historical-inventories.lino';

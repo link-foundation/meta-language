@@ -331,7 +331,9 @@ import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation
 import {structuredDataToLino} from './js/src/structured-data-links.js';
 import {runInNewContext} from 'node:vm';
 const source=process.argv[1],language=process.argv[2],scriptMode=process.argv[3]==='Script';
-const rawOwner=scriptMode?runInNewContext(source+'\n({value:first,error:(()=>{try{second(0);return null;}catch(error){return error.name;}})()});',{}, {timeout:1000}):null;
+const observedOwner=scriptMode?runInNewContext(source+'\n({value:first,error:(()=>{try{second(0);return null;}catch(error){return error.name;}})()});',{}, {timeout:1000}):null;
+// Store observed scalars in a record owned by this bridge's JavaScript realm.
+const rawOwner=observedOwner===null?null:{value:observedOwner.value,error:observedOwner.error};
 process.stdout.write(structuredDataToLino({translation:selfTranslate(source,language,'Rust'),signatures:selfTranslationSignatures(source,language),rawOwner}));
 "#;
     let output = run(Command::new("node").current_dir(root()).args([
