@@ -147,15 +147,38 @@ test('shared pattern planner retains actual token positions and refuses malforme
 });
 
 test('source-free literal edits change actual matching behavior after complete semantic rechecking', () => {
-  const packet = createTypedProgramLinks('fn selected(value:&str)->bool{matches!(value,"π"|"😀")}fn main(){}', 'Rust');
-  const literal = packet.network.links().find(link => link.metadata().definition === 'π');
-  assert.ok(literal);
-  const changed = LinkNetwork.fromLino(packet.network.toLino().split('\n').map(line => line.startsWith('(' + literal.id() + ': ')
-    ? line.replace('(def: %CF%80)', '(def: %CE%B4)') : line).join('\n'));
-  assert.notEqual(changed.toLino(), packet.network.toLino());
-  for (const network of reloads(changed)) {
-    const restored = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, packet.root), { wholeProgram: true });
-    assert.deepEqual(evaluate(emitJavaScript(restored).text, 'selected', ['π', 'δ', '😀', '']), [false, true, true, false]);
+  const repeatedLiteralSource = String.raw`fn provider(value:&str)->&str{value}
+fn selected(value:&str)->bool{matches!(provider(value), | "π" | r#"😀"# | "|" | ")" | ",",)}
+fn bracket(value:&str)->bool{matches![value,"π"|"😀"]}
+fn brace(value:&str)->bool{matches!{value,"π"|"😀"}}
+fn main(){println!("{}",selected("π"));println!("{}",selected("😀"));println!("{}",selected("|"));println!("{}",selected(")"));println!("{}",selected(","));println!("{}",selected("other"));println!("{}",bracket("π"));println!("{}",brace("😀"));}`;
+  const fixtures = [
+    ['fn selected(value:&str)->bool{matches!(value,"π"|"😀")}fn main(){}', []],
+    [repeatedLiteralSource, ['false', 'true', 'true', 'true', 'true', 'false', 'true', 'true']],
+  ];
+  for (const [source, expectedOutput] of fixtures) {
+    const packet = createTypedProgramLinks(source, 'Rust');
+    const fields = packet.network.fieldRelations();
+    const field = (owner, name) => fields.find(({ parent, label }) => parent.equals(owner) && label === name)?.child;
+    // Match the beginning of the pattern in selected, which also has callers that pass π.
+    const patternStart = String(source.indexOf('"π"'));
+    const literals = fields.filter(({ parent, label, child }) => {
+      if (label !== 'value' || packet.network.link(child)?.metadata().definition !== 'π') return false;
+      const span = field(parent, 'source span');
+      const start = span && field(span, 'start');
+      return start && packet.network.link(start)?.metadata().definition === patternStart;
+    });
+    assert.equal(literals.length, 1);
+    const changed = LinkNetwork.fromLino(packet.network.toLino().split('\n').map(line => line.startsWith('(' + literals[0].child + ': ')
+      ? line.replace('(def: %CF%80)', '(def: %CE%B4)') : line).join('\n'));
+    assert.notEqual(changed.toLino(), packet.network.toLino());
+    for (const network of reloads(changed)) {
+      const restored = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, packet.root), { wholeProgram: true });
+      const output = [];
+      const actual = evaluate(emitJavaScript(restored).text, 'selected', ['π', 'δ', '😀', ''], { console: { log: value => output.push(value) } });
+      assert.deepEqual(actual, [false, true, true, false]);
+      assert.deepEqual(output, expectedOutput);
+    }
   }
 });
 

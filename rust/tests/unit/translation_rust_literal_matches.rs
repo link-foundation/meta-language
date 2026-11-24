@@ -5,7 +5,7 @@ use meta_language::translation::check::check_program;
 use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::rust::parse_rust;
 use meta_language::{
-    BinaryLinksOptions, LinkNetwork, ParseConfiguration, create_typed_program_links,
+    BinaryLinksOptions, LinkNetwork, LinkType, ParseConfiguration, create_typed_program_links,
     decode_link_network_binary, decode_typed_program_links, emit_typed_program_links,
     encode_link_network_binary, read_structured_data_lino,
 };
@@ -219,13 +219,45 @@ fn main(){println!("{}",selected("π"));println!("{}",selected("😀"));println!
         false,
     );
     observe(source, expected, true);
-    let literal = packet
+    let fields = packet
         .network
         .links()
-        .find(|link| link.metadata().definition() == Some("π"))
-        .unwrap()
-        .id();
-    let prefix = format!("({literal}: ");
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Field))
+        .filter_map(|link| {
+            let [owner, label, child] = link.references() else {
+                return None;
+            };
+            let name = packet.network.link(*label)?.metadata().term()?;
+            Some((*owner, name, *child))
+        })
+        .collect::<Vec<_>>();
+    let field = |owner, name| {
+        fields
+            .iter()
+            .find(|&&(parent, label, _)| parent == owner && label == name)
+            .map(|&(_, _, child)| child)
+    };
+    // Match the authored pattern in selected, which also has callers that pass π.
+    let pattern = "\"π\" | r#\"😀\"#";
+    let pattern_start = source[..source.find(pattern).unwrap()]
+        .encode_utf16()
+        .count()
+        .to_string();
+    let literals = fields
+        .iter()
+        .filter_map(|&(owner, label, child)| {
+            if label != "value" || packet.network.link(child)?.metadata().definition() != Some("π")
+            {
+                return None;
+            }
+            let span = field(owner, "source span")?;
+            let start = field(span, "start")?;
+            (packet.network.link(start)?.metadata().definition() == Some(pattern_start.as_str()))
+                .then_some(child)
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(literals.len(), 1);
+    let prefix = format!("({}: ", literals[0]);
     let changed = packet
         .network
         .to_lino()
@@ -241,13 +273,24 @@ fn main(){println!("{}",selected("π"));println!("{}",selected("😀"));println!
         .join("\n");
     assert_ne!(changed, packet.network.to_lino());
     let changed = LinkNetwork::from_lino(&changed).unwrap();
+    let edited_expected = "false\ntrue\ntrue\ntrue\ntrue\nfalse\ntrue\ntrue\nfalse\ntrue\n";
+    let edited_source = source.replacen(pattern, "\"δ\" | r#\"😀\"#", 1);
+    observe(
+        &format!(
+            "{}{}",
+            edited_source.strip_suffix('}').unwrap(),
+            r#"println!("{}",selected("π"));println!("{}",selected("δ"));}"#,
+        ),
+        edited_expected,
+        true,
+    );
     for network in archives(&changed) {
         let code = emit_typed_program_links(&network, packet.root, "JavaScript")
             .unwrap()
             .code;
         observe(
             &format!("{code}\nconsole.log(selected(\"π\"));console.log(selected(\"δ\"));"),
-            &format!("{expected}false\ntrue\n"),
+            edited_expected,
             false,
         );
     }
