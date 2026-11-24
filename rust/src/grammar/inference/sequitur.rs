@@ -527,8 +527,8 @@ impl Sequitur {
         let mut names = BTreeMap::from([(START_RULE, "start".to_string())]);
         let mut next = 1usize;
 
-        for rule_id in 1..self.rules.len() {
-            if self.rules[rule_id].active {
+        for (rule_id, rule) in self.rules.iter().enumerate().skip(1) {
+            if rule.active {
                 names.insert(rule_id, format!("R{next}"));
                 next += 1;
             }

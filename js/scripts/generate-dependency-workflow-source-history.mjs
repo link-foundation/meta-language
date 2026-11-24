@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { captureGitArtifactCertificate } from './capture-git-artifact-certificate.mjs';
 import { dependencyWorkflowHistoricalPredecessors, dependencyWorkflowHistoryPath, dependencyWorkflowPredecessors } from './dependency-workflow-source-history.mjs';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
+import { restoreCiIntegrationSource } from './ci-integration-source-history.mjs';
 
 const root = new URL('../../', import.meta.url);
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -13,7 +14,7 @@ const predecessors = [...Object.entries(dependencyWorkflowPredecessors), ...Obje
 const commits = new Map();
 const trees = new Map();
 const sources = predecessors.map(([file, revision]) => {
-  const current = readFileSync(new URL(file, root));
+  const current = Buffer.from(restoreCiIntegrationSource(readFileSync(new URL(file, root), 'utf8'), file, 'dependencies'));
   const { certificate, blob } = captureGitArtifactCertificate(revision, file);
   commits.set(revision, certificate.commitText);
   for (const tree of certificate.trees) trees.set(tree.objectId, tree);

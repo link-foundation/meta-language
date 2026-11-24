@@ -18,6 +18,7 @@ rust-version = "1.90"
 include = [
     "build.rs",
     "src/**/*.rs",
+    "tests/unit/self_translation_recursive_declaration_groups/ownership_metadata.rs",
     "src/data/semantic-lexicon.lino",
     "src/data/grammar-lock.lino",
     "src/data/language-catalog.lino",

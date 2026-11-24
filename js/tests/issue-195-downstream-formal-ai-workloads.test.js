@@ -380,9 +380,9 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.ok(names.indexOf(save.name) < names.indexOf(cleanup.name));
   assert.match(originalJob.steps.find(step => step.name === identify.name).text,
     /runner\.os.*runner\.arch.*rust1\.99\.0-opt3-debug0-incremental0/u);
-  assert.match(job.steps.find(step => step.name === 'Setup Rust').text, /rust-toolchain@1\.100\.0/u);
-  assert.match(identify.text, /runner\.os.*runner\.arch.*rust1\.100\.0-opt3-debug0-incremental0/u);
-  assert.match(identify.run, /grep -Fx 'release: 1\.100\.0'/u);
+  assert.match(job.steps.find(step => step.name === 'Setup Rust').text, /rust-toolchain@1\.99\.1/u);
+  assert.match(identify.text, /runner\.os.*runner\.arch.*rust1\.99\.1-opt3-debug0-incremental0/u);
+  assert.match(identify.run, /grep -Fx 'release: 1\.99\.1'/u);
   assert.match(identify.text, /hashFiles\('parity\/fixtures\/formal-ai-workloads\.lino'/u);
   assert.match(identify.run, /sha256sum --check/u);
   assert.match(identify.run, /compiler_identity="\$\(rustc -vV\)"/u);

@@ -128,7 +128,7 @@ fn source_free_global_archives_execute_original_included_range_cst() {
             .or_insert_with(|| json!({}))["settling"] = json!([]);
         let empty = deserialize_grammar(&empty.to_string()).unwrap();
         assert_eq!(empty.declarations().settling, Some(Vec::new()));
-        let error = compile_feature_grammar(&empty, Some(&resolve), options.clone()).unwrap_err();
+        let error = compile_feature_grammar(&empty, Some(&resolve), options).unwrap_err();
         assert_eq!(error.reason, "declaration");
         assert_eq!(error.message, "the settling names no step");
         let archive = global_concept_space_to_links(&space).unwrap();
@@ -250,7 +250,7 @@ fn raw_source_view_records_refuse_before_global_archive_field_loss() {
             || candidate_path.to_owned(),
             |path| format!("{candidate_path}/{path}"),
         );
-        changed.pointer_mut(&parent).unwrap()[key] = value.clone();
+        changed.pointer_mut(&parent).unwrap()[key] = value;
         let candidate = changed.pointer(candidate_path).unwrap().clone();
         assert!(
             deserialize_grammar(&changed.to_string()).is_err(),

@@ -4,6 +4,8 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
+import {restoreCiIntegrationSource} from './ci-integration-source-history.mjs';
+import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 
@@ -17,11 +19,17 @@ export function generateBooleanValueSourceHistory({check=false}={}) {
     'js/src/project-data-files.js','js/scripts/generate-project-data-tooling-fixture.mjs',
     'experiments/grammar-context-source-metadata/generate.mjs','js/scripts/grammar-context-metadata-history.mjs',
     'js/tests/support/raw-contract-partition-history.js','js/scripts/current-ci-repair-source-history.mjs'];
+  const pauseSources = new Set(['experiments/grammar-context-source-metadata/generate.mjs',
+    'js/scripts/grammar-context-metadata-history.mjs']);
   const sources=files.map(file=>{
     const original=captureGitArtifactCertificate(revision,file);
     verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
     const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
-    const current=readFileSync(new URL(file,root));
+    const physical=readFileSync(new URL(file,root),'utf8');
+    const preceding=file==='js/scripts/current-ci-repair-source-history.mjs'
+      ? restoreDependencyWorkflowSource(physical,file)
+      : restoreCiIntegrationSource(physical,file,pauseSources.has(file)?'translationPause':'dependencies');
+    const current=Buffer.from(preceding);
     return{file,commit:revision,bytes:original.blob.length,sha256:createHash('sha256').update(original.blob).digest('hex'),
       sourceText,certificate:original.certificate,current:{bytes:current.length,sha256:createHash('sha256').update(current).digest('hex')}};
   });

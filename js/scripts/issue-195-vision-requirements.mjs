@@ -2102,6 +2102,62 @@ export const VISION_REQUIREMENTS = Object.freeze([
     ],
     tooling: ['js/scripts/issue-195-documentation.mjs', 'js/scripts/check-documentation.mjs'],
   },
+  {
+    id: 'I195-ISSUE-197-CI-PLATFORMS',
+    sourceKey: 'dependencyPullRequestCiPause',
+    area: 'automated-translation-pause',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'retained Windows and macOS CI scheduling',
+    expectedBehavior: 'CI schedules only Linux native and clean consumer jobs, including when automated translation runs. The policy retains every native and clean consumer cell and the aggregate verifies the scheduled jobs for the exact run attempt.',
+    assertions: ['workflowsScheduleOnlyLinux', 'policyRetainsOriginalPlatformCells', 'aggregateVerifiesExactPlatformJobs'],
+    tooling: ['.github/workflows/ci.yml', '.github/workflows/rust.yml', 'js/scripts/rust-test-shards.mjs',
+      'js/tests/issue-195-evidence-automated-translation-pause.test.js'],
+  },
+  ...[
+    {
+      suffix: 'DEFAULT',
+      construct: 'paused by default with a maintainer opt-in',
+      expectedBehavior: 'Normal CI skips automated translation execution until a maintainer opts in. Independent checks continue to report failures.',
+      assertions: ['defaultPausesTranslation', 'explicitOptInRunsTranslation', 'independentFailuresRemainVisible'],
+      tooling: ['.github/workflows/ci.yml', '.github/workflows/js.yml', '.github/workflows/rust.yml'],
+    },
+    {
+      suffix: 'RETAIN',
+      construct: 'retained automated checks and evidence requirements',
+      expectedBehavior: 'Keep the original code, test commands and complete assertion scope available. A paused run never supplies full translation evidence.',
+      assertions: ['originalCommandsRetained', 'pausedRunsCannotSupplyCompleteEvidence'],
+      tooling: ['.github/workflows/ci.yml', 'js/scripts/rust-test-shards.mjs'],
+    },
+    {
+      suffix: 'MANUAL',
+      construct: 'manual ports during the pause',
+      expectedBehavior: 'Permit manual ports between supported languages while retaining shared parity expectations.',
+      assertions: ['manualPortsPermitted', 'sharedParityPreserved'],
+      tooling: ['AGENTS.md', 'CONTRIBUTING.md', 'docs/vision.md', 'docs/self-translation.md'],
+    },
+    {
+      suffix: 'CASE-STUDY',
+      construct: 'recorded case study and solution plans',
+      expectedBehavior: 'Capture issue and failure data in docs/case-studies/issue-248 and document every requirement with researched alternatives and execution plans.',
+      assertions: ['capturedSourceReconstructsIssue', 'caseStudyMapsEveryRequirement', 'caseStudyRecordsResearchAndAlternatives'],
+      tooling: ['docs/case-studies/issue-248/README.md', 'docs/case-studies/issue-248/evidence.lino'],
+    },
+    {
+      suffix: 'OPEN-PULL-REQUESTS',
+      construct: 'application to every open pull request',
+      expectedBehavior: 'Every open pull request uses the default pause in its own eligible GitHub Actions run.',
+      assertions: ['everyOpenPullRequestRunsPausedWorkflow'],
+      checkpoint: 'post-merge',
+      group: 'merge-enforcement',
+      tooling: ['js/scripts/check-automated-translation-rollout.mjs', 'js/tests/issue-195-evidence-automated-translation-rollout.test.js', '.github/workflows/ci.yml'],
+    },
+  ].map(({ suffix, ...row }) => ({
+    id: `I195-AUTOMATED-TRANSLATION-PAUSE-${suffix}`,
+    sourceKey: 'automatedTranslationPause',
+    area: 'automated-translation-pause',
+    specification: 'javascript-first-and-self-translation',
+    ...row,
+  })),
 ]);
 
 const RUNTIMES = ['javascript', 'rust', 'tooling'];

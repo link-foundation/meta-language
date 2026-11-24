@@ -1,5 +1,5 @@
 //! CI-only actual source, generated decision and complete emitted-program parity.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
 use meta_language::translation::{
     check::check_program,
     emit_javascript::emit_javascript,
@@ -17,7 +17,6 @@ use meta_language::{
     encode_link_network_binary, read_structured_data_lino,
 };
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -69,9 +68,13 @@ fn versions() {
     });
 }
 
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn javascript_bridge(mode: &str, source: &str) -> Value {
     versions();
-    let script = r#"
+    let script = r"
 import {runInNewContext} from 'node:vm';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
 import {parseJavaScript} from './js/src/translation/javascript.js';
@@ -110,7 +113,7 @@ if(mode==='raw-error'){
  process.stdout.write(structuredDataToLino({surface,javascript,rust:emitRust(checked,{arrayConsumption:true}).text,lines}));
  }catch(error){process.stdout.write(structuredDataToLino({error:{kind:error.kind??null,reason:error.reason??String(error),span:error.span??null}}));}
 }
-"#;
+";
     let result = run(Command::new("node").current_dir(root()).args([
         "--input-type=module",
         "-e",
@@ -249,6 +252,10 @@ fn require_source(source: &str, expected: &str) {
 }
 
 #[test]
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn original_required_field_sources_keep_complete_execution_and_both_source_free_directions() {
     for (source, expected) in [
         (
@@ -317,6 +324,10 @@ fn original_required_field_sources_keep_complete_execution_and_both_source_free_
 }
 
 #[test]
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_owners() {
     versions();
     let policy = policy();
@@ -328,10 +339,7 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
     {
         let source = fs::read(root().join(owner["path"].as_str().unwrap())).unwrap();
         assert_eq!(source.len() as u64, owner["bytes"].as_u64().unwrap());
-        assert_eq!(
-            format!("{:x}", Sha256::digest(&source)),
-            owner["sourceSha256"].as_str().unwrap()
-        );
+        assert_eq!(sha256(&source), owner["sourceSha256"].as_str().unwrap());
         if let Some(declaration) = owner["declaration"].as_str() {
             assert!(String::from_utf8(source).unwrap().contains(declaration));
             let concrete =
@@ -370,6 +378,10 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
 }
 
 #[test]
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn generated_decisions_keep_every_truncated_actual_column_and_binding_profile_control() {
     use generated_decisions::{self as rules, ml_string::Text};
     let policy = policy();
@@ -560,7 +572,7 @@ fn generated_standard_owners_and_actual_directive_columns_keep_their_independent
             };
             let kinds = texts("kinds");
             let values = texts("values");
-            let raws = texts("raws");
+            let raw_tokens = texts("raws");
             let lines = row["lineBreaks"]
                 .as_array()
                 .unwrap()
@@ -568,7 +580,11 @@ fn generated_standard_owners_and_actual_directive_columns_keep_their_independent
                 .map(|value| value.as_bool().unwrap())
                 .collect::<Vec<_>>();
             let decision = rules::find_java_script_record_parameter_strict_directive(
-                &kinds, &values, &raws, &lines, 0.0,
+                &kinds,
+                &values,
+                &raw_tokens,
+                &lines,
+                0.0,
             );
             assert_eq!(
                 decision.to_bits(),
@@ -578,7 +594,11 @@ fn generated_standard_owners_and_actual_directive_columns_keep_their_independent
             for start in [-1.0, f64::NAN, f64::INFINITY, 0.5] {
                 assert_eq!(
                     rules::find_java_script_record_parameter_strict_directive(
-                        &kinds, &values, &raws, &lines, start
+                        &kinds,
+                        &values,
+                        &raw_tokens,
+                        &lines,
+                        start
                     )
                     .to_bits(),
                     (-2.0f64).to_bits()
@@ -625,6 +645,10 @@ fn generated_standard_owners_and_actual_directive_columns_keep_their_independent
 }
 
 #[test]
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn actual_parameter_sources_keep_every_unsupported_profile_scope_and_call_boundary() {
     for source in [
         "function f({a}){a=2;return a;}",

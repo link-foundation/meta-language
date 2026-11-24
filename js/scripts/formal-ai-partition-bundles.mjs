@@ -87,6 +87,7 @@ export async function formalAiPartitionExpectations({ root, tarball, crate, fixt
     candidates: { npm: await candidate(tarball, true), crate: await candidate(crate, false) },
     platform: `${process.platform}-${process.arch}`, profile: FORMAL_AI_PARTITION_PROFILE,
     nativeWorkloads: 134, javascriptWorkloads: 148, producerResult, rustVersion,
+    ...(environment.META_LANGUAGE_AUTOMATED_TRANSLATION === 'false' && { translationPaused: true }),
   };
 }
 

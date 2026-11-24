@@ -10,6 +10,13 @@ name: CI
 # release-delivery checkpoint. Every push and pull request runs, without path
 # filters, because Full Requirements Aggregate is a required check.
 on:
+  workflow_dispatch:
+    inputs:
+      automated_translation:
+        description: Run the full automated translation checks
+        type: boolean
+        required: false
+        default: false
   push:
     branches:
       - main
@@ -76,6 +83,7 @@ jobs:
     uses: ./.github/workflows/js.yml
     with:
       external_reports: true
+      automated_translation: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
     secrets: inherit
     # A called workflow gets at most the caller's permissions; publish asks for
     # id-token although it runs only on a release or a dispatch of js.yml.
@@ -86,9 +94,10 @@ jobs:
   rust:
     name: Rust
     needs: [changes, js, self-translation-report-validation]
-    if: ${{ needs.changes.outputs.rust == 'true' }}
+    if: ${{ !cancelled() && needs.changes.result == 'success' && needs.js.result == 'success' && (!(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') || needs.self-translation-report-validation.result == 'success') && needs.changes.outputs.rust == 'true' }}
     uses: ./.github/workflows/rust.yml
     with:
+      automated_translation: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
       native_test_inputs_changed: ${{ needs.changes.outputs.native_test_inputs_changed == 'true' }}
     secrets: inherit
     # The release and website jobs run on a push to main and ask for these.
@@ -106,7 +115,7 @@ jobs:
   # every published module before recording the reporting assertion.
   self-translation-report:
     name: Self-Translation Report (${{ matrix.shard }}/8)
-    if: ${{ github.event_name != 'release' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (github.event_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -152,7 +161,7 @@ jobs:
   self-translation-report-validation:
     name: JavaScript / Self-Translation Report Assertions
     needs: self-translation-report
-    if: ${{ !cancelled() && github.event_name != 'release' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled() && github.event_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -307,9 +316,11 @@ jobs:
     # The acceptance stages start only after every JavaScript job passed. On a
     # release, js.yml runs by its own trigger and the js job here is skipped.
     needs: [js, self-translation-report-validation]
-    if: ${{ !cancelled() && (needs.js.result == 'success' || (github.event_name == 'release' && needs.js.result == 'skipped')) && (needs.self-translation-report-validation.result == 'success' || (github.event_name == 'release' && needs.self-translation-report-validation.result == 'skipped')) }}
+    if: ${{ !cancelled() && (needs.js.result == 'success' || (github.event_name == 'release' && needs.js.result == 'skipped')) && (needs.self-translation-report-validation.result == 'success' || ((!(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') || github.event_name == 'release') && needs.self-translation-report-validation.result == 'skipped')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      consumer-matrix: ${{ steps.consumer-matrix.outputs.matrix }}
     concurrency:
       group: issue-195-candidates-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
@@ -324,13 +335,17 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       # The evidence runner reads the language catalog, whose native grammar
       # source names are parsed with links-notation.
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Select active clean consumer platforms
+        id: consumer-matrix
+        run: node js/scripts/rust-test-shards.mjs --workflow-matrix consumer
 
       # The package remains install-script-free and parses offline. Its current
       # compiled fallback grammars are staged from authenticated temporary
@@ -378,6 +393,8 @@ jobs:
   consumers:
     name: Clean Consumer (${{ matrix.os }})
     needs: candidates
+    # The skipped translation report is an ancestor of Delivery Candidates.
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     concurrency:
@@ -385,8 +402,7 @@ jobs:
       cancel-in-progress: true
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+      matrix: ${{ fromJSON(needs.candidates.outputs.consumer-matrix) }}
     steps:
       - uses: actions/checkout@v7
 
@@ -404,7 +420,7 @@ jobs:
         working-directory: js
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
@@ -483,6 +499,8 @@ jobs:
       - name: Install and parse the exact artifacts in clean consumers
         if: ${{ !cancelled() }}
         shell: bash
+        env:
+          META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: >-
           node js/scripts/run-issue-195-consumer.mjs
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
@@ -539,6 +557,7 @@ jobs:
   rml-workloads:
     name: Relative Meta Logic Workloads
     needs: candidates
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
     # theory-network.test.mjs alone takes minutes, and the Rust workloads build RML from scratch.
     timeout-minutes: 90
@@ -562,7 +581,7 @@ jobs:
         working-directory: js
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       - uses: actions/download-artifact@v8
         with:
@@ -607,6 +626,7 @@ jobs:
   formal-ai-workload-parts:
     name: Formal AI Workloads (${{ matrix.partition }})
     needs: candidates
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -634,7 +654,7 @@ jobs:
         working-directory: js
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       # The runner was shut down (signal 15, status 143) without output while cargo built
       # formal-ai's test targets from scratch. The workload runner bounds the
@@ -670,7 +690,7 @@ jobs:
         id: formal-ai-cache-key
         shell: bash
         env:
-          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.100.0-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs', 'js/scripts/formal-ai-workload-partitions.mjs', 'js/scripts/formal-ai-partition-bundles.mjs') }}
+          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.99.1-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs', 'js/scripts/formal-ai-workload-partitions.mjs', 'js/scripts/formal-ai-partition-bundles.mjs') }}
         run: |
           set -euo pipefail
           candidate_crates=(.issue-195-work/candidates/*.crate)
@@ -679,7 +699,7 @@ jobs:
           (cd "$(dirname "$candidate_crate")" && sha256sum --check "$(basename "$candidate_crate").sha256")
           candidate_digest="$(sha256sum "$candidate_crate" | cut -d ' ' -f 1)"
           compiler_identity="$(rustc -vV)"
-          printf '%s\n' "$compiler_identity" | grep -Fx 'release: 1.100.0'
+          printf '%s\n' "$compiler_identity" | grep -Fx 'release: 1.99.1'
           compiler_digest="$(printf '%s\n' "$compiler_identity" | sha256sum | cut -d ' ' -f 1)"
           dependency_key="$CACHE_CONTEXT-$compiler_digest"
           printf 'dependency_key=%s\nkey=%s\n' "$dependency_key" "$dependency_key-$candidate_digest" >> "$GITHUB_OUTPUT"
@@ -698,6 +718,8 @@ jobs:
 
       - name: Run the link-assistant/formal-ai workloads on the exact artifacts
         shell: bash
+        env:
+          META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: >-
           node js/scripts/run-formal-ai-workloads.mjs
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
@@ -805,6 +827,8 @@ jobs:
       - name: Merge the independently validated Formal AI workloads
         if: ${{ !cancelled() }}
         shell: bash
+        env:
+          META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: >-
           node js/scripts/run-formal-ai-workloads.mjs
           --merge-partitions .issue-195-work/formal-ai-partitions/corpus-ratchet,.issue-195-work/formal-ai-partitions/remaining
@@ -849,7 +873,7 @@ jobs:
   runtime-parity:
     name: Evidence Stage (runtime-parity)
     needs: [js, self-translation-report-validation]
-    if: ${{ github.event_name != 'release' && needs.js.result == 'success' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (github.event_name != 'release' && needs.js.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -866,7 +890,7 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -920,7 +944,7 @@ jobs:
     needs: [js, runtime-parity]
     # A failed runtime-parity stage still uploads its record; this stage then
     # records why it has no translations to validate.
-    if: ${{ !cancelled() && github.event_name != 'release' && needs.js.result == 'success' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled() && github.event_name != 'release' && needs.js.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -937,7 +961,7 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -985,7 +1009,7 @@ jobs:
   native-rust:
     name: Evidence Stage (native-rust)
     needs: [runtime-parity, native-javascript]
-    if: ${{ !cancelled() && github.event_name != 'release' && needs.native-javascript.result == 'success' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled() && github.event_name != 'release' && needs.native-javascript.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -1002,7 +1026,7 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -1056,7 +1080,7 @@ jobs:
     needs: [js, runtime-parity]
     # A failed runtime-parity stage still uploads its record; this stage then
     # records why it has no translations to validate.
-    if: ${{ !cancelled() && github.event_name != 'release' && needs.js.result == 'success' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled() && github.event_name != 'release' && needs.js.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -1077,7 +1101,7 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       - name: Setup Lean
         if: ${{ matrix.target == 'lean' }}
@@ -1194,7 +1218,7 @@ jobs:
     # retain their exact scopes and artifacts while those producers run.
     name: Evidence Stage (javascript-suite - ${{ matrix.group }} ${{ matrix.shard }})
     needs: [candidates, self-translation-report]
-    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled() && github.event_name != 'release' && needs.candidates.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     # The evidence groups keep the same files and acceptance cells. Separate
@@ -1271,12 +1295,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 26.13.1
+          # Use one exact Node release within the supported assertion range.
+          node-version: 24.22.3
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
         with:
           # JavaScript self-translation acceptance checks the emitted Rust.
           components: rustfmt, clippy
@@ -1409,7 +1434,7 @@ jobs:
   javascript-suite:
     name: Evidence Stage (javascript-suite - ${{ matrix.group }} ${{ matrix.shard }})
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads, self-translation-report]
-    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled() && github.event_name != 'release' && needs.candidates.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     # The evidence groups keep the same files and acceptance cells. Separate
@@ -1432,12 +1457,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 26.13.1
+          # Use one exact Node release within the supported assertion range.
+          node-version: 24.22.3
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
         with:
           # JavaScript self-translation acceptance checks the emitted Rust.
           components: rustfmt, clippy
@@ -1588,7 +1614,7 @@ jobs:
   rust-suite:
     name: Evidence Stage (rust-suite - ${{ matrix.physical_shard }}/8)
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, javascript-suite]
-    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' && needs.javascript-suite.result == 'success' && needs.javascript-suite-independent.result == 'success' }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' && needs.javascript-suite.result == 'success' && needs.javascript-suite-independent.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -1609,12 +1635,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 26.13.1
+          # Use one exact Node release within the supported assertion range.
+          node-version: 24.22.3
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
         with:
           # The self-translation tests check translated Rust with clippy-driver.
           components: rustfmt, clippy
@@ -1775,7 +1802,7 @@ jobs:
   delivery:
     name: Evidence Stage (delivery)
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads]
-    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+    if: ${{ !cancelled() && needs.candidates.result == 'success' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -1792,7 +1819,7 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.100.0
+        uses: dtolnay/rust-toolchain@1.99.1
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -1862,12 +1889,13 @@ jobs:
   post-merge:
     name: Post-merge Report
     needs: [js, self-translation-report-validation]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.js.result == 'success' }}
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.js.result == 'success' && (!(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') || needs.self-translation-report-validation.result == 'success') }}
     continue-on-error: true
     permissions:
       contents: read
       pull-requests: read
       checks: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -1889,6 +1917,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.100.0
+
+      - name: Materialize the verified Links Notation grammar
+        run: node js/scripts/external-grammar-cache.mjs --asset parity/grammars/links-notation-0.22.0.pegjs --materialize
 
       - name: Inspect the default-branch rules with the workflow token
         env:
@@ -1929,7 +1960,7 @@ jobs:
 
   acceptance:
     name: Full Requirements Aggregate
-    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
+    needs: [changes, js, rust, grammar-bulk-pipeline, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
     # GitHub reports a skipped job as a successful required check. This job
     # always runs and fails itself when there are no candidates to evaluate.
     if: ${{ always() }}
@@ -1991,7 +2022,7 @@ jobs:
 
       - name: Identify admitted Rust physical profiles
         id: rust-physical-admission
-        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -1999,14 +2030,14 @@ jobs:
           node js/scripts/rust-test-shards.mjs --admission "$RUNNER_TEMP/rust-physical-jobs.json"
 
       - name: Download complete Rust physical partitions
-        if: ${{ !cancelled() && steps.rust-physical-admission.outputs.enabled == 'true' }}
+        if: ${{ !cancelled() && steps.rust-physical-admission.outputs.enabled == 'true' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/download-artifact@v8
         with:
           pattern: rust-physical-*-${{ github.sha }}
           path: issue-195-artifacts/rust-physical-partitions
 
       - name: Require the complete authenticated Rust test union
-        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           RUST_WORKFLOW_RESULT: ${{ needs.rust.result }}
           RUST_EVIDENCE_RESULT: ${{ needs.rust-suite.result }}
@@ -2021,13 +2052,72 @@ jobs:
       - name: Validate atomic manifest and protected scope baseline
         env:
           BASELINE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.event.release.target_commitish }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           ISSUE_195_SCOPE_CHANGE_APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'issue-195-scope-change-approved') }}
-        run: node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
+        run: |
+          if [ -z "$BASELINE_SHA" ]; then
+            BASELINE_SHA=$(git merge-base HEAD "refs/remotes/origin/$DEFAULT_BRANCH")
+          fi
+          node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
+
+      - name: Require the active checks while automated translation is paused
+        if: ${{ !cancelled() && needs.candidates.result == 'success' && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          JAVASCRIPT_RESULT: ${{ needs.js.result }}
+          RUST_NEEDED: ${{ needs.changes.outputs.rust }}
+          RUST_RESULT: ${{ needs.rust.result }}
+          GRAMMAR_RESULT: ${{ needs.grammar-bulk-pipeline.result }}
+          CONSUMERS_RESULT: ${{ needs.consumers.result }}
+          RELATIVE_META_LOGIC_RESULT: ${{ needs.rml-workloads.result }}
+          FORMAL_AI_RESULT: ${{ needs.formal-ai-workloads.result }}
+          DELIVERY_EVIDENCE_RESULT: ${{ needs.delivery.result }}
+        run: |
+          status=0
+          checks=(CONSUMERS RELATIVE_META_LOGIC FORMAL_AI)
+          if [ "$GITHUB_EVENT_NAME" != release ]; then
+            checks+=(CHANGES JAVASCRIPT GRAMMAR)
+            case "$RUST_NEEDED:$RUST_RESULT" in
+              true:success|false:skipped) ;;
+              *) echo "::error::Rust finished as '$RUST_RESULT' (needed: '$RUST_NEEDED')"; status=1 ;;
+            esac
+          fi
+          for check in "${checks[@]}"; do
+            result="${check}_RESULT"
+            if [ "${!result}" != success ]; then
+              echo "::error::$check finished as '${!result}'"
+              status=1
+            fi
+          done
+          if [ "$DELIVERY_EVIDENCE_RESULT" != skipped ]; then
+            echo "::error::Full delivery evidence finished as '$DELIVERY_EVIDENCE_RESULT' while paused"
+            status=1
+          fi
+          echo "Automated translation and the full Issue #195 acceptance evaluation are paused." >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Verify Linux-only workflow scheduling
+        if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/workflow-platforms.json"
+          node js/scripts/rust-test-shards.mjs --verify-workflow-platforms "$RUNNER_TEMP/workflow-platforms.json"
+
+      - name: Verify paused checkout for PR ${{ github.event.pull_request.number }} at ${{ github.event.pull_request.head.sha }} against ${{ github.event.pull_request.base.sha }}
+        if: ${{ success() && github.event_name == 'pull_request' && !(inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
+        env:
+          PULL_REQUEST_HEAD: ${{ github.event.pull_request.head.sha }}
+          PULL_REQUEST_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^1)" = "$PULL_REQUEST_BASE"
+          test "$(git rev-parse HEAD^2)" = "$PULL_REQUEST_HEAD"
 
       # A stage whose job failed before uploading has no record here; the
       # aggregate reports it as one gate error naming the stage.
       - name: Download the evidence stage outputs
-        if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+        if: ${{ !cancelled() && needs.candidates.result == 'success' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/download-artifact@v8
         with:
           # Every matrix partition carries distinct stage/observation identities;
@@ -2037,7 +2127,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge the evidence stages
-        if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+        if: ${{ !cancelled() && needs.candidates.result == 'success' && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -2049,7 +2139,7 @@ jobs:
           --aggregate
 
       - name: Evaluate every required verification cell
-        if: ${{ always() && needs.candidates.result == 'success' }}
+        if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (always() && needs.candidates.result == 'success') }}
         env:
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -2063,7 +2153,7 @@ jobs:
           --markdown-report issue-195-artifacts/report.md
 
       - name: Publish per-requirement evidence report
-        if: ${{ always() && needs.candidates.result == 'success' }}
+        if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (always() && needs.candidates.result == 'success') }}
         uses: actions/upload-artifact@v7
         with:
           name: issue-195-requirement-report-${{ github.sha }}

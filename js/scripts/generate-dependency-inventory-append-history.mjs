@@ -15,14 +15,14 @@ const root=new URL('../../',import.meta.url);
 const revision='ec9f4efb0e9ef936114e09823981352f6db13700';
 
 /** Recollect from the complete declaration inputs before the release refresh. */
-export function collectDependencyDeclarationsBeforeRefresh(inventory) {
+export function collectDependencyDeclarationsBeforeRefresh(inventory, sourceRevision = revision) {
   const declaredPaths=new Set(inventory.items.flatMap(item=>item.declaredIn));
   const packageInputs=/^(?:\.github\/workflows\/[^/]+\.ya?ml|(?:experiments|rust\/oracles)\/.+\/(?:Cargo\.toml|Cargo\.lock|package\.json|lean-toolchain)|js\/scripts\/(?:build|generate)-[^/]+\.mjs|rust\/scripts\/.+\.(?:sh|rs)|(?:js\/|rust\/)?Dockerfile)$/u;
-  const files=execFileSync('git',['ls-tree','-r','--name-only','-z',revision],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024})
+  const files=execFileSync('git',['ls-tree','-r','--name-only','-z',sourceRevision],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024})
     .split('\0').filter(file=>declaredPaths.has(file)||packageInputs.test(file));
   const scratch=mkdtempSync(join(tmpdir(),'meta-language-dependency-declarations-'));
   try{
-    const inputs=execFileSync('git',['archive',revision,'--',...files],{cwd:root,maxBuffer:16*1024*1024});
+    const inputs=execFileSync('git',['archive',sourceRevision,'--',...files],{cwd:root,maxBuffer:16*1024*1024});
     execFileSync('tar',['-xf','-','-C',scratch],{input:inputs});
     return collectDependencies(scratch);
   }finally{

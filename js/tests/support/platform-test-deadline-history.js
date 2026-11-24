@@ -12,6 +12,7 @@ export function restorePlatformTestDeadlineHistory(source) {
   source=restoreDependencyWorkflowSource(source,'.github/workflows/js.yml');
   source=restoreDependencyWorkflowSource(source,'.github/workflows/dependency-refresh.yml');
   source=restoreCurrentCiRepairSource(source,'.github/workflows/rust.yml');
+  source=restoreAutomatedTranslationPauseSource(source,'rust/tests/unit/ci-cd/workflow_release.rs');
   source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);
   source=restoreConformancePartitionHistory(source);
   for(const change of history.changes){
@@ -30,3 +31,4 @@ import {restoreEvidenceTranslationSourceHistory} from '../../scripts/evidence-tr
 import {restoreCurrentCiRepairSource} from '../../scripts/current-ci-repair-source-history.mjs';
 
 import {restoreDependencyWorkflowSource} from '../../scripts/dependency-workflow-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from '../../scripts/automated-translation-pause-source-history.mjs';

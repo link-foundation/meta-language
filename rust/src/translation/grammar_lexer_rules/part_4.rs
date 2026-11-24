@@ -48,13 +48,13 @@ pub fn ml_read_grammar_lexer_owner_comparison_loop19(
                                 {
                                     let originals_2 = {
                                         let (ml_append_right, ml_append_left) =
-                                            (vec![original.clone()], originals);
+                                            (vec![original], originals);
                                         self::ml_array::append(ml_append_left, ml_append_right)
                                     };
                                     {
                                         let publics_2 = {
                                             let (ml_append_right, ml_append_left) =
-                                                (vec![target.clone()], publics);
+                                                (vec![target], publics);
                                             self::ml_array::append(ml_append_left, ml_append_right)
                                         };
                                         {
@@ -133,7 +133,7 @@ pub fn ml_read_grammar_lexer_binding_names_loop23(
                                     {
                                         {
                                             let (ml_append_right, ml_append_left) =
-                                                (vec![name.clone()], bindings);
+                                                (vec![name], bindings);
                                             self::ml_array::append(ml_append_left, ml_append_right)
                                         }
                                     }
@@ -148,7 +148,7 @@ pub fn ml_read_grammar_lexer_binding_names_loop23(
                                     {
                                         {
                                             let (ml_append_right, ml_append_left) =
-                                                (vec![legacy.clone()], bindings_3);
+                                                (vec![legacy], bindings_3);
                                             self::ml_array::append(ml_append_left, ml_append_right)
                                         }
                                     }
@@ -169,7 +169,7 @@ pub fn ml_read_grammar_lexer_binding_names_loop23(
                                             {
                                                 {
                                                     let (ml_append_right, ml_append_left) =
-                                                        (vec![emitted.clone()], bindings_5);
+                                                        (vec![emitted], bindings_5);
                                                     self::ml_array::append(
                                                         ml_append_left,
                                                         ml_append_right,
@@ -220,8 +220,7 @@ pub fn ml_read_grammar_lexer_binding_names_loop22(
                     {
                         {
                             {
-                                let (ml_append_right, ml_append_left) =
-                                    (vec![name.clone()], bindings);
+                                let (ml_append_right, ml_append_left) = (vec![name], bindings);
                                 self::ml_array::append(ml_append_left, ml_append_right)
                             }
                         }
@@ -346,7 +345,7 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                             || self::accept_grammar_lexer_decimal(
                                                                 &(argument_2),
                                                             ));
-                                                    self::MlReadGrammarLexerCommandPlanJoin25::MlReadGrammarLexerCommandPlanJoin25Next(head_2.clone(), argument_2.clone(), call_2)
+                                                    self::MlReadGrammarLexerCommandPlanJoin25::MlReadGrammarLexerCommandPlanJoin25Next(head_2, argument_2, call_2)
                                                 }
                                             }
                                         }
@@ -371,7 +370,7 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                         }
                                                     } else if call_3 && (head_3 == (self::ml_string::Text::from_units(vec![116, 121, 112, 101]))) {
                                                             {
-                                                                let type_3 = argument_3.clone();
+                                                                let type_3 = argument_3;
                                                                 {
                                                                     let disposition_3 = self::ml_string::Text::from_units(vec![101, 109, 105, 116]);
                                                                     self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_3, channel, disposition_3, actions)
@@ -388,7 +387,7 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                                                 let channel_2 = if zero_2 || (argument_3 == (self::ml_string::Text::from_units(vec![68, 69, 70, 65, 85, 76, 84, 95, 84, 79, 75, 69, 78, 95, 67, 72, 65, 78, 78, 69, 76]))) {
                                                                                     self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])
                                                                                 } else {
-                                                                                    argument_3.clone()
+                                                                                    argument_3
                                                                                 };
                                                                                 self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel_2, disposition, actions)
                                                                             }
@@ -404,7 +403,7 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                                         }, if argument_3 == (self::ml_string::Text::from_units(vec![68, 69, 70, 65, 85, 76, 84, 95, 77, 79, 68, 69])) {
                                                                             self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])
                                                                         } else {
-                                                                            argument_3.clone()
+                                                                            argument_3
                                                                         }], actions); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                         self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel, disposition, actions_3)
                                                                     }
@@ -412,7 +411,7 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
 let ml_library_inequality_1 = piece != (self::ml_string::Text::from_units(vec![])) ;
 if ml_library_inequality_1 {
                                                                         {
-                                                                            let actions_4 = { let (ml_append_right, ml_append_left) = (vec![self::ml_string::Text::from_units(vec![117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100]), piece.clone()], actions); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                                            let actions_4 = { let (ml_append_right, ml_append_left) = (vec![self::ml_string::Text::from_units(vec![117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100]), piece], actions); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                             self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel, disposition, actions_4)
                                                                         }
                                                                     } else {
@@ -552,16 +551,16 @@ pub fn ml_read_grammar_lexer_command_emission_loop30(
                         {
                             if (self::accept_grammar_lexer_identifier(&(mode))) {
                                 {
-                                    let argument = if mode
-                                        == (self::ml_string::Text::from_units(vec![
+                                    let default_mode = (mode
+                                        == self::ml_string::Text::from_units(vec![
                                             100, 101, 102, 97, 117, 108, 116,
-                                        ])) {
+                                        ]))
+                                    .then(|| {
                                         self::ml_string::Text::from_units(vec![
                                             68, 69, 70, 65, 85, 76, 84, 95, 77, 79, 68, 69,
                                         ])
-                                    } else {
-                                        mode.clone()
-                                    };
+                                    });
+                                    let argument = default_mode.as_ref().unwrap_or(&mode);
                                     {
                                         let pieces_3 = {
                                             let (ml_append_right, ml_append_left) = (
@@ -582,7 +581,7 @@ pub fn ml_read_grammar_lexer_command_emission_loop30(
                                                     .concat(&self::ml_string::Text::from_units(
                                                         vec![40],
                                                     )))
-                                                    .concat(&argument))
+                                                    .concat(argument))
                                                     .concat(&self::ml_string::Text::from_units(
                                                         vec![41],
                                                     )),
@@ -814,7 +813,7 @@ pub fn ml_read_grammar_lexer_emission_issue_loop35(
                                                     self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Return(self::ml_string::Text::from_units(vec![111, 110, 108, 121, 32, 100, 101, 102, 97, 117, 108, 116, 45, 109, 111, 100, 101, 32, 108, 101, 120, 105, 99, 97, 108, 32, 114, 117, 108, 101, 115, 32, 97, 114, 101, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100]))
                                                 } else {
                                                     {
-                                                        let locals_2 = { let (ml_append_right, ml_append_left) = (vec![name.clone()], locals); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                        let locals_2 = { let (ml_append_right, ml_append_left) = (vec![name], locals); self::ml_array::append(ml_append_left, ml_append_right) };
                                                         self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Next(locals_2)
                                                     }
                                                 }

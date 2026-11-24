@@ -22,6 +22,10 @@ const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-cost
 const translationSchedulingFile=new URL('../../parity/fixtures/ci-45080642295-translation-costs.lino',import.meta.url);
 const translationWallSchedulingFile = new URL('../../parity/fixtures/ci-45186623729-translation-wall-costs.lino', import.meta.url);
 const toolingSchedulingFile = new URL('../../parity/fixtures/ci-45186623729-tooling-wall-costs.lino', import.meta.url);
+const toolingPauseTests = new Map([
+  ['issue-195-evidence-automated-translation-pause.test.js', 3],
+  ['issue-195-evidence-automated-translation-rollout.test.js', 4],
+]);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
 const workloadRevisions=new Map([
  [39615628279,schedulingRevision],
@@ -33,7 +37,7 @@ const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
 /** Balance observed durations and estimate changed or unsampled files by size.
  * Timing samples only choose owners. They never establish test completion. */
-export function partitionMeasuredWorkloads(files,count,{readSource,costs,prioritizeUnmeasured=false}={}){
+export function partitionMeasuredWorkloads(files,count,{readSource,costs,prioritizeUnmeasured=false,retainObservedCost=false}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
  const measured=costs??readProjectData(schedulingFile);
@@ -55,7 +59,9 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs,priorit
   const bytes = Buffer.from(read(file));
   const row = known.get(file);
   const measured = row !== undefined && row.bytes === bytes.length && row.sha256 === schedulingDigest(bytes);
-  return { file, measured, milliseconds: measured ? row.milliseconds : Math.max(1, Math.ceil(bytes.length * rate)) };
+  const estimated = Math.max(1, Math.ceil(bytes.length * rate));
+  const previous = retainObservedCost ? row?.milliseconds ?? 0 : 0;
+  return { file, measured, milliseconds: measured ? row.milliseconds : Math.max(estimated, previous) };
  });
  workloads.sort((left, right) => {
   // Spread uncertain inputs before measured files compete for the remaining time.
@@ -172,13 +178,22 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
   if ([6, 8, 10].includes(count) && files.includes('translation-native-library-receipt-history.test.js')) {
     const costs = readProjectData(count === 6 ? translationSchedulingFile : translationWallSchedulingFile);
-    return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs })[index - 1]
+    // Use the previous duration as a scheduling floor while changed tests await new CI measurements.
+    return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, {
+      costs, retainObservedCost: count === 8,
+    })[index - 1]
       .map(file => file.slice('js/tests/'.length));
   }
   if (count === 4 && files.includes('issue-195-evidence-tooling-partitions.test.js')) {
     const costs = readProjectData(toolingSchedulingFile);
-    return partitionMeasuredWorkloads(files.map(file => `js/tests/${file}`), count, { costs, prioritizeUnmeasured: true })[index - 1]
-      .map(file => file.slice('js/tests/'.length));
+    const established = files.filter(file => !toolingPauseTests.has(file));
+    const preservePauseOwners = established.length >= count;
+    const measured = preservePauseOwners ? established : files;
+    const partitions = partitionMeasuredWorkloads(measured.map(file => `js/tests/${file}`), count, {
+      costs, prioritizeUnmeasured: true, retainObservedCost: true,
+    });
+    const selected = partitions[index - 1].map(file => file.slice('js/tests/'.length));
+    return preservePauseOwners ? [...selected, ...files.filter(file => toolingPauseTests.get(file) === index)].sort() : selected;
   }
   return files.filter((_, offset) => offset % count === index - 1);
 }

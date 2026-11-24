@@ -5,6 +5,7 @@ import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.
 import {checkProjectData,readProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {retainDependencyInventoryOrder} from './dependency-inventory-order.mjs';
+import {restoreDependencyDeclaration} from './dependency-inventory-append-history.mjs';
 import {collectDependencies,checkInventory,renderAuditDocument} from './dependency-inventory.mjs';
 import {writeFileSync,readFileSync} from 'node:fs';
 
@@ -30,7 +31,8 @@ export function generateDependencyInventoryOrderHistory({check=false}={}) {
   const prefix={...ordered,items:ordered.items.slice(0,first.items.length)};
   assert.equal(serializeProjectData(prefix,path),original.source);
   const oldIds=new Set(previous.items.map(row=>row.id));
-  const inverse={...ordered,items:previous.items.map(row=>ordered.items.find(item=>item.id===row.id))};
+  const inverse = {...ordered, items: previous.items
+    .map(row => restoreDependencyDeclaration(ordered.items.find(item => item.id === row.id), row))};
   assert.equal(serializeProjectData(inverse,path),predecessor.source,'complete current predecessor remains reconstructible');
   const value={schemaVersion:1,original,predecessor,
     retainedIds:previous.items.map(row=>row.id),

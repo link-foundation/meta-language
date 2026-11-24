@@ -37,6 +37,19 @@ export function restoreNodeDependencyInventoryTestSource(source) {
   return original;
 }
 
+// The pinned action gained one user after the certified inventories were taken.
+// Verify its exact new declaration before reconstructing a historical record.
+export function restoreDependencyDeclaration(entry, original) {
+  const workflow = '.github/workflows/rust.yml';
+  if (entry?.id !== 'action dtolnay/rust-toolchain@1.99.0' ||
+      original?.id !== entry.id || !entry.declaredIn.includes(workflow)) {
+    return entry;
+  }
+  assert.deepEqual(entry.declaredIn, [...original.declaredIn, workflow],
+    'the Rust workflow is the only added declaration for the pinned action');
+  return {...entry, declaredIn: original.declaredIn};
+}
+
 /** Check every current declaration and every old byte before removing appends. */
 export function verifyDependencyInventoryAppends(inventory,declarations,history) {
   // Impossible current inventories cannot select a historical view. Reject
@@ -46,7 +59,9 @@ export function verifyDependencyInventoryAppends(inventory,declarations,history)
   const before=verifiedOriginalInventory(history);
   assert.equal(before.items.length,745);
   assert.ok(inventory.items.length>=before.items.length);
-  const prefix={...inventory,items:inventory.items.slice(0,before.items.length)};
+  const historicalItems = inventory.items.slice(0,before.items.length)
+    .map((entry, index) => restoreDependencyDeclaration(entry, before.items[index]));
+  const prefix={...inventory,items:historicalItems};
   assert.deepEqual(prefix,before,'every complete original item, audit fact, order and alias stays exact');
   const ids=new Set(prefix.items.map(row=>row.id));
   for(const entry of inventory.items.slice(before.items.length)){

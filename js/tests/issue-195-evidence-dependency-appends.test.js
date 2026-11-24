@@ -3,6 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import test from 'node:test';
+import {ciIntegrationParents} from '../scripts/ci-integration-source-history.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {collectDependencies,checkInventory} from '../scripts/dependency-inventory.mjs';
 import {readDependencyInventoryAppendHistory,verifyDependencyInventoryAppends,
@@ -53,6 +54,19 @@ test('historical inventory selection refuses changed old facts missing declarati
   for(const mutate of mutations){const changed=structuredClone(original);mutate(changed);assert.throws(()=>verifyDependencyInventoryAppends(changed,declared));}
   const forged=structuredClone(history);forged.inventory.source+=' ';
   assert.throws(()=>verifyDependencyInventoryAppends(original,declared,forged));
+  const revision=ciIntegrationParents.translationPause;
+  const pinnedWorkflowInventory=readStructuredDataLino(execFileSync('git', ['--no-replace-objects', 'show',
+    revision+':parity/dependency-inventory.lino'], {cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}));
+  const pinnedWorkflowDeclarations=collectDependencyDeclarationsBeforeRefresh(pinnedWorkflowInventory,revision);
+  assert.deepEqual(checkInventory(pinnedWorkflowInventory,pinnedWorkflowDeclarations),[]);
+  assert.equal(structuredDataToLino(verifyDependencyInventoryAppends(pinnedWorkflowInventory,pinnedWorkflowDeclarations)),history.inventory.source);
+  const changedInventory=structuredClone(pinnedWorkflowInventory),changedDeclarations=structuredClone(pinnedWorkflowDeclarations);
+  for(const items of [changedInventory.items,changedDeclarations]){
+    items.find(row=>row.id==='action dtolnay/rust-toolchain@1.99.0').declaredIn.push('.github/workflows/unreviewed.yml');
+  }
+  assert.deepEqual(checkInventory(changedInventory,changedDeclarations),[]);
+  assert.throws(()=>verifyDependencyInventoryAppends(changedInventory,changedDeclarations),
+    /the Rust workflow is the only added declaration for the pinned action/u);
   const reloaded=readStructuredDataLino(structuredDataToLino(history));
   assert.equal(structuredDataToLino(verifyDependencyInventoryAppends(original,declared,reloaded)),history.inventory.source);
 });

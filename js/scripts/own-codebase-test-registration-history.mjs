@@ -162,11 +162,16 @@ export function readOwnCodebaseTestRegistrationHistory(){
 
 function restoreSource(source,file){
   assert.equal(typeof source,'string');
-  source=restoreDependencyWorkflowSource(source,file);
   const history=readVerifiedRegistrationHistory();
   const row=history.sources.find(row=>row.file===file);assert.ok(row);
   const current=replay(row.predecessor.source,row.edits);
-  assert.ok(source===row.predecessor.source||source===current,'unknown complete sources cannot acquire historical test authority');
+  const isRegistered = candidate => candidate === row.predecessor.source || candidate === current;
+  const dependencies = restoreDependencyWorkflowSource(source,file);
+  if (!isRegistered(dependencies)) {
+    const paused = restoreAutomatedTranslationPauseSource(source,file);
+    assert.ok(isRegistered(restoreDependencyWorkflowSource(paused,file)),
+      'unknown complete sources cannot acquire historical test authority');
+  }
   return row.predecessor.source;
 }
 
@@ -180,7 +185,9 @@ export function restoreOwnCodebaseTestRegistrationClassifier(source){
 
 /** The preceding helper still independently checks its original two supported source forms. */
 export function restoreOwnCodebaseTestRegistrationTestSource(source){
-  return restoreSource(source,'js/tests/issue-195-evidence-node-dependency.test.js');
+  const file='js/tests/issue-195-evidence-node-dependency.test.js';
+  return restoreSource(source,file);
 }
 
 import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 import { readBootstrapStructuredDataLino } from '../../scripts/lib/structured-data-bootstrap.mjs';
+import { restoreCiIntegrationSource } from './ci-integration-source-history.mjs';
 
 export const dependencyWorkflowHistoryPath = 'parity/self-translation/dependency-workflow-source-history.lino';
 export const dependencyWorkflowPredecessors = Object.freeze({
@@ -133,7 +134,7 @@ export function restoreDependencyWorkflowSource(source, file, revision = depende
     archive = { commits, trees, sources: new Map(history.sources.map((row) => [`${row.revision}:${row.file}`, row])) };
   }
   const row = archive.sources.get(`${revision}:${file}`);
-  const bytes = Buffer.from(source);
+  const bytes = Buffer.from(restoreCiIntegrationSource(source, file, 'dependencies'));
   if (digest(bytes) !== row.currentDigest) return source;
   assert.equal(bytes.length, row.currentBytes);
   if (verifiedPredecessors.has(row)) return verifiedPredecessors.get(row);

@@ -80,7 +80,7 @@ impl Inference {
             self.unify(&body, &ret, function.span)?;
             self.results.push(FunctionResult {
                 result: ret.clone(),
-                declared: signature.declared_ret.clone(),
+                declared: signature.declared_ret,
                 body: body.clone(),
             });
             if function.ret.is_none()

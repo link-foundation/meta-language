@@ -295,13 +295,7 @@ pub fn ml_plan_rust_literal_match_pattern_loop1(
             ) {
                 (Some(ml_left), ml_right) => ml_left == ml_right,
                 _ => false,
-            }) || ((match self::ml_array::optional_at(values, self::ml_array::number_index(at)) {
-                Some(ml_present) => {
-                    let _ = ml_present;
-                    String::from("string")
-                }
-                None => String::from("undefined"),
-            }) != "string")
+            }) || self::ml_array::optional_at(values, self::ml_array::number_index(at)).is_none()
             {
                 self::MlPlanRustLiteralMatchPatternLoop1Result::MlPlanRustLiteralMatchPatternLoop1Return(Vec::<f64>::new())
             } else {

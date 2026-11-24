@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
+import {restoreAutomatedTranslationPauseSource} from '../scripts/automated-translation-pause-source-history.mjs';
 import {generateNodeDependencyTestPlacement,readNodeDependencyPlacementLiteral} from '../scripts/generate-node-dependency-test-placement.mjs';
 import {NAME_INVENTORIES} from '../scripts/issue-195-naming.mjs';
 import {restoreDependencyWorkflowSource} from '../scripts/dependency-workflow-source-history.mjs';
@@ -15,7 +16,7 @@ test('the Node test source placement preserves original namespaces and every pre
   const destination=readFileSync(new URL('../../'+policy.placement.destination,import.meta.url),'utf8');
   const oldNames=previous.extract(destination,policy.placement.destination);assert.equal(oldNames.length,3);
   const current=NAME_INVENTORIES.find(row=>row.inventory==='B70 physical field source view names for '+policy.placement.destination);assert.ok(current);
-  const retainedNames=current.extract(restoreDependencyWorkflowSource(destination,policy.placement.destination));
+  const retainedNames=current.extract(restoreAutomatedTranslationPauseSource(restoreDependencyWorkflowSource(destination,policy.placement.destination),policy.placement.destination));
   assert.equal(retainedNames.length,4);
   const historical=readNodeDependencyGeneratorRegistrationHistory().legacyNames;
   assert.equal(historical.length,2);

@@ -18,7 +18,9 @@ export function restoreSchedulingTestPredecessor(file,source) {
 
 export function restoreSchedulingSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
-  source=restoreCurrentCiRepairSource(restoreSchedulingTestPredecessor(file,source),file);
+  source=restoreSchedulingTestPredecessor(file,source);
+  if(file==='js/tests/test-groups.test.js')source=restoreAutomatedTranslationPauseSource(source,file,'231c6610fc93225fccb1682ab2943729e0c0e52e');
+  source=restoreCurrentCiRepairSource(source,file);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}
   const row=history.sources.find(row=>row.file===file);if(!row)return source;
   const actual=digest(source);
@@ -31,3 +33,4 @@ export function restoreSchedulingSourceHistory(file,source) {
 }
 
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';

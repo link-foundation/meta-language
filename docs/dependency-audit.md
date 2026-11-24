@@ -6,7 +6,7 @@
 
 # Dependency audit
 
-Audit date: 2026-11-23
+Audit date: 2026-11-24
 
 This inventory lists every runtime, development, build and optional dependency
 of the two published packages and the website crate, every lockfile
@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 255 | 254 | 1 | 0 |
-| Toolchains and tools | 18 | 16 | 1 | 1 |
-| GitHub Actions | 22 | 22 | 0 | 0 |
+| Generators | 257 | 256 | 1 | 0 |
+| Toolchains and tools | 21 | 16 | 2 | 3 |
+| GitHub Actions | 23 | 22 | 1 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 91 | 0 | 0 | 91 |
+| Published artifact contents | 92 | 0 | 0 | 92 |
 
 ## JavaScript engines
 
@@ -335,7 +335,6 @@ they are.
 | `zerofrom-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom-derive) | version | current |  |
 | `zerofrom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom) | version | current |  |
 | `zerotrie` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.5` | transitive |  | 0.2.5 (crates.io, zerotrie) | version | current |  |
-| `zlib-rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.8` | transitive |  | 0.6.8 (crates.io, zlib-rs) | version | current |  |
 | `zmij` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, zmij) | version | current |  |
 | `agda-layout-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/agda-layout-source-oracle` | direct, development |  |  | unversioned | not applicable |  |
 | `cmake-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/cmake-source-oracle` | direct, development |  |  | unversioned | not applicable |  |
@@ -362,7 +361,6 @@ they are.
 | `clap` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `4.6.9` | direct, runtime | `4.4` | 4.6.9 (crates.io, clap) | version | current |  |
 | `const-oid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.3` | transitive |  | 0.10.3 (crates.io, const-oid) | version | current |  |
 | `constant_time_eq` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.1` | transitive |  | 0.6.1 (crates.io, constant_time_eq) | version | current |  |
-| `crc32fast` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.5` | transitive |  | 1.5.5 (crates.io, crc32fast) | version | current |  |
 | `daachorse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `5.1.0` | transitive |  | 5.1.0 (crates.io, daachorse) | version | current |  |
 | `doublets` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.21.0` | direct, runtime (optional) | `0.21.0` | 0.21.0 (crates.io, doublets) | version | current |  |
 | `either` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.19.0` | transitive |  | 1.19.0 (crates.io, either) | version | current |  |
@@ -470,6 +468,8 @@ they are.
 | `wasm-bindgen-shared` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `0.2.130` | transitive |  | 0.2.130 (crates.io, wasm-bindgen-shared) | version | current |  |
 | `wasm-bindgen` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock`, `rust/web/Cargo.toml` | `0.2.130` | direct, runtime | `0.2` | 0.2.130 (crates.io, wasm-bindgen) | version | current |  |
 | `zip` | `rust/Cargo.lock` | `rust/Cargo.lock` | `9.8.2` | transitive |  | 9.8.2 (crates.io, zip) | version | current |  |
+| `zlib-rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.9` | transitive |  | 0.6.9 (crates.io, zlib-rs) | version | current |  |
+| `crc32fast` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.6` | transitive |  | 1.5.6 (crates.io, crc32fast) | version | current |  |
 
 ## Experiment manifests
 
@@ -822,29 +822,34 @@ they are.
 | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-dependency-workflow-source-history.mjs` | `js/scripts/generate-dependency-workflow-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-automated-translation-pause-source-history.mjs` | `js/scripts/generate-automated-translation-pause-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-integration-source-history.mjs` | `js/scripts/generate-ci-integration-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
-| Item | Scope | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
-|---|---|---|---|---|---|---|---|
-| `@secretlint/secretlint-rule-preset-recommend` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `cargo-llvm-cov` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24, 26)) | floor | current |  |
-| `npm` |  | `.github/workflows/js.yml` | `12` | 12.2.3 (npm registry, npm latest) | major | current |  |
-| `ocaml` |  | `.github/workflows/ci.yml` | `5.4` | 5.5.2 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
-| `pre-commit/pre-commit-hooks` |  | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
-| `lark` | `pypi` | `.github/workflows/js.yml` | `1.3.1` | 1.3.1 (PyPI JSON registry, lark newest non-yanked stable release) | version | current |  |
-| `rocq-core` |  | `.github/workflows/ci.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
-| `rocq-prover` |  | `.github/workflows/ci.yml` | `meta.1` |  | unversioned | not applicable |  |
-| `rocq-stdlib` |  | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
-| `rust-script` |  | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
-| `secretlint` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.2` | 0.27.2 (npm registry, tree-sitter-cli latest) | version | current |  |
-| `elan` |  | `.github/workflows/ci.yml` | `v4.4.0` | v4.4.0 (GitHub release, leanprover/elan) | version | current |  |
-| `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.36.0` | v4.36.0 (GitHub release, leanprover/lean4) | version | current |  |
-| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `26.13.1` | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | current |  |
-| `cargo-outdated` |  | `.github/workflows/dependency-refresh.yml` | `latest` |  | floating | current |  |
+| Item | Scope | Declared in | Pinned | Role | Requirement | Current stable release | Comparison | Status | Reason |
+|---|---|---|---|---|---|---|---|---|---|
+| `@secretlint/secretlint-rule-preset-recommend` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  |  |  | floating | current |  |
+| `cargo-llvm-cov` |  | `.github/workflows/rust.yml` | `latest` |  |  |  | floating | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` |  |  | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24, 26)) | floor | current |  |
+| `npm` |  | `.github/workflows/js.yml` | `12` |  |  | 12.2.3 (npm registry, npm latest) | major | current |  |
+| `ocaml` |  | `.github/workflows/ci.yml` | `5.4` |  |  | 5.5.2 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
+| `pre-commit/pre-commit-hooks` |  | `.pre-commit-config.yaml` | `v6.0.0` |  |  | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
+| `lark` | `pypi` | `.github/workflows/js.yml` | `1.3.1` |  |  | 1.3.1 (PyPI JSON registry, lark newest non-yanked stable release) | version | current |  |
+| `rocq-core` |  | `.github/workflows/ci.yml` | `9.3.0` |  |  | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
+| `rocq-prover` |  | `.github/workflows/ci.yml` | `meta.1` |  |  |  | unversioned | not applicable |  |
+| `rocq-stdlib` |  | `.github/workflows/ci.yml` | `9.2.0` |  |  | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
+| `rust-script` |  | `rust/scripts/install-rust-script.sh` | `latest` |  |  |  | floating | current |  |
+| `secretlint` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  |  |  | floating | current |  |
+| `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  |  |  | floating | current |  |
+| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.2` |  |  | 0.27.2 (npm registry, tree-sitter-cli latest) | version | current |  |
+| `elan` |  | `.github/workflows/ci.yml` | `v4.4.0` |  |  | v4.4.0 (GitHub release, leanprover/elan) | version | current |  |
+| `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.36.0` |  |  | v4.36.0 (GitHub release, leanprover/lean4) | version | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `26.13.1` |  |  | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | current |  |
+| `cargo-outdated` |  | `.github/workflows/dependency-refresh.yml` | `latest` |  |  |  | floating | current |  |
+| `rust/src/data/declaration-dependency-rules.lino` |  | `rust/src/data/declaration-dependency-rules.lino` | `profile` |  | `>=1.90.0 <1.100.0` |  | unversioned | not applicable |  |
+| `js/src/translation/data/ascii-text-predicate-rules.lino` |  | `js/src/translation/data/ascii-text-predicate-rules.lino` | `profile` |  | `>=22.15.0 <23.0.0 \|\| >=24.0.0 <25.0.0` |  | unversioned | not applicable |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `24.22.3` |  |  | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | behind | The complete test jobs share an exact Node version, and the recorded JavaScript assertions only cover >=22.15.0 <23.0.0 \|\| >=24.0.0 <25.0.0. |
 
 ## GitHub Actions
 
@@ -872,6 +877,7 @@ they are.
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `cargo-llvm-cov` |  | floating | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.90.8 (GitHub release, taiki-e/install-action) | major | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml` | `1.100.0` | 1.100.0 (GitHub release, rust-lang/rust) | version | current |  |
+| `dtolnay/rust-toolchain` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `1.99.1` | 1.100.0 (GitHub release, rust-lang/rust) | version | behind | Held by the native assertion profile, which covers Rust >=1.90.0 <1.100.0. The GitHub release list identifies 1.99.1 as its newest stable toolchain. |
 
 ## Build images
 
@@ -982,11 +988,12 @@ they are.
 | `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/unit/self_translation_recursive_declaration_groups/ownership_metadata.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 
-30 retained items are behind their current stable release on 2026-11-23, each for the recorded reason.
-30 of them are at their newest compatible release, verified against the requirements that hold them;
+32 retained items are behind their current stable release on 2026-11-24, each for the recorded reason.
+32 of them are at their newest compatible release, verified against the requirements that hold them;
 0 are stale and fail the delivery check.
 
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.2 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`), `crate rust/Cargo.lock hashbrown@0.17.2` (`^0.2.9`).
@@ -1019,3 +1026,5 @@ they are.
 - `emscripten/emsdk` `4.0.15` → `7.0.1` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino`): Held by tree-sitter v0.27.2, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.2 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.2` (`=4.0.15`).
 - `bitflags` `1.3.2` → `2.13.2` (`rust/Cargo.lock`): Held by the requirement of `kanaria` 0.2.0 (`^1.2.1`), which does not admit 2.13.2; it moves when that dependent does. Delivered at its newest compatible release `1.3.2`, held by `crate rust/Cargo.lock kanaria@0.2.0` (`^1.2.1`).
 - `object` `0.39.1` → `0.41.0` (`rust/Cargo.lock`): Held by the requirement of `ar_archive_writer` 0.5.5 (`^0.39`), which does not admit 0.41.0; it moves when that dependent does. Delivered at its newest compatible release `0.39.1`, held by `crate rust/Cargo.lock ar_archive_writer@0.5.5` (`^0.39`).
+- `node` `24.22.3` → `26.13.1` (`.github/workflows/ci.yml`, `.github/workflows/rust.yml`): The complete test jobs share an exact Node version, and the recorded JavaScript assertions only cover >=22.15.0 <23.0.0 || >=24.0.0 <25.0.0. Delivered at its newest compatible release `24.22.3`, held by `toolchain js/src/translation/data/ascii-text-predicate-rules.lino@profile` (`>=22.15.0 <23.0.0 \|\| >=24.0.0 <25.0.0`).
+- `dtolnay/rust-toolchain` `1.99.1` → `1.100.0` (`.github/workflows/ci.yml`, `.github/workflows/rust.yml`): Held by the native assertion profile, which covers Rust >=1.90.0 <1.100.0. The GitHub release list identifies 1.99.1 as its newest stable toolchain. Delivered at its newest compatible release `1.99.1`, held by `toolchain rust/src/data/declaration-dependency-rules.lino@profile` (`>=1.90.0 <1.100.0`).

@@ -255,6 +255,14 @@ test('declared toolchains must match exactly; tools a stage does not use are not
   assert.deepEqual(toolchainProblems({ lean: 'Lean (version 4.33.0)' }), [
     'lean version does not match declared toolchain 4.36.0: Lean (version 4.33.0)',
   ]);
+  for (const checkpoint of ['pre-merge', 'release-delivery']) {
+    assert.deepEqual(toolchainProblems({ rustc: 'rustc 1.99.1 (abc 2026-10-16)' }, checkpoint), []);
+    for (const version of ['1.100.0', '1.99.0', '1.99.0-nightly', '1.99.1-nightly', '1.99.01']) {
+      assert.deepEqual(toolchainProblems({ rustc: `rustc ${version}` }, checkpoint), [
+        `rustc version does not match declared toolchain 1.99.1: rustc ${version}`,
+      ]);
+    }
+  }
 });
 
 test('a native stage deletes the compiler outputs no cell cites', () => {
@@ -271,11 +279,11 @@ test('a native stage deletes the compiler outputs no cell cites', () => {
 
 test('CI runs each stage as its own job and the aggregate only merges and evaluates', () => {
   const workflow = read('.github/workflows/ci.yml');
-  const job = (id) => {
-    const start = workflow.indexOf(`\n  ${id}:\n`);
+  const job = (id, source = workflow) => {
+    const start = source.indexOf(`\n  ${id}:\n`);
     assert.ok(start >= 0, `job ${id}`);
-    const end = workflow.slice(start + 1).search(/\n {2}[\w-]+:\n/u);
-    return workflow.slice(start, end < 0 ? undefined : start + 1 + end);
+    const end = source.slice(start + 1).search(/\n {2}[\w-]+:\n/u);
+    return source.slice(start, end < 0 ? undefined : start + 1 + end);
   };
   assert.match(job('runtime-parity'), /--stage runtime-parity/u);
   // The JavaScript stages run before the Rust stages; Lean and Rocq share one matrix.
@@ -292,9 +300,23 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
     assert.match(job(stage), new RegExp(`STAGE: ${stage}\n`, 'u'), stage);
     assert.doesNotMatch(job(stage), /merge-enforcement|RULESET_TOKEN|pull-requests: read/u, stage);
   }
+  for (const stage of ['runtime-parity', 'native-javascript', 'native-rust', 'native-translations',
+    'javascript-suite', 'javascript-suite-independent', 'rust-suite', 'delivery', 'formal-ai-workload-parts']) {
+    assert.match(job(stage), /uses: dtolnay\/rust-toolchain@1\.99\.1/u, stage);
+  }
+  for (const stage of ['javascript-suite', 'javascript-suite-independent', 'rust-suite']) {
+    assert.match(job(stage), /node-version: 24\.22\.3\n/u, stage);
+  }
+  const nativeWorkflow = read('.github/workflows/rust.yml');
+  for (const stage of ['fresh-merge', 'test', 'coverage']) {
+    assert.match(job(stage, nativeWorkflow), /node-version: 24\.22\.3\n/u, stage);
+  }
+  assert.match(job('formal-ai-workload-parts'), /grep -Fx 'release: 1\.99\.1'/u);
+  assert.match(job('formal-ai-workload-parts'), /CACHE_CONTEXT: .*rust1\.99\.1-/u);
   // The post-merge report runs on main only and never blocks.
   const postMerge = job('post-merge');
-  assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' && github\.ref == 'refs\/heads\/main' && needs\.js\.result == 'success' \}\}/u);
+  assert.match(postMerge, /!cancelled\(\) && github\.event_name == 'push' && github\.ref == 'refs\/heads\/main' && needs\.js\.result == 'success'/u);
+  assert.match(postMerge, /!\(inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'\) \|\| needs\.self-translation-report-validation\.result == 'success'/u);
   assert.match(postMerge, /continue-on-error: true/u);
   assert.match(postMerge, /--checkpoint post-merge/u);
   assert.match(postMerge, /uses: dtolnay\/rust-toolchain@1\.100\.0/u);

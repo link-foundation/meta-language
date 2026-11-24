@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import { compareRustDefinitions, createModuleContext, measureReportModules, measureSelfTranslationModule, partitionReportModules, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -48,7 +49,7 @@ test('translation scheduling retains every test across six balanced shards', () 
   assert.ok(Math.max(...loads) < 600_000, 'balance the observed workload within the existing deadline');
 });
 
-test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', async () => {
+test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', automatedTranslationTest, async () => {
   const module = 'js/src/translation/primitive-value-rules.js';
   const context = { moduleDirectory: [], imports: {} };
   const decoratorsText = readFileSync(new URL('../../parity/self-translation/decorators.lino', import.meta.url), 'utf8');
@@ -100,7 +101,7 @@ test('two report measurements retain complete results and failures in source ord
   ]);
 });
 
-test('report import resolution checks callable candidates and avoids dependencies of carried classes', () => {
+test('report import resolution checks callable candidates and avoids dependencies of carried classes', async (testContext) => {
   const modules = new Map([
     ['consumer.js', "import { Box } from './class.js';import { plus as add } from './provider.js';export function twice(value){return add(value,value);}"],
     ['class.js', "import { hidden } from './unused.js';export class Box { read(){return hidden();} }"],
@@ -112,9 +113,11 @@ test('report import resolution checks callable candidates and avoids dependencie
   assert.deepEqual(context.imports['./class.js'], []);
   assert.deepEqual(context.imports['./provider.js'].map(signature => signature.name), ['plus']);
   assert.equal(reads.includes('unused.js'), false);
-  const source = modules.get('consumer.js');
-  const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
-  assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+  await testContext.test('the resolved callable enables actual translation', automatedTranslationTest, () => {
+    const source = modules.get('consumer.js');
+    const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
+    assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+  });
 });
 
 test('lexical report headers agree with independent grammar headers despite opaque and nested syntax', () => {
@@ -151,7 +154,7 @@ test('self-translation report compares each function independently', () => {
   assert.equal(standalone.identical, 0);
 });
 
-test('self-translation report accounts for actual translated, carried and UTF-8 comment source bytes', () => {
+test('self-translation report accounts for actual translated, carried and UTF-8 comment source bytes', automatedTranslationTest, () => {
   const source = '\r\n// café 😀\r\nexport function add(a, b) { return a + b; }\n\nclass Unsupported {}\n';
   const translation = selfTranslate(source, 'JavaScript', 'Rust');
   const coverage = sourceCoverage(source, translation.items);

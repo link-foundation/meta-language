@@ -618,7 +618,7 @@ fn mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_
         ),
         ("/tree/children/0/root/children/0/text", json!("b\nπ😀")),
     ] {
-        replacements.push(json!({"path":path,"value":replacement.clone()}));
+        replacements.push(json!({"path":path,"value":replacement}));
         let mut forged = genuine.clone();
         *forged
             .pointer_mut(path)

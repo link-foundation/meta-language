@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import test from 'node:test';
+import {ciIntegrationHistoryPath,ciIntegrationParents,restoreCiIntegrationSource} from '../scripts/ci-integration-source-history.mjs';
 import {extractNameInventory,NAME_INVENTORIES} from '../scripts/issue-195-naming.mjs';
 import {extractOwnCodebaseHistoricalNames,readOwnCodebaseHistoricalNamingPolicy,
   readOwnCodebaseHistoricalNamingSources,verifyOwnCodebaseHistoricalNamingSources} from '../scripts/own-codebase-baseline-naming-history.mjs';
@@ -37,23 +38,38 @@ test('historical naming retains complete certified definitions and every indepen
 });
 
 test('unknown whole current naming sources and driver bytes cannot borrow historical authority',()=>{
-  const history=readOwnCodebaseHistoricalNamingSources(),scratch=mkdtempSync(join(tmpdir(),'meta-language-own-naming-'));
-  const strictFiles=new Set([...history.views.map(view=>view.file),history.driver.file,
+  const history=readOwnCodebaseHistoricalNamingSources();
+  const requiredFiles=new Set([...history.views.map(view=>view.file),history.driver.file,
     ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file)]);
-  const files=[...new Set([...strictFiles,
-    ...NAME_INVENTORIES.filter(entry=>entry.inventory.startsWith('B70 physical field source view names for '))
-      .flatMap(entry=>entry.files.filter(file=>Object.hasOwn(dependencyWorkflowPredecessors,file)))])];
+  const expected=extractOwnCodebaseHistoricalNames(root,NAME_INVENTORIES,history);
+  for(const [file,record] of [
+    ['js/scripts/formal-ai-workload-partitions.mjs','repository.validate-formal-artificial-intelligence-workload-partition'],
+    ['rust/tests/unit/grammar_recursive_selection.rs','repository.check-native-mapped-correspondence-forgeries'],
+  ]){
+    const original=readFileSync(join(root,file),'utf8');
+    const predecessor=restoreCiIntegrationSource(original,file,'dependencies');
+    assert.notEqual(original,predecessor);
+    const rows=expected.filter(row=>row.file===file&&row.record===record&&row.sourceView.archive===ciIntegrationHistoryPath);
+    assert.equal(rows.length,1,record);
+    assert.equal(rows[0].sourceView.archive,ciIntegrationHistoryPath);
+    assert.equal(rows[0].sourceView.revision,ciIntegrationParents.dependencies);
+    assert.equal(rows[0].sourceView.sha256,digest(predecessor));
+  }
+  const files=new Set([...requiredFiles,...expected.map(row=>row.file)]);
+  const dependencyInputs=NAME_INVENTORIES.flatMap(entry=>entry.files)
+    .filter(file=>Object.hasOwn(dependencyWorkflowPredecessors,file));
+  const fixtureFiles=new Set([...files,...dependencyInputs]);
+  const scratch=mkdtempSync(join(tmpdir(),'meta-language-own-naming-'));
   try{
-    for(const file of files){const destination=join(scratch,file);mkdirSync(dirname(destination),{recursive:true});writeFileSync(destination,readFileSync(join(root,file)));}
-    const expected=extractOwnCodebaseHistoricalNames(root,NAME_INVENTORIES,history);
+    for(const file of fixtureFiles){const destination=join(scratch,file);mkdirSync(dirname(destination),{recursive:true});writeFileSync(destination,readFileSync(join(root,file)));}
     assert.deepEqual(extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),expected);
     for(const file of files){
       const destination=join(scratch,file),source=readFileSync(destination);writeFileSync(destination,Buffer.concat([source,Buffer.from('\n')]));
-      const dependencyOnly=Object.hasOwn(dependencyWorkflowPredecessors,file)&&!strictFiles.has(file);
-      if(dependencyOnly) {
-        assert.deepEqual(extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),expected.filter(row=>row.file!==file));
-      } else {
-        assert.throws(()=>extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history));
+      if(requiredFiles.has(file)){
+        assert.throws(()=>extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),file);
+      }else{
+        assert.deepEqual(extractOwnCodebaseHistoricalNames(scratch,NAME_INVENTORIES,history),
+          expected.filter(row=>row.file!==file),`unknown bytes cannot authenticate the historical rows for ${file}`);
       }
       writeFileSync(destination,source);
     }

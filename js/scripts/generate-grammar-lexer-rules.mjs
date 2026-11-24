@@ -10,6 +10,7 @@ import { GRAMMAR_LEXER_FORMS } from '../src/grammar-lexer-forms.js';
 import { readProjectData, writeProjectData } from './project-data.mjs';
 import { readPortableSourceParameterStyles, readPortableSourceLintStyles, partitionPortableRustLibrary } from './portable-source-library-style.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
+import { applyReviewedNativeSourceStyle } from './reviewed-native-source-styles.mjs';
 
 const sourceFile = new URL('../src/translation/grammar-lexer-rules.js', import.meta.url);
 const formFile = new URL('../src/grammar-lexer-forms.js', import.meta.url);
@@ -123,6 +124,9 @@ export async function generateGrammarLexerRules({ check = false, native = false 
     const notice = '// Generated from the complete shared grammar-lexer-rules.js and recorded source closure.\n// Do not edit by hand.\n';
     const rustSource = formatProductRuleSource(decorated);
     const nativeFiles = partitionPortableRustLibrary(rustSource, { notice, directory: 'grammar_lexer_rules' });
+    for (const file of nativeFiles) {
+      file.source = applyReviewedNativeSourceStyle('rust/src/translation/' + (file.path ?? 'grammar_lexer_rules.rs'), file.source);
+    }
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256, closedSourceSha256: policy.closedSourceSha256,
       sourceClosure: policy.sourceClosure, formSourceSha256: policy.formSourceSha256, styleSha256: hash(readFileSync(nativeStyles)),
       definitions: emitted.definitions, assumptions: emitted.assumptions, encodings: emitted.encodings, rustSource, rustSha256: hash(rustSource),

@@ -22,8 +22,9 @@ import { mergeRustSuitePartitions } from './issue-195-rust-suite-partitions.mjs'
 export const RUNTIMES = Object.freeze(['javascript', 'rust']);
 export const NATIVE_TARGETS = Object.freeze(['JavaScript', 'Rust', 'Lean', 'Rocq']);
 
-/** The toolchain versions the issue #195 evidence declares. */
+/** The toolchain versions used by the post-merge report. */
 export const DECLARED_TOOLCHAINS = Object.freeze({ rustc: '1.100.0', lean: '4.36.0', rocq: '9.3' });
+const NATIVE_EVIDENCE_TOOLCHAINS = Object.freeze({ ...DECLARED_TOOLCHAINS, rustc: '1.99.1' });
 
 const NATIVE_TOOLS = Object.freeze({ JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' });
 // The suites' tests run the native toolchains on emitted translations.
@@ -104,10 +105,13 @@ export function stageFiles(name) {
   return { record: `work/stage-${name}.lino`, observations: `work/stage-${name}-observations.lino` };
 }
 
-/** Problems with the declared toolchain versions among `versions`. */
-export function toolchainProblems(versions) {
-  return Object.entries(DECLARED_TOOLCHAINS)
-    .filter(([tool, wanted]) => tool in versions && !String(versions[tool]).includes(wanted))
+/** Problems with the installed tools for the selected evidence checkpoint. */
+export function toolchainProblems(versions, checkpoint = 'post-merge') {
+  const declared = checkpoint === 'post-merge' ? DECLARED_TOOLCHAINS : NATIVE_EVIDENCE_TOOLCHAINS;
+  return Object.entries(declared)
+    .filter(([tool, wanted]) => tool in versions && (tool === 'rustc'
+      ? /^rustc (\S+)/u.exec(versions[tool])?.[1] !== wanted
+      : !String(versions[tool]).includes(wanted)))
     .map(([tool, wanted]) => `${tool} version does not match declared toolchain ${wanted}: ${versions[tool]}`);
 }
 

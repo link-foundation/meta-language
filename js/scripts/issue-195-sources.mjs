@@ -19,8 +19,8 @@ export const ISSUE_195_SOURCE_REGISTER_PATH = 'parity/issue-195-sources.json';
 export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
-export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 197]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 249]);
+export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 197, 248]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 249, 250]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never
@@ -306,7 +306,7 @@ export function refreshRegister(register, { issue, issues = [], comments }) {
   };
 }
 
-/** Add the reviewed issue #197 sources, then resolve their exact live revisions. */
+/** Add the reviewed dependency and CI sources before resolving live revisions. */
 export function appendDependencyUpgradeSources(register, sources) {
   const reviewed = [
     ['dependencyUpgradeIssue', 197, 'issue', 'Update all dependencies to their latest releases and enforce freshness in CI',
@@ -320,6 +320,13 @@ export function appendDependencyUpgradeSources(register, sources) {
     ['npmConsumerResolution', 6878955660, 'comment', 'JavaScript parser dependency resolution and npm publication',
       'Upgrade Links Notation, Peggy and source-map-generator, run grammar and translation tests, and publish metadata without consumer overrides',
       ['I195-ISSUE-197-NPM-CONSUMER', 'I195-ISSUE-197-NPM-PUBLISHED']],
+    ['automatedTranslationPause', 248, 'issue', 'Make a strict requirement to stop fully require automated translation',
+      'Temporary pause, manual ports, open pull request rollout, and case study', ['I195-AUTOMATED-TRANSLATION-PAUSE-']],
+    ['dependencyPullRequestCiPause', 7127808977, 'comment', 'Pause Windows, macOS and automated translation checks',
+      'Retain Windows and macOS jobs and bring the automated translation pause into the dependency upgrade',
+      ['I195-ISSUE-197-CI-PLATFORMS', 'I195-AUTOMATED-TRANSLATION-PAUSE-']],
+    ['relatedPullRequestCiPause', 7127536709, 'comment', 'Retain paused Windows and macOS checks',
+      'Matching platform instructions on the related CI pause pull request', ['I195-ISSUE-197-CI-PLATFORMS']],
   ];
   const reviewedKeys = new Set(reviewed.map(([key]) => key));
   const retained = register.requirementSources.filter(({ key }) => !reviewedKeys.has(key));

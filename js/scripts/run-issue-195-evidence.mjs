@@ -395,7 +395,7 @@ async function prepareDirectories() {
 function readToolchainVersions(tools) {
   const versions = Object.fromEntries(tools.map((tool) => [tool, commandOutput(tool, ['--version'])]));
   versions.platform = `${process.platform}-${process.arch}`;
-  const problems = toolchainProblems(versions);
+  const problems = toolchainProblems(versions, checkpoint);
   if (problems.length > 0) throw new Error(problems.join('; '));
   return versions;
 }
@@ -448,7 +448,16 @@ async function produceMergeEnforcementEvidence() {
     if (execution.ok) throw error;
   }
   if (!execution.ok) failureLogs.push(execution.artifacts[0]);
-  return bundle(execution, ...cargo, { commands: [], artifacts, failureLogs });
+  const rolloutPath = path.join(artifactsDirectory, 'automated-translation-rollout.lino');
+  const rollout = await runCommand('automated-translation-rollout', 'node', [
+    path.join(root, 'js/scripts/check-automated-translation-rollout.mjs'), rolloutPath,
+  ], { allowFailure: true });
+  if (rollout.ok) observe(
+    'i195-automated-translation-pause-open-pull-requests-tooling-behavior',
+    'everyOpenPullRequestRunsPausedWorkflow', 'eligible GitHub Actions rollout inspection',
+  );
+  if (!rollout.ok) failureLogs.push(...rollout.artifacts);
+  return bundle(execution, ...cargo, rollout, { commands: [], artifacts: [...artifacts, relative(rolloutPath)], failureLogs });
 }
 
 /**

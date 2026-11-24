@@ -6,6 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
 import {restoreDependencyWorkflowSource} from './dependency-workflow-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
 const archiveSha256='5b50046591ff194808c3d151e3a41df7de1c677230995f3e7356e498a7f161c6';
@@ -18,6 +19,7 @@ let history;
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
   source=restoreDependencyWorkflowSource(source,path);
+  if(path!=='js/tests/test-groups.test.js')source=restoreAutomatedTranslationPauseSource(source,path);
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
   source=restoreRawPlanningWorkflowHistory(source,path);

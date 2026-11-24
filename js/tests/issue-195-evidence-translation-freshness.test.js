@@ -198,7 +198,7 @@ test('Rust lint runs complete source freshness after tools and existing checks e
   assert.ok(freshness);
   assert.equal(job.steps.filter(step => step.name === freshness.name).length, 1);
   assert.equal(freshness.run.trim(), 'node js/scripts/check-bulk-translation-rules.mjs');
-  assert.match(freshness.text, /if: \$\{\{ !cancelled\(\) \}\}/u);
+  assert.match(freshness.text, /if: \$\{\{ !cancelled\(\) && \(inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'\) \}\}/u);
   assert.match(freshness.text, /working-directory: \$\{\{ github.workspace \}\}/u);
   for (const name of ['Setup Rust', 'Setup Node.js for independent grammar sources', 'Install the linked grammar manifest reader dependencies',
     'Check formatting', 'Reject tests in src', 'Run Clippy', 'Check docs.rs feature set']) {

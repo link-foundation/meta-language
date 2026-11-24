@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import vm from 'node:vm';
 import { ParseConfiguration, TriviaAttachmentPolicy } from '../src/primitives.js';
 import {
@@ -124,7 +125,7 @@ test('embedded region diagnostics expose attempted counters while only admitted 
   assert.equal(readEmbeddedRegionDiagnosticObserved('embeddedRegionByteLimit', 1, 0, Number.MAX_SAFE_INTEGER, 0, 1), -1);
 });
 
-test('complete embedded region kernels translate from their actual shared JavaScript source', async () => {
+test('complete embedded region kernels translate from their actual shared JavaScript source', automatedTranslationTest, async () => {
   const { parseJavaScript } = await import('../src/translation/javascript.js');
   const { checkProgram } = await import('../src/translation/check.js');
   const { emitRust } = await import('../src/translation/emit-rust.js');

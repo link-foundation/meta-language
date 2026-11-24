@@ -398,6 +398,10 @@ fn mutable_dense_literal_bindings_keep_order_scope_and_complete_archives() {
 }
 
 #[test]
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn mutable_array_bindings_keep_original_refusals_and_temporal_dead_zones() {
     let original = "function f(n) { let [a] = n; return a; }";
     assert_eq!(
@@ -457,6 +461,10 @@ fn mutable_array_bindings_keep_original_refusals_and_temporal_dead_zones() {
 }
 
 #[test]
+#[expect(
+    clippy::literal_string_with_formatting_args,
+    reason = "Preserve literal JavaScript source passed to the JavaScript runtime or translator"
+)]
 fn mutable_literal_binding_owners_preserve_shadows_and_refuse_redeclarations() {
     for (source, expected) in [
         (

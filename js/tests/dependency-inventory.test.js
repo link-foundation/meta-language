@@ -18,6 +18,8 @@ import {
   checkInventory,
   collectDependencies,
   comparePypiVersions,
+  couplingResolvers,
+  deliveredStatuses,
   ownStatus,
   pinnedPipPackages,
   refreshInventory,
@@ -50,6 +52,17 @@ function observe(assertions, testName) {
 }
 
 const kinds = (problems) => problems.map(({ kind }) => kind);
+
+test('dependency inventory retains runner declarations from inactive native and consumer platforms', () => {
+  const workflows = ['.github/workflows/ci.yml', '.github/workflows/rust.yml'];
+  const collected = collectDependencies(root);
+  for (const name of ['macos-latest', 'windows-latest', 'ubuntu-latest']) {
+    const runner = collected.find(item => item.category === 'runner' && item.name === name);
+    assert.ok(runner, name);
+    assert.equal(runner.compare, 'floating', name);
+    for (const workflow of workflows) assert.ok(runner.declaredIn.includes(workflow), `${name}: ${workflow}`);
+  }
+});
 
 test('main dependency refresh retains failed live findings and delivers their outcome to repair pull requests', () => {
   const text = readFileSync(path.join(root, '.github/workflows/dependency-refresh.yml'), 'utf8');
@@ -446,6 +459,66 @@ test('the committed inventory is dated and every retained item is current or rec
     if (ownStatus(item) === 'behind') assert.ok(item.reason?.length > 20, `${item.id} is behind ${item.current} and records why`);
   }
   observe(['auditDateRecorded', 'retainedItemsAtCurrentStableRelease'], 'the committed inventory is dated and every retained item is current or records its compatibility reason');
+});
+
+test('the native assertion range selects the newest admitted stable Rust release', async () => {
+  const declarations = collectDependencies(root);
+  const holder = declarations.find(item => item.name === 'rust/src/data/declaration-dependency-rules.lino');
+  const action = declarations.find(item => item.name === 'dtolnay/rust-toolchain' && item.pinned === '1.99.1');
+  assert.ok(holder && action);
+  assert.equal(holder.requirement, '>=1.90.0 <1.100.0');
+  const releases = ['1.100.0', '1.99.2', '1.99.1', '1.99.0', '1.90.0'].map(tag_name => ({
+    tag_name, draft: tag_name === '1.99.2', prerelease: false,
+  }));
+  const resolve = couplingResolvers({ github: async route => {
+    assert.equal(route, 'repos/rust-lang/rust/releases?per_page=100');
+    return releases;
+  } })['action dtolnay/rust-toolchain'];
+  const pinned = { ...action, current: '1.100.0' };
+  const find = (category, name) => declarations.find(item => item.category === category && item.name === name);
+  const profile = await resolve(pinned, find);
+  assert.equal(profile.compatible, '1.99.1');
+  assert.deepEqual(profile.heldBy.map(({ id, requirement }) => ({ id, requirement })), [{ id: holder.id, requirement: holder.requirement }]);
+  assert.equal(deliveredStatuses([holder, { ...pinned, ...profile }]).get(action.id).status, 'compatible');
+  assert.deepEqual(await resolve({ ...pinned, declaredIn: ['.github/workflows/dependency-refresh.yml'] }, find), {});
+  const previous = { ...pinned, pinned: '1.99.0' };
+  assert.equal(deliveredStatuses([holder, { ...previous, ...profile }]).get(action.id).status, 'behind');
+  assert.equal(deliveredStatuses([holder, { ...pinned, ...profile, pinned: '1.98.0' }]).get(action.id).status, 'behind');
+  releases.find(release => release.tag_name === '1.99.1').draft = true;
+  const priorProfile = await resolve(previous, find);
+  assert.equal(priorProfile.compatible, '1.99.0');
+  assert.equal(deliveredStatuses([holder, { ...previous, ...priorProfile }]).get(action.id).status, 'compatible');
+  releases.pop();
+  await assert.rejects(resolve(pinned, find), /does not cover the full native assertion range/u);
+});
+
+test('the complete test jobs share the newest stable Node release in the recorded assertion range', async () => {
+  const declarations = collectDependencies(root);
+  const find = (category, name) => declarations.find(item => item.category === category && item.name === name);
+  const holder = find('toolchain', 'js/src/translation/data/ascii-text-predicate-rules.lino');
+  const node = declarations.find(item => item.name === 'node' && item.pinned === '24.22.3');
+  assert.ok(holder && node);
+  assert.equal(holder.requirement, '>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0');
+  const releases = ['26.13.1', '25.8.0', '24.22.4-rc.1', '24.22.3', '24.22.0', '22.23.5', '22.15.0']
+    .map(version => ({ version: `v${version}` }));
+  const resolvers = releaseResolvers({ http: async url => {
+    assert.equal(url, 'https://nodejs.org/dist/index.json');
+    return JSON.stringify(releases);
+  } });
+  const pinned = { ...node, current: '26.13.1' };
+  const resolve = resolvers.couplings['toolchain node'];
+  const profile = await resolve(pinned, find);
+  assert.equal(profile.compatible, '24.22.3');
+  assert.deepEqual(profile.heldBy.map(({ id, requirement }) => ({ id, requirement })), [{ id: holder.id, requirement: holder.requirement }]);
+  assert.equal(deliveredStatuses([holder, { ...pinned, ...profile }]).get(node.id).status, 'compatible');
+  for (const older of ['22.23.5', '24.22.0']) {
+    const previous = { ...pinned, pinned: older, ...profile };
+    assert.equal(deliveredStatuses([holder, previous]).get(node.id).status, 'behind');
+  }
+  assert.deepEqual(await resolve({ ...pinned, declaredIn: ['.github/workflows/ci.yml'] }, find), {});
+  assert.deepEqual(await resolve({ ...pinned, source: { type: 'node-maintained' } }, find), {});
+  await assert.rejects(couplingResolvers({ nodeIndex: async () => releases.slice(0, -1) })['toolchain node'](pinned, find),
+    /does not cover the full JavaScript assertion range/u);
 });
 
 test('the check rejects a stale item without a reason, an undated audit and an uninventoried dependency', () => {
