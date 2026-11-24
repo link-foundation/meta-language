@@ -70,10 +70,11 @@ export function observeFormalStructuralState(kind, referenceReceiver) {
 }
 
 /** @param {boolean} observedCollection @param {boolean} observedCell
- * @param {boolean} structuralState @param {boolean} standalone @returns {boolean}
+ * @param {boolean} structuralState @param {boolean} standalone
+ * @param {boolean} checkedClass @returns {boolean}
  */
-export function acceptFormalReferenceStoreLowering(observedCollection, observedCell, structuralState, standalone) {
-  return observedCollection || observedCell && !structuralState || standalone && structuralState;
+export function acceptFormalReferenceStoreLowering(observedCollection, observedCell, structuralState, standalone, checkedClass) {
+  return observedCollection || observedCell && !structuralState || structuralState && (standalone || checkedClass);
 }
 
 /** Each edge is an actual checked call, from its owner to its callee.
@@ -104,6 +105,7 @@ export function planFormalReferenceStoreFunctions(roots, callers, callees) {
 export function readFormalReferenceStoreOperation(kind, operation, identity, argumentsCount, orderedRecord, recordOperator) {
   if (kind === 'record' && recordOperator === '=' && !orderedRecord && argumentsCount === 1) return 'write field';
   if (identity === 'fill-array-elements' && argumentsCount === 1) return 'fill';
+  if (kind === 'array' && identity === 'append-array-elements') return 'append array';
   if (identity === '' || kind !== 'map' && kind !== 'set') return '';
   if (operation === 'clear') return operation;
   if (operation === 'set' && kind === 'map' && argumentsCount >= 2) return operation;

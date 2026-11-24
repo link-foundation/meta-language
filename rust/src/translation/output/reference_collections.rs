@@ -43,23 +43,24 @@ pub(in crate::translation) fn prepare(source: &Program) -> Cow<'_, Program> {
         .main
         .as_ref()
         .is_none_or(|main| main.effects.is_empty());
+    let checked_class = source
+        .source_class_owners
+        .as_ref()
+        .and_then(|owners| owners.get("owners"))
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|owners| !owners.is_empty());
     if !rules::accept_formal_reference_store_lowering(
         observed_collection,
         observed_cell,
         structural_state,
         standalone,
+        checked_class,
     ) {
         return Cow::Borrowed(source);
     }
     let prepared = class_slots::lower(source);
     let owner = prepared.as_ref().unwrap_or(source);
-    let closed_class_library = standalone
-        && owner
-            .source_class_owners
-            .as_ref()
-            .and_then(|owners| owners.get("owners"))
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|owners| !owners.is_empty());
+    let closed_class_library = standalone && checked_class;
     let declared: HashSet<_> = owner
         .declarations
         .iter()
@@ -874,17 +875,17 @@ impl ReferenceStore {
         let address = *address;
         let operation = &op;
         let kind = source.kind();
-        let identity = if kind == "array" {
-            use crate::translation::array_state_method_rules as array_rules;
-            array_rules::read_array_state_method_identity(&array_rules::ml_string::Text::from_text(
-                operation,
-            ))
-            .to_string()
-        } else {
+        let mut identity =
             crate::translation::reference_method_rules::read_reference_method_identity(
                 kind, operation,
+            );
+        if identity.is_empty() && kind == "array" {
+            use crate::translation::array_state_method_rules as array_rules;
+            identity = array_rules::read_array_state_method_identity(
+                &array_rules::ml_string::Text::from_text(operation),
             )
-        };
+            .to_string();
+        }
         let args: Vec<_> = args.into_iter().collect::<Option<_>>()?;
         let arity = serde_json::Number::from(args.len()).as_f64()?;
         let selected = rules::read_formal_reference_store_operation(
@@ -942,6 +943,18 @@ impl ReferenceStore {
                     method(value.clone(), "map", vec![callback], value.ty),
                     address.clone(),
                 )
+            }
+            "append array" => {
+                let ty = value.ty.clone();
+                let appended = append(value, items(ty, args));
+                let updated = self.bind(steps, appended);
+                let output = Expr::new(
+                    Node::Length {
+                        array: Box::new(updated.clone()),
+                    },
+                    self.target_type(&call.ty),
+                );
+                (updated, output)
             }
             _ => {
                 let (replacement, output) =

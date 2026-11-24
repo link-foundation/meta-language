@@ -716,9 +716,10 @@ pub const fn accept_formal_reference_store_lowering(
     observed_cell: bool,
     structural_state: bool,
     standalone: bool,
+    checked_class: bool,
 ) -> bool {
     (observed_collection || (observed_cell && !structural_state))
-        || (standalone && structural_state)
+        || (structural_state && (standalone || checked_class))
 }
 
 /// Execute the checked shared source algorithm.
@@ -757,6 +758,8 @@ pub fn read_formal_reference_store_operation(
         String::from("write field")
     } else if (identity == "fill-array-elements") && (arguments_count == 1f64) {
         String::from("fill")
+    } else if (kind == "array") && (identity == "append-array-elements") {
+        String::from("append array")
     } else if ((identity).is_empty()) || ((kind != "map") && (kind != "set")) {
         String::new()
     } else if (operation == "clear")

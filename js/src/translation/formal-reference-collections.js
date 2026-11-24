@@ -267,6 +267,11 @@ class FormalReferenceCollections {
         const callback = this.callback([value.type.element], () => args[0]);
         return finish({ k: 'method', op: 'map', object: value, args: [callback], type: value.type }, object);
       }
+      if (operation === 'append array') {
+        const appended = append(value, collection('array', args, value.type));
+        return this.bind(appended, updated => finish(updated,
+          { k: 'length', array: updated, type: this.targetType(node.type) }));
+      }
       const isMap = kind === 'map';
       const keyType = isMap ? value.type.key : value.type.element;
       const element = isMap ? tuple([keyType, value.type.value]) : keyType;
@@ -517,7 +522,8 @@ export function prepareFormalReferenceCollections(program) {
     for (const entry of program.declarations.values()) inspect(entry, observe);
     inspect(program.main, observe);
     const standalone = !program.main?.effects.length;
-    if (!acceptFormalReferenceStoreLowering(observedCollection, observedCell, structuralState, standalone)) return program;
+    const checkedClass = readJavaScriptClassOwnerRecords(program.sourceClassOwners).length > 0;
+    if (!acceptFormalReferenceStoreLowering(observedCollection, observedCell, structuralState, standalone, checkedClass)) return program;
     const lowering = new FormalReferenceCollections(prepareFormalClassMethods(program), structuralState);
     return lowering.slots.size ? lowering.lowerProgram() : program;
   } catch (error) {
