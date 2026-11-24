@@ -7,7 +7,9 @@ export function createUnsignedGraphFixtureInput(row,fixture){
  let network,root,second;
  if(row.raw!==undefined)network=UnsignedLinkNetwork.fromLino(row.raw);
  else{
-  const packet=createUnsignedTypedProgramLinks(fixture.typedSource,'Rust',{}, {firstIdentity:fixture.firstIdentity});root=packet.root;network=packet.network.clone();
+  // Keep the fixture's declaration verbatim inside an ordinary Rust program.
+  const source=fixture.typedSource+'\nfn main() {}\n';
+  const packet=createUnsignedTypedProgramLinks(source,'Rust',{}, {firstIdentity:fixture.firstIdentity});root=packet.root;network=packet.network.clone();
   if(row.edit!==undefined){const values=network.links().filter(link=>link.metadata().language===TYPED_PROGRAM_LINKS_SCHEMA.language&&link.metadata().term===TYPED_PROGRAM_LINKS_SCHEMA.scalars.string&&link.metadata().definition==='7');assert.equal(values.length,1,'the original program has one exact scalar spelling to edit');const id=values[0].id();assert.equal(network.setLinkMetadata(id,values[0].metadata().clone().withDefinition(row.edit)),true);assert.equal(packet.network.link(id).metadata().definition,'7','editing the clone preserves the original source graph');}
   if(row.multiple){const link=network.link(root);second=network.insertLink(link.references(),link.metadata().clone());}
  }

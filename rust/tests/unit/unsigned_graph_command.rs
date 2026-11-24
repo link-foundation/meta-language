@@ -213,8 +213,13 @@ fn native_saved_graph_transport_matches_actual_javascript_snapshots_and_edits() 
 fn metadata_edits_preserve_original_graph_state_and_missing_identity_is_atomic() {
     super::unsigned_source_documents::require_versions();
     let options = BinaryLinksOptions::default();
+    let fixture = data();
+    let source = format!(
+        "{}\nfn main() {{}}\n",
+        fixture["typedSource"].as_str().unwrap()
+    );
     let packet = meta_language::create_unsigned_typed_program_links(
-        "pub fn result()->u8{7}",
+        &source,
         "Rust",
         LinkId::from_u64(9_007_199_254_740_993),
         options,
