@@ -1,22 +1,21 @@
 use std::fs;
 
-fn release_workflow() -> String {
-    // GitHub Actions workflows must live at `<repo>/.github/workflows`, which is
-    // shared across language implementations and stays at the repository root
-    // even though the Rust crate now lives under `rust/`. Walk up from the crate
-    // manifest directory to find the workflow regardless of layout. The Rust
-    // CI/CD pipeline (formerly `release.yml`) is now `rust.yml`.
+fn repository_file(relative: &str) -> String {
     let mut dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     loop {
-        let candidate = dir.join(".github/workflows/rust.yml");
+        let candidate = dir.join(relative);
         if candidate.is_file() {
             return fs::read_to_string(candidate).unwrap().replace("\r\n", "\n");
         }
         assert!(
             dir.pop(),
-            "could not locate .github/workflows/rust.yml from the crate manifest"
+            "could not locate {relative} from the crate manifest"
         );
     }
+}
+
+fn release_workflow() -> String {
+    repository_file(".github/workflows/rust.yml")
 }
 
 fn job_block<'a>(workflow: &'a str, job_name: &str) -> &'a str {
@@ -173,10 +172,9 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         // Cold platform test builds retain all original logical suites and tests
         // with the same bounded thirty-minute deadline for every physical cell.
         let expected = if job_name == "test" {
-            assert!(job.contains("        os: [ubuntu-latest, macos-latest, windows-latest]\n"));
-            assert!(job.contains(
-                "        suite: [grammar, inference, generative, translation, remaining]\n"
-            ));
+            assert!(
+                job.contains("      matrix: ${{ fromJSON(needs.check.outputs.test_matrix) }}\n")
+            );
             "    timeout-minutes: 30\n".to_owned()
         } else {
             format!("    timeout-minutes: {timeout_minutes}\n")
@@ -363,6 +361,7 @@ fn workflow_propagates_cancellation_without_always_override() {
 ";
     let prerequisites = r"    needs: [detect-changes, changelog, cargo-lock, check]
     if: |
+      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&
       !cancelled() &&
       needs.cargo-lock.result == 'success' &&
       needs.check.result == 'success' &&
@@ -467,6 +466,18 @@ fn workflow_propagates_cancellation_without_always_override() {
         workflow.replacen(
             execution,
             &execution.replace("--test-concurrency=1", "--test-concurrency=2"),
+            1,
+        ),
+        false,
+    ));
+    cases.push((
+        "removed translation opt-in",
+        workflow.replacen(
+            prerequisites,
+            &prerequisites.replace(
+                "      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&\n",
+                "",
+            ),
             1,
         ),
         false,
@@ -882,15 +893,43 @@ fn cargo_check_gates_every_compiling_job() {
 fn rust_test_suites_partition_the_tests_by_name() {
     let workflow = release_workflow();
     let test = job_block(&workflow, "test");
-    assert!(test.contains("suite: [grammar, inference, generative, translation, remaining]"));
-    assert!(test.contains("os: [ubuntu-latest, macos-latest, windows-latest]"));
+    let check = job_block(&workflow, "check");
+    assert!(check.contains("test_matrix: ${{ steps.test-platforms.outputs.matrix }}"));
+    assert!(check.contains("node js/scripts/rust-test-shards.mjs --test-matrix"));
+    assert!(test.contains("matrix: ${{ fromJSON(needs.check.outputs.test_matrix) }}"));
+    let policy = meta_language::read_structured_data_lino(&repository_file(
+        "parity/rust-test-physical-shards.lino",
+    ))
+    .unwrap();
+    assert_eq!(
+        policy["platforms"],
+        serde_json::json!(["ubuntu-latest", "macos-latest", "windows-latest"])
+    );
+    let suites = policy["suites"].as_array().unwrap();
+    assert_eq!(
+        suites
+            .iter()
+            .map(|row| row["name"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        [
+            "grammar",
+            "inference",
+            "generative",
+            "translation",
+            "remaining"
+        ]
+    );
     let filters = |suite: &str| {
-        let marker = format!("          - suite: {suite}\n            filters: ");
-        let start = test
-            .find(&marker)
-            .unwrap_or_else(|| panic!("the {suite} suite declares its filters"))
-            + marker.len();
-        test[start..].lines().next().unwrap().to_string()
+        suites
+            .iter()
+            .find(|row| row["name"].as_str() == Some(suite))
+            .unwrap()["filters"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|filter| filter.as_str().unwrap())
+            .collect::<Vec<_>>()
+            .join(" ")
     };
     // Each suite skips the filters of the suites before it, and `remaining`
     // skips every filter, so each test runs in exactly one suite.

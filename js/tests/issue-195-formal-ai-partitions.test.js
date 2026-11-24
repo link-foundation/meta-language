@@ -17,6 +17,7 @@ import {
   runFormalAiNativePartition,
 } from '../scripts/formal-ai-partition-bundles.mjs';
 import {
+  FORMAL_AI_TRANSLATION_WORKLOAD,
   FORMAL_AI_WORKLOAD_ASSERTIONS,
   FORMAL_AI_WORKLOAD_FIXTURE,
   countOutcomes,
@@ -70,7 +71,7 @@ function executionRuns(inventory, partition) {
   });
 }
 
-function passingPair() {
+function passingPair({ translationPaused = false, skippedIdentity = FORMAL_AI_TRANSLATION_WORKLOAD } = {}) {
   const expected = {
     identity: { repository: 'link-foundation/meta-language', commit: 'b'.repeat(40), run: '123', attempt: '2',
       fixtureSha256: 'c'.repeat(64), semanticProjectionFixtureSha256: 'd'.repeat(64),
@@ -81,12 +82,14 @@ function passingPair() {
     profile: { CARGO_BUILD_JOBS: '2', CARGO_INCREMENTAL: '0', CARGO_PROFILE_DEV_DEBUG: '0',
       CARGO_PROFILE_TEST_DEBUG: '0', RUST_TEST_THREADS: '1', patchedCrateOptLevel: 3 },
     platform: 'linux-x64', nativeWorkloads: 134, javascriptWorkloads: 148, producerResult: 'success',
+    ...(translationPaused && { translationPaused }),
   };
   const listed = inventoryRuns();
   const inventory = readFormalAiNativeInventory(listed, fixture);
   const javascriptTests = Array.from({ length: 148 }, (_, index) => ({
     file: dataFiles[index % dataFiles.length], name: `synthetic ${index}`, outcome: 'passed',
   }));
+  if (translationPaused) javascriptTests[0] = { ...skippedIdentity, outcome: 'skipped' };
   const outputs = { documents: {}, queries: {}, linkEdits: {}, projections: {}, ruleSet: {}, seedNetwork: {} };
   const comparison = compareRuntimeOutputs(outputs, outputs);
   const checked = { name: 'actual synthetic process check', holds: true, detail: {} };
@@ -128,6 +131,7 @@ function passingPair() {
     };
     const result = {
       schemaVersion: 1, fixture: FORMAL_AI_WORKLOAD_FIXTURE, fixtureSha256: expected.identity.fixtureSha256,
+      ...(translationPaused && { translationChecks: 'paused' }),
       platform: expected.platform, node: 'v24.0.0',
       formalAi: { repository: fixture.repository, revision: fixture.revision, checkedOutRevision: fixture.revision,
         verifiedBlobs: fixture.workloads.map(({ file, blob }) => ({ file, actual: blob, expected: blob, matches: true })) },
@@ -180,6 +184,21 @@ test('formal AI partitions preserve 134 target-qualified workloads, both probes 
   assert.equal(result.report.crate.probeTests.length, 2);
   for (const runtime of ['javascript', 'rust']) assert.deepEqual(validateFormalAiWorkloadReport(result.report, fixture, runtime).observed, [...FORMAL_AI_WORKLOAD_ASSERTIONS]);
   assert.deepEqual(pair.map(({ envelope }) => envelope.result.crate.tests.length), [1, 133]);
+});
+
+test('paused Formal AI workloads retain every independent test and cannot supply strict acceptance', () => {
+  const { expected, pair } = passingPair({ translationPaused: true });
+  const merged = mergeFormalAiWorkloadPartitions(pair, fixture, expected);
+  assert.deepEqual(merged.problems, []);
+  assert.equal(merged.report.translationChecks, 'paused');
+  assert.deepEqual(merged.report.npm.counts, { passed: 147, failed: 0, skipped: 1, total: 148 });
+  assert.equal(merged.report.crate.counts.passed, 134);
+  assert.match(mergeFormalAiWorkloadPartitions(pair, fixture, { ...expected, translationPaused: false }).problems.join('\n'), /does not match the requested automated translation mode/u);
+  for (const runtime of ['javascript', 'rust']) {
+    assert.deepEqual(validateFormalAiWorkloadReport(merged.report, fixture, runtime).observed, []);
+  }
+  const incorrect = passingPair({ translationPaused: true, skippedIdentity: { ...FORMAL_AI_TRANSLATION_WORKLOAD, name: 'an independent check' } });
+  assert.match(mergeFormalAiWorkloadPartitions(incorrect.pair, fixture, incorrect.expected).problems.join('\n'), /skip exactly the semantic translation workload/u);
 });
 
 test('formal AI exact-target execution refuses missing repeated unknown failed ignored and changed argv rows', () => {

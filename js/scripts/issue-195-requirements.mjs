@@ -124,6 +124,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
   naturalLanguageSentenceIssue: 'https://github.com/link-foundation/meta-language/issues/232',
   naturalLanguageSentenceScopeFeedback:
     'https://github.com/link-foundation/meta-language/pull/247#issuecomment-7084151602',
+  naturalLanguageSentenceCiFeedback:
+    'https://github.com/link-foundation/meta-language/pull/247#issuecomment-7127823448',
 });
 
 // The rows the audit of c39470d0 lists as open work.
@@ -987,8 +989,6 @@ export async function buildIssue195Manifest(root) {
     ...buildVisionRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.repositoryDirective,
       sourceByRequirement: {
-        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ sourceKey }) => sourceKey)
-          .map(({ id, sourceKey }) => [id, ISSUE_195_SOURCES[sourceKey]])),
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ id }) => id.startsWith('I195-GLOBAL-CONCEPT-'))
           .map(({ id }) => [id, ISSUE_195_SOURCES.globalConceptSpace])),
         'I195-GRAMMAR-NATURAL-LANGUAGE-REPRESENTATION': ISSUE_195_SOURCES.latestDeliveryAudit,
@@ -1059,6 +1059,8 @@ export async function buildIssue195Manifest(root) {
           .map((id) => [id, ISSUE_195_SOURCES.recoveryAudit])),
         // The audit of c39470d0, re-posted to deliver it in bulk, makes every row that is still open work this PR delivers.
         ...Object.fromEntries(FINISH_THE_WORK_ROWS.map((id) => [id, ISSUE_195_SOURCES.bulkDeliveryRepost])),
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ sourceKey }) => sourceKey)
+          .map(({ id, sourceKey }) => [id, ISSUE_195_SOURCES[sourceKey]])),
       },
     }),
   ];

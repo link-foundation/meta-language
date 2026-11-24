@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import vm from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -107,7 +108,7 @@ test('invalid projection selections refuse without changing the source network',
   assert.equal(network.toLino(), before);
 });
 
-test('both complete projection decisions self-translate to all four targets and execute against every fixture cell', () => {
+test('both complete projection decisions self-translate to all four targets and execute against every fixture cell', automatedTranslationTest, () => {
   const source = readNetworkProjectionSourceModule();
   const names = ['acceptNetworkProjection', 'acceptNetworkProjectionLink'];
   const surface = parseJavaScript(source, { referenceSemantics: false });

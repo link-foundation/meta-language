@@ -86,9 +86,10 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
   assert.equal(new Set(additional.sources.map(row=>row.file+'@'+row.predecessor.revision)).size,additional.sources.length);
   for(const row of additional.sources){
     exactKeys(row,['file','predecessor','current']);exactKeys(row.predecessor,['revision','source','bytes','sha256','certificate']);
-    assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs)$/u);assert.equal(row.file.includes('..'),false);
+    assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs|d\.ts)$/u);assert.equal(row.file.includes('..'),false);
     assert.ok(['6ffff3b2dc530a5f24c128dadf877f3fa106932b','8bc0ef9725388c7927acf1854870bf46f5e365be',
-      'ec9f4efb0e9ef936114e09823981352f6db13700','3866f25f3dde30644152829fb5d3bf8d680ba2fd'].includes(row.predecessor.revision));
+      'ec9f4efb0e9ef936114e09823981352f6db13700','3866f25f3dde30644152829fb5d3bf8d680ba2fd',
+      'c41404a2199e5057c23a39f3645c1ecc516f1d47','e8bc968b4fb55f02f34854eaf58f375ac715c34c'].includes(row.predecessor.revision));
     exactKeys(row.current,['bytes','sha256']);assert.equal(typeof row.predecessor.source,'string');
     assert.deepEqual(pin(row.predecessor.source),{bytes:row.predecessor.bytes,sha256:row.predecessor.sha256});
     verifyGitArtifactCertificate(row.predecessor.certificate,Buffer.from(row.predecessor.source),{revision:row.predecessor.revision,path:row.file});

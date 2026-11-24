@@ -8,6 +8,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy,verifyOwnCodebaseHistoricalNamingSources} from './own-codebase-baseline-naming-history.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {pausePredecessor,pauseSourceFiles} from './automated-translation-pause-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:createHash('sha256').update(bytes).digest('hex')});
 
@@ -102,6 +103,58 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     'rust/tests/unit/translation_rust_literal_matches.rs',
     'rust/tests/unit/translation_surface_reference_analysis.rs',
   ];
+  // Retain the exact names from the published sources before the CI repairs.
+  const ciRepairPredecessor = 'e8bc968b4fb55f02f34854eaf58f375ac715c34c';
+  const ciRepairFiles = [
+    'experiments/rust-text-certificate-adapter/provider-succession.mjs',
+    'js/scripts/declaration-dependency-native-interface.mjs',
+    'js/scripts/dependency-inventory-append-history.mjs',
+    'js/scripts/generate-ascii-text-predicate-host-history.mjs',
+    'js/scripts/generate-ascii-text-predicate-hosts.mjs',
+    'js/scripts/generate-boolean-declaration-value-hosts.mjs',
+    'js/scripts/generate-dependency-inventory-order-history.mjs',
+    'js/scripts/generate-program-string-host-registration-history.mjs',
+    'js/scripts/generate-scoped-iteration-native-host-source-history.mjs',
+    'js/scripts/record-rule-library.mjs',
+    'js/scripts/scoped-iteration-native-host-source-history.mjs',
+    'js/src/index.d.ts',
+    'js/src/self-translation.js',
+    'js/src/translation/javascript-infer.js',
+    'js/tests/cache-fresh-merge-dependencies.test.js',
+    'js/tests/translation-array-relative-element.test.js',
+    'js/tests/translation-program-string-host-registration-history.test.js',
+    'js/tests/translation-required-field-native-host-succession.test.js',
+    'js/tests/translation-scoped-iteration-native-source-history.test.js',
+    'rust/src/formal_concept_definition.rs',
+    'rust/src/self_translation.rs',
+    'rust/src/self_translation/binding/deferred_scope.rs',
+    'rust/src/self_translation/binding/dependency_rules.rs',
+    'rust/src/self_translation/binding/recursive_groups.rs',
+    'rust/src/self_translation/scope.rs',
+    'rust/src/shared_numeric_function_model.rs',
+    'rust/src/translation/ascii_text_predicate_rules/part_2.rs',
+    'rust/src/translation/declaration_dependency_rules/part_2.rs',
+    'rust/src/translation/declaration_dependency_rules/part_3.rs',
+    'rust/src/translation/declaration_dependency_rules/part_4.rs',
+    'rust/src/translation/declaration_dependency_rules/part_5.rs',
+    'rust/src/translation/emit_rust/declarations.rs',
+    'rust/src/translation/external_emission_rules/part_1.rs',
+    'rust/src/translation/grammar_lexer_rules/part_2.rs',
+    'rust/src/translation/grammar_lexer_rules/part_3.rs',
+    'rust/src/translation/grammar_lexer_rules/part_4.rs',
+    'rust/src/translation/javascript/declarations.rs',
+    'rust/src/translation/javascript/infer/arrays.rs',
+    'rust/src/translation/javascript_record_parameter_rules/part_3.rs',
+    'rust/src/translation/reference_identity_rules/part_1.rs',
+    'rust/src/translation/rust_literal_match_rules/part_1.rs',
+    'rust/src/typed_program_links.rs',
+    'rust/tests/unit/translation_array_classification.rs',
+    'rust/tests/unit/translation_array_from.rs',
+    'rust/tests/unit/translation_array_relative_element.rs',
+    'rust/tests/unit/translation_ascii_text_predicates.rs',
+    'rust/tests/unit/translation_owned_array_append.rs',
+    'rust/tests/unit/typed_program_number_projection.rs',
+  ];
   const file='parity/naming/array-identity-historical-inventories.lino';
   const stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
   let sources;
@@ -110,7 +163,9 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     sources=stored.sources.map(row=>({...row,current:pin(readFileSync(new URL(row.file,root)))}));
     const namedPredecessors = [
       ...integrationFiles.map(path => [integration, path]),
+      ...ciRepairFiles.map(path => [ciRepairPredecessor, path]),
       ['3866f25f3dde30644152829fb5d3bf8d680ba2fd', 'js/tests/issue-195-evidence-translation-partition-conservation.test.js'],
+      ...pauseSourceFiles.filter(path => /^(?:js|rust)\//u.test(path)).map(path => [pausePredecessor, path]),
     ];
     for(const [revision,path] of namedPredecessors){
       if(sources.some(row=>row.file===path&&row.predecessor.revision===revision))continue;

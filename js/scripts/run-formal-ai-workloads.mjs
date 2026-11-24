@@ -131,6 +131,7 @@ const PROBE_FILE = `rust/tests/${RUST_PROBE_TARGET}.rs`;
 
 const logs = [];
 const partitionState = {};
+const translationPaused = process.env.META_LANGUAGE_AUTOMATED_TRANSLATION === 'false';
 if (partition && (!['corpus-ratchet', 'remaining'].includes(partition) || skipRust || mergePartitions)) {
   throw new Error('--partition requires exactly one real native producer, without --skip-rust or --merge-partitions');
 }
@@ -149,6 +150,7 @@ async function main() {
     platform: `${process.platform}-${process.arch}`,
     node: process.version,
     formalAi: formalAi.report,
+    ...(translationPaused && { translationChecks: 'paused' }),
   };
   const outputs = {};
   if (mismatched.length > 0) {
@@ -215,7 +217,7 @@ async function main() {
         FORMAL_AI_PROBE_ASSERTIONS.some((assertion) => part.probe?.[assertion]?.holds !== true);
       continue;
     }
-    const { problems, observed } = validateFormalAiWorkloadReport(report, fixture, runtime);
+    const { problems, observed } = validateFormalAiWorkloadReport(report, fixture, runtime, { translationPaused });
     const part = report[runtime === 'javascript' ? 'npm' : 'crate'];
     console.log(`${runtime}: ${part.counts ? `${part.counts.passed}/${part.counts.total} workload tests passed; ` : ''}observed ${observed.join(', ') || 'nothing'}`);
     for (const [assertion, messages] of Object.entries(problems)) {

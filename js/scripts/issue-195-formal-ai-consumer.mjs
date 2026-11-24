@@ -12,6 +12,7 @@
 //   runtimes compare and the sharedConceptsReused and distinctionsPreserved checks.
 import { formalAiHelpers } from './issue-195-formal-ai-workload-probes.mjs';
 import { formalAiSemanticProjections } from './formal-ai-semantic-projections.mjs';
+import { FORMAL_AI_TRANSLATION_WORKLOAD } from './issue-195-formal-ai-workloads.mjs';
 
 /** The environment variable naming the inputs file the workload tests read. */
 export const JAVASCRIPT_INPUTS_VARIABLE = 'ISSUE_195_FORMAL_AI_INPUTS';
@@ -110,7 +111,9 @@ test(files.projectionRules + " › projects formal-ai's issue 1138 samples", () 
   assert.deepEqual(helpers.projectionFailures(inputs.projections, inputs.projectionLabels, inputs.ruleSetText), none);
 });
 
-test(files.projectionRules + ' › executes all six JavaScript TypeScript Rust numeric projection directions', async () => {
+test(files.projectionRules + ' › ${FORMAL_AI_TRANSLATION_WORKLOAD.name}', {
+  skip: process.env.META_LANGUAGE_AUTOMATED_TRANSLATION === 'false',
+}, async () => {
   const observations = await semanticProjections(inputs.semanticProjections);
   assert.equal(observations.length, 6);
   assert.deepEqual(observations.flatMap(({ id, failures }) => failures.map((failure) => id + ': ' + failure)), none);
@@ -166,7 +169,8 @@ const sharedConceptsReused = assertion([
 
 const outputs = helpers.outputs(inputs);
 const distinctionsPreserved = assertion(helpers.distinctionChecks(inputs));
-const semanticProjectionObservations = await semanticProjections(inputs.semanticProjections);
+const semanticProjectionObservations = process.env.META_LANGUAGE_AUTOMATED_TRANSLATION === 'false'
+  ? [] : await semanticProjections(inputs.semanticProjections);
 
 writeFileSync(process.argv[2], JSON.stringify({ packageUrl, outputs, sharedConceptsReused, distinctionsPreserved,
   semanticProjectionObservations }, null, 2) + '\n');

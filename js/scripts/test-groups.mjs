@@ -216,6 +216,17 @@ export function partitionGroupFiles(files, shard = '1/1') {
     const group = translation ? (count === 8 ? 'translation-eight' : 'translation') : 'grammar';
     return partitionMeasuredWorkloads(files.map(file => 'js/tests/' + file), count, { group })[index - 1].map(file => file.slice(9));
   }
+  // Keep the four established tooling assignments. The two pause tests fill
+  // the next slots without moving the larger source and data replay checks.
+  if (count === 4 && files.includes('issue-195-evidence-automated-translation-pause.test.js')) {
+    const pauseTests = new Set([
+      'issue-195-evidence-automated-translation-pause.test.js',
+      'issue-195-evidence-automated-translation-rollout.test.js',
+    ]);
+    const established = files.filter(file => !pauseTests.has(file));
+    const added = files.filter(file => pauseTests.has(file));
+    return [...established, ...added].filter((_, offset) => offset % count === index - 1);
+  }
   return files.filter((_, offset) => offset % count === index - 1);
 }
 

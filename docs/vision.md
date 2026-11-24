@@ -3454,6 +3454,18 @@ before every JavaScript job passed, and the Rust jobs show as skipped when
 JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
+Ordinary CI schedules Linux while retaining the macOS and Windows test and
+clean-consumer profiles. The CI workflow's `all_platforms` dispatch input or
+the repository variable `META_LANGUAGE_ALL_PLATFORMS=true` restores all
+three platforms from the declared physical shard policy.
+
+Automated translation is temporarily paused in ordinary CI. Package checks,
+native grammar, independent consumer workloads and active Linux verification
+remain required. The `automated_translation` dispatch input or
+`META_LANGUAGE_AUTOMATED_TRANSLATION=true` restores the original translation
+commands and strict acceptance evaluation. Use both options for a run of the
+complete cross-platform acceptance scope. A paused run reports its active
+checks and preserves their failures. It supplies no evidence for paused cells.
 Verification concurrency uses stable pull request numbers for updates and
 individual run identifiers for other events, through every nested job group.
 Release write jobs retain their separate non-cancelling queue. The retained

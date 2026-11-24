@@ -2005,6 +2005,33 @@ export const VISION_REQUIREMENTS = Object.freeze([
     javascript: ['js/src/text-grammar.js', 'js/scripts/build-native-text-grammars.mjs', 'js/tests/native-text-grammars.test.js'],
     rust: ['rust/src/structured_text_parser.rs', 'rust/tests/unit/native_text_grammars.rs'],
   },
+  {
+    id: 'I195-CI-NON-LINUX-PAUSE',
+    sourceKey: 'naturalLanguageSentenceCiFeedback',
+    area: 'continuous-integration', specification: 'continuous-integration',
+    construct: 'default Linux scheduling with retained macOS and Windows checks',
+    expectedBehavior: 'Ordinary CI schedules Rust tests and clean consumers on Linux. The explicit all-platform input restores every original Linux, macOS, and Windows physical test and consumer profile.',
+    assertions: ['defaultSchedulesOnlyLinux', 'explicitOptInRetainsEveryPlatform'],
+    tooling: ['.github/workflows/ci.yml', '.github/workflows/rust.yml', 'js/scripts/rust-test-shards.mjs', 'js/tests/issue-195-evidence-automated-translation-pause.test.js'],
+  },
+  {
+    id: 'I195-AUTOMATED-TRANSLATION-PAUSE-DEFAULT',
+    sourceKey: 'naturalLanguageSentenceCiFeedback',
+    area: 'continuous-integration', specification: 'continuous-integration',
+    construct: 'temporary scheduling pause for automated translation',
+    expectedBehavior: 'CI applies the reviewed automated translation pause from pull request 250. Default runs skip automated translation, keep independent checks active with failures visible, and admit the unchanged strict translation checks through explicit opt-in.',
+    assertions: ['defaultPausesTranslation', 'explicitOptInRunsTranslation', 'independentFailuresRemainVisible'],
+    tooling: ['.github/workflows/ci.yml', '.github/workflows/js.yml', '.github/workflows/rust.yml', 'js/tests/issue-195-evidence-automated-translation-pause.test.js'],
+  },
+  {
+    id: 'I195-AUTOMATED-TRANSLATION-PAUSE-RETAIN',
+    sourceKey: 'naturalLanguageSentenceCiFeedback',
+    area: 'continuous-integration', specification: 'continuous-integration',
+    construct: 'strict commands and evidence retained during the automated translation pause',
+    expectedBehavior: 'The original translation commands, native selectors, and full acceptance and evidence requirements remain available. Reports from a paused run cannot satisfy missing translation or platform evidence.',
+    assertions: ['originalCommandsRetained', 'pausedRunsCannotSupplyCompleteEvidence'],
+    tooling: ['.github/workflows/ci.yml', '.github/workflows/js.yml', '.github/workflows/rust.yml', 'js/scripts/rust-test-shards.mjs', 'js/tests/issue-195-evidence-automated-translation-pause.test.js'],
+  },
 ]);
 
 const RUNTIMES = ['javascript', 'rust', 'tooling'];

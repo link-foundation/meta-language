@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import vm from 'node:vm';
 import { importAntlr } from '../src/grammar-importers/antlr.js';
 import { compileGrammar } from '../src/grammar.js';
@@ -204,7 +205,7 @@ test('portable lexical source closure records actual fact accessors and refuses 
   assert.throws(() => readGrammarLexerDeclarationIssue(sparse, ['', ''], ['', ''], ['', ''], ['default', 'default'], ['default', 'default'], ['emit', 'emit'], [], [], []), /missing required text fact/u);
 });
 
-test('complete portable lexical rules translate from the actual shared JavaScript module', async () => {
+test('complete portable lexical rules translate from the actual shared JavaScript module', automatedTranslationTest, async () => {
   const { parseJavaScript } = await import('../src/translation/javascript.js');
   const { checkProgram } = await import('../src/translation/check.js');
   const { emitRust } = await import('../src/translation/emit-rust.js');

@@ -7,6 +7,11 @@ name: JavaScript
 on:
   workflow_call:
     inputs:
+      automated_translation:
+        description: Run the full automated translation checks
+        type: boolean
+        required: false
+        default: false
       external_reports:
         description: 'The caller produces and validates the complete self-translation report artifacts'
         required: false
@@ -16,6 +21,11 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
+      automated_translation:
+        description: Run the full automated translation checks
+        type: boolean
+        required: false
+        default: false
       release_version:
         description: 'Expected package version (optional safety check)'
         required: false
@@ -37,13 +47,14 @@ env:
   GIT_CONFIG_COUNT: '1'
   GIT_CONFIG_KEY_0: init.defaultBranch
   GIT_CONFIG_VALUE_0: main
+  META_LANGUAGE_AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
 
 jobs:
-  # Standalone release/dispatch runs produce the same report artifacts as CI.
+  # Opted-in standalone runs produce the same report artifacts as CI.
   # ci.yml supplies its existing parallel shards and validates them separately.
   reports:
     name: Self-Translation Report (${{ matrix.shard }}/12)
-    if: ${{ !inputs.external_reports }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && !inputs.external_reports }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -89,7 +100,7 @@ jobs:
   report-assertions:
     name: Self-Translation Report Assertions
     needs: reports
-    if: ${{ !cancelled() && !inputs.external_reports }}
+    if: ${{ !cancelled() && !inputs.external_reports && (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -171,17 +182,23 @@ jobs:
           - {group: translation, partition: 7, shards: 8}
           - {group: translation, partition: 8, shards: 8}
     steps:
+      - name: Report paused translation shard
+        if: ${{ matrix.group == 'translation' && env.META_LANGUAGE_AUTOMATED_TRANSLATION != 'true' }}
+        run: echo 'Automated translation is paused.' >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/checkout@v7
+        if: ${{ (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         with:
           fetch-depth: 0
 
       - name: Simulate fresh merge with base branch
-        if: github.event_name == 'pull_request'
+        if: ${{ (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (github.event_name == 'pull_request') }}
         env:
           BASE_REF: ${{ github.base_ref }}
         run: bash js/scripts/simulate-fresh-merge.sh
 
       - name: Setup Node.js
+        if: ${{ (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -189,10 +206,12 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Install dependencies
+        if: ${{ (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         run: npm ci
         working-directory: js
 
       - name: Provision the pinned external grammar test inputs
+        if: ${{ (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         run: node js/scripts/external-grammar-cache.mjs --all --materialize
 
       - name: Build the independently corrected Agda layout oracle
@@ -201,7 +220,7 @@ jobs:
         working-directory: js
 
       - name: Setup Rust for translation behavior and generated-code checks
-        if: matrix.group == 'translation'
+        if: ${{ matrix.group == 'translation' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -222,7 +241,7 @@ jobs:
           if-no-files-found: error
 
       - name: Run the test group
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         env:
           TEST_GROUP: ${{ matrix.group }}
           TEST_GROUP_SHARD: ${{ matrix.partition }}/${{ matrix.shards || 1 }}
@@ -232,7 +251,7 @@ jobs:
         working-directory: js
 
       - name: Capture translation compiler feedback partition
-        if: ${{ !cancelled() && matrix.group == 'translation' }}
+        if: ${{ !cancelled() && matrix.group == 'translation' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         env:
           GITHUB_SHA: ${{ github.sha }}
           TRANSLATION_SHARD: ${{ matrix.partition }}/${{ matrix.shards }}
@@ -242,7 +261,7 @@ jobs:
           --out "issue-195-artifacts/translation-test-feedback/${{ matrix.partition }}-of-${{ matrix.shards }}"
 
       - name: Retain translation compiler feedback and native observations
-        if: ${{ !cancelled() && matrix.group == 'translation' }}
+        if: ${{ !cancelled() && matrix.group == 'translation' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: translation-test-feedback-${{ github.sha }}-${{ matrix.partition }}-of-${{ matrix.shards }}
@@ -254,19 +273,19 @@ jobs:
           if-no-files-found: error
 
       - name: Remove the temporary external grammar inputs
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
-        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' && (matrix.group != 'translation' || env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
   translation-test-feedback:
     name: Translation Test Feedback
     needs: tests
-    if: ${{ !cancelled() }}
+    if: ${{ (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') && (!cancelled()) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
@@ -558,31 +577,31 @@ jobs:
         working-directory: js
 
       - name: Check the shared self-translation cases
-        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        if: ${{ !cancelled() && matrix.group == 'contracts' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: npm run check:self-translation
         working-directory: js
 
       - name: Setup Rust formatting for generated frontend rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
       - name: Check the generated Rust frontend rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: npm run check:frontend-rules
         working-directory: js
 
       - name: Check the generated global concept rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-global-concept-rules.mjs --check
 
       - name: Check generated parameter default rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-parameter-default-rules.mjs --native --check
 
       - name: Check the generated discovery integration rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-discovered-concept-rules.mjs --check
 
       - name: Check shared discovered concept graph fixtures
@@ -590,7 +609,7 @@ jobs:
         run: node js/scripts/generate-discovered-concept-fixture.mjs --check
 
       - name: Check generated concept view admission rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-concept-view-rules.mjs --check
 
       - name: Check shared ontology and taxonomy view fixtures
@@ -598,7 +617,7 @@ jobs:
         run: node js/scripts/generate-concept-view-fixture.mjs --check
 
       - name: Check generated binary link network rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-link-network-binary-rules.mjs --check
 
       - name: Check shared binary link network fixtures
@@ -606,7 +625,7 @@ jobs:
         run: node js/scripts/generate-link-network-binary-fixtures.mjs --check
 
       - name: Check the generated Resource Description Framework rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-resource-description-rules.mjs --check
 
       - name: Check shared Resource Description Framework graph fixtures
@@ -618,7 +637,7 @@ jobs:
         run: node js/scripts/generate-resource-description-ntriples-characters.mjs --check
 
       - name: Check generated resource triple syntax token rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-resource-description-ntriples-rules.mjs --check
 
       - name: Check shared resource triple syntax fixtures
@@ -626,36 +645,36 @@ jobs:
         run: node js/scripts/generate-resource-description-ntriples-fixture.mjs --check
 
       - name: Check the generated grammar merge decisions against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-grammar-merge-decisions.mjs --check
 
       - name: Check the generated structural type rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-structured-type-rules.mjs --check
 
       - name: Check the generated primitive value rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-primitive-value-rules.mjs --check
 
       - name: Check the shared Rust array runtime artifacts
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-array-runtime.mjs --check
 
       - name: Check the generated TypeScript erasure rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-typescript-erasure-rules.mjs --check
 
       - name: Check the generated typed program link rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-typed-program-link-rules.mjs --check
 
       - name: Check shared self translation representation artifacts
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-self-translation-representation.mjs --native --check
 
       - name: Check generated Rust cast syntax rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-cast-syntax-rules.mjs --check
 
@@ -665,27 +684,27 @@ jobs:
         run: node ../experiments/original-link-complete-table-projection/generate-raw-schema-source-closure.mjs --check
 
       - name: Check generated original-link network projection rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-network-projection-rules.mjs --check
 
       - name: Check generated JavaScript array binding rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-array-binding-rules.mjs --check
 
       - name: Check generated Array.from rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-array-from-rules.mjs --native --check
 
       - name: Check generated numeric operand projection rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-program-number-projection-rules.mjs --native --check
 
       - name: Check generated partial callable context rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-partial-callable-rules.mjs --native --check
 
@@ -700,87 +719,87 @@ jobs:
         run: node scripts/generate-assertion-version-policy.mjs --check
 
       - name: Check generated embedded region rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-embedded-region-rules.mjs --native --check
 
       - name: Check generated grammar selection field range rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-grammar-selection-field-range-rules.mjs --native --check
 
       - name: Check generated grammar attribute order rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-grammar-attribute-order-rules.mjs --native --check
 
       - name: Check generated collection construction rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-collection-construction-rules.mjs --native --check
 
       - name: Check generated grammar rule composition rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-grammar-rule-composition-rules.mjs --native --check
 
       - name: Check generated guarded private array write rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-guarded-private-array-write-rules.mjs --native --check
 
       - name: Check the generated Rust source indirection rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check
 
       - name: Check shared scoped Rust lifetime fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-function-lifetime-fixtures.mjs --check
 
       - name: Check generated Rust array admission rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-array-rules.mjs --check
 
       - name: Check generated Rust floating point predicate rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-float-predicate-rules.mjs --check
 
       - name: Check shared Rust floating point predicate fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-float-predicate-fixtures.mjs --check
 
       - name: Check shared Rust floating point operation fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-float-operation-fixtures.mjs --check
 
       - name: Check shared Rust floating point constant fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-float-constant-fixtures.mjs --check
 
       - name: Check generated Rust guarded function completion rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-completion-rules.mjs --check
 
       - name: Check shared Rust guarded function completion fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-completion-fixtures.mjs --check
 
       - name: Check shared Rust guarded completion panic fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-completion-panic-fixtures.mjs --check
 
       - name: Check generated read-only Rust scalar parameter rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-scalar-parameter-rules.mjs --check
 
       - name: Check shared read-only Rust scalar parameter fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-scalar-parameter-fixtures.mjs --check
 
       - name: Check shared Rust array source fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-array-source-fixtures.mjs --check
 
       - name: Check shared fresh Rust scalar vector result fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-array-result-fixtures.mjs --check
 
       - name: Check generated Rust string continuation rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-string-rules.mjs --check
 
       - name: Check shared Rust string continuation fixtures
@@ -788,7 +807,7 @@ jobs:
         run: node js/scripts/build-rust-string-continuation-fixtures.mjs --check
 
       - name: Check generated Rust cooked string escape rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-cooked-string-rules.mjs --check
 
@@ -798,7 +817,7 @@ jobs:
         run: node scripts/build-rust-cooked-string-escape-fixtures.mjs --check
 
       - name: Check generated Rust Unicode scalar escape rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-unicode-escape-rules.mjs --check
 
@@ -808,12 +827,12 @@ jobs:
         run: node scripts/build-rust-unicode-escape-fixtures.mjs --check
 
       - name: Check generated Rust source whitespace and boundary rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-source-whitespace-rules.mjs --check
 
       - name: Check generated Rust raw string literal rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-raw-string-rules.mjs --check
 
@@ -822,7 +841,7 @@ jobs:
         run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
 
       - name: Check generated formal function selection rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-formal-function-rules.mjs --check
 
       - name: Check shared formal function definition fixtures
@@ -830,19 +849,19 @@ jobs:
         run: node js/scripts/generate-formal-function-fixtures.mjs --check
 
       - name: Check generated shared numeric function rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-shared-numeric-function-rules.mjs --check
 
       - name: Check generated Rust source signature rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-source-signature-rules.mjs --check
 
       - name: Check shared Rust source signature fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-source-signature-fixtures.mjs --check
 
       - name: Check generated Rust borrowed call interface rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-borrowed-call-interface-rules.mjs --check
 
@@ -852,27 +871,27 @@ jobs:
         run: node scripts/generate-rust-borrowed-call-interface-fixtures.mjs --check
 
       - name: Check generated Rust primitive owner rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-primitive-owner-rules.mjs --check
 
       - name: Check shared Rust primitive owner fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-primitive-owner-fixtures.mjs --check
 
       - name: Check generated Rust type namespace rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-type-namespace-rules.mjs --check
 
       - name: Check shared Rust type namespace fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-type-namespace-fixtures.mjs --check
 
       - name: Check generated Rust pure Unit call rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-pure-unit-call-rules.mjs --check
 
@@ -882,12 +901,12 @@ jobs:
         run: node scripts/generate-rust-pure-unit-call-fixtures.mjs --check
 
       - name: Check shared Rust public pure Unit call fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-public-pure-unit-call-fixtures.mjs --check
 
       - name: Check generated source span rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-source-span-rules.mjs --check
 
@@ -897,27 +916,27 @@ jobs:
         run: node scripts/generate-source-span-fixtures.mjs --check
 
       - name: Check generated Rust numeric boundary rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-number-rules.mjs --check
 
       - name: Check generated JavaScript line terminator rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-javascript-line-terminator-rules.mjs --check
 
       - name: Check generated JavaScript Unit module experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generated-javascript-unit/generate-rules.mjs --check
 
       - name: Check complete generated JavaScript Unit module experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generated-javascript-unit/generate-fixtures.mjs --check
 
       - name: Run generated JavaScript Unit module experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -925,17 +944,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-javascript-unit/model.test.mjs
 
       - name: Check generated owned Rust module experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-rules.mjs --check
 
       - name: Check complete generated owned Rust module experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-fixtures.mjs --check
 
       - name: Run generated owned Rust module experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -943,17 +962,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/model.test.mjs
 
       - name: Check generated owned Rust literal value edit experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-value-edit-rules.mjs --check
 
       - name: Check complete generated owned Rust literal value edit fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-value-edit-fixtures.mjs --check
 
       - name: Run generated owned Rust literal value edit experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -961,17 +980,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/value-edits.test.mjs
 
       - name: Check generated Rust text value projection experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-text-value-projection/generate-rules.mjs --check
 
       - name: Check complete Rust text value projection experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-text-value-projection/generate-fixtures.mjs --check
 
       - name: Run Rust text value projection experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -979,12 +998,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-value-projection/model.test.mjs
 
       - name: Check generated Rust raw binding identifier experiment rules and fixtures
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-raw-binding-identifiers/generate-rules.mjs --check
 
       - name: Run Rust raw binding identifier experiment
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -992,12 +1011,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-raw-binding-identifiers/model.test.mjs
 
       - name: Check generated complete Rust text certificate kernel
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-text-certificate/generate.mjs --check
 
       - name: Run portable Rust text certificate feasibility checks
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1005,7 +1024,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/feasibility.mjs
 
       - name: Run complete portable Rust text certificate kernel
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1013,22 +1032,22 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/kernel.test.mjs
 
       - name: Check owned Rust text certificate overlay receipts
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-text-certificate-adapter/generate.mjs --check
 
       - name: Check owned Rust raw binding certificate rules
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-raw-binding-certificate-adapter/generate-rules.mjs --check
 
       - name: Check owned Rust raw binding overlay receipts
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-raw-binding-certificate-adapter/generate-overlay.mjs --check
 
       - name: Run owned Rust text and raw binding certificate adapters
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1036,12 +1055,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate-adapter/overlay-builder.test.mjs ../experiments/rust-text-certificate-adapter/overlay.test.mjs ../experiments/rust-text-certificate-adapter/model.test.mjs ../experiments/rust-text-certificate-adapter/raw-identity.test.mjs ../experiments/rust-raw-binding-certificate-adapter/model.test.mjs
 
       - name: Check complete Rust text certificate library packaging
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/rust-text-certificate-library/generate.mjs --check
 
       - name: Run complete Rust source oracle contracts
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1049,12 +1068,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/source-native-observations.test.mjs ../experiments/rust-text-certificate-library/native-observations.test.mjs
 
       - name: Check exact original link identity kernel
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/original-link-identity/generate.mjs --check
 
       - name: Run exact original link identity checks
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1062,7 +1081,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/identity.test.mjs
 
       - name: Run exact original link identity oracle contracts
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1070,17 +1089,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/native-observations.test.mjs
 
       - name: Check fresh Number array collector rules
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/fresh-number-array-collectors/generate.mjs --check
 
       - name: Check complete fresh Number array collector fixtures
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/fresh-number-array-collectors/generate-fixtures.mjs --check
 
       - name: Run fresh Number array collector certificates
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1088,12 +1107,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/fresh-number-array-collectors/model.test.mjs
 
       - name: Check original link role projection kernel
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/original-link-role-projection/generate.mjs --check
 
       - name: Run original link certificate role projection
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1101,12 +1120,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-role-projection/projection.test.mjs
 
       - name: Check original link symbol projection kernel
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/original-link-symbol-projection/generate.mjs --check
 
       - name: Run original link symbol projection checks
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1114,7 +1133,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-symbol-projection/projection.test.mjs
 
       - name: Run original link symbol native oracle contracts
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1123,12 +1142,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-symbol-projection/native-observations.test.mjs
 
       - name: Check original link table projection kernel
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/original-link-table-projection/generate.mjs --check
 
       - name: Run original link table projection checks
-        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1136,12 +1155,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-table-projection/projection.test.mjs
 
       - name: Check complete original link table projection kernel
-        if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-tables' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/original-link-complete-table-projection/generate.mjs --check
 
       - name: Run complete original link table projection checks
-        if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-tables' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1149,7 +1168,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/projection.test.mjs
 
       - name: Run complete original link table native oracle contracts
-        if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-tables' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           CI: 'true'
@@ -1159,28 +1178,28 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/native-observations.test.mjs
 
       - name: Setup Rust formatting for binary metadata candidate
-        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
       - name: Check generated binary metadata buffer candidate
-        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-link-network-binary-rules.mjs --metadata-buffer-candidate --check
 
       - name: Check generated record-local binary link network rules
-        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-link-network-binary-record-rules.mjs --check
 
       - name: Check generated buffered binary link network rules
-        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-link-network-binary-buffer-rules.mjs --check
 
       - name: Run binary metadata buffer candidate checks
-        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1189,7 +1208,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/model.test.mjs
 
       - name: Run binary metadata buffer candidate style checks
-        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1198,7 +1217,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/styles.test.mjs
 
       - name: Run binary metadata buffer native oracle contracts
-        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1207,12 +1226,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/native-observations.test.mjs
 
       - name: Check complete original link raw projection native generation
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw-current-emission.mjs --native --check
 
       - name: Run complete original link raw projection checks
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           CI: 'true'
@@ -1234,7 +1253,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
 
       - name: Run complete original link raw native oracle contracts
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           CI: 'true'
@@ -1246,7 +1265,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
 
       - name: Run complete raw emission profile contracts
-        if: ${{ !cancelled() && matrix.group == 'raw-emission-profiles' }}
+        if: ${{ !cancelled() && matrix.group == 'raw-emission-profiles' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           CI: 'true'
@@ -1256,7 +1275,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-emission-profiles.test.mjs
 
       - name: Run complete raw consuming emission contracts
-        if: ${{ !cancelled() && matrix.group == 'raw-consuming-emission' }}
+        if: ${{ !cancelled() && matrix.group == 'raw-consuming-emission' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           CI: 'true'
@@ -1266,7 +1285,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-consuming-emission.test.mjs
 
       - name: Run complete raw borrowed emission contracts
-        if: ${{ !cancelled() && matrix.group == 'raw-borrowed-emission' }}
+        if: ${{ !cancelled() && matrix.group == 'raw-borrowed-emission' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         env:
           CI: 'true'
@@ -1276,17 +1295,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-borrowed-emission.test.mjs
 
       - name: Check generated whole Rust runtime shell rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-runtime-shell-rules.mjs --check
 
       - name: Check complete Rust runtime shell fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-runtime-shell-fixtures.mjs --check
 
       - name: Check generated source text byte rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-source-text-byte-rules.mjs --check
 
@@ -1296,126 +1315,126 @@ jobs:
         run: node scripts/generate-source-text-byte-fixtures.mjs --check
 
       - name: Check portable source text byte kernels
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/source-text-byte-kernel.test.mjs ../experiments/complete-binary-formatter-probe.test.mjs
 
       - name: Check generated integral program metadata rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-program-numeric-metadata-rules.mjs --check
 
       - name: Check shared integral program metadata fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-program-numeric-metadata-fixture.mjs --check
 
       - name: Run integral program metadata checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/program-numeric-metadata.test.mjs
 
       - name: Check shared owned occurrence position fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-owned-occurrence-position-fixture.mjs --check
 
       - name: Run owned occurrence position checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-occurrence-position.test.mjs
       - name: Check generated closed Rust const predicate rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-const-function-rules.mjs --check
 
       - name: Check actual styled Rust const predicate fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-const-function-fixture.mjs --check
 
       - name: Run closed Rust const predicate prototype checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-const-function-prototype.test.mjs
 
       - name: Check generated Boolean Rust const decision rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-const-branch-rules.mjs --native --check
 
       - name: Check Boolean Rust const decision fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-const-branch-fixture.mjs --check
 
       - name: Run Boolean Rust const decision prototype checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/rust-const-branch-prototype.test.mjs
 
       - name: Check generated Rust owned local text state rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-state-rules.mjs --check
 
       - name: Check generated owned tuple initialization call rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-tuple-call-rules.mjs --check
 
       - name: Check owned tuple initialization call fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-owned-tuple-call-fixture.mjs --check
 
       - name: Check actual public owned tuple call native archives
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-owned-tuple-call-native-fixture.mjs --check
 
       - name: Run owned tuple initialization call checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-tuple-call.test.mjs
 
       - name: Check shared Rust owned local text state fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-state-fixture.mjs --check
 
       - name: Check shared Rust owned local source operation fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-source-operation-fixture.mjs --check
 
       - name: Check shared Rust owned local container fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-container-fixture.mjs --check
 
       - name: Run Rust owned local text state prototype checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-prototype.test.mjs
 
       - name: Run Rust owned local text public profile checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-public.test.mjs
 
       - name: Run Rust owned local text unit checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-text-units.test.mjs
 
       - name: Run Rust owned local container checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-container.test.mjs
 
       - name: Check generated Rust empty option rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-rust-empty-option-rules.mjs --check
 
@@ -1425,41 +1444,41 @@ jobs:
         run: node scripts/generate-rust-empty-option-fixtures.mjs --check
 
       - name: Check generated JavaScript scoped binding emission rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-javascript-scoped-binding-emission-rules.mjs --check
 
       - name: Check shared JavaScript scoped binding emission fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         working-directory: js
         run: node scripts/generate-javascript-scoped-binding-emission-fixtures.mjs --check
 
       - name: Check generated standard Rust readonly query rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-read-only-query-rules.mjs --check
 
       - name: Check standard Rust readonly query fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-read-only-query-fixtures.mjs --check
 
       - name: Check generated shared scalar loop rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-scalar-loop-rules.mjs --check
 
       - name: Check shared scalar loop source fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node experiments/generate-rust-scalar-loop-fixture.mjs --check
 
       - name: Check owned declaration scalar loop source fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node experiments/generate-rust-scalar-loop-declaration-fixture.mjs --check
 
       - name: Check generated primitive borrowed Rust header rules
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-source-header-emission-rules.mjs --check
 
       - name: Check primitive borrowed Rust header fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-source-header-emission-fixtures.mjs --check
 
       - name: Check shared numeric function definition fixtures
@@ -1475,31 +1494,31 @@ jobs:
         run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
 
       - name: Check the generated Rust source product rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-rust-product-rules.mjs --check
 
       - name: Check the generated immutable product emission rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-product-emission-rules.mjs --check
 
       - name: Check the generated closed product source proofs against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-product-source-rules.mjs --check
 
       - name: Check shared source-free typed program fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-typed-program-links-fixtures.mjs --check
 
       - name: Check shared editable algebraic program fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-typed-program-algebraic-fixtures.mjs --check
 
       - name: Check shared editable immutable product fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-typed-program-tuple-fixtures.mjs --check
 
       - name: Check shared product unit value fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-product-unit-fixture.mjs --check
 
       - name: Check the associative data tooling fixture
@@ -1515,7 +1534,7 @@ jobs:
         run: node js/scripts/generate-formal-concept-fixtures.mjs --check
 
       - name: Check generated formal relation identities
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-formal-relation-rules.mjs --check
 
       - name: Check shared formal relation identity fixtures
@@ -1523,16 +1542,16 @@ jobs:
         run: node js/scripts/generate-formal-relation-fixtures.mjs --check
 
       - name: Check generated frontend rule compilation and style
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: npm run check:frontend-rule-styles
         working-directory: js
 
       - name: Check generated global concept rule compilation and style
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: node js/scripts/generate-global-concept-rule-styles.mjs --check
 
       - name: Retain exact generated sources and compiler feedback
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: generated-compiler-feedback-${{ github.sha }}
@@ -1635,12 +1654,13 @@ jobs:
           TESTS_RESULT: ${{ needs.tests.result }}
           REPORTS_RESULT: ${{ needs.report-assertions.result }}
           EXTERNAL_REPORTS: ${{ inputs.external_reports }}
+          AUTOMATED_TRANSLATION: ${{ inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}
         run: |
           if [ "$PACKAGE_CHECKS_RESULT" != "success" ]; then
             echo "::error::JavaScript package check groups finished with '$PACKAGE_CHECKS_RESULT'; see the JavaScript Package Checks jobs."
             exit 1
           fi
-          if [ "$TRANSLATION_FEEDBACK_RESULT" != "success" ]; then
+          if [ "$AUTOMATED_TRANSLATION" = true ] && [ "$TRANSLATION_FEEDBACK_RESULT" != "success" ]; then
             echo "::error::Translation feedback merge finished with '$TRANSLATION_FEEDBACK_RESULT'; see the Translation Test Feedback job."
             exit 1
           fi
@@ -1648,7 +1668,7 @@ jobs:
             echo "::error::JavaScript test groups finished with '$TESTS_RESULT'; see the JavaScript Tests jobs."
             exit 1
           fi
-          if [ "$EXTERNAL_REPORTS" != "true" ] && [ "$REPORTS_RESULT" != "success" ]; then
+          if [ "$AUTOMATED_TRANSLATION" = true ] && [ "$EXTERNAL_REPORTS" != "true" ] && [ "$REPORTS_RESULT" != "success" ]; then
             echo "::error::Self-translation report assertions finished with '$REPORTS_RESULT'."
             exit 1
           fi
@@ -1668,7 +1688,7 @@ jobs:
     needs: test
     if: |
       !cancelled() && needs.test.result == 'success' && (
-        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'workflow_dispatch' && !inputs.external_reports) ||
         (github.event_name == 'release' && github.event.action == 'published')
       )
     runs-on: ubuntu-latest

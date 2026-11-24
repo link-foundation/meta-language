@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
+import {restoreAutomatedTranslationPauseSource} from './automated-translation-pause-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
 const archiveSha256='5b50046591ff194808c3d151e3a41df7de1c677230995f3e7356e498a7f161c6';
@@ -16,6 +17,7 @@ let integrationSources;
 
 /** Restore the complete workflow before the Rust admission repairs. */
 export function restoreRustJobAdmissionSource(source) {
+  source = restoreAutomatedTranslationPauseSource(source, '.github/workflows/ci.yml');
   const prior = '3b31f67ab3224accb94bbe2175594bdded76689f9c4bf2a2111f42bae13ee462';
   if (pin(source).sha256 === 'c3e84bbf746c8a1477a910750ff9165eb0443ed4ce7ed7660c75b6dc5dc69bc3') {
     const rustRan = "needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped'";
@@ -60,6 +62,7 @@ export function restoreVersionedFixtureCompilerWorkflow(source) {
 
 /** Return the certified predecessor only for a complete integration successor. */
 export function restoreIntegrationSource(source,path) {
+  source = restoreAutomatedTranslationPauseSource(source, path);
   if (path === '.github/workflows/ci.yml') source = restoreRustJobAdmissionSource(source);
   if (path === '.github/workflows/rust.yml') source = restoreVersionedFixtureCompilerWorkflow(source);
   source = restoreDiagnosticOrderFixture(source, path);

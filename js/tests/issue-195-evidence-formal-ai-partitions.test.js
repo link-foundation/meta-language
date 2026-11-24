@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
+import { restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
 
 const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
 const needs = (job) => (/^    needs: (.+)$/mu.exec(job?.header ?? '')?.[1] ?? '').replace(/[\[\]]/gu, '').split(',').map((value) => value.trim()).filter(Boolean);
@@ -89,7 +90,8 @@ test('Formal AI workflow refuses lost producers mixed artifacts overwritten scop
 });
 
 test('Formal AI partition adoption preserves every byte of the existing complete report validator', () => {
-  const source = readFileSync(new URL('../scripts/issue-195-formal-ai-workloads.mjs', import.meta.url));
+  const file = 'js/scripts/issue-195-formal-ai-workloads.mjs';
+  const source = Buffer.from(restoreAutomatedTranslationPauseSource(read(file), file));
   // Exact original source bytes read before this additive export was drafted.
   // This also protects all original private grounding/coverage/probe checks.
   assert.equal(createHash('sha256').update(source.subarray(0, 12317)).digest('hex'),

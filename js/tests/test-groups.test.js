@@ -321,7 +321,10 @@ test('CI report assertions consume every exact-commit shard and gate Rust and de
     assert.ok(required(parsed.get(name)).includes('self-translation-report-validation'), name);
   }
   assert.match(parsed.get('js').header, /external_reports: true/u);
-  assert.doesNotMatch(parsed.get('rust').header, /always\(\)|cancelled\(\)/u);
+  const rust = parsed.get('rust').header;
+  assert.doesNotMatch(rust, /always\(\)/u);
+  assert.match(rust, /!cancelled\(\) && needs\.changes\.result == 'success' && needs\.js\.result == 'success'/u);
+  assert.match(rust, /!\(inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'\) \|\| needs\.self-translation-report-validation\.result == 'success'/u);
   const seen = new Set();
   const active = new Set();
   const visit = id => {
@@ -349,6 +352,7 @@ test('standalone JavaScript runs produce and validate the same report shards', a
   assert.match(producers.steps.map(step => step.text).join('\n'), /name: self-translation-report-\$\{\{ github.sha \}\}-\$\{\{ matrix.shard \}\}/u);
   assert.match(assertions.header, /needs: reports/u);
   assert.match(assertions.header, /!cancelled\(\) && !inputs.external_reports/u);
+  assert.match(assertions.header, /inputs\.automated_translation \|\| vars\.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true'/u);
   for (const job of [producers, assertions]) {
     const checkout = job.steps.find(step => /actions\/checkout@/u.test(step.text));
     assert.match(checkout.text, /ref: \$\{\{ github.sha \}\}/u);
