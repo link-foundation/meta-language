@@ -2745,9 +2745,12 @@ The scheduled registry refresh runs only on main as a non-blocking live report.
 It preserves the actual audit outcome, complete log and refreshed audit artifact.
 It opens or updates the repair PR even when new upstream releases leave unresolved
 findings. An unresolved live audit fails the scheduled job after this reporting
-and repair attempt. Before pushing, the refresh regenerates the dependency history
-and acceptance fixture fingerprints and checks the ledger against the committed
-scope. The PR body and job summary retain those findings. Required offline PR and
+and repair attempt. When the Rust dependency inputs change, the refresh regenerates
+the exact diagnostic dependency profile and certifies the corresponding source
+history before checking acceptance fingerprints. It always regenerates the
+dependency history and acceptance fixture fingerprints and checks the ledger
+against the committed scope before pushing. The PR body and job summary retain
+those findings. Required offline PR and
 delivery gates fail until the applicable dependency problems are repaired. An
 unavailable registry cannot be presented as a current audit.
 

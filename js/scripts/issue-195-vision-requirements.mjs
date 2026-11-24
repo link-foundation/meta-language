@@ -542,9 +542,10 @@ export const VISION_REQUIREMENTS = Object.freeze([
     specification: 'dependencies',
     fixture: 'js/tests/dependency-inventory.test.js',
     construct: 'direct dependency freshness check',
-    expectedBehavior: 'Offline pull request CI applies the audited current releases. A stale direct pin fails without an attached and audited open issue, and live main checks refresh registry and issue state.',
-    assertions: ['staleDirectPinRejected', 'openBlockerAccepted', 'closedOrWrongBlockerRejected'],
-    tooling: ['.github/workflows/js.yml', '.github/workflows/dependency-refresh.yml', 'js/scripts/dependency-freshness.mjs'],
+    expectedBehavior: 'Offline pull request CI applies the audited current releases. A stale direct pin fails without an attached and audited open issue, and live main checks refresh registry and issue state. A changed native manifest or lock refreshes the exact diagnostic dependency profile and its source history before the repair pull request.',
+    assertions: ['staleDirectPinRejected', 'openBlockerAccepted', 'closedOrWrongBlockerRejected', 'nativeLockRefreshRegeneratesDiagnosticProfile'],
+    tooling: ['.github/workflows/js.yml', '.github/workflows/dependency-refresh.yml', 'js/scripts/dependency-freshness.mjs',
+      'experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs', 'js/scripts/generate-ci-integration-source-history.mjs'],
   },
   {
     id: 'I195-ISSUE-197-LINKS-CONSUMER',

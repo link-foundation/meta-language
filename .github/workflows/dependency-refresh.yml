@@ -124,6 +124,10 @@ jobs:
       - name: Regenerate dependency history and acceptance fixtures
         run: |
           npm --prefix js ci --ignore-scripts
+          if ! git diff --quiet HEAD -- rust/Cargo.lock rust/Cargo.toml; then
+            node experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs --write
+            node js/scripts/generate-ci-integration-source-history.mjs
+          fi
           node js/scripts/generate-dependency-workflow-source-history.mjs
           npm --prefix js run acceptance:issue-195:refresh
           node js/scripts/check-issue-195-acceptance.mjs --scope-baseline HEAD

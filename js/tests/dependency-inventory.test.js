@@ -106,15 +106,25 @@ test('main dependency refresh retains failed live findings and delivers their ou
       npm() { printf 'npm %s\\n' "$*"; }
       node() { printf 'node %s\\n' "$*"; }
     `;
-    const regeneration = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', regenerateCommands + script(regenerate)],
-      { cwd: directory, encoding: 'utf8' });
-    assert.equal(regeneration.status, 0, regeneration.stderr);
-    assert.deepEqual(regeneration.stdout.trim().split('\n'), [
-      'npm --prefix js ci --ignore-scripts',
+    const install = 'npm --prefix js ci --ignore-scripts';
+    const acceptanceCommands = [
       'node js/scripts/generate-dependency-workflow-source-history.mjs',
       'npm --prefix js run acceptance:issue-195:refresh',
       'node js/scripts/check-issue-195-acceptance.mjs --scope-baseline HEAD',
-    ]);
+    ];
+    for (const [diffStatus, nativeCommands] of [
+      [0, []],
+      [1, [
+        'node experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs --write',
+        'node js/scripts/generate-ci-integration-source-history.mjs',
+      ]],
+    ]) {
+      const git = `git() { test "$*" = 'diff --quiet HEAD -- rust/Cargo.lock rust/Cargo.toml' || exit 2; return ${diffStatus}; }\n`;
+      const regeneration = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', regenerateCommands + git + script(regenerate)],
+        { cwd: directory, encoding: 'utf8' });
+      assert.equal(regeneration.status, 0, regeneration.stderr);
+      assert.deepEqual(regeneration.stdout.trim().split('\n'), [install, ...nativeCommands, ...acceptanceCommands]);
+    }
     const failure = spawnSync('bash', ['-e', '-o', 'pipefail', '-c',
       "npm() { printf '23 dependency inventory problem(s)\\n' >&2; return 1; }\n" + script(audit)],
     {cwd: directory, encoding: 'utf8'});
@@ -184,6 +194,15 @@ test('main dependency refresh retains failed live findings and delivers their ou
       assert.equal(invocations.includes('merge --strategy=ours --no-edit FETCH_HEAD'), Boolean(existing));
     }
   } finally {rmSync(directory, {recursive: true, force: true});}
+  recordIssue195Observations({
+    requirementId: 'I195-ISSUE-197-FRESHNESS',
+    suffix: 'behavior',
+    fixtureId: 'planned:repository-directive:i195-issue-197-freshness',
+    fixtureFile: 'js/tests/dependency-inventory.test.js',
+    assertions: ['nativeLockRefreshRegeneratesDiagnosticProfile'],
+    testName: 'main dependency refresh retains failed live findings and delivers their outcome to repair pull requests',
+    runtime: 'tooling',
+  });
 });
 
 test('scheduled refresh fast-forwards a diverged automation branch under the existing push rule', (context) => {
