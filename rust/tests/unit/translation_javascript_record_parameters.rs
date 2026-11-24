@@ -89,7 +89,9 @@ if(mode==='raw-error'){
  process.stdout.write(structuredDataToLino({surface}));
 }else if(mode==='plans'){
  const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(t=>t.value);
- const rows=[];for(let end=0;end<=tokens.length;end++)rows.push({kinds:kinds.slice(0,end),values:values.slice(0,end),
+ // A template token carries parts in JavaScript and an empty text value in the native lexer.
+ const transportValues=tokens.map(t=>t.kind==='template'&&t.value===undefined?'':t.value);
+ const rows=[];for(let end=0;end<=tokens.length;end++)rows.push({kinds:kinds.slice(0,end),values:transportValues.slice(0,end),
  plan:rules.planJavaScriptRecordParameters(kinds.slice(0,end),values.slice(0,end),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings),
  found:rules.findJavaScriptRecordParameterPattern(kinds.slice(0,end),values.slice(0,end),0)});
  process.stdout.write(structuredDataToLino(rows));
