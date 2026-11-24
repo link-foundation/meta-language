@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
+import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
 import {partitionCiTestGroupFiles} from '../scripts/ci-test-partitions.mjs';
 import {readCiTestPartitionHistory,verifyCiTestPartitionHistory,restoreCiTestPartitionWorkflow,restoreCiTestPartitionSource,restorePhysicalReportWorkflow,restoreParallelPackageWorkflow} from '../scripts/ci-test-partition-history.mjs';
+import {restoreWorkflowSourceHistory} from '../scripts/workflow-source-history.mjs';
 test('physical CI partitions preserve every complete logical cohort exactly once under the original deadline',()=>{
  const groups=partitionTests(testFiles()).groups;
  for(const[group,oldCount]of [['translation',6],['conformance',4]]){
@@ -47,10 +49,11 @@ test('physical report changes retain complete independently certified workflow p
 test('parallel package checks retain every command and all JavaScript and native prerequisites',()=>{
  const packet=readCiTestPartitionHistory();assert.equal(packet.packageWorkflows.rows.length,2);
  for(const row of packet.packageWorkflows.rows){
-  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(actual,row.current.source);
-  assert.equal(restoreParallelPackageWorkflow(actual,row.file),row.previous.source);
-  assert.equal(restoreParallelPackageWorkflow(actual+'\n',row.file),actual+'\n');
-  assert.equal(restoreParallelPackageWorkflow(actual,row.file+'.unknown'),actual);
+  const published=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');
+  const actual=restoreWorkflowSourceHistory(row.file,published);assert.equal(actual,row.current.source);
+  assert.equal(restoreParallelPackageWorkflow(published,row.file),row.previous.source);
+  assert.equal(restoreParallelPackageWorkflow(published+'\n',row.file),published+'\n');
+  assert.equal(restoreParallelPackageWorkflow(published,row.file+'.unknown'),published);
   assert.equal(restoreParallelPackageWorkflow(row.previous.source,row.file),row.previous.source);
   if(row.file==='.github/workflows/js.yml'){
    assert.equal(row.previous.source.replace('    needs: [tests, report-assertions]\n',''),actual,'one dependency edge is the entire workflow change');
@@ -65,4 +68,37 @@ test('parallel package checks retain every command and all JavaScript and native
  for(const mutate of [value=>{value.packageWorkflows.rows[0].current.source+=' ';},value=>{value.packageWorkflows.rows[1].previous.certificate.path='foreign.yml';},value=>{value.packageWorkflows.rows[1].changes=[];},value=>{value.packageWorkflows.rows.reverse();}]){
   const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyCiTestPartitionHistory(changed));
  }
+});
+
+test('active workflows require every new holdout and source replay while retaining package gates',()=>{
+ const readWorkflow = name => readFileSync(new URL(`../../.github/workflows/${name}.yml`,import.meta.url),'utf8');
+ const jobs = source => new Map(parseWorkflow(source).map(job => [job.id, job]));
+ const ci = jobs(readWorkflow('ci'));
+ const aggregate = ci.get('acceptance');
+ const holdouts = ci.get('grammar-inference-holdout');
+ const versions = ci.get('rust-source-versions');
+ const originals = jobs(readWorkflow('rust')).get('rust-state-source-originals');
+ const javascript = jobs(readWorkflow('js'));
+ assert.match(holdouts.header,/strategy: \[rpni, edsm, alergia, xvada, natgi, crucio, attributed\]/u);
+ assert.match(holdouts.steps.map(step => step.text).join('\n'),/node-version: 24\.14\.0/u);
+ assert.match(versions.header,/needs: \[js\]/u);
+ assert.match(versions.header,/version: \['1\.90\.0', '1\.96\.0', '1\.97\.0', '1\.99\.0'\]/u);
+ for(const [job, command] of [
+  [versions, 'experiments/rust-source-versions/native-matrix.mjs'],
+  [originals, 'js/scripts/run-rust-state-source-originals.mjs --execute'],
+ ]){
+  const steps = job.steps.map(step => step.text).join('\n');
+  assert.match(steps,/node-version: 24\.22\.0/u);
+  assert.ok(steps.includes(command),command);
+  assert.match(steps,/if-no-files-found: error/u);
+ }
+ assert.match(originals.header,/needs: \[check\]/u);
+ assert.match(originals.header,/needs\.check\.result == 'success'/u);
+ assert.match(aggregate.header,/needs: \[[^\n]*rust-source-versions, grammar-inference-holdout\]/u);
+ assert.match(aggregate.steps[0].text,/needs\.candidates\.result != 'success'/u);
+ for (const job of ['rust-source-versions','grammar-inference-holdout']){
+  assert.ok(aggregate.steps.some(step => step.text.includes(`needs.${job}.result != 'success'`) && step.text.includes('exit 1')),job);
+ }
+ assert.doesNotMatch(javascript.get('package-checks').header,/needs:/u);
+ assert.match(javascript.get('test').header,/needs: \[tests, report-assertions, package-checks, translation-test-feedback\]/u);
 });

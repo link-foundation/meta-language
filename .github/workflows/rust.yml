@@ -1066,6 +1066,8 @@ jobs:
       META_LANGUAGE_SHARD_INDEX: ${{ matrix.physical_shard || 1 }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

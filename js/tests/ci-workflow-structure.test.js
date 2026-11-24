@@ -1375,8 +1375,9 @@ function readPackageFreshnessPredecessor(step, revision) {
 
 test('package artifact checks retain their exact workflow gates and can access pinned compiler history', () => {
   const sources = jobs('js.yml').get('package-checks').steps;
-  assert.match(sources.find(row => row.text.includes('actions/checkout@')).text, /fetch-depth: 0/u);
-  const native = jobs('rust.yml').get('test').steps;
+  const activePackage = parseWorkflow(read('.github/workflows/js.yml')).find(job => job.id === 'package-checks').steps;
+  assert.match(activePackage.find(row => row.text.includes('actions/checkout@')).text, /fetch-depth: 0/u);
+  const native = parseWorkflow(read('.github/workflows/rust.yml')).find(job => job.id === 'test').steps;
   assert.match(native.find(row => row.text.includes('actions/checkout@')).text, /fetch-depth: 0/u);
   for (const revision of packageFreshnessRevisions.values()) {
     const step = sources.find(row => row.name === revision.name);

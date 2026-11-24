@@ -6,6 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
 import {restoreDependencyRefreshPublication,restoreToolingFrozenHostSource} from './tooling-frozen-source-history.mjs';
+import {restoreWorkflowSourceHistory} from './workflow-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
 const archiveSha256='1d5871f0b8f4af6a15b2d1d944af774a15a1f689c0987faf26cbbbfc73b62849';
@@ -17,6 +18,7 @@ let history;
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreWorkflowSourceHistory(path,source);
   if(path==='.github/workflows/dependency-refresh.yml')source=restoreDependencyRefreshPublication(source,path);
   source=restoreToolingFrozenHostSource(source,path,{hostSuccessorsOnly:true,preserveUnknownSource:true});
   source=restoreCurrentNativeHostSource(source,path);

@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreWorkflowSourceHistory} from './workflow-source-history.mjs';
 export const CI_TEST_PARTITION_REVISION='491cf0caa9f014e7f4f4caef62611fa482114721';
 export const CI_TEST_PARTITION_HISTORY='parity/fixtures/ci-39839936265-test-partitions.lino';
 const packetSha256='be7756fec94eb9cced8bb4c1cd6d20ab8b0c1e549c114bd4e25cff0d00e76a9a';
@@ -104,6 +105,7 @@ export function restoreCiTestPartitionWorkflow(source){
 
 /** Exact certified scheduling change only; every command and aggregate stays. */
 export function restoreParallelPackageWorkflow(source,file){
+ source=restoreWorkflowSourceHistory(file,source);
  const row=readCiTestPartitionHistory().packageWorkflows?.rows.find(row=>row.file===file);
  return row&&source===row.current.source?row.previous.source:source;
 }
