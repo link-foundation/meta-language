@@ -930,6 +930,7 @@ export function createWrongLanguagePacket(){return createTypedProgramLinks('func
     },
     {
       name: 'reject-unregistered-owned-tuple-call-source-signature-model', expectedDiagnostics: ['TS2322'],
+      assertionPolicy: 'typescript-const-signature-rejection-diagnostic',
       source: `import { createTypedProgramLinks } from ${module};
 createTypedProgramLinks(${JSON.stringify(retargetTupleCall.source)},'Rust',
   {rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)},rustSourceSignatureModel:'Rust source function signature 99'});

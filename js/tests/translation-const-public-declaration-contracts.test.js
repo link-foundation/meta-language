@@ -74,7 +74,7 @@ test('the exact declared const selector still requires Rust source',async contex
 
 test('the exact unknown explicit const signature selection keeps its independent runtime refusal',async context=>{
  await assert.rejects(runConsumer('reject-unregistered-explicit-const-predicate-signature-model',context),error=>{
-  assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust source signature model: select the legacy model or Rust source function signature 1');return true;
+  assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust source signature model: select the legacy model, Rust source function signature 1, or the explicit borrowed vector signature 3');return true;
  });
 });
 
