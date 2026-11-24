@@ -781,9 +781,16 @@ class Inference {
     const before = this.unificationChanges;
     const constraints = readOptionalJoinConstraints(left, right, a, b, this.resolve(result), guarded);
     if (constraints.pair) this.unify(...constraints.pair, where);
-    const value = this.resolve(constraints.value);
+    let value = this.resolve(constraints.value);
     const current = this.resolve(result);
     if (requireInferenceJoinAlias(current.kind, current.id ?? -1, result.id)) this.unify(current, value, where);
+    if (current.kind === 'option' && value.kind === 'option'
+      && current.absence !== value.absence && this.sameTerm(current.element, value.element)) {
+      // Other constraints can already have widened the same present type.
+      // Recomputing the branch must retain those observed absence paths.
+      const absence = mergeOptionalAbsence(current.absence, value.absence);
+      value = absence === current.absence ? current : { ...value, absence };
+    }
     const original = value === result || (value.kind === 'var' && value.id === result.id);
     const same = !original && this.sameTerm(result, value);
     const operation = readOptionalJoinBinding(original, same, !original && !same && this.contains(value, result.id));

@@ -43,6 +43,32 @@ fn check_runtime(source: &str, expected: &[u8]) {
 }
 
 #[test]
+fn guarded_projection_and_null_branch_reach_the_inference_fixed_point() {
+    let source = "function select(row, take) { return take ? row?.count : null; }
+console.log(select({ count: 4 }, true));
+console.log(select(undefined, true));
+console.log(select({ count: 4 }, false));";
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let Some(Decl::Fn(function)) = checked.declaration("select") else {
+        panic!("the actual selector declaration is retained");
+    };
+    assert_eq!(
+        function.ret,
+        Type::Option {
+            element: Box::new(Type::Float),
+            absence: "both".to_owned()
+        }
+    );
+    let original = observe(source);
+    let emitted = observe(&emit_javascript(&checked).unwrap().text);
+    assert!(original.status.success());
+    assert_eq!(original.stdout, b"4\nundefined\nnull\n");
+    assert_eq!(emitted.status.code(), original.status.code());
+    assert_eq!(emitted.stdout, original.stdout);
+    assert_eq!(emitted.stderr, original.stderr);
+}
+
+#[test]
 fn nullish_fallbacks_keep_falsy_values_and_only_run_absent_branch_effects() {
     let source = "function fallback(){console.log('fallback');return 7;}function choose(value){return value??fallback();}console.log(choose(0));console.log(choose(null));console.log(choose(undefined));";
     check_runtime(source, b"0\nfallback\n7\nfallback\n7\n");

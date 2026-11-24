@@ -165,6 +165,19 @@ test('absent branch joins reuse exact fixed point identities and keep nested opt
   assert.equal(merged.pair[1], inner);
 });
 
+test('a guarded projection and a null branch retain both absences at the inference fixed point', () => {
+  const source = `
+function select(row, take) { return take ? row?.count : null; }
+console.log(select({ count: 4 }, true));
+console.log(select(undefined, true));
+console.log(select({ count: 4 }, false));`;
+  const checked = checkProgram(parseJavaScript(source));
+  assert.deepEqual(checked.declarations.get('select').ret, { kind: 'option', element: number, absence: 'both' });
+  const expected = '4\nundefined\nnull\n';
+  assert.equal(observations(source), expected);
+  assert.equal(observations(emitJavaScript(checked).text), expected);
+});
+
 test('actual nullable inference preserves falsy values field shapes and recursive return joins', () => {
   const cases = [
     ["function choose(value){return value??'fallback';} console.log(`${choose(undefined)} ${choose(null)} ${choose('')} ${choose('kept')}`);", 'fallback fallback  kept\n'],

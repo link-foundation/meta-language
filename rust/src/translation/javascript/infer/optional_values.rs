@@ -327,7 +327,12 @@ impl Inference {
         })
     }
 
-    fn bind_join_result(&mut self, constraint: &Join, value: Term, before: usize) -> Result<bool> {
+    fn bind_join_result(
+        &mut self,
+        constraint: &Join,
+        mut value: Term,
+        before: usize,
+    ) -> Result<bool> {
         let Term::Var(variable) = constraint.result else {
             unreachable!("a deferred join owns a result variable");
         };
@@ -343,6 +348,25 @@ impl Inference {
             .expect("a bounded inference variable has a Number representation");
         if values::require_inference_join_alias(kind(&current), alias, original_id) {
             self.unify(&current, &value, constraint.place)?;
+        }
+        if let (
+            Term::Option {
+                element: current_element,
+                absence: current_absence,
+            },
+            Term::Option { element, absence },
+        ) = (&current, &value)
+            && *current_absence.borrow() != *absence.borrow()
+            && self.same_term(current_element, element)
+        {
+            // Recomputing the branch retains absence paths contributed by
+            // other constraints on this same present type.
+            let merged = merge_optional_absence(&current_absence.borrow(), &absence.borrow());
+            value = if *current_absence.borrow() == merged {
+                current.clone()
+            } else {
+                optional(*element.clone(), &merged)
+            };
         }
         let original = matches!(value, Term::Var(id) if id == variable);
         let same = !original && self.same_term(&constraint.result, &value);
