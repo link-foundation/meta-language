@@ -195,7 +195,7 @@ fn source_iteration_retains_its_actual_iterable_wrapper_and_generated_read_proof
     }
     let program = parse_javascript(ARRAYS).expect("the original array program parses");
     let raw = serde_json::to_value(program).expect("raw source tree serialization");
-    assert_eq!(count(&raw, "forOfIterable", false), 1);
+    assert_eq!(count(&raw, "forOfIterable", false), 2);
     assert_eq!(count(&raw, "index", true), 1);
 }
 

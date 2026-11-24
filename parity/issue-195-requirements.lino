@@ -2655,7 +2655,7 @@
 (2655: (meta: (t: semantic) (n: 1) (term: string%20value) (def: parity%2Ffixtures%2Fmodern-javascript-array-parity.lino) (lang: meta-language%20structured%20data)))
 (2656: 226 2655 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2657: 229 2648 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(2658: (meta: (t: semantic) (n: 1) (term: string%20value) (def: c496c4026dc75d94965c89be9c73d8895a1feb6949769fdbd49a777b404c1770) (lang: meta-language%20structured%20data)))
+(2658: (meta: (t: semantic) (n: 1) (term: string%20value) (def: ca401bd04906f86283ed6a6fc0af43240d655bb6e6323a8b2c0e986a7745b690) (lang: meta-language%20structured%20data)))
 (2659: 232 2658 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2660: 2653 2654 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2661: (meta: (t: semantic) (n: 1) (term: string%20value) (def: conversation-contract%3AcompactContributorInstructionsRequest) (lang: meta-language%20structured%20data)))
