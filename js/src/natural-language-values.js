@@ -9,6 +9,7 @@ const parsers = new Map();
 const data = new URL('./data/natural-language-values/', import.meta.url);
 let vocabulary;
 let currencyCodes;
+let currencySymbolAlternatives;
 let decimalDigits;
 
 function loadDecimalDigits() {
@@ -29,6 +30,11 @@ function valueProfile(language) {
     vocabulary = source.trim().split('\n').map(line => line.slice(1, -1).split(' '));
     const codes = readFileSync(new URL('currencies.lino', data), 'utf8');
     currencyCodes = new Set(codes.trim().slice(1, -1).split(' ').slice(2));
+    const symbols = readFileSync(new URL('currency-symbol-alternatives.lino', data), 'utf8');
+    currencySymbolAlternatives = new Map(symbols.trim().split('\n').slice(1).map(line => {
+      const [, symbol, ...alternatives] = line.slice(1, -1).split(' ');
+      return [symbol.toLowerCase(), alternatives];
+    }));
     decimalDigits = loadDecimalDigits();
   }
   let profile = parsers.get(locale);
@@ -130,24 +136,19 @@ function readAmount(match, range, profile) {
   return chunk === undefined ? total : addDecimals(total, chunk);
 }
 
-function readCurrency(match, profile) {
-  let currency;
-  const defaultSymbols = new Map([['$', ['USD', 'CAD', 'AUD', 'NZD', 'HKD', 'SGD']], ['¥', ['JPY', 'CNY']]]);
-  const spellings = match.captures.currency;
-  for (const { text } of spellings) {
-    const candidate = wordValue(profile, 'currency', text) ?? (currencyCodes.has(text) ? text : undefined);
-    if (!candidate) return undefined;
-    if (defaultSymbols.has(text)) continue;
-    if (currency && candidate !== currency) return undefined;
-    currency = candidate;
+function readCurrencyCodes(match, profile) {
+  let candidates;
+  for (const { text } of match.captures.currency) {
+    let codes = currencySymbolAlternatives.get(text.toLowerCase());
+    if (!codes) {
+      const code = wordValue(profile, 'currency', text) ?? (currencyCodes.has(text) ? text : undefined);
+      if (!code) return [];
+      codes = [code];
+    }
+    candidates = candidates ? candidates.filter(code => codes.includes(code)) : codes;
+    if (candidates.length === 0) break;
   }
-  for (const { text } of spellings) {
-    const candidates = defaultSymbols.get(text);
-    if (!candidates) continue;
-    if (currency && !candidates.includes(currency)) return undefined;
-    currency ??= candidates[0];
-  }
-  return currency;
+  return candidates ?? [];
 }
 
 function readDate(match, range, profile) {
@@ -180,7 +181,7 @@ function readDuration(match, profile) {
   return `value:duration {"${property}":${decimalText(months)}}`;
 }
 
-function numberRange(match, profile, money) {
+function rangeLimits(match, profile, money) {
   const first = match.captures[money ? 'first_money' : 'first_amount'][0];
   const last = match.captures[money ? 'last_money' : 'last_amount'][0];
   let left = readAmount(match, first, profile);
@@ -191,32 +192,34 @@ function numberRange(match, profile, money) {
   }
   const comparison = addDecimals(left, scaleDecimal(right, -1)).coefficient;
   const [minimum, maximum] = comparison <= 0n ? [left, right] : [right, left];
-  const limits = `"min":${decimalText(minimum)},"max":${decimalText(maximum)}`;
-  if (!money) return `value:number-range {${limits}}`;
-  const currency = readCurrency(match, profile);
-  if (currency) return `value:money {${limits},"currency":"${currency}"}`;
+  return `"min":${decimalText(minimum)},"max":${decimalText(maximum)}`;
 }
 
-function termFor(rule, match, profile) {
+function termsFor(rule, match, profile) {
   switch (rule) {
-    case 'amount': return `value:number ${decimalText(readAmount(match, match, profile))}`;
-    case 'number_range': return numberRange(match, profile, false);
-    case 'money_range': return numberRange(match, profile, true);
-    case 'money_amount': {
-      const currency = readCurrency(match, profile);
-      if (currency) return `value:money {"amount":${decimalText(readAmount(match, match, profile))},"currency":"${currency}"}`;
-      break;
+    case 'amount': return [`value:number ${decimalText(readAmount(match, match, profile))}`];
+    case 'number_range': return [`value:number-range {${rangeLimits(match, profile, false)}}`];
+    case 'money_range': {
+      const currencies = readCurrencyCodes(match, profile);
+      if (currencies.length === 0) return [];
+      const limits = rangeLimits(match, profile, true);
+      return currencies.map(currency => `value:money {${limits},"currency":"${currency}"}`);
     }
-    case 'duration': return readDuration(match, profile);
+    case 'money_amount': {
+      const currencies = readCurrencyCodes(match, profile);
+      if (currencies.length === 0) return [];
+      const amount = decimalText(readAmount(match, match, profile));
+      return currencies.map(currency => `value:money {"amount":${amount},"currency":"${currency}"}`);
+    }
+    case 'duration': return [readDuration(match, profile)];
     case 'date_range': {
       const from = readDate(match, match.captures.first_date[0], profile);
       const to = readDate(match, match.captures.last_date[0], profile);
-      if (from && to) return `value:date-range {"from":"${from}","to":"${to}"}`;
-      break;
+      return from && to ? [`value:date-range {"from":"${from}","to":"${to}"}`] : [];
     }
     default: {
       const date = readDate(match, match, profile);
-      if (date) return `value:date ${date}`;
+      return date ? [`value:date ${date}`] : [];
     }
   }
 }
@@ -256,14 +259,14 @@ export function naturalLanguageValues(text, language) {
       if (rule === 'amount' && numberWordRules.some(name => match.captures[name].length)) compounds.add(range);
       if (rule === 'number_range' && compounds.has(range)) continue;
       if (rule === 'amount' && /^[-−]/u.test(match.text) && precededByDecimalDigit(text, match.start)) continue;
-      const term = termFor(rule, match, profile);
-      if (!term) continue;
       const start = boundaries.get(match.start).byte;
       const end = boundaries.get(match.end).byte;
-      const key = `${start}:${end}:${term}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      results.push({ start, end, term });
+      for (const term of termsFor(rule, match, profile)) {
+        const key = `${start}:${end}:${term}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        results.push({ start, end, term });
+      }
     }
   }
   return results.sort((left, right) => left.start - right.start || right.end - left.end);

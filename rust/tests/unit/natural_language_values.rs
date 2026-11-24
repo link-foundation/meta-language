@@ -11,6 +11,7 @@ const WRITTEN_MULTIPLIER_FIXTURE: &str =
     "parity/fixtures/natural-language-written-multipliers.lino";
 const NAMED_CALENDAR_DATE_FIXTURE: &str =
     "parity/fixtures/natural-language-named-calendar-dates.lino";
+const CURRENCY_AMBIGUITY_FIXTURE: &str = "parity/fixtures/natural-language-currency-ambiguity.lino";
 
 fn check_value_fixtures(fixtures: &str) {
     let data: Value = read_project_data(fixtures).expect("value fixtures");
@@ -46,6 +47,28 @@ fn check_value_fixtures(fixtures: &str) {
                 );
                 assert_eq!(entries.contains(&entry), expected, "{entry:?}");
             }
+        }
+        for item in fixture["exactMoney"].as_array().into_iter().flatten() {
+            let spelling = item[0].as_str().expect("currency spelling");
+            let start = source.find(spelling).expect("original currency spelling");
+            let end = start + spelling.len();
+            let interpretations = standalone
+                .iter()
+                .filter(|value| value.start == start && value.end == end)
+                .filter_map(|value| value.term.strip_prefix("value:money "))
+                .map(|term| serde_json::from_str::<Value>(term).expect("money fields"))
+                .collect::<Vec<_>>();
+            let expected = item[2]
+                .as_array()
+                .expect("compatible currencies")
+                .iter()
+                .map(|currency| {
+                    let mut fields = item[1].clone();
+                    fields["currency"] = currency.clone();
+                    fields
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(interpretations, expected, "{spelling}");
         }
     }
 }
@@ -125,5 +148,24 @@ fn named_calendar_dates_and_ranges_preserve_valid_days_and_spans() {
             "namedCalendarDateSpansAndValidation",
         ],
         test_name: "named_calendar_dates_and_ranges_preserve_valid_days_and_spans",
+    });
+}
+
+#[test]
+fn currency_symbols_keep_compatible_codes_at_original_spans() {
+    check_value_fixtures(include_str!(
+        "../../../parity/fixtures/natural-language-currency-ambiguity.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I242-CURRENCY-SYMBOL-ALTERNATIVES",
+        suffix: "behavior",
+        fixture_id: "i195-i242-currency-symbol-alternatives",
+        fixture_file: CURRENCY_AMBIGUITY_FIXTURE,
+        assertions: &[
+            "currencySymbolsKeepCompatibleCodes",
+            "currencyMarkersIntersectAtOriginalSpans",
+            "qualifiedCurrencySymbolsKeepTheirFullSpans",
+        ],
+        test_name: "currency_symbols_keep_compatible_codes_at_original_spans",
     });
 }

@@ -903,6 +903,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
         rust: ['js/scripts/build-natural-language-values.mjs', 'rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
       },
     },
+    {
+      id: 'I195-I242-CURRENCY-SYMBOL-ALTERNATIVES',
+      source: ISSUE_195_SOURCES.naturalLanguageValues,
+      language: 'English, Russian and shared currency syntax',
+      version: 'CLDR 49 root currency symbols, Unicode 17.0.0 Currency_Symbol, ISO 4217 List One 2026-09-17',
+      construct: 'ambiguous currency symbols on typed money amounts and ranges',
+      expectedBehavior: 'Return one typed money value per compatible currency at the original UTF-8 span. The established currency stays first for an ambiguous sign. Additional signs and explicit ISO codes constrain the alternatives by intersection. Conflicting markers prevent a money value over their combined span. CLDR currency spellings containing a currency symbol retain their complete sign, including a qualifying prefix.',
+      fixture: 'parity/fixtures/natural-language-currency-ambiguity.lino',
+      selector: 'the reported dollar range, dollar and yen amounts with explicit codes, qualified and case-insensitive signs, pound and won alternatives, euro amounts, overlapping and incompatible markers, preceding UTF-8 text, and all ten newly recognized CLDR spellings',
+      assertions: ['currencySymbolsKeepCompatibleCodes', 'currencyMarkersIntersectAtOriginalSpans', 'qualifiedCurrencySymbolsKeepTheirFullSpans'],
+      implementationEntryPoints: {
+        javascript: ['js/scripts/build-natural-language-values.mjs', 'js/src/natural-language-values.js', 'js/tests/natural-language-values.test.js'],
+        rust: ['js/scripts/build-natural-language-values.mjs', 'rust/src/link_network/natural_language_values/mod.rs', 'rust/tests/unit/natural_language_values.rs'],
+      },
+    },
     ...[
       {
         id: 'I195-I243-NORMALIZED-TEXT-LOCATION',

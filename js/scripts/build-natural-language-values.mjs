@@ -8,12 +8,15 @@ const data = new URL('../src/data/natural-language-values/', import.meta.url);
 const nativeData = new URL('../../rust/src/data/natural-language-values/', import.meta.url);
 const check = process.argv.includes('--check');
 const argumentsToRead = process.argv.slice(2).filter(argument => argument !== '--check');
-const unicodeOption = argumentsToRead.indexOf('--unicode-data');
-let unicodeSource;
-if (unicodeOption >= 0) {
-  [, unicodeSource] = argumentsToRead.splice(unicodeOption, 2);
-  assert.ok(unicodeSource, '--unicode-data requires the UnicodeData.txt path');
+function sourceArgument(option) {
+  const index = argumentsToRead.indexOf(option);
+  if (index < 0) return undefined;
+  const [, path] = argumentsToRead.splice(index, 2);
+  assert.ok(path, `${option} requires a source path`);
+  return path;
 }
+const unicodeSource = sourceArgument('--unicode-data');
+const cldrRoot = sourceArgument('--cldr-root');
 const [isoSource] = argumentsToRead;
 const lexicon = readFileSync(new URL('lexicon.lino', data), 'utf8');
 const rows = lexicon.trim().split('\n').map(line => line.slice(1, -1).split(' '));
@@ -25,14 +28,54 @@ if (isoSource) {
   currencies = `(iso4217 2026-09-17 ${codes.join(' ')})\n`;
 }
 
+// https://github.com/unicode-org/cldr/blob/96e54b273d2da4ec6fbad350ba19ff23fa24a588/common/main/root.xml
+function collectCurrencySymbols(path, unicodeData) {
+  assert.ok(unicodeData, '--cldr-root requires --unicode-data');
+  const xml = readFileSync(path);
+  const digest = createHash('sha256').update(xml).digest('hex');
+  assert.equal(digest, '7447cc014ec93a1425a2ab51e3d2b5cc48e6865c95350caa0fca36cbebcc93e6');
+  const codes = new Set(currencies.trim().slice(1, -1).split(' ').slice(2));
+  const defaults = new Map(rows.filter(([kind, language]) => kind === 'currency' && language === 'common')
+    .flatMap(([, , code, ...symbols]) => symbols.map(symbol => [symbol, code])));
+  const currencyCharacters = new Set();
+  for (const record of unicodeData.records) {
+    const [code, , category] = record.split(';', 3);
+    if (category === 'Sc') currencyCharacters.add(String.fromCodePoint(Number.parseInt(code, 16)));
+  }
+  const alternatives = new Map();
+  for (const [, code, currency] of xml.toString().matchAll(/<currency type="([A-Z]{3})">([\s\S]*?)<\/currency>/gu)) {
+    if (!codes.has(code) || code === 'XXX') continue;
+    for (const [, symbol] of currency.matchAll(/<symbol(?: alt="narrow")?>([^<]+)<\/symbol>/gu)) {
+      const established = defaults.get(symbol);
+      if (!established && ![...symbol].some(character => currencyCharacters.has(character))) continue;
+      if (!alternatives.has(symbol)) alternatives.set(symbol, new Set(established ? [established] : []));
+      alternatives.get(symbol).add(code);
+    }
+  }
+  const records = [`(currency-symbol-source CLDR 49 ${digest})`];
+  for (const symbol of [...alternatives.keys()].sort()) {
+    const candidates = alternatives.get(symbol);
+    const first = defaults.get(symbol);
+    if (first && candidates.size === 1) continue;
+    const ordered = [...candidates].filter(code => code !== first).sort();
+    if (first) ordered.unshift(first);
+    records.push(`(currency-symbol ${symbol} ${ordered.join(' ')})`);
+  }
+  return `${records.join('\n')}\n`;
+}
+
 // https://www.unicode.org/Public/17.0.0/ucd/UnicodeData.txt
-function collectDecimalDigits(path) {
+function readUnicodeData(path) {
   const unicodeData = readFileSync(path);
   const digest = createHash('sha256').update(unicodeData).digest('hex');
   assert.equal(digest, '2e1efc1dcb59c575eedf5ccae60f95229f706ee6d031835247d843c11d96470c');
+  return { records: unicodeData.toString().split('\n'), digest };
+}
+
+function collectDecimalDigits({ records, digest }) {
   const zeros = [];
   let decimalValue = 0;
-  for (const record of unicodeData.toString().split('\n')) {
+  for (const record of records) {
     const [code, , category, , , , value] = record.split(';');
     if (category !== 'Nd') continue;
     const point = Number.parseInt(code, 16);
@@ -45,7 +88,14 @@ function collectDecimalDigits(path) {
   return `(unicode-decimal-digits 17.0.0 ${digest} ${zeros.map(point => point.toString(16)).join(' ')})\n`;
 }
 
-const digitData = unicodeSource ? collectDecimalDigits(unicodeSource) : readFileSync(new URL('decimal-digits.lino', data), 'utf8');
+const unicodeData = unicodeSource ? readUnicodeData(unicodeSource) : undefined;
+const digitData = unicodeData ? collectDecimalDigits(unicodeData) : readFileSync(new URL('decimal-digits.lino', data), 'utf8');
+const symbolData = cldrRoot ? collectCurrencySymbols(cldrRoot, unicodeData)
+  : readFileSync(new URL('currency-symbol-alternatives.lino', data), 'utf8');
+const currencySymbolRows = symbolData.trim().split('\n').slice(1).map(line => {
+  const [, symbol, first] = line.slice(1, -1).split(' ');
+  return ['currency', 'common', first, symbol];
+});
 const unicodeLicense = readFileSync(new URL('UNICODE-LICENSE.txt', data), 'utf8');
 const digitBlocks = digitData.trim().slice(1, -1).split(' ').slice(3).map(zero => Number.parseInt(zero, 16));
 const { seq, choice, literal, literalInsensitive, charClass, charRange, ref, optional, repeat } = GrammarBuilder;
@@ -72,7 +122,7 @@ const plainNumeral = seq(repeat(digit, 1, 18), optional(seq(decimal, fraction)))
 const range = (left, right, between) => seq(left, between, right);
 
 function profile(locale) {
-  const relevant = rows.filter(([, language]) => language === 'common' || language === locale);
+  const relevant = [...rows.filter(([, language]) => language === 'common' || language === locale), ...currencySymbolRows];
   const vocabulary = (category, select = () => true) => words(relevant
     .filter(([kind, , value]) => kind === category && select(Number(value)))
     .flatMap(([, , , ...spellings]) => spellings));
@@ -164,6 +214,7 @@ function profile(locale) {
 for (const [name, value] of [
   ['lexicon.lino', lexicon], ['currencies.lino', currencies],
   ['decimal-digits.lino', digitData], ['UNICODE-LICENSE.txt', unicodeLicense],
+  ['currency-symbol-alternatives.lino', symbolData],
   ...['en', 'ru', 'common'].map(locale => [`${locale}.lino`, profile(locale)]),
 ]) {
   for (const directory of [data, nativeData]) {

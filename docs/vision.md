@@ -1602,6 +1602,14 @@ ISO 4217 codes, and validates calendar dates. Both runtimes derive numeric and
 calendar fields from one pinned Unicode 17.0 decimal digit table. The shared
 grammar recognizes Arabic decimal and grouping separators, and value actions
 normalize digit spellings after search preserves their original source spans.
+Shared Links data records CLDR 49 root currency spellings with a Unicode
+17.0 currency symbol and their active ISO 4217 codes. The rules also keep
+established sign aliases. A money match emits one link per compatible code,
+including the full spelling of a qualified sign. When the input has several
+currency markers, the value action keeps the codes supported by every marker.
+The established code for a sign remains first when several interpretations
+are possible. [Pinned CLDR currency data](https://github.com/unicode-org/cldr/blob/96e54b273d2da4ec6fbad350ba19ff23fa24a588/common/main/root.xml)
+
 A named month can occur after the day in English and Russian or before the day
 in English. These full dates use the same calendar validation as digit-only
 dates and can be endpoints of bounded or open date ranges.

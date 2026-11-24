@@ -121,6 +121,21 @@ static CURRENCIES: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         .skip(2)
         .collect()
 });
+static CURRENCY_SYMBOL_ALTERNATIVES: LazyLock<HashMap<String, Vec<&'static str>>> =
+    LazyLock::new(|| {
+        include_str!("../../data/natural-language-values/currency-symbol-alternatives.lino")
+            .lines()
+            .skip(1)
+            .map(|line| {
+                let mut fields = line
+                    .trim_matches(['(', ')'])
+                    .split_ascii_whitespace()
+                    .skip(1);
+                let symbol = fields.next().expect("currency symbol");
+                (symbol.to_lowercase(), fields.collect())
+            })
+            .collect()
+    });
 static DECIMAL_DIGITS: LazyLock<HashMap<char, char>> = LazyLock::new(|| {
     include_str!("../../data/natural-language-values/decimal-digits.lino")
         .trim()
@@ -296,43 +311,34 @@ fn read_amount(
     Some(chunk.map_or(total, |chunk| total.add(chunk)))
 }
 
-fn currency_defaults(spelling: &str) -> &'static [&'static str] {
-    match spelling {
-        "$" => &["USD", "CAD", "AUD", "NZD", "HKD", "SGD"],
-        "¥" => &["JPY", "CNY"],
-        _ => &[],
-    }
-}
-
-fn read_currency<'text>(
-    matched: &'text GrammarSearchMatch,
+fn read_currency_codes(
+    matched: &GrammarSearchMatch,
     profile: &ValueProfile,
-) -> Option<&'text str> {
-    let mut currency = None;
-    let spellings = &matched.captures["currency"];
-    for spelling in spellings {
-        let candidate = profile
-            .word("currency", &spelling.text)
-            .or_else(|| CURRENCIES.get(spelling.text.as_str()).copied())?;
-        if !currency_defaults(&spelling.text).is_empty() {
-            continue;
-        }
-        if currency.is_some_and(|code| code != candidate) {
-            return None;
-        }
-        currency = Some(candidate);
-    }
-    for spelling in spellings {
-        let candidates = currency_defaults(&spelling.text);
-        let Some(&primary) = candidates.first() else {
-            continue;
+) -> Option<Vec<&'static str>> {
+    let mut candidates: Option<Vec<&str>> = None;
+    for spelling in &matched.captures["currency"] {
+        let spelling = spelling.text.as_str();
+        let explicit;
+        let codes = if let Some(alternatives) =
+            CURRENCY_SYMBOL_ALTERNATIVES.get(&spelling.to_lowercase())
+        {
+            alternatives.as_slice()
+        } else {
+            explicit = [profile
+                .word("currency", spelling)
+                .or_else(|| CURRENCIES.get(spelling).copied())?];
+            &explicit
         };
-        if currency.is_some_and(|code| !candidates.contains(&code)) {
-            return None;
+        if let Some(candidates) = &mut candidates {
+            candidates.retain(|code| codes.contains(code));
+            if candidates.is_empty() {
+                return None;
+            }
+        } else {
+            candidates = Some(codes.to_vec());
         }
-        currency.get_or_insert(primary);
     }
-    currency
+    candidates
 }
 
 fn read_date(
@@ -407,7 +413,11 @@ fn read_duration(matched: &GrammarSearchMatch, profile: &ValueProfile) -> Option
     Some(format!(r#"value:duration {{"{property}":{months}}}"#))
 }
 
-fn read_range(matched: &GrammarSearchMatch, profile: &ValueProfile, money: bool) -> Option<String> {
+fn read_range(
+    matched: &GrammarSearchMatch,
+    profile: &ValueProfile,
+    money: bool,
+) -> Option<(ExactDecimal, ExactDecimal)> {
     let (first_kind, last_kind) = if money {
         ("first_money", "last_money")
     } else {
@@ -423,48 +433,53 @@ fn read_range(matched: &GrammarSearchMatch, profile: &ValueProfile, money: bool)
     {
         left = left.scale(scale.parse().ok()?);
     }
-    let (minimum, maximum) = if left.add(right.scale(-1)).coefficient <= 0 {
+    Some(if left.add(right.scale(-1)).coefficient <= 0 {
         (left, right)
     } else {
         (right, left)
-    };
-    if money {
-        let currency = read_currency(matched, profile)?;
-        return Some(format!(
-            r#"value:money {{"min":{minimum},"max":{maximum},"currency":"{currency}"}}"#
-        ));
-    }
-    Some(format!(
-        r#"value:number-range {{"min":{minimum},"max":{maximum}}}"#
-    ))
+    })
 }
 
-fn term_for(rule: &str, matched: &GrammarSearchMatch, profile: &ValueProfile) -> Option<String> {
+fn terms_for(
+    rule: &str,
+    matched: &GrammarSearchMatch,
+    profile: &ValueProfile,
+) -> Option<Vec<String>> {
     let span = &matched.span;
-    match rule {
-        "amount" => Some(format!(
-            "value:number {}",
-            read_amount(matched, span, profile)?
-        )),
-        "number_range" => read_range(matched, profile, false),
-        "money_range" => read_range(matched, profile, true),
-        "money_amount" => {
-            let currency = read_currency(matched, profile)?;
-            let amount = read_amount(matched, span, profile)?;
-            Some(format!(
-                r#"value:money {{"amount":{amount},"currency":"{currency}"}}"#
-            ))
+    let term = match rule {
+        "amount" => format!("value:number {}", read_amount(matched, span, profile)?),
+        "number_range" => {
+            let (minimum, maximum) = read_range(matched, profile, false)?;
+            format!(r#"value:number-range {{"min":{minimum},"max":{maximum}}}"#)
         }
-        "duration" => read_duration(matched, profile),
+        "money_range" => {
+            let currencies = read_currency_codes(matched, profile)?;
+            let (minimum, maximum) = read_range(matched, profile, true)?;
+            return Some(currencies.into_iter().map(|currency| {
+                format!(r#"value:money {{"min":{minimum},"max":{maximum},"currency":"{currency}"}}"#)
+            }).collect());
+        }
+        "money_amount" => {
+            let currencies = read_currency_codes(matched, profile)?;
+            let amount = read_amount(matched, span, profile)?;
+            return Some(
+                currencies
+                    .into_iter()
+                    .map(|currency| {
+                        format!(r#"value:money {{"amount":{amount},"currency":"{currency}"}}"#)
+                    })
+                    .collect(),
+            );
+        }
+        "duration" => read_duration(matched, profile)?,
         "date_range" => {
             let from = read_date(matched, matched.captures["first_date"].first()?, profile)?;
             let to = read_date(matched, matched.captures["last_date"].first()?, profile)?;
-            Some(format!(
-                r#"value:date-range {{"from":"{from}","to":"{to}"}}"#
-            ))
+            format!(r#"value:date-range {{"from":"{from}","to":"{to}"}}"#)
         }
-        _ => Some(format!("value:date {}", read_date(matched, span, profile)?)),
-    }
+        _ => format!("value:date {}", read_date(matched, span, profile)?),
+    };
+    Some(vec![term])
 }
 
 /// One normalized value and its original UTF-8 extent.
@@ -535,7 +550,7 @@ pub fn natural_language_values(text: &str, language: &str) -> Vec<NaturalLanguag
             {
                 continue;
             }
-            if let Some(term) = term_for(rule, &matched, profile) {
+            for term in terms_for(rule, &matched, profile).into_iter().flatten() {
                 results.push(NaturalLanguageValue {
                     start: *start,
                     end: *end,

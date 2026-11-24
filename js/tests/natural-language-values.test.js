@@ -8,10 +8,11 @@ const fixtureFile = 'parity/fixtures/natural-language-values.lino';
 const unicodeFixtureFile = 'parity/fixtures/natural-language-unicode-decimal-values.lino';
 const writtenMultiplierFixtureFile = 'parity/fixtures/natural-language-written-multipliers.lino';
 const namedCalendarDateFixtureFile = 'parity/fixtures/natural-language-named-calendar-dates.lino';
+const currencyAmbiguityFixtureFile = 'parity/fixtures/natural-language-currency-ambiguity.lino';
 
 function checkValueFixtures(file) {
   const { fixtures } = readProjectData(new URL(`../../${file}`, import.meta.url));
-  for (const { source, language, expected, absent = [] } of fixtures) {
+  for (const { source, language, expected = [], absent = [], exactMoney = [] } of fixtures) {
     const network = LinkNetwork.parse(source, language);
     const bytes = Buffer.from(source);
     const entries = network.links().map(link => link.metadata())
@@ -26,6 +27,15 @@ function checkValueFixtures(file) {
     assert.deepEqual(naturalLanguageValues(source, language).map(({ start, end, term }) => [bytes.subarray(start, end).toString(), term]), values);
     for (const entry of expected) assert.ok(values.some(value => value.every((part, index) => part === entry[index])), entry.join(' → '));
     for (const entry of absent) assert.ok(!values.some(value => value.every((part, index) => part === entry[index])), entry.join(' → '));
+    for (const [spelling, fields, currencies] of exactMoney) {
+      const start = bytes.indexOf(spelling);
+      assert.ok(start >= 0, spelling);
+      const end = start + Buffer.byteLength(spelling);
+      const interpretations = entries.filter(({ span, term }) =>
+        span.byteRange.start === start && span.byteRange.end === end && term.startsWith('value:money '));
+      assert.deepEqual(interpretations.map(({ term }) => JSON.parse(term.slice('value:money '.length))),
+        currencies.map(currency => ({ ...fields, currency })), spelling);
+    }
   }
 }
 
@@ -65,6 +75,16 @@ test('named calendar dates and ranges preserve valid days and original spans', (
     requirementId: 'I195-I242-NAMED-CALENDAR-DATES', suffix: 'behavior',
     fixtureId: 'i195-i242-named-calendar-dates', fixtureFile: namedCalendarDateFixtureFile,
     assertions: ['namedCalendarDatesAndRanges', 'namedCalendarDateSpansAndValidation'],
+    testName: context.name,
+  });
+});
+
+test('currency symbols retain every compatible currency at their original spans', (context) => {
+  checkValueFixtures(currencyAmbiguityFixtureFile);
+  recordIssue195Observations({
+    requirementId: 'I195-I242-CURRENCY-SYMBOL-ALTERNATIVES', suffix: 'behavior',
+    fixtureId: 'i195-i242-currency-symbol-alternatives', fixtureFile: currencyAmbiguityFixtureFile,
+    assertions: ['currencySymbolsKeepCompatibleCodes', 'currencyMarkersIntersectAtOriginalSpans', 'qualifiedCurrencySymbolsKeepTheirFullSpans'],
     testName: context.name,
   });
 });
