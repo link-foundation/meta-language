@@ -85,10 +85,15 @@ test('two required raw contract cells preserve complete commands limits and the 
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
   const live=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
   const active=parseWorkflow(liveSource).find(row=>row.id==='package-checks');
-  for(const name of ['Check out raw plan inputs', 'Run complete original link raw native oracle contracts',
-    'Run complete original link raw schema and consumer contracts']){
+  for(const name of ['Check out raw plan inputs', 'Run complete original link raw schema and consumer contracts']){
     assert.equal(active.steps.find(row=>row.name===name)?.text,live.steps.find(row=>row.name===name)?.text,name);
   }
+  const activePlan=active.steps.find(row=>row.name===plan.name);
+  const historicalPlan=live.steps.find(row=>row.name===plan.name);
+  const planCondition="matrix.group == 'source-model-raw'";
+  assert.ok(historicalPlan.text.includes(`${planCondition} }}`));
+  assert.equal(activePlan.text,historicalPlan.text.replace(
+    `${planCondition} }}`,`${planCondition} && env.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true' }}`));
   const checkoutFilter="          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n";
   const [,scheduled,blobless,currentWorkflow]=readIssue245SourcePair(javascriptWorkflowSource).versions;
   assert.equal(currentSource,currentWorkflow);
