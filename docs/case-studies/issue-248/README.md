@@ -427,6 +427,21 @@ Confirm the translation stages are skipped and the applicable independent
 checks ran. A conflicting branch requires its own conflict resolution before
 it can be verified. The captured branch inventory is a rollout input.
 
+The 2026-11-24 09:08 UTC audit found seven other open PRs targeting
+`main` at `ec9f4efb0e9ef936114e09823981352f6db13700`. Each exact head's
+`ci.yml` lacked the pause check. The linked runs below are observations from
+that audit. [Default branch commit](https://github.com/link-foundation/meta-language/commit/ec9f4efb0e9ef936114e09823981352f6db13700)
+
+| PR | Workflow at audited head | Eligible run observation |
+| --- | --- | --- |
+| #218 | [`896905cec`](https://github.com/link-foundation/meta-language/blob/896905cec33db402d9fe3f1a315340e714ea9c51/.github/workflows/ci.yml) | GitHub reported a merge conflict and the audit found no matching run. [Pull request](https://github.com/link-foundation/meta-language/pull/218) |
+| #228 | [`cdf531106`](https://github.com/link-foundation/meta-language/blob/cdf531106811596de3fa0a8aeaa8726b69c4e379/.github/workflows/ci.yml) | Aggregate failed. [Run](https://github.com/link-foundation/meta-language/actions/runs/45085724750) |
+| #229 | [`dc0a17bd1`](https://github.com/link-foundation/meta-language/blob/dc0a17bd1f9d0accbb0a5d91ebb83e04ebb3d855/.github/workflows/ci.yml) | Aggregate absent. [Run](https://github.com/link-foundation/meta-language/actions/runs/40304773051) |
+| #246 | [`fdec74850`](https://github.com/link-foundation/meta-language/blob/fdec748503360a6621f5cca0656c3af4150fd27a/.github/workflows/ci.yml) | Queued. [Run](https://github.com/link-foundation/meta-language/actions/runs/45336634236) |
+| #247 | [`e8bc968b4`](https://github.com/link-foundation/meta-language/blob/e8bc968b4fb55f02f34854eaf58f375ac715c34c/.github/workflows/ci.yml) | Queued at the updated head. [Run](https://github.com/link-foundation/meta-language/actions/runs/45359109686) |
+| #249 | [`61965b24f`](https://github.com/link-foundation/meta-language/blob/61965b24ff7888ea64f9cd118d02d88d737443de/.github/workflows/ci.yml) | Queued. [Run](https://github.com/link-foundation/meta-language/actions/runs/45332829639) |
+| #251 | [`0597f6148`](https://github.com/link-foundation/meta-language/blob/0597f6148879b26eeb57d431ca2130ffcf384230/.github/workflows/ci.yml) | Queued. [Run](https://github.com/link-foundation/meta-language/actions/runs/45325647941) |
+
 The post-merge report records the newest eligible workflow run and its latest
 attempt for each current pull request head and base pair. It requires a
 successful pause step and aggregate. It checks the workflow's pull request
