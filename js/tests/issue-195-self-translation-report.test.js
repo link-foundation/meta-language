@@ -66,12 +66,33 @@ test('report checkout preserves the complete workload and removes unrelated arch
 
 test('recent report timings balance all complete module workloads across the same sixteen shards', () => {
   const repository = fileURLToPath(new URL('../../', import.meta.url));
+  const git = (args, options = {}) => execFileSync('git', ['--no-replace-objects', ...args], {
+    cwd: repository, maxBuffer: 2 * 1024 * 1024, ...options,
+  });
+  function readSources(revision) {
+    const files = git(['ls-tree', '-r', '--name-only', revision, 'js/src'])
+      .toString().trimEnd().split('\n').filter(file => file.endsWith('.js')).sort();
+    const blobs = git(['cat-file', '--batch'], {
+      input: files.map(file => `${revision}:${file}\n`).join(''),
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    const bytes = new Map();
+    let offset = 0;
+    for (const file of files) {
+      const headerEnd = blobs.indexOf(10, offset);
+      const header = /^[a-f0-9]+ blob ([0-9]+)$/u.exec(blobs.toString('ascii', offset, headerEnd));
+      assert.ok(header, file);
+      const end = headerEnd + 1 + Number(header[1]);
+      assert.equal(blobs[end], 10, file);
+      bytes.set(file, blobs.subarray(headerEnd + 1, end));
+      offset = end + 1;
+    }
+    assert.equal(offset, blobs.length);
+    return { files, bytes };
+  }
   // Replay the old assignments on the source tree used to evaluate the scheduling change.
   const comparisonRevision = 'b964c412ed4efd5a0b9d04002780b7306f0e92b4';
-  const git = (...args) => execFileSync('git', ['--no-replace-objects', ...args], { cwd: repository, maxBuffer: 2 * 1024 * 1024 });
-  const historicalSources = git('ls-tree', '-r', '--name-only', comparisonRevision, 'js/src')
-    .toString().trimEnd().split('\n').filter(file => file.endsWith('.js')).sort();
-  const historicalBytes = new Map(historicalSources.map(file => [file, git('show', `${comparisonRevision}:${file}`)]));
+  const { files: historicalSources, bytes: historicalBytes } = readSources(comparisonRevision);
   const historicalInput = { readSource: file => historicalBytes.get(file) };
   const record = readProjectData(new URL('../../parity/fixtures/ci-45076523061-report-workload-costs.lino', import.meta.url));
   assert.deepEqual(record.logs.map(row => row.number), Array.from({ length: 16 }, (_, index) => index + 1));
@@ -106,10 +127,8 @@ test('recent report timings balance all complete module workloads across the sam
   const [unfinishedModule] = cancelled[0].unfinished;
   assert.deepEqual(cancelled[0].unfinished, ['js/src/typed-program-expression-projection.js']);
   const sampledSources = [...latest.entries.map(row => row.file), unfinishedModule].sort();
-  const sampledRevision = git('ls-tree', '-r', '--name-only', latest.head, 'js/src')
-    .toString().trimEnd().split('\n').filter(file => file.endsWith('.js')).sort();
+  const { files: sampledRevision, bytes: sampledBytes } = readSources(latest.head);
   assert.deepEqual(sampledSources, sampledRevision);
-  const sampledBytes = new Map(sampledSources.map(file => [file, git('show', `${latest.head}:${file}`)]));
   const sampledInput = { readSource: file => sampledBytes.get(file) };
   const preceding = partitionMeasuredWorkloads(sampledSources, 16, {
     ...sampledInput, costs: { ...baseline, entries: [...priorEntries.values()] },
@@ -129,22 +148,19 @@ test('recent report timings balance all complete module workloads across the sam
   assert.ok(longest(updated) <= 17 * 60 * 1000, 'updated costs distribute the expensive modules across the sixteen owners');
 
   const complete = readProjectData(new URL('../../parity/fixtures/ci-45296878458-report-workload-costs.lino', import.meta.url));
-  assert.equal(git('rev-parse', `${complete.revision}^2`).toString().trim(), complete.head);
+  assert.equal(git(['rev-parse', `${complete.revision}^2`]).toString().trim(), complete.head);
   assert.deepEqual(complete.logs.map(row => row.number), record.logs.map(row => row.number));
   for (const row of complete.logs) {
     assert.equal(row.conclusion, 'success');
     assert.deepEqual(row.unfinished, []);
   }
-  const completeSources = git('ls-tree', '-r', '--name-only', complete.revision, 'js/src')
-    .toString().trimEnd().split('\n').filter(file => file.endsWith('.js')).sort();
+  const { files: completeSources, bytes: completeBytes } = readSources(complete.revision);
   assert.equal(completeSources.length, 382);
   assert.deepEqual(complete.entries.map(row => row.file).sort(), completeSources);
-  const completeBytes = new Map();
   for (const row of complete.entries) {
-    const bytes = git('show', `${complete.revision}:${row.file}`);
+    const bytes = completeBytes.get(row.file);
     assert.equal(bytes.length, row.bytes, row.file);
     assert.equal(createHash('sha256').update(bytes).digest('hex'), row.sha256, row.file);
-    completeBytes.set(row.file, bytes);
     elapsed.set(row.file, row.milliseconds);
   }
   const completeInput = { readSource: file => completeBytes.get(file) };
