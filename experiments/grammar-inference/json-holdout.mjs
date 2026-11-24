@@ -57,7 +57,7 @@ function git(checkout, ...arguments_) {
 function readHoldout(checkout) {
   const directory = git(checkout, 'ls-tree', '-rlz', corpusRevision, '--', 'test_parsing').toString('utf8');
   return directory.split('\0').filter(Boolean).map(record => {
-    const [, oid, size, path] = /^100644 blob ([0-9a-f]{40})\s+(\d+)\t(test_parsing\/[iny]_[^\t\/]+\.json)$/u.exec(record) ?? [];
+    const [, oid, size, path] = /^100(?:644|755) blob ([0-9a-f]{40})\s+(\d+)\t(test_parsing\/[iny]_[^\t\/]+\.json)$/u.exec(record) ?? [];
     if (!path) throw new Error('uncovered corpus entry ' + JSON.stringify(record));
     const label = { y: 'accept', n: 'reject', i: 'implementation-defined' }[path.split('/')[1][0]];
     const row = { corpus: 'JSONTestSuite', path, oid, label, size: Number(size) };
@@ -75,7 +75,7 @@ function readSupplementalCorpus(root, source) {
   const checkout = root + '/' + source.directory;
   const tree = git(checkout, 'ls-tree', '-rlz', source.revision, '--', ...source.paths).toString('utf8');
   const rows = tree.split('\0').filter(Boolean).flatMap(record => {
-    const [, oid, size, path] = /^100644 blob ([0-9a-f]{40})\s+(\d+)\t([^\t]+)$/u.exec(record) ?? [];
+    const [, oid, size, path] = /^100(?:644|755) blob ([0-9a-f]{40})\s+(\d+)\t([^\t]+)$/u.exec(record) ?? [];
     if (!path || !source.pathPattern.test(path)) return [];
     return [{ corpus: source.name, path: source.directory + '/' + path, oid, size: Number(size), label: 'unlabelled' }];
   });
