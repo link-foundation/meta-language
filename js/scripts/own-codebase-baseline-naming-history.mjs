@@ -6,7 +6,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
-import { nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
+import { nativeLintCaptureSources, nativeRepairNamingSources, restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -181,6 +181,11 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     }
   }
   const baseline = 'ec9f4efb0e9ef936114e09823981352f6db13700';
+  const nativeInventories = {
+    'rust/src/translation/grammar_lexer_rules/part_4.rs': 'B59 parser token exclusion source names',
+    'rust/tests/unit/grammar_included_range_archive.rs': 'B69 included range archive names',
+    'rust/tests/unit/grammar_recursive_selection.rs': 'B63 actual source names',
+  };
   for (const [file, revision, sourceInventory = 'B70 physical field source view names'] of [
     ['js/scripts/contributor-instruction-coverage.mjs', baseline],
     ['js/scripts/current-ci-repair-source-history.mjs', baseline],
@@ -208,8 +213,7 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
     ['js/tests/issue-195-evidence-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
     ['js/tests/issue-195-formal-ai-partitions.test.js', baseline, 'B63 actual source names'],
     ['js/tests/link-network-binary.test.js', baseline],
-    ...nativeRepairNamingSources.map(file => [file, baseline, file === 'rust/src/translation/grammar_lexer_rules/part_4.rs'
-      ? 'B59 parser token exclusion source names' : 'B70 physical field source view names']),
+    ...[...nativeRepairNamingSources, ...nativeLintCaptureSources].map(file => [file, baseline, nativeInventories[file]]),
   ]) {
     const inventory = sourceInventory + ' for ' + file;
     const entry = inventories.find(candidate => candidate.inventory === inventory && candidate.files.includes(file));

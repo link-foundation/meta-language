@@ -404,6 +404,10 @@ fn mutable_array_bindings_keep_original_refusals_and_temporal_dead_zones() {
         parse_javascript(original).unwrap_err().message(),
         "let destructuring: declare each binding with its own let at 16..20"
     );
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript source contains literal object syntax."
+    )]
     for binding in [
         "[first]=values",
         "[first,second]=[1]",
@@ -474,6 +478,10 @@ fn mutable_literal_binding_owners_preserve_shadows_and_refuse_redeclarations() {
     ] {
         require_declaration_list_equivalent(source, &expected);
     }
+    #[allow(
+        clippy::literal_string_with_formatting_args,
+        reason = "The JavaScript source contains literal object syntax."
+    )]
     for source in [
         "function selected(){let left=9;let [left,right]=[1,2];return right;}",
         "function selected(){let [left,right]=[1,2];let left=9;return right;}",

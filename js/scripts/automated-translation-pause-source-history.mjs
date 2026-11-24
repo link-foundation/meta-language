@@ -8,11 +8,17 @@ import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 // Native CI repairs changed full-source naming witnesses on these paths.
 export const nativeRepairNamingSources = Object.freeze([
   'experiments/binary-metadata-buffer/native-observations.mjs',
+  'js/scripts/ascii-text-predicate-host-history.mjs',
   'js/scripts/declaration-dependency-native-interface.mjs',
+  'js/scripts/generate-ascii-text-predicate-host-history.mjs',
+  'js/scripts/generate-ascii-text-predicate-hosts.mjs',
   'js/scripts/generate-boolean-declaration-value-hosts.mjs',
+  'js/scripts/generate-boolean-value-source-history.mjs',
+  'js/scripts/generate-javascript-mutable-array-bindings.mjs',
   'js/scripts/generate-scoped-iteration-native-host-source-history.mjs',
   'js/scripts/record-rule-library.mjs',
   'js/scripts/scoped-iteration-native-host-source-history.mjs',
+  'js/tests/translation-ascii-text-predicate-hosts.test.js',
   'js/tests/translation-required-field-native-host-succession.test.js',
   'js/tests/translation-scoped-iteration-native-source-history.test.js',
   'rust/src/formal_concept_definition.rs',
@@ -39,9 +45,15 @@ export const nativeRepairNamingSources = Object.freeze([
   'rust/src/translation/rust/expressions.rs',
   'rust/src/translation/rust_literal_match_rules/part_1.rs',
   'rust/src/typed_program_links/checked.rs',
+  'rust/tests/unit/grammar_included_range_archive.rs',
+  'rust/tests/unit/grammar_recursive_selection.rs',
   'rust/tests/unit/self_translation_recursive_declaration_groups.rs',
+  'rust/tests/unit/self_translation_scope.rs',
+  'rust/tests/unit/translation_arrays.rs',
   'rust/tests/unit/translation_javascript_record_parameters.rs',
+  'rust/tests/unit/translation_owned_array_append.rs',
   'rust/tests/unit/translation_surface_reference_analysis.rs',
+  'rust/tests/unit/typescript_erasure.rs',
   'js/tests/support/platform-test-deadline-history.js',
   'rust/tests/unit/ci-cd/workflow_release.rs',
   'js/scripts/dependency-inventory-append-history.mjs',
@@ -49,14 +61,22 @@ export const nativeRepairNamingSources = Object.freeze([
   'js/tests/issue-195-evidence-dependency-appends.test.js',
 ]);
 
+// Historical host generators must preserve the exact files captured before lint-only edits.
+export const nativeLintCaptureSources = Object.freeze([
+  'rust/tests/unit/shared_numeric_function_links.rs',
+  'rust/tests/unit/translation_ascii_text_predicates.rs',
+  'rust/tests/unit/translation_javascript_array_bindings.rs',
+]);
+
 const archive = new URL('../../parity/self-translation/automated-translation-pause-source-history.lino', import.meta.url);
-const archiveDigest = 'c1de8ff0897d216d5d3e539ee8d86296505c0dd375dfbb59a9650c236103a22f';
+const archiveDigest = 'aa09e2fb7b63b4b254460199a25c9788703574e3297845b3452d6609f9a964b4';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let history;
 
 export function restoreAutomatedTranslationPauseSource(source, file, revision) {
   const workflow = file.startsWith('.github/workflows/');
-  if (!workflow && !nativeRepairNamingSources.includes(file) && !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs',
+  if (!workflow && !nativeRepairNamingSources.includes(file) && !nativeLintCaptureSources.includes(file) &&
+    !['js/scripts/current-ci-repair-source-history.mjs', 'js/scripts/rust-test-shards.mjs',
     'js/scripts/grammar-test-partition-history.mjs', 'js/scripts/generate-link-network-binary-rules.mjs', 'js/tests/cache-fresh-merge-dependencies.test.js',
     'js/scripts/own-codebase-baseline-naming-history.mjs', 'js/scripts/own-codebase-test-registration-history.mjs',
     'js/scripts/run-issue-195-consumer.mjs', 'js/scripts/test-groups.mjs',

@@ -8,7 +8,7 @@ import { runInNewContext } from 'node:vm';
 
 import { captureDiagnosticDependencyProfile, diagnosticFixturePath } from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
-import { restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
+import { nativeLintCaptureSources, restoreAutomatedTranslationPauseSource } from '../scripts/automated-translation-pause-source-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { executePhysicalHarness, matchesLogicalFilters, nativeTestArguments, verifyHarnessExecution } from '../scripts/rust-test-shards.mjs';
 import { partitionGroupFiles, partitionTests, testFiles } from '../scripts/test-groups.mjs';
@@ -207,6 +207,20 @@ test('ordinary workflows pause automated translation and fail on independent che
     assert.match(result.stdout, new RegExp(check, 'u'));
   }
   observe('DEFAULT', ['defaultPausesTranslation', 'explicitOptInRunsTranslation', 'independentFailuresRemainVisible'], context.name);
+});
+
+test('native host replays require the exact current lint-corrected source', () => {
+  for (const file of nativeLintCaptureSources) {
+    const current = read(file);
+    const predecessor = restoreAutomatedTranslationPauseSource(current, file);
+    assert.notEqual(predecessor, current, file);
+    for (const altered of [current + '\n', current.replace('fn ', '// Unreviewed edit\nfn ')]) {
+      assert.notEqual(altered, current, file);
+      assert.equal(restoreAutomatedTranslationPauseSource(altered, file), altered, file);
+    }
+    assert.equal(restoreAutomatedTranslationPauseSource(current, 'rust/tests/unit/unrelated.rs'), current);
+    assert.equal(restoreAutomatedTranslationPauseSource(predecessor, file), predecessor);
+  }
 });
 
 test('strict commands and native selectors remain available without claiming paused evidence', (context) => {

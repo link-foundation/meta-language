@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readProjectData } from '../scripts/project-data.mjs';
-import { verifyAsciiTextPredicateHosts } from '../scripts/ascii-text-predicate-host-history.mjs';
+import { readProjectData, readProjectFileBytes } from '../scripts/project-data.mjs';
+import { captureAsciiTextPredicateArtifact, verifyAsciiTextPredicateHosts } from '../scripts/ascii-text-predicate-host-history.mjs';
 import { generateAsciiTextPredicateHosts } from '../scripts/generate-ascii-text-predicate-hosts.mjs';
 
 test('complete ASCII native source hosts preserve certified predecessors actual ABI and registered test ownership', () => {
@@ -11,6 +11,10 @@ test('complete ASCII native source hosts preserve certified predecessors actual 
   assert.equal(files.length, 4);
   assert.equal(archive.registrations.find(row => row.path === 'rust/tests/unit/mod.rs').declaration,
     'mod translation_ascii_text_predicates;');
+  const { path, pin } = archive.sourceArtifact;
+  const artifact = readProjectFileBytes(new URL('../../' + path, import.meta.url));
+  const altered = Buffer.concat([artifact, Buffer.from('\n')]);
+  assert.notDeepEqual(captureAsciiTextPredicateArtifact(path, altered).pin, pin);
 });
 
 test('unknown host edits source corruption and forged predecessor certificates cannot produce a reviewed source view', () => {

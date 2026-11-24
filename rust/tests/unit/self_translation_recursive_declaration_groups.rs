@@ -4,11 +4,13 @@ mod owned_auxiliary;
 use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, ParseConfiguration, SelfTranslationOptions,
-    create_typed_program_links, decode_link_network_binary, decode_typed_program_links,
-    emit_typed_program_links, encode_link_network_binary, encode_typed_program_links,
-    read_structured_data_lino, self_translate, self_translate_with, self_translation_signatures,
+    SelfTranslationSignature, create_typed_program_links, decode_link_network_binary,
+    decode_typed_program_links, emit_typed_program_links, encode_link_network_binary,
+    encode_typed_program_links, read_structured_data_lino, self_translate, self_translate_with,
+    self_translation_signatures,
 };
 use serde_json::{Value, json};
+use std::fmt::Write as _;
 use std::{collections::BTreeMap, fs, path::Path, process::Command, sync::OnceLock};
 
 fn root() -> &'static Path {
@@ -63,14 +65,14 @@ fn archives(network: &LinkNetwork) -> [LinkNetwork; 2] {
     ]
 }
 fn javascript_bridge(source: &str, language: &str, script_mode: bool) -> Value {
-    let script = r#"
+    let script = r"
 import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
 import {runInNewContext} from 'node:vm';
 const source=process.argv[1],language=process.argv[2],scriptMode=process.argv[3]==='Script';
 const rawOwner=scriptMode?runInNewContext(source+'\n({value:first,error:(()=>{try{second(0);return null;}catch(error){return error.name;}})()});',{}, {timeout:1000}):null;
 process.stdout.write(structuredDataToLino({translation:selfTranslate(source,language,'Rust'),signatures:selfTranslationSignatures(source,language),rawOwner}));
-"#;
+";
     let output = run(Command::new("node").current_dir(root()).args([
         "--input-type=module",
         "-e",
@@ -98,6 +100,10 @@ fn observe_javascript(source: &str, calls: &Value, expected: &str, script_mode: 
         let directory = TemporaryDirectory::new("recursive-script-fixture");
         let file = directory.0.join("original-script.txt");
         fs::write(&file, source).unwrap();
+        #[allow(
+            clippy::literal_string_with_formatting_args,
+            reason = "The JavaScript source contains literal object syntax."
+        )]
         let runner = "import {readFileSync} from 'node:fs';import {runInNewContext} from 'node:vm';runInNewContext(readFileSync(process.argv[1],'utf8'),{console},{timeout:1000});";
         let output = run(Command::new("node")
             .args(["--input-type=module", "-e", runner])
@@ -193,7 +199,8 @@ fn every_shared_complete_module_fixture_keeps_atomic_results_actual_signatures_s
         );
         assert_eq!(
             serde_json::to_value(
-                self_translation_signatures(source, language, &Default::default()).unwrap()
+                self_translation_signatures(source, language, &SelfTranslationOptions::default())
+                    .unwrap()
             )
             .unwrap(),
             javascript["signatures"]
@@ -215,12 +222,13 @@ fn every_shared_complete_module_fixture_keeps_atomic_results_actual_signatures_s
             fixture["functionStatuses"]
         );
         let signatures =
-            self_translation_signatures(source, language, &Default::default()).unwrap();
+            self_translation_signatures(source, language, &SelfTranslationOptions::default())
+                .unwrap();
         assert_eq!(
             serde_json::to_value(
                 signatures
                     .iter()
-                    .map(|signature| signature.name())
+                    .map(SelfTranslationSignature::name)
                     .collect::<Vec<_>>()
             )
             .unwrap(),
@@ -267,7 +275,7 @@ fn every_shared_complete_module_fixture_keeps_atomic_results_actual_signatures_s
                     false,
                 );
             }
-            let mut changed = program.clone();
+            let mut changed = program;
             let declaration = changed
                 .declarations
                 .iter_mut()
@@ -308,10 +316,14 @@ fn whole_module_writes_and_eval_cannot_leak_a_recursive_owner_through_either_ret
             assert!(!actual.code.contains("pub fn first("));
             assert!(!actual.code.contains("pub fn second("));
             assert!(actual.code.contains("pub fn independent("));
-            assert!(
-                self_translation_signatures(&source, "JavaScript", &Default::default())
-                    .unwrap()
-                    .is_empty()
+            assert_eq!(
+                self_translation_signatures(
+                    &source,
+                    "JavaScript",
+                    &SelfTranslationOptions::default()
+                )
+                .unwrap(),
+                Vec::<SelfTranslationSignature>::new()
             );
             assert_eq!(
                 self_translate(&actual.code, "Rust", "JavaScript")
@@ -360,19 +372,20 @@ fn actual_named_import_signatures_and_complete_wider_module_context_match_javasc
     let dependency = "/** @param {number} value @returns {number} */\nexport function lower(value) { return value - 1; }\n";
     let source = "import { lower as step } from \"./dependency.js\";\nexport function left(value) { if(value <= 0) return true; return right(step(value)); }\nfunction unavailable() { return new Date(); }\nfunction right(value) { if(value <= 0) return false; return left(step(value)); }\n";
     let signatures =
-        self_translation_signatures(dependency, "JavaScript", &Default::default()).unwrap();
+        self_translation_signatures(dependency, "JavaScript", &SelfTranslationOptions::default())
+            .unwrap();
     let options = SelfTranslationOptions {
         imports: BTreeMap::from([("./dependency.js".to_owned(), signatures)]),
         ..Default::default()
     };
     let actual = self_translate_with(source, "JavaScript", "Rust", &options).unwrap();
-    let script = r#"
+    let script = r"
 import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
 const source=process.argv[1],dependency=process.argv[2];
 const options={imports:{'./dependency.js':selfTranslationSignatures(dependency,'JavaScript')}};
 process.stdout.write(structuredDataToLino({translation:selfTranslate(source,'JavaScript','Rust',options),signatures:selfTranslationSignatures(source,'JavaScript',options)}));
-"#;
+";
     let output = run(Command::new("node").current_dir(root()).args([
         "--input-type=module",
         "-e",
@@ -447,10 +460,10 @@ fn ordinary_and_public_module_signatures_use_actual_owner_counts_and_preserve_ev
         javascript["translation"]["code"].as_str().unwrap()
     );
     assert!(!native.code.contains("pub fn second("));
-    assert!(
-        self_translation_signatures(original, "JavaScript", &Default::default())
-            .unwrap()
-            .is_empty()
+    assert_eq!(
+        self_translation_signatures(original, "JavaScript", &SelfTranslationOptions::default())
+            .unwrap(),
+        Vec::<SelfTranslationSignature>::new()
     );
     assert_eq!(
         self_translate(&native.code, "Rust", "JavaScript")
@@ -458,7 +471,7 @@ fn ordinary_and_public_module_signatures_use_actual_owner_counts_and_preserve_ev
             .code,
         original
     );
-    let script = r#"
+    let script = r"
 import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';
 import {structuredDataToLino,readStructuredDataLino} from './js/src/structured-data-links.js';
 import {runInNewContext} from 'node:vm';
@@ -468,7 +481,7 @@ const raw=fixture.sourceMode==='Script'?runInNewContext(fixture.source+'\n({firs
 const owner=Object.hasOwn(fixture,'sourceOwnerValue')?{value:raw.first,error:(()=>{try{raw.second(0);return null;}catch(error){return error.name;}})()}:null;
 const lines=fixture.calls.map(call=>{if(call==='limit')return String(raw.limit);const match=/^([A-Za-z_][A-Za-z_0-9]*)\((\d*)\)$/u.exec(call);if(!match)throw new Error('unsupported fixture call');return String(match[2]?raw[match[1]](Number(match[2])):raw[match[1]]());}).join('\n')+'\n';
 process.stdout.write(structuredDataToLino({owner,lines,translation:selfTranslate(fixture.source,fixture.language,'Rust'),signatures:selfTranslationSignatures(fixture.source,fixture.language)}));
-"#;
+";
     for fixture in value["ordinaryModuleFixtures"].as_array().unwrap() {
         let source = fixture["source"].as_str().unwrap();
         let language = fixture["language"].as_str().unwrap();
@@ -510,7 +523,8 @@ process.stdout.write(structuredDataToLino({owner,lines,translation:selfTranslate
             fixture["functionStatuses"]
         );
         let signatures =
-            self_translation_signatures(source, language, &Default::default()).unwrap();
+            self_translation_signatures(source, language, &SelfTranslationOptions::default())
+                .unwrap();
         assert_eq!(
             serde_json::to_value(&signatures).unwrap(),
             javascript["signatures"]
@@ -583,7 +597,7 @@ process.stdout.write(structuredDataToLino({observation:raw.observation,lines,tra
         let javascript = read_structured_data_lino(&output.stdout).unwrap();
         let expected = fixture
             .get("sourceProbeExpected")
-            .unwrap_or(&fixture["sourceProbeError"]);
+            .unwrap_or_else(|| &fixture["sourceProbeError"]);
         assert_eq!(&javascript["observation"], expected, "{}", fixture["id"]);
         assert_eq!(javascript["lines"], fixture["expectedLines"]);
         let actual = self_translate(source, language, "Rust").unwrap();
@@ -609,7 +623,8 @@ process.stdout.write(structuredDataToLino({observation:raw.observation,lines,tra
             fixture["functionStatuses"]
         );
         let signatures =
-            self_translation_signatures(source, language, &Default::default()).unwrap();
+            self_translation_signatures(source, language, &SelfTranslationOptions::default())
+                .unwrap();
         assert_eq!(
             serde_json::to_value(&signatures).unwrap(),
             javascript["signatures"]
@@ -650,20 +665,21 @@ fn a_real_named_import_called_string_preserves_its_actual_function_call_and_both
     let dependency = "/** @param {number} value @returns {number} */\nexport function increment(value){return value+1;}\n";
     let source = "import { increment as String } from './dependency.mjs';\n/** @returns {number} */\nexport function selected(){return String(7);}\n";
     let signatures =
-        self_translation_signatures(dependency, "JavaScript", &Default::default()).unwrap();
+        self_translation_signatures(dependency, "JavaScript", &SelfTranslationOptions::default())
+            .unwrap();
     let options = SelfTranslationOptions {
         imports: BTreeMap::from([("./dependency.mjs".to_owned(), signatures)]),
         ..Default::default()
     };
     let actual = self_translate_with(source, "JavaScript", "Rust", &options).unwrap();
     assert!(actual.items.iter().all(|item| item.status == "translated"));
-    let script = r#"
+    let script = r"
 import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
 const source=process.argv[1],dependency=process.argv[2];
 const options={imports:{'./dependency.mjs':selfTranslationSignatures(dependency,'JavaScript')}};
 process.stdout.write(structuredDataToLino({translation:selfTranslate(source,'JavaScript','Rust',options),signatures:selfTranslationSignatures(source,'JavaScript',options)}));
-"#;
+";
     let output = run(Command::new("node").current_dir(root()).args([
         "--input-type=module",
         "-e",
@@ -765,8 +781,8 @@ fn the_complete_original_shared_algorithm_and_every_three_node_graph_execute_thr
     let mut expected = String::new();
     for mask in 0..512 {
         let (starts, counts, targets, leaders) = graph_case(mask);
-        source.push_str(&format!("\nconst case{mask}=readDeclarationDependencyComponents({starts:?},{counts:?},{targets:?});console.log(case{mask}[0],case{mask}[1],case{mask}[2]);\n"));
-        expected.push_str(&format!("{} {} {}\n", leaders[0], leaders[1], leaders[2]));
+        writeln!(source, "\nconst case{mask}=readDeclarationDependencyComponents({starts:?},{counts:?},{targets:?});console.log(case{mask}[0],case{mask}[1],case{mask}[2]);").unwrap();
+        writeln!(expected, "{} {} {}", leaders[0], leaders[1], leaders[2]).unwrap();
     }
     source.push_str("\nconsole.log(acceptDeclarationModuleScope(['comment','named function declaration','named import','primitive literal binding'],false));\n");
     expected.push_str("true\n");
@@ -780,13 +796,13 @@ fn the_complete_original_shared_algorithm_and_every_three_node_graph_execute_thr
         "unknown module form",
     ] {
         let literal = serde_json::to_string(form).unwrap();
-        source.push_str(&format!("\nconsole.log(acceptDeclarationModuleScope(['named function declaration',{literal}],false));console.log(acceptDeclarationModuleScope(['named function declaration',{literal}],true));\n"));
+        writeln!(source, "\nconsole.log(acceptDeclarationModuleScope(['named function declaration',{literal}],false));console.log(acceptDeclarationModuleScope(['named function declaration',{literal}],true));").unwrap();
         expected.push_str("false\ntrue\n");
     }
     source.push_str("\nconsole.log(acceptDeclarationModuleScope(['empty class declaration'],false));console.log(acceptDeclarationSignatureBinding(true,1));\n");
     expected.push_str("true\ntrue\n");
     for count in [0, 2] {
-        source.push_str(&format!("\nconsole.log(acceptDeclarationSignatureBinding(true,{count}));console.log(acceptDeclarationSignatureBinding(false,{count}));\n"));
+        writeln!(source, "\nconsole.log(acceptDeclarationSignatureBinding(true,{count}));console.log(acceptDeclarationSignatureBinding(false,{count}));").unwrap();
         expected.push_str("false\nfalse\n");
     }
     source.push_str("\nconsole.log(acceptDeclarationSignatureBinding(false,1));\n");
@@ -847,7 +863,8 @@ fn deferred_class_and_function_value_scope_uses_actual_shared_cst_facts_and_keep
             fixture["id"]
         );
         let signatures =
-            self_translation_signatures(source, "JavaScript", &Default::default()).unwrap();
+            self_translation_signatures(source, "JavaScript", &SelfTranslationOptions::default())
+                .unwrap();
         assert_eq!(
             serde_json::to_value(&signatures).unwrap(),
             javascript["signatures"]

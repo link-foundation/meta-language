@@ -299,9 +299,13 @@ fn complete_self_slice_inventory_preserves_original_effects_both_codecs_and_nati
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         compiler.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled =
+    let build_output =
         super::issue_195_translation_pairs::run(compiler.arg(&input).arg("-o").arg(&binary));
-    assert!(compiled.ok, "{}\n{}", compiled.stdout, compiled.stderr);
+    assert!(
+        build_output.ok,
+        "{}\n{}",
+        build_output.stdout, build_output.stderr
+    );
     let executed = super::issue_195_translation_pairs::run(&mut Command::new(binary));
     assert!(executed.ok, "{}", executed.stderr);
     assert_eq!(executed.stdout, expected);
@@ -395,9 +399,9 @@ fn actual_completed_string_iteration_borrows_keep_source_semantics_and_live_alia
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         compiler.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled =
+    let build_output =
         super::issue_195_translation_pairs::run(compiler.arg(&input).arg("-o").arg(&binary));
-    assert!(compiled.ok, "{}", compiled.stderr);
+    assert!(build_output.ok, "{}", build_output.stderr);
     let executed = super::issue_195_translation_pairs::run(&mut Command::new(binary));
     assert!(executed.ok, "{}", executed.stderr);
     assert_eq!(executed.stdout, expected);

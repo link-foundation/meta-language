@@ -6,6 +6,7 @@ use super::{
     javascript_fixture_program, observe_complete_javascript, observe_javascript, policy, root,
     versions,
 };
+use meta_language::translation::emit_rust::RustEmissionOptions;
 use meta_language::{
     SelfTranslationOptions, create_typed_program_links, decode_typed_program_links,
     emit_typed_program_links, encode_typed_program_links, read_structured_data_lino,
@@ -179,7 +180,7 @@ fn actual_callable_module_imports_and_both_semantic_codecs_execute_the_original_
         ..base
     };
     let actual = self_translate_with(callable, "JavaScript", "Rust", &options).unwrap();
-    let script = r#"
+    let script = r"
 import {readOwnedRecursiveSourceFixtures} from './js/scripts/declaration-owned-auxiliary-fixtures.mjs';
 import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
@@ -187,7 +188,7 @@ const f=readOwnedRecursiveSourceFixtures(),[facts,types,source]=f.inputs.map(row
 const fs=selfTranslationSignatures(facts,'JavaScript',{utf16Strings:true});
 const ts=selfTranslationSignatures(types,'JavaScript',{utf16Strings:true,imports:{'./fact-column-rules.js':fs}});
 process.stdout.write(structuredDataToLino(selfTranslate(source,'JavaScript','Rust',{utf16Strings:true,imports:{'./fact-column-rules.js':fs,'./type-syntax-rules.js':ts}})));
-"#;
+";
     let output =
         run(Command::new("node")
             .current_dir(root())
@@ -251,7 +252,7 @@ process.stdout.write(structuredDataToLino(selfTranslate(source,'JavaScript','Rus
         );
         let native = meta_language::translation::emit_rust::emit_rust_with_array_consumption(
             &restored,
-            Default::default(),
+            RustEmissionOptions::default(),
         )
         .unwrap();
         assert_eq!(

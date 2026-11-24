@@ -288,6 +288,33 @@ even when it is added to both the current inventory and the declaration input.
 [fourth tooling job](https://github.com/link-foundation/meta-language/actions/runs/45288277212/job/138090162763),
 [historical inventory tests](../../../js/tests/issue-195-evidence-dependency-appends.test.js)
 
+On `7c0a19857`, stable Clippy reached the Rust unit tests and reported 56
+diagnostics at log lines 1655–2346. The corrections remove unnecessary copies
+and raw-string delimiters, clarify local names and assertion output, and
+write into existing buffers. The ASCII predicate input still uses the Kelvin
+sign U+212A, which differs from ASCII `K`. Narrow attributes identify embedded
+fixture code whose literal braces Clippy mistook for Rust format arguments.
+The historical source checks authenticate the complete current files before
+recovering the previous captures. The grammar mapping profile applies and
+reverses the exact clone removal, and the modern array fixture updates the
+current test capture with the original body and expected outputs preserved.
+The ASCII host replay also authenticates the rule artifact regenerated for
+the earlier lint repair and recovers its original pinned bytes from the
+certified prior partition. The Boolean source history reproduces its prior
+capture using complete authenticated sources. The host ABI and archived
+sources remain verifiable.
+[Rust lint job](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138269579668),
+[grammar mapping profile](../../../parity/fixtures/grammar-selection-capture-source-profile.lino),
+[modern array fixture](../../../parity/fixtures/modern-javascript-array-parity.lino)
+
+The same revision verified the Rust 1.99.0 pin in the native grammar
+experiment. Its native report records 11 JavaScript outcome rows and three
+independent constructed rows, with text and binary archive replay. The first
+Windows translation partition filtered 1,757 cases and passed all three
+selected independent tests while automated translation was paused.
+[native grammar artifact](https://github.com/link-foundation/meta-language/actions/runs/45307026026/artifacts/14900795234),
+[Windows partition](https://github.com/link-foundation/meta-language/actions/runs/45307026026/job/138282886688)
+
 ## Requirements and implementation plan
 
 | Requirement | Alternatives considered | Selected implementation and verification |

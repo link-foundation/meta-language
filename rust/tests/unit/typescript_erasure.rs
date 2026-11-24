@@ -240,7 +240,7 @@ fn native_type_script_receiver_outputs_run_against_the_active_bounded_node_oracl
         })
         .collect();
     let script = format!(
-        r#"
+        r"
         import assert from 'node:assert/strict';
         import {{stripTypeScriptTypes}} from 'node:module';
         const [major,minor]=process.versions.node.split('.').map(Number);
@@ -254,7 +254,7 @@ fn native_type_script_receiver_outputs_run_against_the_active_bounded_node_oracl
             assert.deepEqual(value,row.expected,row.id);
           }}
         }}
-    "#,
+    ",
         serde_json::to_string(&cases).unwrap()
     );
     let output = std::process::Command::new("node")

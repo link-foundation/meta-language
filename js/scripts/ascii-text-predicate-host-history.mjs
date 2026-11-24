@@ -1,7 +1,10 @@
 // Complete finite native source replay; normal verification uses no Git process.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readStructuredDataLino } from '../src/structured-data-links.js';
+import { restoreAutomatedTranslationPauseSource } from './automated-translation-pause-source-history.mjs';
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
+import { serializeProjectData } from './project-data.mjs';
 
 export const ASCII_HOST_REVISION = '52132727d7ce158762a4499b7032a42a9f16f3c3';
 export const ASCII_HOST_ADDITIONS = [
@@ -72,6 +75,23 @@ export const ASCII_HOST_EDITS = [
 
 export function asciiHostPin(source) {
   return { bytes: Buffer.byteLength(source), sha256: createHash('sha256').update(source).digest('hex') };
+}
+
+export function captureAsciiTextPredicateArtifact(path, bytes) {
+  const artifact = readStructuredDataLino(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  let pin = asciiHostPin(bytes);
+  // Replay the single regenerated partition from its certified source. The
+  // exact whole-artifact pin keeps unrelated edits out of the historical view.
+  if (pin.sha256 === 'd9c65c07908ee04473e0c6213a23b4f3a7e524e7b88e32e04649a5d2ca888490') {
+    const part = artifact.files.find(row => row.path === 'ascii_text_predicate_rules/part_2.rs');
+    assert.ok(part);
+    const source = restoreAutomatedTranslationPauseSource(part.source, 'rust/src/translation/' + part.path);
+    assert.notEqual(source, part.source, 'the generated partition has a certified predecessor');
+    const original = asciiHostPin(source);
+    Object.assign(part, { source, bytes: original.bytes, sourceSha256: original.sha256 });
+    pin = asciiHostPin(serializeProjectData(artifact, path));
+  }
+  return { path, pin, libraryInterface: artifact.libraryInterface };
 }
 
 export function replayAsciiHostEdits(source, changes) {
