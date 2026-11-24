@@ -5,7 +5,7 @@ import {closeSync,fstatSync,openSync,readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
-import {restoreReviewedOverlayProviderModuleSource} from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
+import {restoreRawDecisionSource} from './raw-emission-decision-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const RAW_CONSUMING_SNAPSHOT_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const RAW_CONSUMING_SNAPSHOT_OUTPUT='parity/self-translation/raw-consuming-snapshot-source-profile.lino';
@@ -123,10 +123,8 @@ export function restoreRawConsumingSnapshotSource(bytes,file,currentOnly=false){
 }
 export function rawConsumingSnapshotSourceReader(read){
   const selected=new Map(RAW_CONSUMING_SNAPSHOT_FILES.map(row=>[String(new URL(row.file,root)),row.file]));
-  const providers=new Map(['js/src/typed-program-links.js','js/src/typed-program-checked-projection.js'].map(file=>[String(new URL(file,root)),file]));
   return file=>{
-    const bytes=read(file),path=selected.get(String(file)),provider=providers.get(String(file));
-    if(provider)return Buffer.from(restoreReviewedOverlayProviderModuleSource(bytes.toString('utf8'),provider,'f73a10b22f8d0bcfbf4707621bcc9edd6989533d'));
-    return path?restoreRawConsumingSnapshotSource(bytes,path):bytes;
+    const bytes=read(file),path=selected.get(String(file));
+    return path?restoreRawConsumingSnapshotSource(bytes,path):restoreRawDecisionSource(bytes,String(file).slice(String(root).length));
   };
 }

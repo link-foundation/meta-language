@@ -6,6 +6,7 @@ import {readProjectData, writeProjectData, checkProjectData} from '../../js/scri
 import {structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {readPortableSourceParameterStyles} from '../../js/scripts/portable-source-library-style.mjs';
+import {restoreRawDecisionSource} from '../../js/scripts/raw-emission-decision-source-history.mjs';
 import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT, readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
 import {readOriginalRawColumnLoanStyles} from './raw-column-loan-styles.mjs';
 
@@ -56,7 +57,7 @@ export function prepareOriginalLinkRawBorrowedEmission(predecessor, {read = read
     predecessor: {...descriptor(storedBytes), source: descriptor(source)},
     source: descriptor(styled.source), definitionCount: 106,
     declarationNames: stored.declarationNames, publicEntryHeader: header(source),
-    decisions: decisions.map(file => ({file, ...descriptor(read(new URL(file, root)))})),
+    decisions: decisions.map(file => ({file, ...descriptor(restoreRawDecisionSource(read(new URL(file, root)), file))})),
     styles: styled.actions.map(action => ({name: names(action.from)[0],
       before: descriptor(action.from), after: descriptor(action.to)})),
     cloneCalls: {before: cloneCalls(source), after: cloneCalls(styled.source)},
