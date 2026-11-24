@@ -3043,7 +3043,7 @@
 (3043: 232 3042 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3044: (meta: (t: semantic) (n: 1) (term: string%20value) (def: %23sources-of-truth%3A%20one%20authoritative%20vision%20and%20architecture%20specification) (lang: meta-language%20structured%20data)))
 (3045: 235 3044 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(3046: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 597787cc66bb6562129a8c423646e68c8d671192633e27d10a5c9b58615aa672) (lang: meta-language%20structured%20data)))
+(3046: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 5da9a10e087cab8e51ecd1e4378089c9219d4893c30adda34e686c86969a37dd) (lang: meta-language%20structured%20data)))
 (3047: 238 3046 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3048: 3040 3041 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (3049: (meta: (t: semantic) (n: 1) (term: string%20value) (def: planned%3Arepository-directive%3Ai195-vision-source-register) (lang: meta-language%20structured%20data)))

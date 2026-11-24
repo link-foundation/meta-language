@@ -3718,11 +3718,10 @@ consuming emitter still checks every definition after both typed archive
 reloads and verifies the complete generated profile against the stored bytes.
 In [run 45276612669](https://github.com/link-foundation/meta-language/actions/runs/45276612669/job/138109543491),
 the planner passed all seven contracts before the ten-minute job expired during
-teardown. Checkout used nearly two minutes. This cell now fetches full commit
-and tree history with Git's `blob:none` filter. Checkout loads every current
-file and Git fetches historical blobs on demand during fresh merge checks or
-source authentication. The complete planner, cleanup and ten-minute deadline
-still apply.
+teardown. Checkout used nearly two minutes. The first repair fetched full commit
+and tree history with Git's `blob:none` filter and materialized every current
+file. Git fetched historical blobs on demand during fresh merge checks or source
+authentication. The complete planner, cleanup and ten-minute deadline still apply.
 The subsequent [blobless run](https://github.com/link-foundation/meta-language/actions/runs/45303012723/job/138190375005)
 also passed all seven contracts and reached the job deadline. The checkout
 took 117 seconds. Each profile check now rereads both complete Lino artifacts
@@ -3731,10 +3730,29 @@ Changed bytes are decoded again. The complete profile verifier, producer
 source reads, and pre- and post-execution comparisons still run at their
 original boundaries.
 
-The generated-slice guard reverses these exact checkout lines before checking
-the original package schedule digest. The separate raw-planning guard checks
-the active filter, complete ancestry and fresh-merge command.
-[Tooling shard 4 failure](https://github.com/link-foundation/meta-language/actions/runs/45303012723/job/138139941669)
+In [run 45332829639](https://github.com/link-foundation/meta-language/actions/runs/45332829639/job/138300719168),
+the planner replayed all three complete source archives and constructed all 383
+vectors. Checkout took 126 seconds, and the deadline interrupted the contract
+assertions. The planner checkout now also defers the retained logs under
+`dev/log/` and the naming concepts and source-bindings inventories. These
+22 files occupied 269,472,856 bytes in the worktree. Planner sources, the checked-in
+Rust grammar, and the historical receipts remain available to the same commands.
+The focused checkout test uses a genuinely blobless clone, merges an advanced
+base, and retrieves the deferred historical bytes by commit.
+
+The two canonical relative-array and continuation history packets are decoded
+from the same complete bytes checked against their original SHA-256 pins. The
+bootstrap reader produces structures identical to the general reader for the
+22 MB of retained input, including all 34 full source records. In the bounded
+Node 22 comparison, combined decoding took 21.3 seconds with the bootstrap
+reader and 30.8 seconds with the general reader. The historical source
+certificates preserve both original reader sources and their predecessors.
+
+The generated-slice guard checks the exact sparse patterns and reverses those
+checkout lines before checking the original package schedule digest. The separate
+raw-planning guard checks the active filter, complete ancestry and fresh-merge command.
+The earlier checkout change exposed the need for this inverse in the
+[hosted workflow checksum](https://github.com/link-foundation/meta-language/actions/runs/45303012723/job/138139941669).
 
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. Workloads with unchanged source bytes

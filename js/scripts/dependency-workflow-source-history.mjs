@@ -22,6 +22,8 @@ export const dependencyWorkflowPredecessors = Object.freeze({
   'experiments/grammar-outcome-network/native-transport/runner/run.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/current-ci-repair-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/scripts/array-relative-element-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
+  'js/scripts/continuation-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/dependency-inventory.mjs': '81107a5945651f17c962e4bb81fb560f96c65ccd',
   'js/scripts/dependency-inventory-append-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
   'js/scripts/evidence-translation-source-history.mjs': 'ec9f4efb0e9ef936114e09823981352f6db13700',
@@ -108,7 +110,7 @@ export const dependencyWorkflowHistoricalPredecessors = Object.freeze({
   'parity/fixtures/native-default-cst-expected.lino': 'bb6722e623fabc6a8be8ce6c0c5a4679602f1711',
 });
 const root = new URL('../../', import.meta.url);
-const archiveDigest = '7528a6731b7744d2b1afa9f888b5ca37f77fe9ea358aa621ff284ff1a0f17a20';
+const archiveDigest = '063d535b05ff7bc0f13e8fd58f92307462f775e60a460f0fee78317464cdecac';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let archive;
 const verifiedPredecessors = new WeakMap();

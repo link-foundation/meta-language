@@ -1,8 +1,8 @@
 // Historical checks authenticate a complete successor before restoring its input.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
-import {readProjectData} from './project-data.mjs';
+import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {readProjectFileBytes} from './project-data.mjs';
 import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-source-history.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
@@ -18,8 +18,8 @@ export function restoreContinuationHistoricalSource(source,file,profile) {
   assert.equal(typeof source,'string');
   if(profile==='relative array')source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
   if(!history){
-    const bytes=readFileSync(historyFile);assert.equal(pin(bytes).sha256,historyHash);
-    history=readProjectData(historyFile);assert.equal(history.schemaVersion,1);
+    const bytes=readProjectFileBytes(historyFile);assert.equal(pin(bytes).sha256,historyHash);
+    history=readBootstrapStructuredDataLino(bytes.toString('utf8'));assert.equal(history.schemaVersion,1);
   }
   const rows=history.sources.filter(row=>row.file===file&&row.profiles.includes(profile));
   assert.ok(rows.length<=1,'one complete historical input per profile');

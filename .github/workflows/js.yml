@@ -380,6 +380,9 @@ jobs:
           fetch-depth: 0
           # Keep commit ancestry for fresh merge simulation and fetch old blobs on demand.
           filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}
+          # Defer the retained development logs and the two naming-only inventories.
+          sparse-checkout: ${{ matrix.group == 'source-model-raw' && fromJSON('"/*\n!/dev/log/\n!/parity/naming/canonical-concepts.lino\n!/parity/naming/source-bindings.lino"') || '' }}
+          sparse-checkout-cone-mode: false
 
       - name: Simulate fresh merge with base branch
         if: github.event_name == 'pull_request'

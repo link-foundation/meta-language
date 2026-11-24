@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -89,6 +93,10 @@ test('a third required generated slice keeps every command and feedback producer
   const rawCheckoutSetup = [
     '          # Keep commit ancestry for fresh merge simulation and fetch old blobs on demand.',
     "          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}",
+    '          # Defer the retained development logs and the two naming-only inventories.',
+    "          sparse-checkout: ${{ matrix.group == 'source-model-raw' && "
+      + String.raw`fromJSON('"/*\n!/dev/log/\n!/parity/naming/canonical-concepts.lino\n!/parity/naming/source-bindings.lino"') || '' }}`,
+    '          sparse-checkout-cone-mode: false',
     '',
   ].join('\n');
   const previousSteps = checks.steps.map(step => {
@@ -111,4 +119,81 @@ test('a third required generated slice keeps every command and feedback producer
   assert.equal(createHash('sha256').update(aggregate.header + gate.text).digest('hex'),
     'eeb8ab8db81f053f173fe98e55e847a990e04fabd038907e2ea287c614e8c7a6',
     'every generated slice feeds the same required package gate');
+});
+
+test('the raw planning checkout defers unrelated blobs and still merges and reads full history', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const job = parseWorkflow(workflow).find(row => row.id === 'package-checks');
+  const checkout = job.steps.find(row => row.name === '- uses: actions/checkout@v7').text;
+  const patternInput = /^          sparse-checkout: \$\{\{ matrix\.group == 'source-model-raw' && fromJSON\(('.*')\) \|\| '' \}\}$/mu.exec(checkout);
+  assert.ok(patternInput, 'only the full raw planning cell defers its unrelated current blobs');
+  assert.match(checkout, /^          sparse-checkout-cone-mode: false$/mu);
+  const patterns = JSON.parse(patternInput[1].slice(1, -1));
+  const omitted = ['dev/log/retained.log', 'parity/naming/canonical-concepts.lino', 'parity/naming/source-bindings.lino'];
+  const required = [
+    'js/package-lock.json',
+    'scripts/with-cache-cleanup.mjs',
+    'js/src/data/concept-records.lino',
+    'parity/fixtures/raw-native-contract-partitions.lino',
+    'parity/grammars/native/rust.lino',
+    'parity/naming/unicode-string-order-source-history.lino',
+    'parity/self-translation/complete-declaration-receipts.lino',
+    'experiments/original-link-complete-table-projection/raw-native-observations.test.mjs',
+    'rust/src/data/concept-records.lino',
+  ];
+  const directory = mkdtempSync(join(tmpdir(), 'raw-planning-checkout-'));
+  try {
+    const git = (cwd, ...args) => execFileSync('git', args, {
+      cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+    const origin = join(directory, 'origin');
+    const planner = join(directory, 'planner');
+    git(directory, 'init', '--initial-branch=main', origin);
+    git(origin, 'config', 'user.name', 'Raw Planning Test');
+    git(origin, 'config', 'user.email', 'raw-planning@example.test');
+    git(origin, 'config', 'uploadpack.allowFilter', 'true');
+    git(origin, 'config', 'uploadpack.allowAnySHA1InWant', 'true');
+    for (const file of [...omitted, ...required]) {
+      mkdirSync(dirname(join(origin, file)), { recursive: true });
+      writeFileSync(join(origin, file), file + '\n');
+    }
+    git(origin, 'add', '--force', '.');
+    git(origin, 'commit', '-m', 'Retain planner and historical inputs');
+    const ancestor = git(origin, 'rev-parse', 'HEAD');
+    git(origin, 'checkout', '-b', 'planner');
+    writeFileSync(join(origin, omitted[0]), 'Changed log on the planner branch\n');
+    git(origin, 'commit', '-am', 'Change unrelated planner worktree input');
+    git(origin, 'checkout', 'main');
+    writeFileSync(join(origin, required[0]), 'Latest base lock\n');
+    git(origin, 'commit', '-am', 'Advance the merge base');
+    const base = git(origin, 'rev-parse', 'HEAD');
+
+    git(directory, 'clone', '--filter=blob:none', '--no-checkout', pathToFileURL(origin).href, planner);
+    const plannerGit = (...args) => git(planner, ...args);
+    plannerGit('config', 'core.sparseCheckout', 'true');
+    plannerGit('config', 'core.sparseCheckoutCone', 'false');
+    writeFileSync(join(planner, '.git/info/sparse-checkout'), patterns + '\n');
+    plannerGit('checkout', 'planner');
+    const head = plannerGit('rev-parse', 'HEAD');
+    for (const file of required) assert.equal(readFileSync(join(planner, file), 'utf8'), file + '\n');
+    for (const file of omitted) assert.equal(existsSync(join(planner, file)), false, file);
+    const missingBlobs = plannerGit('rev-list', '--objects', '--missing=print', '--all').split('\n');
+    for (const file of omitted) assert.ok(missingBlobs.includes('?' + plannerGit('rev-parse', `${head}:${file}`)), file);
+    const mergeScript = fileURLToPath(new URL('../scripts/simulate-fresh-merge.sh', import.meta.url));
+    const merged = execFileSync('bash', [mergeScript], {
+      cwd: planner, env: { ...process.env, BASE_REF: 'main' }, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    assert.match(merged, /Fresh merge simulation succeeded/u);
+    plannerGit('merge-base', '--is-ancestor', base, 'HEAD');
+    plannerGit('merge-base', '--is-ancestor', head, 'HEAD');
+    assert.equal(plannerGit('rev-parse', '--is-shallow-repository'), 'false');
+    assert.equal(readFileSync(join(planner, required[0]), 'utf8'), 'Latest base lock\n');
+    for (const file of omitted) {
+      assert.equal(plannerGit('show', `${ancestor}:${file}`), file);
+      assert.equal(existsSync(join(planner, file)), false, file);
+    }
+    assert.equal(plannerGit('status', '--porcelain'), '');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
