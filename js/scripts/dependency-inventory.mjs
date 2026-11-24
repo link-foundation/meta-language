@@ -271,6 +271,15 @@ function collectCargo(root, items, manifestFile, lockFile = manifestFile.replace
 }
 
 function collectExperiments(root, items) {
+  const attributed = 'experiments/grammar-inference/attributed-holdout.mjs';
+  const json = 'experiments/grammar-inference/json-holdout.mjs';
+  if (existsSync(path.join(root, attributed)) && existsSync(path.join(root, json))) {
+    const pinned = readText(root, attributed).match(/const oracleVersion = '(\d+\.\d+\.\d+)'/u)?.[1];
+    const jsonVersion = readText(root, json).match(/process\.versions\.node !== '(\d+\.\d+\.\d+)'/u)?.[1];
+    if (!pinned || pinned !== jsonVersion) throw new Error('the holdout oracle version guards disagree');
+    addItem(items, { category: 'experiment', name: 'holdout Node oracle contract', pinned,
+      declaredIn: [attributed, json], compare: 'unversioned', source: { type: 'none' } });
+  }
   for (const file of trackedFiles(root, 'experiments', /^Cargo\.toml$/u)) collectCargo(root, items, file);
   for (const file of trackedFiles(root, 'experiments', /^package\.json$/u)) {
     const manifest = readJson(root, file);
@@ -368,6 +377,13 @@ function collectWorkflows(root, items) {
     }
     for (const match of text.matchAll(/npm install -g npm@(\S+)/gu)) {
       addItem(items, { category: 'toolchain', name: 'npm', declaredIn: file, pinned: match[1], compare: 'major', source: { type: 'npm', package: 'npm' } });
+    }
+    const crucioRevision = text.match(/^\s*CRUCIO_REVISION:\s*([0-9a-f]{40})\s*$/mu)?.[1];
+    if (crucioRevision) {
+      const repository = text.match(/remote add origin https:\/\/github\.com\/([\w.-]+\/crucio)\.git(?=\s|$)/u)?.[1];
+      if (!repository) throw new Error('the Crucio checkout has no GitHub repository');
+      addItem(items, { category: 'experiment', name: 'Crucio learner', pinned: crucioRevision,
+        declaredIn: file, compare: 'revision', source: { type: 'github-default-revision', repository } });
     }
     for (const { name, pinned } of pinnedPipPackages(text)) {
       addItem(items, { category: 'toolchain', scope: 'pypi', name, declaredIn: file, pinned, compare: 'version', source: { type: 'pypi', package: name } });
@@ -979,6 +995,12 @@ export function releaseResolvers({ http, github, today }) {
         evidence: `GitHub release, ${repository} (the pin is ${comparison.status} of it)`,
       };
     },
+    'github-default-revision': async ({ repository }, item) => {
+      const { default_branch: branch } = await github(`repos/${repository}`);
+      const { sha: current } = await github(`repos/${repository}/commits/${encodeURIComponent(branch)}`);
+      if (!/^[0-9a-f]{40}$/u.test(current)) throw new Error(`No default branch revision for ${repository}`);
+      return { current, containsCurrent: current === item.pinned, evidence: `GitHub, ${repository} ${branch} head` };
+    },
     'node-lts': async () => {
       const release = (await nodeIndex()).find((entry) => entry.lts);
       return { current: release.version.replace(/^v/u, ''), evidence: `nodejs.org, newest LTS release (${release.lts})` };
@@ -1029,6 +1051,33 @@ export function opamConstraint(opam, name) {
  */
 export function couplingResolvers({ github }) {
   return {
+    'toolchain node': async (item, find) => {
+      const holder = find('experiment', 'holdout Node oracle contract');
+      if (!holder || holder.pinned !== item.pinned) return {};
+      return {
+        compatible: holder.pinned,
+        heldBy: [{ id: holder.id, requirement: `=${holder.pinned}`, evidence: holder.declaredIn.join(', ') }],
+        reason: `The issue #224 holdout oracles require Node.js ${holder.pinned} to reproduce their measured observations.`,
+      };
+    },
+    'toolchain colored': async (item, find, versions) => {
+      const holder = find('experiment', 'Crucio learner');
+      if (!holder || !versions) return {};
+      const repository = holder.source.repository;
+      const requirements = await githubFile(github, repository, 'requirements.txt', holder.pinned);
+      const pin = requirements.match(/^colored\s*~=\s*((\d+)\.(\d+)\.\d+)\s*$/mu);
+      if (!pin) return {};
+      const [, minimum, major, minor] = pin;
+      const requirement = `>=${minimum} <${major}.${Number(minor) + 1}.0`;
+      const compatible = versions.filter(version => comparePypiVersions(version, minimum) >= 0
+        && comparePypiVersions(version, `${major}.${Number(minor) + 1}.0`) < 0)
+        .sort((a, b) => comparePypiVersions(b, a))[0];
+      return {
+        compatible,
+        heldBy: [{ id: holder.id, requirement, evidence: `${repository} ${holder.pinned} requirements.txt: colored~=${minimum}` }],
+        reason: `The pinned Crucio learner requires colored~=${minimum} for the issue #224 reproduction.`,
+      };
+    },
     // The vendored web-tree-sitter runtime is built with the emscripten that
     // its tree-sitter release pins; another emscripten changes the runtime.
     'image emscripten/emsdk': async (item, find) => {
@@ -1213,7 +1262,7 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
       const rootName = parseCargoManifest(readText(root, manifest)).settings.name;
       reason = heldReason(item, holders, { syntax, rootName });
     } else if (resolvers.couplings?.[`${item.category} ${item.name}`]) {
-      const coupled = await resolvers.couplings[`${item.category} ${item.name}`](item, find);
+      const coupled = await resolvers.couplings[`${item.category} ${item.name}`](item, find, releases.get(item.id));
       if (coupled.compatible && coupled.heldBy?.length) {
         Object.assign(item, { compatible: coupled.compatible, heldBy: coupled.heldBy });
         reason = coupled.reason;

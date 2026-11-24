@@ -63,16 +63,16 @@ they are.
 | npm packages | 39 | 39 | 0 | 0 |
 | Rust package settings | 9 | 9 | 0 | 0 |
 | Rust crates | 310 | 283 | 24 | 3 |
-| Experiment manifests | 6 | 6 | 0 | 0 |
+| Experiment manifests | 8 | 7 | 0 | 1 |
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 340 | 339 | 1 | 0 |
-| Toolchains and tools | 18 | 16 | 1 | 1 |
+| Generators | 341 | 340 | 1 | 0 |
+| Toolchains and tools | 20 | 16 | 3 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
-| Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 355 | 0 | 0 | 355 |
+| Runners | 4 | 3 | 0 | 1 |
+| Published artifact contents | 406 | 0 | 0 | 406 |
 
 ## JavaScript engines
 
@@ -463,6 +463,8 @@ they are.
 | `cc` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=1.6.0` | build |  | 1.6.0 (crates.io, cc) | version | current |  |
 | `tree-sitter-language` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.1.8` | runtime |  | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
 | `tree-sitter` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.27.0` | runtime |  | 0.27.0 (crates.io, tree-sitter) | version | current |  |
+| `Crucio learner` |  | `.github/workflows/ci.yml` | `ce913637763f0b25017d38e0e01944f54cf86d38` |  |  | ce913637763f0b25017d38e0e01944f54cf86d38 (GitHub, Sinpersrect/crucio main head) | revision | current |  |
+| `holdout Node oracle contract` |  | `experiments/grammar-inference/attributed-holdout.mjs`, `experiments/grammar-inference/json-holdout.mjs` | `24.14.0` |  |  |  | unversioned | not applicable |  |
 
 ## Downloaded generated parser sources
 
@@ -889,6 +891,7 @@ they are.
 | `js/scripts/generate-unicode-case-fixtures.mjs` | `js/scripts/generate-unicode-case-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-unicode-identifier-fixtures.mjs` | `js/scripts/generate-unicode-identifier-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-unicode-scalar-rules.mjs` | `js/scripts/generate-unicode-scalar-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-emission-decision-source-history.mjs` | `js/scripts/generate-raw-emission-decision-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -912,6 +915,8 @@ they are.
 | `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
 | `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `link-cli` |  | `experiments/link-cli-archive-reconstruction.mjs`, `js/scripts/link-cli-archive-reconstruction-assertions.mjs` | `3.1.1` | 3.1.1 (crates.io, link-cli) | version | current | Registry release checked 2026-11-22 for the native store replay. |
+| `node` |  | `.github/workflows/ci.yml` | `24.14.0` | 26.13.1 (nodejs.org, newest LTS release (Lithium)) | version | behind | The issue #224 holdout oracles require Node.js 24.14.0 to reproduce their measured observations. |
+| `colored` | `pypi` | `.github/workflows/ci.yml` | `1.4.4` | 2.3.2 (PyPI JSON registry, colored newest non-yanked stable release) | version | behind | The pinned Crucio learner requires colored~=1.4.4 for the issue #224 reproduction. |
 
 ## GitHub Actions
 
@@ -953,6 +958,7 @@ they are.
 | `macos-latest` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `ubuntu-latest` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `windows-latest` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `ubuntu-24.04` | `.github/workflows/ci.yml` | `24.04` |  | unversioned | not applicable |  |
 
 ## Published artifact contents
 
@@ -1313,11 +1319,62 @@ they are.
 | `src/data/rust-standard-sum-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-library-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-library-error-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-active-learning-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-attribute-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-discovery-parser-oracle-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-scanner-character-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-scanner-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-scanner-mode-stack-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-structural-inference-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-array-assignment-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-arrays-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-call-templates-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-iteration-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-iterator-call-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-collection-iterator-results-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-error-class-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-error-construction-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-ordinary-class-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-concrete-source-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-compound-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-loan-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-string-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-exclusive-source-vector-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fnmut-source-abi-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fnmut-source-declaration-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-fnmut-source-token-rules-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-record-place-owner-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-collection-value-packet-program-source.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-standard-collection-value-packet-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-package-imports.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/grammar_inference/refinement.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/source_definition_catalog.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/callable_data.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/formal_datatype_aliases.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/formal_datatype_modules.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust_string_byte_lengths.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/borrowed_iterators.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/borrowed_vectors.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/declaration_headers.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/expressions/array_lookups/source_owners.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/fn_mut_source_declarations.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/fn_mut_source_headers.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/retained_source_storage.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/source_origins/type_owners.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/source_type_origins.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/standard_sum_completions.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/standard_sum_metadata.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/rust/standard_sum_source.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/source_expression_regions.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/source_fn_mut_specializations.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/source_vector_mutations.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `tests/internal/translation/surface_reference_facts.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 
-26 retained items are behind their current stable release on 2026-10-06, each for the recorded reason.
-26 of them are at their newest compatible release, verified against the requirements that hold them;
+28 retained items are behind their current stable release on 2026-10-06, each for the recorded reason.
+28 of them are at their newest compatible release, verified against the requirements that hold them;
 0 are stale and fail the delivery check.
 
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`).
@@ -1346,3 +1403,5 @@ they are.
 - `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-sys@0.52.0` (`^0.52.0`).
 - `ocaml` `5.4` → `5.5.1` (`.github/workflows/ci.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
 - `emscripten/emsdk` `4.0.15` → `6.0.11` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).
+- `node` `24.14.0` → `26.13.1` (`.github/workflows/ci.yml`): The issue #224 holdout oracles require Node.js 24.14.0 to reproduce their measured observations. Delivered at its newest compatible release `24.14.0`, held by `experiment holdout Node oracle contract@24.14.0` (`=24.14.0`).
+- `colored` `1.4.4` → `2.3.2` (`.github/workflows/ci.yml`): The pinned Crucio learner requires colored~=1.4.4 for the issue #224 reproduction. Delivered at its newest compatible release `1.4.4`, held by `experiment Crucio learner@ce913637763f0b25017d38e0e01944f54cf86d38` (`>=1.4.4 <1.5.0`).

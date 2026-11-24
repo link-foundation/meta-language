@@ -4,7 +4,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { checkDeliveredDependencies, checkInventory, collectDependencies } from '../scripts/dependency-inventory.mjs';
+import {
+  checkDeliveredDependencies, checkInventory, collectDependencies, couplingResolvers, deliveredStatuses,
+} from '../scripts/dependency-inventory.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -49,6 +51,28 @@ test('delivery keeps inventory integrity checks and accepts current dependencies
   const audited = { auditDate: '2026-09-29', items: [current] };
   assert.deepEqual(checkDeliveredDependencies(audited, collectedOf([current]), { npmConsumerLock: consumerOf([current]) }), []);
   assert.ok(checkDeliveredDependencies(audited, []).some(({ kind }) => kind === 'not-in-repository'));
+});
+
+test('holdout pins are held by the oracle guards and the pinned Crucio requirements', async () => {
+  const find = (category, name) => inventory.items.find(item => item.category === category && item.name === name);
+  const oracle = find('experiment', 'holdout Node oracle contract');
+  const crucio = find('experiment', 'Crucio learner');
+  const node = inventory.items.find(item => item.id === `toolchain node@${oracle.pinned}`);
+  const colored = find('toolchain', 'colored');
+  const github = async endpoint => {
+    assert.equal(endpoint, `repos/${crucio.source.repository}/contents/requirements.txt?ref=${crucio.pinned}`);
+    return { content: Buffer.from('lark~=1.1.9\ncolored~=1.4.4\n').toString('base64') };
+  };
+  const couplings = couplingResolvers({ github });
+  assert.equal((await couplings['toolchain node'](node, find)).compatible, oracle.pinned);
+  assert.deepEqual(await couplings['toolchain node']({ ...node, pinned: '24.15.0' }, find), {});
+  const basic = ['1.4.3', '1.4.4', '1.5.0', '2.3.2'];
+  assert.equal((await couplings['toolchain colored'](colored, find, basic)).compatible, '1.4.4');
+  assert.equal((await couplings['toolchain colored'](colored, find, [...basic, '1.4.5'])).compatible, '1.4.5');
+  const withObsoleteLearner = [node, colored, oracle, { ...crucio, containsCurrent: false }];
+  const status = deliveredStatuses(withObsoleteLearner);
+  assert.equal(status.get(node.id).status, 'compatible');
+  assert.match(status.get(colored.id).cause, /holder .* is itself stale/u);
 });
 
 test('current repository overrides cannot certify a missing or stale installed dependency tree', () => {
