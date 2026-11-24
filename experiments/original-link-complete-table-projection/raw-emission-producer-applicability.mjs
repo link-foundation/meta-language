@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
 import { restoreCompleteDeclarationReceipt } from '../../js/scripts/complete-declaration-receipts.mjs';
 import {restoreTranslationSourceHistory} from '../../js/scripts/translation-source-history.mjs';
+import {rawEmissionProducerRevision, rawEmissionSourceIdentity, restoreRawEmissionProducerSource} from './raw-emission-source-history.mjs';
 
 const applicabilityDigest = value => createHash('sha256').update(value).digest('hex');
 const freezeApplicability = value => {
@@ -176,6 +177,21 @@ function verifyCollectionApplicabilityClosure(sources) {
 /** Authenticate exact historical inputs or the one reviewed whole-source extraction. */
 export function verifyOriginalLinkRawEmissionProducerApplicability(producerSources) {
   const revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
+  if (Object.keys(producerSources).length !== originalProducerDescriptors.length) {
+    const changes = [];
+    const previousSources = Object.fromEntries(Object.entries(producerSources).map(([file, bytes]) => {
+      const previous = restoreRawEmissionProducerSource(file, bytes);
+      if (previous !== bytes) changes.push({ file, previous: { file, ...rawEmissionSourceIdentity(previous) },
+        current: { file, ...rawEmissionSourceIdentity(bytes) } });
+      return [file, previous];
+    }));
+    if (changes.length) {
+      const original = verifyOriginalLinkRawEmissionProducerApplicability(previousSources);
+      const current = new Map(changes.map(change => [change.file, change.current]));
+      return freezeApplicability({ ...original, sources: original.sources.map(row => current.get(row.file) ?? row),
+        producerSourceHistory: { revision: rawEmissionProducerRevision, changes } });
+    }
+  }
   const inference=producerSources[revision.inference.file];
   if(Object.keys(producerSources).length!==originalProducerDescriptors.length&&Buffer.isBuffer(inference)
     &&applicabilityDigest(inference)!==revision.inference.sha256){

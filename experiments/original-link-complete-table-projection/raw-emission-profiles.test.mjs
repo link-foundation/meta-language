@@ -18,6 +18,7 @@ import { parseJavaScript } from '../../js/src/translation/javascript.js';
 import { checkProgram } from '../../js/src/translation/check.js';
 import { emitJavaScript } from '../../js/src/translation/emit-javascript.js';
 import { emitRust } from '../../js/src/translation/emit-rust.js';
+import { restoreRawEmissionProducerSource } from './raw-emission-source-history.mjs';
 import {
   ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT,
   ORIGINAL_LINK_RAW_EMISSION_BASELINE, ORIGINAL_LINK_RAW_EMISSION_CHANGES, ORIGINAL_LINK_RAW_EMISSION_PRODUCERS,
@@ -50,9 +51,11 @@ function rawEmissionFixture() {
 
 function rawEmissionHistoricalInferenceFixture() {
   const input = rawEmissionFixture();
-  const file = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.inference.file;
-  input.producerSources[file] = Buffer.from(restoreTranslationSourceHistory(input.producerSources[file].toString('utf8'),
-    file, '81107a5945651f17c962e4bb81fb560f96c65ccd'));
+  input.producerSources = Object.fromEntries(Object.entries(input.producerSources)
+    .map(([file, bytes]) => [file, restoreRawEmissionProducerSource(file, bytes)]));
+  const { inference } = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
+  input.producerSources[inference.file] = Buffer.from(restoreTranslationSourceHistory(input.producerSources[inference.file].toString('utf8'),
+    inference.file, '81107a5945651f17c962e4bb81fb560f96c65ccd'));
   return input;
 }
 
@@ -233,13 +236,14 @@ test('a coalesced Number captured by a lifted loop preserves absent reads NaN an
 
 function originalRawProducerSnapshots(input) {
   const revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
-  const current = restoreTranslationSourceHistory(input.producerSources[revision.inference.file].toString('utf8'),
+  const inference = restoreRawEmissionProducerSource(revision.inference.file, input.producerSources[revision.inference.file]);
+  const current = restoreTranslationSourceHistory(inference.toString('utf8'),
     revision.inference.file, '81107a5945651f17c962e4bb81fb560f96c65ccd');
   assert.equal(current.split(revision.addedImport).length, 2);
   assert.equal(current.split(revision.currentBranches).length, 2);
   const original = current.replace(revision.addedImport, '').replace(revision.currentBranches, () => revision.originalBranches);
   return Object.fromEntries(ORIGINAL_LINK_RAW_EMISSION_PRODUCERS.map(row => [row.file,
-    row.file === revision.inference.file ? Buffer.from(original) : Buffer.from(input.producerSources[row.file])]));
+    row.file === revision.inference.file ? Buffer.from(original) : restoreRawEmissionProducerSource(row.file, input.producerSources[row.file])]));
 }
 
 test('the collection extraction restores the complete original producer without changing either raw emission artifact', () => {
@@ -251,6 +255,12 @@ test('the collection extraction restores the complete original producer without 
   assert.deepEqual(proof.producerApplicability.causalProducers, ORIGINAL_LINK_RAW_EMISSION_PRODUCERS);
   assert.deepEqual(proof.producerApplicability.sources.map(row => row.file), Object.keys(input.producerSources));
   assert.equal(proof.producerApplicability.sources.length, 14);
+  for (const change of proof.producerApplicability.producerSourceHistory.changes) {
+    const actual = input.producerSources[change.file];
+    assert.equal(change.current.bytes, actual.length);
+    assert.equal(change.current.sha256, rawEmissionDigest(actual));
+    assert.notEqual(change.current.sha256, change.previous.sha256);
+  }
   assert.deepEqual(proof.producerApplicability.inverse, ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[1]);
   const historicalSources = originalRawProducerSnapshots(input);
   for (const descriptor of ORIGINAL_LINK_RAW_EMISSION_PRODUCERS) {
