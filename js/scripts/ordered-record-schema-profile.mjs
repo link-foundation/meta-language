@@ -39,6 +39,15 @@ export function extendOrderedRecordSchema(before){
  after.neutralTypeFieldDefaults.record.ordered='false';
  return after;
 }
+function extendDataTypeFieldSignatures(before){
+ const after=structuredClone(before);
+ const fields={sourceFieldSignatures:'source data type field signatures',dataTypeName:'source data type name'};
+ for(const [name,label] of Object.entries(fields)){
+  if(Object.hasOwn(after.fields,name))fail('the ordered predecessor already has the datatype field vocabulary');
+  after.fields[name]=label;
+ }
+ return after;
+}
 export function restoreOrderedRecordSchema(bytes,file){
  if(!['js/src/data/typed-program-links-schema.lino','rust/src/data/typed-program-links-schema.lino'].includes(file))fail('unknown schema owner');
  if(!Buffer.isBuffer(bytes)||bytes.length>256*1024)fail('invalid schema source boundary');
@@ -46,7 +55,8 @@ export function restoreOrderedRecordSchema(bytes,file){
  const previous=readOrderedRecordSchemaPredecessor().previousSchema;
  const before=readStructuredDataLino(previous.source),expected=extendOrderedRecordSchema(before);
  let after=readStructuredDataLino(bytes.toString('utf8'));if(Object.hasOwn(after.references??{},'classConstructor'))after=readStructuredDataLino(restoreClassOwnerSchema(bytes,file));
- if(JSON.stringify(after)!==JSON.stringify(expected))fail('unknown complete current schema edit');
+ const actual=JSON.stringify(after);
+ if(actual!==JSON.stringify(expected)&&actual!==JSON.stringify(extendDataTypeFieldSignatures(expected)))fail('unknown complete current schema edit');
  return previous.source;
 }
 export function restoreOrderedRecordTypeSource(bytes,file){
