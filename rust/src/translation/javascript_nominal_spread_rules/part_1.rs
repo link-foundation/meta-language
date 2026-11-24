@@ -221,6 +221,26 @@ pub fn read_java_script_nominal_spread_guard_arm(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_guarded_optional_projection_operation() -> String {
+    String::from("projectGuardedJavaScriptOptional")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_projected_typed_absence(
+    kind: &str,
+    domain: &str,
+    absence: &str,
+    policy: &str,
+    same_domain: bool,
+) -> bool {
+    ((((kind == "none") && (domain == "option")) && same_domain)
+        && ((absence == "null") || (absence == "undefined")))
+        && ((policy == absence) || (policy == "both"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_nominal_sum_spread_error(
     constructors: f64,
     kinds: &[String],

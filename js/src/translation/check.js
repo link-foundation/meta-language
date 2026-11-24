@@ -34,6 +34,7 @@ import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-pro
 import {checkJavaScriptObjectEnumeration} from './javascript-object-enumeration.js';
 import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-order-operations.js';
 import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,hasJavaScriptGuardedOwnField,readJavaScriptGuardedConstructors,readJavaScriptOptionalGuardBranch,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
+import {acceptJavaScriptProjectedTypedAbsence,readJavaScriptGuardedOptionalProjectionOperation} from './javascript-nominal-spread-rules.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
@@ -778,7 +779,7 @@ class Checker {
       case 'name': {
         if (node.path.length === 1 && env.has(node.path[0])) {
           const value={ k: 'var', name: node.path[0], type: env.get(node.path[0]) };
-          return this.language==='JavaScript'?projectJavaScriptGuardedOptional(node,value,env):value;
+          return this.language==='JavaScript'&&!this.checkedProjection?projectJavaScriptGuardedOptional(node,value,env):value;
         }
         const declaration = this.lookup(node.path, path, node.span);
         if (acceptCallableFunctionReference(node.k, expected?.kind ?? '', declaration?.k ?? '')) {
@@ -801,7 +802,7 @@ class Checker {
         if(guarded)return guarded;
         const guard=readJavaScriptGuardedConstructors(node.object,env),own=hasJavaScriptGuardedOwnField(node,env);
         const field=checkJavaScriptDataField(this,value,node.field,node.span,false,{guard,own})??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span,this.checkedProjection);
-        return this.language==='JavaScript'?projectJavaScriptGuardedOptional(node,field,env):field;
+        return this.language==='JavaScript'&&!this.checkedProjection?projectJavaScriptGuardedOptional(node,field,env):field;
       }
       case 'length': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
@@ -1565,9 +1566,26 @@ class Checker {
         throw typeError('an ordered record snapshot requires its actual shared closed record', node.span);
       return this.referenceValue(operand);
     }
+    if (this.checkedProjection && this.language === 'JavaScript' && node.op === readJavaScriptGuardedOptionalProjectionOperation()) {
+      const source = node.args.length === 1 && !node.args[0].spread ? node.args[0].value : null;
+      const value = source && this.expr(source, env, path, undefined);
+      const operand = value && projectJavaScriptGuardedOptional(source, value, env);
+      if (operand === value) throw typeError('a checked optional extraction needs its actual dominating absence guards', node.span);
+      return operand;
+    }
     if (this.checkedProjection && ['strictEqual:false', 'strictEqual:true'].includes(node.op)) {
       if (node.args.length !== 2 || node.args.some(argument => argument.spread)) throw typeError('checked strict equality requires two actual operands', node.span);
-      const [left, right] = node.args.map(argument => this.expr(argument.value, env, path, undefined));
+      let [left, right] = node.args.map(argument => this.expr(argument.value, env, path, undefined));
+      if (this.language === 'JavaScript' && (node.name === 'left' || node.name === 'right')) {
+        const literal = node.name === 'left' ? left : right;
+        const peer = node.name === 'left' ? right : left;
+        if (peer.k === 'none' || !acceptJavaScriptProjectedTypedAbsence(literal.k, peer.type.kind, literal.absence ?? '', peer.type.absence ?? '', true)) {
+          throw typeError('checked strict equality needs an absence in its actual optional operand domain', node.span);
+        }
+        const typed = { ...literal, type: peer.type };
+        if (node.name === 'left') left = typed;
+        else right = typed;
+      }
       const a = left.type.kind === 'option' ? left.type.element : left.type;
       const b = right.type.kind === 'option' ? right.type.element : right.type;
       const mode = readOptionalComparisonOperation(this.language, left.type.kind, right.type.kind, 'eq', sameType(a, b), primitiveKey(a));

@@ -1,6 +1,9 @@
-import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 // Host JSON boundary adapter. Projection instructions and admission decisions
 // are shared data; the existing checker still owns types and semantics.
+import { acceptJavaScriptProjectedTypedAbsence, readJavaScriptGuardedOptionalProjectionOperation } from './translation/javascript-nominal-spread-rules.js';
+import { sameType } from './translation/types.js';
+import { readJavaScriptOptionalChainField, readJavaScriptOptionalChainForm, readJavaScriptOptionalChainOperation } from './translation/javascript-optional-chain-rules.js';
+import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
 import {acceptLinkedNumberBitwiseOperation} from './translation/number-bitwise-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './translation/rust-shared-array-handle-rules.js';
@@ -46,6 +49,27 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
 
 function projectLinkedProgramExpressionValue(value, declarations, {rootedNamespace, referenceSemantics, sourceLanguage}) {
   const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics, sourceLanguage});
+  if (sourceLanguage === 'JavaScript' && value?.k === 'let' && value.value?.k === 'record' && value.value.entries.length === 1) {
+    // Replay the entire chain so the checker re-derives both the guard and the unwrap.
+    const [capture] = value.value.entries;
+    const branch = value.body?.k === 'flattenOption' ? value.body.value : value.body;
+    const scope = branch?.then?.k === 'some' ? branch.then.value : undefined;
+    const receiver = scope?.value?.arg;
+    if (capture.name === readJavaScriptOptionalChainField()
+      && readJavaScriptOptionalChainForm(capture.value.type.kind, capture.value.type.element?.kind ?? '') === 'guarded'
+      && branch?.k === 'if' && scope?.k === 'let' && scope.value.k === 'unwrapOption'
+      && receiver?.k === 'recordField' && receiver.field === capture.name && receiver.index === 0
+      && receiver.object?.k === 'var' && receiver.object.name === value.name) {
+      return { k: 'math', op: readJavaScriptOptionalChainOperation(), name: value.name,
+        args: [{ value: { k: 'let', name: scope.name, value: project(capture.value), body: project(scope.body) }, spread: false }],
+        ...(value.span !== undefined ? {span: value.span} : {}),
+      };
+    }
+  }
+  if (sourceLanguage === 'JavaScript' && value?.k === 'unwrapOption' && value.arg?.type?.kind === 'option') {
+    return { k: 'math', op: readJavaScriptGuardedOptionalProjectionOperation(), name: '',
+      args: [{ value: project(value.arg), spread: false }], ...(value.span !== undefined ? {span: value.span} : {}) };
+  }
   if(acceptRustExactArrayLengthResult(value?.k??'',value?.type?.kind??'',value?.type?.bits??0,value?.type?.signed===true,value?.array?.type?.kind??''))return {k:'cast',arg:{k:'length',object:project(value.array),integer:true},to:value.type,flavor:'exact',...(value.span!==undefined?{span:value.span}:{})};
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
   if (['tuple', 'tupleIndex'].includes(value?.k)
@@ -89,7 +113,11 @@ function projectLinkedProgramExpressionValue(value, declarations, {rootedNamespa
   if (snapshot) return {k:'referencePayload',value:{k:'math',op:snapshot,name:'',args:[{value:project(value.reference),spread:false}]},
     ...(value.span !== undefined ? {span:value.span} : {})};
   if (sourceLanguage && value.k === 'strictEqual') {
-    return { k: 'math', op: key, name: '', args: [value.left, value.right].map(value => ({ value: project(value), spread: false })),
+    const typedAbsence = (node, peer) => peer.k !== 'none' && acceptJavaScriptProjectedTypedAbsence(
+      node.k, peer.type.kind, node.absence ?? '', peer.type.absence ?? '', sameType(node.type, peer.type));
+    const name = sourceLanguage !== 'JavaScript' ? ''
+      : typedAbsence(value.left, value.right) ? 'left' : typedAbsence(value.right, value.left) ? 'right' : '';
+    return { k: 'math', op: key, name, args: [value.left, value.right].map(value => ({ value: project(value), spread: false })),
       ...(value.span !== undefined ? { span: value.span } : {}) };
   }
   // This domain already states identity semantics in checked IR. Reconstruct

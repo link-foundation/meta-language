@@ -21,6 +21,34 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        use crate::translation::javascript_nominal_spread_rules::{
+            accept_java_script_projected_typed_absence,
+            read_java_script_guarded_optional_projection_operation,
+        };
+        if self.checked_projection
+            && self.language == super::Language::JavaScript
+            && op == read_java_script_guarded_optional_projection_operation()
+        {
+            let diagnostic = || {
+                type_error(
+                    "a checked optional extraction needs its actual dominating absence guards",
+                    span,
+                )
+            };
+            let [argument] = args else {
+                return Err(diagnostic());
+            };
+            if argument.spread {
+                return Err(diagnostic());
+            }
+            let value = self.expr(&argument.value, env, path, None, false)?;
+            let original_type = value.ty.clone();
+            let value = self.guarded_nominal_optional(&argument.value, value, env);
+            if value.ty == original_type {
+                return Err(diagnostic());
+            }
+            return Ok(value);
+        }
         if self.checked_projection && matches!(op, "strictEqual:false" | "strictEqual:true") {
             let [left, right] = args else {
                 return Err(type_error(
@@ -34,8 +62,38 @@ impl Checker {
                     span,
                 ));
             }
-            let left = self.expr(&left.value, env, path, None, false)?;
-            let right = self.expr(&right.value, env, path, None, false)?;
+            let mut left = self.expr(&left.value, env, path, None, false)?;
+            let mut right = self.expr(&right.value, env, path, None, false)?;
+            if self.language == super::Language::JavaScript && matches!(name, "left" | "right") {
+                let (literal, peer) = if name == "left" {
+                    (&mut left, &right)
+                } else {
+                    (&mut right, &left)
+                };
+                let diagnostic = || {
+                    type_error(
+                        "checked strict equality needs an absence in its actual optional operand domain",
+                        span,
+                    )
+                };
+                let (Node::None { absence }, Type::Option { absence: policy, .. }) =
+                    (&literal.node, &peer.ty)
+                else {
+                    return Err(diagnostic());
+                };
+                if matches!(&peer.node, Node::None { .. })
+                    || !accept_java_script_projected_typed_absence(
+                        "none",
+                        peer.ty.kind(),
+                        absence,
+                        policy,
+                        true,
+                    )
+                {
+                    return Err(diagnostic());
+                }
+                literal.ty = peer.ty.clone();
+            }
             use crate::translation::optional_value_rules::{
                 accept_optional_primitive_kind, read_optional_comparison_operation,
             };
@@ -94,7 +152,7 @@ impl Checker {
         if op == "testJavaScriptOwnedProperty" {
             return self.javascript_own_property(args, span, env, path);
         }
-        if op==crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation(){return self.javascript_optional_chain(args,span,env,path);}
+        if op==crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation(){return self.javascript_optional_chain(name,args,span,env,path);}
         if op==crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(){return self.javascript_optional_call(args,span,env,path);}
         if op == "testJavaScriptArrayValue" {
             return self.javascript_array_builtin(args, span, env, path);

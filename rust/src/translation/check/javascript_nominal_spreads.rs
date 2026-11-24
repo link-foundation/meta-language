@@ -207,6 +207,17 @@ impl Checker {
                 .push(ConstructorGuard { path, owner, names });
             return;
         }
+        if self.checked_projection
+            && let SNode::Math { op, args, .. } = &condition.node
+            && matches!(op.as_str(), "strictEqual:false" | "strictEqual:true")
+            && let [left, right] = args.as_slice()
+            && !left.spread
+            && !right.spread
+        {
+            let operation = if op == "strictEqual:true" { "ne" } else { "eq" };
+            self.record_javascript_absence_guard(operation, &left.value, &right.value, env, outcome);
+            return;
+        }
         let SNode::Binary {
             op, left, right, ..
         } = &condition.node
@@ -251,6 +262,17 @@ impl Checker {
             }
             return;
         }
+        self.record_javascript_absence_guard(op.name(), left, right, env, outcome);
+    }
+
+    fn record_javascript_absence_guard(
+        &self,
+        operation: &str,
+        left: &SExpr,
+        right: &SExpr,
+        env: &mut Env,
+        outcome: bool,
+    ) {
         let absence = |node: &SExpr| match &node.node {
             SNode::None { absence } => Some(absence.clone()),
             SNode::Unit => Some("undefined".to_owned()),
@@ -263,7 +285,7 @@ impl Checker {
         } else {
             return;
         };
-        let arm = rules::read_java_script_nominal_spread_guard_arm("binary", op.name(), &absence);
+        let arm = rules::read_java_script_nominal_spread_guard_arm("binary", operation, &absence);
         if arm != if outcome { 1.0 } else { 2.0 } {
             return;
         }

@@ -70,6 +70,12 @@ function directTagTest(condition){
 export function readJavaScriptOptionalGuardBranch(checker,condition,env,outcome,depth=0){
  if(depth>=256)return env;
  if(condition.k==='unary'&&condition.op==='not')return readJavaScriptOptionalGuardBranch(checker,condition.arg,env,!outcome,depth+1);
+ if(checker.checkedProjection&&condition.k==='math'
+   &&(condition.op==='strictEqual:false'||condition.op==='strictEqual:true')
+   &&condition.args.length===2&&condition.args.every(arg=>!arg.spread)){
+  const [left,right]=condition.args.map(arg=>arg.value);
+  return readJavaScriptOptionalGuardBranch(checker,{k:'binary',op:condition.op==='strictEqual:true'?'ne':'eq',left,right},env,outcome,depth+1);
+ }
  if(outcome&&condition.k==='math'&&condition.op==='testJavaScriptOwnedProperty'&&condition.args.length===2&&condition.args.every(arg=>!arg.spread)){
   const [object,key]=condition.args.map(arg=>arg.value);
   const path=key.k==='str'?immutableFieldPath(checker,object,env):null;

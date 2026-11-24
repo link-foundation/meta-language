@@ -4,6 +4,7 @@ import {typeError,unsupported} from './diagnostics.js';
 import {coerce,bindLocal} from './check.js';
 import {readTypeQueryResult} from './frontend-rules.js';
 import {mergeOptionalAbsence} from './structured-type-rules.js';
+import {acceptSourcePrivateIdentifier} from './source-identifier-rules.js';
 import {acceptJavaScriptOptionalChainOperands,readJavaScriptOptionalChainField,
  readJavaScriptOptionalChainForm,readJavaScriptOptionalChainResultForm,
  readJavaScriptOptionalChainPresenceForm} from './javascript-optional-chain-rules.js';
@@ -19,7 +20,9 @@ export function checkJavaScriptOptionalChain(checker,node,env,path){
  if(checker.language!=='JavaScript'||scopeSource?.k!=='let'||scopeSource.type!==undefined||!acceptJavaScriptOptionalChainOperands(node.args.length,node.args.some(item=>item.spread),scopeSource.name))throw typeError('an optional chain needs its actual receiver, lexical binding and complete continuation',node.span);
  const value=checker.expr(scopeSource.value,env,path,undefined);
  const form=readJavaScriptOptionalChainForm(value.type.kind,value.type.element?.kind??'');
- const binding=checker.freshName('ml_optional_chain_receiver'),field=readJavaScriptOptionalChainField();
+ const replayBinding=checker.checkedProjection?node.name:'';
+ if(replayBinding&&(!acceptSourcePrivateIdentifier(replayBinding)||env.has(replayBinding)))throw typeError('a checked optional chain requires its own receiver binding',node.span);
+ const binding=replayBinding||checker.freshName('ml_optional_chain_receiver'),field=readJavaScriptOptionalChainField();
  const type={kind:'record',fields:[{name:field,type:value.type}]};
  const receiver={k:'recordField',object:{k:'var',name:binding,type},field,index:0,type:value.type};
  let body;

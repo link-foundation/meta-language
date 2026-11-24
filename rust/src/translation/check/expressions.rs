@@ -244,11 +244,12 @@ impl Checker {
             | SNode::OptionalField { .. } => self.optional_expr(node, env, path, expected),
             SNode::Name { path: segments } => {
                 if let Some(name) = env.local(node) {
-                    return Ok(self.guarded_nominal_optional(
-                        node,
-                        Expr::var(name, env.vars[name].clone()),
-                        env,
-                    ));
+                    let local = Expr::var(name, env.vars[name].clone());
+                    return Ok(if self.checked_projection {
+                        local
+                    } else {
+                        self.guarded_nominal_optional(node, local, env)
+                    });
                 }
                 if let Some(reference) = self.callable_reference(node, segments, path, context)? {
                     return Ok(reference);

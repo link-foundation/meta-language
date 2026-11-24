@@ -62,6 +62,7 @@ impl Checker {
 
     pub(super) fn javascript_optional_chain(
         &mut self,
+        replay_binding: &str,
         args: &[SArrayItem],
         span: Option<Span>,
         env: &Env,
@@ -103,7 +104,20 @@ impl Checker {
             _ => "",
         };
         let form = rules::read_java_script_optional_chain_form(value.ty.kind(), element);
-        let binding = self.fresh_name("ml_optional_chain_receiver");
+        let binding = if self.checked_projection && !replay_binding.is_empty() {
+            if !crate::translation::source_identifier_rules::accept_source_private_identifier(
+                &replay_binding.into(),
+            ) || env.has(replay_binding)
+            {
+                return Err(type_error(
+                    "a checked optional chain requires its own receiver binding",
+                    span,
+                ));
+            }
+            replay_binding.to_owned()
+        } else {
+            self.fresh_name("ml_optional_chain_receiver")
+        };
         let field = rules::read_java_script_optional_chain_field();
         let ty = Type::Record {
             source_class_owner: None,

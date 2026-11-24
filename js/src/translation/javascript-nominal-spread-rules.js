@@ -27,6 +27,19 @@ export function readJavaScriptNominalSpreadGuardArm(kind,operation,absence){
   return operation==='ne'?1:operation==='eq'?2:0;
 }
 
+/** @returns {string} */
+export function readJavaScriptGuardedOptionalProjectionOperation(){
+ return 'projectGuardedJavaScriptOptional';
+}
+
+/** Checked strict equality keeps an absence in the opposite operand's domain.
+ * @param {string} kind @param {string} domain @param {string} absence
+ * @param {string} policy @param {boolean} sameDomain @returns {boolean} */
+export function acceptJavaScriptProjectedTypedAbsence(kind,domain,absence,policy,sameDomain){
+ return kind==='none'&&domain==='option'&&sameDomain
+  &&(absence==='null'||absence==='undefined')&&(policy===absence||policy==='both');
+}
+
 /** @param {number} constructors @param {string[]} kinds @param {boolean} commonFields @returns {string} */
 export function readJavaScriptNominalSumSpreadError(constructors,kinds,commonFields){
  if(constructors<2||constructors>4096||kinds.length===0||kinds.length>65536||kinds[0]!=='spread')return 'nominal sum copies require a bounded actual constructor directory';
