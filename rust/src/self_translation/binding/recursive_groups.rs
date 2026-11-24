@@ -22,6 +22,18 @@ pub(super) fn source_number(value: usize) -> Option<f64> {
     (number_index(number) == Some(value) && number <= 9_007_199_254_740_991.0).then_some(number)
 }
 
+pub(super) fn trace_recursive_declaration(
+    names: &[String],
+    stage: &str,
+    detail: std::fmt::Arguments<'_>,
+) {
+    if std::env::var("META_LANGUAGE_TRACE_RECURSIVE_DECLARATION")
+        .is_ok_and(|selected| names.contains(&selected))
+    {
+        eprintln!("recursive declaration {names:?} {stage}: {detail}");
+    }
+}
+
 pub(super) fn read_components(
     scans: &[Option<Scan>],
     owners: &HashMap<String, usize>,
@@ -198,6 +210,16 @@ impl Binder<'_, '_> {
                     .is_some_and(|name| state.owner_counts.get(name) == Some(&1))
             });
         if !dependency_rules::accept_group(count, ordinary, unique) {
+            if let Ok(selected) = std::env::var("META_LANGUAGE_TRACE_RECURSIVE_DECLARATION")
+                && state.scans[index]
+                    .as_ref()
+                    .and_then(|scan| scan.declares.as_ref())
+                    == Some(&selected)
+            {
+                eprintln!(
+                    "recursive declaration {selected} group refused: {count} members, ordinary={ordinary}, unique={unique}"
+                );
+            }
             return false;
         }
         state.attempted.insert(leader);
@@ -287,14 +309,27 @@ impl Binder<'_, '_> {
             utf16_strings: self.utf16_strings,
             module_binding_scope: Some(Self::module_binding_scope(state)),
         };
-        let whole = check_and_emit_item_with_ownership(
+        let whole = match check_and_emit_item_with_ownership(
             &source,
             self.from,
             self.to,
             &context,
             &HashMap::new(),
-        )
-        .ok()??;
+        ) {
+            Ok(Some(whole)) => whole,
+            Ok(None) => {
+                trace_recursive_declaration(
+                    &names,
+                    "whole check",
+                    format_args!("top-level effects"),
+                );
+                return None;
+            }
+            Err(error) => {
+                trace_recursive_declaration(&names, "whole check", format_args!("{error}"));
+                return None;
+            }
+        };
         let declarations = &whole.program.declarations;
         let signatures = &whole.signatures;
         let flat=whole.program.main.as_ref().is_none_or(|main|main.effects.is_empty())&&whole.program.imports.is_empty()
@@ -314,6 +349,14 @@ impl Binder<'_, '_> {
             emitted,
             true,
         ) {
+            trace_recursive_declaration(
+                &names,
+                "owned publication",
+                format_args!(
+                    "{declaration_count} checked declarations, {signature_count} signatures, {} definitions",
+                    whole.emitted.definitions.len()
+                ),
+            );
             return self.check_owned_recursive_members(state, members, externals, &whole);
         }
         let targets = whole

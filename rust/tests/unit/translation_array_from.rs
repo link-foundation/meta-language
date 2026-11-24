@@ -16,7 +16,7 @@ use meta_language::{
 };
 use serde_json::Value;
 
-use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, versioned_fixture_tool};
 
 fn observe(source: &str) -> String {
     let output = run(Command::new("node").args(["--input-type=module", "-e", source]));
@@ -132,7 +132,7 @@ fn emitted_array_from_mapping_runs_with_original_javascript_observations() {
     let file = directory.0.join("program.rs");
     let executable = directory.0.join("program");
     fs::write(&file, emit_rust(&program).unwrap().text).unwrap();
-    let compiled = run(Command::new("rustc")
+    let compiled = run(versioned_fixture_tool("rustc")
         .args(["--edition=2024"])
         .arg(&file)
         .arg("-o")
@@ -155,7 +155,7 @@ fn original_nullable_array_source_preserves_all_elements_before_and_after_iterab
         node_major == 22 && node_minor >= 15 || node_major == 24,
         "uncovered Node version {node_version}; supported >=22.15.0 <23.0.0 || >=24.0.0 <25.0.0"
     );
-    let rust = run(Command::new("rustc").arg("--version"));
+    let rust = run(versioned_fixture_tool("rustc").arg("--version"));
     assert!(rust.ok, "{}", rust.stderr);
     let rust_version = rust.stdout.split_whitespace().nth(1).unwrap();
     let mut rust_parts = rust_version.split('.');
@@ -227,7 +227,7 @@ console.log(nullableBigints());";
             .0
             .join(format!("program_{format}{}", std::env::consts::EXE_SUFFIX));
         fs::write(&file, &rust).unwrap();
-        let compiled = run(Command::new("rustc")
+        let compiled = run(versioned_fixture_tool("rustc")
             .args(["--edition=2024"])
             .arg(&file)
             .arg("-o")

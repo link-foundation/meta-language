@@ -1,5 +1,6 @@
 //! Fresh source constructions, actual reader identity and source-free value replay.
 
+use super::issue_195_translation_pairs::versioned_fixture_tool;
 use meta_language::translation::check::check_program;
 use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::emit_rust::emit_rust;
@@ -178,7 +179,8 @@ fn self_slice_versions() {
         (major == 22 && minor >= 15) || major == 24,
         "uncovered Node {node_version}"
     );
-    let rust = super::issue_195_translation_pairs::run(Command::new("rustc").arg("--version"));
+    let rust =
+        super::issue_195_translation_pairs::run(versioned_fixture_tool("rustc").arg("--version"));
     assert!(rust.ok, "{}", rust.stderr);
     let rust_version = rust.stdout.split_whitespace().nth(1).unwrap();
     let parts: Vec<_> = rust_version.split('.').collect();
@@ -293,7 +295,7 @@ fn complete_self_slice_inventory_preserves_original_effects_both_codecs_and_nati
         .0
         .join(format!("program{}", std::env::consts::EXE_SUFFIX));
     std::fs::write(&input, &native).unwrap();
-    let mut compiler = Command::new("rustc");
+    let mut compiler = versioned_fixture_tool("rustc");
     compiler.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
@@ -389,7 +391,7 @@ fn actual_completed_string_iteration_borrows_keep_source_semantics_and_live_alia
         .0
         .join(format!("program{}", std::env::consts::EXE_SUFFIX));
     std::fs::write(&input, native).unwrap();
-    let mut compiler = Command::new("rustc");
+    let mut compiler = versioned_fixture_tool("rustc");
     compiler.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {

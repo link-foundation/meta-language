@@ -2,6 +2,7 @@
 //! Rocq list, read through an optional bounds-checked helper that retains
 //! JavaScript's observable absence outside an array.
 
+use super::issue_195_translation_pairs::versioned_fixture_tool;
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::{TranslationSupport, translate_program};
 
@@ -429,7 +430,7 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
             rust_code.expect("every admitted original target set includes Rust"),
         )
         .unwrap();
-        let mut compiler = Command::new("rustc");
+        let mut compiler = versioned_fixture_tool("rustc");
         compiler.arg("--edition=2024");
         #[cfg(windows)]
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
@@ -512,7 +513,7 @@ fn assert_modern_array_identity_translation(source: &str, previous_message: &str
         "uncovered npm version; [1.0.0,1.0.1) required"
     );
     for (tool, rust) in [("node", false), ("rustc", true)] {
-        let actual = run(Command::new(tool).arg("--version"));
+        let actual = run(versioned_fixture_tool(tool).arg("--version"));
         assert!(actual.ok, "{}", actual.stderr);
         let version = if rust {
             actual.stdout.split_whitespace().nth(1).unwrap()

@@ -1,5 +1,5 @@
 //! CI-only actual source, generated decision and complete emitted-program parity.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256, versioned_fixture_tool};
 use meta_language::translation::{
     check::check_program,
     emit_javascript::emit_javascript,
@@ -46,7 +46,7 @@ fn versions() {
             ">=22.15.0 <23.0.0 || >=24.0.0 <25.0.0"
         );
         for (tool, rust) in [("rustc", true), ("node", false)] {
-            let result = run(Command::new(tool).arg("--version"));
+            let result = run(versioned_fixture_tool(tool).arg("--version"));
             assert!(result.ok, "{}", result.stderr);
             let version = if rust {
                 result.stdout.split_whitespace().nth(1).unwrap()
@@ -144,7 +144,7 @@ fn compile(source: &str, directory: &TemporaryDirectory, name: &str) -> PathBuf 
         .0
         .join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
     fs::write(&file, source).unwrap();
-    let mut command = Command::new("rustc");
+    let mut command = versioned_fixture_tool("rustc");
     command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {

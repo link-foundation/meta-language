@@ -148,6 +148,18 @@ pub fn run(command: &mut Command) -> Run {
     )
 }
 
+pub fn versioned_fixture_tool(tool: &str) -> Command {
+    if tool == "rustc"
+        && let Some(toolchain) = std::env::var_os("META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN")
+    {
+        let mut compiler = Command::new("rustup");
+        compiler.arg("run").arg(toolchain).arg(tool);
+        compiler
+    } else {
+        Command::new(tool)
+    }
+}
+
 fn lines_of(text: &str) -> Vec<String> {
     let mut lines = text.split('\n').map(str::to_owned).collect::<Vec<_>>();
     lines.pop();

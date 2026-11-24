@@ -3767,6 +3767,12 @@ artifact and adds no work to the nine existing native oracles. Removing
 only this cell, its three steps and the new job restores the previous workflows
 byte for byte; the global JavaScript-first caller and path selector are unchanged.
 
+Physical Rust tests, fresh-merge tests and coverage build the crate with stable
+Rust. Fixtures that declare `>=1.90.0 <1.100.0` query and compile their native
+sources with the same installed Rust 1.99.0 toolchain. Their version assertions
+still reject uncovered versions, including when the test runs with only the
+active compiler outside the configured workflow.
+
 The JavaScript package checks also compile the generated shared frontend rules
 as a standalone Rust module with the crate's Clippy lint groups and warnings
 denied. This checks the generated interface without building the crate's

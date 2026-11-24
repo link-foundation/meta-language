@@ -1,7 +1,10 @@
 //! Actual checked-program/emitter fact transport; all normative admission is
 //! normally generated from the shared JavaScript decision source.
 use super::super::emission::CheckedItem;
-use super::{dependency_rules, recursive_groups::source_number};
+use super::{
+    dependency_rules,
+    recursive_groups::{source_number, trace_recursive_declaration},
+};
 use crate::translation::{ir::Decl, surface::External};
 use serde_json::Value;
 use std::collections::HashSet;
@@ -238,6 +241,13 @@ fn read_capture<'a>(item: &'a CheckedItem, names: &[String]) -> Option<Capture<'
     let owners =
         dependency_rules::read_source_owners(&root_starts, &root_ends, &starts, &ends, &roles);
     if owners.len() != declarations.len() {
+        trace_recursive_declaration(
+            names,
+            "source ownership",
+            format_args!(
+                "root starts={root_starts:?}, root ends={root_ends:?}, starts={starts:?}, ends={ends:?}, roles={roles:?}"
+            ),
+        );
         return None;
     }
     let owners = owners
@@ -268,6 +278,11 @@ fn read_capture<'a>(item: &'a CheckedItem, names: &[String]) -> Option<Capture<'
                 .iter()
                 .any(|external| external.name() == name)
             {
+                trace_recursive_declaration(
+                    names,
+                    "declaration references",
+                    format_args!("unresolved reference {name:?}"),
+                );
                 return None;
             }
         }
@@ -285,10 +300,20 @@ fn read_capture<'a>(item: &'a CheckedItem, names: &[String]) -> Option<Capture<'
         &edge_counts,
         &edge_targets,
     ) {
+        trace_recursive_declaration(
+            names,
+            "declaration references",
+            format_args!("closure refused for owners={owners:?}, references={references:?}"),
+        );
         return None;
     }
     let externals = crate::translation::emit_rust::read_rust_external_targets(program);
     if metadata.external_targets != externals {
+        trace_recursive_declaration(
+            names,
+            "external targets",
+            format_args!("the emitted external targets differ from the checked program targets"),
+        );
         return None;
     }
     let mut targets = Vec::new();
@@ -373,6 +398,15 @@ fn read_capture<'a>(item: &'a CheckedItem, names: &[String]) -> Option<Capture<'
             &forbidden,
         )
     {
+        trace_recursive_declaration(
+            names,
+            "owned emission",
+            format_args!(
+                "{} captured mappings, {} actual mappings",
+                mappings.len() / 3,
+                emitted.mappings.len()
+            ),
+        );
         return None;
     }
     Some(Capture {
@@ -488,18 +522,33 @@ pub(super) fn plan_owned_publication(
     {
         return None;
     }
-    let actual = read_capture(whole, names)?;
+    let actual = read_capture(whole, names).or_else(|| {
+        trace_recursive_declaration(names, "whole ownership", format_args!("capture refused"));
+        None
+    })?;
     let mut indices = Vec::new();
     for (owner, name) in names.iter().enumerate() {
         let member = members.get(owner)?;
         if member.source != sources[owner] {
             return None;
         }
-        let one = read_capture(member, std::slice::from_ref(name))?;
+        let one = read_capture(member, std::slice::from_ref(name)).or_else(|| {
+            trace_recursive_declaration(
+                names,
+                "member ownership",
+                format_args!("{name} capture refused"),
+            );
+            None
+        })?;
         if !dependency_rules::accept_auxiliary_correspondence(
             &actual.inventory(owner, names)?,
             &one.inventory(0, names)?,
         ) {
+            trace_recursive_declaration(
+                names,
+                "auxiliary correspondence",
+                format_args!("{name} inventory differed"),
+            );
             return None;
         }
         let expected = whole
@@ -615,14 +664,31 @@ impl super::Binder<'_, '_> {
                 utf16_strings: self.utf16_strings,
                 module_binding_scope: Some(Self::module_binding_scope(state)),
             };
-            let capture = super::super::emission::check_and_emit_item_with_ownership(
+            let capture = match super::super::emission::check_and_emit_item_with_ownership(
                 sources[owner],
                 self.from,
                 self.to,
                 &context,
                 &std::collections::HashMap::new(),
-            )
-            .ok()??;
+            ) {
+                Ok(Some(capture)) => capture,
+                Ok(None) => {
+                    trace_recursive_declaration(
+                        &names,
+                        "member check",
+                        format_args!("{} has top-level effects", names[owner]),
+                    );
+                    return None;
+                }
+                Err(error) => {
+                    trace_recursive_declaration(
+                        &names,
+                        "member check",
+                        format_args!("{}: {error}", names[owner]),
+                    );
+                    return None;
+                }
+            };
             let member_generic = capture.emitted.definitions.join("\n\n");
             if crate::grammar::decorate_emitted(self.to, &member_generic, self.decorators)
                 != member_generic
@@ -638,12 +704,21 @@ impl super::Binder<'_, '_> {
                 &context,
             );
             if original.status != "translated" {
+                trace_recursive_declaration(
+                    &names,
+                    "independent member translation",
+                    format_args!("{}: {:?}", names[owner], original.reason),
+                );
                 return None;
             }
             captures.push(capture);
         }
-        let plan =
-            plan_owned_publication(&names, &sources, whole, &captures, state.module_scope_known)?;
+        let Some(plan) =
+            plan_owned_publication(&names, &sources, whole, &captures, state.module_scope_known)
+        else {
+            trace_recursive_declaration(&names, "owned publication", format_args!("plan refused"));
+            return None;
+        };
         let mut staged = Vec::new();
         for (owner, member) in members.iter().copied().enumerate() {
             let GroupKind::Item { text, term } = &self.groups[member].kind else {

@@ -1,5 +1,5 @@
 //! Unexecuted private draft. Native compilation and observation run only in CI.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256, versioned_fixture_tool};
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, ParseConfiguration, SelfTranslationOptions,
     TypedProgramLinksEmissionOptions, TypedProgramLinksLimits, create_typed_program_links,
@@ -195,7 +195,6 @@ process.stdout.write(structuredDataToLino(selfTranslate(source,'JavaScript','Rus
             .args(["--input-type=module", "-e", script]));
     assert!(output.ok, "{}", output.stderr);
     let javascript = read_structured_data_lino(&output.stdout).unwrap();
-    assert_eq!(actual.code, javascript["code"].as_str().unwrap());
     for name in ["readCallableStatementUses", "callableStatementUses"] {
         let owner = actual
             .items
@@ -204,6 +203,7 @@ process.stdout.write(structuredDataToLino(selfTranslate(source,'JavaScript','Rus
             .unwrap();
         assert_eq!(owner.status, "translated", "{name}: {:?}", owner.reason);
     }
+    assert_eq!(actual.code, javascript["code"].as_str().unwrap());
     assert_eq!(
         self_translate(&actual.code, "Rust", "JavaScript")
             .unwrap()
@@ -296,7 +296,7 @@ fn versions() {
             ">=22.15.0 <23.0.0 || >=24.0.0 <25.0.0"
         );
         for (tool, rust) in [("rustc", true), ("node", false)] {
-            let result = run(Command::new(tool).arg("--version"));
+            let result = run(versioned_fixture_tool(tool).arg("--version"));
             assert!(result.ok, "{}", result.stderr);
             let version = if rust {
                 result.stdout.split_whitespace().nth(1).unwrap()
@@ -401,7 +401,7 @@ fn compile_and_observe(source: &str, calls: &Value, expected: &str, name: &str) 
         format!("{source}\nfn main(){{\n{calls}\n}}\n"),
     )
     .unwrap();
-    let mut command = Command::new("rustc");
+    let mut command = versioned_fixture_tool("rustc");
     command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
@@ -420,7 +420,7 @@ fn compile_complete_and_observe(source: &str, expected: &str, name: &str) {
         .0
         .join(format!("program{}", std::env::consts::EXE_SUFFIX));
     fs::write(&file, source).unwrap();
-    let mut command = Command::new("rustc");
+    let mut command = versioned_fixture_tool("rustc");
     command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {

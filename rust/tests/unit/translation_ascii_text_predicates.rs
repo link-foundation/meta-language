@@ -1,5 +1,5 @@
 //! CI-only original/translated execution, exact sources and both Links codecs.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, versioned_fixture_tool};
 use meta_language::translation::check::check_program;
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::rust::parse_rust;
@@ -34,7 +34,7 @@ fn assert_versions() {
             policy["assertionVersions"]["Node"],
             ">=22.15.0 <23.0.0 || >=24.0.0 <25.0.0"
         );
-        let rust = run(Command::new("rustc").arg("--version"));
+        let rust = run(versioned_fixture_tool("rustc").arg("--version"));
         assert!(rust.ok, "{}", rust.stderr);
         let version = rust.stdout.split_whitespace().nth(1).unwrap();
         let mut parts = version.split('.');
@@ -88,7 +88,7 @@ fn observe(source: &str, expected: &str, native: bool) {
         let binary = directory
             .0
             .join(format!("program{}", std::env::consts::EXE_SUFFIX));
-        let mut command = Command::new("rustc");
+        let mut command = versioned_fixture_tool("rustc");
         command.args(["--edition", "2024"]);
         #[cfg(windows)]
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {

@@ -1,5 +1,5 @@
 //! Shared source fixtures; compilation and native observation run in CI only.
-use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use super::issue_195_translation_pairs::{TemporaryDirectory, run, versioned_fixture_tool};
 use meta_language::translation::{
     check::check_program, emit_javascript::emit_javascript, emit_rust::emit_rust,
     javascript::parse_javascript,
@@ -31,7 +31,7 @@ fn versions() {
         "uncovered Node {}; supported >=22.15.0 <23 || >=24 <25",
         node.stdout.trim()
     );
-    let rust = run(Command::new("rustc").arg("--version"));
+    let rust = run(versioned_fixture_tool("rustc").arg("--version"));
     assert!(rust.ok, "{}", rust.stderr);
     let release = rust.stdout.split_whitespace().nth(1).unwrap();
     let parts = release
@@ -87,7 +87,7 @@ fn compiled(source: &str) -> (bool, String, String) {
         "array-classification"
     });
     fs::write(&input, source).unwrap();
-    let built = run(Command::new("rustc")
+    let built = run(versioned_fixture_tool("rustc")
         .args(["--edition", "2024"])
         .arg(&input)
         .arg("-o")

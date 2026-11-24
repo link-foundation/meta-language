@@ -49,7 +49,9 @@ fn actual_source_selection_recursively_marks_nested_structural_types() {
 
 #[test]
 fn late_structural_equality_selection_marks_actual_types_and_preserves_reference_identity() {
-    use super::issue_195_translation_pairs::{TemporaryDirectory, run, sha256};
+    use super::issue_195_translation_pairs::{
+        TemporaryDirectory, run, sha256, versioned_fixture_tool,
+    };
     use meta_language::{
         BinaryLinksOptions, decode_link_network_binary, encode_link_network_binary,
     };
@@ -91,7 +93,7 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
         profile["sourceClosure"]["sourceSha256"].as_str().unwrap()
     );
     for (tool, rust) in [("node", false), ("rustc", true)] {
-        let actual = run(Command::new(tool).arg("--version"));
+        let actual = run(versioned_fixture_tool(tool).arg("--version"));
         assert!(actual.ok, "{}", actual.stderr);
         let version = if rust {
             actual.stdout.split_whitespace().nth(1).unwrap()
@@ -175,7 +177,7 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
         .0
         .join(format!("observed{}", std::env::consts::EXE_SUFFIX));
     fs::write(&input, &rust).unwrap();
-    let mut command = Command::new("rustc");
+    let mut command = versioned_fixture_tool("rustc");
     command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {

@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {captureGitArtifactCertificate} from '../scripts/capture-git-artifact-certificate.mjs';
-import {restoreIntegrationSource} from '../scripts/current-ci-repair-source-history.mjs';
+import {restoreIntegrationSource,restoreVersionedFixtureCompilerWorkflow} from '../scripts/current-ci-repair-source-history.mjs';
 const file=new URL('../../.github/workflows/rust.yml',import.meta.url);
 const coverageProfile="          CARGO_PROFILE_TEST_OPT_LEVEL: 3\n"
   +"          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'\n"
@@ -33,11 +33,33 @@ test('fresh merge restores the existing successful check cache before every unch
   assert.ok(setup.text.includes(scopedCompiler));
   assert.equal(source.split(setup.text).length,2);
   const beforeScopedCompiler=restoreIntegrationSource(source,'.github/workflows/rust.yml');
-  assert.equal(beforeScopedCompiler,source.replace(setup.text,
+  assert.equal(beforeScopedCompiler,restoreVersionedFixtureCompilerWorkflow(source).replace(setup.text,
     setup.text.replace(scopedCompiler,'        uses: dtolnay/rust-toolchain@stable')));
   const predecessor=removePartitionUploadRetry(beforeScopedCompiler.replace(block,'').replace(coverageProfile,''));
   assert.equal(predecessor,original.blob.toString('utf8'),'every original job, deadline, matrix cell, gate, command and artifact step remains exact');
   assert.match(source,/fresh-merge:[\s\S]*?timeout-minutes: 20/u);
+});
+
+test('physical native jobs preserve stable package compilation and install the declared fixture compiler',()=>{
+  const source=readFileSync(file,'utf8'),jobs=parseWorkflow(source);
+  const profiles=['fresh-merge','test','coverage'];
+  const provision='Install the version-qualified fixture compiler';
+  assert.deepEqual(jobs.filter(job=>job.steps.some(step=>step.name===provision)).map(job=>job.id),profiles);
+  for(const id of profiles){
+    const job=jobs.find(row=>row.id===id);
+    assert.match(job.header,/^ {6}META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN: 1\.99\.0$/mu);
+    const setup=job.steps.find(step=>step.name==='Setup Rust');
+    const install=job.steps.find(step=>step.name===provision);
+    assert.match(setup.text,/uses: dtolnay\/rust-toolchain@stable/u);
+    assert.equal(job.steps.indexOf(install),job.steps.indexOf(setup)+1);
+    assert.equal(install.run.trimEnd(),'rustup toolchain install "$META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN" --profile minimal --no-self-update');
+  }
+  const traced=jobs.flatMap(job=>job.steps).filter(step=>step.text.includes('META_LANGUAGE_TRACE_RECURSIVE_DECLARATION'));
+  assert.equal(traced.length,1);
+  assert.equal(traced[0].name,'Run tests');
+  assert.match(traced[0].text,/META_LANGUAGE_TRACE_RECURSIVE_DECLARATION: readCallableStatementUses/u);
+  const changed=source.replace('META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN: 1.99.0','META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN: 1.100.0');
+  assert.equal(restoreVersionedFixtureCompilerWorkflow(changed),changed);
 });
 
 test('instrumented native tests use optimization with debug assertions overflow checks original coverage floor and deadline',()=>{

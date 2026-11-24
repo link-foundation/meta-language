@@ -42,9 +42,26 @@ export function restoreRustJobAdmissionSource(source) {
   return restored;
 }
 
+/** Recover the complete workflow before native fixture configuration. */
+export function restoreVersionedFixtureCompilerWorkflow(source) {
+  if (pin(source).sha256 !== '7425022b22c550eb338fc087452161b585488f1c44f0d0262192d14acb93b6ee') return source;
+  const selector = '      META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN: 1.99.0\n';
+  const trace = '          META_LANGUAGE_TRACE_RECURSIVE_DECLARATION: readCallableStatementUses\n';
+  const provisioning = '      - name: Install the version-qualified fixture compiler\n'
+    + '        shell: bash\n'
+    + '        run: rustup toolchain install "$META_LANGUAGE_VERSIONED_RUST_TOOLCHAIN" --profile minimal --no-self-update\n\n';
+  assert.equal(source.split(selector).length, 4);
+  assert.equal(source.split(trace).length, 2);
+  assert.equal(source.split(provisioning).length, 4);
+  const earlier = source.replaceAll(selector, '').replaceAll(provisioning, '').replace(trace, '');
+  assert.equal(pin(earlier).sha256, '9ea1cf322e18b37306b02d3f5d6752a7de26fccbd3e591fbc76f7b1ee9b9296f');
+  return earlier;
+}
+
 /** Return the certified predecessor only for a complete integration successor. */
 export function restoreIntegrationSource(source,path) {
   if (path === '.github/workflows/ci.yml') source = restoreRustJobAdmissionSource(source);
+  if (path === '.github/workflows/rust.yml') source = restoreVersionedFixtureCompilerWorkflow(source);
   source = restoreDiagnosticOrderFixture(source, path);
   source = restoreCargoTestHarnessRecognition(source, path);
   if (path === 'js/scripts/test-groups.mjs'
