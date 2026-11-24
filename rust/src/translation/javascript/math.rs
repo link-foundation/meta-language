@@ -56,6 +56,24 @@ impl JavaScriptParser {
     pub(super) fn math(&mut self, token: &Token, name: &str) -> Result<Option<SExpr>> {
         let called = self.cursor.is("(");
         let standard_owner = self.has_standard_builtin_owner(token);
+        let array_classification =
+            crate::translation::array_classification_rules::read_java_script_array_classification_builtin_operation(name);
+        if called && standard_owner && !array_classification.is_empty() {
+            let mut args = self.spread_arguments(name)?;
+            let span = self.to_here(token);
+            let form = if args.len() == 1 && !args[0].spread {
+                SNode::ArrayIsArray {
+                    arg: Box::new(args.remove(0).value),
+                }
+            } else {
+                SNode::Math {
+                    op: array_classification,
+                    name: name.to_owned(),
+                    args,
+                }
+            };
+            return Ok(Some(node(form, span)));
+        }
         let mut numeric_builtin =
             crate::translation::string_number_rules::read_java_script_number_builtin_operation(
                 name,
@@ -68,9 +86,6 @@ impl JavaScriptParser {
         }
         if numeric_builtin.is_empty() {
             numeric_builtin=crate::translation::optional_value_rules::read_java_script_boolean_builtin_operation(name);
-        }
-        if numeric_builtin.is_empty() {
-            numeric_builtin=crate::translation::array_classification_rules::read_java_script_array_classification_builtin_operation(name);
         }
         if numeric_builtin.is_empty() {
             numeric_builtin = crate::translation::javascript_own_property_rules::read_java_script_own_property_builtin_operation(name);

@@ -395,17 +395,29 @@ impl JavaScriptParser {
             _ => None,
         };
         let tagged = tag_object.is_some();
-        if let Some(object) = &tag_object
-            && object.simple_name().is_none()
-        {
-            return Err(unsupported(
-                "switch on the tag of an expression",
-                "bind the value with const and switch on its tag",
-                discriminant.span,
-            ));
-        }
+        let clauses =
+            self.with_block_declarations(|parser| parser.switch_clauses(tagged, &start))?;
+        let whole = self.to_here(&start);
+        let (scrutinee, tag) = match tag_object {
+            Some(object) => {
+                let subject = object.simple_name().unwrap_or_default().to_owned();
+                let data = self.switch_data(&object, &clauses, whole)?;
+                (object, Some((subject, data)))
+            }
+            None => (discriminant, None),
+        };
+        Ok(Switch {
+            scrutinee,
+            tag,
+            clauses,
+            span: whole,
+        })
+    }
+
+    fn switch_clauses(&mut self, tagged: bool, start: &Token) -> Result<Vec<Clause>> {
         let mut clauses = Vec::new();
         let mut tests = Vec::new();
+        let mut declaration = None;
         while !self.cursor.is("}") {
             let clause_start = self.peek();
             if self.cursor.eat("default").is_some() {
@@ -425,11 +437,14 @@ impl JavaScriptParser {
             while !self.cursor.is("case") && !self.cursor.is("default") && !self.cursor.is("}") {
                 if self.cursor.is("const") || self.cursor.is("let") {
                     let token = self.peek();
-                    return Err(unsupported(
-                        "declaration in a case clause",
-                        "case clauses share one scope; wrap the case body in braces",
-                        Some(span(&token, &token)),
-                    ));
+                    declaration.get_or_insert_with(|| span(&token, &token));
+                    if !tagged {
+                        return Err(unsupported(
+                            "declaration in a case clause",
+                            "case clauses share one scope; wrap the case body in braces",
+                            declaration,
+                        ));
+                    }
                 }
                 body.push(self.statement()?);
             }
@@ -444,25 +459,18 @@ impl JavaScriptParser {
             clauses.push(Clause {
                 tests,
                 body: Vec::new(),
-                span: self.to_here(&start),
+                span: self.to_here(start),
             });
         }
+        if declaration.is_some() && clauses.len() != 1 {
+            return Err(unsupported(
+                "declaration in a case clause",
+                "case clauses share one scope; wrap the case body in braces",
+                declaration,
+            ));
+        }
         self.cursor.expect("}", Some("switch"))?;
-        let whole = self.to_here(&start);
-        let (scrutinee, tag) = match tag_object {
-            Some(object) => {
-                let subject = object.simple_name().unwrap_or_default().to_owned();
-                let data = self.switch_data(&object, &clauses, whole)?;
-                (object, Some((subject, data)))
-            }
-            None => (discriminant, None),
-        };
-        Ok(Switch {
-            scrutinee,
-            tag,
-            clauses,
-            span: whole,
-        })
+        Ok(clauses)
     }
 
     pub(super) fn case_test(&mut self, tagged: bool) -> Result<CaseTest> {

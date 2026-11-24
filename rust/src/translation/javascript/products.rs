@@ -459,6 +459,15 @@ impl<'a> Facts<'a> {
             });
         let potential = matches!(ty, Some(Type::Tuple { .. }));
         let id = self.fact(ty, Some(node));
+        if let SNode::Math { op, args, .. } = &node.node
+            && op == &crate::translation::array_classification_rules::read_java_script_array_classification_builtin_operation("Array.isArray")
+            && args.iter().all(|argument| !argument.spread)
+        {
+            for argument in args {
+                self.expression(&argument.value, env, context);
+            }
+            return id;
+        }
         if let SNode::Math{op,args,..}=&node.node
             && op==&crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_operation().to_string()
             && args.len()==1&&!args[0].spread {

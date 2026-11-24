@@ -153,6 +153,13 @@ impl JavaScriptParser {
 
     pub(super) fn block_statements(&mut self) -> Result<Vec<Stmt>> {
         self.cursor.expect("{", Some("block"))?;
+        self.with_block_declarations(Self::block_body)
+    }
+
+    pub(super) fn with_block_declarations<T>(
+        &mut self,
+        parse: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<T> {
         let mut tdz = self.scope.tdz.clone();
         let (names, counts) = self.block_declaration_counts(self.cursor.index);
         let names = names.into_iter().collect::<Vec<_>>();
@@ -165,7 +172,7 @@ impl JavaScriptParser {
         let outer = std::mem::replace(&mut self.scope, inner);
         let statements = self.with_lexical_scope(&names, 0, |parser| {
             parser.lexical.declaration_counts(counts);
-            parser.block_body()
+            parse(parser)
         });
         self.scope = outer;
         statements

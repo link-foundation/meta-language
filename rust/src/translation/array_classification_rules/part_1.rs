@@ -1,4 +1,5 @@
-// Generated from complete js/src/translation/array-classification-rules.js. Do not edit by hand.
+// Generated from the complete checked JavaScript source and recorded dependencies.
+// Do not edit by hand.
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_array_classification(kind: &str) -> bool {

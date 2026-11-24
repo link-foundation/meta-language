@@ -1492,11 +1492,17 @@ class JavaScriptParser {
     c.expect(')', 'switch');
     c.expect('{', 'switch');
     const tagged = discriminant.k === 'field' && discriminant.field === '$';
-    if (tagged && !(discriminant.object.k === 'name' && discriminant.object.path.length === 1)) {
-      throw unsupported('switch on the tag of an expression', 'bind the value with const and switch on its tag', discriminant.span);
-    }
+    const clauses = this.withBlockScope(() => this.switchClauses(tagged, start));
+    const node = { s: 'switch', discriminant, tagged, clauses, span: span(start, c.peek()) };
+    if (tagged) node.data = this.switchData(node);
+    return node;
+  }
+
+  switchClauses(tagged, start) {
+    const c = this.cursor;
     const clauses = [];
     let tests = [];
+    let declaration;
     while (!c.is('}')) {
       const clauseStart = c.peek();
       if (c.eat('default')) {
@@ -1511,7 +1517,8 @@ class JavaScriptParser {
       this.jumps.switches += 1;
       while (!c.is('case') && !c.is('default') && !c.is('}')) {
         if (c.is('const') || c.is('let')) {
-          throw unsupported('declaration in a case clause', 'case clauses share one scope; wrap the case body in braces', span(c.peek(), c.peek()));
+          declaration ??= span(c.peek(), c.peek());
+          if (!tagged) throw unsupported('declaration in a case clause', 'case clauses share one scope; wrap the case body in braces', declaration);
         }
         body.push(this.statement());
       }
@@ -1520,10 +1527,11 @@ class JavaScriptParser {
       tests = [];
     }
     if (tests.length) clauses.push({ tests, body: [], span: span(start, c.peek()) });
+    if (declaration && clauses.length !== 1) {
+      throw unsupported('declaration in a case clause', 'case clauses share one scope; wrap the case body in braces', declaration);
+    }
     c.expect('}', 'switch');
-    const node = { s: 'switch', discriminant, tagged, clauses, span: span(start, c.peek()) };
-    if (tagged) node.data = this.switchData(node);
-    return node;
+    return clauses;
   }
 
   caseTest(tagged) {
@@ -1900,7 +1908,8 @@ class JavaScriptParser {
 
   tagRow(node, test, caseBody, where) {
     let body = caseBody;
-    const subject = node.discriminant.object.path[0];
+    const receiver = node.discriminant.object;
+    const subject = receiver.k === 'name' && receiver.path.length === 1 ? receiver.path[0] : null;
     const ctor = node.data.ctors.find((candidate) => candidate.name === test.tag);
     if (!ctor) throw typeError(`${node.data.name} has no tag ${test.tag}`, test.span);
     const binders = new Map();
@@ -1936,7 +1945,7 @@ class JavaScriptParser {
       }
       return binders.get(field);
     };
-    const substituted = substituteFields(body, subject, (field, span) => {
+    const substituted = subject === null ? body : substituteFields(body, subject, (field, span) => {
       if (field === '$') return { k: 'str', value: ctor.name, span };
       const binder = { k: 'name', path: [binderFor(field)], span };
       return ctor.fields.find(candidate => candidate.name === field).optional
@@ -2643,7 +2652,14 @@ class JavaScriptParser {
       const value = CONSTANTS[name];
       return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
     }
-    const numericBuiltin=standardOwner?(readJavaScriptNumberBuiltinOperation(name)||readJavaScriptBigIntegerBuiltinOperation(name)||readJavaScriptStringConstructionOperation(name)||readJavaScriptBooleanBuiltinOperation(name)||readJavaScriptArrayClassificationBuiltinOperation(name)||readJavaScriptOwnPropertyBuiltinOperation(name)||readJavaScriptEnumerationBuiltinOperation(name)):'';
+    const arrayClassification = standardOwner ? readJavaScriptArrayClassificationBuiltinOperation(name) : '';
+    if (arrayClassification && c.is('(')) {
+      const args = this.spreadArguments(name);
+      const called = span(token, c.peek());
+      if (args.length === 1 && !args[0].spread) return { k: 'arrayIsArray', arg: args[0].value, span: called };
+      return { k: 'math', op: arrayClassification, name, args, span: called };
+    }
+    const numericBuiltin=standardOwner?(readJavaScriptNumberBuiltinOperation(name)||readJavaScriptBigIntegerBuiltinOperation(name)||readJavaScriptStringConstructionOperation(name)||readJavaScriptBooleanBuiltinOperation(name)||readJavaScriptOwnPropertyBuiltinOperation(name)||readJavaScriptEnumerationBuiltinOperation(name)):'';
     if(numericBuiltin&&c.is('('))return{k:'math',op:numericBuiltin,name,args:this.spreadArguments(name),span:span(token,c.peek())};
     if (Object.hasOwn(MATH, name) && c.is('(') && standardOwner) {
       const args = this.spreadArguments(name);
@@ -2661,7 +2677,6 @@ class JavaScriptParser {
       if (fixedCast) return fixedCast;
     }
     if (name === 'Array.from' && standardOwner) return { k: 'arrayFrom', args, span: called };
-    if (name === 'Array.isArray' && args.length === 1 && standardOwner) return { k: 'arrayIsArray', arg: args[0], span: called };
     const arrayForm = standardOwner ? readArrayMethodForm(name) : '';
     if (arrayForm === 'copy-from' || arrayForm === 'construct') {
       if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`${name}() with ${args.length} arguments`, 'array copying takes one array and no mapping function', called);
