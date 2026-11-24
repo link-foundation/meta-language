@@ -249,7 +249,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   }
   const bytes = Buffer.from(text, 'utf8');
   const parsed = parseProgrammingLanguage(text, from);
-  // Signature discovery still checks and translates every declaration. It
+  // Signature discovery checks the complete binding scope and translates admitted declarations. It
   // does not need a second complete source graph or a provenance envelope.
   const reconstructed = signaturesOnly ? bytes.toString('utf8') : LinkNetwork._parseWithLinks(text, from, ParseConfiguration.default(), parsed).network.reconstructText();
   if (reconstructed !== text) {
@@ -321,8 +321,9 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   const { outs, scans, moduleScopeKnown, ownerCounts } = wholePublication
     ?{outs:groups.map(group=>translateGroup(group,from,to,set,{retainDiagnostics,wholePublication,rustSourceVersion:sourceVersion})),scans:[],moduleScopeKnown:true,ownerCounts:new Map()}
     :family(to) === 'Rust'
-    ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
+    ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, signaturesOnly })
     : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, wholePublication, rustSourceVersion:sourceVersion })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
+  if (signaturesOnly && !moduleScopeKnown) return { signatures: [] };
   const results = wholePublication?groups.map((group,index)=>({group,out:outs[index]})):translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, rustSourceVersion:sourceVersion }, scans);
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   // An isolated item proof does not certify its actual mutable module binding.
@@ -395,7 +396,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
  * dependency binder: only signatures of already translated dependencies bind.
  * A failed component supplies no provisional peers to the ordinary fallback.
  */
-function translateBound(groups, from, to, decorators, { moduleDirectory, imports, moduleSource, utf16Strings, referenceSemantics, retainDiagnostics }) {
+function translateBound(groups, from, to, decorators, { moduleDirectory, imports, moduleSource, utf16Strings, referenceSemantics, retainDiagnostics, signaturesOnly }) {
   const scans = groups.map((group) => {
     if (group.kind !== 'item') return null;
     try { return scanItem(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text); }
@@ -498,6 +499,9 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
   const imported = outs.flatMap((out, index) => scans[index]?.imports && out?.status === 'translated' ? out.signatures ?? [] : []);
   moduleScopeKnown = readDeclarationModuleScope(groups, scans, from, to, decorators,
     { moduleDirectory, moduleSource, externals: imported, referenceSemantics, ownerCounts, moduleBindingNames });
+  // The complete scope check is required for every published signature.
+  // Standalone item proofs still run when producing the translation report.
+  if (signaturesOnly && !moduleScopeKnown) return { outs, scans, moduleScopeKnown, ownerCounts };
   groups.forEach((_, index) => visit(index));
   return { outs, scans, moduleScopeKnown, ownerCounts };
 }
