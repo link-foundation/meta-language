@@ -17,6 +17,8 @@ const EXCLUSIVE_TYPED_ARRAY_ITEMS_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-typed-array-items.lino";
 const EXCLUSIVE_TYPED_ARRAY_PREFIXES_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino";
+const EXCLUSIVE_ARRAY_ITEMS_FIXTURE: &str =
+    "parity/fixtures/json-schema-exclusive-array-items.lino";
 const EXCLUSIVE_OBJECT_PROPERTY_FIXTURE: &str =
     "parity/fixtures/json-schema-exclusive-object-property.lino";
 const EXCLUSIVE_OBJECT_SIBLINGS_FIXTURE: &str =
@@ -316,6 +318,24 @@ fn exclusive_array_alternatives_distinguish_disjoint_first_item_types() {
         fixture_file: EXCLUSIVE_TYPED_ARRAY_PREFIXES_FIXTURE,
         assertions: &["decoderDistinguishesDisjointArrayPrefixTypes"],
         test_name: "exclusive_array_alternatives_distinguish_disjoint_first_item_types",
+    });
+}
+
+#[test]
+fn exclusive_array_alternatives_count_matching_branches_across_member_values_and_lengths() {
+    check_exclusive_alternatives(include_str!(
+        "../../../parity/fixtures/json-schema-exclusive-array-items.lino"
+    ));
+    record(&Observation {
+        requirement_id: "I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-ITEMS",
+        suffix: "behavior",
+        fixture_id: "i195-i240-json-schema-exclusive-array-items",
+        fixture_file: EXCLUSIVE_ARRAY_ITEMS_FIXTURE,
+        assertions: &[
+            "decoderCountsExclusiveArrayItemMembership",
+            "equivalentArrayItemLanguagesHaveNoGeneratableDocument",
+        ],
+        test_name: "exclusive_array_alternatives_count_matching_branches_across_member_values_and_lengths",
     });
 }
 

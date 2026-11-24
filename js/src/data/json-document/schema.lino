@@ -9,4 +9,5 @@
 (stringAssertion pattern format)
 (nestedCollectionLimits 32 4096)
 (finiteCollectionLimits 6 32 128)
+(exclusiveArrayWorkLimit 16384)
 (repair closeOpenContainers dropTrailingCommas stripCodeFence extractFirstValue stripTrailingGarbage repairEscapes)

@@ -925,12 +925,11 @@ export function importJsonSchema(schema) {
     const entries = branches.map(({ index, type, limits }) => numberExpression(type, limits, pointerChild(location, index))).filter(Boolean);
     return entries.length ? choice(...entries) : null;
   }
-  function exclusiveArrayLengthExpression(rules, alternatives, allowedTypes, pointer) {
+  function lowerExclusiveArrayAlternatives(rules, alternatives, allowedTypes, pointer) {
     const array = jsonTypes.get('array');
     const guard = arrayLengthProfile([rules], 'oneOf');
     if (!guard) return undefined;
-    const groups = [];
-    let emptyCoverage = 0;
+    const profiles = [];
     for (const branch of alternatives) {
       if (possibleTypeMembership(branch, allowedTypes) === 0) continue;
       const layers = referenceLayers(branch);
@@ -942,11 +941,19 @@ export function importJsonSchema(schema) {
       if (!profile) return undefined;
       const minimum = Math.max(guard.minimum, profile.minimum);
       const maximum = Math.min(guard.maximum, profile.maximum);
-      if (minimum > maximum) continue;
+      if (minimum <= maximum) profiles.push({ minimum, maximum, layout: profile.layout });
+    }
+    const lengths = lowerExclusiveArrayLengths(guard.layout, profiles, pointer);
+    return lengths === undefined ? lowerExclusiveArrayItems(guard.layout, profiles, pointer) : lengths;
+  }
+  function lowerExclusiveArrayLengths(guard, profiles, pointer) {
+    const groups = [];
+    let emptyCoverage = 0;
+    for (const { minimum, maximum, layout: items } of profiles) {
       if (minimum === 0) emptyCoverage += 1;
       if (maximum === 0) continue;
-      if (guard.layout && profile.layout && !isDeepStrictEqual(guard.layout, profile.layout)) return undefined;
-      const layout = guard.layout ?? profile.layout;
+      if (guard && items && !isDeepStrictEqual(guard, items)) return undefined;
+      const layout = guard ?? items;
       let group = groups.find(candidate => isDeepStrictEqual(candidate.layout, layout));
       if (!group) {
         group = { layout, boundaries: new Map() };
@@ -979,6 +986,60 @@ export function importJsonSchema(schema) {
       if (count === 1) addInterval(minimum, null);
     }
     return expressions.length ? choice(...expressions) : null;
+  }
+  function lowerExclusiveArrayItems(guard, profiles, pointer) {
+    const lastPosition = profiles.reduce((position, { layout, minimum, maximum }) => Math.max(
+      position, minimum, Number.isFinite(maximum) ? maximum : 0, layout?.prefixItems.length ?? 0,
+    ), Math.max(1, guard?.prefixItems.length ?? 0));
+    const budget = { remaining: Number(jsonDocumentPolicy.exclusiveArrayWorkLimit[0]) };
+    const states = new Map();
+    const itemSchema = (layout, position) => layout?.prefixItems[position] ?? layout?.items ?? true;
+    const itemPointer = pointerChild(pointer, 'items');
+    const start = stateAt(0, profiles.map((_, index) => index));
+    // After the final prefix or length boundary, only branch membership can change.
+    for (const state of states.values()) {
+      const { position, branches, transitions } = state;
+      budget.remaining -= 1 + branches.length;
+      if (budget.remaining < 0) return undefined;
+      const children = branches.map(index => {
+        const { layout, maximum } = profiles[index];
+        return position < maximum ? itemSchema(layout, position) : false;
+      });
+      const variants = selectExclusiveCollectionValueVariants(children, itemSchema(guard, position), itemPointer, budget, true);
+      if (!variants) return undefined;
+      for (const variant of variants) {
+        const remaining = variant.matches.map(index => branches[index]);
+        transitions.push({ variant, target: stateAt(Math.min(position + 1, lastPosition), remaining) });
+      }
+    }
+    // Work backward from possible ends. The only cycles consume a member and stay in the same state.
+    const ordered = [...states.values()].sort((left, right) => right.position - left.position || left.branches.length - right.branches.length);
+    for (const state of ordered) {
+      const matching = state.branches.filter(index => state.position >= profiles[index].minimum);
+      const expressions = matching.length === 1 ? [empty()] : [];
+      const loops = [];
+      for (const { variant, target } of state.transitions) {
+        if (target !== state && !target.expression) continue;
+        const item = variant.schema === undefined
+          ? choice(...variant.values.map(value => constantExpression(value, itemPointer, 'oneOf')))
+          : childExpression(variant.schema, itemPointer);
+        if (!item) continue;
+        const member = state.position ? separated(item) : item;
+        if (target === state) loops.push(member);
+        else expressions.push(seq(member, target.expression));
+      }
+      if (!expressions.length) continue;
+      const name = `json_exclusive_array_${next++}`;
+      state.expression = ref(name);
+      builder.rule(name, choice(...expressions, ...loops.map(item => seq(item, state.expression))));
+    }
+    return start.expression ? collection('[', ']', start.expression) : null;
+
+    function stateAt(position, branches) {
+      const key = `${position}:${branches.join(',')}`;
+      if (!states.has(key)) states.set(key, { position, branches, transitions: [] });
+      return states.get(key);
+    }
   }
   function exclusiveObjectFieldExpression(rules, alternatives, allowedTypes, pointer) {
     const object = jsonTypes.get('object');
@@ -1028,7 +1089,7 @@ export function importJsonSchema(schema) {
         const schemas = layouts.map(layout => propertySchema(layout, name));
         const sibling = Object.hasOwn(rules.properties ?? {}, name)
           ? rules.properties[name] : rules.additionalProperties ?? true;
-        variants = exclusivePropertyVariants(schemas, sibling, pointerChild(propertiesPointer, name), budget);
+        variants = selectExclusiveCollectionValueVariants(schemas, sibling, pointerChild(propertiesPointer, name), budget);
         if (!variants) return undefined;
       }
       if (!required.has(name)) {
@@ -1108,12 +1169,12 @@ export function importJsonSchema(schema) {
     }).filter(Boolean);
     return expressions.length ? choice(...expressions) : null;
   }
-  function exclusivePropertyVariants(schemas, sibling, pointer, budget) {
+  function selectExclusiveCollectionValueVariants(schemas, sibling, pointer, budget, allowSharedSchema = false) {
     if (sibling === false) return [];
     const allowed = schemas.filter(schema => schema !== false);
-    // A closed layout can forbid a field whose present values share one ordinary schema.
-    if (allowed.length < schemas.length && allowed.every(schema => isDeepStrictEqual(schema, allowed[0]))) {
-      if (!allowed.length) return [];
+    if (!allowed.length) return [];
+    // A shared schema gives every permitted present value the same branch membership.
+    if ((allowSharedSchema || allowed.length < schemas.length) && allowed.every(schema => isDeepStrictEqual(schema, allowed[0]))) {
       const schema = combineChildSchemas([allowed[0], sibling], pointer, 0);
       if (schema === undefined) return undefined;
       if (schema === false) return [];
@@ -1121,8 +1182,9 @@ export function importJsonSchema(schema) {
     }
     const checks = schemas.length + Number(sibling !== true);
     const candidates = new Map();
-    for (const schema of allowed) {
-      const finite = finiteSchemaCandidates(schema, analysis.target, budget);
+    const shared = allowSharedSchema && sibling !== true && finiteSchemaCandidates(sibling, analysis.target, budget);
+    for (const schema of shared ? [sibling] : allowed) {
+      const finite = shared || finiteSchemaCandidates(schema, analysis.target, budget);
       if (!finite) return undefined;
       for (const item of finite.values) {
         if (!chargeCollectionValue(item, checks, budget)) return undefined;
@@ -1216,7 +1278,7 @@ export function importJsonSchema(schema) {
         const numeric = alternativeNumericExpression(rules, alternatives, allowedTypes, keyword, pointer);
         if (numeric !== undefined) return numeric;
         if (overlaps) {
-          const array = exclusiveArrayLengthExpression(rules, alternatives, allowedTypes, pointer);
+          const array = lowerExclusiveArrayAlternatives(rules, alternatives, allowedTypes, pointer);
           if (array !== undefined) return array;
           const object = exclusiveObjectFieldExpression(rules, alternatives, allowedTypes, pointer);
           if (object !== undefined) return object;

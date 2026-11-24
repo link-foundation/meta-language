@@ -739,6 +739,21 @@ function buildLanguageTaskRequirements(fixtureCatalog) {
       },
     },
     {
+      id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-ITEMS',
+      source: ISSUE_195_SOURCES.jsonSchema,
+      language: 'JSON with draft 2020-12 schemas',
+      version: 'RFC 8259 JSON and JSON Schema draft 2020-12 semantics',
+      construct: 'exclusive array alternatives with overlapping item domains',
+      expectedBehavior: 'Within the shared construction bound, group candidate item values by the branches that accept them. Apply sibling item assertions and preserve only those branches for subsequent positions. Allow closing the array only when exactly one surviving branch accepts the length. Preserve shared item productions and unbounded tails. Equivalent item languages and lengths have no generatable exclusive document.',
+      fixture: 'parity/fixtures/json-schema-exclusive-array-items.lino',
+      selector: 'overlapping enums, empty arrays, escaped values, bounded and unbounded lengths, optional prefixes, impossible positions, shared unbounded item schemas, local references, parent item assertions and equivalent branches',
+      assertions: ['decoderCountsExclusiveArrayItemMembership', 'equivalentArrayItemLanguagesHaveNoGeneratableDocument'],
+      implementationEntryPoints: {
+        javascript: ['js/src/grammar-importers/json-schema.js', 'js/src/data/json-document/schema.lino', 'js/tests/grammar-json-document.test.js'],
+        rust: ['rust/src/grammar/json_document/import/exclusive_alternatives.rs', 'rust/src/data/json-document/schema.lino', 'rust/tests/unit/json_schema_and_recovery.rs'],
+      },
+    },
+    {
       id: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-OBJECT-PROPERTY',
       source: ISSUE_195_SOURCES.jsonSchema,
       language: 'JSON with draft 2020-12 schemas',

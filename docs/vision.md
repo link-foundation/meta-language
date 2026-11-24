@@ -4850,12 +4850,22 @@ the layout for unrestricted branches. If no layout admits a length covered by
 one branch, there is no generatable array. Two branches with different item
 layouts can also be distinguished by disjoint finite string sets at a
 common required prefix position. Optional positions and overlapping string sets
-cannot establish that proof. An unresolved overlap retains a diagnostic for
-validation. For object alternatives with a common additional-property rule,
-the decoder compares effective property schemas across the union of declared
-names. The default applies to names a branch leaves undeclared. The decoder
-can factor finite property domains, including typed defaults, and group values
-by the branches that accept them. When all branches that allow a property share
+cannot establish that proof. The decoder can also enforce exclusivity when
+each distinct item schema has a finite candidate domain or a common sibling
+schema supplies that domain. It groups item values by the branches accepting
+them and carries only those branches to the next array position. A shared item
+schema can constrain all surviving branches without enumerating its values.
+Closing the array requires exactly one surviving branch that accepts its length.
+Beyond the final prefix and length boundaries, the current item schema and
+the effect of length stay the same. The decoder can represent the remaining
+tail with recursive productions. The shared policy bounds the work used to
+inspect members and construct branch states. An unresolved overlap retains a
+diagnostic for validation. For object alternatives with a common
+additional-property rule, the decoder compares effective property schemas
+across the union of declared names. The default applies to names a branch
+leaves undeclared. The decoder can factor finite property domains, including
+typed defaults, and group values by the branches that accept them. When all
+branches that allow a property share
 its schema, that schema constrains its presence. In closed layouts this lets
 the decoder distinguish optional properties that other branches prohibit.
 Absence contributes only the branches in which the property is optional.

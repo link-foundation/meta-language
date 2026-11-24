@@ -106,6 +106,14 @@ The fixtures cover an empty array accepted by one branch, overlapping lengths
 within a shared item layout, disjoint layouts connected by local references,
 and a common item rule inherited by an unrestricted branch.
 
+Run `node experiments/issue-245/json-schema-exclusive-array-items.mjs` to
+check an unbounded array whose branches allow `red` or `blue` and `blue` or
+`green`, respectively. The decoder previously accepted `["blue"]` even though
+both branches matched. The regression checks branch membership across items,
+the empty array, an arbitrarily repeatable tail, limits on prefix and tail
+positions, local references, parent item assertions, JSON escapes, and
+equivalent finite languages whose exclusive alternative accepts no array.
+
 Run `node experiments/issue-245/json-schema-exclusive-object-property.mjs`
 to check overlapping property enumerations in objects with an unrestricted
 text field. The previous grammar accepted the shared choice. It now rejects
@@ -147,8 +155,9 @@ default, and an empty language when the parent requires both contact fields.
 The required prefix cases share a length range and distinguish branches by
 their first string value. One minimum length comes from a sibling of the
 local reference. The decoder previously admitted `["selected",null]` and now
-applies the common Boolean tail rule. A control with optional prefix positions
-retains the exclusivity diagnostic because both branches match the empty array.
+applies the common Boolean tail rule. With optional prefix positions, the
+decoder now rejects `[]` because both branches accept that length. It retains
+all four original inputs and agrees with the original validator expectations.
 
 The decimal cases use overlapping `oneOf` intervals with limits from linked
 schemas and their containing schema. Before the change, the decoder admitted

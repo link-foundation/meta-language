@@ -305,6 +305,13 @@ struct ArrayLengthProfile<'schema> {
     layout: Option<ArrayItemLayout<'schema>>,
 }
 
+struct ArrayMembershipState<'schema> {
+    position: usize,
+    branches: Vec<usize>,
+    transitions: Vec<(CollectionValueVariant<'schema>, usize)>,
+    expression: Option<Expression>,
+}
+
 #[derive(Clone)]
 enum CollectionChild<'schema> {
     Schema(&'schema Value),
@@ -320,10 +327,10 @@ enum ConjunctionEntry<'schema> {
 
 struct ObjectFieldVariants<'schema> {
     name: &'schema str,
-    variants: Vec<ObjectFieldVariant<'schema>>,
+    variants: Vec<CollectionValueVariant<'schema>>,
 }
 
-struct ObjectFieldVariant<'schema> {
+struct CollectionValueVariant<'schema> {
     branches: Vec<usize>,
     use_common_schema: bool,
     child: Option<CollectionChild<'schema>>,
@@ -558,7 +565,7 @@ impl<'schema> Importer<'schema> {
                         return expression;
                     }
                     if overlaps
-                        && let Some(expression) = self.exclusive_array_length_expression(
+                        && let Some(expression) = self.lower_exclusive_array_alternatives(
                             schema,
                             branches,
                             allowed_types,

@@ -14,6 +14,7 @@ const shared = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url))
 const exclusiveArrayLengthsFixture = 'parity/fixtures/json-schema-exclusive-array-lengths.lino';
 const exclusiveTypedArrayItemsFixture = 'parity/fixtures/json-schema-exclusive-typed-array-items.lino';
 const exclusiveTypedArrayPrefixesFixture = 'parity/fixtures/json-schema-exclusive-typed-array-prefixes.lino';
+const exclusiveArrayItemsFixture = 'parity/fixtures/json-schema-exclusive-array-items.lino';
 const exclusiveObjectPropertyFixture = 'parity/fixtures/json-schema-exclusive-object-property.lino';
 const exclusiveObjectSiblingsFixture = 'parity/fixtures/json-schema-exclusive-object-siblings.lino';
 const exclusiveObjectFieldsFixture = 'parity/fixtures/json-schema-exclusive-object-fields.lino';
@@ -324,6 +325,16 @@ test('exclusive array alternatives distinguish disjoint first-item types', conte
     requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-PREFIX-TYPES', suffix: 'behavior',
     fixtureId: 'i195-i240-json-schema-exclusive-array-prefix-types', fixtureFile: exclusiveTypedArrayPrefixesFixture,
     assertions: ['decoderDistinguishesDisjointArrayPrefixTypes'],
+    testName: context.name,
+  });
+});
+
+test('exclusive array alternatives count matching branches across member values and lengths', context => {
+  checkExclusiveAlternatives(exclusiveArrayItemsFixture);
+  recordIssue195Observations({
+    requirementId: 'I195-I240-JSON-SCHEMA-EXCLUSIVE-ARRAY-ITEMS', suffix: 'behavior',
+    fixtureId: 'i195-i240-json-schema-exclusive-array-items', fixtureFile: exclusiveArrayItemsFixture,
+    assertions: ['decoderCountsExclusiveArrayItemMembership', 'equivalentArrayItemLanguagesHaveNoGeneratableDocument'],
     testName: context.name,
   });
 });

@@ -53,7 +53,7 @@ impl<'schema> Importer<'schema> {
         Some((!entries.is_empty()).then(|| EXPRESSION.choice_unordered(entries)))
     }
 
-    fn exclusive_array_length_expression(
+    fn lower_exclusive_array_alternatives(
         &mut self,
         schema: &'schema Value,
         branches: &'schema [Value],
@@ -62,8 +62,7 @@ impl<'schema> Importer<'schema> {
     ) -> Option<Option<Expression>> {
         let array = type_membership("array");
         let guard = array_length_profile(&[schema], Some("oneOf"))?;
-        let mut groups = Vec::<(ArrayItemLayout<'schema>, BTreeMap<usize, i64>)>::new();
-        let mut empty_coverage = 0;
+        let mut profiles = Vec::new();
         for branch in branches {
             if possible_type_membership(branch, allowed_types) == 0 {
                 continue;
@@ -84,18 +83,42 @@ impl<'schema> Importer<'schema> {
             if maximum.is_some_and(|maximum| minimum > maximum) {
                 continue;
             }
+            profiles.push(ArrayLengthProfile {
+                minimum,
+                maximum,
+                layout: profile.layout,
+            });
+        }
+        self.lower_exclusive_array_lengths(guard.layout, &profiles, pointer)
+            .or_else(|| self.lower_exclusive_array_items(guard.layout, &profiles, pointer))
+    }
+
+    fn lower_exclusive_array_lengths(
+        &mut self,
+        guard: Option<ArrayItemLayout<'schema>>,
+        profiles: &[ArrayLengthProfile<'schema>],
+        pointer: &str,
+    ) -> Option<Option<Expression>> {
+        let mut groups = Vec::<(ArrayItemLayout<'schema>, BTreeMap<usize, i64>)>::new();
+        let mut empty_coverage = 0;
+        for &ArrayLengthProfile {
+            minimum,
+            maximum,
+            layout: items,
+        } in profiles
+        {
             if minimum == 0 {
                 empty_coverage += 1;
             }
             if maximum == Some(0) {
                 continue;
             }
-            if let (Some(guard_layout), Some(branch_layout)) = (guard.layout, profile.layout)
+            if let (Some(guard_layout), Some(branch_layout)) = (guard, items)
                 && guard_layout != branch_layout
             {
                 return None;
             }
-            let layout = guard.layout.or(profile.layout).unwrap_or(ArrayItemLayout {
+            let layout = guard.or(items).unwrap_or(ArrayItemLayout {
                 prefix: &[],
                 items: &UNRESTRICTED_SCHEMA,
             });
@@ -159,6 +182,150 @@ impl<'schema> Importer<'schema> {
             }
         }
         Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
+    }
+
+    fn lower_exclusive_array_items(
+        &mut self,
+        guard: Option<ArrayItemLayout<'schema>>,
+        profiles: &[ArrayLengthProfile<'schema>],
+        pointer: &str,
+    ) -> Option<Option<Expression>> {
+        let last_position = profiles.iter().fold(
+            guard.map_or(1, |layout| layout.prefix.len().max(1)),
+            |position, profile| {
+                position
+                    .max(profile.minimum)
+                    .max(profile.maximum.unwrap_or(0))
+                    .max(profile.layout.map_or(0, |layout| layout.prefix.len()))
+            },
+        );
+        let mut work: usize = keywords("exclusiveArrayWorkLimit").next()?.parse().ok()?;
+        let location = pointer_child(pointer, "items");
+        let item_schema = |layout: Option<ArrayItemLayout<'schema>>, position: usize| {
+            layout.map_or(&UNRESTRICTED_SCHEMA, |items| {
+                items.prefix.get(position).unwrap_or(items.items)
+            })
+        };
+        let branches: Vec<_> = (0..profiles.len()).collect();
+        let mut indices = HashMap::from([((0, branches.clone()), 0)]);
+        let mut states = vec![ArrayMembershipState {
+            position: 0,
+            branches,
+            transitions: Vec::new(),
+            expression: None,
+        }];
+        // After the final prefix or length boundary, only branch membership can change.
+        let mut index = 0;
+        while index < states.len() {
+            let position = states[index].position;
+            let branches = states[index].branches.clone();
+            work = work.checked_sub(1 + branches.len())?;
+            let children: Vec<_> = branches
+                .iter()
+                .map(|&branch| {
+                    let profile = &profiles[branch];
+                    if profile.maximum.is_some_and(|maximum| position >= maximum) {
+                        &PROHIBITED_SCHEMA
+                    } else {
+                        item_schema(profile.layout, position)
+                    }
+                })
+                .collect();
+            let variants = self.select_exclusive_collection_value_variants(
+                &children,
+                item_schema(guard, position),
+                &location,
+                &mut work,
+                true,
+            )?;
+            for variant in variants {
+                let remaining: Vec<_> = variant
+                    .branches
+                    .iter()
+                    .map(|&item| branches[item])
+                    .collect();
+                let position = (position + 1).min(last_position);
+                let target = *indices
+                    .entry((position, remaining.clone()))
+                    .or_insert_with(|| {
+                        let target = states.len();
+                        states.push(ArrayMembershipState {
+                            position,
+                            branches: remaining,
+                            transitions: Vec::new(),
+                            expression: None,
+                        });
+                        target
+                    });
+                states[index].transitions.push((variant, target));
+            }
+            index += 1;
+        }
+        // Work backward from possible ends. The only cycles consume a member and stay in the same state.
+        let mut ordered: Vec<_> = (0..states.len()).collect();
+        ordered.sort_by_key(|&index| {
+            let state = &states[index];
+            (std::cmp::Reverse(state.position), state.branches.len())
+        });
+        for index in ordered {
+            let state = &states[index];
+            let position = state.position;
+            let matching = state
+                .branches
+                .iter()
+                .filter(|&&branch| position >= profiles[branch].minimum)
+                .count();
+            let mut expressions = Vec::new();
+            if matching == 1 {
+                expressions.push(EXPRESSION.empty());
+            }
+            let mut loops = Vec::new();
+            for (variant, target) in std::mem::take(&mut states[index].transitions) {
+                if target != index && states[target].expression.is_none() {
+                    continue;
+                }
+                let item = if let Some(child) = variant.child {
+                    self.lower_child(child, &location)
+                } else {
+                    Some(
+                        EXPRESSION.choice_unordered(
+                            variant
+                                .values
+                                .iter()
+                                .map(|value| self.constant(value, &location, "oneOf")),
+                        ),
+                    )
+                };
+                let Some(item) = item else { continue };
+                let member = if position == 0 { item } else { separated(item) };
+                if let Some(target_expression) = &states[target].expression {
+                    expressions.push(EXPRESSION.seq([member, target_expression.clone()]));
+                } else {
+                    loops.push(member);
+                }
+            }
+            if expressions.is_empty() {
+                continue;
+            }
+            let name = format!("json_exclusive_array_{}", self.next());
+            let expression = reference_expression(&name);
+            expressions.extend(
+                loops
+                    .into_iter()
+                    .map(|item| EXPRESSION.seq([item, expression.clone()])),
+            );
+            self.grammar.add_rule(GrammarRule::new(
+                &name,
+                EXPRESSION.choice_unordered(expressions),
+            ));
+            states[index].expression = Some(expression);
+        }
+        Some(
+            states[0]
+                .expression
+                .take()
+                .map(|body| collection("[", "]", body)),
+        )
     }
 
     fn exclusive_object_field_expression(
@@ -280,14 +447,15 @@ impl<'schema> Importer<'schema> {
                     .map(|&(layout, _)| object_property_schema(layout, name))
                     .collect();
                 let sibling = object_property_schema(schema, name);
-                self.exclusive_property_variants(
+                self.select_exclusive_collection_value_variants(
                     &schemas,
                     sibling,
                     &pointer_child(&properties_pointer, name),
                     &mut work,
+                    false,
                 )?
             } else {
-                vec![ObjectFieldVariant {
+                vec![CollectionValueVariant {
                     branches: all_branches.clone(),
                     use_common_schema: true,
                     child: None,
@@ -302,7 +470,7 @@ impl<'schema> Importer<'schema> {
                     .filter_map(|(index, required)| (!required.contains(name)).then_some(index))
                     .collect();
                 if !branches.is_empty() {
-                    variants.push(ObjectFieldVariant {
+                    variants.push(CollectionValueVariant {
                         branches,
                         use_common_schema: false,
                         child: None,
@@ -333,13 +501,15 @@ impl<'schema> Importer<'schema> {
             if shared.is_none() && values.is_empty() {
                 return Some(None);
             }
-            field.variants.push(shared.unwrap_or(ObjectFieldVariant {
-                branches: Vec::new(),
-                use_common_schema: false,
-                child: None,
-                values,
-                expression: None,
-            }));
+            field
+                .variants
+                .push(shared.unwrap_or(CollectionValueVariant {
+                    branches: Vec::new(),
+                    use_common_schema: false,
+                    child: None,
+                    values,
+                    expression: None,
+                }));
             selections.push(vec![0]);
         } else {
             // An absent field admits only branches that leave it optional. Each selected
@@ -467,13 +637,14 @@ impl<'schema> Importer<'schema> {
         Some((!expressions.is_empty()).then(|| EXPRESSION.choice_unordered(expressions)))
     }
 
-    fn exclusive_property_variants(
+    fn select_exclusive_collection_value_variants(
         &mut self,
         schemas: &[&'schema Value],
         sibling: &'schema Value,
         pointer: &str,
         work: &mut usize,
-    ) -> Option<Vec<ObjectFieldVariant<'schema>>> {
+        allow_shared_schema: bool,
+    ) -> Option<Vec<CollectionValueVariant<'schema>>> {
         if sibling == &PROHIBITED_SCHEMA {
             return Some(Vec::new());
         }
@@ -486,13 +657,15 @@ impl<'schema> Importer<'schema> {
         let Some((&(_, first), rest)) = allowed.split_first() else {
             return Some(Vec::new());
         };
-        // A closed layout can forbid a field whose present values share one ordinary schema.
-        if allowed.len() < schemas.len() && rest.iter().all(|&(_, rule)| rule == first) {
+        // A shared schema gives every permitted present value the same branch membership.
+        if (allow_shared_schema || allowed.len() < schemas.len())
+            && rest.iter().all(|&(_, rule)| rule == first)
+        {
             let child = self.combine_child_schemas(vec![first, sibling], pointer, 0)?;
             if matches!(child, CollectionChild::Schema(Value::Bool(false))) {
                 return Some(Vec::new());
             }
-            return Some(vec![ObjectFieldVariant {
+            return Some(vec![CollectionValueVariant {
                 branches: allowed.iter().map(|&(index, _)| index).collect(),
                 use_common_schema: false,
                 child: Some(child),
@@ -503,15 +676,34 @@ impl<'schema> Importer<'schema> {
         let checks = schemas.len() + usize::from(sibling != &UNRESTRICTED_SCHEMA);
         let mut seen = HashSet::new();
         let mut candidates = Vec::new();
-        for (_, child) in allowed {
-            let (values, _) = finite_schema_candidates(
+        let mut shared = if allow_shared_schema && sibling != &UNRESTRICTED_SCHEMA {
+            finite_schema_candidates(
                 self.root,
-                child,
+                sibling,
                 &mut HashSet::new(),
                 work,
                 0,
                 ALL_JSON_TYPES,
-            )?;
+            )
+        } else {
+            None
+        };
+        let sources = if shared.is_some() {
+            vec![sibling]
+        } else {
+            allowed.into_iter().map(|(_, child)| child).collect()
+        };
+        for child in sources {
+            let (values, _) = shared.take().or_else(|| {
+                finite_schema_candidates(
+                    self.root,
+                    child,
+                    &mut HashSet::new(),
+                    work,
+                    0,
+                    ALL_JSON_TYPES,
+                )
+            })?;
             for value in values {
                 charge_collection_value(value.as_ref(), checks, work, 0)?;
                 if seen.insert(value.to_string()) {
@@ -540,7 +732,7 @@ impl<'schema> Importer<'schema> {
             }
             let index = *signatures.entry(branches.clone()).or_insert_with(|| {
                 let index = variants.len();
-                variants.push(ObjectFieldVariant {
+                variants.push(CollectionValueVariant {
                     branches,
                     use_common_schema: false,
                     child: None,

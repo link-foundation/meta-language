@@ -41,6 +41,9 @@ const layeredPatternItem = {
   type: 'array', $ref: '#/$defs/row', prefixItems: [{ type: 'string', pattern: 'z$' }],
   $defs: { row: { prefixItems: [{ type: 'string', pattern: '^a' }] } },
 };
+const optionalArrayPrefixes = {
+  type: 'array', oneOf: [{ prefixItems: [{ const: 'selected' }] }, { prefixItems: [{ const: 'pending' }] }],
+};
 const duplicateReferenceAlternative = [
   { $defs: { item: tag('item', 'string'), alias: { $ref: '#/$defs/item' } }, oneOf: [{ $ref: '#/$defs/item' }, { $ref: '#/$defs/alias' }] },
   [['{"kind":"item","value":"answer"}', false], ['{"kind":"item","value":true}', false]],
@@ -389,9 +392,9 @@ const cases = [
     [],
   ],
   [
-    { type: 'array', oneOf: [{ prefixItems: [{ const: 'selected' }] }, { prefixItems: [{ const: 'pending' }] }] },
-    [['[]', true], ['["selected"]', true], ['["pending"]', true], ['["other"]', false]],
-    ['/oneOf'],
+    optionalArrayPrefixes,
+    [['[]', false], ['["selected"]', true], ['["pending"]', true], ['["other"]', false]],
+    [],
     [['[]', false], ['["selected"]', true], ['["pending"]', true], ['["other"]', false]],
   ],
   [
@@ -542,7 +545,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       data.ungeneratable.push(duplicateReferenceAlternative);
       changed = true;
     }
-    for (const corrected of [closedArrayReference, conflictingArrayReference, layeredPatternProperty, layeredPatternItem]) {
+    for (const corrected of [closedArrayReference, conflictingArrayReference, layeredPatternProperty, layeredPatternItem, optionalArrayPrefixes]) {
       const existing = data.grammars.findIndex(([schema]) => JSON.stringify(schema) === JSON.stringify(corrected));
       const replacement = cases.find(([schema]) => schema === corrected);
       if (existing >= 0 && JSON.stringify(data.grammars[existing]) !== JSON.stringify(replacement)) {
