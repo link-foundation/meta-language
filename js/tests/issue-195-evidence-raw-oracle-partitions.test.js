@@ -5,6 +5,7 @@ import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {generateRawOracleContractPartitions} from '../scripts/generate-raw-oracle-contract-partitions.mjs';
 import {restoreRawOracleContractPartitionHistory,restoreReportScheduleHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 import {createOriginalLinkRawContractPartition} from '../../experiments/original-link-complete-table-projection/raw-contract-partitions.mjs';
 import {javascriptWorkflowSource,readIssue245SourcePair} from '../../experiments/issue-245/source-history.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
@@ -71,7 +72,8 @@ test('the entire current test source retains every original call body hash and a
 
 test('two required raw contract cells preserve complete commands limits and the preceding whole workflow',()=>{
   const {history}=generateRawOracleContractPartitions({check:true}),path='.github/workflows/js.yml';
-  const currentSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const liveSource=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const currentSource=restoreVerificationPauseSource(path,liveSource);
   const previousSource=history.sources.find(row=>row.path===path).source;
   assert.equal(restoreRawOracleContractPartitionHistory(currentSource,path),previousSource);
   const previous=parseWorkflow(previousSource),current=parseWorkflow(restoreReportScheduleHistory(currentSource));
@@ -82,6 +84,11 @@ test('two required raw contract cells preserve complete commands limits and the 
   const plan=after.steps.find(row=>row.name===old.name);
   const schema=after.steps.find(row=>row.name==='Run complete original link raw schema and consumer contracts');
   const live=parseWorkflow(currentSource).find(row=>row.id==='package-checks');
+  const active=parseWorkflow(liveSource).find(row=>row.id==='package-checks');
+  for(const name of ['Check out raw plan inputs', 'Run complete original link raw native oracle contracts',
+    'Run complete original link raw schema and consumer contracts']){
+    assert.equal(active.steps.find(row=>row.name===name)?.text,live.steps.find(row=>row.name===name)?.text,name);
+  }
   const checkoutFilter="          filter: ${{ matrix.group == 'source-model-raw' && 'blob:none' || '' }}\n";
   const [,scheduled,blobless,currentWorkflow]=readIssue245SourcePair(javascriptWorkflowSource).versions;
   assert.equal(currentSource,currentWorkflow);

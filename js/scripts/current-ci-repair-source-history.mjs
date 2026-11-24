@@ -1,3 +1,4 @@
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 // Exact source views for the current CI repair; current execution stays separate.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -17,6 +18,7 @@ let history;
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreVerificationPauseSource(path,source);
   if(path===javascriptWorkflowSource||path===rustWorkflowSource)source=restoreIssue245SourceSuccessor(path,source);
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);

@@ -179,7 +179,7 @@ test('the remaining-scope issue is checked and refreshed independently of the or
 });
 
 test('source discovery includes every original and follow-up discussion endpoint', async () => {
-  const followUpIssues = [230, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245];
+  const followUpIssues = [230, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 248];
   const endpoints = [];
   const discussion = await fetchLiveDiscussion({ request: async (endpoint) => {
     endpoints.push(endpoint);
@@ -199,14 +199,16 @@ test('source discovery includes every original and follow-up discussion endpoint
     'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
     'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
     'issues/226/comments?per_page=100', 'pulls/226/comments?per_page=100', 'pulls/226/reviews?per_page=100',
+    'issues/246/comments?per_page=100', 'pulls/246/comments?per_page=100', 'pulls/246/reviews?per_page=100',
   ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
   assert.equal(discussion.issue.number, 195);
   assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224, ...followUpIssues]);
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/226/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/246/comments')));
   const reviews = discussion.comments.filter(({ body }) => body === 'A reviewed requirement');
-  assert.equal(reviews.length, 3);
+  assert.equal(reviews.length, 4);
   assert.ok(reviews.every(({ created_at, updated_at }) => created_at === updated_at && updated_at === '2026-10-12T00:00:00Z'));
   assert.ok(discussion.comments.every(({ body }) => body !== ''));
 });
@@ -217,6 +219,7 @@ test('follow-up comment permalinks are validated without assuming pull request 1
   for (const url of [
     'https://github.com/link-foundation/meta-language/pull/201#issuecomment-1',
     'https://github.com/link-foundation/meta-language/pull/226#issuecomment-1',
+    'https://github.com/link-foundation/meta-language/pull/246#issuecomment-1',
     'https://github.com/link-foundation/meta-language/issues/199#issuecomment-1',
   ]) {
     discussion.register.requirementSources[1].url = url;

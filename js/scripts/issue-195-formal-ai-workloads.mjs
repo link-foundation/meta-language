@@ -14,12 +14,17 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
+import { FORMAL_AI_DATA_FILES } from './issue-195-formal-ai-workload-probes.mjs';
 
 export const FORMAL_AI_WORKLOAD_REQUIREMENT = 'I195-DOWNSTREAM-FORMAL-AI-WORKLOADS';
 export const FORMAL_AI_WORKLOAD_FIXTURE_ID = 'planned:repository-directive:i195-downstream-formal-ai-workloads';
 export const FORMAL_AI_WORKLOAD_FIXTURE = 'parity/fixtures/formal-ai-workloads.json';
 export const FORMAL_AI_WORKLOAD_REPORT_VARIABLE = 'ISSUE_195_FORMAL_AI_WORKLOAD_REPORT';
 export const FORMAL_AI_WORKLOAD_SCHEMA_VERSION = 1;
+export const FORMAL_AI_TRANSLATION_WORKLOAD = Object.freeze({
+  file: FORMAL_AI_DATA_FILES.projectionRules,
+  name: 'executes all six JavaScript TypeScript Rust numeric projection directions',
+});
 export const FORMAL_AI_WORKLOAD_ASSERTIONS = Object.freeze([
   'workloadsRunOnInstalledArtifacts',
   'sharedConceptsReused',
@@ -163,7 +168,7 @@ function artifactProblems(runtime, part) {
 }
 
 // Problems of the executed workload tests: every inventoried workload file had a passing test and nothing failed.
-function testProblems(runtime, part, fixture) {
+function testProblems(runtime, part, fixture, translationPaused) {
   const problems = [];
   const tests = Array.isArray(part.tests) ? part.tests : [];
   const counts = countOutcomes(tests);
@@ -173,7 +178,13 @@ function testProblems(runtime, part, fixture) {
   for (const entry of tests.filter(({ outcome }) => outcome === 'failed')) {
     problems.push(`the ${runtime} workload ${entry.file} › ${entry.name} failed`);
   }
-  for (const entry of tests.filter(({ outcome }) => outcome === 'skipped')) {
+  const skipped = tests.filter(({ outcome }) => outcome === 'skipped');
+  const projections = part.semanticProjectionObservations;
+  if (translationPaused && (skipped.length !== 1 || skipped[0].file !== FORMAL_AI_TRANSLATION_WORKLOAD.file ||
+      skipped[0].name !== FORMAL_AI_TRANSLATION_WORKLOAD.name || !Array.isArray(projections) || projections.length !== 0)) {
+    problems.push('the paused JavaScript report must skip exactly the semantic translation workload and contain no translation observations');
+  }
+  for (const entry of translationPaused ? [] : skipped) {
     problems.push(`the ${runtime} workload ${entry.file} › ${entry.name} was skipped`);
   }
   for (const file of workloadFiles(fixture, runtime)) {
@@ -204,7 +215,7 @@ function probeProblems(runtime, part, assertion) {
  * problem. A probe observation counts only when the probe ran against the
  * verified checkout and the installed artifact.
  */
-export function validateFormalAiWorkloadReport(report, fixture, runtime) {
+export function validateFormalAiWorkloadReport(report, fixture, runtime, { translationPaused = false } = {}) {
   const problems = Object.fromEntries(FORMAL_AI_WORKLOAD_ASSERTIONS.map((assertion) => [assertion, []]));
   const layout = FORMAL_AI_WORKLOAD_RUNTIMES[runtime];
   if (!layout) throw new Error(`unknown runtime ${runtime}`);
@@ -213,13 +224,18 @@ export function validateFormalAiWorkloadReport(report, fixture, runtime) {
     problems.workloadsRunOnInstalledArtifacts.push(
       `the report schema version is ${report?.schemaVersion}, not ${FORMAL_AI_WORKLOAD_SCHEMA_VERSION}`);
   }
+  if (report?.translationChecks !== (translationPaused ? 'paused' : undefined)) {
+    const message = 'the report does not match the requested automated translation mode';
+    for (const assertion of FORMAL_AI_WORKLOAD_ASSERTIONS) problems[assertion].push(message);
+    return { problems, observed: [] };
+  }
   if (!part || part.skipped) {
     const message = `the report has no ${runtime} run${part?.reason ? `: ${part.reason}` : ''}`;
     for (const assertion of FORMAL_AI_WORKLOAD_ASSERTIONS) problems[assertion].push(message);
     return { problems, observed: [] };
   }
   const grounding = [...checkoutProblems(report, fixture), ...artifactProblems(runtime, part)];
-  problems.workloadsRunOnInstalledArtifacts.push(...grounding, ...testProblems(runtime, part, fixture));
+  problems.workloadsRunOnInstalledArtifacts.push(...grounding, ...testProblems(runtime, part, fixture, translationPaused && runtime === 'javascript'));
   for (const assertion of FORMAL_AI_PROBE_ASSERTIONS) {
     problems[assertion].push(...grounding.map((problem) => `not observed on the installed artifact: ${problem}`));
     problems[assertion].push(...probeProblems(runtime, part, assertion));
@@ -234,9 +250,9 @@ export function validateFormalAiWorkloadReport(report, fixture, runtime) {
 // installed-artifact/probe checks without pretending its partial test list
 // covers every inventoried workload file. The partition validator separately
 // proves exact target-qualified execution against the complete native --list.
-export function formalAiWorkloadPartitionGroundingProblems(report, fixture) {
+export function formalAiWorkloadPartitionGroundingProblems(report, fixture, options) {
   const problems = [];
-  const javascript = validateFormalAiWorkloadReport(report, fixture, 'javascript');
+  const javascript = validateFormalAiWorkloadReport(report, fixture, 'javascript', options);
   for (const [assertion, entries] of Object.entries(javascript.problems)) {
     problems.push(...entries.map((entry) => `javascript ${assertion}: ${entry}`));
   }

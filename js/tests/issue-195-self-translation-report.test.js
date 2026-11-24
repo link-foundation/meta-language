@@ -5,8 +5,10 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { automatedTranslationTest } from './support/automated-translation-test.js';
 import { fileURLToPath } from 'node:url';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
+import { restoreVerificationPauseSource } from '../../experiments/issue-245/verification-pause-history.mjs';
 import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, partitionSelfTranslationReportModules, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { partitionGroupFiles, partitionMeasuredWorkloads, partitionTests, testFiles } from '../scripts/test-groups.mjs';
@@ -19,7 +21,9 @@ test('report checkout preserves the complete workload and removes unrelated arch
   const workflow = '.github/workflows/ci.yml';
   const git = (...args) => execFileSync('git', args, { cwd: repository, encoding: 'utf8' });
   const reportJob = source => parseWorkflow(source).find(job => job.id === 'self-translation-report');
-  const current = reportJob(readFileSync(join(repository, workflow), 'utf8'));
+  const live = readFileSync(join(repository, workflow), 'utf8');
+  const current = reportJob(restoreVerificationPauseSource(workflow, live));
+  assert.deepEqual(reportJob(live).steps, current.steps, 'opt-in retains the exact report steps');
   const previous = reportJob(git('show', `1e0cecca0cb83797c8b3263e5576705db95cb492:${workflow}`));
   const checkout = current.steps[0].text;
   const sparse = /^ {10}sparse-checkout-cone-mode: false\n {10}sparse-checkout: \|\n((?: {12}\S[^\n]*\n)+)/mu.exec(checkout);
@@ -190,7 +194,7 @@ test('recent translation test timings balance both jobs in each original three-w
   assert.ok(Math.max(...old.map(workload)) > 11 * 60 * 1000);
 });
 
-test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', async () => {
+test('one CI measurement worker preserves full source coverage, hashes and both independent comparisons', automatedTranslationTest, async () => {
   const module = 'js/src/translation/primitive-value-rules.js';
   const context = { moduleDirectory: [], imports: {} };
   const decoratorsText = readFileSync(new URL('../../parity/self-translation/decorators.lino', import.meta.url), 'utf8');
@@ -211,7 +215,7 @@ test('one CI measurement worker preserves full source coverage, hashes and both 
   } finally { await worker.close(); }
 });
 
-test('report import resolution checks callable candidates and avoids dependencies of carried classes', () => {
+test('report import resolution checks callable candidates and avoids dependencies of carried classes', async (testContext) => {
   const modules = new Map([
     ['consumer.js', "import { Box } from './class.js';import { plus as add } from './provider.js';export function twice(value){return add(value,value);}"],
     ['class.js', "import { hidden } from './unused.js';export class Box { read(){return hidden();} }"],
@@ -223,9 +227,11 @@ test('report import resolution checks callable candidates and avoids dependencie
   assert.deepEqual(context.imports['./class.js'], []);
   assert.deepEqual(context.imports['./provider.js'].map(signature => signature.name), ['plus']);
   assert.equal(reads.includes('unused.js'), false);
-  const source = modules.get('consumer.js');
-  const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
-  assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+  await testContext.test('the resolved callable enables actual translation', automatedTranslationTest, () => {
+    const source = modules.get('consumer.js');
+    const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
+    assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+  });
 });
 
 test('lexical report headers agree with independent grammar headers despite opaque and nested syntax', () => {
@@ -262,7 +268,7 @@ test('self-translation report compares each function independently', () => {
   assert.equal(standalone.identical, 0);
 });
 
-test('self-translation report accounts for actual translated, carried and UTF-8 comment source bytes', () => {
+test('self-translation report accounts for actual translated, carried and UTF-8 comment source bytes', automatedTranslationTest, () => {
   const source = '\r\n// café 😀\r\nexport function add(a, b) { return a + b; }\n\nclass Unsupported {}\n';
   const translation = selfTranslate(source, 'JavaScript', 'Rust');
   const coverage = sourceCoverage(source, translation.items);

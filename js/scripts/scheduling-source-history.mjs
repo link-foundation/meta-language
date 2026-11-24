@@ -13,7 +13,7 @@ let history;
 export function restoreSchedulingSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
   if(file===platformDeadlineTestSource)source=restoreIssue245Source(file,source);
-  if(file===javascriptTestGroupsSource)source=restoreIssue245SourceSuccessor(file,source);
+  if(file===javascriptTestGroupsSource)source=restoreIssue245SourceSuccessor(file,restoreVerificationPauseSource(file,source));
   source=restoreCurrentCiRepairSource(source,file);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}
   const row=history.sources.find(row=>row.file===file);if(!row)return source;

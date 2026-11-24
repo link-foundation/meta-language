@@ -1,3 +1,4 @@
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 // Authenticate complete source views; unrelated changes stay observable.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -21,6 +22,7 @@ const reportScheduleHistory = new Map([
 
 /** Admit only the complete reviewed report matrix change for historical tests. */
 export function restoreReportScheduleHistory(source) {
+  source = restoreVerificationPauseSource(undefined,source);
   source = restoreIssue245SourceSuccessor(javascriptWorkflowSource,source);
   const digest = value => createHash('sha256').update(value).digest('hex');
   if (digest(source) === '1a84ae044fd6bf946376a6b2b9507a97d1c3eb9a53cb898b171a925f34985123') {

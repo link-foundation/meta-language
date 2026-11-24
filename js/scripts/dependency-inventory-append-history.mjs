@@ -10,6 +10,7 @@ import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {checkInventory,collectDependencies} from './dependency-inventory.mjs';
 import {restoreDependencyDeclaration} from './dependency-inventory-order.mjs';
 import {restoreOwnCodebaseTestRegistrationTestSource} from './own-codebase-test-registration-history.mjs';
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 
 const file=new URL('../../parity/fixtures/dependency-inventory-append-history.lino',import.meta.url);
 const inventoryRevision='9ac3038132953e6a220bba6f06a3e6147d39836f';
@@ -23,6 +24,7 @@ export function readDependencyInventoryAppendHistory() {
 }
 
 export function restoreNodeDependencyInventoryTestSource(source) {
+  source=restoreVerificationPauseSource('js/tests/issue-195-evidence-node-dependency.test.js',source);
   const history=readDependencyInventoryAppendHistory();
   const original=history.test.source;
   let current=original;

@@ -27,9 +27,9 @@ Applies to all contributors; setup: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Development
 
-- JavaScript first: draft/debug complete batches; self-translate to Rust together,
-  then verify lossless round trips and parity. Unsupported translation requires improving the translator,
-  never handwritten replacement semantics. Follow
+- JavaScript first: draft/debug complete batches, then port them together and
+  verify parity. During the #248 pause, manual ports between supported languages
+  are allowed. Keep translator code and verification for opt-in checks. Follow
   [self-translation](docs/self-translation.md).
 - Generate grammars automatically across the catalog; adjustments are recorded
   rules, never generated-file edits. Tree-sitter serves only as a test oracle.

@@ -363,6 +363,7 @@ fn workflow_propagates_cancellation_without_always_override() {
 ";
     let prerequisites = r"    needs: [detect-changes, changelog, cargo-lock, check]
     if: |
+      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&
       !cancelled() &&
       needs.cargo-lock.result == 'success' &&
       needs.check.result == 'success' &&
@@ -467,6 +468,18 @@ fn workflow_propagates_cancellation_without_always_override() {
         workflow.replacen(
             execution,
             &execution.replace("--test-concurrency=1", "--test-concurrency=2"),
+            1,
+        ),
+        false,
+    ));
+    cases.push((
+        "removed translation opt-in",
+        workflow.replacen(
+            prerequisites,
+            &prerequisites.replace(
+                "      (inputs.automated_translation || vars.META_LANGUAGE_AUTOMATED_TRANSLATION == 'true') &&\n",
+                "",
+            ),
             1,
         ),
         false,

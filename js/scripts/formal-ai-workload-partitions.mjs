@@ -223,7 +223,8 @@ export function validateFormalAiWorkloadPartition(envelope, fixture, expected, f
       fail('missing independently pinned full workload expectations');
     }
     const report = envelope.result;
-    const grounding = formalAiWorkloadPartitionGroundingProblems(report, fixture);
+    const translationPaused = expected.translationPaused === true;
+    const grounding = formalAiWorkloadPartitionGroundingProblems(report, fixture, { translationPaused });
     if (grounding.length) fail(grounding.join('\n'));
     equal(report.fixtureSha256, expected.identity.fixtureSha256, 'report fixture differs from the actual pinned bytes');
     equal(report.fixture, FORMAL_AI_WORKLOAD_FIXTURE, 'report logical fixture identity changed');
@@ -281,7 +282,8 @@ export function validateFormalAiWorkloadPartition(envelope, fixture, expected, f
       };
     });
     equal(javascriptTests, report.npm.tests, 'JavaScript report differs from actual terminal events');
-    if (javascriptTests.length !== expected.javascriptWorkloads || javascriptTests.some((entry) => entry.file === null || entry.outcome !== 'passed') ||
+    const validOutcome = (outcome) => outcome === 'passed' || (translationPaused && outcome === 'skipped');
+    if (javascriptTests.length !== expected.javascriptWorkloads || javascriptTests.some((entry) => entry.file === null || !validOutcome(entry.outcome)) ||
         new Set(javascriptTests.map(({ file, name }) => JSON.stringify([file, name]))).size !== javascriptTests.length) fail('JavaScript workload identities are missing, duplicate or unsuccessful');
     equal(report.npm.workloadFiles, workloadFiles(fixture, 'javascript'), 'JavaScript workload scope changed');
     const javascriptProbe = reader.data(evidence.javascriptProbe.file);
@@ -375,7 +377,7 @@ export function mergeFormalAiWorkloadPartitions(parts, fixture, expected) {
     report.crate.counts = countOutcomes(report.crate.tests);
     report.crate.exit = 0;
     for (const runtime of ['javascript', 'rust']) {
-      const result = validateFormalAiWorkloadReport(report, fixture, runtime);
+      const result = validateFormalAiWorkloadReport(report, fixture, runtime, { translationPaused: expected.translationPaused === true });
       equal(result.observed, [...FORMAL_AI_WORKLOAD_ASSERTIONS], `unchanged complete ${runtime} validator refused the merged report`);
     }
     return { problems: [], report, provenance: {

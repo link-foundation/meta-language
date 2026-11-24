@@ -1,3 +1,4 @@
+import {restoreVerificationPauseSource} from '../../experiments/issue-245/verification-pause-history.mjs';
 // Structural controls for the connected partition producer; no external
 // process, dependency installation or native workload runs in these tests.
 import assert from 'node:assert/strict';
@@ -60,7 +61,7 @@ function partitionWorkflowProblems(workflow, runner, transport) {
   requireValue(transport.includes('readFormalAiNativeInventory(state.nativeInventory, fixture)') &&
     transport.includes('formalAiWorkloadPartitionCommands(state.inventory, partition)'), 'actual full lists control exact execution');
   requireValue(transport.includes('mergeFormalAiWorkloadPartitions(parts, fixture, expected)') &&
-    transport.includes('formalAiPartitionExpectations({ root, tarball, crate, fixture, environment, producerResult })'), 'the merger builds its own expected context rather than trusting envelopes');
+    transport.includes('formalAiPartitionExpectations({ root, tarball, crate, fixture, environment, producerResult'), 'the merger builds its own expected context rather than trusting envelopes');
   requireValue(!/spawn|execFile|node:child_process/u.test(transport), 'bundle transport/merge cannot run native processes');
   return problems;
 }
@@ -89,7 +90,8 @@ test('Formal AI workflow refuses lost producers mixed artifacts overwritten scop
 });
 
 test('Formal AI partition adoption preserves every byte of the existing complete report validator', () => {
-  const source = readFileSync(new URL('../scripts/issue-195-formal-ai-workloads.mjs', import.meta.url));
+  const file = 'js/scripts/issue-195-formal-ai-workloads.mjs';
+  const source = Buffer.from(restoreVerificationPauseSource(file, read(file)));
   // Exact original source bytes read before this additive export was drafted.
   // This also protects all original private grounding/coverage/probe checks.
   assert.equal(createHash('sha256').update(source.subarray(0, 12317)).digest('hex'),

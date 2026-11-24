@@ -3066,6 +3066,31 @@ architecture.
 
 ## JavaScript first and self-translation
 
+[Issue #248](https://github.com/link-foundation/meta-language/issues/248) pauses
+required automated translation until the maintainer resumes it. During the
+pause, contributors may hand-port JavaScript-first batches between the supported
+languages. A manual port follows the same observable behavior contract and uses
+shared fixtures, native tests and the language feature inventory. Keep the
+automated translator, its checks, and its complete acceptance scope available.
+Skipped execution produces no translation evidence. Normal CI continues scoped
+JavaScript and Rust checks, grammar generation, candidate packaging and
+downstream validation. The complete acceptance path remains available on opt-in.
+
+[The CI scope decision in PR #246](https://github.com/link-foundation/meta-language/pull/246#issuecomment-7127833773)
+also pauses Windows and macOS execution. Ordinary CI schedules Linux native
+tests and clean package consumers. The native matrix reads the same Links shard
+policy for each platform. Keep platform-specific test commands, setup, fixtures
+and required evidence available.
+
+Use the CI dispatch inputs `automated_translation` and
+`cross_platform_checks`, or set the repository variables
+`META_LANGUAGE_AUTOMATED_TRANSLATION` and
+`META_LANGUAGE_CROSS_PLATFORM_CHECKS` to `true`. Enable both for the
+complete acceptance workflow and every supported consumer platform. Linux test
+and candidate package observations can still establish their individual
+assertions when the switches are off. The aggregate reports active job failures.
+A paused workflow supplies evidence only for the checks it executes.
+
 The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
 at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source
 hashes and applicability decisions in
@@ -3202,11 +3227,12 @@ predecessor sources and independent body and source inverses accompany the
 correspondence. This changes the internal library ABI, keeps the checked source
 algorithm intact and disables no lint. Native validation remains CI work.
 
-The port is done by meta-language itself. A self-translation tool, a library
+The long-term porting workflow uses meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or
-TypeScript. Code it cannot translate yet is a gap in the translator, not
-something to write by hand. Meta-language's own source is its main acceptance
+TypeScript. Code it cannot translate yet remains a gap in the translator,
+including when a manual port implements equivalent behavior during the pause.
+Meta-language's own source is its main acceptance
 corpus:
 
 - JavaScript → links → JavaScript and Rust → links → Rust are byte-identical;

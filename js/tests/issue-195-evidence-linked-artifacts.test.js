@@ -21,8 +21,15 @@ test('consumer and workload artifact paths match their linked report outputs and
     const dependencies = job.steps.findIndex((step) => /npm ci --ignore-scripts/u.test(step.run));
     assert.ok(dependencies >= 0 && dependencies < job.steps.indexOf(run), `${id} installs the bootstrap-safe linked report reader`);
     assert.match(job.steps[dependencies].text, /working-directory: js/u);
-    assert.ok(job.steps.some((step) => /actions\/upload-artifact@/u.test(step.text)
-      && step.text.includes(`path: ${output}\n`)), `${id} uploads the exact report it produced`);
+    const upload = job.steps.find((step) => /actions\/upload-artifact@/u.test(step.text)
+      && step.text.split('\n').some((line) => [output, `path: ${output}`].includes(line.trim())));
+    assert.ok(upload, `${id} uploads the exact report it produced`);
+    if (id === 'consumers') {
+      const observations = /ISSUE_195_OBSERVATION_FILE: .*?\{0\}\/([^']+)'/u.exec(run.text)?.[1];
+      assert.ok(observations, 'the clean consumers record actual observations');
+      assert.ok(upload.text.split('\n').some((line) => line.trim() === observations),
+        'the clean consumer report and observations belong to the same artifact');
+    }
     reportPaths.set(id, output);
   }
   for (const id of ['javascript-suite', 'rust-suite', 'delivery']) {

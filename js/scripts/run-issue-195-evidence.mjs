@@ -426,7 +426,19 @@ async function produceMergeEnforcementEvidence() {
       'live GitHub merge enforcement and separate release checkpoint inspection',
     );
   }
-  return { ...bundle(execution), artifacts: [relative(reportPath)] };
+  const rolloutPath = path.join(artifactsDirectory, 'automated-translation-rollout.lino');
+  const rollout = await runCommand('automated-translation-rollout', 'node', [
+    path.join(root, 'js/scripts/check-automated-translation-rollout.mjs'), rolloutPath,
+  ], { allowFailure: true });
+  if (rollout.ok) observe(
+    'i195-automated-translation-pause-open-pull-requests-tooling-behavior',
+    'everyOpenPullRequestRunsPausedWorkflow', 'eligible GitHub Actions rollout inspection',
+  );
+  return bundle(execution, rollout, {
+    commands: [],
+    artifacts: [relative(reportPath), relative(rolloutPath)],
+    failureLogs: [...(execution.ok ? [] : execution.artifacts), ...(rollout.ok ? [] : rollout.artifacts)],
+  });
 }
 
 /**
