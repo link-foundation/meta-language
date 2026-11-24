@@ -500,7 +500,7 @@ pub fn ml_accept_deferred_declaration_parameters_loop44(
                                 {
                                     let text = self::read_required_text_fact(texts, child);
                                     if ((((text.encode_utf16().count() as f64) == 0f64)
-                                        || text.contains("\\"))
+                                        || text.contains('\\'))
                                         || (text == "eval"))
                                         || (text == "arguments")
                                     {
@@ -605,7 +605,7 @@ pub fn ml_read_declaration_deferred_binding_loop58(
                             {
                                 let text = self::read_required_text_fact(texts, child);
                                 if ((((text.encode_utf16().count() as f64) == 0f64)
-                                    || text.contains("\\"))
+                                    || text.contains('\\'))
                                     || (text == "eval"))
                                     || (text == "arguments")
                                 {

@@ -312,9 +312,9 @@ pub fn ml_read_declaration_dependency_components_loop12(
                                                             {
                                                                 let ml_s35 = self::ml_read_declaration_dependency_components_loop16(vertices, leaders, leader_2, &(ml_values6), ml_index6);
                                                                 match ml_s35 {
-                                                                    self::MlReadDeclarationDependencyComponentsLoop16Result::MlReadDeclarationDependencyComponentsLoop16Done(vertices_2, leaders_2) => {
+                                                                    self::MlReadDeclarationDependencyComponentsLoop16Result::MlReadDeclarationDependencyComponentsLoop16Done(vertices_2, component_representatives) => {
                                                                         {
-                                                                            (assigned, vertices, leaders, position) = (assigned_2, vertices_2, leaders_2, position_2);
+                                                                            (assigned, vertices, leaders, position) = (assigned_2, vertices_2, component_representatives, position_2);
                                                                             continue;
                                                                         }
                                                                     }
@@ -508,11 +508,11 @@ pub fn ml_read_recursive_declaration_source_owners_loop22(
                                                         match ml_s37 {
                                                             self::MlReadRecursiveDeclarationSourceOwnersJoin24::MlReadRecursiveDeclarationSourceOwnersJoin24Next(roots_3) => {
                                                                 {
-                                                                    let owners_2 = { let (ml_append_right, ml_append_left) = (vec![owner_2], owners); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                                    let declaration_owner_column = { let (ml_append_right, ml_append_left) = (vec![owner_2], owners); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                     {
                                                                         let declaration_2 = declaration + 1f64;
                                                                         {
-                                                                            (owners, roots, declaration) = (owners_2, roots_3, declaration_2);
+                                                                            (owners, roots, declaration) = (declaration_owner_column, roots_3, declaration_2);
                                                                             continue;
                                                                         }
                                                                     }

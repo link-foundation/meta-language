@@ -4296,6 +4296,12 @@ assigned whole test file.
   diagnostics through decorators after formatting complete translated functions.
   The Boolean value host generator replays its exact reviewed visibility and
   method reference corrections after authenticating the original host archive.
+  The remaining portable library review binds nineteen diagnostics to complete
+  formatted declarations. It records binding renames, equivalent control flow,
+  literal patterns and a tuple for the three linked reference-domain conditions.
+  The ASCII host reader restores its original complete generated artifact from
+  the exact current artifact and six checked source intervals. Both historical
+  host checks and current native generation remain required.
   Rendered review never acquires invented machine applicability or substitutes
   for native compilation and execution in CI.
 - Full acceptance and native evidence stages execute in CI. Local validation

@@ -519,13 +519,13 @@ pub fn ml_find_java_script_record_parameter_strict_directive_loop15(
                     == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))
                 {
                     {
-                        let raw_ = self::read_required_text_fact(raws, at);
+                        let directive_spelling = self::read_required_text_fact(raws, at);
                         {
-                            let strict = (raw_
+                            let strict = (directive_spelling
                                 == (self::ml_string::Text::from_units(vec![
                                     34, 117, 115, 101, 32, 115, 116, 114, 105, 99, 116, 34,
                                 ])))
-                                || (raw_
+                                || (directive_spelling
                                     == (self::ml_string::Text::from_units(vec![
                                         39, 117, 115, 101, 32, 115, 116, 114, 105, 99, 116, 39,
                                     ])));

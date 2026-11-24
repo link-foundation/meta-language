@@ -8,14 +8,16 @@ import { checkProjectData, writeProjectData, readProjectData } from './project-d
 import { ASCII_HOST_REVISION, ASCII_HOST_ADDITIONS, ASCII_HOST_REGISTRATIONS,
   ASCII_HOST_EDITS, ASCII_ASSERTION_EDITS, asciiHostPin, replayAsciiHostEdits, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import {readAsciiTextPredicateHostArtifact} from './generate-ascii-text-predicate-hosts.mjs';
 
 const root = new URL('../../', import.meta.url);
 
 export function generateAsciiTextPredicateHostHistory({ check = false, assertionDraft = null } = {}) {
   const output = new URL('parity/self-translation/ascii-text-predicate-hosts.lino', root);
+  const previous = existsSync(output) ? readProjectData(output) : null;
   const draftSource = assertionDraft === null
-    ? (assert.ok(existsSync(output), 'first capture requires the retained exact unexecuted draft via --assertion-draft'),
-      readProjectData(output).assertionCorrection.draft.source)
+    ? (assert.ok(previous, 'first capture requires the retained exact unexecuted draft via --assertion-draft'),
+      previous.assertionCorrection.draft.source)
     : readFileSync(assertionDraft, 'utf8');
   const assertionPath = 'js/tests/translation-ascii-text-predicates.test.js';
   const currentAssertionSource = readFileSync(new URL(assertionPath, root), 'utf8');
@@ -42,12 +44,11 @@ export function generateAsciiTextPredicateHostHistory({ check = false, assertion
     return { path, source, pin: asciiHostPin(source) };
   });
   const artifactPath = 'parity/self-translation/ascii-text-predicate-rules-native.lino';
-  const artifactBytes = readFileSync(new URL(artifactPath, root));
-  const artifact = readProjectData(new URL(artifactPath, root));
+  const { artifact, pin } = readAsciiTextPredicateHostArtifact(artifactPath, previous?.sourceArtifact.pin);
   const archive = { schemaVersion: 1, model: 'Rust ASCII character query host replay 1',
     revision: ASCII_HOST_REVISION, coordinateUnit: 'UTF-16 code units', hosts, additions,
     registrations: ASCII_HOST_REGISTRATIONS, assertionCorrection,
-    sourceArtifact: { path: artifactPath, pin: asciiHostPin(artifactBytes), libraryInterface: artifact.libraryInterface },
+    sourceArtifact: { path: artifactPath, pin, libraryInterface: artifact.libraryInterface },
     boundary: 'Only declared frontend transport edits and complete new adapter/test sources. All predicate/query/callback decisions come from the separately checked complete JavaScript closure and its actual generated Text ABI. Complete predecessor inverses and native registration are checked independently; source capture is not compilation or runtime evidence.' };
   verifyAsciiTextPredicateHosts(archive);
   if (check) checkProjectData(output, archive);
