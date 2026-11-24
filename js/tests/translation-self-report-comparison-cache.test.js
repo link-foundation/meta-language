@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {compareRustDefinitions,createRustDefinitionComparison,rustFunctionDefinitions} from '../scripts/generate-self-translation-report.mjs';
+import {compareRustDefinitions,createRustDefinitionComparison,rustFunctionDefinitions,translateReportVersions} from '../scripts/generate-self-translation-report.mjs';
+import { DecoratorSet } from '../src/decorators.js';
+import { selfTranslate } from '../src/self-translation.js';
 import {parseProgrammingLanguage} from '../src/programming-language-parser.js';
 
 const generic='// cafe\u0301 😀\nfn first() -> i64 { 1 }\nfn café() -> i64 { 2 }\nfn first() -> i64 { 9 }\nmod nested { fn hidden() {} }\n';
@@ -10,6 +12,25 @@ const observingReader=()=>{
   const inputs=[];
   return{inputs,read:source=>{inputs.push(source);return rustFunctionDefinitions(source);}};
 };
+
+test('a report reuses only the output of an inactive emitter and retains decorated dependency refusals', () => {
+  const source = 'export function value() { return true; }\nexport function used() { return value(); }\n';
+  const options = { retainDiagnostics: true };
+  const generic = selfTranslate(source, 'JavaScript', 'Rust', options);
+  const inactive = DecoratorSet.fromLino('(decorator other (level emitter) (when (format JavaScript)) (drop))');
+  const unchanged = translateReportVersions(source, inactive, options);
+  assert.deepEqual(unchanged.generic, generic);
+  assert.equal(unchanged.hasDecoratedChanges, false);
+  assert.equal(unchanged.decorated(), unchanged.generic);
+
+  const dropping = DecoratorSet.fromLino('(decorator remove (level emitter) (when (format Rust)) (drop))');
+  const changed = translateReportVersions(source, dropping, options);
+  const expected = selfTranslate(source, 'JavaScript', 'Rust', { ...options, decorators: dropping });
+  assert.deepEqual(changed.generic, generic);
+  assert.equal(changed.hasDecoratedChanges, true);
+  assert.notDeepEqual(expected.items, generic.items);
+  assert.deepEqual(changed.decorated(), expected);
+});
 
 test('one report row preserves both complete independent CST comparisons while parsing its exact native counterpart once',()=>{
   const observed=observingReader(),comparison=createRustDefinitionComparison(counterpart,observed.read);

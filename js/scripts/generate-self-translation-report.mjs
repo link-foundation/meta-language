@@ -243,8 +243,8 @@ export function createModuleContext(readSource) {
           continue;
         }
         if (!signatures.has(target)) {
-          const started = performance.now();
           const providerContext = context(target);
+          const started = performance.now();
           if (process.env.META_LANGUAGE_REPORT_PROGRESS === '1') console.error(`self-translation report: signatures ${target}`);
           signatures.set(target, selfTranslationSignatures(provider, 'JavaScript', providerContext));
           if (process.env.META_LANGUAGE_REPORT_PROGRESS === '1') console.error(`self-translation report: signatures recorded ${target} (${Math.round(performance.now() - started)} ms)`);
@@ -340,7 +340,8 @@ export function measureSelfTranslationModule(module, decorators, context) {
   const rust = counterpart(module);
   const source = readFileSync(join(root, module), 'utf8');
   const started = performance.now();
-  const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, retainDiagnostics: true });
+  const versions = translateReportVersions(source, decorators, { ...context, retainDiagnostics: true });
+  const { generic: translation } = versions;
   const coverage = checkedCoverage(source, translation);
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
   const milliseconds = Math.round(performance.now() - started);
@@ -350,14 +351,36 @@ export function measureSelfTranslationModule(module, decorators, context) {
     const generic = comparisons.compare(translation.code);
     const retained = { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items };
     let decorated = { ...generic, coverage, translation: retained };
-    if (decorators.size > 0) {
-      const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators, retainDiagnostics: true });
+    if (versions.hasDecoratedChanges) {
+      const translation = versions.decorated();
       decorated = { ...comparisons.compare(translation.code), coverage: checkedCoverage(source, translation),
         translation: { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items } };
     }
     const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
     return { module, rust, sourceSha256: sha256(module), rustSha256: rust ? sha256(rust) : null, items, coverage, milliseconds, ...generic, translation: retained, decorated };
   } finally { comparisons.clear(); }
+}
+
+// Self-translation uses emitter output when binding signatures. Observe the
+// actual emitter calls, including tentative groups, before reusing a result.
+export function translateReportVersions(source, decorators, context) {
+  let changed = false;
+  class ReportDecoratorProbe extends DecoratorSet {
+    decorate(level, record) {
+      if (!changed) {
+        const candidate = super.decorate(level, record);
+        changed = candidate === null || candidate.line !== record.line;
+      }
+      return record;
+    }
+  }
+  const emit = set => selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators: set });
+  const generic = emit(decorators.has('emitter') ? new ReportDecoratorProbe(decorators.decorators) : undefined);
+  return {
+    generic,
+    hasDecoratedChanges: changed,
+    decorated: () => changed ? emit(decorators) : generic,
+  };
 }
 
 /** How the Rust a translation writes compares with the hand-written Rust, or with none. */
